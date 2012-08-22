@@ -508,8 +508,8 @@ if (!JSON) {
       }
     } finally {
 
-    };
-  }
+    }
+  };
 
   //cookie read/write only used internally, make it private
   var _mock_uuid_cookie_name = "mock_uuid";
@@ -559,7 +559,7 @@ if (!JSON) {
         }
         return uuid;
     }
-  }
+  };
 
   function isSameOrigin(url) {
     var loc = window.location;
@@ -575,7 +575,7 @@ if (!JSON) {
             || (locParts[1] === urlParts[1] && // protocol matches }
             locParts[3] === urlParts[3] && // domain matches   }-> absolute url
             locParts[4] === urlParts[4]); // port matches      }
-  };
+  }
 
 
   // ** millicore/src/main/webapp/box/static/apps/libs/feedhenry/feedhenry-core.js **
@@ -619,7 +619,7 @@ if (!JSON) {
     if(console){
       console.log(err);
     }
-  }
+  };
 
   $fh.__ajax = function (options) {
     var o = options ? options : {};
@@ -772,6 +772,55 @@ if (!JSON) {
         error: errraw
       })
     }
+  };
+
+  _getQueryMap = function(url) {
+    var qmap;
+    var i = url.split("?");
+    if (i.length == 2) {
+      var queryString = i[1];
+      var pairs = queryString.split("&");
+      qmap = {};
+      for (var p = 0; p < pairs.length; p++) {
+        var q = pairs[p];
+        var qp = q.split("=");
+        qmap[qp[0]] = qp[1];
+      }
+    }
+    return qmap;
+  };
+
+  _checkAuthResponse = function(url) {
+    if (/\_fhAuthCallback/.test(url)) {
+      var qmap = _getQueryMap(url);
+      if (qmap) {
+        var fhCallback = qmap["_fhAuthCallback"];
+        if (fhCallback) {
+          if (qmap['result'] && qmap['result'] === 'success') {
+            var sucRes = {'sessionToken': qmap['fh_auth_session'], 'authResponse' : JSON.parse(decodeURIComponent(decodeURIComponent(qmap['authResponse'])))};
+            window[fhCallback](null, sucRes);
+          } else {
+            window[fhCallback]({'message':qmap['message']});
+          }
+        }
+      }
+    }
+  };
+
+  _addFhParams = function(params) {
+    var fhParams = {};
+    fhParams.cuid = getDeviceId();
+    fhParams.appid = $fh.app_props.appid;
+    fhParams.appkey = $fh.app_props.appkey;
+    params = params || {};
+    params.__fh = fhParams;
+    return params;
+  };
+
+  if (window.addEventListener) {
+    window.addEventListener('load', _checkAuthResponse(window.location.href), false); //W3C
+  } else {
+    window.attachEvent('onload', _checkAuthResponse(window.location.href)); //IE
   }
 
   $fh._handleAuthResponse = function(endurl, res, success, fail){
@@ -784,16 +833,8 @@ if (!JSON) {
               window.plugins.childBrowser.onLocationChange = function(new_url){
                 if(new_url.indexOf(endurl) > -1){
                   window.plugins.childBrowser.close();
-                  var i = new_url.split("?");
-                  if(i.length == 2){
-                    var queryString = i[1];
-                    var pairs = queryString.split("&");
-                    var qmap ={};
-                    for(var p=0;p<pairs.length;p++){
-                      var q = pairs[p];
-                      var qp = q.split("=");
-                      qmap[qp[0]] = qp[1];
-                    };
+                  var qmap = _getQueryMap(new_url);
+                  if(qmap) {
                     if(qmap['result'] && qmap['result'] === 'success'){
                       var sucRes = {'sessionToken': qmap['fh_auth_session'], 'authResponse' : JSON.parse(decodeURIComponent(decodeURIComponent(qmap['authResponse'])))};
                       success(sucRes);
@@ -808,7 +849,7 @@ if (!JSON) {
                     }
                   }
                 }
-              }
+              };
               window.plugins.childBrowser.showWebPage(res.url);
             }
           } else {
@@ -859,7 +900,7 @@ if (!JSON) {
           $fh.cloud_props = res;
           if(success){
             success(res);
-          }; 
+          }
           _cloudReady(true);
         },
         "error": function(req, statusText, error){
@@ -891,18 +932,20 @@ if (!JSON) {
       return fail('act_no_action', {});
     }
     
-    var cloud_host = $fh.cloud_props.hosts.debugCloudUrl;
-    var app_type = $fh.cloud_props.hosts.debugCloudType;
+    var cloud_host = $fh.cloud_props.hosts.releaseCloudUrl;
+    var app_type = $fh.cloud_props.hosts.releaseCloudType;
     
-    if($fh.app_props.mode && $fh.app_props.mode.indexOf("prod") > -1){
-      cloud_host = $fh.cloud_props.hosts.releaseCloudUrl;
-      app_type = $fh.cloud_props.hosts.releaseCloudType;
+    if($fh.app_props.mode && $fh.app_props.mode.indexOf("dev") > -1){
+      cloud_host = $fh.cloud_props.hosts.debugCloudUrl;
+      app_type = $fh.cloud_props.hosts.debugCloudType;
     }
+    alert(cloud_host);
     var url = cloud_host + "/cloud/" + opts.act;
     if(app_type === "fh"){
       url = cloud_host + $fh.boxprefix + "act/" + $fh.cloud_props.domain + "/"+ $fh.app_props.appid + "/" + opts.act + "/" + $fh.app_props.appid;
     }
     var params = opts.req || {};
+    params = _addFhParams(params);
 
     return $fh.__ajax({
       "url": url,
@@ -937,17 +980,20 @@ if (!JSON) {
     }
     req.policyId = opts.policyId;
     req.clientToken = opts.clientToken;
-    if(opts.endRedirectUrl){
+    if (opts.endRedirectUrl) {
       req.endRedirectUrl = opts.endRedirectUrl;
+      if (opts.authCallback) {
+        req.endRedirectUrl += (/\?/.test(req.endRedirectUrl) ? "&" : "?") + "_fhAuthCallback=" + opts.authCallback;
+      }
     }
     req.params = {};
     if (opts.params) {
       req.params = opts.params;
     }
     var endurl = opts.endRedirectUrl || "status=complete";
-    var deviceId = getDeviceId();
-    req.device = deviceId;
+    req.device = getDeviceId();
     var path = $fh.app_props.host + $fh.boxprefix + "admin/authpolicy/auth";
+    req = _addFhParams(req);
 
     $fh.__ajax({
       "url": path,
