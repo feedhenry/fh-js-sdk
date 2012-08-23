@@ -491,7 +491,8 @@ if (!JSON) {
   var $fh = root.$fh;
   $fh.fh_timeout = 20000;
   $fh.boxprefix = '/box/srv/1.1/';
-
+  $fh.sdk_version = '1.0.0';
+  
   var _is_initializing = false;
   var _cloud_ready_listeners = [];
 
@@ -807,14 +808,38 @@ if (!JSON) {
     }
   };
 
-  _addFhParams = function(params) {
+  _getFhParams = function() {
     var fhParams = {};
     fhParams.cuid = getDeviceId();
     fhParams.appid = $fh.app_props.appid;
     fhParams.appkey = $fh.app_props.appkey;
+
+    if (typeof fh_destination_code != 'undefined'){
+      fhParams.destination = fh_destination_code;
+    } else {
+      fhParams.destination = "web";
+    }
+    if (typeof fh_app_version != 'undefined'){
+      fhParams.app_version = fh_app_version;
+    }
+    fhParams.sdk_version = _getSdkVersion();
+    return fhParams;
+  };
+
+  _addFhParams = function(params) {
     params = params || {};
-    params.__fh = fhParams;
+    params.__fh = _getFhParams();
     return params;
+  };
+
+  _getSdkVersion = function() {
+    var type = "FH_JS_SDK";
+    if (typeof fh_destination_code != 'undefined') {
+      type = "FH_HYBRID_SDK";
+    } else if(window.PhoneGap || window.cordova) {
+      type = "FH_PHONEGAP_SDK";
+    }
+    return type + "/" + $fh.sdk_version;
   };
 
   if (window.addEventListener) {
@@ -889,7 +914,7 @@ if (!JSON) {
       }
       $fh.app_props = opts;
       var path = opts.host + $fh.boxprefix + "app/init";
-      var data = {"appKey": opts.appkey, "appId": opts.appid, "deviceID": getDeviceId()};
+      var data = _getFhParams();
       $fh.__ajax({
         "url": path,
         "type": "POST",
@@ -939,7 +964,6 @@ if (!JSON) {
       cloud_host = $fh.cloud_props.hosts.debugCloudUrl;
       app_type = $fh.cloud_props.hosts.debugCloudType;
     }
-    alert(cloud_host);
     var url = cloud_host + "/cloud/" + opts.act;
     if(app_type === "fh"){
       url = cloud_host + $fh.boxprefix + "act/" + $fh.cloud_props.domain + "/"+ $fh.app_props.appid + "/" + opts.act + "/" + $fh.app_props.appid;
