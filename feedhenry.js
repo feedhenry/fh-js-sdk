@@ -767,7 +767,7 @@ if (!JSON) {
       }
     }
     if(fail){
-      fail(error, {
+      fail('error_ajaxfail', {
         status: req.status,
         message: resStatus,
         error: errraw
