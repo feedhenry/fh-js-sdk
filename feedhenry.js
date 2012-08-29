@@ -491,7 +491,7 @@ if (!JSON) {
   var $fh = root.$fh;
   $fh.fh_timeout = 20000;
   $fh.boxprefix = '/box/srv/1.1/';
-  $fh.sdk_version = '1.0.1';
+  $fh.sdk_version = '1.0.2';
   
   var _is_initializing = false;
   var _cloud_ready_listeners = [];
@@ -561,6 +561,8 @@ if (!JSON) {
         return uuid;
     }
   };
+  
+  $fh._getDeviceId = getDeviceId;
 
   function isSameOrigin(url) {
     var loc = window.location;
