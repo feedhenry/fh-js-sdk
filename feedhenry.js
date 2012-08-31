@@ -845,9 +845,13 @@ if (!JSON) {
   };
 
   if (window.addEventListener) {
-    window.addEventListener('load', _checkAuthResponse(window.location.href), false); //W3C
+    window.addEventListener('load', function(){
+      _checkAuthResponse(window.location.href);
+    }, false); //W3C
   } else {
-    window.attachEvent('onload', _checkAuthResponse(window.location.href)); //IE
+    window.attachEvent('onload', function(){
+      _checkAuthResponse(window.location.href);
+    }); //IE
   }
 
   $fh._handleAuthResponse = function(endurl, res, success, fail){
