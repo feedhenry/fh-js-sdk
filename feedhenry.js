@@ -491,7 +491,7 @@ if (!JSON) {
   var $fh = root.$fh;
   $fh.fh_timeout = 20000;
   $fh.boxprefix = '/box/srv/1.1/';
-  $fh.sdk_version = '1.0.3';
+  $fh.sdk_version = '1.0.4';
   
   var _is_initializing = false;
   var _cloud_ready_listeners = [];
@@ -711,7 +711,9 @@ if (!JSON) {
             } catch (e) {
               statusText = "";
             }
-            done(req.status, req.statusText, req.responseText);
+            if( ! req.isAborted ) {
+              done(req.status, req.statusText, req.responseText);
+            }
           }
         };
 
@@ -749,6 +751,7 @@ if (!JSON) {
     if (o.timeout > 0) {
       timeoutTimer = setTimeout(function () {
         if (req) {
+          req.isAborted = true;
           req.abort();
         }
         done(0, 'timeout');
