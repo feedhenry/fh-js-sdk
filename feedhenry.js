@@ -491,7 +491,7 @@ if (!JSON) {
   var $fh = root.$fh;
   $fh.fh_timeout = 20000;
   $fh.boxprefix = '/box/srv/1.1/';
-  $fh.sdk_version = '1.0.3';
+  $fh.sdk_version = '1.0.4';
   
   var _is_initializing = false;
   var _cloud_ready_listeners = [];
