@@ -711,7 +711,9 @@ if (!JSON) {
             } catch (e) {
               statusText = "";
             }
-            done(req.status, req.statusText, req.responseText);
+            if( ! req.isAborted ) {
+              done(req.status, req.statusText, req.responseText);
+            }
           }
         };
 
@@ -749,6 +751,7 @@ if (!JSON) {
     if (o.timeout > 0) {
       timeoutTimer = setTimeout(function () {
         if (req) {
+          req.isAborted = true;
           req.abort();
         }
         done(0, 'timeout');
