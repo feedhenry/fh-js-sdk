@@ -563,6 +563,8 @@ if (!JSON) {
   };
   
   $fh._getDeviceId = getDeviceId;
+  var __isSmartMobile = /Android|webOS|iPhone|iPad|iPad|Blackberry|Windows Phone/i.test(navigator.userAgent);
+  var __isLocalFile = window.location.protocol.indexOf("file") > -1;
 
   function isSameOrigin(url) {
     var loc = window.location;
@@ -583,15 +585,79 @@ if (!JSON) {
 
   // ** millicore/src/main/webapp/box/static/apps/libs/feedhenry/feedhenry-core.js **
 
-  var __XMLHttpRequest__ = window.ActiveXObject ? ActiveXObject : XMLHttpRequest;
-  var __useActiveXObject = window.ActiveXObject ? true : false;
-
-  var __xhr = function () {
-    if (__useActiveXObject) {
-      return new __XMLHttpRequest__("Microsoft.XMLHTTP");
-    } else {
-      return new __XMLHttpRequest__();
+  function XDomainRequestWrapper(xdr){
+    this.xdr = xdr;
+    this.readyState = 0;
+    this.onreadystatechange = null;
+    this.status = 0;
+    this.statusText = "";
+    this.responseText = "";
+    var self = this;
+    this.xdr.onload = function(){
+        self.readyState = 4;
+        self.status = 200;
+        self.statusText = "";
+        self.responseText = self.xdr.responseText;
+        if(self.onreadystatechange){
+            self.onreadystatechange();
+        }
     }
+    this.xdr.onerror = function(){
+        self.readyState = 4;
+        self.status = 400;
+        self.statusText = "error";
+        if(self.onreadystatechange){
+            self.onreadystatechange();
+        }
+    }
+    this.xdr.ontimeout = function(){
+        self.readyState = 4;
+        self.status = 408;
+        self.statusText = "timeout";
+        if(self.onreadystatechange){
+            self.onreadystatechange();
+        }
+    }
+  }
+
+  XDomainRequestWrapper.prototype.open = function(method, url, asyn){
+    this.xdr.open(method, url);
+  }
+
+  XDomainRequestWrapper.prototype.send = function(data){
+    this.xdr.send(data);
+  }
+
+  XDomainRequestWrapper.prototype.abort = function(){
+    this.xdr.abort();
+  }
+
+  XDomainRequestWrapper.prototype.setRequestHeader = function(n, v){
+    //not supported by xdr
+  }
+
+  XDomainRequestWrapper.prototype.getResponseHeader = function(n){
+    //not supported by xdr
+  }
+
+
+  var __cors_supported = false;
+  var __xhr = function () {
+    var xhr = null;
+    if(window.XMLHttpRequest){
+        xhr = new XMLHttpRequest();
+        if('withCredentials' in xhr){
+            __cors_supported = true;
+        }
+    } else if(window.ActiveXObject){
+        if(typeof XDomainRequest !== "undefined"){
+            xhr = new XDomainRequestWrapper(new XDomainRequest());
+            __cors_supported = true;
+        } else {
+            xhr = new window.ActiveXObject("Microsoft.XMLHTTP");
+        }
+    }
+    return xhr;
   };
 
   var __cb_counts = 0;
@@ -626,8 +692,29 @@ if (!JSON) {
 
   $fh.__ajax = function (options) {
     var o = options ? options : {};
-    //only use jsonp if it's not in the same origin and Phonegap/cordova doesn't exist
-    if (!isSameOrigin(options.url) && typeof window.PhoneGap === "undefined" && typeof window.cordova === "undefined") {
+    var useJsonp = true;
+    if(useJsonp){
+        if(typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined"){
+            //found phonegap, it should be a hyrbid mobile app
+            useJsonp = false;
+        }
+    }
+    if(useJsonp){
+        if(__isSmartMobile && __isLocalFile){
+            //we can't find phonegap, but we are loading the page use file protocol and the device is a smart phone,
+            //it should be a mobile hyrid app
+            useJsonp = false;
+        }
+    }
+    if(useJsonp){
+        //the above checks don't work, so probably this is not a hybrid app, check if the request url is in the same 
+        //origin and if cors is supported
+        if(isSameOrigin(options.url) || (!isSameOrigin(options.url) && __cors_supported)){
+            useJsonp = false;
+        }
+    }
+
+    if (useJsonp) {
       o.dataType = 'jsonp';
     } else {
       o.dataType = "json";
