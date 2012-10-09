@@ -584,7 +584,7 @@ if (!JSON) {
 
 
   // ** millicore/src/main/webapp/box/static/apps/libs/feedhenry/feedhenry-core.js **
-
+  //IE 8/9 use XDomainRequest for cors requests
   function XDomainRequestWrapper(xdr){
     this.xdr = xdr;
     this.readyState = 0;
@@ -644,6 +644,7 @@ if (!JSON) {
   }
 
 
+  //first, check if cors if supported by the browser
   var __cors_supported = false;
   if(window.XMLHttpRequest){
     var rq = new XMLHttpRequest();
@@ -656,6 +657,8 @@ if (!JSON) {
         }
     }
   }
+
+  //create a normal ajax request object
   var __xhr = function () {
     var xhr = null;
     if(window.XMLHttpRequest){
@@ -666,6 +669,7 @@ if (!JSON) {
     return xhr;
   };
 
+  //create a CORS reqeust
   var __cor = function () {
     var cor = null;
     if(window.XMLHttpRequest){
