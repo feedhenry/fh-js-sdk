@@ -1,4 +1,4 @@
-/*
+    /*
     json2.js
     2011-10-19
 
@@ -603,9 +603,12 @@ if (!JSON) {
         }
     }
     this.xdr.onerror = function(){
+        if(self.onerror){
+            self.onerror();
+        }
         self.readyState = 4;
-        self.status = 400;
-        self.statusText = "error";
+        self.status = 0;
+        self.statusText = "";
         if(self.onreadystatechange){
             self.onreadystatechange();
         }
@@ -642,24 +645,43 @@ if (!JSON) {
 
 
   var __cors_supported = false;
+  if(window.XMLHttpRequest){
+    var rq = new XMLHttpRequest();
+    if('withCredentials' in rq){
+        __cors_supported = true;
+    }
+    if(!__cors_supported){
+        if(typeof XDomainRequest !== "undefined"){
+            __cors_supported = true;
+        }
+    }
+  }
   var __xhr = function () {
     var xhr = null;
     if(window.XMLHttpRequest){
         xhr = new XMLHttpRequest();
-        if('withCredentials' in xhr){
-            __cors_supported = true;
-        }
     } else if(window.ActiveXObject){
-        if(typeof XDomainRequest !== "undefined"){
-            xhr = new XDomainRequestWrapper(new XDomainRequest());
-            __cors_supported = true;
-        } else {
-            xhr = new window.ActiveXObject("Microsoft.XMLHTTP");
-        }
+        xhr = new window.ActiveXObject("Microsoft.XMLHTTP");
     }
     return xhr;
   };
 
+  var __cor = function () {
+    var cor = null;
+    if(window.XMLHttpRequest){
+        var rq = new XMLHttpRequest();
+        if('withCredentials' in rq){
+            cor = rq;
+        }
+    }
+    if(null == cor){
+        if(typeof XDomainRequest !== "undefined"){
+            cor = new XDomainRequestWrapper(new XDomainRequest());
+        }
+    }
+    return cor;
+  }
+  
   var __cb_counts = 0;
 
   var __load_script = function (url, callback) {
@@ -692,32 +714,25 @@ if (!JSON) {
 
   $fh.__ajax = function (options) {
     var o = options ? options : {};
-    var useJsonp = true;
-    if(useJsonp){
+    var sameOrigin = isSameOrigin(options.url);
+    if(!sameOrigin){
         if(typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined"){
-            //found phonegap, it should be a hyrbid mobile app
-            useJsonp = false;
+            //found phonegap, it should be a hyrbid mobile app, consider as same origin
+            sameOrigin = true;
         }
     }
-    if(useJsonp){
+    if(!sameOrigin){
         if(__isSmartMobile && __isLocalFile){
             //we can't find phonegap, but we are loading the page use file protocol and the device is a smart phone,
             //it should be a mobile hyrid app
-            useJsonp = false;
-        }
-    }
-    if(useJsonp){
-        //the above checks don't work, so probably this is not a hybrid app, check if the request url is in the same 
-        //origin and if cors is supported
-        if(isSameOrigin(options.url) || (!isSameOrigin(options.url) && __cors_supported)){
-            useJsonp = false;
+            sameOrigin = true;
         }
     }
 
-    if (useJsonp) {
-      o.dataType = 'jsonp';
+    if (sameOrigin || ((!sameOrigin) && __cors_supported) ) {
+      o.dataType = 'json';
     } else {
-      o.dataType = "json";
+      o.dataType = "jsonp";
     }
 
     var req;
@@ -781,7 +796,11 @@ if (!JSON) {
 
     var types = {
       'json': function () {
-        req = __xhr();
+        if(sameOrigin){
+          req = __xhr();
+        } else {
+          req = __cor();
+        }
         req.open(method, url, true);
         if (o.contentType) {
           req.setRequestHeader('Content-Type', o.contentType);
@@ -791,6 +810,12 @@ if (!JSON) {
           if (req.readyState == 4) {
             if (timeoutTimer) {
               clearTimeout(timeoutTimer);
+            }
+            //the status code will be 0 if there is a network level error, including server rejecting the cors request
+            if(req.status === 0){
+                if(!sameOrigin){
+                    return types['jsonp']();
+                }
             }
             var statusText;
             try {
