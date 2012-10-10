@@ -637,6 +637,9 @@ if (!JSON) {
 
   XDomainRequestWrapper.prototype.setRequestHeader = function(n, v){
     //not supported by xdr
+    //Good doc on limitations of XDomainRequest http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
+    //XDomainRequest doesn't allow setting custom request headers. But it is the only available option to do CORS requests in IE8 & 9. In IE10, they finally start to use standard XMLHttpRequest.
+    //To support FH auth tokens in IE8&9, we have to find a different way of doing it.
   }
 
   XDomainRequestWrapper.prototype.getResponseHeader = function(n){
@@ -645,6 +648,10 @@ if (!JSON) {
 
 
   //first, check if cors if supported by the browser
+  /* The following code is used to detect if the browser is supporting CORS. 
+    Most of the browsers implement CORS support using XMLHttpRequest2 object. 
+    The "withCredentials" property is unique in XMLHttpRequest2 object so it is the easiest way to tell if the browser support CORS. Again, IE uses XDomainRequest. 
+    A very good article covering this can be found here: http://www.html5rocks.com/en/tutorials/cors/.*/
   var __cors_supported = false;
   if(window.XMLHttpRequest){
     var rq = new XMLHttpRequest();
