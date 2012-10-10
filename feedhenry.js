@@ -1,4 +1,4 @@
-/*
+    /*
     json2.js
     2011-10-19
 
@@ -491,7 +491,7 @@ if (!JSON) {
   var $fh = root.$fh;
   $fh.fh_timeout = 20000;
   $fh.boxprefix = '/box/srv/1.1/';
-  $fh.sdk_version = '1.0.4';
+  $fh.sdk_version = '1.0.5';
   
   var _is_initializing = false;
   var _cloud_ready_listeners = [];
@@ -563,6 +563,8 @@ if (!JSON) {
   };
   
   $fh._getDeviceId = getDeviceId;
+  var __isSmartMobile = /Android|webOS|iPhone|iPad|iPad|Blackberry|Windows Phone/i.test(navigator.userAgent);
+  var __isLocalFile = window.location.protocol.indexOf("file") > -1;
 
   function isSameOrigin(url) {
     var loc = window.location;
@@ -582,18 +584,115 @@ if (!JSON) {
 
 
   // ** millicore/src/main/webapp/box/static/apps/libs/feedhenry/feedhenry-core.js **
-
-  var __XMLHttpRequest__ = window.ActiveXObject ? ActiveXObject : XMLHttpRequest;
-  var __useActiveXObject = window.ActiveXObject ? true : false;
-
-  var __xhr = function () {
-    if (__useActiveXObject) {
-      return new __XMLHttpRequest__("Microsoft.XMLHTTP");
-    } else {
-      return new __XMLHttpRequest__();
+  //IE 8/9 use XDomainRequest for cors requests
+  function XDomainRequestWrapper(xdr){
+    this.xdr = xdr;
+    this.readyState = 0;
+    this.onreadystatechange = null;
+    this.status = 0;
+    this.statusText = "";
+    this.responseText = "";
+    var self = this;
+    this.xdr.onload = function(){
+        self.readyState = 4;
+        self.status = 200;
+        self.statusText = "";
+        self.responseText = self.xdr.responseText;
+        if(self.onreadystatechange){
+            self.onreadystatechange();
+        }
     }
+    this.xdr.onerror = function(){
+        if(self.onerror){
+            self.onerror();
+        }
+        self.readyState = 4;
+        self.status = 0;
+        self.statusText = "";
+        if(self.onreadystatechange){
+            self.onreadystatechange();
+        }
+    }
+    this.xdr.ontimeout = function(){
+        self.readyState = 4;
+        self.status = 408;
+        self.statusText = "timeout";
+        if(self.onreadystatechange){
+            self.onreadystatechange();
+        }
+    }
+  }
+
+  XDomainRequestWrapper.prototype.open = function(method, url, asyn){
+    this.xdr.open(method, url);
+  }
+
+  XDomainRequestWrapper.prototype.send = function(data){
+    this.xdr.send(data);
+  }
+
+  XDomainRequestWrapper.prototype.abort = function(){
+    this.xdr.abort();
+  }
+
+  XDomainRequestWrapper.prototype.setRequestHeader = function(n, v){
+    //not supported by xdr
+    //Good doc on limitations of XDomainRequest http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
+    //XDomainRequest doesn't allow setting custom request headers. But it is the only available option to do CORS requests in IE8 & 9. In IE10, they finally start to use standard XMLHttpRequest.
+    //To support FH auth tokens in IE8&9, we have to find a different way of doing it.
+  }
+
+  XDomainRequestWrapper.prototype.getResponseHeader = function(n){
+    //not supported by xdr
+  }
+
+
+  //first, check if cors if supported by the browser
+  /* The following code is used to detect if the browser is supporting CORS. 
+    Most of the browsers implement CORS support using XMLHttpRequest2 object. 
+    The "withCredentials" property is unique in XMLHttpRequest2 object so it is the easiest way to tell if the browser support CORS. Again, IE uses XDomainRequest. 
+    A very good article covering this can be found here: http://www.html5rocks.com/en/tutorials/cors/.*/
+  var __cors_supported = false;
+  if(window.XMLHttpRequest){
+    var rq = new XMLHttpRequest();
+    if('withCredentials' in rq){
+        __cors_supported = true;
+    }
+    if(!__cors_supported){
+        if(typeof XDomainRequest !== "undefined"){
+            __cors_supported = true;
+        }
+    }
+  }
+
+  //create a normal ajax request object
+  var __xhr = function () {
+    var xhr = null;
+    if(window.XMLHttpRequest){
+        xhr = new XMLHttpRequest();
+    } else if(window.ActiveXObject){
+        xhr = new window.ActiveXObject("Microsoft.XMLHTTP");
+    }
+    return xhr;
   };
 
+  //create a CORS reqeust
+  var __cor = function () {
+    var cor = null;
+    if(window.XMLHttpRequest){
+        var rq = new XMLHttpRequest();
+        if('withCredentials' in rq){
+            cor = rq;
+        }
+    }
+    if(null == cor){
+        if(typeof XDomainRequest !== "undefined"){
+            cor = new XDomainRequestWrapper(new XDomainRequest());
+        }
+    }
+    return cor;
+  }
+  
   var __cb_counts = 0;
 
   var __load_script = function (url, callback) {
@@ -626,11 +725,25 @@ if (!JSON) {
 
   $fh.__ajax = function (options) {
     var o = options ? options : {};
-    //only use jsonp if it's not in the same origin and Phonegap/cordova doesn't exist
-    if (!isSameOrigin(options.url) && typeof window.PhoneGap === "undefined" && typeof window.cordova === "undefined") {
-      o.dataType = 'jsonp';
+    var sameOrigin = isSameOrigin(options.url);
+    if(!sameOrigin){
+        if(typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined"){
+            //found phonegap, it should be a hyrbid mobile app, consider as same origin
+            sameOrigin = true;
+        }
+    }
+    if(!sameOrigin){
+        if(__isSmartMobile && __isLocalFile){
+            //we can't find phonegap, but we are loading the page use file protocol and the device is a smart phone,
+            //it should be a mobile hyrid app
+            sameOrigin = true;
+        }
+    }
+
+    if (sameOrigin || ((!sameOrigin) && __cors_supported) ) {
+      o.dataType = 'json';
     } else {
-      o.dataType = "json";
+      o.dataType = "jsonp";
     }
 
     var req;
@@ -694,7 +807,11 @@ if (!JSON) {
 
     var types = {
       'json': function () {
-        req = __xhr();
+        if(sameOrigin){
+          req = __xhr();
+        } else {
+          req = __cor();
+        }
         req.open(method, url, true);
         if (o.contentType) {
           req.setRequestHeader('Content-Type', o.contentType);
@@ -704,6 +821,12 @@ if (!JSON) {
           if (req.readyState == 4) {
             if (timeoutTimer) {
               clearTimeout(timeoutTimer);
+            }
+            //the status code will be 0 if there is a network level error, including server rejecting the cors request
+            if(req.status === 0){
+                if(!sameOrigin){
+                    return types['jsonp']();
+                }
             }
             var statusText;
             try {
