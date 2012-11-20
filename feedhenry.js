@@ -491,7 +491,7 @@ if (!JSON) {
   var $fh = root.$fh;
   $fh.fh_timeout = 20000;
   $fh.boxprefix = '/box/srv/1.1/';
-  $fh.sdk_version = '1.0.5';
+  $fh.sdk_version = '1.0.6';
   
   var _is_initializing = false;
   var _cloud_ready_listeners = [];
@@ -640,6 +640,7 @@ if (!JSON) {
     //Good doc on limitations of XDomainRequest http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
     //XDomainRequest doesn't allow setting custom request headers. But it is the only available option to do CORS requests in IE8 & 9. In IE10, they finally start to use standard XMLHttpRequest.
     //To support FH auth tokens in IE8&9, we have to find a different way of doing it.
+    this.xdr.contentType = "text/plain";
   }
 
   XDomainRequestWrapper.prototype.getResponseHeader = function(n){
