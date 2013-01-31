@@ -1102,7 +1102,7 @@ var CryptoJS=CryptoJS||function(e,m){var p={},j=p.lib={},l=function(){},f=j.Base
       cloud_host = $fh.cloud_props.hosts.debugCloudUrl;
       app_type = $fh.cloud_props.hosts.debugCloudType;
     }
-    var url = cloud_host + "/cloud/" + opts.act;
+    var url;
     var params = opts.req || {};
     params = _addFhParams(params);
 
@@ -1114,7 +1114,9 @@ var CryptoJS=CryptoJS||function(e,m){var p={},j=p.lib={},l=function(){},f=j.Base
 
       url = cloud_host + "/sync/"+sync;
     }
-    else if (!opts.act) {
+    else if (opts.act) {
+      url = cloud_host + "/cloud/" + opts.act;
+    }else{
       return fail('act_no_action', {});
     }
 
