@@ -46,8 +46,8 @@ $fh.sec = function(p, s, f){
       }
       var keysize = parseInt(p.params.keysize);
       //keysize is in bit, need to convert to bytes to generate random key
-      //but the legacy code has a bug, it doesn't do the convert, so if the keysize is 16 or 32, don't convert
-      if(keysize !== 16 && keysize !== 32){
+      //but the legacy code has a bug, it doesn't do the convert, so if the keysize is less than 100, don't convert
+      if(keysize > 100){
         keysize = keysize/8;
       }
       if(typeof SecureRandom === "undefined"){
