@@ -1,6 +1,22 @@
 module.exports = function (grunt){
   grunt.initConfig({
     meta:{},
+    lint: {
+      files:['src/*.js']
+    },
+    jshint: {
+      options:{
+        curly: true,
+        eqeqeq: true,
+        eqnull: true,
+        sub: true,
+        loopfunc: true
+      },
+
+      globals: {
+        browser: true
+      }
+    },
     concat:{
       dist:{
         src:["libs/json2.js",
@@ -21,6 +37,9 @@ module.exports = function (grunt){
         dest:'dist/feedhenry-latest.js'
       }
     },
+    qunit: {
+      all:['test/index.html']
+    },
     min: {
       dist: {
         src: ['dist/feedhenry-latest.js'],
@@ -28,4 +47,6 @@ module.exports = function (grunt){
       }
     }
   });
+
+  grunt.registerTask('default', 'lint concat qunit min');
 };

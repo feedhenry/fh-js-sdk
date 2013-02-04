@@ -90,15 +90,15 @@ $fh.sync = (function() {
           self.config = self.defaults;
         }
 
-        var datasetConfig = JSON.parse(JSON.stringify(self.config));
-        for (var i in options) {
-          datasetConfig[i] = options[i];
+        datasetConfig = JSON.parse(JSON.stringify(self.config));
+        for (var idx in options) {
+          datasetConfig[idx] = options[idx];
         }
 
         dataset.query_params = query_params || {};
         dataset.config = datasetConfig;
 
-        if( dataset.initialised != true) {
+        if( dataset.initialised !== true) {
           dataset.initialised = true;
           self.saveDataSet(dataset_id);
           self.syncLoop(dataset_id);
@@ -180,16 +180,16 @@ $fh.sync = (function() {
       //return callback(online);
 
       // first, check if navigator.online is available
-      if(typeof navigator.onLine != "undefined"){
+      if(typeof navigator.onLine !== "undefined"){
         online = navigator.onLine;
       }
 
       // second, check if Phonegap is available and has online info
       if(online){
         //use phonegap to determin if the network is available
-        if(typeof navigator.network != "undefined" && typeof navigator.network.connection != "undefined"){
+        if(typeof navigator.network !== "undefined" && typeof navigator.network.connection !== "undefined"){
           var networkType = navigator.network.connection.type;
-          if(networkType == "none" || networkType == null) {
+          if(networkType === "none" || networkType == null) {
             online = false;
           }
         }
@@ -342,9 +342,9 @@ $fh.sync = (function() {
 
               function processUpdates(updates, notification) {
                 if( updates ) {
-                  for (i in updates) {
-                    rec = updates[i];
-                    delete dataSet.pending[i];
+                  for (var idx in updates) {
+                    rec = updates[idx];
+                    delete dataSet.pending[idx];
                     self.doNotify(dataset_id, rec.uid, notification, rec);
                   }
                 }
@@ -391,7 +391,7 @@ $fh.sync = (function() {
 
         var clientRecs = {};
         for (var i in localDataSet) {
-          var uid = i
+          var uid = i;
           var hash = localDataSet[i].hash;
           clientRecs[uid] = hash;
         }

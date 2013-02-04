@@ -13,10 +13,22 @@
       while(_cloud_ready_listeners[0]){
         var act_fun = _cloud_ready_listeners.shift();
         if(act_fun.type === "init"){
-          success? act_fun.success($fh.cloud_props):(act_fun.fail?act_fun.fail("fh_init_failed", {}): function(){});
+          if(success){
+            act_fun.success($fh.cloud_props);
+          } else {
+            if(act_fun.fail){
+              act_fun.fail("fh_init_failed", {});
+            }
+          }
         }
         if(act_fun.type === "act"){
-          success?$fh.act(act_fun.opts, act_fun.success, act_fun.fail):(act_fun.fail?act_fun.fail("fh_init_failed", {}):function(){});
+          if(success){
+            $fh.act(act_fun.opts, act_fun.success, act_fun.fail);
+          } else {
+            if(act_fun.fail){
+              act_fun.fail("fh_init_failed", {});
+            }
+          }
         }
       }
     } finally {
@@ -31,10 +43,10 @@
     var cookies = document.cookie.split(";");
     for (var i = 0; i < cookies.length; i++) {
       var c = cookies[i];
-      while (c.charAt(0) == ' ') {
+      while (c.charAt(0) === ' ') {
         c = c.substring(1, c.length);
       }
-      if (c.indexOf(name_str) == 0) {
+      if (c.indexOf(name_str) === 0) {
         return c.substring(name_str.length, c.length);
       }
     }
@@ -88,8 +100,8 @@
 
     return ((urlParts[1] == null || urlParts[1] === '') && // no protocol }
             (urlParts[3] == null || urlParts[3] === '') && // no domain   } - > relative url
-            (urlParts[4] == null || urlParts[4] === '')) // no port       }
-            || (locParts[1] === urlParts[1] && // protocol matches }
+            (urlParts[4] == null || urlParts[4] === ''))|| // no port       }
+            (locParts[1] === urlParts[1] && // protocol matches }
             locParts[3] === urlParts[3] && // domain matches   }-> absolute url
             locParts[4] === urlParts[4]); // port matches      }
   }
@@ -113,7 +125,7 @@
         if(self.onreadystatechange){
             self.onreadystatechange();
         }
-    }
+    };
     this.xdr.onerror = function(){
         if(self.onerror){
             self.onerror();
@@ -124,7 +136,7 @@
         if(self.onreadystatechange){
             self.onreadystatechange();
         }
-    }
+    };
     this.xdr.ontimeout = function(){
         self.readyState = 4;
         self.status = 408;
@@ -132,31 +144,31 @@
         if(self.onreadystatechange){
             self.onreadystatechange();
         }
-    }
+    };
   }
 
   XDomainRequestWrapper.prototype.open = function(method, url, asyn){
     this.xdr.open(method, url);
-  }
+  };
 
   XDomainRequestWrapper.prototype.send = function(data){
     this.xdr.send(data);
-  }
+  };
 
   XDomainRequestWrapper.prototype.abort = function(){
     this.xdr.abort();
-  }
+  };
 
   XDomainRequestWrapper.prototype.setRequestHeader = function(n, v){
     //not supported by xdr
     //Good doc on limitations of XDomainRequest http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
     //XDomainRequest doesn't allow setting custom request headers. But it is the only available option to do CORS requests in IE8 & 9. In IE10, they finally start to use standard XMLHttpRequest.
     //To support FH auth tokens in IE8&9, we have to find a different way of doing it.
-  }
+  };
 
   XDomainRequestWrapper.prototype.getResponseHeader = function(n){
     //not supported by xdr
-  }
+  };
 
 
   //first, check if cors if supported by the browser
@@ -203,7 +215,7 @@
         }
     }
     return cor;
-  }
+  };
   
   var __cb_counts = 0;
 
@@ -274,12 +286,12 @@
       var issuccess = false;
       var error;
       var res;
-      if (status >= 200 && status <= 300 || status == 304) {
-        if (status == 304) {
+      if (status >= 200 && status <= 300 || status === 304) {
+        if (status === 304) {
           statusText = "notmodified";
           issuccess = true;
         } else {
-          if (o.dataType && o.dataType.indexOf('json') != -1) {
+          if (o.dataType && o.dataType.indexOf('json') !== -1) {
             try {
               if (typeof responseText === "string") {
                 res = JSON.parse(responseText);
@@ -331,7 +343,7 @@
         }
         req.setRequestHeader('X-Request-With', 'XMLHttpRequest');
         var handler = function () {
-          if (req.readyState == 4) {
+          if (req.readyState === 4) {
             if (timeoutTimer) {
               clearTimeout(timeoutTimer);
             }
@@ -367,7 +379,7 @@
           done(200, "", response);
           window[callbackId] = undefined;
           try {
-            delete window[callbackId]
+            delete window[callbackId];
           } catch(e) {
           }
         };
@@ -412,14 +424,14 @@
         status: req.status,
         message: resStatus,
         error: errraw
-      })
+      });
     }
   };
 
   _getQueryMap = function(url) {
     var qmap;
     var i = url.split("?");
-    if (i.length == 2) {
+    if (i.length === 2) {
       var queryString = i[1];
       var pairs = queryString.split("&");
       qmap = {};
@@ -455,12 +467,12 @@
     fhParams.appid = $fh.app_props.appid;
     fhParams.appkey = $fh.app_props.appkey;
 
-    if (typeof fh_destination_code != 'undefined'){
+    if (typeof fh_destination_code !== 'undefined'){
       fhParams.destination = fh_destination_code;
     } else {
       fhParams.destination = "web";
     }
-    if (typeof fh_app_version != 'undefined'){
+    if (typeof fh_app_version !== 'undefined'){
       fhParams.app_version = fh_app_version;
     }
     fhParams.sdk_version = _getSdkVersion();
@@ -475,7 +487,7 @@
 
   _getSdkVersion = function() {
     var type = "FH_JS_SDK";
-    if (typeof fh_destination_code != 'undefined') {
+    if (typeof fh_destination_code !== 'undefined') {
       type = "FH_HYBRID_SDK";
     } else if(window.PhoneGap || window.cordova) {
       type = "FH_PHONEGAP_SDK";
