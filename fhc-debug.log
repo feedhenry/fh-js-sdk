@@ -1,0 +1,47 @@
+info it worked if it ends with ok
+info using fhc@0.7.21-180
+info using node@v0.6.10
+silly config file /Users/kelly/.fhcrc
+silly config file /usr/local/etc/fhcrc
+verbose feedhenry url https://testing-lon3.feedhenry.com
+silly get container Getting app container from url: https://testing-lon3.feedhenry.com/, domain: testing
+verbose feedhenry url https://testing-lon3.feedhenry.com/
+silly POST box/srv/1.1/ide/testing/app/read
+silly url, unparsed https://testing-lon3.feedhenry.com/
+verbose resolveUrl - IN box/srv/1.1/ide/testing/app/read
+verbose resolveUrl - OUT https://testing-lon3.feedhenry.com/box/srv/1.1/ide/testing/app/read
+verbose calling url https://testing-lon3.feedhenry.com/box/srv/1.1/ide/testing/app/read payload: { payload: { guid: 'SPW6dm7tpqq5MeKjDKptSp_j' } }
+silly port 443
+silly cookie feedhenry=HVY-FNSuAFvM4Z4G9bM6O-DO;
+silly nocache false
+silly explain level 0
+verbose getHeaders { accept: 'application/json',
+verbose getHeaders   cookie: 'feedhenry=HVY-FNSuAFvM4Z4G9bM6O-DO;',
+verbose getHeaders   'User-Agent': 'FHC/0.7.21-180 darwin/11.4.2',
+verbose getHeaders   'content-type': 'application/json',
+verbose getHeaders   'content-length': 47 }
+verbose what... { payload: { guid: 'SPW6dm7tpqq5MeKjDKptSp_j' } }
+silly writing json { payload: { guid: 'SPW6dm7tpqq5MeKjDKptSp_j' } }
+silly headers { accept: 'application/json',
+silly headers   cookie: 'feedhenry=HVY-FNSuAFvM4Z4G9bM6O-DO;',
+silly headers   'User-Agent': 'FHC/0.7.21-180 darwin/11.4.2',
+silly headers   'content-type': 'application/json',
+silly headers   'content-length': 47 }
+silly getProxy null
+silly response headers { date: 'Wed, 06 Feb 2013 14:47:29 GMT',
+silly response headers   expires: 'Sat, 6 May 1995 12:00:00 GMT',
+silly response headers   'cache-control': 'no-store, no-cache, must-revalidate',
+silly response headers   p3p: 'CP="ALL ADM DEV PSAi COM OUR OTRo STP IND ONL" policyref="/box/p3p.xml"',
+silly response headers   pragma: 'no-cache',
+silly response headers   'last-modified': 'Wed, 06 Feb 2013 14:47:29 GMT',
+silly response headers   etag: '"xiY0xgQgwfraBdsQYO7lKV"',
+silly response headers   'content-type': 'application/json;charset=UTF-8',
+silly response headers   'content-length': '1111',
+silly response headers   vary: 'Accept-Encoding',
+silly response headers   connection: 'close' }
+WARN application.js No existing application.js file, creating
+ERR! Error: ENOENT, no such file or directory './cloud/application.js'
+ERR! 
+ERR! System Darwin 11.4.2
+ERR! command "node" "/usr/local/bin/fhc" "initlocal" "SPW6dm7tpqq5MeKjDKptSp_j"
+verbose exit [ 34, true ]

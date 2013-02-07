@@ -90,15 +90,15 @@ $fh.sync = (function() {
           self.config = self.defaults;
         }
 
-        datasetConfig = JSON.parse(JSON.stringify(self.config));
-        for (var idx in options) {
-          datasetConfig[idx] = options[idx];
+        var datasetConfig = JSON.parse(JSON.stringify(self.config));
+        for (var i in options) {
+          datasetConfig[i] = options[i];
         }
 
         dataset.query_params = query_params || {};
         dataset.config = datasetConfig;
 
-        if( dataset.initialised !== true) {
+        if( dataset.initialised != true) {
           dataset.initialised = true;
           self.saveDataSet(dataset_id);
           self.syncLoop(dataset_id);
@@ -170,52 +170,46 @@ $fh.sync = (function() {
       self.addPendingObj(dataset_id, uid, null, "delete", success, failure);
     },
 
+    listCollisions : function(dataset_id, success, failure){
+      $fh.act({
+        "act": dataset_id,
+        "req": {
+          "fn": "listCollisions"
+        }
+      }, success, failure);
+    },
 
+    removeCollision: function(dataset_id, colissionHash, success, failure) {
+      $fh.act({
+        "act": dataset_id,
+        "req": {
+          "fn": "removeCollision",
+          "hash": colissionHash
+        }
+      }, success, failure);
+    },
 
     // PRIVATE FUNCTIONS
     isOnline: function(callback) {
       var online = true;
 
-      // TODO HACK FOR LOCAL DEV - DELETE
-      //return callback(online);
-
       // first, check if navigator.online is available
-      if(typeof navigator.onLine !== "undefined"){
+      if(typeof navigator.onLine != "undefined"){
         online = navigator.onLine;
       }
 
       // second, check if Phonegap is available and has online info
       if(online){
         //use phonegap to determin if the network is available
-        if(typeof navigator.network !== "undefined" && typeof navigator.network.connection !== "undefined"){
+        if(typeof navigator.network != "undefined" && typeof navigator.network.connection != "undefined"){
           var networkType = navigator.network.connection.type;
-          if(networkType === "none" || networkType == null) {
+          if(networkType == "none" || networkType == null) {
             online = false;
           }
         }
       }
 
       return callback(online);
-
-//      // third, ping app cloud
-//      if (online) {
-//        // ajax call to app ping endpoint
-//        $fh.__ajax({
-//          url:"/sys/info/ping",
-//          type: "GET",
-//          timeout: 2000, // 2 second timeout
-//          success: function () {
-//            self.consoleLog('ONLINE CHECK OK');
-//            callback(true);
-//          },
-//          error: function () {
-//            self.consoleLog('ONLINE CHECK NOT OK');
-//            callback(false);
-//          }
-//        });
-//      } else {
-//        callback(false);
-//      }
     },
 
     doNotify: function(dataset_id, uid, code, message) {
@@ -342,9 +336,9 @@ $fh.sync = (function() {
 
               function processUpdates(updates, notification) {
                 if( updates ) {
-                  for (var idx in updates) {
-                    rec = updates[idx];
-                    delete dataSet.pending[idx];
+                  for (i in updates) {
+                    rec = updates[i];
+                    delete dataSet.pending[i];
                     self.doNotify(dataset_id, rec.uid, notification, rec);
                   }
                 }
@@ -391,7 +385,7 @@ $fh.sync = (function() {
 
         var clientRecs = {};
         for (var i in localDataSet) {
-          var uid = i;
+          var uid = i
           var hash = localDataSet[i].hash;
           clientRecs[uid] = hash;
         }
@@ -459,58 +453,92 @@ $fh.sync = (function() {
     },
 
     saveDataSet: function (dataset_id) {
+      var onFail =  function(msg, err) {
+        // save failed
+        var errMsg = 'save to local storage failed  msg:' + msg + ' err:' + err;
+        self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);
+        self.consoleLog(errMsg);
+      };
       self.getDataSet(dataset_id, function(dataset) {
         // save dataset to local storage
-        $fh.data({
-          act: "save",
-          key: "dataset_" + dataset_id,
-          val: JSON.stringify(dataset)
-        }, function() {
-          //save success
-          //self.consoleLog('save to local storage success');
-        }, function(msg, err) {
-          // save failed
-          var errMsg = 'save to local storage failed  msg:' + msg + ' err:' + err;
-          self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);
-          self.consoleLog(errMsg);
+        Lawnchair({fail:onFail}, function (){
+             this.save({key:"dataset_" + dataset_id,val:JSON.stringify(dataset)}, function(){
+               //save success
+             })
         });
+//        $fh.data({
+//          act: "save",
+//          key: "dataset_" + dataset_id,
+//          val: JSON.stringify(dataset)
+//        }, function() {
+//          //save success
+//          //self.consoleLog('save to local storage success');
+//        }, function(msg, err) {
+//          // save failed
+//          var errMsg = 'save to local storage failed  msg:' + msg + ' err:' + err;
+//          self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);
+//          self.consoleLog(errMsg);
+//        });
       });
     },
 
     loadDataSet: function (dataset_id, success, failure) {
       // load dataset from local storage
-      $fh.data({
-        act: "load",
-        key: "dataset_" + dataset_id
-      }, function(res) {
-        //load success
-
-        // may be null if first time
-        if (res.val !== null) {
-          var dataset = JSON.parse(res.val);
-          // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
-          // the user wants sync
-          dataset.initialised = false;
-          self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
-          self.consoleLog('load from local storage success dataset:', dataset);
-          return success(dataset);
-        } else {
-          // no data yet, probably first time. failure calback should handle this
-          return failure();
-        }
-      }, function(msg, err) {
+      var onFail = function(msg, err) {
         // load failed
         var errMsg = 'load from local storage failed  msg:' + msg + ' err:' + err;
         self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);
         self.consoleLog(errMsg);
+      };
+      Lawnchair({fail:onFail},function (){
+         this.get( "dataset_" + dataset_id, function (data){
+           if (data && data.val !== null) {
+              var dataset = JSON.parse(data.val);
+              // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
+              // the user wants sync
+              dataset.initialised = false;
+              self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
+              self.consoleLog('load from local storage success dataset:', dataset);
+              return success(dataset);
+        } else {
+          // no data yet, probably first time. failure calback should handle this
+          return failure();
+        }
+         });
       });
+
+//      $fh.data({
+//        act: "load",
+//        key: "dataset_" + dataset_id
+//      }, function(res) {
+//        //load success
+//
+//        // may be null if first time
+//        if (res.val !== null) {
+//          var dataset = JSON.parse(res.val);
+//          // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
+//          // the user wants sync
+//          dataset.initialised = false;
+//          self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
+//          self.consoleLog('load from local storage success dataset:', dataset);
+//          return success(dataset);
+//        } else {
+//          // no data yet, probably first time. failure calback should handle this
+//          return failure();
+//        }
+//      }, function(msg, err) {
+//        // load failed
+//        var errMsg = 'load from local storage failed  msg:' + msg + ' err:' + err;
+//        self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);
+//        self.consoleLog(errMsg);
+//      });
     },
 
     consoleLog: function() {
-    if( self.config.do_console_log ) {
-      console.log(arguments);
+      if( self.config.do_console_log ) {
+        console.log(arguments);
+      }
     }
-  }
   };
 
   (function() {
@@ -521,10 +549,12 @@ $fh.sync = (function() {
     init: self.init,
     manage: self.manage,
     notify: self.notify,
-    list: self.list,
-    create: self.create,
-    read: self.read,
-    update: self.update,
-    'delete': self['delete']
+    doList: self.list,
+    doCreate: self.create,
+    doRead: self.read,
+    doUpdate: self.update,
+    doDelete: self['delete'],
+    listCollisions: self.listCollisions,
+    removeCollision: self.removeCollision
   };
 })();

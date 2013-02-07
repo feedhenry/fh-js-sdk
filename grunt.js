@@ -32,6 +32,12 @@ module.exports = function (grunt){
              "libs/cryptojs-sha3.js",
              "libs/rsa.js",
              "src/feedhenry.js",
+             "libs/lawnchair/lawnchair.js",
+             "libs/lawnchair/lawnchairWindowNameStorageAdapter.js",
+             "libs/lawnchair/lawnchairLocalStorageAdapter.js",
+             "libs/lawnchair/lawnchairIndesDbAdapter.js",
+             "libs/lawnchair/lawnchairLocalFileStorageAdapter.js",
+             "libs/lawnchair/lawnchairWebkitSqlAdapter.js",
              "src/sync-cli.js",
              "src/security.js"],
         dest:'dist/feedhenry-latest.js'
