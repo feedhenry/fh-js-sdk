@@ -6306,25 +6306,20 @@ $fh.sync = (function() {
       var doManage = function(dataset) {
         self.consoleLog('doManage dataset :: initialised = ', dataset.initialised, " :: ", dataset_id, ' :: ', options);
 
-        var datasetConfig = JSON.parse(JSON.stringify(options));
-        for (var i in options) {
-          datasetConfig[i] = options[i];
-        }
-
         // Make sure config is initialised
         if( ! self.config ) {
-          self.config = self.defaults;
+          self.config = JSON.parse(JSON.stringify(self.defaults));
         }
 
         var datasetConfig = JSON.parse(JSON.stringify(self.config));
-        for (var i in options) {
-          datasetConfig[i] = options[i];
+        for (var k in options) {
+          datasetConfig[k] = options[k];
         }
 
         dataset.query_params = query_params || {};
         dataset.config = datasetConfig;
 
-        if( dataset.initialised != true) {
+        if( dataset.initialised !== true) {
           dataset.initialised = true;
           self.saveDataSet(dataset_id);
           self.syncLoop(dataset_id);
@@ -6337,10 +6332,13 @@ $fh.sync = (function() {
         }
       };
 
+
+
       // Check if the dataset is already loaded
       self.getDataSet(dataset_id, function(dataset) {
         doManage(dataset);
       }, function(err) {
+
         // Not already loaded, try to load from local storage
         self.loadDataSet(dataset_id, function(dataset) {
             // Loading from local storage worked
@@ -6420,16 +6418,16 @@ $fh.sync = (function() {
       var online = true;
 
       // first, check if navigator.online is available
-      if(typeof navigator.onLine != "undefined"){
+      if(typeof navigator.onLine !== "undefined"){
         online = navigator.onLine;
       }
 
       // second, check if Phonegap is available and has online info
       if(online){
         //use phonegap to determin if the network is available
-        if(typeof navigator.network != "undefined" && typeof navigator.network.connection != "undefined"){
+        if(typeof navigator.network !== "undefined" && typeof navigator.network.connection !== "undefined"){
           var networkType = navigator.network.connection.type;
-          if(networkType == "none" || networkType == null) {
+          if(networkType === "none" || networkType === null) {
             online = false;
           }
         }
@@ -6463,7 +6461,7 @@ $fh.sync = (function() {
       if (dataset) {
         success(dataset);
       } else {
-        failure('unknown_dataset', dataset_id);
+        failure('unknown_dataset' + dataset_id, dataset_id);
       }
     },
 
@@ -6558,13 +6556,13 @@ $fh.sync = (function() {
               'req': syncLoopParams
             }, function(res) {
               self.consoleLog("Back from Sync Loop : full Dataset = " + (res.records ? " Y" : "N"));
-              var i, rec;
+              var rec;
 
               function processUpdates(updates, notification) {
                 if( updates ) {
-                  for (i in updates) {
-                    rec = updates[i];
-                    delete dataSet.pending[i];
+                  for (var up in updates) {
+                    rec = updates[up];
+                    delete dataSet.pending[up];
                     self.doNotify(dataset_id, rec.uid, notification, rec);
                   }
                 }
@@ -6611,7 +6609,7 @@ $fh.sync = (function() {
 
         var clientRecs = {};
         for (var i in localDataSet) {
-          var uid = i
+          var uid = i;
           var hash = localDataSet[i].hash;
           clientRecs[uid] = hash;
         }
@@ -6690,21 +6688,8 @@ $fh.sync = (function() {
         Lawnchair({fail:onFail}, function (){
              this.save({key:"dataset_" + dataset_id,val:JSON.stringify(dataset)}, function(){
                //save success
-             })
+             });
         });
-//        $fh.data({
-//          act: "save",
-//          key: "dataset_" + dataset_id,
-//          val: JSON.stringify(dataset)
-//        }, function() {
-//          //save success
-//          //self.consoleLog('save to local storage success');
-//        }, function(msg, err) {
-//          // save failed
-//          var errMsg = 'save to local storage failed  msg:' + msg + ' err:' + err;
-//          self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);
-//          self.consoleLog(errMsg);
-//        });
       });
     },
 
@@ -6712,10 +6697,11 @@ $fh.sync = (function() {
       // load dataset from local storage
       var onFail = function(msg, err) {
         // load failed
-        var errMsg = 'load from local storage failed  msg:' + msg + ' err:' + err;
+        var errMsg = 'load from local storage failed  msg:' + msg;
         self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);
         self.consoleLog(errMsg);
       };
+
       Lawnchair({fail:onFail},function (){
          this.get( "dataset_" + dataset_id, function (data){
            if (data && data.val !== null) {
@@ -6726,38 +6712,12 @@ $fh.sync = (function() {
               self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
               self.consoleLog('load from local storage success dataset:', dataset);
               return success(dataset);
-        } else {
-          // no data yet, probably first time. failure calback should handle this
-          return failure();
-        }
+            } else {
+                // no data yet, probably first time. failure calback should handle this
+                return failure();
+            }
          });
       });
-
-//      $fh.data({
-//        act: "load",
-//        key: "dataset_" + dataset_id
-//      }, function(res) {
-//        //load success
-//
-//        // may be null if first time
-//        if (res.val !== null) {
-//          var dataset = JSON.parse(res.val);
-//          // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
-//          // the user wants sync
-//          dataset.initialised = false;
-//          self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
-//          self.consoleLog('load from local storage success dataset:', dataset);
-//          return success(dataset);
-//        } else {
-//          // no data yet, probably first time. failure calback should handle this
-//          return failure();
-//        }
-//      }, function(msg, err) {
-//        // load failed
-//        var errMsg = 'load from local storage failed  msg:' + msg + ' err:' + err;
-//        self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);
-//        self.consoleLog(errMsg);
-//      });
     },
 
     consoleLog: function() {
