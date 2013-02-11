@@ -1,0 +1,19 @@
+{
+  "name": "fh-js-sdk",
+  "version": "0.0.1",
+  "description": "feedhenry js sdk",
+  "main": "feedhenry.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/feedhenry/fh-js-sdk.git"
+  },
+  "author": "",
+  "license": "BSD",
+  "gitHead": "251a1f88a39f59f2652552ae245893a833faee71",
+  "devDependencies":{
+    "grunt":"*"
+  }
+}
