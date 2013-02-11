@@ -6,6 +6,7 @@
   $fh.sdk_version = '1.0.5';
   
   var _is_initializing = false;
+  var _init_failed = false;
   var _cloud_ready_listeners = [];
 
   var _cloudReady = function(success){
@@ -586,6 +587,8 @@
           _cloudReady(true);
         },
         "error": function(req, statusText, error){
+          _init_failed = true;
+          _is_initializing = false;
           _handleError(fail, req, statusText);
           _cloudReady(false);
         }
@@ -600,7 +603,19 @@
     if(!fail){
       fail = defaultFail;
     }
-    if (null == $fh.cloud_props && _is_initializing){
+    if (!opts.act) {
+      return fail('act_no_action', {});
+    }
+    // if the initial init failed try and re init then retry the act call
+    if(_init_failed){
+      $fh.init($fh.app_props , function (suc){
+        _init_failed = false;
+        doActCall();
+      }, function (err){
+        _handleError(fail,{"status":0,"responseText":"Init Failed"},"failed to call init. Check network status");
+      });
+    }
+    else if (null == $fh.cloud_props && _is_initializing){
       _cloud_ready_listeners.push({
         "type": "act",
         "opts": opts,
@@ -609,24 +624,24 @@
       });
       return;
     }
+    else{
+      doActCall();
+    }
 
-    if (!opts.act) {
-      return fail('act_no_action', {});
-    }
-    
-    var cloud_host = $fh.cloud_props.hosts.releaseCloudUrl;
-    var app_type = $fh.cloud_props.hosts.releaseCloudType;
-    
-    if($fh.app_props.mode && $fh.app_props.mode.indexOf("dev") > -1){
-      cloud_host = $fh.cloud_props.hosts.debugCloudUrl;
-      app_type = $fh.cloud_props.hosts.debugCloudType;
-    }
-    var url = cloud_host + "/cloud/" + opts.act;
-    if(app_type === "fh"){
-      url = cloud_host + $fh.boxprefix + "act/" + $fh.cloud_props.domain + "/"+ $fh.app_props.appid + "/" + opts.act + "/" + $fh.app_props.appid;
-    }
-    var params = opts.req || {};
-    params = _addFhParams(params);
+    function doActCall(){
+      var cloud_host = $fh.cloud_props.hosts.releaseCloudUrl;
+      var app_type = $fh.cloud_props.hosts.releaseCloudType;
+
+      if($fh.app_props.mode && $fh.app_props.mode.indexOf("dev") > -1){
+        cloud_host = $fh.cloud_props.hosts.debugCloudUrl;
+        app_type = $fh.cloud_props.hosts.debugCloudType;
+      }
+      var url = cloud_host + "/cloud/" + opts.act;
+      if(app_type === "fh"){
+        url = cloud_host + $fh.boxprefix + "act/" + $fh.cloud_props.domain + "/"+ $fh.app_props.appid + "/" + opts.act + "/" + $fh.app_props.appid;
+      }
+      var params = opts.req || {};
+      params = _addFhParams(params);
 
     return $fh.__ajax({
       "url": url,
@@ -643,7 +658,9 @@
         _handleError(fail, req, statusText);
       }
     });
+    }
   };
+
 
   $fh.auth = function (opts, success, fail) {
     if(!fail){

@@ -146,7 +146,7 @@ $fh.sync = (function() {
     },
 
     read: function(dataset_id, uid, success, failure) {
-      self.getDataSet(dataset_id, function(dataset) {
+        self.getDataSet(dataset_id, function(dataset) {
         var rec = dataset.data[uid];
         if (!rec) {
           failure("unknown_uid");
