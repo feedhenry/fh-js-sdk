@@ -269,6 +269,9 @@
 
   $fh.hash = function(p, s, f){
     var params = {};
+    if(typeof p.algorithm === "undefined"){
+      p.algorithm = "MD5";
+    }
     params.act = "hash";
     params.params = p;
     $fh.sec(params, s, f);

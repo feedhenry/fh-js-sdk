@@ -6389,7 +6389,7 @@ $fh.sync = (function() {
     },
 
     read: function(dataset_id, uid, success, failure) {
-      self.getDataSet(dataset_id, function(dataset) {
+        self.getDataSet(dataset_id, function(dataset) {
         var rec = dataset.data[uid];
         if (!rec) {
           failure("unknown_uid");
@@ -7032,6 +7032,9 @@ $fh.sync = (function() {
 
   $fh.hash = function(p, s, f){
     var params = {};
+    if(typeof p.algorithm === "undefined"){
+      p.algorithm = "MD5";
+    }
     params.act = "hash";
     params.params = p;
     $fh.sec(params, s, f);
