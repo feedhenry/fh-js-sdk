@@ -111,4 +111,10 @@ test('$fh.sec legacy', function(){
   $fh.hash({algorithm:'MD5', text:hashtext}, function(result){
     strictEqual(expected_md5_value, result.hashvalue);
   });
+
+  $fh.hash({text: hashtext}, function(result){
+    strictEqual(expected_md5_value, result.hashvalue);
+  }, function(err){
+    equal(err,null);
+  });
 });
