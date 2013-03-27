@@ -4739,15 +4739,17 @@ RSAKey.prototype.encrypt = RSAEncrypt;
 
   var getDeviceId = function(){
     //check for cordova/phonegap first
-    if(typeof navigator.device !== "undefined" && typeof navigator.device.uuid !== "undefined"){
-        return navigator.device.uuid;
+    if(typeof window.device !== "undefined" && typeof window.device.uuid !== "undefined"){
+      return window.device.uuid;
+    }  else if(typeof navigator.device !== "undefined" && typeof navigator.device.uuid !== "undefined"){
+      return navigator.device.uuid;
     } else {
-        var uuid = __readCookieValue(_mock_uuid_cookie_name);
-        if(null == uuid){
-            uuid = __createUUID();
-            __createCookie(_mock_uuid_cookie_name, uuid);
-        }
-        return uuid;
+      var uuid = __readCookieValue(_mock_uuid_cookie_name);
+      if(null == uuid){
+          uuid = __createUUID();
+          __createCookie(_mock_uuid_cookie_name, uuid);
+      }
+      return uuid;
     }
   };
   
