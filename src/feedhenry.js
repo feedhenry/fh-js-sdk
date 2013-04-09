@@ -1,4 +1,5 @@
 (function(root) {
+  var window = window || {};
   root.$fh = root.$fh || {};
   var $fh = root.$fh;
   $fh.fh_timeout = 20000;
@@ -40,6 +41,9 @@
   //cookie read/write only used internally, make it private
   var _mock_uuid_cookie_name = "mock_uuid";
   var __readCookieValue  = function (cookie_name) {
+    if ( typeof document === "undefined" ){
+      return null;
+    }
     var name_str = cookie_name + "=";
     var cookies = document.cookie.split(";");
     for (var i = 0; i < cookies.length; i++) {
@@ -67,6 +71,9 @@
     return uuid;
   };
   var __createCookie = function (cookie_name, cookie_value) {
+    if ( typeof document === "undefined" ){
+      return;
+    }
     var date = new Date();
     date.setTime(date.getTime() + 36500 * 24 * 60 * 60 * 1000); //100 years
     var expires = "; expires=" + date.toGMTString();
@@ -77,21 +84,24 @@
     //check for cordova/phonegap first
     if(typeof window.device !== "undefined" && typeof window.device.uuid !== "undefined"){
       return window.device.uuid;
-    }  else if(typeof navigator.device !== "undefined" && typeof navigator.device.uuid !== "undefined"){
+    }  else if( typeof navigator !== "undefined" && typeof navigator.device !== "undefined" && typeof navigator.device.uuid !== "undefined"){
       return navigator.device.uuid;
+    } else if ( typeof Titanium !== "undefined" && typeof Ti !== "undefined" ){
+      return Ti.Platform.id;
     } else {
       var uuid = __readCookieValue(_mock_uuid_cookie_name);
       if(null == uuid){
-          uuid = __createUUID();
-          __createCookie(_mock_uuid_cookie_name, uuid);
+        uuid = __createUUID();
+        __createCookie(_mock_uuid_cookie_name, uuid);
       }
       return uuid;
     }
   };
   
   $fh._getDeviceId = getDeviceId;
-  var __isSmartMobile = /Android|webOS|iPhone|iPad|iPad|Blackberry|Windows Phone/i.test(navigator.userAgent);
-  var __isLocalFile = window.location.protocol.indexOf("file") > -1;
+  var uA = ( typeof navigator !== "undefined" ) ? navigator.userAgent : Titanium.userAgent;
+  var __isSmartMobile = /Android|webOS|iPhone|iPad|iPad|Blackberry|Windows Phone/i.test(uA);
+  var __isLocalFile = window.location && window.location.protocol.indexOf("file") > -1;
 
   function isSameOrigin(url) {
     var loc = window.location;
@@ -219,10 +229,19 @@
     }
     return cor;
   };
-  
+
+  var __titanium = function(){
+    var titanium = Titanium.Network.createHTTPClient({ timeout: $fh.fh_timeout });
+    return titanium;
+  };
+
   var __cb_counts = 0;
 
   var __load_script = function (url, callback) {
+    if (typeof document === "undefined"){
+      return callback && callback();
+    }
+
     var script;
     var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
     script = document.createElement("script");
@@ -268,7 +287,7 @@
         }
     }
 
-    if (sameOrigin || ((!sameOrigin) && __cors_supported) ) {
+    if (sameOrigin || ((!sameOrigin) && __cors_supported) || typeof Titanium !== "undefined" ) {
       o.dataType = 'json';
     } else {
       o.dataType = "jsonp";
@@ -337,9 +356,12 @@
       'json': function () {
         if(sameOrigin){
           req = __xhr();
-        } else {
+        } else if ( typeof Titanium === "undefined" ) {
           req = __cor();
+        }else{
+          req = __titanium();
         }
+
         req.open(method, url, true);
         if (o.contentType) {
           req.setRequestHeader('Content-Type', o.contentType);
@@ -502,7 +524,7 @@
     window.addEventListener('load', function(){
       _checkAuthResponse(window.location.href);
     }, false); //W3C
-  } else {
+  } else if ( window.attachEvent ) {
     window.attachEvent('onload', function(){
       _checkAuthResponse(window.location.href);
     }); //IE
@@ -541,7 +563,7 @@
             console.log("ChildBrowser plugin is not intalled.");
             success(res);
           }
-        } else {
+        } else if ( typeof document !== "undefined" ) {
          document.location.href = res.url;  
         }
       } else {
