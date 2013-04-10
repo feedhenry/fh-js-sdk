@@ -1,5 +1,5 @@
 (function(root) {
-  var window = window || {};
+  window = window || {};
   root.$fh = root.$fh || {};
   var $fh = root.$fh;
   $fh.fh_timeout = 20000;
