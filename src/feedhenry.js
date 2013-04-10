@@ -86,7 +86,7 @@
       return window.device.uuid;
     }  else if( typeof navigator !== "undefined" && typeof navigator.device !== "undefined" && typeof navigator.device.uuid !== "undefined"){
       return navigator.device.uuid;
-    } else if ( typeof Titanium !== "undefined" && typeof Ti !== "undefined" ){
+    } else if (typeof Ti !== "undefined" && typeof Ti.Platform !== "undefined" ){
       return Ti.Platform.id;
     } else {
       var uuid = __readCookieValue(_mock_uuid_cookie_name);
@@ -101,7 +101,7 @@
   $fh._getDeviceId = getDeviceId;
   var uA = ( typeof navigator !== "undefined" ) ? navigator.userAgent : Titanium.userAgent;
   var __isSmartMobile = /Android|webOS|iPhone|iPad|iPad|Blackberry|Windows Phone/i.test(uA);
-  var __isLocalFile = window.location && window.location.protocol.indexOf("file") > -1;
+  var __isLocalFile = window && window.location && window.location.protocol && window.location.protocol.indexOf("file") > -1;
 
   function isSameOrigin(url) {
     var loc = window.location;
@@ -231,7 +231,12 @@
   };
 
   var __titanium = function(){
-    var titanium = Titanium.Network.createHTTPClient({ timeout: $fh.fh_timeout });
+    var titanium = Titanium.Network.createHTTPClient({
+      timeout: $fh.fh_timeout,
+      onerror : function(){
+        //NOOP - xhr.onreadystatechange is sufficient
+      }
+    });
     return titanium;
   };
 
@@ -374,7 +379,7 @@
             }
             //the status code will be 0 if there is a network level error, including server rejecting the cors request
             if(req.status === 0){
-                if(!sameOrigin){
+                if(!sameOrigin && typeof Titanium === "undefined"){
                     return types['jsonp']();
                 }
             }
