@@ -1,2 +1,9 @@
 .idea/
 node_modules/
+fhc-debug.log
+.settings
+.DS_Store
+*/.DS_Store
+.tmp_*
+*.swp
+*.lock

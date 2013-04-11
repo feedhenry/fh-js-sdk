@@ -1,7 +1,6 @@
-(function(root) {
-  window = window || {};
-  root.$fh = root.$fh || {};
-  var $fh = root.$fh;
+(function(window) {
+  window.$fh = window.$fh || {};
+  var $fh = window.$fh;
   $fh.fh_timeout = 20000;
   $fh.boxprefix = '/box/srv/1.1/';
   $fh.sdk_version = '1.0.5';
