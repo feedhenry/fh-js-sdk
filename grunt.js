@@ -35,7 +35,7 @@ module.exports = function (grunt){
              "libs/lawnchair/lawnchair.js",
              "libs/lawnchair/lawnchairWindowNameStorageAdapter.js",
              "libs/lawnchair/lawnchairLocalStorageAdapter.js",
-             "libs/lawnchair/lawnchairIndesDbAdapter.js",
+             "libs/lawnchair/lawnchairIndexDbAdapter.js",
              "libs/lawnchair/lawnchairLocalFileStorageAdapter.js",
              "libs/lawnchair/lawnchairWebkitSqlAdapter.js",
              "src/sync-cli.js",
@@ -44,7 +44,8 @@ module.exports = function (grunt){
       }
     },
     qunit: {
-      all:['test/index.html']
+      unit:['test/unit.html'],
+      accept:['test/accept.html']
     },
     min: {
       dist: {
@@ -54,5 +55,14 @@ module.exports = function (grunt){
     }
   });
 
-  grunt.registerTask('default', 'lint concat qunit min');
+  grunt.registerTask('unit', function () {
+    grunt.task.run('qunit:unit');
+  });
+
+  grunt.registerTask('accept', function() {
+    var cloudApp = require('./accept.js');
+    grunt.task.run('qunit:accept');
+  });
+
+  grunt.registerTask('default', 'lint concat unit accept min');
 };
