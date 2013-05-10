@@ -14,7 +14,7 @@
   "license": "BSD",
   "gitHead": "251a1f88a39f59f2652552ae245893a833faee71",
   "devDependencies":{
-    "grunt":"*",
+    "grunt":"0.3.17",
     "fh-nodeapp":"*"
   }
 }
