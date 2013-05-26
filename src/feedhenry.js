@@ -3,7 +3,7 @@
   var $fh = root.$fh;
   $fh.fh_timeout = 20000;
   $fh.boxprefix = '/box/srv/1.1/';
-  $fh.sdk_version = '1.0.5';
+  $fh.sdk_version = '1.0.8';
   
   var _is_initializing = false;
   var _init_failed = false;
@@ -354,14 +354,15 @@
         req.setRequestHeader('X-Request-With', 'XMLHttpRequest');
         var handler = function () {
           if (req.readyState === 4) {
-            if (timeoutTimer) {
-              clearTimeout(timeoutTimer);
+            if (req.status === 0 && !sameOrigin && !req.isAborted) {
+              // If the XHR/cors was aborted because of a timeout, don't re-try using jsonp. This will cause the request
+              // to be re-fired and can cause replay issues - e.g. creates getting applied multiple times.
+              return types['jsonp']();
             }
-            //the status code will be 0 if there is a network level error, including server rejecting the cors request
-            if(req.status === 0){
-                if(!sameOrigin){
-                    return types['jsonp']();
-                }
+            else {
+              if (timeoutTimer) {
+                clearTimeout(timeoutTimer);
+              }
             }
             var statusText;
             try {
