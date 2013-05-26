@@ -3,7 +3,7 @@
   var $fh = root.$fh;
   $fh.fh_timeout = 20000;
   $fh.boxprefix = '/box/srv/1.1/';
-  $fh.sdk_version = '1.0.5';
+  $fh.sdk_version = '1.0.8';
   
   var _is_initializing = false;
   var _init_failed = false;
