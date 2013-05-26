@@ -354,14 +354,14 @@
         req.setRequestHeader('X-Request-With', 'XMLHttpRequest');
         var handler = function () {
           if (req.readyState === 4) {
-            if (timeoutTimer) {
-              clearTimeout(timeoutTimer);
-            }
             //the status code will be 0 if there is a network level error, including server rejecting the cors request
-            if(req.status === 0){
-                if(!sameOrigin){
-                    return types['jsonp']();
-                }
+            if (req.status === 0 && !sameOrigin) {
+              return types['jsonp']();
+            }
+            else {
+              if (timeoutTimer) {
+                clearTimeout(timeoutTimer);
+              }
             }
             var statusText;
             try {
