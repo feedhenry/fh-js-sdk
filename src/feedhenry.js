@@ -354,8 +354,9 @@
         req.setRequestHeader('X-Request-With', 'XMLHttpRequest');
         var handler = function () {
           if (req.readyState === 4) {
-            //the status code will be 0 if there is a network level error, including server rejecting the cors request
-            if (req.status === 0 && !sameOrigin) {
+            if (req.status === 0 && !sameOrigin && !req.isAborted) {
+              // If the XHR/cors was aborted because of a timeout, don't re-try using jsonp. This will cause the request
+              // to be re-fired and can cause replay issues - e.g. creates getting applied multiple times.
               return types['jsonp']();
             }
             else {
