@@ -9,25 +9,25 @@ $fh.sync = (function() {
       // How often to synchronise data with the cloud in seconds.
       "auto_sync_local_updates": true,
       // Should local chages be syned to the cloud immediately, or should they wait for the next sync interval
-      "notify_client_storage_failed": false,
+      "notify_client_storage_failed": true,
       // Should a notification event be triggered when loading/saving to client storage fails
-      "notify_sync_started": false,
+      "notify_sync_started": true,
       // Should a notification event be triggered when a sync cycle with the server has been started
       "notify_sync_complete": true,
       // Should a notification event be triggered when a sync cycle with the server has been completed
-      "notify_offline_update": false,
+      "notify_offline_update": true,
       // Should a notification event be triggered when an attempt was made to update a record while offline
-      "notify_collision_detected": false,
+      "notify_collision_detected": true,
       // Should a notification event be triggered when an update failed due to data collision
-      "notify_remote_update_failed": false,
+      "notify_remote_update_failed": true,
       // Should a notification event be triggered when an update failed for a reason other than data collision
-      "notify_local_update_applied": false,
+      "notify_local_update_applied": true,
       // Should a notification event be triggered when an update was applied to the local data store
-      "notify_remote_update_applied": false,
+      "notify_remote_update_applied": true,
       // Should a notification event be triggered when an update was applied to the remote data store
-      "notify_delta_received": false,
+      "notify_delta_received": true,
       // Should a notification event be triggered when a delta was received from the remote data store (dataset or record - depending on whether uid is set)
-      "notify_sync_failed": false,
+      "notify_sync_failed": true,
       // Should a notification event be triggered when the sync loop failed to complete
       "do_console_log": false,
       // Should log statements be written to console.log
@@ -546,7 +546,6 @@ $fh.sync = (function() {
               var timeSinceLastSync = new Date().getTime() - lastSyncCmp;
               var syncFrequency = dataset.config.sync_frequency * 1000;
               if( timeSinceLastSync > syncFrequency ) {
-                self.consoleLog(dataset_id + ' - Sync Loop time expired, starting new sync');
                 // Time between sync loops has passed - do another sync
                 dataset.syncPending = true;
               }
@@ -892,6 +891,22 @@ $fh.sync = (function() {
                   resolvedCrashes[crashedUpdate.uid] = crashedUpdate;
 
                   self.consoleLog('updateCrashedInFlightFromNewData - Resolving status for crashed inflight pending record ' + JSON.stringify(crashedUpdate));
+
+                  if( crashedUpdate.type === 'failed' ) {
+                    // Crashed update failed - revert local dataset
+                    if( crashedUpdate.action === 'create' ) {
+                      self.consoleLog('updateCrashedInFlightFromNewData - Deleting failed create from dataset');
+                      delete dataset.data[crashedUpdate.uid];
+                    }
+                    else if ( crashedUpdate.action === 'update' || crashedUpdate.action === 'delete' ) {
+                      self.consoleLog('updateCrashedInFlightFromNewData - Reverting failed ' + crashedUpdate.action + ' in dataset');
+                      dataset.data[crashedUpdate.uid] = {
+                        data : pendingRec.pre,
+                        hash : pendingRec.preHash
+                      };
+                    }
+                  }
+
                   delete pending[pendingHash];
                   self.doNotify(dataset_id, crashedUpdate.uid, updateNotifications[crashedUpdate.type], crashedUpdate);
                 }
