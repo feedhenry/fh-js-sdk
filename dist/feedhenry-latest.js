@@ -6263,27 +6263,27 @@ $fh.sync = (function() {
       // How often to synchronise data with the cloud in seconds.
       "auto_sync_local_updates": true,
       // Should local chages be syned to the cloud immediately, or should they wait for the next sync interval
-      "notify_client_storage_failed": false,
+      "notify_client_storage_failed": true,
       // Should a notification event be triggered when loading/saving to client storage fails
-      "notify_sync_started": false,
+      "notify_sync_started": true,
       // Should a notification event be triggered when a sync cycle with the server has been started
       "notify_sync_complete": true,
       // Should a notification event be triggered when a sync cycle with the server has been completed
-      "notify_offline_update": false,
+      "notify_offline_update": true,
       // Should a notification event be triggered when an attempt was made to update a record while offline
-      "notify_collision_detected": false,
+      "notify_collision_detected": true,
       // Should a notification event be triggered when an update failed due to data collision
-      "notify_remote_update_failed": false,
+      "notify_remote_update_failed": true,
       // Should a notification event be triggered when an update failed for a reason other than data collision
-      "notify_local_update_applied": false,
+      "notify_local_update_applied": true,
       // Should a notification event be triggered when an update was applied to the local data store
-      "notify_remote_update_applied": false,
+      "notify_remote_update_applied": true,
       // Should a notification event be triggered when an update was applied to the remote data store
-      "notify_delta_received": false,
+      "notify_delta_received": true,
       // Should a notification event be triggered when a delta was received from the remote data store (dataset or record - depending on whether uid is set)
-      "notify_sync_failed": false,
+      "notify_sync_failed": true,
       // Should a notification event be triggered when the sync loop failed to complete
-      "do_console_log": true,
+      "do_console_log": false,
       // Should log statements be written to console.log
       "crashed_count_wait" : 10,
       // How many syncs should we check for updates on crashed in flight updates before we give up searching
@@ -6323,7 +6323,7 @@ $fh.sync = (function() {
 
     // PUBLIC FUNCTION IMPLEMENTATIONS
     init: function(options) {
-      console.log('sync - init called');
+      self.consoleLog('sync - init called');
       self.config = JSON.parse(JSON.stringify(self.defaults));
       for (var i in options) {
         self.config[i] = options[i];
@@ -6423,24 +6423,22 @@ $fh.sync = (function() {
       self.addPendingObj(dataset_id, uid, null, "delete", success, failure);
     },
 
-    getPending: function(dataset_id) {
-      console.log('getPending');
+    getPending: function(dataset_id, cb) {
       self.getDataSet(dataset_id, function(dataset) {
         var res;
         if( dataset ) {
           res = dataset.pending;
         }
-        console.log(JSON.stringify(res, null, 2));
-        return res;
+        cb(res);
       }, function(err, datatset_id) {
-          console.log(err);
+          self.ConsoleLog(err);
       });
     },
 
-    clearPending: function(dataset_id) {
+    clearPending: function(dataset_id, cb) {
       self.getDataSet(dataset_id, function(dataset) {
         dataset.pending = {};
-        self.saveDataSet(dataset_id);
+        self.saveDataSet(dataset_id, cb);
       });
     },
 
@@ -6540,7 +6538,6 @@ $fh.sync = (function() {
         str = JSON.stringify(self.sortObject(obj));
       } catch (e) {
         console.error('Error stringifying sorted object:' + e);
-        throw e;
       }
 
       return str;
@@ -6560,8 +6557,6 @@ $fh.sync = (function() {
 
       function storePendingObject(obj) {
         obj.hash = self.generateHash(obj);
-
-        //self.consoleLog("storePendingObj :: " + JSON.stringify( obj ));
 
         self.getDataSet(dataset_id, function(dataset) {
 
@@ -6643,7 +6638,6 @@ $fh.sync = (function() {
                 'act': dataset_id,
                 'req': syncLoopParams
               }, function(res) {
-                //self.consoleLog("Back from Sync Loop : full Dataset = " + (res.records ? " Y" : "N"));
                 var rec;
 
                 function processUpdates(updates, notification, acknowledgements) {
@@ -6677,7 +6671,6 @@ $fh.sync = (function() {
                   dataSet.hash = res.hash;
 
                   self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'full dataset');
-                  //self.consoleLog("Full Dataset returned");
                 }
 
                 if (res.updates) {
@@ -6707,7 +6700,7 @@ $fh.sync = (function() {
               });
             }
             catch (e) {
-              console.log('Error performing sync - ', e);
+              self.consoleLog('Error performing sync - ' + e);
               self.syncComplete(dataset_id, e);
             }
           }
@@ -6776,7 +6769,6 @@ $fh.sync = (function() {
     },
 
     syncComplete: function(dataset_id, status) {
-      //self.consoleLog('syncComplete');
 
       self.getDataSet(dataset_id, function(dataset) {
         dataset.syncRunning = false;
@@ -6796,16 +6788,13 @@ $fh.sync = (function() {
             var lastSyncStart = dataset.syncLoopStart;
             var lastSyncCmp = dataset.syncLoopEnd;
             if( lastSyncStart == null ) {
-              console.log(dataset_id +' - Performing initial sync');
+              self.consoleLog(dataset_id +' - Performing initial sync');
               // Dataset has never been synced before - do initial sync
               dataset.syncPending = true;
             } else if (lastSyncCmp != null) {
               var timeSinceLastSync = new Date().getTime() - lastSyncCmp;
               var syncFrequency = dataset.config.sync_frequency * 1000;
-              //console.log(dataset_id + ' - timeSinceLastSync = ' + timeSinceLastSync);
-              //console.log(dataset_id + ' - syncFrequency = ' + syncFrequency);
               if( timeSinceLastSync > syncFrequency ) {
-                //console.log(dataset_id + ' - Sync Loop time expired, starting new sync');
                 // Time between sync loops has passed - do another sync
                 dataset.syncPending = true;
               }
@@ -6823,14 +6812,15 @@ $fh.sync = (function() {
     },
 
     datasetMonitor: function() {
+      self.checkDatasets();
+
       // Re-execute datasetMonitor every 500ms so we keep invoking checkDatasets();
       setTimeout(function() {
         self.datasetMonitor();
       }, 500);
-      self.checkDatasets();
     },
 
-    saveDataSet: function (dataset_id) {
+    saveDataSet: function (dataset_id, cb) {
       var onFail =  function(msg, err) {
         // save failed
         var errMsg = 'save to local storage failed  msg:' + msg + ' err:' + err;
@@ -6842,6 +6832,9 @@ $fh.sync = (function() {
         Lawnchair({fail:onFail}, function (){
              this.save({key:"dataset_" + dataset_id,val:JSON.stringify(dataset)}, function(){
                //save success
+               if( cb ) {
+                 cb();
+               }
              });
         });
       });
@@ -6877,11 +6870,11 @@ $fh.sync = (function() {
 
     updateDatasetFromLocal: function(dataset, pendingRec) {
       var pending = dataset.pending;
-
-      //self.consoleLog('updateDatasetFromLocal - START');
+      var previousPendingUid;
+      var previousPending;
 
       var uid = pendingRec.uid;
-      //self.consoleLog('updating local dataset for uid ' + uid + ' - action = ' + pendingRec.action);
+      self.consoleLog('updating local dataset for uid ' + uid + ' - action = ' + pendingRec.action);
 
       dataset.meta[uid] = dataset.meta[uid] || {};
 
@@ -6894,7 +6887,7 @@ $fh.sync = (function() {
           if (dataset.meta[uid].fromPending) {
             // We are trying to create on top of an existing pending record
             // Remove the previous pending record and use this one instead
-            var previousPendingUid = dataset.meta[uid].pendingUid;
+            previousPendingUid = dataset.meta[uid].pendingUid;
             delete pending[previousPendingUid];
           }
         }
@@ -6906,9 +6899,9 @@ $fh.sync = (function() {
           if (dataset.meta[uid].fromPending) {
             self.consoleLog('updating an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));
             // We are trying to update an existing pending record
-            var previousPendingUid = dataset.meta[uid].pendingUid;
+            previousPendingUid = dataset.meta[uid].pendingUid;
             dataset.meta[uid].previousPendingUid = previousPendingUid;
-            var previousPending = pending[previousPendingUid];
+            previousPending = pending[previousPendingUid];
             if( previousPending && !previousPending.inFlight) {
               self.consoleLog('existing pre-flight pending record = ' + JSON.stringify(previousPending));
               // We are trying to perform an update on an existing pending record
@@ -6926,18 +6919,18 @@ $fh.sync = (function() {
           if (dataset.meta[uid].fromPending) {
             self.consoleLog('Deleting an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));
             // We are trying to delete an existing pending record
-            var previousPendingUid = dataset.meta[uid].pendingUid;
+            previousPendingUid = dataset.meta[uid].pendingUid;
             dataset.meta[uid].previousPendingUid = previousPendingUid;
-            var previousPending = pending[previousPendingUid];
+            previousPending = pending[previousPendingUid];
             if( previousPending && !previousPending.inFlight ) {
               self.consoleLog('existing pending record = ' + JSON.stringify(previousPending));
-              if( previousPending.action == "create" ) {
+              if( previousPending.action === "create" ) {
                 // We are trying to perform a delete on an existing pending create
                 // These cancel each other out so remove them both
                 delete pending[pendingRec.hash];
                 delete pending[previousPendingUid];
               }
-              if( previousPending.action == "update" ) {
+              if( previousPending.action === "update" ) {
                 // We are trying to perform a delete on an existing pending update
                 // Use the pre value from the pending update for the delete and
                 // get rid of the pending update
@@ -6953,25 +6946,16 @@ $fh.sync = (function() {
       }
 
       if( dataset.data[uid] ) {
-        //self.consoleLog('Updating dataset record for uid ' + uid);
-        //self.consoleLog('Updating dataset record FROM ' + JSON.stringify(dataset.data[uid]));
         dataset.data[uid].data = pendingRec.post;
         dataset.data[uid].hash = pendingRec.postHash;
         dataset.meta[uid].fromPending = true;
         dataset.meta[uid].pendingUid = pendingRec.hash;
-        //self.consoleLog('Updating dataset record TO ' + JSON.stringify(dataset.data[uid]));
       }
-
-
-      //self.consoleLog('updateDatasetFromLocal - END');
-      //self.consoleLog('pending = ' + JSON.stringify(pending));
     },
 
     updatePendingFromNewData: function(dataset_id, dataset, newData) {
-
-      //self.consoleLog('updatePendingFromNewData - START');
-
       var pending = dataset.pending;
+      var newRec;
 
       if( pending && newData.records) {
         for( var pendingHash in pending ) {
@@ -6986,7 +6970,7 @@ $fh.sync = (function() {
               if( pendingRec.action === "update" || pendingRec.action === "delete") {
                 // Update the pre value of pending record to reflect the latest data returned from sync.
                 // This will prevent a collision being reported when the pending record is sent.
-                var newRec = newData.records[pendingRec.uid];
+                newRec = newData.records[pendingRec.uid];
                 if( newRec ) {
                   self.consoleLog('updatePendingFromNewData - Updating pre values for existing pending record ' + pendingRec.uid);
                   pendingRec.pre = newRec.data;
@@ -7000,7 +6984,7 @@ $fh.sync = (function() {
                     if( newData && newData.updates &&  newData.updates.applied && newData.updates.applied[previousPending.hash] ) {
                       // There is an update in from a previous pending action
                       var newUid = newData.updates.applied[previousPending.hash].uid;
-                      var newRec = newData.records[newUid];
+                      newRec = newData.records[newUid];
                       if( newRec ) {
                         self.consoleLog('updatePendingFromNewData - Updating pre values for existing pending record which was previously a create ' + pendingRec.uid + ' ==> ' + newUid);
                         pendingRec.pre = newRec.data;
@@ -7015,12 +6999,12 @@ $fh.sync = (function() {
               if( pendingRec.action === "create" ) {
                 if( newData && newData.updates &&  newData.updates.applied && newData.updates.applied[pendingHash] ) {
                   self.consoleLog('updatePendingFromNewData - Found an update for a pending create ' + JSON.stringify(newData.updates.applied[pendingHash]));
-                  var newRec = newData.records[newData.updates.applied[pendingHash].uid];
+                  newRec = newData.records[newData.updates.applied[pendingHash].uid];
                   if( newRec ) {
                     self.consoleLog('updatePendingFromNewData - Changing pending create to an update based on new record  ' + JSON.stringify(newRec));
 
                     // Set up the pending create as an update
-                    pendingRec.action = "update"
+                    pendingRec.action = "update";
                     pendingRec.pre = newRec.data;
                     pendingRec.preHash = newRec.hash;
                     pendingRec.uid = newData.updates.applied[pendingHash].uid;
@@ -7031,12 +7015,9 @@ $fh.sync = (function() {
           }
         }
       }
-      //self.consoleLog('updatePendingFromNewData - END');
     },
 
     updateNewDataFromInFlight: function(dataset_id, dataset, newData) {
-      //self.consoleLog('updateNewDataFromInFlight - START');
-
       var pending = dataset.pending;
 
       if( pending && newData.records) {
@@ -7067,7 +7048,7 @@ $fh.sync = (function() {
                   var newPendingCreate = {
                     data: pendingRec.post,
                     hash: pendingRec.postHash
-                  }
+                  };
                   newData.records[pendingRec.uid] = newPendingCreate;
                 }
               }
@@ -7075,13 +7056,9 @@ $fh.sync = (function() {
           }
         }
       }
-      //self.consoleLog('updateNewDataFromInFlight - END');
     },
 
     updateNewDataFromPending: function(dataset_id, dataset, newData) {
-
-      //self.consoleLog('updateNewDataFromPending - START');
-
       var pending = dataset.pending;
 
       if( pending && newData.records) {
@@ -7107,7 +7084,7 @@ $fh.sync = (function() {
                 var newPendingCreate = {
                   data: pendingRec.post,
                   hash: pendingRec.postHash
-                }
+                };
                 newData.records[pendingRec.uid] = newPendingCreate;
               }
             }
@@ -7117,9 +7094,6 @@ $fh.sync = (function() {
     },
 
     updateCrashedInFlightFromNewData: function(dataset_id, dataset, newData) {
-
-      //self.consoleLog('updateCrashedInFlightFromNewData - START');
-
       var updateNotifications = {
         applied: self.notifications.REMOTE_UPDATE_APPLIED,
         failed: self.notifications.REMOTE_UPDATE_FAILED,
@@ -7128,12 +7102,14 @@ $fh.sync = (function() {
 
       var pending = dataset.pending;
       var resolvedCrashes = {};
+      var pendingHash;
+      var pendingRec;
 
 
       if( pending ) {
-        for( var pendingHash in pending ) {
+        for( pendingHash in pending ) {
           if( pending.hasOwnProperty(pendingHash) ) {
-            var pendingRec = pending[pendingHash];
+            pendingRec = pending[pendingHash];
 
             if( pendingRec.inFlight && pendingRec.crashed) {
               self.consoleLog('updateCrashedInFlightFromNewData - Found crashed inFlight pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash );
@@ -7147,6 +7123,22 @@ $fh.sync = (function() {
                   resolvedCrashes[crashedUpdate.uid] = crashedUpdate;
 
                   self.consoleLog('updateCrashedInFlightFromNewData - Resolving status for crashed inflight pending record ' + JSON.stringify(crashedUpdate));
+
+                  if( crashedUpdate.type === 'failed' ) {
+                    // Crashed update failed - revert local dataset
+                    if( crashedUpdate.action === 'create' ) {
+                      self.consoleLog('updateCrashedInFlightFromNewData - Deleting failed create from dataset');
+                      delete dataset.data[crashedUpdate.uid];
+                    }
+                    else if ( crashedUpdate.action === 'update' || crashedUpdate.action === 'delete' ) {
+                      self.consoleLog('updateCrashedInFlightFromNewData - Reverting failed ' + crashedUpdate.action + ' in dataset');
+                      dataset.data[crashedUpdate.uid] = {
+                        data : pendingRec.pre,
+                        hash : pendingRec.preHash
+                      };
+                    }
+                  }
+
                   delete pending[pendingHash];
                   self.doNotify(dataset_id, crashedUpdate.uid, updateNotifications[crashedUpdate.type], crashedUpdate);
                 }
@@ -7175,9 +7167,9 @@ $fh.sync = (function() {
           }
         }
 
-        for( var pendingHash in pending ) {
+        for( pendingHash in pending ) {
           if( pending.hasOwnProperty(pendingHash) ) {
-            var pendingRec = pending[pendingHash];
+            pendingRec = pending[pendingHash];
 
             if( pendingRec.inFlight && pendingRec.crashed) {
               if( pendingRec.crashedCount > dataset.config.crashed_count_wait ) {
@@ -7194,7 +7186,7 @@ $fh.sync = (function() {
               }
             }
             else if (!pendingRec.inFlight && pendingRec.crashed ) {
-              console.log('updateCrashedInFlightFromNewData - Trying to resolve issues with crashed non in flight record - uid = ' + pendingRec.uid);
+              self.consoleLog('updateCrashedInFlightFromNewData - Trying to resolve issues with crashed non in flight record - uid = ' + pendingRec.uid);
               // Stalled pending record because a previous pending update on the same record crashed
               var crashedRef = resolvedCrashes[pendingRec.uid];
               if( crashedRef ) {
@@ -7205,19 +7197,19 @@ $fh.sync = (function() {
           }
         }
       }
-
-      //self.consoleLog('updateCrashedInFlightFromNewData - END');
     },
 
 
     markInFlightAsCrashed : function(dataset) {
       var pending = dataset.pending;
+      var pendingHash;
+      var pendingRec;
 
       if( pending ) {
         var crashedRecords = {};
-        for( var pendingHash in pending ) {
+        for( pendingHash in pending ) {
           if( pending.hasOwnProperty(pendingHash) ) {
-            var pendingRec = pending[pendingHash];
+            pendingRec = pending[pendingHash];
 
             if( pendingRec.inFlight ) {
               self.consoleLog('Marking in flight pending record as crashed : ' + pendingHash);
@@ -7229,9 +7221,9 @@ $fh.sync = (function() {
 
         // Check for any pending updates that would be modifying a crashed record. These can not go out until the
         // status of the crashed record is determined
-        for( var pendingHash in pending ) {
+        for( pendingHash in pending ) {
           if( pending.hasOwnProperty(pendingHash) ) {
-            var pendingRec = pending[pendingHash];
+            pendingRec = pending[pendingHash];
 
             if( ! pendingRec.inFlight ) {
               var crashedRef = crashedRecords[pendingRec.uid];
