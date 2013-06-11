@@ -477,6 +477,7 @@
     fhParams.cuid = getDeviceId();
     fhParams.appid = $fh.app_props.appid;
     fhParams.appkey = $fh.app_props.appkey;
+    fhParams.trackId = $fh.app_props.trackId;
 
     if (typeof fh_destination_code !== 'undefined'){
       fhParams.destination = fh_destination_code;
@@ -562,6 +563,7 @@
     }
   };
 
+
   $fh.init = function(opts, success, fail) {
     if($fh.cloud_props){
       return success($fh.cloud_props);
@@ -580,33 +582,59 @@
       if (!opts.appkey) {
         return fail('init_no_appkey', {});
       }
+
       $fh.app_props = opts;
-      var path = opts.host + $fh.boxprefix + "app/init";
-      var data = _getFhParams();
-      $fh.__ajax({
-        "url": path,
-        "type": "POST",
-        "contentType": "application/json",
-        "data": JSON.stringify(data),
-        "timeout" : opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
-        "success": function(res){
-          $fh.cloud_props = res;
-          if(success){
-            success(res);
-          }
-          _cloudReady(true);
-        },
-        "error": function(req, statusText, error){
-          _init_failed = true;
-          _is_initializing = false;
-          _handleError(fail, req, statusText);
-          _cloudReady(false);
+
+      Lawnchair({
+        fail: function() {
+          // on fail
         }
+      }, function() {
+        this.get("fh_track_id", function(res) {
+          if (res && res.val !== null) {
+            $fh.app_props.trackId = res.val;
+          }
+
+          var path = opts.host + $fh.boxprefix + "app/init";
+          var data = _getFhParams();
+          $fh.__ajax({
+            "url": path,
+            "type": "POST",
+            "contentType": "application/json",
+            "data": JSON.stringify(data),
+            "timeout" : opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
+            "success": function(res){
+              $fh.cloud_props = res;
+
+              // Save trackId
+              Lawnchair({
+                fail: function() {
+                  // on fail
+                }
+              }, function() {
+                this.save({
+                  key: "fh_track_id",
+                  val: $fh.cloud_props.trackId
+                }, function() {
+                  if(success){
+                    success(res);
+                  }
+                  _cloudReady(true);
+                });
+              });
+            },
+            "error": function(req, statusText, error){
+              _init_failed = true;
+              _is_initializing = false;
+              _handleError(fail, req, statusText);
+              _cloudReady(false);
+            }
+          });
+        });
       });
     } else {
       _cloud_ready_listeners.push({type:'init', success: success, fail: fail});
     }
-    
   };
 
   $fh.act = function(opts, success, fail) {
