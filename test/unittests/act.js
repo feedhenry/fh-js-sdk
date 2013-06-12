@@ -1,11 +1,14 @@
 test("$fh.act", function() {
   var appid = '123456789012345678901234';
+  var trackId = "1234567890123";
+
   $fh.app_props = {mode:'dev', appid:appid};
   $fh.cloud_props = {domain:'testing', firstTime: false, hosts:{
     debugCloudType: 'fh',
     debugCloudUrl:'http://localhost',
     releaseCloudType:'node',
-    releaseCloudUrl:'http://localhost'
+    releaseCloudUrl:'http://localhost',
+    trackId: trackId
   }};
   $fh.__ajax = function(p){
     var reqdata = JSON.parse(p.data);

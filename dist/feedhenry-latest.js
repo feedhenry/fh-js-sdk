@@ -6143,51 +6143,40 @@ Lawnchair.adapter('webkit-sqlite', (function() {
 
       $fh.app_props = opts;
 
-      Lawnchair({
-        fail: function() {
-          // on fail
+      var storage = new Lawnchair({name: "fh_tracking", adapter: "dom"}, function(){});
+
+      storage.get('fh_track_id', function(storage_res) {
+        if (storage_res && storage_res.value !== null) {
+          $fh.app_props.trackId = storage_res.value;
         }
-      }, function() {
-        this.get("fh_track_id", function(res) {
-          if (res && res.val !== null) {
-            $fh.app_props.trackId = res.val;
+
+        var path = opts.host + $fh.boxprefix + "app/init";
+        var data = _getFhParams();
+        $fh.__ajax({
+          "url": path,
+          "type": "POST",
+          "contentType": "application/json",
+          "data": JSON.stringify(data),
+          "timeout": opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
+          "success": function(data) {
+            $fh.cloud_props = data;
+
+            storage.save({
+              key: "fh_track_id",
+              value: data.trackId
+            }, function() {
+              if (success) {
+                success(data);
+              }
+              _cloudReady(true);
+            });
+          },
+          "error": function(req, statusText, error) {
+            _init_failed = true;
+            _is_initializing = false;
+            _handleError(fail, req, statusText);
+            _cloudReady(false);
           }
-
-          var path = opts.host + $fh.boxprefix + "app/init";
-          var data = _getFhParams();
-          $fh.__ajax({
-            "url": path,
-            "type": "POST",
-            "contentType": "application/json",
-            "data": JSON.stringify(data),
-            "timeout" : opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
-            "success": function(res){
-              $fh.cloud_props = res;
-
-              // Save trackId
-              Lawnchair({
-                fail: function() {
-                  // on fail
-                }
-              }, function() {
-                this.save({
-                  key: "fh_track_id",
-                  val: $fh.cloud_props.trackId
-                }, function() {
-                  if(success){
-                    success(res);
-                  }
-                  _cloudReady(true);
-                });
-              });
-            },
-            "error": function(req, statusText, error){
-              _init_failed = true;
-              _is_initializing = false;
-              _handleError(fail, req, statusText);
-              _cloudReady(false);
-            }
-          });
         });
       });
     } else {
