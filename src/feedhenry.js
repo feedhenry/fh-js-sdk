@@ -585,7 +585,14 @@
 
       $fh.app_props = opts;
 
-      var storage = new Lawnchair({name: "fh_tracking", adapter: "dom"}, function(){});
+      var storage = new Lawnchair({
+        name: "fh_tracking",
+        adapter: "dom",
+        fail: function(msg, err) {
+          var error_message = 'read/save from/to local storage failed  msg:' + msg + ' err:' + err;
+          return fail(error_message, {});
+        }
+      }, function() {});
 
       storage.get('fh_track_id', function(storage_res) {
         if (storage_res && storage_res.value !== null) {
