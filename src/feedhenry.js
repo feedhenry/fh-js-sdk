@@ -477,6 +477,7 @@
     fhParams.cuid = getDeviceId();
     fhParams.appid = $fh.app_props.appid;
     fhParams.appkey = $fh.app_props.appkey;
+    fhParams.analyticsTag =  $fh.app_props.analyticsTag;
     fhParams.init = $fh.app_props.init;
 
     if (typeof fh_destination_code !== 'undefined'){
