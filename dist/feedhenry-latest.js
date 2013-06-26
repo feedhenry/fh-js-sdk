@@ -6035,7 +6035,7 @@ Lawnchair.adapter('webkit-sqlite', (function() {
     fhParams.cuid = getDeviceId();
     fhParams.appid = $fh.app_props.appid;
     fhParams.appkey = $fh.app_props.appkey;
-    fhParams.trackId = $fh.app_props.trackId;
+    fhParams.init = $fh.app_props.init;
 
     if (typeof fh_destination_code !== 'undefined'){
       fhParams.destination = fh_destination_code;
@@ -6154,7 +6154,7 @@ Lawnchair.adapter('webkit-sqlite', (function() {
 
       storage.get('fh_track_id', function(storage_res) {
         if (storage_res && storage_res.value !== null) {
-          $fh.app_props.trackId = storage_res.value;
+          $fh.app_props.init = storage_res.value;
         }
 
         var path = opts.host + $fh.boxprefix + "app/init";
@@ -6169,8 +6169,8 @@ Lawnchair.adapter('webkit-sqlite', (function() {
             $fh.cloud_props = data;
 
             storage.save({
-              key: "fh_track_id",
-              value: data.trackId
+              key: "init",
+              value: data.init
             }, function() {
               if (success) {
                 success(data);
