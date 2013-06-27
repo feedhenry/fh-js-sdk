@@ -88,8 +88,19 @@
       return uuid;
     }
   };
+
+  var getCuidMap = function() {
+    if(typeof window.device !== "undefined" && typeof window.device.cuidMap !== "undefined"){
+      return window.device.cuidMap;
+    }  else if(typeof navigator.device !== "undefined" && typeof navigator.device.cuidMap !== "undefined"){
+      return navigator.device.cuidMap;
+    }
+
+    return null;
+  };
   
   $fh._getDeviceId = getDeviceId;
+  $fh._getCuidMap = getCuidMap;
   var __isSmartMobile = /Android|webOS|iPhone|iPad|iPad|Blackberry|Windows Phone/i.test(navigator.userAgent);
   var __isLocalFile = window.location.protocol.indexOf("file") > -1;
 
@@ -475,6 +486,7 @@
   _getFhParams = function() {
     var fhParams = {};
     fhParams.cuid = getDeviceId();
+    fhParams.cuidMap = getCuidMap();
     fhParams.appid = $fh.app_props.appid;
     fhParams.appkey = $fh.app_props.appkey;
     fhParams.analyticsTag =  $fh.app_props.analyticsTag;
