@@ -16,4 +16,8 @@ Building
 ========
 The jssdk is now build using Grunt (install via npm install). To add new files edit the grunt.js file under concat. Thirdparty libraries should go under libs and our modules go under src.
 
+To build, run:
+
+    grunt
+
 There are qunit tests. You will need to install phantomjs to run these tests.
