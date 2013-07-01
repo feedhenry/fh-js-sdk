@@ -3,7 +3,7 @@
   var $fh = root.$fh;
   $fh.fh_timeout = 20000;
   $fh.boxprefix = '/box/srv/1.1/';
-  $fh.sdk_version = '1.1.0';
+  $fh.sdk_version = '1.1.1';
   
   var _is_initializing = false;
   var _init_failed = false;
@@ -88,8 +88,19 @@
       return uuid;
     }
   };
+
+  var getCuidMap = function() {
+    if(typeof window.device !== "undefined" && typeof window.device.cuidMap !== "undefined"){
+      return window.device.cuidMap;
+    }  else if(typeof navigator.device !== "undefined" && typeof navigator.device.cuidMap !== "undefined"){
+      return navigator.device.cuidMap;
+    }
+
+    return null;
+  };
   
   $fh._getDeviceId = getDeviceId;
+  $fh._getCuidMap = getCuidMap;
   var __isSmartMobile = /Android|webOS|iPhone|iPad|iPad|Blackberry|Windows Phone/i.test(navigator.userAgent);
   var __isLocalFile = window.location.protocol.indexOf("file") > -1;
 
@@ -475,8 +486,11 @@
   _getFhParams = function() {
     var fhParams = {};
     fhParams.cuid = getDeviceId();
+    fhParams.cuidMap = getCuidMap();
     fhParams.appid = $fh.app_props.appid;
     fhParams.appkey = $fh.app_props.appkey;
+    fhParams.analyticsTag =  $fh.app_props.analyticsTag;
+    fhParams.init = $fh.app_props.init;
 
     if (typeof fh_destination_code !== 'undefined'){
       fhParams.destination = fh_destination_code;
@@ -562,6 +576,7 @@
     }
   };
 
+
   $fh.init = function(opts, success, fail) {
     if($fh.cloud_props){
       return success($fh.cloud_props);
@@ -580,33 +595,55 @@
       if (!opts.appkey) {
         return fail('init_no_appkey', {});
       }
+
       $fh.app_props = opts;
-      var path = opts.host + $fh.boxprefix + "app/init";
-      var data = _getFhParams();
-      $fh.__ajax({
-        "url": path,
-        "type": "POST",
-        "contentType": "application/json",
-        "data": JSON.stringify(data),
-        "timeout" : opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
-        "success": function(res){
-          $fh.cloud_props = res;
-          if(success){
-            success(res);
-          }
-          _cloudReady(true);
-        },
-        "error": function(req, statusText, error){
-          _init_failed = true;
-          _is_initializing = false;
-          _handleError(fail, req, statusText);
-          _cloudReady(false);
+
+      var storage = new Lawnchair({
+        name: "fh_init_storage",
+        adapter: "dom",
+        fail: function(msg, err) {
+          var error_message = 'read/save from/to local storage failed  msg:' + msg + ' err:' + err;
+          return fail(error_message, {});
         }
+      }, function() {});
+
+      storage.get('fh_init', function(storage_res) {
+        if (storage_res && storage_res.value !== null) {
+          $fh.app_props.init = storage_res.value;
+        }
+
+        var path = opts.host + $fh.boxprefix + "app/init";
+        var data = _getFhParams();
+        $fh.__ajax({
+          "url": path,
+          "type": "POST",
+          "contentType": "application/json",
+          "data": JSON.stringify(data),
+          "timeout": opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
+          "success": function(data) {
+            $fh.cloud_props = data;
+
+            storage.save({
+              key: "fh_init",
+              value: data.init
+            }, function() {
+              if (success) {
+                success(data);
+              }
+              _cloudReady(true);
+            });
+          },
+          "error": function(req, statusText, error) {
+            _init_failed = true;
+            _is_initializing = false;
+            _handleError(fail, req, statusText);
+            _cloudReady(false);
+          }
+        });
       });
     } else {
       _cloud_ready_listeners.push({type:'init', success: success, fail: fail});
     }
-    
   };
 
   $fh.act = function(opts, success, fail) {

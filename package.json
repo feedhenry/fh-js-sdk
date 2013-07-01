@@ -1,6 +1,6 @@
 {
   "name": "fh-js-sdk",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "feedhenry js sdk",
   "main": "feedhenry.js",
   "scripts": {
@@ -13,8 +13,9 @@
   "author": "",
   "license": "BSD",
   "gitHead": "251a1f88a39f59f2652552ae245893a833faee71",
-  "devDependencies":{
+  "dependencies":{
     "grunt":"0.3.17",
+    "grunt-zip": "0.9.2",
     "fh-nodeapp":"*"
   }
 }
