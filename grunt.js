@@ -60,7 +60,7 @@ module.exports = function(grunt) {
           var filename = path.basename(filepath);
           return 'feedhenry-js-sdk/' + filename;
         },
-        dest: 'dist/feedhenry-latest.zip',
+        dest: 'dist/fh-starter-project-latest.zip',
         src: ['src/index.html', 'dist/feedhenry-latest.js']
       }
     }
