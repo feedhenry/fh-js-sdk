@@ -1,25 +1,26 @@
-module.exports = function (grunt){
+var path = require('path');
+
+module.exports = function(grunt) {
   grunt.initConfig({
-    meta:{},
+    meta: {},
     lint: {
-      files:['src/*.js']
+      files: ['src/*.js']
     },
     jshint: {
-      options:{
+      options: {
         curly: true,
         eqeqeq: true,
         eqnull: true,
         sub: true,
         loopfunc: true
       },
-
       globals: {
         browser: true
       }
     },
-    concat:{
-      dist:{
-        src:["libs/json2.js",
+    concat: {
+      dist: {
+        src: ["libs/json2.js",
              "libs/cryptojs-core.js",
              "libs/cryptojs-enc-base64.js",
              "libs/cryptojs-cipher-core.js",
@@ -31,30 +32,43 @@ module.exports = function (grunt){
              "libs/cryptojs-sha512.js",
              "libs/cryptojs-sha3.js",
              "libs/rsa.js",
-             "src/feedhenry.js",
              "libs/lawnchair/lawnchair.js",
              "libs/lawnchair/lawnchairWindowNameStorageAdapter.js",
              "libs/lawnchair/lawnchairLocalStorageAdapter.js",
              "libs/lawnchair/lawnchairLocalFileStorageAdapter.js",
              "libs/lawnchair/lawnchairWebkitSqlAdapter.js",
+             "src/feedhenry.js",
              "src/sync-cli.js",
              "src/security.js"],
-        dest:'dist/feedhenry-latest.js'
+        dest: 'dist/feedhenry-latest.js'
       }
     },
     qunit: {
-      unit:['test/unit.html'],
-      accept:['test/accept.html']
+      unit: ['test/unit.html'],
+      accept: ['test/accept.html']
     },
     min: {
       dist: {
         src: ['dist/feedhenry-latest.js'],
         dest: 'dist/feedhenry-latest.min.js'
       }
+    },
+    zip: {
+      zipall: {
+        router: function(filepath) {
+          console.log(filepath);
+          var filename = path.basename(filepath);
+          return 'feedhenry-js-sdk/' + filename;
+        },
+        dest: 'dist/fh-starter-project-latest.zip',
+        src: ['src/index.html', 'dist/feedhenry-latest.js']
+      }
     }
   });
 
-  grunt.registerTask('unit', function () {
+  grunt.loadNpmTasks('grunt-zip');
+
+  grunt.registerTask('unit', function() {
     grunt.task.run('qunit:unit');
   });
 
@@ -63,5 +77,5 @@ module.exports = function (grunt){
     grunt.task.run('qunit:accept');
   });
 
-  grunt.registerTask('default', 'lint concat unit accept min');
+  grunt.registerTask('default', 'lint concat unit accept min zip');
 };

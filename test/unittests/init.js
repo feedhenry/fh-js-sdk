@@ -21,6 +21,7 @@ test( "$fh.init", function() {
   var appid="123456789012345678901234";
   var appkey="800183c81c341bacc48253ed69c5dc409b0b04e3";
   var host="http://localhost";
+  var init = { trackId: "1234567890123" };
   var mode = "dev";
   var timeout = 20;
   $fh.__ajax = function(p){
@@ -34,7 +35,7 @@ test( "$fh.init", function() {
     strictEqual(fhparams.appkey, appkey);
     ok(null != fhparams.cuid);
     strictEqual(p.timeout, timeout);
-    p.success({status:'ok', domain:'testing', firstTime: false, hosts:{
+    p.success({status:'ok', domain:'testing', firstTime: false, init: init, hosts:{
       debugCloudType: 'node',
       debugCloudUrl:'http://localhost',
       releaseCloudType:'node',
@@ -45,6 +46,7 @@ test( "$fh.init", function() {
   $fh.init({appid: appid, appkey: appkey, host:host, mode:mode, timeout: timeout}, function(res){
     ok(null != $fh.cloud_props);
     strictEqual($fh.cloud_props.domain, "testing");
+    strictEqual($fh.cloud_props.init, init);
     strictEqual($fh.cloud_props.hosts.debugCloudType, "node");
     strictEqual($fh.cloud_props.hosts.releaseCloudType, "node");
   }, function(err){
