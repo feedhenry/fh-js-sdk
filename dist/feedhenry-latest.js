@@ -5918,7 +5918,7 @@ Lawnchair.adapter('webkit-sqlite', (function() {
           req.open(method, url, true);
         }
         if (o.contentType) {
-          req.setRequestHeader('Content-Type', o.contentType);
+          req.setRequestHeader('Content-Type', o.contentType + '; charset=utf-8');
         }
         req.setRequestHeader('X-Request-With', 'XMLHttpRequest');
         var handler = function () {
@@ -6252,7 +6252,7 @@ Lawnchair.adapter('webkit-sqlite', (function() {
       "url": url,
       "type": "POST",
       "data": JSON.stringify(params),
-      "contentType": "application/json",
+      "contentType": "application/json; charset=utf-8",
       "timeout" : opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
       success: function(res) {
         if(success){
@@ -6302,7 +6302,7 @@ Lawnchair.adapter('webkit-sqlite', (function() {
       "url": path,
       "type": "POST",
       "data": JSON.stringify(req),
-      "contentType": "application/json",
+      "contentType": "application/json; charset=utf-8",
       "timeout" : opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
       success: function(res) {
         $fh._handleAuthResponse(endurl, res, success, fail);
