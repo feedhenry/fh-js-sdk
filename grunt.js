@@ -39,7 +39,8 @@ module.exports = function(grunt) {
              "libs/lawnchair/lawnchairWebkitSqlAdapter.js",
              "src/feedhenry.js",
              "src/sync-cli.js",
-             "src/security.js"],
+             "src/security.js",
+          "src/cms.js"],
         dest: 'dist/feedhenry-latest.js'
       }
     },
