@@ -5,12 +5,27 @@
   root.$fh = root.$fh || {};
   var $fh = root.$fh;
 
+  var EMPTY_CMS = {
+    cms: {
+      sections: []
+    }
+  };
+
+  var CMS_API_GETALL     = "/cloud/getAll";      // "/mbaas/cms/getAll";
+  var CMS_API_GETSECTION = "/cloud/getSection";  // "/mbaas/cms/section/get";
+  var CMS_API_GETFIELD   = "/cloud/getField&fieldid=";   // "/mbaas/cms/field/";
+
+  var CMS_FIELD_TYPES_TEXT = ['string', 'paragraph'];
+  var CMS_FIELD_TYPES_FILE = ['image', 'file'];
+
   var _cmsAvailable = false;
   var _cmsInitialising = false;
   var _cmsData;
   var _cmsReadyListeners = [];
   var _cmsUpdateInProgress = false;
   var _cmsFileSystem;
+  var _cmsFileSystemEnabled = false;
+
   //Object initialised, need to initialise the cms
 
   var handleError = function(err, failCallback){
@@ -58,81 +73,51 @@
     });
   };
 
-  var initialiseCMS = function(success, failure){
+  var initialiseCMS = function (success, failure) {
+    console.log("initialiseCMS() begin");
     _cmsInitialising = true;
-    if(!isCordovaOrPhonegapWindow()){
-      return cmsInitFailure("CMS Only Available for Hybrid Apps.", failure);
+    if(isCordovaOrPhonegapWindow()){
+      _csmFileSystemEnabled = true;
     }
 
-    initialiseCMSFileSystem(function(err){
-      if (err) {
-        return cmsInitFailure(err, failure);
-      }
-
-      cmsJSONFileAvailable(function(err, exists){
+    console.log("initialiseCMS() _cmsFileSystemEnabled:", _cmsFileSystemEnabled);
+    if (_cmsFileSystemEnabled) {
+      async.waterfall([
+        initialiseCMSFileSystem,
+        cmsJSONFileAvailable,
+        function(exists, cb) {
+          if(exists){
+            readCMSJSON(cb);
+          } else {
+            async.waterfall([
+              appCMSZipAvailable,
+              function (exists, cb) {
+                if (exists) {
+                  unzipCMSData(cb);
+                } else {
+                  return cb("No CMS Data Available.", failure);
+                }
+              }
+            ], function (err, cmsData) {
+              return cb(err, cmsData);
+            });
+          }
+        }
+      ], function (err, cmsData) {
         if(err) {
           return cmsInitFailure(err, failure);
-        }
-
-        if(exists){
-          readCMSJSON(function(err, cmsData){
-            if(err){
-              return cmsInitFailure(err, failure);
-            }
-            return cmsInitSuccess(cmsData, success);
-          });
         } else {
-          appCMSZipAvailable(function(err, exists){
-            if(err){
-              return cmsInitFailure(err, failure);
-            }
-
-            if(exists){
-              unzipCMSData(function(err, cmsData){
-                //TODO need to read CMSJSON file here also
-                if(err){
-                  return cmsInitFailure(err, failure);
-                }
-                return cmsInitSuccess(cmsData, success);
-              });
-            } else {
-              return cmsInitFailure("No CMS Data Available.", failure); //TODO: This may need to be changed to send a query to the server for the initial cms data if it is not already packaged.....
-            }
-          });
+          return cmsInitSuccess(cmsData, success);
         }
-      });
-    });
+      });  
+    } else {  // no data persisted on filesystem, so will do full refresh
+      console.log("initialiseCMS() about to call cmsInitSuccess()");
+      return cmsInitSuccess(EMPTY_CMS, success);
+    }
   };
 
   var isCordovaOrPhonegapWindow = function(){
     return (typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined");
-  };
-
-  var cmsJSONFileAvailable = function(cb){
-    $fh.__cmsFileManager({"act": "fileExists", "params": {"fileName": "fh-cms.js"}}, cb);//TODO fh-cms.js should be constant or config
-  };
-
-  var appCMSZipAvailable = function(cb){
-    $fh.__cmsFileManager({"act": "cmsZipExists"}, cb);
-  };
-
-  var unzipCMSData = function(cb){
-    $fh.__cmsFileManager({"act": "unzipCMS"}, cb);
-  };
-
-  var writeCMSDataToFile = function(cb){
-    $fh.__cmsFileManager({"act": "writeFile", "params": {"fileName": "fh-cms.js"}}, cb);
-  };
-
-  //TODO FileData Should not all reside in RAM -- optimise
-  var readCMSJSON = function(cb){
-    $fh.__cmsFileManager({"act": "readFile", "params": {"fileName": "fh-cms.js"}}, function(err, cmsJSONString){
-      if(err) return cb(err);
-      if(!fileData) return cb("No Data Read");
-
-      var cmsJSON = JSON.parse(cmsJSONString); //Parsing CMS Data.
-      cb(undefined, cmsJSON);
-    });//TODO fh-cms.js should be constant or config
   };
 
   //TODO move "." to config to allow for splitting using different character
@@ -155,9 +140,22 @@
     }
   };
 
+  var constructGetFieldURL = function (fieldid) {
+    return getCloudUrlPrefix() + CMS_API_GETFIELD + fieldid;
+  };
+
   //TODO this will change with file handling
   var getFieldValue = function(field, fieldOptions, cb){
-    cb(undefined, field.value);
+    var retErr;
+    var retVal;
+    if (CMS_FIELD_TYPES_TEXT.indexOf(field.fieldType) >=0 ) {
+      retVal = field.value;
+    } else if (CMS_FIELD_TYPES_FILE.indexOf(field.fieldType) >= 0) {
+      retVal = constructGetFieldURL(field.binaryURL);
+    } else {
+      retErr = "Invalid field type: " + field.fieldType;
+    }
+    return cb(retErr, retVal);
   };
 
   //TODO Needs some optimisation to avoid constantly traversing the cms structure. SectionName possibly not unique so change to hash
@@ -181,55 +179,60 @@
   };
 
   var findCMSField = function(section, fieldName, fieldOptions, cb){
+
     var foundFieldArray = section.fields.filter(function(fieldEntry){
       return fieldEntry.fieldName === fieldName;
     });
 
-    if(foundFieldArray.length === 1){//TODO duplication here, abstract. Very heavily nested. Need to be neater
-
+    if(foundFieldArray.length === 0) {
+      return cb("No field matching " + fieldName + " found.");
+    } else if (foundFieldArray.length > 1) {
+      return cb("Unexpected number of fields matching " + fieldName + " found. " + foundFieldArray.length);
+    }  else {  // (foundFieldArray.length === 1)
       if(fieldOptions.list){
-        if(foundFieldArray[0].fieldType === "list"){
-          if(fieldOptions.size){
-            return cb(undefined, foundFieldArray[0].listData.length);
-          } else {
-
-            if(fieldOptions.index >= foundFieldArray[0].listData.length){
-              return cb("Index " + fieldOptions.index + " out of bounds.");
-            }
-            //Have a list index and fieldName needed,
-            //Get the listOptions --> Find the field in the fieldTypes
-            var foundListFieldTypeArray = foundFieldArray[0].fieldTypes.filter(function(listFieldTypeEntry){
-              return listFieldTypeEntry.name === fieldOptions.listFieldName;
-            });
-
-            if(foundListFieldTypeArray.length === 1){
-              //Found the list
-              var listFieldType = foundListFieldTypeArray[0].type;
-
-              //Now want the actual list data
-              //TODO Assuming list items are in order. This may not be true.
-              var listFieldData = {};
-              listFieldData.value = foundFieldArray[0].listData[fieldOptions.index][fieldOptions.listFieldName];
-              listFieldData.fieldType = listFieldType;
-
-              return cb(undefined, listFieldData);
-
-            } else if(foundListFieldTypeArray.length === 0){
-              return cb("No list field matches the name " + fieldOptions.listFieldName);
-            } else if(foundListFieldTypeArray.length > 1) {
-              return cb("More than one list field matches the name " + fieldOptions.listFieldName);
-            }
-          }
-        } else {
-          return cb("The field " + fieldName + " is not a list.");
-        }
+        findCMSFieldList(foundFieldArray[0], fieldOptions, cb);
+        return;
       } else {
         return cb(undefined, foundFieldArray[0]);
       }
-    } else if(foundFieldArray.length === 0){
-      return cb("No field matching " + fieldName + " found.");
+    }
+  };
+
+  var findCMSFieldList = function (field, fieldOptions, cb) {
+    if(field.fieldType !== "list"){
+      return cb("The field " + fieldName + " is not a list.");
     } else {
-      return cb("Unexpected number of fields matching " + fieldName + " found. " + foundFieldArray.length);
+      // do list stuff
+      if(fieldOptions.size){
+        return cb(undefined, field.listData.length);
+      } else {
+        if(fieldOptions.index >= field.listData.length){
+          return cb("Index " + fieldOptions.index + " out of bounds.");
+        }
+        //Have a list index and fieldName needed,
+        //Get the listOptions --> Find the field in the fieldTypes
+        var foundListFieldTypeArray = field.fieldTypes.filter(function(listFieldTypeEntry){
+          return listFieldTypeEntry.name === fieldOptions.listFieldName;
+        });
+
+        if(foundListFieldTypeArray.length === 1){
+          //Found the list
+          var listFieldType = foundListFieldTypeArray[0].type;
+
+          //Now want the actual list data
+          //TODO Assuming list items are in order. This may not be true.
+          var listFieldData = {};
+          listFieldData.value = field.listData[fieldOptions.index][fieldOptions.listFieldName];
+          listFieldData.fieldType = listFieldType;
+
+          return cb(undefined, listFieldData);
+
+        } else if(foundListFieldTypeArray.length === 0){
+          return cb("No list field matches the name " + fieldOptions.listFieldName);
+        } else if(foundListFieldTypeArray.length > 1) {
+          return cb("More than one list field matches the name " + fieldOptions.listFieldName);
+        }
+      }         
     }
   };
 
@@ -256,22 +259,27 @@
 
     //Now have the section name and field name of interest, search the cms sections for requested fields
     findCMSSection(sectionOfInterestName, {}, function(err, foundSection){
-      if(err) return handleError(err, f);
+      if(err) {
+        return handleError(err, f);
+      }
 
       //Have the section, now find the field in the section
       findCMSField(foundSection, fieldOfInterestName, findCMSFieldOptions, function(err, foundField){
-        if(err) return handleError(err, f);
+        if (err) {
+          return handleError(err, f);
+        }
 
         //Have the field, now want the value of the field.
         getFieldValue(foundField, findCMSFieldOptions, function(err, fieldValue){
-          if(err) return handleError(err, f);
+          if (err) {
+            return handleError(err, f);
+          }
 
           return returnCMSValue(fieldValue, s);
         });
       });
     });
   };
-
 
   //TODO This may change with file handling.
   var returnCMSValue = function(value, successCallback){
@@ -282,12 +290,16 @@
     }
   };
 
+  function isString(str) {
+    return "string" === typeof str;
+  }
+
   var sanityCheckParams = function(params, options, cb){
     if(options.path){
       if(!params.path){
         return cb("No path specified");
       }
-      if(!(String.isString(params.path) && params.path.length > 3 && params.path.indexOf(".") != -1)){//Must exist, be at least 3 characters long and contain at least a single . TODO: REPLACE ". with constant"
+      if(!(isString(params.path) && params.path.length > 3 && params.path.indexOf(".") !== -1)){ //Must exist, be at least 3 characters long and contain at least a single . TODO: REPLACE ". with constant"
         return cb("Incorrect format for path");
       }
     }
@@ -305,7 +317,7 @@
       if(!params.fieldName){
         return cb("No list field name specified.");
       }
-      if(!(String.isString(params.fieldName) && params.fieldName.length > 0)){
+      if(!(isString(params.fieldName) && params.fieldName.length > 0)){
         return cb("List field name empty.");
       }
     }
@@ -314,54 +326,58 @@
     cb();
   };
 
-
-
   var buildCMSHashList = function(options, cb){
     //Building a JSON object to send to /mbaas
 
+    console.log('in buildCMSHashList: ');
     var cmsUpdateHashList = {};
 
     if(options.singleSection){
       findCMSSection(options.sectionName, {}, function(err, foundSection){
-        if(err) return cb(err);
+        if(err) {
+          return cb(err);
+        }
         cmsUpdateHashList[foundSection.name] = foundSection.hash;
+        return cb(undefined, cmsUpdateHashList);
       });
     } else if(options.allSections) {
       findCMSSection(undefined, {"findAllSections": true}, function(err, foundSections){
-        for(var sectionEntry in foundSections){
+        var i, l;
+        var sectionEntry;
+
+        for(i = 0, l = foundSections.length; i < l; i += 1){
+          sectionEntry = foundSections[i]; 
           cmsUpdateHashList[sectionEntry.name] = sectionEntry.hash;
         }
+        return cb(undefined, cmsUpdateHashList);
       });
+
     } else {
       return cb("Invalid update option " + JSON.toString(options));
     }
-
-    return cb(undefined, cmsUpdateHashList);
   };
+
+  function getCloudUrlPrefix() {
+    var cloud_host = $fh.cloud_props.hosts.releaseCloudUrl;
+
+    if($fh.app_props.mode && $fh.app_props.mode.indexOf("dev") > -1){
+      cloud_host = $fh.cloud_props.hosts.debugCloudUrl;
+    }
+
+    return cloud_host;
+  }
 
   var sendUpdateRequest = function(options, cmsSectionHashes, cb){
     //Now, need to send the hashes to the /cms/mbaas to check for updates
 
     var payload = JSON.stringify(cmsSectionHashes);
-    var url;
 
-    ///BUILDING URL
-    var cloud_host = $fh.cloud_props.hosts.releaseCloudUrl;
-    var app_type = $fh.cloud_props.hosts.releaseCloudType;
-
-    if($fh.app_props.mode && $fh.app_props.mode.indexOf("dev") > -1){
-      cloud_host = $fh.cloud_props.hosts.debugCloudUrl;
-    }
-    url = cloud_host;
-    var path = url;
-
-    //END BUILDING URL
-
+    var path = getCloudUrlPrefix();
 
     if(options.singleSection){
-      path += "/mbaas/cms/section/get";
+      path += CMS_API_GETSECTION;
     } else if(options.allSections){
-      path += "/mbaas/cms/getAll";
+      path += CMS_API_GETALL;
     } else {
       return cb("Should either be updating a single or all sections.");
     }
@@ -373,6 +389,8 @@
       "data": JSON.stringify(payload),
       "timeout": $fh.app_props.timeout || $fh.fh_timeout,
       "success": function(data) {
+        console.log(typeof data);
+        console.log(data);
         return cb(undefined, data);
       },
       "error": function(req, statusText, error) {
@@ -381,63 +399,39 @@
     });
   };
 
-  var sanityCheckUpdateResponse = function(jsonResponse, cb){
-
+  var sanityCheckUpdateResponse = function(jsonResponse, cb) {
     var updatedSectionArray = jsonResponse.cms;
-    var verifiedSections = {};
 
     if(!(updatedSectionArray && Array.isArray(updatedSectionArray))){
       return cb("Invalid update response. Aborting");
     }
 
-    for(var updatedSectionEntry in updatedSectionArray){
-      if(!(updatedSectionEntry.updateFlag && String.isString(updatedSectionEntry.updateFlag) && updatedSectionEntry.name && String.isString(updatedSectionEntry.name))){
-        return cb("Invalid update response fields. Aboring.");
+    async.each(updatedSectionArray, function (updatedSectionEntry, cb) {
+      if(!(updatedSectionEntry.updateFlag && isString(updatedSectionEntry.updateFlag) && updatedSectionEntry.name && isString(updatedSectionEntry.name))) {
+        console.log("updatedSectionEntry", updatedSectionEntry);
+        return cb("Invalid update response fields. Aborting.");
       }
-    }
 
-    for(updatedSectionEntry in updatedSectionArray){
       //Check sections changed or deleted actually exist.
       if(updatedSectionEntry.updateFlag === "changed" || updatedSectionEntry.updateFlag === "deleted"){
-        findCMSSection(updatedSectionEntry.name, {}, function(err, section){
-          if(err) {
-            verifiedSections[updatedSectionEntry.name] = err;
-          } else {
-            verifiedSections[updatedSectionEntry.name] = true;
-          }
-        });
+        findCMSSection(updatedSectionEntry.name, {}, cb);
       } else if(updatedSectionEntry.updateFlag === "added"){
         findCMSSection(updatedSectionEntry.name, {}, function(err, section){
+          console.log("after find - err: ", err);
+          // should be a not found error from "find" so if no error, or if error not "no section found" then callback with error
           if(!err){
-            verifiedSections[updatedSectionEntry.name] = "Section " + updatedSectionEntry.name + " expected to be added. Should not exist. But it does.";
-          } else if(err.indexOf("No section matching" === -1)){
-            verifiedSections[updatedSectionEntry.name] = err;
-          } else {
-            verifiedSections[updatedSectionEntry.name] = true;
+            return cb("Section " + updatedSectionEntry.name + " expected to be added. Should not exist. But it does.");
+          } else if(err.indexOf("No section matching") === -1){
+            return cb(err);
           }
+          return cb();
         });
       } else {
-         verifiedSections[updatedSectionEntry.name] = "Invalid Update Flag For Section " + updatedSectionEntry.name;
+        return cb("Invalid Update Flag For Section " + updatedSectionEntry.name);
       }
-    }
-
-    //Checking for any errors with the sections
-    var sectionCheckInterval = setInterval(function(){
-      if(verifiedSections.length == updatedSectionArray.length){
-        //All checks finished, check for errors
-        for(var key in verifiedSections){
-          if(verifiedSections[key] != true){
-            //Section update invalid
-            clearInterval(sectionCheckInterval);
-            return cb(verifiedSections[key]);
-          }
-        }
-
-        //Reached this point, no errors.
-        clearInterval(sectionCheckInterval);
-        return cb();
-      }
-    }, 500);
+    }, function (err) {
+      return cb(err);
+    });
   };
 
   var scanSectionForFiles = function(sectionToScan, cb){
@@ -489,7 +483,9 @@
     //Scan section for files
     //Return file changes
     insertCMSSection(addedSection, function(err){
-      if(err) return cb(err);
+      if (err) {
+        return cb(err);
+      }
 
       scanSectionForFiles(addedSection, cb);
     });
@@ -500,10 +496,14 @@
     //Return list of files to be deleted.
 
     findCMSSection(deletedSection.name, {}, function(err, foundSection){
-      if(err) return cb(err);
+      if (err) {
+        return cb(err);
+      }
 
       scanSectionForFiles(foundSection, function(err, fileChanges){
-        if(err) return cb(err);
+        if (err) {
+          return cb(err);
+        }
 
         deleteCMSSection(deletedSection, function(err){
           return cb(err, fileChanges);
@@ -524,7 +524,6 @@
         return i;
       }
     }
-
     return -1;
   };
 
@@ -540,171 +539,64 @@
     }
   };
 
-  var processCMSUpdateResponse = function(response, cb){
+  var processCMSUpdateResponse = function(jsonResponse, cb){
     //Right, response object contains a array of sections response.cms.iterate ---
-    var jsonResponse = JSON.parse(response);
     var updatedSectionArray = jsonResponse.cms;
-    var sectionsUpdated = {};
     var fileChanges = {"added": [], "deleted": []};
 
-    sanityCheckUpdateResponse(jsonResponse, function(err){
-      if(err) return cb(err); //If not a sane response, aborting the update. CMS remains the same.
-
-      for(var updatedSectionEntry in updatedSectionArray){
-
-        if(updatedSectionEntry.updateFlag === "changed"){ //TODO extract flags to constants
-          processDeletedSection(updatedSectionEntry, function(err, delFileChanges){
-            if(err) return cb(err);
-
-            processAddedSection(updatedSectionEntry, function(err, fileChanges){
-              if(err){
-                sectionsUpdated[updatedSectionEntry.name] = err; //flagged as error
-              } else {
-                sectionsUpdated[updatedSectionEntry.name] = true; //flags as no error
-              }
-
-              fileChanges.added.push(fileChanges);
-              fileChanges.deleted.push(delFileChanges);
-            });
-          });
-        } else if (updatedSectionEntry.updateFlag === "added"){
-          processAddedSection(updatedSectionEntry, function(err, fileChanges){
-            if(err){
-              sectionsUpdated[updatedSectionEntry.name] = err; //flagged as error
-            } else {
-              sectionsUpdated[updatedSectionEntry.name] = true; //flags as no error
-            }
-
-            fileChanges.added.push(fileChanges);
-
-          });
-        } else if (updatedSectionEntry.updateFlag === "deleted") {
-          processDeletedSection(updatedSectionEntry, function(err, fileChanges){
-            if(err){
-              sectionsUpdated[updatedSectionEntry.name] = err; //flagged as error
-            } else {
-              sectionsUpdated[updatedSectionEntry.name] = true; //flags as no error
-            }
-
-            fileChanges.deleted.push(fileChanges);
-
-          });
-        }
-      }
-
-      //Checking when updating is complete.
-      var cmsUpdateCheckInterval = setInterval(function(){
-        if(sectionsUpdated.length === updatedSectionArray.length){
-          //Finished all updates -- check for failures
-          for(var sectionKey in sectionsUpdated){
-            if(sectionsUpdated[sectionKey] != true){
-              clearInterval(cmsUpdateCheckInterval);
-              return cb(sectionsUpdated[sectionKey]);
-            }
+    var processors = {
+      "changed": function (entry, cb) {
+        processDeletedSection(entry, function (err, delFileChanges) {
+          if (err) {
+            return cb(err);
           }
-
-          //No errors, update worked
-          clearInterval(cmsUpdateCheckInterval);
-          return cmsFilesUpdate(fileChanges, cb);//Finished update for file structure, now need to update the file storage.
-        }
-      }, 500);
-    });
-  };
-
-  var cmsFilesUpdate = function(fileChanges, cb){
-    //Need to process any changes to files made by updating the cms.
-    //Files are either added or deleted.
-    var filesNotInFileSystem = []; //Array of file hashes not in storage
-
-    var deletedFileChanges = fileChanges.deleted;
-    var addedFileChanges = fileChanges.added;
-    for(var sectionHash in addedFileChanges){
-      var sectionChanges = addedFileChanges[sectionHash];
-      for(var fileChange in sectionChanges){
-        for(var fileHash in fileChange){ //fileChange[fileHash] is the path of the file.
-          if(_cmsData.fileStorage[fileHash]){
-            _cmsData.fileStorage[fileHash].push(fileChange[fileHash]);
-          } else { //File does not exist in file system. Need to download it.
-            _cmsData.fileStorage[fileHash] = [];
-            _cmsData.fileStorage[fileHash].push(fileChange[fileHash]);
-            filesNotInFileSystem.push(fileHash);
+          processAddedSection(entry, function (err, addFileChanges) {
+            if(err) {
+              return cb(err);
+            }
+            fileChanges.added.push(addFileChanges);
+            fileChanges.deleted.push(delFileChanges);
+            return cb();
+          });
+        });
+      },
+      "added": function (entry, cb) {
+        processAddedSection(entry, function (err, addFileChanges) {
+          if (err) {
+            return cb(err);
           }
-
-        }
-      }
-    }
-
-    for(sectionHash in deletedFileChanges){ //TODO duplicated, can make a function out of this.
-      sectionChanges = deletedFileChanges[sectionHash];
-      for(fileChange in sectionChanges){
-        for(fileHash in fileChange){
-          var fileEntryIndex = _cmsData.fileStorage[fileHash].indexOf(fileChange[fileHash]); // Just an array of string so I can compare.
-          _cmsData.fileStorage[fileHash].splice(fileEntryIndex, 1);
-        }
-      }
-    }
-
-    //All changes to file storage complete. Need to check if any files have no more references.
-    var fileHashes = _cmsData.fileStorage;
-    var filesCheckedSuccess = {};
-    for(fileHash in fileHashes){
-      if(fileHashes[fileHash].length === 0){
-        $fh.__cmsFileManager({"act": "delete", "params": {"fileHash": fileHash}}, function (err) {
-          if (!err) {
-            filesCheckedSuccess = true;
-          } else {
-            filesCheckedSuccess[fileHash] = err;
+          fileChanges.added.push(addFileChanges);
+          return cb();
+        });
+      },
+      "deleted": function (entry, cb) {
+        processDeletedSection(entry, function (err, delFileChanges) {
+          if (err) {
+            return cb(err);
           }
+          fileChanges.deleted.push(delFileChanges);
+          return cb();
         });
       }
-    }
+    };
 
-    var filesCheckedInterval = setInterval(function(){
-      if(filesCheckedSuccess.length === fileHashes.length){
-        //Finished -- check for success
-        for(var fileCheckHash in filesCheckedSuccess){
-          if(!(filesCheckedSuccess[fileCheckHash] === true)){
-            clearInterval(filesCheckedInterval);
-            return cb(filesCheckedSuccess[fileCheckHash]);// Error, return the error
+    async.series([
+      async.apply(sanityCheckUpdateResponse, jsonResponse),
+      async.apply(async.eachSeries, updatedSectionArray,
+        function(updatedSectionEntry, cb) {
+          if (processors[updatedSectionEntry.updateFlag]) {
+            processors[updatedSectionEntry.updateFlag](updatedSectionEntry, cb);
+          } else {
+            return cb(new Error("Invalid updateFlag"));
           }
         }
-
-        //All good, now download any files needed
-        clearInterval(filesCheckedInterval);
-        downloadMissingFiles(filesNotInFileSystem, cb);
-      }
-    }, 500); //TODO Set interval as config option.
-  };
-
-  var downloadMissingFiles = function(missingFilesHashes, cb){
-    var missingFilesCompleted = {};
-
-    for(var missingFileHash in missingFilesHashes){
-      $fh.__cmsFileManager({"act" : "download", "params": {"hash" : missingFileHash}}, function(err){
-        if (!err) {
-          missingFilesCompleted[missingFileHash] = true;
-        } else {
-          missingFilesCompleted[missingFileHash] = err;
-        }
-      });
-    }
-
-    var downloadedFilesInterval = setInterval(function(){
-      if(missingFilesCompleted.length === missingFilesHashes.length){
-        for(var downloadResult in missingFilesCompleted){
-          if(missingFilesCompleted[downloadResult] != true){
-            clearInterval(downloadedFilesInterval);
-            return cb(missingFilesCompleted[downloadResult]);
-          }
-        }
-
-        //No errors,
-        clearInterval(downloadedFilesInterval);
-        return cb(undefined);
-      }
-
-    }, 500);
-
+      )
+    ], function (err) {
+        //No errors, update worked
+        console.log('avoid handling updated files');
+        return cb(err);
+        return cmsFilesUpdate(fileChanges, cb);//Finished update for file structure, now need to update the file storage.
+    });
   };
 
   var cmsUpdateError = function(err, failCallback){ //TODO Similar to cmsInitFail, can integrate.
@@ -718,107 +610,70 @@
     //process cmsUpdateResponse
 
     _cmsUpdateInProgress = true; //queueing calls until data is updated.
-    buildCMSHashList(options, function(err, cmsSectionHashes){
-      if(err) return cmsUpdateError(err, failCallback);
-
-      //No error, hash object created.
-      sendUpdateRequest(options, cmsSectionHashes, function(err, responseData){
-        if(err) return cmsUpdateError(err, failCallback);
-
-        //No error, have the response object
-        processCMSUpdateResponse(responseData, function(err){
-          if(err) return cmsUpdateError(err, failCallback);
-
-          //All CMS actions are now complete and new structure is saved, ready to continue processing.
-          _cmsReady(true);
-          _cmsUpdateInProgress = false;
-          successCallback();
-        });
-      });
+    async.waterfall([
+      async.apply(buildCMSHashList, options),
+      async.apply(sendUpdateRequest, options),
+      processCMSUpdateResponse
+    ], function (err) {
+      if (err) {
+        return cmsUpdateError(err, failCallback);
+      } else {
+        _cmsReady(true);
+        _cmsUpdateInProgress = false;
+        successCallback();
+      }
     });
   };
 
-  /*
-   * __cmsFileManager (params, cb)
-   * 
-   *  params:
-   *      {
-   *         act: actionName (delete|download|fileExists|cmsZipExists|unzipCMS|writeFile|readFile)
-   *         params:
-   *             action specific params
-   *             delete: {"fileHash": fileHash}
-   *             download: {"hash" : missingFileHash}}
-   *             fileExists: {"fileName": "fh-cms.js"}
-   *             cmsZipExists: none
-   *             unzipCMS: none
-   *             writeFile: {"fileName": "fh-cms.js"}
-   *             readFile: {"fileName": "fh-cms.js"}
-   *      }
-   *
-   */
-
-  $fh.__cmsFileManager = function(p, s, f){
-
-    var cmsRootFolder = "FHCMSData"; //Setting the folder for the cms files on device.
-
-    if(!_cmsAvailable){
-      return handleError("CMS Not Available", f);
-    }
-
-    var acts = {
-      "download": function(){
-
-      },
-      "delete": function(){
-
-      },
-      "clean": function(){
-
-      },
-      "fileExists": function(){
-        _cmsFileSystem.root.getDirectory(cmsRootFolder, {"create": true}, function(parent){
-          parent.getFile(p.fileName, {"create" : false}, function(fileFound){
-            s();
-          }, function(err){
-            //File Not Found
-            f();
-          });
-        }, function(err){
-          return handleError(err, f);
-        });
-      },
-      "cmsZipExists": function(){
-        //TODO WHERE WILL THE ZIP RESIDE IN THE BINARY?
-      },
-      "unzipCMS": function(){
-
-      },
-      "readFile": function(){
-
-      }
-    };
-
-    if(acts[p.act]){
-      return acts[p.act]();
-    } else {
-      return handleError("Invalid CMS File Manager Action Call", f);
-    }
-
-  };
-
   $fh.cms = {
+    /*
+     * Initialise CMS
+     *   s - success callback - funciton () {}
+     *   f - failure callback - function (error) {}
+     */
     init: function (s, f) {
       _cmsInitialising = true; //Immediately set the cms to initialising to block other calls
       return initialiseCMS(s, f);
     },
+
+    /*
+     * Update CMS from server
+     *   s - success callback - funciton () {}
+     *   f - failure callback - function (error) {}
+     */    
     updateAll: function (s, f) {
       return updateCMS({"allSections": true}, s, f);
+    },
+
+    /*     
+     * get CMS Field value
+     *   p - params - {"path": dot.seperated.path.section.field.name}
+     *   s - success callback - funciton (value) {}
+     *   f - failure callback - function (error) {}
+     *
+     * Function: $fh.cms.getField(params)
+
+     * Params:
+     *   path - dot separated name of section & field to return
+     * Response: 
+     *   Non Blocking. Returns requested field from CMS content as response
+     * Errors: 
+     *   No CMS
+     */           
+    getField: function(params, s, f){
+      alert('getField() called');
+      console.log("getField() called with params: ", params);
+      sanityCheckParams(params, {"path": true}, function(err){
+        if(err){
+          return handleError(err, f);
+        }
+
+        return searchForFieldValue(params, {}, s, f);
+      });
     }
   };
 
   $fh.cms2 = function(p, s, f){//Parameters, success, failure
-
-
     //TODO This init logic should be its own function
     //TODO Success and fail for init should be their own functions.
     if(!_cmsAvailable && !_cmsInitialising){ //CMS Not Available and not initialising, try and init cms
@@ -841,7 +696,6 @@
     }
 
     var acts = {
-
       "getField": function(){
         //Check getFieldParams
         //getFieldValue
@@ -853,7 +707,7 @@
             return handleError(err, f);
           }
 
-          return searchForFieldValue(params, s, {}, f);
+          return searchForFieldValue(params, {}, s, f);
         });
       },
       "getListSize": function(){
@@ -916,4 +770,209 @@
       });
     };
   };
+
+  var cmsJSONFileAvailable = function(cb){
+    $fh.__cmsFileManager({"act": "fileExists", "params": {"fileName": "fh-cms.js"}}, cb);//TODO fh-cms.js should be constant or config
+  };
+
+  var appCMSZipAvailable = function(cb){
+    $fh.__cmsFileManager({"act": "cmsZipExists"}, cb);
+  };
+
+  var unzipCMSData = function(cb){
+    $fh.__cmsFileManager({"act": "unzipCMS"}, cb);
+  };
+
+  var writeCMSDataToFile = function(cb){
+    $fh.__cmsFileManager({"act": "writeFile", "params": {"fileName": "fh-cms.js"}}, cb);
+  };
+
+  //TODO FileData Should not all reside in RAM -- optimise
+  var readCMSJSON = function(cb){
+    $fh.__cmsFileManager({"act": "readFile", "params": {"fileName": "fh-cms.js"}}, function(err, cmsJSONString){
+      if (err) {
+        return cb(err);
+      }
+      if (!fileData) {
+        return cb("No Data Read");
+      }
+
+      var cmsJSON = JSON.parse(cmsJSONString); //Parsing CMS Data.
+      cb(undefined, cmsJSON);
+    });//TODO fh-cms.js should be constant or config
+  };
+
+  var cmsFilesUpdate = function(fileChanges, cb){
+    //Need to process any changes to files made by updating the cms.
+    //Files are either added or deleted.
+    var filesNotInFileSystem = []; //Array of file hashes not in storage
+    var sectionChanges;
+    var deletedFileChanges = fileChanges.deleted;
+    var addedFileChanges = fileChanges.added;
+    var fileChange;
+    var fileHash;
+    var sectionHash;
+    var fileEntryIndex;
+    var fileHashes;
+    var filesCheckedSuccess;
+
+    for(sectionHash in addedFileChanges){
+      sectionChanges = addedFileChanges[sectionHash];
+      for(fileChange in sectionChanges){
+        for(fileHash in fileChange){ //fileChange[fileHash] is the path of the file.
+          if(_cmsData.fileStorage[fileHash]){
+            _cmsData.fileStorage[fileHash].push(fileChange[fileHash]);
+          } else { //File does not exist in file system. Need to download it.
+            _cmsData.fileStorage[fileHash] = [];
+            _cmsData.fileStorage[fileHash].push(fileChange[fileHash]);
+            filesNotInFileSystem.push(fileHash);
+          }
+
+        }
+      }
+    }
+
+    for (sectionHash in deletedFileChanges){ //TODO duplicated, can make a function out of this.
+      sectionChanges = deletedFileChanges[sectionHash];
+      for (fileChange in sectionChanges){
+        for (fileHash in fileChange){
+          fileEntryIndex = _cmsData.fileStorage[fileHash].indexOf(fileChange[fileHash]); // Just an array of string so I can compare.
+          _cmsData.fileStorage[fileHash].splice(fileEntryIndex, 1);
+        }
+      }
+    }
+
+    //All changes to file storage complete. Need to check if any files have no more references.
+    fileHashes = _cmsData.fileStorage;
+    filesCheckedSuccess = {};
+    for(fileHash in fileHashes){
+      if(fileHashes[fileHash].length === 0){
+        $fh.__cmsFileManager({"act": "delete", "params": {"fileHash": fileHash}}, function (err) {
+          if (!err) {
+            filesCheckedSuccess = true;
+          } else {
+            filesCheckedSuccess[fileHash] = err;
+          }
+        });
+      }
+    }
+
+    var filesCheckedInterval = setInterval(function(){
+      var fileCheckHash;
+      if(filesCheckedSuccess.length === fileHashes.length){
+        //Finished -- check for success
+        for(fileCheckHash in filesCheckedSuccess){
+          if(filesCheckedSuccess[fileCheckHash] !== true){
+            clearInterval(filesCheckedInterval);
+            return cb(filesCheckedSuccess[fileCheckHash]);// Error, return the error
+          }
+        }
+
+        //All good, now download any files needed
+        clearInterval(filesCheckedInterval);
+        downloadMissingFiles(filesNotInFileSystem, cb);
+      }
+    }, 500); //TODO Set interval as config option.
+  };
+
+  var downloadMissingFiles = function(missingFilesHashes, cb){
+    var missingFilesCompleted = {};
+    var missingFileHash;
+
+    for(missingFileHash in missingFilesHashes){
+      $fh.__cmsFileManager({"act" : "download", "params": {"hash" : missingFileHash}}, function(err){
+        if (!err) {
+          missingFilesCompleted[missingFileHash] = true;
+        } else {
+          missingFilesCompleted[missingFileHash] = err;
+        }
+      });
+    }
+
+    var downloadedFilesInterval = setInterval(function(){
+      if(missingFilesCompleted.length === missingFilesHashes.length){
+        for(var downloadResult in missingFilesCompleted){
+          if(missingFilesCompleted[downloadResult] !== true){
+            clearInterval(downloadedFilesInterval);
+            return cb(missingFilesCompleted[downloadResult]);
+          }
+        }
+
+        //No errors,
+        clearInterval(downloadedFilesInterval);
+        return cb(undefined);
+      }
+
+    }, 500);
+
+  };
+
+  /*
+   * __cmsFileManager (params, cb)
+   * 
+   *  params:
+   *      {
+   *         act: actionName (delete|download|fileExists|cmsZipExists|unzipCMS|writeFile|readFile)
+   *         params:
+   *             action specific params
+   *             delete: {"fileHash": fileHash}
+   *             download: {"hash" : missingFileHash}}
+   *             fileExists: {"fileName": "fh-cms.js"}
+   *             cmsZipExists: none
+   *             unzipCMS: none
+   *             writeFile: {"fileName": "fh-cms.js"}
+   *             readFile: {"fileName": "fh-cms.js"}
+   *      }
+   *
+   */
+  $fh.__cmsFileManager = function(p, s, f){
+
+    var cmsRootFolder = "FHCMSData"; //Setting the folder for the cms files on device.
+
+    if(!_cmsAvailable){
+      return handleError("CMS Not Available", f);
+    }
+
+    var acts = {
+      "download": function(){
+
+      },
+      "delete": function(){
+
+      },
+      "clean": function(){
+
+      },
+      "fileExists": function(){
+        _cmsFileSystem.root.getDirectory(cmsRootFolder, {"create": true}, function(parent){
+          parent.getFile(p.fileName, {"create" : false}, function(fileFound){
+            s();
+          }, function(err){
+            //File Not Found
+            f();
+          });
+        }, function(err){
+          return handleError(err, f);
+        });
+      },
+      "cmsZipExists": function(){
+        //TODO WHERE WILL THE ZIP RESIDE IN THE BINARY?
+      },
+      "unzipCMS": function(){
+
+      },
+      "readFile": function(){
+
+      }
+    };
+
+    if(acts[p.act]){
+      return acts[p.act]();
+    } else {
+      return handleError("Invalid CMS File Manager Action Call", f);
+    }
+
+  };
+
+
 })(this);
