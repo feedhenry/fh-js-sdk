@@ -11,9 +11,9 @@
     }
   };
 
-  var CMS_API_GETALL     = "/cloud/getAll";      // "/mbaas/cms/getAll";
+  var CMS_API_GETALL     = "/mbaas/cms/sections";  // "/mbaas/cms/getAll";
   var CMS_API_GETSECTION = "/cloud/getSection";  // "/mbaas/cms/section/get";
-  var CMS_API_GETFIELD   = "/cloud/getField&fieldid=";   // "/mbaas/cms/field/";
+  var CMS_API_GETFIELD   = "/cloud/getField?fieldid=";   // "/mbaas/cms/field/";
 
   var CMS_FIELD_TYPES_TEXT = ['string', 'paragraph'];
   var CMS_FIELD_TYPES_FILE = ['image', 'file'];
@@ -148,12 +148,12 @@
   var getFieldValue = function(field, fieldOptions, cb){
     var retErr;
     var retVal;
-    if (CMS_FIELD_TYPES_TEXT.indexOf(field.fieldType) >=0 ) {
+    if (CMS_FIELD_TYPES_TEXT.indexOf(field.type) >=0 ) {
       retVal = field.value;
-    } else if (CMS_FIELD_TYPES_FILE.indexOf(field.fieldType) >= 0) {
+    } else if (CMS_FIELD_TYPES_FILE.indexOf(field.type) >= 0) {
       retVal = constructGetFieldURL(field.binaryURL);
     } else {
-      retErr = "Invalid field type: " + field.fieldType;
+      retErr = "Invalid field type: " + field.type;
     }
     return cb(retErr, retVal);
   };
@@ -165,9 +165,12 @@
       return cb(undefined, _cmsData.cms.sections);
     }
 
+    console.log('findCMSSection() - sections: ', _cmsData.cms.sections);
     var foundSectionArray = _cmsData.cms.sections.filter(function(sectionEntry){
       return sectionEntry.name === sectionName;
     });
+
+    console.log('findCMSSection() - foundSectionArray: ', foundSectionArray);
 
     if(foundSectionArray.length === 1){//TODO duplication here, abstract
       return cb(undefined, foundSectionArray[0]);
@@ -179,10 +182,12 @@
   };
 
   var findCMSField = function(section, fieldName, fieldOptions, cb){
-
+    console.log("findCMSField() - fields: ", section.fields);
     var foundFieldArray = section.fields.filter(function(fieldEntry){
-      return fieldEntry.fieldName === fieldName;
+      return fieldEntry.name === fieldName;
     });
+
+    console.log("findCMSField() - foundFieldArray: ", foundFieldArray);
 
     if(foundFieldArray.length === 0) {
       return cb("No field matching " + fieldName + " found.");
@@ -199,19 +204,19 @@
   };
 
   var findCMSFieldList = function (field, fieldOptions, cb) {
-    if(field.fieldType !== "list"){
+    if(field.type !== "list"){
       return cb("The field " + fieldName + " is not a list.");
     } else {
       // do list stuff
       if(fieldOptions.size){
-        return cb(undefined, field.listData.length);
+        return cb(undefined, field.data.length);
       } else {
-        if(fieldOptions.index >= field.listData.length){
+        if(fieldOptions.index >= field.data.length){
           return cb("Index " + fieldOptions.index + " out of bounds.");
         }
         //Have a list index and fieldName needed,
         //Get the listOptions --> Find the field in the fieldTypes
-        var foundListFieldTypeArray = field.fieldTypes.filter(function(listFieldTypeEntry){
+        var foundListFieldTypeArray = field.fields.filter(function(listFieldTypeEntry){
           return listFieldTypeEntry.name === fieldOptions.listFieldName;
         });
 
@@ -222,8 +227,8 @@
           //Now want the actual list data
           //TODO Assuming list items are in order. This may not be true.
           var listFieldData = {};
-          listFieldData.value = field.listData[fieldOptions.index][fieldOptions.listFieldName];
-          listFieldData.fieldType = listFieldType;
+          listFieldData.value = field.data[fieldOptions.index][fieldOptions.listFieldName];
+          listFieldData.type = listFieldType;
 
           return cb(undefined, listFieldData);
 
@@ -262,6 +267,8 @@
       if(err) {
         return handleError(err, f);
       }
+
+      console.log("searchForFieldValue() - found section: ", foundSection);
 
       //Have the section, now find the field in the section
       findCMSField(foundSection, fieldOfInterestName, findCMSFieldOptions, function(err, foundField){
@@ -370,6 +377,11 @@
   var sendUpdateRequest = function(options, cmsSectionHashes, cb){
     //Now, need to send the hashes to the /cms/mbaas to check for updates
 
+    if ("function" === typeof cmsSectionHashes) {
+      cb = cmsSectionHashes;
+      cmsSectionHashes = {};
+    }
+
     var payload = JSON.stringify(cmsSectionHashes);
 
     var path = getCloudUrlPrefix();
@@ -384,9 +396,9 @@
 
     $fh.__ajax({
       "url": path,
-      "type": "POST",
+      "type": "GET",
       "contentType": "application/json",
-      "data": JSON.stringify(payload),
+//TODO      "data": JSON.stringify(payload),
       "timeout": $fh.app_props.timeout || $fh.fh_timeout,
       "success": function(data) {
         console.log(typeof data);
@@ -541,7 +553,7 @@
 
   var processCMSUpdateResponse = function(jsonResponse, cb){
     //Right, response object contains a array of sections response.cms.iterate ---
-    var updatedSectionArray = jsonResponse.cms;
+    var updatedSectionArray = jsonResponse.sections; // TODO  .cms;
     var fileChanges = {"added": [], "deleted": []};
 
     var processors = {
@@ -580,20 +592,23 @@
       }
     };
 
+    console.log("processCMSUpdateResponse() - processing response: ", updatedSectionArray);
     async.series([
-      async.apply(sanityCheckUpdateResponse, jsonResponse),
+      //TODO async.apply(sanityCheckUpdateResponse, jsonResponse),
       async.apply(async.eachSeries, updatedSectionArray,
         function(updatedSectionEntry, cb) {
+          console.log("processCMSUpdateResponse() - processing: ", updatedSectionEntry);
           if (processors[updatedSectionEntry.updateFlag]) {
             processors[updatedSectionEntry.updateFlag](updatedSectionEntry, cb);
           } else {
-            return cb(new Error("Invalid updateFlag"));
+            processors["added"](updatedSectionEntry, cb);   // TODO remove this when updateAll ith hashes implementer in server
+            //TODO return cb(new Error("Invalid updateFlag"));
           }
         }
       )
     ], function (err) {
         //No errors, update worked
-        console.log('avoid handling updated files');
+        console.log('avoid handling updated files, err: ', err);
         return cb(err);
         return cmsFilesUpdate(fileChanges, cb);//Finished update for file structure, now need to update the file storage.
     });
@@ -611,7 +626,14 @@
 
     _cmsUpdateInProgress = true; //queueing calls until data is updated.
     async.waterfall([
-      async.apply(buildCMSHashList, options),
+      function (cb) {  // TODO not currently sending the hash list for updates, initialising instead
+        // when server-side updated replane with:    async.apply(buildCMSHashList, options),
+        initialiseCMS(function() {
+          return cb(undefined, {});
+        }, function () {
+          return cb("failure initialising");
+        });
+      },
       async.apply(sendUpdateRequest, options),
       processCMSUpdateResponse
     ], function (err) {
@@ -625,6 +647,10 @@
     });
   };
 
+  function doNothing() {
+    // this is the default callback function
+  }
+
   $fh.cms = {
     /*
      * Initialise CMS
@@ -633,6 +659,12 @@
      */
     init: function (s, f) {
       _cmsInitialising = true; //Immediately set the cms to initialising to block other calls
+      if (!f) {
+        f = doNothing;
+      }
+      if (!s) {
+        s = doNothing;
+      }
       return initialiseCMS(s, f);
     },
 
@@ -642,6 +674,12 @@
      *   f - failure callback - function (error) {}
      */    
     updateAll: function (s, f) {
+      if (!f) {
+        f = doNothing;
+      }
+      if (!s) {
+        s = doNothing;
+      }
       return updateCMS({"allSections": true}, s, f);
     },
 
@@ -661,6 +699,12 @@
      *   No CMS
      */           
     getField: function(params, s, f){
+      if (!f) {
+        f = doNothing;
+      }
+      if (!s) {
+        s = doNothing;
+      }
       alert('getField() called');
       console.log("getField() called with params: ", params);
       sanityCheckParams(params, {"path": true}, function(err){
@@ -670,7 +714,27 @@
 
         return searchForFieldValue(params, {}, s, f);
       });
-    }
+    },
+
+     "getListSize": function(params, s, f){
+        sanityCheckParams(params, {"path": true}, function(err){
+          if(err){
+            return handleError(err, f);
+          }
+
+          return searchForFieldValue(params, {"list": true, "size": true}, s, f);
+        });
+      },
+      "getListField": function(params, s, f){
+        sanityCheckParams(params, {"path": true, "index": true, "fieldName": true}, function(err){
+          if(err){
+            return handleError(err, f);
+          }
+
+          return searchForFieldValue(params, {"list": true}, s, f);
+        });
+      }
+
   };
 
   $fh.cms2 = function(p, s, f){//Parameters, success, failure
