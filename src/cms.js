@@ -51,7 +51,7 @@
   };
 
   var cmsInitSuccess = function(cmsData, success){
-    _cmsData = cmsData;
+    _cmsData = JSON.parse(JSON.stringify(cmsData));
     _cmsInitialising = false;
     _cmsReady(true);
     success();
@@ -148,12 +148,17 @@
   var getFieldValue = function(field, fieldOptions, cb){
     var retErr;
     var retVal;
-    if (CMS_FIELD_TYPES_TEXT.indexOf(field.type) >=0 ) {
-      retVal = field.value;
-    } else if (CMS_FIELD_TYPES_FILE.indexOf(field.type) >= 0) {
-      retVal = constructGetFieldURL(field.binaryURL);
+    if (fieldOptions.list) {
+      findCMSFieldList(field, fieldOptions, cb);
+      return;
     } else {
-      retErr = "Invalid field type: " + field.type;
+      if (CMS_FIELD_TYPES_TEXT.indexOf(field.type) >=0 ) {
+        retVal = field.value;
+      } else if (CMS_FIELD_TYPES_FILE.indexOf(field.type) >= 0) {
+        retVal = constructGetFieldURL(field.binaryURL);
+      } else {
+        retErr = "Invalid field type: " + field.type;
+      }
     }
     return cb(retErr, retVal);
   };
@@ -194,22 +199,22 @@
     } else if (foundFieldArray.length > 1) {
       return cb("Unexpected number of fields matching " + fieldName + " found. " + foundFieldArray.length);
     }  else {  // (foundFieldArray.length === 1)
-      if(fieldOptions.list){
-        findCMSFieldList(foundFieldArray[0], fieldOptions, cb);
-        return;
-      } else {
-        return cb(undefined, foundFieldArray[0]);
-      }
+      return cb(undefined, foundFieldArray[0]);
     }
   };
 
   var findCMSFieldList = function (field, fieldOptions, cb) {
+    console.log('findCMSFieldList() - field: ', field);
+    console.log('findCMSFieldList() - fieldOptions: ', fieldOptions);
+
     if(field.type !== "list"){
       return cb("The field " + fieldName + " is not a list.");
     } else {
       // do list stuff
-      if(fieldOptions.size){
+      if (fieldOptions.size) {
         return cb(undefined, field.data.length);
+      } else if (fieldOptions.wholeList) {
+        return cb(undefined, field.data);
       } else {
         if(fieldOptions.index >= field.data.length){
           return cb("Index " + fieldOptions.index + " out of bounds.");
@@ -217,25 +222,20 @@
         //Have a list index and fieldName needed,
         //Get the listOptions --> Find the field in the fieldTypes
         var foundListFieldTypeArray = field.fields.filter(function(listFieldTypeEntry){
-          return listFieldTypeEntry.name === fieldOptions.listFieldName;
+          console.log('checking: ', listFieldTypeEntry, ", against: ", fieldOptions);
+          return listFieldTypeEntry.name === fieldOptions.fieldName;
         });
 
         if(foundListFieldTypeArray.length === 1){
           //Found the list
           var listFieldType = foundListFieldTypeArray[0].type;
 
-          //Now want the actual list data
-          //TODO Assuming list items are in order. This may not be true.
-          var listFieldData = {};
-          listFieldData.value = field.data[fieldOptions.index][fieldOptions.listFieldName];
-          listFieldData.type = listFieldType;
-
-          return cb(undefined, listFieldData);
+          return cb(undefined, field.data[fieldOptions.index][fieldOptions.fieldName]);
 
         } else if(foundListFieldTypeArray.length === 0){
-          return cb("No list field matches the name " + fieldOptions.listFieldName);
+          return cb("No list field matches the name: " + fieldOptions.fieldName);
         } else if(foundListFieldTypeArray.length > 1) {
-          return cb("More than one list field matches the name " + fieldOptions.listFieldName);
+          return cb("More than one list field matches the name: " + fieldOptions.fieldName);
         }
       }         
     }
@@ -252,12 +252,15 @@
       findCMSFieldOptions.list = options.list;
     }
 
-    if(options.size){
+    if (options.size) {
       findCMSFieldOptions.size = options.size;
+    } else if (options.wholeList) {
+      findCMSFieldOptions.wholeList = options.wholeList;
     } else {
       findCMSFieldOptions.index = params.index;
-      findCMSFieldOptions.listFieldName = params.listFieldName; // The field within a list entry that user is interested in.
+      findCMSFieldOptions.fieldName = params.fieldName; // The field within a list entry that user is interested in.
     }
+
     //As sections are stored flat, only interested in the last entry of the array. section.section2.field
     var sectionOfInterestName = parseSection(pathArray);
     var fieldOfInterestName = parseField(pathArray);
@@ -301,7 +304,12 @@
     return "string" === typeof str;
   }
 
+  function isNumber(str) {
+    return "number" === typeof str;
+  }
+
   var sanityCheckParams = function(params, options, cb){
+    console.log('sanityCheckParams(): params: ', params, "options: ", options);
     if(options.path){
       if(!params.path){
         return cb("No path specified");
@@ -312,10 +320,10 @@
     }
 
     if(options.index){
-      if(!params.index){
+      if("undefined" === typeof params.index){
         return cb("No index specified.");
       }
-      if(!(Number.isNumber(params.index))){
+      if(!(isNumber(params.index))){
         return cb("Index must be a number.");
       }
     }
@@ -659,6 +667,7 @@
      */
     init: function (s, f) {
       _cmsInitialising = true; //Immediately set the cms to initialising to block other calls
+      console.log('Initialising mCMS');
       if (!f) {
         f = doNothing;
       }
@@ -705,7 +714,6 @@
       if (!s) {
         s = doNothing;
       }
-      alert('getField() called');
       console.log("getField() called with params: ", params);
       sanityCheckParams(params, {"path": true}, function(err){
         if(err){
@@ -716,25 +724,34 @@
       });
     },
 
-     "getListSize": function(params, s, f){
-        sanityCheckParams(params, {"path": true}, function(err){
-          if(err){
-            return handleError(err, f);
-          }
+    getList: function(params, s, f){
+      sanityCheckParams(params, {"path": true}, function(err){
+        if(err){
+          return handleError(err, f);
+        }
+        return searchForFieldValue(params, {"list": true, "wholeList": true}, s, f);
+      });
+    },
 
-          return searchForFieldValue(params, {"list": true, "size": true}, s, f);
-        });
-      },
-      "getListField": function(params, s, f){
-        sanityCheckParams(params, {"path": true, "index": true, "fieldName": true}, function(err){
-          if(err){
-            return handleError(err, f);
-          }
+    getListSize: function(params, s, f){
+      sanityCheckParams(params, {"path": true}, function(err){
+        if(err){
+          return handleError(err, f);
+        }
 
-          return searchForFieldValue(params, {"list": true}, s, f);
-        });
-      }
+        return searchForFieldValue(params, {"list": true, "size": true}, s, f);
+      });
+    },
 
+    getListField: function(params, s, f){
+      sanityCheckParams(params, {"path": true, "index": true, "fieldName": true}, function(err){
+        if(err){
+          return handleError(err, f);
+        }
+
+        return searchForFieldValue(params, {"list": true}, s, f);
+      });
+    }
   };
 
   $fh.cms2 = function(p, s, f){//Parameters, success, failure

@@ -5556,6 +5556,962 @@ Lawnchair.adapter('webkit-sqlite', (function() {
     }
   }
 })());
+/*global setImmediate: false, setTimeout: false, console: false */
+(function () {
+
+    var async = {};
+
+    // global on the server, window in the browser
+    var root, previous_async;
+
+    root = this;
+    if (root != null) {
+      previous_async = root.async;
+    }
+
+    async.noConflict = function () {
+        root.async = previous_async;
+        return async;
+    };
+
+    function only_once(fn) {
+        var called = false;
+        return function() {
+            if (called) throw new Error("Callback was already called.");
+            called = true;
+            fn.apply(root, arguments);
+        }
+    }
+
+    //// cross-browser compatiblity functions ////
+
+    var _each = function (arr, iterator) {
+        if (arr.forEach) {
+            return arr.forEach(iterator);
+        }
+        for (var i = 0; i < arr.length; i += 1) {
+            iterator(arr[i], i, arr);
+        }
+    };
+
+    var _map = function (arr, iterator) {
+        if (arr.map) {
+            return arr.map(iterator);
+        }
+        var results = [];
+        _each(arr, function (x, i, a) {
+            results.push(iterator(x, i, a));
+        });
+        return results;
+    };
+
+    var _reduce = function (arr, iterator, memo) {
+        if (arr.reduce) {
+            return arr.reduce(iterator, memo);
+        }
+        _each(arr, function (x, i, a) {
+            memo = iterator(memo, x, i, a);
+        });
+        return memo;
+    };
+
+    var _keys = function (obj) {
+        if (Object.keys) {
+            return Object.keys(obj);
+        }
+        var keys = [];
+        for (var k in obj) {
+            if (obj.hasOwnProperty(k)) {
+                keys.push(k);
+            }
+        }
+        return keys;
+    };
+
+    //// exported async module functions ////
+
+    //// nextTick implementation with browser-compatible fallback ////
+    if (typeof process === 'undefined' || !(process.nextTick)) {
+        if (typeof setImmediate === 'function') {
+            async.nextTick = function (fn) {
+                // not a direct alias for IE10 compatibility
+                setImmediate(fn);
+            };
+            async.setImmediate = async.nextTick;
+        }
+        else {
+            async.nextTick = function (fn) {
+                setTimeout(fn, 0);
+            };
+            async.setImmediate = async.nextTick;
+        }
+    }
+    else {
+        async.nextTick = process.nextTick;
+        if (typeof setImmediate !== 'undefined') {
+            async.setImmediate = setImmediate;
+        }
+        else {
+            async.setImmediate = async.nextTick;
+        }
+    }
+
+    async.each = function (arr, iterator, callback) {
+        callback = callback || function () {};
+        if (!arr.length) {
+            return callback();
+        }
+        var completed = 0;
+        _each(arr, function (x) {
+            iterator(x, only_once(function (err) {
+                if (err) {
+                    callback(err);
+                    callback = function () {};
+                }
+                else {
+                    completed += 1;
+                    if (completed >= arr.length) {
+                        callback(null);
+                    }
+                }
+            }));
+        });
+    };
+    async.forEach = async.each;
+
+    async.eachSeries = function (arr, iterator, callback) {
+        callback = callback || function () {};
+        if (!arr.length) {
+            return callback();
+        }
+        var completed = 0;
+        var iterate = function () {
+            iterator(arr[completed], function (err) {
+                if (err) {
+                    callback(err);
+                    callback = function () {};
+                }
+                else {
+                    completed += 1;
+                    if (completed >= arr.length) {
+                        callback(null);
+                    }
+                    else {
+                        iterate();
+                    }
+                }
+            });
+        };
+        iterate();
+    };
+    async.forEachSeries = async.eachSeries;
+
+    async.eachLimit = function (arr, limit, iterator, callback) {
+        var fn = _eachLimit(limit);
+        fn.apply(null, [arr, iterator, callback]);
+    };
+    async.forEachLimit = async.eachLimit;
+
+    var _eachLimit = function (limit) {
+
+        return function (arr, iterator, callback) {
+            callback = callback || function () {};
+            if (!arr.length || limit <= 0) {
+                return callback();
+            }
+            var completed = 0;
+            var started = 0;
+            var running = 0;
+
+            (function replenish () {
+                if (completed >= arr.length) {
+                    return callback();
+                }
+
+                while (running < limit && started < arr.length) {
+                    started += 1;
+                    running += 1;
+                    iterator(arr[started - 1], function (err) {
+                        if (err) {
+                            callback(err);
+                            callback = function () {};
+                        }
+                        else {
+                            completed += 1;
+                            running -= 1;
+                            if (completed >= arr.length) {
+                                callback();
+                            }
+                            else {
+                                replenish();
+                            }
+                        }
+                    });
+                }
+            })();
+        };
+    };
+
+
+    var doParallel = function (fn) {
+        return function () {
+            var args = Array.prototype.slice.call(arguments);
+            return fn.apply(null, [async.each].concat(args));
+        };
+    };
+    var doParallelLimit = function(limit, fn) {
+        return function () {
+            var args = Array.prototype.slice.call(arguments);
+            return fn.apply(null, [_eachLimit(limit)].concat(args));
+        };
+    };
+    var doSeries = function (fn) {
+        return function () {
+            var args = Array.prototype.slice.call(arguments);
+            return fn.apply(null, [async.eachSeries].concat(args));
+        };
+    };
+
+
+    var _asyncMap = function (eachfn, arr, iterator, callback) {
+        var results = [];
+        arr = _map(arr, function (x, i) {
+            return {index: i, value: x};
+        });
+        eachfn(arr, function (x, callback) {
+            iterator(x.value, function (err, v) {
+                results[x.index] = v;
+                callback(err);
+            });
+        }, function (err) {
+            callback(err, results);
+        });
+    };
+    async.map = doParallel(_asyncMap);
+    async.mapSeries = doSeries(_asyncMap);
+    async.mapLimit = function (arr, limit, iterator, callback) {
+        return _mapLimit(limit)(arr, iterator, callback);
+    };
+
+    var _mapLimit = function(limit) {
+        return doParallelLimit(limit, _asyncMap);
+    };
+
+    // reduce only has a series version, as doing reduce in parallel won't
+    // work in many situations.
+    async.reduce = function (arr, memo, iterator, callback) {
+        async.eachSeries(arr, function (x, callback) {
+            iterator(memo, x, function (err, v) {
+                memo = v;
+                callback(err);
+            });
+        }, function (err) {
+            callback(err, memo);
+        });
+    };
+    // inject alias
+    async.inject = async.reduce;
+    // foldl alias
+    async.foldl = async.reduce;
+
+    async.reduceRight = function (arr, memo, iterator, callback) {
+        var reversed = _map(arr, function (x) {
+            return x;
+        }).reverse();
+        async.reduce(reversed, memo, iterator, callback);
+    };
+    // foldr alias
+    async.foldr = async.reduceRight;
+
+    var _filter = function (eachfn, arr, iterator, callback) {
+        var results = [];
+        arr = _map(arr, function (x, i) {
+            return {index: i, value: x};
+        });
+        eachfn(arr, function (x, callback) {
+            iterator(x.value, function (v) {
+                if (v) {
+                    results.push(x);
+                }
+                callback();
+            });
+        }, function (err) {
+            callback(_map(results.sort(function (a, b) {
+                return a.index - b.index;
+            }), function (x) {
+                return x.value;
+            }));
+        });
+    };
+    async.filter = doParallel(_filter);
+    async.filterSeries = doSeries(_filter);
+    // select alias
+    async.select = async.filter;
+    async.selectSeries = async.filterSeries;
+
+    var _reject = function (eachfn, arr, iterator, callback) {
+        var results = [];
+        arr = _map(arr, function (x, i) {
+            return {index: i, value: x};
+        });
+        eachfn(arr, function (x, callback) {
+            iterator(x.value, function (v) {
+                if (!v) {
+                    results.push(x);
+                }
+                callback();
+            });
+        }, function (err) {
+            callback(_map(results.sort(function (a, b) {
+                return a.index - b.index;
+            }), function (x) {
+                return x.value;
+            }));
+        });
+    };
+    async.reject = doParallel(_reject);
+    async.rejectSeries = doSeries(_reject);
+
+    var _detect = function (eachfn, arr, iterator, main_callback) {
+        eachfn(arr, function (x, callback) {
+            iterator(x, function (result) {
+                if (result) {
+                    main_callback(x);
+                    main_callback = function () {};
+                }
+                else {
+                    callback();
+                }
+            });
+        }, function (err) {
+            main_callback();
+        });
+    };
+    async.detect = doParallel(_detect);
+    async.detectSeries = doSeries(_detect);
+
+    async.some = function (arr, iterator, main_callback) {
+        async.each(arr, function (x, callback) {
+            iterator(x, function (v) {
+                if (v) {
+                    main_callback(true);
+                    main_callback = function () {};
+                }
+                callback();
+            });
+        }, function (err) {
+            main_callback(false);
+        });
+    };
+    // any alias
+    async.any = async.some;
+
+    async.every = function (arr, iterator, main_callback) {
+        async.each(arr, function (x, callback) {
+            iterator(x, function (v) {
+                if (!v) {
+                    main_callback(false);
+                    main_callback = function () {};
+                }
+                callback();
+            });
+        }, function (err) {
+            main_callback(true);
+        });
+    };
+    // all alias
+    async.all = async.every;
+
+    async.sortBy = function (arr, iterator, callback) {
+        async.map(arr, function (x, callback) {
+            iterator(x, function (err, criteria) {
+                if (err) {
+                    callback(err);
+                }
+                else {
+                    callback(null, {value: x, criteria: criteria});
+                }
+            });
+        }, function (err, results) {
+            if (err) {
+                return callback(err);
+            }
+            else {
+                var fn = function (left, right) {
+                    var a = left.criteria, b = right.criteria;
+                    return a < b ? -1 : a > b ? 1 : 0;
+                };
+                callback(null, _map(results.sort(fn), function (x) {
+                    return x.value;
+                }));
+            }
+        });
+    };
+
+    async.auto = function (tasks, callback) {
+        callback = callback || function () {};
+        var keys = _keys(tasks);
+        if (!keys.length) {
+            return callback(null);
+        }
+
+        var results = {};
+
+        var listeners = [];
+        var addListener = function (fn) {
+            listeners.unshift(fn);
+        };
+        var removeListener = function (fn) {
+            for (var i = 0; i < listeners.length; i += 1) {
+                if (listeners[i] === fn) {
+                    listeners.splice(i, 1);
+                    return;
+                }
+            }
+        };
+        var taskComplete = function () {
+            _each(listeners.slice(0), function (fn) {
+                fn();
+            });
+        };
+
+        addListener(function () {
+            if (_keys(results).length === keys.length) {
+                callback(null, results);
+                callback = function () {};
+            }
+        });
+
+        _each(keys, function (k) {
+            var task = (tasks[k] instanceof Function) ? [tasks[k]]: tasks[k];
+            var taskCallback = function (err) {
+                var args = Array.prototype.slice.call(arguments, 1);
+                if (args.length <= 1) {
+                    args = args[0];
+                }
+                if (err) {
+                    var safeResults = {};
+                    _each(_keys(results), function(rkey) {
+                        safeResults[rkey] = results[rkey];
+                    });
+                    safeResults[k] = args;
+                    callback(err, safeResults);
+                    // stop subsequent errors hitting callback multiple times
+                    callback = function () {};
+                }
+                else {
+                    results[k] = args;
+                    async.setImmediate(taskComplete);
+                }
+            };
+            var requires = task.slice(0, Math.abs(task.length - 1)) || [];
+            var ready = function () {
+                return _reduce(requires, function (a, x) {
+                    return (a && results.hasOwnProperty(x));
+                }, true) && !results.hasOwnProperty(k);
+            };
+            if (ready()) {
+                task[task.length - 1](taskCallback, results);
+            }
+            else {
+                var listener = function () {
+                    if (ready()) {
+                        removeListener(listener);
+                        task[task.length - 1](taskCallback, results);
+                    }
+                };
+                addListener(listener);
+            }
+        });
+    };
+
+    async.waterfall = function (tasks, callback) {
+        callback = callback || function () {};
+        if (tasks.constructor !== Array) {
+          var err = new Error('First argument to waterfall must be an array of functions');
+          return callback(err);
+        }
+        if (!tasks.length) {
+            return callback();
+        }
+        var wrapIterator = function (iterator) {
+            return function (err) {
+                if (err) {
+                    callback.apply(null, arguments);
+                    callback = function () {};
+                }
+                else {
+                    var args = Array.prototype.slice.call(arguments, 1);
+                    var next = iterator.next();
+                    if (next) {
+                        args.push(wrapIterator(next));
+                    }
+                    else {
+                        args.push(callback);
+                    }
+                    async.setImmediate(function () {
+                        iterator.apply(null, args);
+                    });
+                }
+            };
+        };
+        wrapIterator(async.iterator(tasks))();
+    };
+
+    var _parallel = function(eachfn, tasks, callback) {
+        callback = callback || function () {};
+        if (tasks.constructor === Array) {
+            eachfn.map(tasks, function (fn, callback) {
+                if (fn) {
+                    fn(function (err) {
+                        var args = Array.prototype.slice.call(arguments, 1);
+                        if (args.length <= 1) {
+                            args = args[0];
+                        }
+                        callback.call(null, err, args);
+                    });
+                }
+            }, callback);
+        }
+        else {
+            var results = {};
+            eachfn.each(_keys(tasks), function (k, callback) {
+                tasks[k](function (err) {
+                    var args = Array.prototype.slice.call(arguments, 1);
+                    if (args.length <= 1) {
+                        args = args[0];
+                    }
+                    results[k] = args;
+                    callback(err);
+                });
+            }, function (err) {
+                callback(err, results);
+            });
+        }
+    };
+
+    async.parallel = function (tasks, callback) {
+        _parallel({ map: async.map, each: async.each }, tasks, callback);
+    };
+
+    async.parallelLimit = function(tasks, limit, callback) {
+        _parallel({ map: _mapLimit(limit), each: _eachLimit(limit) }, tasks, callback);
+    };
+
+    async.series = function (tasks, callback) {
+        callback = callback || function () {};
+        if (tasks.constructor === Array) {
+            async.mapSeries(tasks, function (fn, callback) {
+                if (fn) {
+                    fn(function (err) {
+                        var args = Array.prototype.slice.call(arguments, 1);
+                        if (args.length <= 1) {
+                            args = args[0];
+                        }
+                        callback.call(null, err, args);
+                    });
+                }
+            }, callback);
+        }
+        else {
+            var results = {};
+            async.eachSeries(_keys(tasks), function (k, callback) {
+                tasks[k](function (err) {
+                    var args = Array.prototype.slice.call(arguments, 1);
+                    if (args.length <= 1) {
+                        args = args[0];
+                    }
+                    results[k] = args;
+                    callback(err);
+                });
+            }, function (err) {
+                callback(err, results);
+            });
+        }
+    };
+
+    async.iterator = function (tasks) {
+        var makeCallback = function (index) {
+            var fn = function () {
+                if (tasks.length) {
+                    tasks[index].apply(null, arguments);
+                }
+                return fn.next();
+            };
+            fn.next = function () {
+                return (index < tasks.length - 1) ? makeCallback(index + 1): null;
+            };
+            return fn;
+        };
+        return makeCallback(0);
+    };
+
+    async.apply = function (fn) {
+        var args = Array.prototype.slice.call(arguments, 1);
+        return function () {
+            return fn.apply(
+                null, args.concat(Array.prototype.slice.call(arguments))
+            );
+        };
+    };
+
+    var _concat = function (eachfn, arr, fn, callback) {
+        var r = [];
+        eachfn(arr, function (x, cb) {
+            fn(x, function (err, y) {
+                r = r.concat(y || []);
+                cb(err);
+            });
+        }, function (err) {
+            callback(err, r);
+        });
+    };
+    async.concat = doParallel(_concat);
+    async.concatSeries = doSeries(_concat);
+
+    async.whilst = function (test, iterator, callback) {
+        if (test()) {
+            iterator(function (err) {
+                if (err) {
+                    return callback(err);
+                }
+                async.whilst(test, iterator, callback);
+            });
+        }
+        else {
+            callback();
+        }
+    };
+
+    async.doWhilst = function (iterator, test, callback) {
+        iterator(function (err) {
+            if (err) {
+                return callback(err);
+            }
+            if (test()) {
+                async.doWhilst(iterator, test, callback);
+            }
+            else {
+                callback();
+            }
+        });
+    };
+
+    async.until = function (test, iterator, callback) {
+        if (!test()) {
+            iterator(function (err) {
+                if (err) {
+                    return callback(err);
+                }
+                async.until(test, iterator, callback);
+            });
+        }
+        else {
+            callback();
+        }
+    };
+
+    async.doUntil = function (iterator, test, callback) {
+        iterator(function (err) {
+            if (err) {
+                return callback(err);
+            }
+            if (!test()) {
+                async.doUntil(iterator, test, callback);
+            }
+            else {
+                callback();
+            }
+        });
+    };
+
+    async.queue = function (worker, concurrency) {
+        if (concurrency === undefined) {
+            concurrency = 1;
+        }
+        function _insert(q, data, pos, callback) {
+          if(data.constructor !== Array) {
+              data = [data];
+          }
+          _each(data, function(task) {
+              var item = {
+                  data: task,
+                  callback: typeof callback === 'function' ? callback : null
+              };
+
+              if (pos) {
+                q.tasks.unshift(item);
+              } else {
+                q.tasks.push(item);
+              }
+
+              if (q.saturated && q.tasks.length === concurrency) {
+                  q.saturated();
+              }
+              async.setImmediate(q.process);
+          });
+        }
+
+        var workers = 0;
+        var q = {
+            tasks: [],
+            concurrency: concurrency,
+            saturated: null,
+            empty: null,
+            drain: null,
+            push: function (data, callback) {
+              _insert(q, data, false, callback);
+            },
+            unshift: function (data, callback) {
+              _insert(q, data, true, callback);
+            },
+            process: function () {
+                if (workers < q.concurrency && q.tasks.length) {
+                    var task = q.tasks.shift();
+                    if (q.empty && q.tasks.length === 0) {
+                        q.empty();
+                    }
+                    workers += 1;
+                    var next = function () {
+                        workers -= 1;
+                        if (task.callback) {
+                            task.callback.apply(task, arguments);
+                        }
+                        if (q.drain && q.tasks.length + workers === 0) {
+                            q.drain();
+                        }
+                        q.process();
+                    };
+                    var cb = only_once(next);
+                    worker(task.data, cb);
+                }
+            },
+            length: function () {
+                return q.tasks.length;
+            },
+            running: function () {
+                return workers;
+            }
+        };
+        return q;
+    };
+
+    async.cargo = function (worker, payload) {
+        var working     = false,
+            tasks       = [];
+
+        var cargo = {
+            tasks: tasks,
+            payload: payload,
+            saturated: null,
+            empty: null,
+            drain: null,
+            push: function (data, callback) {
+                if(data.constructor !== Array) {
+                    data = [data];
+                }
+                _each(data, function(task) {
+                    tasks.push({
+                        data: task,
+                        callback: typeof callback === 'function' ? callback : null
+                    });
+                    if (cargo.saturated && tasks.length === payload) {
+                        cargo.saturated();
+                    }
+                });
+                async.setImmediate(cargo.process);
+            },
+            process: function process() {
+                if (working) return;
+                if (tasks.length === 0) {
+                    if(cargo.drain) cargo.drain();
+                    return;
+                }
+
+                var ts = typeof payload === 'number'
+                            ? tasks.splice(0, payload)
+                            : tasks.splice(0);
+
+                var ds = _map(ts, function (task) {
+                    return task.data;
+                });
+
+                if(cargo.empty) cargo.empty();
+                working = true;
+                worker(ds, function () {
+                    working = false;
+
+                    var args = arguments;
+                    _each(ts, function (data) {
+                        if (data.callback) {
+                            data.callback.apply(null, args);
+                        }
+                    });
+
+                    process();
+                });
+            },
+            length: function () {
+                return tasks.length;
+            },
+            running: function () {
+                return working;
+            }
+        };
+        return cargo;
+    };
+
+    var _console_fn = function (name) {
+        return function (fn) {
+            var args = Array.prototype.slice.call(arguments, 1);
+            fn.apply(null, args.concat([function (err) {
+                var args = Array.prototype.slice.call(arguments, 1);
+                if (typeof console !== 'undefined') {
+                    if (err) {
+                        if (console.error) {
+                            console.error(err);
+                        }
+                    }
+                    else if (console[name]) {
+                        _each(args, function (x) {
+                            console[name](x);
+                        });
+                    }
+                }
+            }]));
+        };
+    };
+    async.log = _console_fn('log');
+    async.dir = _console_fn('dir');
+    /*async.info = _console_fn('info');
+    async.warn = _console_fn('warn');
+    async.error = _console_fn('error');*/
+
+    async.memoize = function (fn, hasher) {
+        var memo = {};
+        var queues = {};
+        hasher = hasher || function (x) {
+            return x;
+        };
+        var memoized = function () {
+            var args = Array.prototype.slice.call(arguments);
+            var callback = args.pop();
+            var key = hasher.apply(null, args);
+            if (key in memo) {
+                callback.apply(null, memo[key]);
+            }
+            else if (key in queues) {
+                queues[key].push(callback);
+            }
+            else {
+                queues[key] = [callback];
+                fn.apply(null, args.concat([function () {
+                    memo[key] = arguments;
+                    var q = queues[key];
+                    delete queues[key];
+                    for (var i = 0, l = q.length; i < l; i++) {
+                      q[i].apply(null, arguments);
+                    }
+                }]));
+            }
+        };
+        memoized.memo = memo;
+        memoized.unmemoized = fn;
+        return memoized;
+    };
+
+    async.unmemoize = function (fn) {
+      return function () {
+        return (fn.unmemoized || fn).apply(null, arguments);
+      };
+    };
+
+    async.times = function (count, iterator, callback) {
+        var counter = [];
+        for (var i = 0; i < count; i++) {
+            counter.push(i);
+        }
+        return async.map(counter, iterator, callback);
+    };
+
+    async.timesSeries = function (count, iterator, callback) {
+        var counter = [];
+        for (var i = 0; i < count; i++) {
+            counter.push(i);
+        }
+        return async.mapSeries(counter, iterator, callback);
+    };
+
+    async.compose = function (/* functions... */) {
+        var fns = Array.prototype.reverse.call(arguments);
+        return function () {
+            var that = this;
+            var args = Array.prototype.slice.call(arguments);
+            var callback = args.pop();
+            async.reduce(fns, args, function (newargs, fn, cb) {
+                fn.apply(that, newargs.concat([function () {
+                    var err = arguments[0];
+                    var nextargs = Array.prototype.slice.call(arguments, 1);
+                    cb(err, nextargs);
+                }]))
+            },
+            function (err, results) {
+                callback.apply(that, [err].concat(results));
+            });
+        };
+    };
+
+    var _applyEach = function (eachfn, fns /*args...*/) {
+        var go = function () {
+            var that = this;
+            var args = Array.prototype.slice.call(arguments);
+            var callback = args.pop();
+            return eachfn(fns, function (fn, cb) {
+                fn.apply(that, args.concat([cb]));
+            },
+            callback);
+        };
+        if (arguments.length > 2) {
+            var args = Array.prototype.slice.call(arguments, 2);
+            return go.apply(this, args);
+        }
+        else {
+            return go;
+        }
+    };
+    async.applyEach = doParallel(_applyEach);
+    async.applyEachSeries = doSeries(_applyEach);
+
+    async.forever = function (fn, callback) {
+        function next(err) {
+            if (err) {
+                if (callback) {
+                    return callback(err);
+                }
+                throw err;
+            }
+            fn(next);
+        }
+        next();
+    };
+
+    // AMD / RequireJS
+    if (typeof define !== 'undefined' && define.amd) {
+        define([], function () {
+            return async;
+        });
+    }
+    // Node.js
+    else if (typeof module !== 'undefined' && module.exports) {
+        module.exports = async;
+    }
+    // included directly via <script> tag
+    else {
+        root.async = async;
+    }
+
+}());
+
 (function(root) {
   root.$fh = root.$fh || {};
   var $fh = root.$fh;
@@ -7604,4 +8560,1064 @@ $fh.sync = (function() {
     params.params = p;
     $fh.sec(params, s, f);
   };
+})(this);
+
+(function(root){
+  /*jshint curly: true, eqeqeq: true, eqnull: true, sub: true, loopfunc: true */
+  /* globals { browser: true } */
+
+  root.$fh = root.$fh || {};
+  var $fh = root.$fh;
+
+  var EMPTY_CMS = {
+    cms: {
+      sections: []
+    }
+  };
+
+  var CMS_API_GETALL     = "/mbaas/cms/sections";  // "/mbaas/cms/getAll";
+  var CMS_API_GETSECTION = "/cloud/getSection";  // "/mbaas/cms/section/get";
+  var CMS_API_GETFIELD   = "/cloud/getField?fieldid=";   // "/mbaas/cms/field/";
+
+  var CMS_FIELD_TYPES_TEXT = ['string', 'paragraph'];
+  var CMS_FIELD_TYPES_FILE = ['image', 'file'];
+
+  var _cmsAvailable = false;
+  var _cmsInitialising = false;
+  var _cmsData;
+  var _cmsReadyListeners = [];
+  var _cmsUpdateInProgress = false;
+  var _cmsFileSystem;
+  var _cmsFileSystemEnabled = false;
+
+  //Object initialised, need to initialise the cms
+
+  var handleError = function(err, failCallback){
+    if(!(failCallback && typeof(failCallback) === "function")){
+      failCallback = defaultFail;
+    }
+
+    return failCallback(err);
+  };
+
+  //When the CMS is ready, process the action queue.
+  var _cmsReady = function(success){
+
+    while(_cmsReadyListeners[0]){
+      var cms_fun = _cmsReadyListeners.shift();
+
+      if(success){
+        $fh.cms(cms_fun.callParameters, cms_fun.success, cms_fun.fail);
+      } else {
+        handleError("CMS Resume Failed.", cms_fun.fail);
+      }
+    }
+  };
+
+  var cmsInitSuccess = function(cmsData, success){
+    _cmsData = JSON.parse(JSON.stringify(cmsData));
+    _cmsInitialising = false;
+    _cmsReady(true);
+    success();
+  };
+
+  var cmsInitFailure = function(err, failureCallback){
+    _cmsInitialising = false;
+    _cmsReady(false); //CMS was not able to initialise so no calls to CMS should execute. Fail all calls.
+    return handleError(err, failureCallback);
+  };
+
+  var initialiseCMSFileSystem = function(cb){
+    // request the persistent file system
+    window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function(fileSystem){
+      _cmsFileSystem = fileSystem;
+      return cb();
+    }, function(failEvent){
+      return cb("Failed to initialise file system" + failEvent.target.error.code);
+    });
+  };
+
+  var initialiseCMS = function (success, failure) {
+    console.log("initialiseCMS() begin");
+    _cmsInitialising = true;
+    if(isCordovaOrPhonegapWindow()){
+      _csmFileSystemEnabled = true;
+    }
+
+    console.log("initialiseCMS() _cmsFileSystemEnabled:", _cmsFileSystemEnabled);
+    if (_cmsFileSystemEnabled) {
+      async.waterfall([
+        initialiseCMSFileSystem,
+        cmsJSONFileAvailable,
+        function(exists, cb) {
+          if(exists){
+            readCMSJSON(cb);
+          } else {
+            async.waterfall([
+              appCMSZipAvailable,
+              function (exists, cb) {
+                if (exists) {
+                  unzipCMSData(cb);
+                } else {
+                  return cb("No CMS Data Available.", failure);
+                }
+              }
+            ], function (err, cmsData) {
+              return cb(err, cmsData);
+            });
+          }
+        }
+      ], function (err, cmsData) {
+        if(err) {
+          return cmsInitFailure(err, failure);
+        } else {
+          return cmsInitSuccess(cmsData, success);
+        }
+      });  
+    } else {  // no data persisted on filesystem, so will do full refresh
+      console.log("initialiseCMS() about to call cmsInitSuccess()");
+      return cmsInitSuccess(EMPTY_CMS, success);
+    }
+  };
+
+  var isCordovaOrPhonegapWindow = function(){
+    return (typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined");
+  };
+
+  //TODO move "." to config to allow for splitting using different character
+  var splitPathString = function(pathString){
+    return pathString.split(".");
+  };
+
+  //Parsing a section is always the second last element of the path array. section.section2.field
+  var parseSection = function(sectionPathArray){
+    return sectionPathArray[sectionPathArray.length - 2]; //indexing from 0 and second last.
+  };
+
+  var parseField = function(sectionPathArray){
+    return sectionPathArray[sectionPathArray.length - 1]; //indexing from 0 and last.
+  };
+
+  var defaultFail = function(err){
+    if(console){
+      console.log(err);
+    }
+  };
+
+  var constructGetFieldURL = function (fieldid) {
+    return getCloudUrlPrefix() + CMS_API_GETFIELD + fieldid;
+  };
+
+  //TODO this will change with file handling
+  var getFieldValue = function(field, fieldOptions, cb){
+    var retErr;
+    var retVal;
+    if (fieldOptions.list) {
+      findCMSFieldList(field, fieldOptions, cb);
+      return;
+    } else {
+      if (CMS_FIELD_TYPES_TEXT.indexOf(field.type) >=0 ) {
+        retVal = field.value;
+      } else if (CMS_FIELD_TYPES_FILE.indexOf(field.type) >= 0) {
+        retVal = constructGetFieldURL(field.binaryURL);
+      } else {
+        retErr = "Invalid field type: " + field.type;
+      }
+    }
+    return cb(retErr, retVal);
+  };
+
+  //TODO Needs some optimisation to avoid constantly traversing the cms structure. SectionName possibly not unique so change to hash
+  var findCMSSection = function(sectionName, options, cb){
+
+    if(options.findAllSections){// Just want all of the sections
+      return cb(undefined, _cmsData.cms.sections);
+    }
+
+    console.log('findCMSSection() - sections: ', _cmsData.cms.sections);
+    var foundSectionArray = _cmsData.cms.sections.filter(function(sectionEntry){
+      return sectionEntry.name === sectionName;
+    });
+
+    console.log('findCMSSection() - foundSectionArray: ', foundSectionArray);
+
+    if(foundSectionArray.length === 1){//TODO duplication here, abstract
+      return cb(undefined, foundSectionArray[0]);
+    } else if(foundSectionArray.length === 0){
+      return cb("No section matching " + sectionName + " found.");
+    } else {
+      return cb("Unexpected number of sections matching " + sectionName + " found.");
+    }
+  };
+
+  var findCMSField = function(section, fieldName, fieldOptions, cb){
+    console.log("findCMSField() - fields: ", section.fields);
+    var foundFieldArray = section.fields.filter(function(fieldEntry){
+      return fieldEntry.name === fieldName;
+    });
+
+    console.log("findCMSField() - foundFieldArray: ", foundFieldArray);
+
+    if(foundFieldArray.length === 0) {
+      return cb("No field matching " + fieldName + " found.");
+    } else if (foundFieldArray.length > 1) {
+      return cb("Unexpected number of fields matching " + fieldName + " found. " + foundFieldArray.length);
+    }  else {  // (foundFieldArray.length === 1)
+      return cb(undefined, foundFieldArray[0]);
+    }
+  };
+
+  var findCMSFieldList = function (field, fieldOptions, cb) {
+    console.log('findCMSFieldList() - field: ', field);
+    console.log('findCMSFieldList() - fieldOptions: ', fieldOptions);
+
+    if(field.type !== "list"){
+      return cb("The field " + fieldName + " is not a list.");
+    } else {
+      // do list stuff
+      if (fieldOptions.size) {
+        return cb(undefined, field.data.length);
+      } else if (fieldOptions.wholeList) {
+        return cb(undefined, field.data);
+      } else {
+        if(fieldOptions.index >= field.data.length){
+          return cb("Index " + fieldOptions.index + " out of bounds.");
+        }
+        //Have a list index and fieldName needed,
+        //Get the listOptions --> Find the field in the fieldTypes
+        var foundListFieldTypeArray = field.fields.filter(function(listFieldTypeEntry){
+          console.log('checking: ', listFieldTypeEntry, ", against: ", fieldOptions);
+          return listFieldTypeEntry.name === fieldOptions.fieldName;
+        });
+
+        if(foundListFieldTypeArray.length === 1){
+          //Found the list
+          var listFieldType = foundListFieldTypeArray[0].type;
+
+          return cb(undefined, field.data[fieldOptions.index][fieldOptions.fieldName]);
+
+        } else if(foundListFieldTypeArray.length === 0){
+          return cb("No list field matches the name: " + fieldOptions.fieldName);
+        } else if(foundListFieldTypeArray.length > 1) {
+          return cb("More than one list field matches the name: " + fieldOptions.fieldName);
+        }
+      }         
+    }
+  };
+
+  var searchForFieldValue = function(params, options, s, f){
+    //Correct Params are there, split the path string
+    var pathString = params.path;
+    var pathArray = splitPathString(pathString); //Paths are . separated section names. TODO Move "." to config to allow for different separators
+
+    var findCMSFieldOptions = {};
+
+    if(options.list){
+      findCMSFieldOptions.list = options.list;
+    }
+
+    if (options.size) {
+      findCMSFieldOptions.size = options.size;
+    } else if (options.wholeList) {
+      findCMSFieldOptions.wholeList = options.wholeList;
+    } else {
+      findCMSFieldOptions.index = params.index;
+      findCMSFieldOptions.fieldName = params.fieldName; // The field within a list entry that user is interested in.
+    }
+
+    //As sections are stored flat, only interested in the last entry of the array. section.section2.field
+    var sectionOfInterestName = parseSection(pathArray);
+    var fieldOfInterestName = parseField(pathArray);
+
+    //Now have the section name and field name of interest, search the cms sections for requested fields
+    findCMSSection(sectionOfInterestName, {}, function(err, foundSection){
+      if(err) {
+        return handleError(err, f);
+      }
+
+      console.log("searchForFieldValue() - found section: ", foundSection);
+
+      //Have the section, now find the field in the section
+      findCMSField(foundSection, fieldOfInterestName, findCMSFieldOptions, function(err, foundField){
+        if (err) {
+          return handleError(err, f);
+        }
+
+        //Have the field, now want the value of the field.
+        getFieldValue(foundField, findCMSFieldOptions, function(err, fieldValue){
+          if (err) {
+            return handleError(err, f);
+          }
+
+          return returnCMSValue(fieldValue, s);
+        });
+      });
+    });
+  };
+
+  //TODO This may change with file handling.
+  var returnCMSValue = function(value, successCallback){
+    if(successCallback && typeof(successCallback) === "function"){
+      successCallback(value);
+    } else {
+      return value;
+    }
+  };
+
+  function isString(str) {
+    return "string" === typeof str;
+  }
+
+  function isNumber(str) {
+    return "number" === typeof str;
+  }
+
+  var sanityCheckParams = function(params, options, cb){
+    console.log('sanityCheckParams(): params: ', params, "options: ", options);
+    if(options.path){
+      if(!params.path){
+        return cb("No path specified");
+      }
+      if(!(isString(params.path) && params.path.length > 3 && params.path.indexOf(".") !== -1)){ //Must exist, be at least 3 characters long and contain at least a single . TODO: REPLACE ". with constant"
+        return cb("Incorrect format for path");
+      }
+    }
+
+    if(options.index){
+      if("undefined" === typeof params.index){
+        return cb("No index specified.");
+      }
+      if(!(isNumber(params.index))){
+        return cb("Index must be a number.");
+      }
+    }
+
+    if(options.fieldName){
+      if(!params.fieldName){
+        return cb("No list field name specified.");
+      }
+      if(!(isString(params.fieldName) && params.fieldName.length > 0)){
+        return cb("List field name empty.");
+      }
+    }
+
+    //If it reaches this point, all is good with the params
+    cb();
+  };
+
+  var buildCMSHashList = function(options, cb){
+    //Building a JSON object to send to /mbaas
+
+    console.log('in buildCMSHashList: ');
+    var cmsUpdateHashList = {};
+
+    if(options.singleSection){
+      findCMSSection(options.sectionName, {}, function(err, foundSection){
+        if(err) {
+          return cb(err);
+        }
+        cmsUpdateHashList[foundSection.name] = foundSection.hash;
+        return cb(undefined, cmsUpdateHashList);
+      });
+    } else if(options.allSections) {
+      findCMSSection(undefined, {"findAllSections": true}, function(err, foundSections){
+        var i, l;
+        var sectionEntry;
+
+        for(i = 0, l = foundSections.length; i < l; i += 1){
+          sectionEntry = foundSections[i]; 
+          cmsUpdateHashList[sectionEntry.name] = sectionEntry.hash;
+        }
+        return cb(undefined, cmsUpdateHashList);
+      });
+
+    } else {
+      return cb("Invalid update option " + JSON.toString(options));
+    }
+  };
+
+  function getCloudUrlPrefix() {
+    var cloud_host = $fh.cloud_props.hosts.releaseCloudUrl;
+
+    if($fh.app_props.mode && $fh.app_props.mode.indexOf("dev") > -1){
+      cloud_host = $fh.cloud_props.hosts.debugCloudUrl;
+    }
+
+    return cloud_host;
+  }
+
+  var sendUpdateRequest = function(options, cmsSectionHashes, cb){
+    //Now, need to send the hashes to the /cms/mbaas to check for updates
+
+    if ("function" === typeof cmsSectionHashes) {
+      cb = cmsSectionHashes;
+      cmsSectionHashes = {};
+    }
+
+    var payload = JSON.stringify(cmsSectionHashes);
+
+    var path = getCloudUrlPrefix();
+
+    if(options.singleSection){
+      path += CMS_API_GETSECTION;
+    } else if(options.allSections){
+      path += CMS_API_GETALL;
+    } else {
+      return cb("Should either be updating a single or all sections.");
+    }
+
+    $fh.__ajax({
+      "url": path,
+      "type": "GET",
+      "contentType": "application/json",
+//TODO      "data": JSON.stringify(payload),
+      "timeout": $fh.app_props.timeout || $fh.fh_timeout,
+      "success": function(data) {
+        console.log(typeof data);
+        console.log(data);
+        return cb(undefined, data);
+      },
+      "error": function(req, statusText, error) {
+        return cb(error);
+      }
+    });
+  };
+
+  var sanityCheckUpdateResponse = function(jsonResponse, cb) {
+    var updatedSectionArray = jsonResponse.cms;
+
+    if(!(updatedSectionArray && Array.isArray(updatedSectionArray))){
+      return cb("Invalid update response. Aborting");
+    }
+
+    async.each(updatedSectionArray, function (updatedSectionEntry, cb) {
+      if(!(updatedSectionEntry.updateFlag && isString(updatedSectionEntry.updateFlag) && updatedSectionEntry.name && isString(updatedSectionEntry.name))) {
+        console.log("updatedSectionEntry", updatedSectionEntry);
+        return cb("Invalid update response fields. Aborting.");
+      }
+
+      //Check sections changed or deleted actually exist.
+      if(updatedSectionEntry.updateFlag === "changed" || updatedSectionEntry.updateFlag === "deleted"){
+        findCMSSection(updatedSectionEntry.name, {}, cb);
+      } else if(updatedSectionEntry.updateFlag === "added"){
+        findCMSSection(updatedSectionEntry.name, {}, function(err, section){
+          console.log("after find - err: ", err);
+          // should be a not found error from "find" so if no error, or if error not "no section found" then callback with error
+          if(!err){
+            return cb("Section " + updatedSectionEntry.name + " expected to be added. Should not exist. But it does.");
+          } else if(err.indexOf("No section matching") === -1){
+            return cb(err);
+          }
+          return cb();
+        });
+      } else {
+        return cb("Invalid Update Flag For Section " + updatedSectionEntry.name);
+      }
+    }, function (err) {
+      return cb(err);
+    });
+  };
+
+  var scanSectionForFiles = function(sectionToScan, cb){
+    //Need to find any file references in the section fields.
+    //for each field -- check type. If file or image then get fileHash
+
+    var sectionFiles = {};
+    sectionFiles[sectionToScan.hash] = [];
+    for(var field in sectionToScan.fields){
+      var fieldPath = sectionToScan.path + "." + field.name; //Field path === sectionPath.fieldName. (e.g. section1.section2.field1) TODO Abstract out.
+      if(field.type === "file" || field.type === "image"){
+        var fileEntry = {};
+        fileEntry[field.value] = fieldPath; //fileHash : fieldPath.
+        sectionFiles[sectionToScan.hash].push(fileEntry);
+      } else if(field.type === "list"){
+
+        //Go through each of the fields, check if any are files/images, then go through each of the entries and add to the list
+        var listFileEntries = [];
+        for(var listField in field.fields){
+          if(listField.type === "file" || listField.type === "image"){
+            listFileEntries.push(listField.name);
+          }
+        }
+
+        if(listFileEntries > 0){
+          for(var listFileEntry in listFileEntries){
+            for(var i = 0; i < field.data.length ; i++){
+              var listFieldPath = sectionToScan.path + "." + field.name + "." + String.toString(i) + "." + listFileEntry; //list entry paths are a combination of sectionPath.listName.index.fieldName. TODO Abstract
+              var listFile = {};
+              listFile[field.data[i][listFileEntry].value] = listFieldPath;
+              sectionFiles[sectionToScan.hash].push(listFile);
+            }
+          }
+        } else {
+          // None of the list entries are files -- DO nothing
+        }
+      } else {
+        //Not a file or image, do nothing
+      }
+    }
+
+    //blocking for loop no callbacks-- can return at end
+    cb(undefined, sectionFiles);
+  };
+
+  var processAddedSection = function(addedSection, cb){
+    //A new section will contain the entire field list of the section
+    //Insert new section
+    //Scan section for files
+    //Return file changes
+    insertCMSSection(addedSection, function(err){
+      if (err) {
+        return cb(err);
+      }
+
+      scanSectionForFiles(addedSection, cb);
+    });
+  };
+
+  var processDeletedSection = function(deletedSection, cb){
+    //A deleted section must be scanned for files before it is to be deleted.
+    //Return list of files to be deleted.
+
+    findCMSSection(deletedSection.name, {}, function(err, foundSection){
+      if (err) {
+        return cb(err);
+      }
+
+      scanSectionForFiles(foundSection, function(err, fileChanges){
+        if (err) {
+          return cb(err);
+        }
+
+        deleteCMSSection(deletedSection, function(err){
+          return cb(err, fileChanges);
+        });
+      });
+    });
+  };
+
+  var insertCMSSection = function(sectionToInsert, cb){
+    _cmsData.cms.sections.push(sectionToInsert);
+    return cb();
+  };
+
+  //Handy search feature for section Array.
+  Array.prototype.indexOfSection = function(sectionName){
+    for(var i = 0; i < this.length; i++){
+      if(this[i].name === sectionName){
+        return i;
+      }
+    }
+    return -1;
+  };
+
+  var deleteCMSSection = function(sectionToDelete, cb){
+    var indexOfSection = _cmsData.cms.sections.indexOfSection(sectionToDelete.name);
+
+    if(indexOfSection > -1){
+      //Found the index of the section
+      _cmsData.cms.sections.splice(indexOfSection, 1); // Just want to delete one object
+      return cb();
+    } else {
+      return cb("Section " + sectionToDelete.name + " does not exist");
+    }
+  };
+
+  var processCMSUpdateResponse = function(jsonResponse, cb){
+    //Right, response object contains a array of sections response.cms.iterate ---
+    var updatedSectionArray = jsonResponse.sections; // TODO  .cms;
+    var fileChanges = {"added": [], "deleted": []};
+
+    var processors = {
+      "changed": function (entry, cb) {
+        processDeletedSection(entry, function (err, delFileChanges) {
+          if (err) {
+            return cb(err);
+          }
+          processAddedSection(entry, function (err, addFileChanges) {
+            if(err) {
+              return cb(err);
+            }
+            fileChanges.added.push(addFileChanges);
+            fileChanges.deleted.push(delFileChanges);
+            return cb();
+          });
+        });
+      },
+      "added": function (entry, cb) {
+        processAddedSection(entry, function (err, addFileChanges) {
+          if (err) {
+            return cb(err);
+          }
+          fileChanges.added.push(addFileChanges);
+          return cb();
+        });
+      },
+      "deleted": function (entry, cb) {
+        processDeletedSection(entry, function (err, delFileChanges) {
+          if (err) {
+            return cb(err);
+          }
+          fileChanges.deleted.push(delFileChanges);
+          return cb();
+        });
+      }
+    };
+
+    console.log("processCMSUpdateResponse() - processing response: ", updatedSectionArray);
+    async.series([
+      //TODO async.apply(sanityCheckUpdateResponse, jsonResponse),
+      async.apply(async.eachSeries, updatedSectionArray,
+        function(updatedSectionEntry, cb) {
+          console.log("processCMSUpdateResponse() - processing: ", updatedSectionEntry);
+          if (processors[updatedSectionEntry.updateFlag]) {
+            processors[updatedSectionEntry.updateFlag](updatedSectionEntry, cb);
+          } else {
+            processors["added"](updatedSectionEntry, cb);   // TODO remove this when updateAll ith hashes implementer in server
+            //TODO return cb(new Error("Invalid updateFlag"));
+          }
+        }
+      )
+    ], function (err) {
+        //No errors, update worked
+        console.log('avoid handling updated files, err: ', err);
+        return cb(err);
+        return cmsFilesUpdate(fileChanges, cb);//Finished update for file structure, now need to update the file storage.
+    });
+  };
+
+  var cmsUpdateError = function(err, failCallback){ //TODO Similar to cmsInitFail, can integrate.
+    _cmsUpdateInProgress = false;
+    return handleError(err, failCallback);
+  };
+
+  var updateCMS = function(options, successCallback, failCallback){
+    //To update the cms, build hash list needed -- single section or all
+    //Make call to /mbaas/cms/getAll or /mbaas/cms/section/get depending on options
+    //process cmsUpdateResponse
+
+    _cmsUpdateInProgress = true; //queueing calls until data is updated.
+    async.waterfall([
+      function (cb) {  // TODO not currently sending the hash list for updates, initialising instead
+        // when server-side updated replane with:    async.apply(buildCMSHashList, options),
+        initialiseCMS(function() {
+          return cb(undefined, {});
+        }, function () {
+          return cb("failure initialising");
+        });
+      },
+      async.apply(sendUpdateRequest, options),
+      processCMSUpdateResponse
+    ], function (err) {
+      if (err) {
+        return cmsUpdateError(err, failCallback);
+      } else {
+        _cmsReady(true);
+        _cmsUpdateInProgress = false;
+        successCallback();
+      }
+    });
+  };
+
+  function doNothing() {
+    // this is the default callback function
+  }
+
+  $fh.cms = {
+    /*
+     * Initialise CMS
+     *   s - success callback - funciton () {}
+     *   f - failure callback - function (error) {}
+     */
+    init: function (s, f) {
+      _cmsInitialising = true; //Immediately set the cms to initialising to block other calls
+      console.log('Initialising mCMS');
+      if (!f) {
+        f = doNothing;
+      }
+      if (!s) {
+        s = doNothing;
+      }
+      return initialiseCMS(s, f);
+    },
+
+    /*
+     * Update CMS from server
+     *   s - success callback - funciton () {}
+     *   f - failure callback - function (error) {}
+     */    
+    updateAll: function (s, f) {
+      if (!f) {
+        f = doNothing;
+      }
+      if (!s) {
+        s = doNothing;
+      }
+      return updateCMS({"allSections": true}, s, f);
+    },
+
+    /*     
+     * get CMS Field value
+     *   p - params - {"path": dot.seperated.path.section.field.name}
+     *   s - success callback - funciton (value) {}
+     *   f - failure callback - function (error) {}
+     *
+     * Function: $fh.cms.getField(params)
+
+     * Params:
+     *   path - dot separated name of section & field to return
+     * Response: 
+     *   Non Blocking. Returns requested field from CMS content as response
+     * Errors: 
+     *   No CMS
+     */           
+    getField: function(params, s, f){
+      if (!f) {
+        f = doNothing;
+      }
+      if (!s) {
+        s = doNothing;
+      }
+      console.log("getField() called with params: ", params);
+      sanityCheckParams(params, {"path": true}, function(err){
+        if(err){
+          return handleError(err, f);
+        }
+
+        return searchForFieldValue(params, {}, s, f);
+      });
+    },
+
+    getList: function(params, s, f){
+      sanityCheckParams(params, {"path": true}, function(err){
+        if(err){
+          return handleError(err, f);
+        }
+        return searchForFieldValue(params, {"list": true, "wholeList": true}, s, f);
+      });
+    },
+
+    getListSize: function(params, s, f){
+      sanityCheckParams(params, {"path": true}, function(err){
+        if(err){
+          return handleError(err, f);
+        }
+
+        return searchForFieldValue(params, {"list": true, "size": true}, s, f);
+      });
+    },
+
+    getListField: function(params, s, f){
+      sanityCheckParams(params, {"path": true, "index": true, "fieldName": true}, function(err){
+        if(err){
+          return handleError(err, f);
+        }
+
+        return searchForFieldValue(params, {"list": true}, s, f);
+      });
+    }
+  };
+
+  $fh.cms2 = function(p, s, f){//Parameters, success, failure
+    //TODO This init logic should be its own function
+    //TODO Success and fail for init should be their own functions.
+    if(!_cmsAvailable && !_cmsInitialising){ //CMS Not Available and not initialising, try and init cms
+      _cmsInitialising = true; //Immediately set the cms to initialising to block other calls
+      initialiseCMS(function(s, f){
+        return doCMSAct(p,s,f);
+      }, function(err){
+        return handleError(err);
+      });
+    } else if(!_cmsAvailable && _cmsInitialising){ //CMS Initialising -- Add the request to a queue
+      return _cmsReadyListeners.push({"callParameters" : p, "success": s, "fail": f});
+    } else if(_cmsAvailable && !_cmsInitialising){ //cms is available and not initialising, process request
+      return doCMSAct(p,s,f);
+    } else { //Any other state is illegal.
+      return handleError("CMS Initialisation Illegal State", f);
+    }
+
+    if(_cmsUpdateInProgress){
+      return _cmsReadyListeners.push({"callParameters" : p, "success": s, "fail": f});
+    }
+
+    var acts = {
+      "getField": function(){
+        //Check getFieldParams
+        //getFieldValue
+        //If Exists --> Return Value
+        //If Not --> Failure
+        var params = p.params;
+        sanityCheckParams(params, {"path": true}, function(err){
+          if(err){
+            return handleError(err, f);
+          }
+
+          return searchForFieldValue(params, {}, s, f);
+        });
+      },
+      "getListSize": function(){
+        var params = p.params;
+        sanityCheckParams(params, {"path": true}, function(err){
+          if(err){
+            return handleError(err, f);
+          }
+
+          return searchForFieldValue(params, {"list": true, "size": true}, s, f);
+        });
+      },
+      "getListField": function(){
+        var params = p.params;
+        sanityCheckParams(params, {"path": true, "index": true, "fieldName": true}, function(err){
+          if(err){
+            return handleError(err, f);
+          }
+
+          return searchForFieldValue(params, {"list": true}, s, f);
+        });
+      },
+      "updateSection": function(){
+        var params = p.params;
+        sanityCheckParams(params, {"path": true}, function(err){
+          if(err){
+            return handleError(err, f);
+          }
+
+          var sectionPathArray = splitPathString(params.path);
+          var sectionName = parseSection(sectionPathArray);
+          return updateCMS({"singleSection": true, "sectionName": sectionName}, s, f);
+        });
+      },
+      "updateAll": function(){
+        var params = p.params;
+        sanityCheckParams(params, {}, function(err){
+          if(err){
+            return handleError(err, f);
+          }
+
+          return updateCMS({"allSections": true}, s, f);
+        });
+      }
+    };
+
+    //Function To do The actual processing --> Can assume the CMS is available at this point
+    var doCMSAct = function(p, s, f){
+      sanityCheckParams(p, s, f, function(err){
+        if(err){
+          return handleError(err, f);
+        } else {
+
+          if(acts[p.act]){
+            return acts[p.act]();
+          } else {
+            return handleError("Invalid CMS Action Call", f);
+          }
+        }
+      });
+    };
+  };
+
+  var cmsJSONFileAvailable = function(cb){
+    $fh.__cmsFileManager({"act": "fileExists", "params": {"fileName": "fh-cms.js"}}, cb);//TODO fh-cms.js should be constant or config
+  };
+
+  var appCMSZipAvailable = function(cb){
+    $fh.__cmsFileManager({"act": "cmsZipExists"}, cb);
+  };
+
+  var unzipCMSData = function(cb){
+    $fh.__cmsFileManager({"act": "unzipCMS"}, cb);
+  };
+
+  var writeCMSDataToFile = function(cb){
+    $fh.__cmsFileManager({"act": "writeFile", "params": {"fileName": "fh-cms.js"}}, cb);
+  };
+
+  //TODO FileData Should not all reside in RAM -- optimise
+  var readCMSJSON = function(cb){
+    $fh.__cmsFileManager({"act": "readFile", "params": {"fileName": "fh-cms.js"}}, function(err, cmsJSONString){
+      if (err) {
+        return cb(err);
+      }
+      if (!fileData) {
+        return cb("No Data Read");
+      }
+
+      var cmsJSON = JSON.parse(cmsJSONString); //Parsing CMS Data.
+      cb(undefined, cmsJSON);
+    });//TODO fh-cms.js should be constant or config
+  };
+
+  var cmsFilesUpdate = function(fileChanges, cb){
+    //Need to process any changes to files made by updating the cms.
+    //Files are either added or deleted.
+    var filesNotInFileSystem = []; //Array of file hashes not in storage
+    var sectionChanges;
+    var deletedFileChanges = fileChanges.deleted;
+    var addedFileChanges = fileChanges.added;
+    var fileChange;
+    var fileHash;
+    var sectionHash;
+    var fileEntryIndex;
+    var fileHashes;
+    var filesCheckedSuccess;
+
+    for(sectionHash in addedFileChanges){
+      sectionChanges = addedFileChanges[sectionHash];
+      for(fileChange in sectionChanges){
+        for(fileHash in fileChange){ //fileChange[fileHash] is the path of the file.
+          if(_cmsData.fileStorage[fileHash]){
+            _cmsData.fileStorage[fileHash].push(fileChange[fileHash]);
+          } else { //File does not exist in file system. Need to download it.
+            _cmsData.fileStorage[fileHash] = [];
+            _cmsData.fileStorage[fileHash].push(fileChange[fileHash]);
+            filesNotInFileSystem.push(fileHash);
+          }
+
+        }
+      }
+    }
+
+    for (sectionHash in deletedFileChanges){ //TODO duplicated, can make a function out of this.
+      sectionChanges = deletedFileChanges[sectionHash];
+      for (fileChange in sectionChanges){
+        for (fileHash in fileChange){
+          fileEntryIndex = _cmsData.fileStorage[fileHash].indexOf(fileChange[fileHash]); // Just an array of string so I can compare.
+          _cmsData.fileStorage[fileHash].splice(fileEntryIndex, 1);
+        }
+      }
+    }
+
+    //All changes to file storage complete. Need to check if any files have no more references.
+    fileHashes = _cmsData.fileStorage;
+    filesCheckedSuccess = {};
+    for(fileHash in fileHashes){
+      if(fileHashes[fileHash].length === 0){
+        $fh.__cmsFileManager({"act": "delete", "params": {"fileHash": fileHash}}, function (err) {
+          if (!err) {
+            filesCheckedSuccess = true;
+          } else {
+            filesCheckedSuccess[fileHash] = err;
+          }
+        });
+      }
+    }
+
+    var filesCheckedInterval = setInterval(function(){
+      var fileCheckHash;
+      if(filesCheckedSuccess.length === fileHashes.length){
+        //Finished -- check for success
+        for(fileCheckHash in filesCheckedSuccess){
+          if(filesCheckedSuccess[fileCheckHash] !== true){
+            clearInterval(filesCheckedInterval);
+            return cb(filesCheckedSuccess[fileCheckHash]);// Error, return the error
+          }
+        }
+
+        //All good, now download any files needed
+        clearInterval(filesCheckedInterval);
+        downloadMissingFiles(filesNotInFileSystem, cb);
+      }
+    }, 500); //TODO Set interval as config option.
+  };
+
+  var downloadMissingFiles = function(missingFilesHashes, cb){
+    var missingFilesCompleted = {};
+    var missingFileHash;
+
+    for(missingFileHash in missingFilesHashes){
+      $fh.__cmsFileManager({"act" : "download", "params": {"hash" : missingFileHash}}, function(err){
+        if (!err) {
+          missingFilesCompleted[missingFileHash] = true;
+        } else {
+          missingFilesCompleted[missingFileHash] = err;
+        }
+      });
+    }
+
+    var downloadedFilesInterval = setInterval(function(){
+      if(missingFilesCompleted.length === missingFilesHashes.length){
+        for(var downloadResult in missingFilesCompleted){
+          if(missingFilesCompleted[downloadResult] !== true){
+            clearInterval(downloadedFilesInterval);
+            return cb(missingFilesCompleted[downloadResult]);
+          }
+        }
+
+        //No errors,
+        clearInterval(downloadedFilesInterval);
+        return cb(undefined);
+      }
+
+    }, 500);
+
+  };
+
+  /*
+   * __cmsFileManager (params, cb)
+   * 
+   *  params:
+   *      {
+   *         act: actionName (delete|download|fileExists|cmsZipExists|unzipCMS|writeFile|readFile)
+   *         params:
+   *             action specific params
+   *             delete: {"fileHash": fileHash}
+   *             download: {"hash" : missingFileHash}}
+   *             fileExists: {"fileName": "fh-cms.js"}
+   *             cmsZipExists: none
+   *             unzipCMS: none
+   *             writeFile: {"fileName": "fh-cms.js"}
+   *             readFile: {"fileName": "fh-cms.js"}
+   *      }
+   *
+   */
+  $fh.__cmsFileManager = function(p, s, f){
+
+    var cmsRootFolder = "FHCMSData"; //Setting the folder for the cms files on device.
+
+    if(!_cmsAvailable){
+      return handleError("CMS Not Available", f);
+    }
+
+    var acts = {
+      "download": function(){
+
+      },
+      "delete": function(){
+
+      },
+      "clean": function(){
+
+      },
+      "fileExists": function(){
+        _cmsFileSystem.root.getDirectory(cmsRootFolder, {"create": true}, function(parent){
+          parent.getFile(p.fileName, {"create" : false}, function(fileFound){
+            s();
+          }, function(err){
+            //File Not Found
+            f();
+          });
+        }, function(err){
+          return handleError(err, f);
+        });
+      },
+      "cmsZipExists": function(){
+        //TODO WHERE WILL THE ZIP RESIDE IN THE BINARY?
+      },
+      "unzipCMS": function(){
+
+      },
+      "readFile": function(){
+
+      }
+    };
+
+    if(acts[p.act]){
+      return acts[p.act]();
+    } else {
+      return handleError("Invalid CMS File Manager Action Call", f);
+    }
+
+  };
+
+
 })(this);
