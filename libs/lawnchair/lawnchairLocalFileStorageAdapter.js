@@ -59,6 +59,7 @@ Lawnchair.adapter('localFileStorage', (function () {
 
     save : function (obj, callback){
       var key = obj.key;
+      var value = obj.val||obj.value;
       filenameForKey(key, function(hash) {
         window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function gotFS(fileSystem) {
 
@@ -69,10 +70,10 @@ Lawnchair.adapter('localFileStorage', (function () {
               writer.onwrite = function() {
                 return callback({
                   key: key,
-                  val: obj.val
+                  val: value
                 });
               };
-              writer.write(obj.val);
+              writer.write(value);
             }, function() {
               fail('[save] Failed to create file writer');
             });
