@@ -6058,6 +6058,12 @@ Lawnchair.adapter('webkit-sqlite', (function() {
     if (typeof fh_app_version !== 'undefined'){
       fhParams.app_version = fh_app_version;
     }
+    if (typeof fh_project_version !== 'undefined'){
+      fhParams.fh_project_version = fh_app_version;
+    }
+    if (typeof fh_project_app_version !== 'undefined'){
+      fhParams.fh_project_app_version = fh_app_version;
+    }
     fhParams.sdk_version = _getSdkVersion();
     return fhParams;
   };
