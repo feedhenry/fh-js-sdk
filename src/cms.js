@@ -618,7 +618,7 @@
         //No errors, update worked
         console.log('avoid handling updated files, err: ', err);
         return cb(err);
-        return cmsFilesUpdate(fileChanges, cb);//Finished update for file structure, now need to update the file storage.
+        //return cmsFilesUpdate(fileChanges, cb);//Finished update for file structure, now need to update the file storage.
     });
   };
 
