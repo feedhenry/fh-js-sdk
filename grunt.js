@@ -56,7 +56,7 @@ module.exports = function(grunt) {
     zip: {
       zipall: {
         router: function(filepath) {
-          console.log(filepath);
+          grunt.log.writeln(filepath);
           var filename = path.basename(filepath);
           return 'feedhenry-js-sdk/' + filename;
         },
@@ -72,9 +72,45 @@ module.exports = function(grunt) {
     grunt.task.run('qunit:unit');
   });
 
+  var spawns = [];
+
+  grunt.registerTask('start-servers', function () {
+    var spawn = require('child_process').spawn;
+    var spawnTestCloudServer = function (port) {
+      grunt.log.writeln('Spawning server on port ' + port + ' in cwd ' + __dirname + ' using file ' + __dirname + '/accept.js');
+      var env = JSON.parse(JSON.stringify(process.env));
+      env.FH_PORT = port;
+      var server = spawn('/usr/bin/env', ['node', __dirname + '/accept.js'], {
+        cwd: __dirname,
+        env: env
+      }).on('exit', function (code) {
+        grunt.log.writeln('Exiting server on port ' + port + ' with exit code ' + code);
+      });
+      server.stdout.on('data', function (data) {
+        grunt.log.writeln('Spawned Server port ' + port + ' stdout:' + data);
+      });
+      server.stderr.on('data', function (data) {
+        grunt.log.writeln('Spawned Server port ' + port + ' stderr:' + data);
+      });
+      grunt.log.writeln('Spawned server on port ' + port);
+      spawns.push(server);
+    };
+
+    ['8101', '8102', '8103'].forEach(function (port) {
+      spawnTestCloudServer(port);
+    });
+  });
+  
+  grunt.registerTask('stop-servers', function () {
+    spawns.forEach(function (server) {
+      server.kill();
+    });
+  });
+
   grunt.registerTask('accept', function() {
-    var cloudApp = require('./accept.js');
+    grunt.task.run('start-servers');
     grunt.task.run('qunit:accept');
+    grunt.task.run('stop-servers');
   });
 
   grunt.registerTask('default', 'lint concat unit accept min zip');
