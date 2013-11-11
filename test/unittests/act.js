@@ -1,4 +1,5 @@
-test("$fh.act", function() {
+module('$fh.act');
+test("ok", function() {
   var appid = '123456789012345678901234';
   var init = {trackId: "1234567890123"};
 

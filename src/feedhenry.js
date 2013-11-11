@@ -3,7 +3,7 @@
   var $fh = root.$fh;
   $fh.fh_timeout = 20000;
   $fh.boxprefix = '/box/srv/1.1/';
-  $fh.sdk_version = '1.1.1';
+  $fh.sdk_version = '1.1.2';
   
   var _is_initializing = false;
   var _init_failed = false;
@@ -436,7 +436,10 @@
     if(req){
       try{
         var res = JSON.parse(req.responseText);
-        errraw = res.error;
+        errraw = res.error || res.msg;
+        if (errraw instanceof Array) {
+          errraw = errraw.join('\n');
+        }
       } catch(e){
         errraw = req.responseText;
       }
@@ -664,9 +667,7 @@
       $fh.init($fh.app_props , function (suc){
         _init_failed = false;
         doActCall();
-      }, function (err){
-        _handleError(fail,{"status":0,"responseText":"Init Failed"},"failed to call init. Check network status");
-      });
+      }, fail);
     }
     else if (null == $fh.cloud_props && _is_initializing){
       _cloud_ready_listeners.push({
