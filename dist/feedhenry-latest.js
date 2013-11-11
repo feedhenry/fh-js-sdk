@@ -5995,6 +5995,9 @@ Lawnchair.adapter('webkit-sqlite', (function() {
       try{
         var res = JSON.parse(req.responseText);
         errraw = res.error || res.msg;
+        if (errraw instanceof Array) {
+          errraw = errraw.join('\n');
+        }
       } catch(e){
         errraw = req.responseText;
       }
