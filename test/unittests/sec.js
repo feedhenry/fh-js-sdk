@@ -1,4 +1,5 @@
-test('$fh.sec node',function(){
+module('$fh.sec');
+test('node',function(){
   var appid = '123456789012345678901234';
   $fh.app_props = {mode:'live', appid:appid};
   $fh.cloud_props = {domain:'testing', firstTime: false, hosts:{
@@ -66,7 +67,7 @@ test('$fh.sec node',function(){
   });
 });
 
-test('$fh.sec legacy', function(){
+test('legacy', function(){
   var appid = '123456789012345678901234';
   $fh.app_props = {mode:'dev', appid:appid};
   $fh.cloud_props = {domain:'testing', firstTime: false, hosts:{
