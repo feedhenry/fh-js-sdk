@@ -530,7 +530,7 @@
     }); //IE
   }
 
-  $fh._handleAuthResponse = function(endurl, res, success, fail){
+  $fh._handleFhAuthResponse = function(endurl, res, success, fail){
     if(res.status && res.status === "ok"){
       if(res.url){
         if(window.PhoneGap || window.cordova){
@@ -747,7 +747,7 @@
       "contentType": "application/json",
       "timeout" : opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
       success: function(res) {
-        $fh._handleAuthResponse(endurl, res, success, fail);
+        $fh._handleFhAuthResponse(endurl, res, success, fail);
       },
       error: function(req, statusText, error) {
         _handleError(fail, req, statusText);
