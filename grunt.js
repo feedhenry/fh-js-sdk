@@ -19,6 +19,7 @@ module.exports = function(grunt) {
       }
     },
     concat: {
+
       dist: {
         src: ["libs/json2.js",
              "libs/cryptojs-core.js",
@@ -39,7 +40,8 @@ module.exports = function(grunt) {
              "libs/lawnchair/lawnchairWebkitSqlAdapter.js",
              "src/feedhenry.js",
              "src/sync-cli.js",
-             "src/security.js"],
+             "src/security.js",
+             "src/appforms/src/core/*.js"],
         dest: 'dist/feedhenry-latest.js'
       }
     },
