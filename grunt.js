@@ -1,7 +1,10 @@
 var path = require('path');
+var fs = require("fs");
+var exists = fs.existsSync || path.existsSync;
 
 module.exports = function(grunt) {
   grunt.initConfig({
+    pkg: grunt.file.readJSON('package.json'),
     meta: {},
     lint: {
       files: ['src/*.js']
@@ -68,6 +71,28 @@ module.exports = function(grunt) {
 
   grunt.loadNpmTasks('grunt-zip');
 
+  grunt.registerTask('before-concat', 'update version number in feedhenry.js', function(){
+    var sdkversion = grunt.config.get('pkg.version');
+    var fhjs = path.join(__dirname, 'src', 'feedhenry.js');
+    var fhjs_bak = path.join(__dirname, 'src', 'feedhenry_no_version.js');
+    grunt.log.writeln("Current sdk version is " + sdkversion);
+    grunt.log.writeln("Update version number in feedhenry.js before concating files...");
+    var content = fs.readFileSync(fhjs, 'utf8');
+    content = content.replace(/sdk_version = '(BUILD_VERSION)'/, "sdk_version = '"+sdkversion+"'");
+    fs.renameSync(fhjs, fhjs_bak);
+    fs.writeFileSync(fhjs, content, "utf8");
+  });
+
+  grunt.registerTask('after-concat', function(){
+    var fhjs = path.join(__dirname, 'src', 'feedhenry.js');
+    var fhjs_bak = path.join(__dirname, 'src', 'feedhenry_no_version.js');
+    if(exists(fhjs_bak)){
+      grunt.log.writeln("Remove temporary file.");
+      fs.unlinkSync(fhjs);
+      fs.renameSync(fhjs_bak, fhjs);
+    }
+  })
+
   grunt.registerTask('unit', function() {
     grunt.task.run('qunit:unit');
   });
@@ -77,5 +102,5 @@ module.exports = function(grunt) {
     grunt.task.run('qunit:accept');
   });
 
-  grunt.registerTask('default', 'lint concat unit accept min zip');
+  grunt.registerTask('default', 'lint before-concat concat after-concat unit accept min zip');
 };
