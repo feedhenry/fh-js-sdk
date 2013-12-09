@@ -5223,6 +5223,7 @@ Lawnchair.adapter('localFileStorage', (function () {
 
     save : function (obj, callback){
       var key = obj.key;
+      var value = obj.val||obj.value;
       filenameForKey(key, function(hash) {
         window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function gotFS(fileSystem) {
 
@@ -5233,10 +5234,10 @@ Lawnchair.adapter('localFileStorage', (function () {
               writer.onwrite = function() {
                 return callback({
                   key: key,
-                  val: obj.val
+                  val: value
                 });
               };
-              writer.write(obj.val);
+              writer.write(value);
             }, function() {
               fail('[save] Failed to create file writer');
             });
@@ -5561,7 +5562,7 @@ Lawnchair.adapter('webkit-sqlite', (function() {
   var $fh = root.$fh;
   $fh.fh_timeout = 20000;
   $fh.boxprefix = '/box/srv/1.1/';
-  $fh.sdk_version = '1.1.1';
+  $fh.sdk_version = '1.1.2';
   
   var _is_initializing = false;
   var _init_failed = false;
@@ -6156,14 +6157,25 @@ Lawnchair.adapter('webkit-sqlite', (function() {
 
       $fh.app_props = opts;
 
-      var storage = new Lawnchair({
+      //dom adapter doens't work on windows phone, so don't specify the adapter if the dom one failed
+      var lcConf = {
         name: "fh_init_storage",
         adapter: "dom",
         fail: function(msg, err) {
           var error_message = 'read/save from/to local storage failed  msg:' + msg + ' err:' + err;
           return fail(error_message, {});
         }
-      }, function() {});
+      };
+
+      var storage = null;
+      try {
+        storage = new Lawnchair(lcConf, function() {});
+      } catch(e){
+        //when dom adapter failed, Lawnchair throws an error
+        lcConf.adapter = undefined;
+        storage = new Lawnchair(lcConf, function() {});
+      }
+      
 
       storage.get('fh_init', function(storage_res) {
         if (storage_res && storage_res.value !== null) {
