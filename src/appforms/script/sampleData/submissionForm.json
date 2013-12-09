@@ -1,0 +1,60 @@
+｛
+"appId": "appId123456",
+"appCloudName": "appCloudName123456",
+"appEnvironment": "devLive",
+"deviceId": "device123456",
+"deviceFormTimestamp": 1384800150848,
+"comments": [{
+   "madeBy": "somePerson@example.com",
+   "madeOn": 1384800150848,
+   "value": "This is a comment"
+}, {
+   "madeBy": "somePerson@example.com",
+   "madeOn": 1384800150848,
+   "value": "This is another comment"
+}],
+"formFields": [{
+      "fieldId": "528a5f96fd026bc578000058",
+      "fieldValues": [
+         "test1",
+         "test2"
+      ]
+   }, {
+      "fieldId": "528a5f96fd026bc57800005f",
+      "fieldValues": [{
+         "selections": [
+            "red",
+            "blue",
+            "green"
+         ]
+      }, {
+         "selections": [
+            "red",
+            "blue",
+            "purple"
+         ]
+      }]
+   }, {
+      "fieldId": "528a5f96fd026bc578000060",
+      "fieldValues": [{
+         "lat": "5.555848",
+         "long": "-52.031250"
+      }, {
+         "lat": "1.552348",
+         "long": "-13.031430"
+      }]
+   }, {
+      "fieldId": "528a5f96fd026bc578000061",
+      "fieldValues": [{
+         "zone": "11U",
+         "eastings": "594934",
+         "northings": "5636174"
+      }, {
+         "zone": "12U",
+         "eastings": "594934",
+         "northings": "5636174"
+      }]
+   }
+
+]
+}
