@@ -8,41 +8,7 @@
       "dateCreated": "2013-11-28T14:10:45.865Z",
       "_id": "527d4539639f521e0a000004",
       "pageRules": [{
-         "type": "show",
-         "targetPage": "527d4539639f521e0a000005",
-         "_id": "52974ee55e272dcb3d0000ad",
-         "ruleConditionalStatements": [{
-            "sourceField": "527d4539639f521e0a000006",
-            "restriction": "contains",
-            "sourceValue": "val"
-         }],
-         "ruleConditionalOperator": "and"
-      }, {
-         "type": "show",
-         "targetPage": "527d4539639f521e0a000005",
-         "_id": "52974ee55e272dcb3d0000ae",
-         "ruleConditionalStatements": [{
-            "sourceField": "527d4539639f521e0a000006",
-            "restriction": "begins with",
-            "sourceValue": "dammit"
-         }],
-         "ruleConditionalOperator": "and"
-      }, {
-         "type": "show",
-         "targetPage": "527d4539639f521e0a000005",
-         "_id": "52974ee55e272dcb3d0000af",
-         "ruleConditionalStatements": [{
-            "sourceField": "527d4539639f521e0a000006",
-            "restriction": "begins with",
-            "sourceValue": "begin"
-         }, {
-            "sourceField": "527d4539639f521e0a000006",
-            "restriction": "ends with",
-            "sourceValue": "dammit"
-         }],
-         "ruleConditionalOperator": "and"
-      }, {
-         "type": "show",
+         "type": "hide",
          "targetPage": "527d4539639f521e0a000005",
          "_id": "52974ee55e272dcb3d0000b0",
          "ruleConditionalStatements": [{
@@ -50,9 +16,9 @@
             "restriction": "is greater than",
             "sourceValue": "5"
          }, {
-            "sourceField": "52974ee55e272dcb3d000098",
-            "restriction": "is less than",
-            "sourceValue": "23"
+            "sourceField": "527d4539639f521e0a000006",
+            "restriction": "contains",
+            "sourceValue": "hidepage"
          }],
          "ruleConditionalOperator": "and"
       }],
@@ -67,8 +33,8 @@
          }],
          "ruleConditionalOperator": "and"
       }, {
-         "type": "show",
-         "targetField": "52974ee55e272dcb3d0000a6",
+         "type": "hide",
+         "targetField": "52974ee55e272dcb3d000097",
          "_id": "52974ee55e272dcb3d0000aa",
          "ruleConditionalStatements": [{
             "sourceField": "527d4539639f521e0a000006",
@@ -113,7 +79,7 @@
             "name": "textField",
             "helpText": "This is a text field",
             "type": "text",
-            "required": false,
+            "required": true,
             "fieldOptions": {
                "definition": {
                   "maxRepeat": 5,

@@ -35,7 +35,7 @@ appForm.models = (function(module) {
                         if (err) {
                             cb(err);
                         } else {
-                            _submissions[localId]=submission;
+                            _submissions[localId] = submission;
                             cb(null, submission);
                         }
                     });
@@ -80,7 +80,7 @@ appForm.models = (function(module) {
      */
     Submission.prototype.saveDraft = function(cb) {
         var targetStatus = "draft";
-        var that=this;
+        var that = this;
         this.set("timezoneOffset", new Date().getTimezoneOffset());
         this.set("saveDate", new Date());
         this.changeStatus(targetStatus, function(err) {
@@ -91,8 +91,30 @@ appForm.models = (function(module) {
                 cb(null, null);
             }
         });
-
-
+    }
+    Submission.prototype.validateField = function(fieldId, cb) {
+        var that = this;
+        this.getForm(function(err, form) {
+            if (err) {
+                cb(err);
+            } else {
+                var submissionData = that.getProps();
+                var ruleEngine = form.getRuleEngine();
+                ruleEngine.validateField(fieldId, submissionData, cb);
+            }
+        });
+    }
+    Submission.prototype.checkRules = function(cb) {
+        var self = this;
+        this.getForm(function(err, form) {
+            if (err) {
+                cb(err);
+            } else {
+                var submission = self.getProps();
+                var ruleEngine = form.getRuleEngine();
+                ruleEngine.checkRules(submission, cb);
+            }
+        });
     }
     /**
      * submit current submission to remote
@@ -104,22 +126,31 @@ appForm.models = (function(module) {
         var validateResult = true;
         var that = this;
         this.set("timezoneOffset", new Date().getTimezoneOffset());
-        //TODO overall validate here
-
-        if (validateResult === true) {
-            that.set("submitDate", new Date());
-            that.changeStatus(targetStatus, function(error) {
-                if (error) {
-                    cb(error);
+        this.getForm(function(err, form) {
+            var ruleEngine = form.getRuleEngine();
+            var submission = that.getProps();
+            ruleEngine.validateForm(submission, function(err, res) {
+                if (err) {
+                    cb(err);
                 } else {
-
-                    that.emit("submit");
-                    cb(null, null);
+                    var validation = res.validation;
+                    if (validation.valid) {
+                        that.set("submitDate", new Date());
+                        that.changeStatus(targetStatus, function(error) {
+                            if (error) {
+                                cb(error);
+                            } else {
+                                that.emit("submit");
+                                cb(null, null);
+                            }
+                        });
+                    } else {
+                        cb("Validation error");
+                        that.emit("validationerror", validation);
+                    }
                 }
             });
-        } else {
-            return "This should not happen!!";
-        }
+        });
     }
 
     Submission.prototype.getUploadTask = function(cb) {
@@ -132,12 +163,12 @@ appForm.models = (function(module) {
     }
     Submission.prototype.cancelUploadTask = function(cb) {
         var targetStatus = "submit";
-        var that=this;
+        var that = this;
         appForm.models.uploadManager.cancelSubmission(this, function(err) {
             if (err) {
                 console.error(err);
             }
-            that.changeStatus(targetStatus,cb);
+            that.changeStatus(targetStatus, cb);
         });
     }
     Submission.prototype.getUploadTaskId = function() {
@@ -148,18 +179,18 @@ appForm.models = (function(module) {
     }
     Submission.prototype.submitted = function(cb) {
         var targetStatus = "submitted";
-        var that=this;
+        var that = this;
         this.set("submittedDate", new Date());
-        this.changeStatus(targetStatus, function(err){
-            if (err){
+        this.changeStatus(targetStatus, function(err) {
+            if (err) {
                 cb(err);
-            }else{
-                that.emit("submitted");        
-                cb(null,null);
+            } else {
+                that.emit("submitted");
+                cb(null, null);
             }
         });
-        
-        
+
+
 
     }
     //joint form id and submissions timestamp.
@@ -191,13 +222,13 @@ appForm.models = (function(module) {
         var that = this;
         if (this.isStatusValid(targetStatus)) {
             this.set("status", targetStatus);
-            this.set("uploadStartDate",new Date());
+            this.set("uploadStartDate", new Date());
             appForm.models.submissions.updateSubmissionWithoutSaving(this);
             appForm.models.uploadManager.queueSubmission(this, function(err, ut) {
                 if (err) {
                     cb(err);
                 } else {
-                    that.emit("inprogress",ut);
+                    that.emit("inprogress", ut);
                     cb(null, ut);
                 }
             });
@@ -258,7 +289,10 @@ appForm.models = (function(module) {
     }
     /**
      * Add a value to submission.
-     * This will cause the value been validated
+     * This will not cause the field been validated.
+     * Validation should happen:
+     * 1. onblur (field value)
+     * 2. onsubmit (whole submission json)
      *
      * @param {[type]} fieldId    [description]
      * @param {[type]} inputValue [description]
@@ -269,37 +303,28 @@ appForm.models = (function(module) {
         var that = this;
         this.getForm(function(err, form) {
             var fieldModel = form.getFieldModelById(fieldId);
-            var validateRes = fieldModel.validate(inputValue);
-            if (validateRes === true) {
-                if (that.transactionMode) {
-                    if (!that.tmpFields[fieldId]) {
-                        that.tmpFields[fieldId] = [];
-                    }
-                    fieldModel.processInput(inputValue, function(err, result) {
-                        if (err) {
-                            cb(err);
-                        } else {
-                            if (result) {
-                                that.tmpFields[fieldId].push(result);
-                            }
-                            cb(null, result);
-                        }
-                    });
-                } else {
-                    var target = that.getInputValueObjectById(fieldId);
-                    fieldModel.processInput(inputValue, function(err, result) {
-                        if (err) {
-                            cb(err);
-                        } else {
-                            if (result) {
-                                target.fieldValues.push(result);
-                            }
-                            cb(null, result);
-                        }
-                    });
+            if (that.transactionMode) {
+                if (!that.tmpFields[fieldId]) {
+                    that.tmpFields[fieldId] = [];
                 }
+                fieldModel.processInput(inputValue, function(err, result) {
+                    if (err) {
+                        cb(err);
+                    } else {
+                        that.tmpFields[fieldId].push(result);
+                        cb(null, result);
+                    }
+                });
             } else {
-                cb(validateRes);
+                var target = that.getInputValueObjectById(fieldId);
+                fieldModel.processInput(inputValue, function(err, result) {
+                    if (err) {
+                        cb(err);
+                    } else {
+                        target.fieldValues.push(result);
+                        cb(null, result);
+                    }
+                });
             }
         });
 

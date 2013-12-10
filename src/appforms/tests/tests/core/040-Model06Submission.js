@@ -245,14 +245,15 @@ describe("Submission model", function() {
             var submission = form.newSubmission();
             submission.submit(function(err) { //this will call uploadManager.queueSubmission(submissionModel)
                 assert(!err);
-                assert(appForm.models.uploadManager.timer);
-                submission.getUploadTask(function(err, task) {
+                //assert(appForm.models.uploadManager.timer);
+                submission.upload(function(err, task) {
                     assert(!err);
                     assert(task);
                     done();
                 });
+                assert(appForm.models.uploadManager.hasTask());
             });
-            assert(appForm.models.uploadManager.hasTask());
+            
         });
         it("how to monitor if a submission is submmited", function(done){
             var submission = form.newSubmission();
@@ -262,7 +263,11 @@ describe("Submission model", function() {
                 done();
             });
             submission.submit(function(err) { //this will call uploadManager.queueSubmission(submissionModel)
+               
                 assert(!err);
+                submission.upload(function(err){
+                    assert(!err);
+                });
             });
         })
 

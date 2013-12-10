@@ -1,3 +1,6 @@
+if (typeof App =="undefined"){
+    App={};
+}
 App.Router = Backbone.Router.extend({
 
   /* 
@@ -55,6 +58,11 @@ App.Router = Backbone.Router.extend({
     $('#jsonPage').addClass('hidden');
     $('#formList').addClass('hidden');
     $('#page').removeClass('hidden');
+    var formView = new FormView({parentEl:$("#backbone #page")});
+      formView.loadForm({formId:"527d4539639f521e0a000004"}, function(){
+      formView.render();
+     // Backbone.history.navigate('form',true);
+    })
   },
 
   checkSubmissions: function() {
@@ -67,7 +75,7 @@ App.Router = Backbone.Router.extend({
       res.getSubmissionByMeta(subsArr[0], function(err, sub) {
         var fields = sub.get('formFields');
         self.showForm();
-        var formView = new FormView({parentEl:"#backbone #page"});
+        var formView = new FormView({parentEl:$("#backbone #page")});
         formView.loadForm({formId:"527d4539639f521e0a000004",submission:sub},function(){
           formView.render();
         });

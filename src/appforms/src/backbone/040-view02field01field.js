@@ -1,23 +1,65 @@
 FieldView = Backbone.View.extend({
 
   className: 'field_container',
-  wrapper: '<div id="<%= fieldId %>_<%= index %>" title="<%= helpText %>"><%= title %><%= input %></div>',
-  title: '<label><%= title %></label>',
+  fieldWrapper:"<div />",
+  wrapper: '<div id="wrapper_<%= fieldId %>_<%= index %>" title="<%= helpText %>"><%= title %><%= input %><label class="error errorMsg"></label></div>',
+  title: '<label><%= title %> </label><%= helpText %>',
   input: "<input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/> ",
   instructions: '<p class="instruct"><%= helpText %></p>',
-  template: [],
+  fieldActionBar:"<div class='fieldActionBar'><button class='addInputBtn special_button two_button'>Add Input</button><button class='special_button two_button removeInputBtn'>Remove Input</button></div>",
   events: {
     "change": "contentChanged",
-    "blur input,select,textarea": "validate"
+    "blur input,select,textarea": "validate",
+    "click .addInputBtn":"onAddInput",
+    "click .removeInputBtn":"onRemoveInput"
+  },
+  onAddInput:function(){
+    this.addElement();
+    this.checkActionBar();
+  },
+  onRemoveInput:function(){
+    this.removeElement();
+    this.checkActionBar();
+  },
+  checkActionBar:function(){
+    var curNum=this.curRepeat;
+    var maxRepeat=this.maxRepeat;
+    var minRepeat=this.initialRepeat;
+    if (curNum < maxRepeat){
+      this.$fieldActionBar.find(".addInputBtn").show();
+    }else{
+      this.$fieldActionBar.find(".addInputBtn").hide();
+    }
+
+    if (curNum>minRepeat){
+      this.$fieldActionBar.find(".removeInputBtn").show();
+    }else{
+      this.$fieldActionBar.find(".removeInputBtn").hide();
+    }
+  },  
+  removeElement:function(){
+    var curRepeat=this.curRepeat;
+    var lastIndex=curRepeat-1;
+    this.getWrapper(lastIndex).remove();
+    this.curRepeat--;
   },
   renderTitle: function(index) {
     var name = this.model.getName();
     var title=name;
+    var required="";
+    var helpText="";
     if (this.model.isRepeating()){
       title+=" (" + (index+1) + ") ";
     }
+    // if (this.model.isRequired()){
+    //   required="*";
+    // }
+    if (index == 0){
+      helpText=this.renderHelpText();
+    }
     return _.template(this.title, {
-      "title": title
+      "title": title,
+      "helpText":helpText
     });
   },
   renderInput: function(index) {
@@ -40,12 +82,18 @@ FieldView = Backbone.View.extend({
       "input": inputHtml
     });
   },
+  renderHelpText:function(){
+    var helpText = this.model.getHelpText();
+    return _.template(this.instructions,{
+      "helpText":helpText
+    });
+  },
   addElement: function() {
     var index = this.curRepeat;
     var titleHtml = this.renderTitle(index);
     var inputHtml = this.renderInput(index);
     var eleHtml = this.renderEle(titleHtml, inputHtml, index);
-    this.$el.append(eleHtml);
+    this.$fieldWrapper.append(eleHtml);
     this.curRepeat++;
     this.onElementShow(index);
     
@@ -66,6 +114,9 @@ FieldView = Backbone.View.extend({
       this.addElement();
     }
 
+    this.$el.append(this.$fieldWrapper);
+    this.$el.append(this.$fieldActionBar);
+    this.$el.attr("data-field",this.model.getFieldId());
 
     // var instructions = this.model.get('Instructions');
 
@@ -77,6 +128,7 @@ FieldView = Backbone.View.extend({
 
     // add to dom
     this.options.parentEl.append(this.$el);
+    this.checkActionBar();
     this.show();
 
     // force the element to be initially hidden
@@ -99,12 +151,13 @@ FieldView = Backbone.View.extend({
   },
   // TODO: cache the input element lookup?
   initialize: function() {
-    _.bindAll(this, 'dumpContent', 'clearError');
+    _.bindAll(this, 'dumpContent', 'clearError','onAddInput','onRemoveInput');
 
     if (this.model.isRequired()) {
       this.$el.addClass('required');
     }
-
+    this.$fieldWrapper=$(this.fieldWrapper);
+    this.$fieldActionBar=$(this.fieldActionBar);
     // only call render once. model will never update
     this.render();
   },
@@ -128,19 +181,34 @@ FieldView = Backbone.View.extend({
 
   validate: function(e) {
     if (App.config.validationOn) {
+      var self=this;
       var target = $(e.currentTarget);
-      var val = target.val();
-
-      var result = this.model.validate(val);
-      if (result !== true) {
-        alert("Error: " + result);
-        this.$el.addClass('error');
-      } else {
-        this.clearError();
-      }
+      var index=target.data().index;
+      var val=this.valueFromElement(index);
+      var fieldId=this.model.getFieldId();
+      this.model.validate(val,function(err,res){ //validation
+         if (err){
+            console.error(err);
+         }else{
+            var result=res["validation"][fieldId];
+            if (!result.valid){
+              var errorMessages=result.errorMessages.join(", ");
+              self.setErrorText(index,errorMessages);
+            }else{
+              self.clearError(index);
+            }
+         }
+      });
+      this.trigger("checkrules");
     }
   },
-
+  setErrorText:function(index,text){
+    var wrapperObj=this.getWrapper(index);
+    wrapperObj.find("label.errorMsg").text(text);
+    wrapperObj.find("label.errorMsg").show();
+    wrapperObj.find("label.errorMsg").addClass("error");
+    wrapperObj.find("input,textarea,select").addClass("error");
+  },
   contentChanged: function(e) {
     var target = $(e.currentTarget);
     var changedValue = target.val();
@@ -148,11 +216,11 @@ FieldView = Backbone.View.extend({
     this.dumpContent();
     // this.getTopView().trigger('change:field');
     // var val = this.value();
-    if (this.model.validate(changedValue) === true) {
-      var val = this.value();
-      this.options.formView.setInputValue(self.model.getFieldId(), val);
-      // self.model.set('value', val[self.model.get("_id")]);
-    }
+    // if (this.model.validate(changedValue) === true) {
+    //   var val = this.value();
+    //   this.options.formView.setInputValue(self.model.getFieldId(), val);
+    //   // self.model.set('value', val[self.model.get("_id")]);
+    // }
   },
 
 
@@ -212,8 +280,6 @@ FieldView = Backbone.View.extend({
   hide: function(force) {
     if (force || this.$el.is(':visible')) {
       this.$el.hide();
-      // remove rules too
-      this.removeRules();
     }
   },
   renderButton:function(index, label,extension_type){
@@ -303,7 +369,7 @@ FieldView = Backbone.View.extend({
   },
   getWrapper: function(index) {
     var fieldId = this.model.getFieldId();
-    return this.$el.find("#" + fieldId + "_" + index);
+    return this.$fieldWrapper.find("#wrapper_" + fieldId + "_" + index);
   },
   fillArray: function(array, filler) {
     for (var i = 0; i < array.length; i++) {
@@ -312,11 +378,11 @@ FieldView = Backbone.View.extend({
       }
     }
   },
-  // TODO horrible hack
-  clearError: function() {
-    this.$el.find("label[class=error]").remove();
-    this.$el.removeClass("error");
-    this.$el.find(".error").removeClass("error");
+  
+  clearError: function(index) {
+    var wrapperObj=this.getWrapper(index);
+    wrapperObj.find("label.errorMsg").hide();
+    wrapperObj.find(".error").removeClass("error");
   }
 
 });
