@@ -14,13 +14,19 @@
   var CMS_API_GETALL     = "/mbaas/cms/sections";  // "/mbaas/cms/getAll";
   var CMS_API_GETSECTION = "/cloud/getSection";  // "/mbaas/cms/section/get";
   var CMS_API_GETFIELD   = "/cloud/getField?fieldid=";   // "/mbaas/cms/field/";
+  var CMS_JSON_FILE_NAME = "fh-cms.js";
 
   var CMS_FIELD_TYPES_TEXT = ['string', 'paragraph'];
   var CMS_FIELD_TYPES_FILE = ['image', 'file'];
 
+  var FILE_ENTRIES = "fileEntry";
+  var FILE_PATH = "filePath";
+  var FILE_EXTENSION = "fileExtension";
+
   var _cmsAvailable = false;
   var _cmsInitialising = false;
-  var _cmsData;
+  var _cmsData;  // _cmsData contains two entries "cms" for the cms structure and "fileStorage" for the files associated with the structure.
+  //var testFileStorageStructure = {"fileHash" : {"fileExtension": ".ext", fileEntries: []}};
   var _cmsReadyListeners = [];
   var _cmsUpdateInProgress = false;
   var _cmsFileSystem;
@@ -446,17 +452,25 @@
     });
   };
 
+  var getFileExtension = function(fileName){
+    //Extract the file extension from the name
+    var splitFileName = fileName.split(".");
+    return splitFileName[1];//TODO, needs to be a bit more sophisticated.
+  }
+
   var scanSectionForFiles = function(sectionToScan, cb){
     //Need to find any file references in the section fields.
     //for each field -- check type. If file or image then get fileHash
 
+    //sectionFiles = {"sectionHash" : [{"fileHash" : {FILE_PATH : "path.to.file", FILE_EXTENSION: ".ext"}}]}
     var sectionFiles = {};
     sectionFiles[sectionToScan.hash] = [];
     for(var field in sectionToScan.fields){
       var fieldPath = sectionToScan.path + "." + field.name; //Field path === sectionPath.fieldName. (e.g. section1.section2.field1) TODO Abstract out.
       if(field.type === "file" || field.type === "image"){
-        var fileEntry = {};
-        fileEntry[field.value] = fieldPath; //fileHash : fieldPath.
+        var fileEntry = {FILE_PATH: "", FILE_EXTENSION: ""};
+        fileEntry[field.fileHash][FILE_PATH] = fieldPath;
+        fileEntry[field.fileHash][FILE_EXTENSION] = getFileExtension(field.binaryFileName);
         sectionFiles[sectionToScan.hash].push(fileEntry);
       } else if(field.type === "list"){
 
@@ -472,8 +486,9 @@
           for(var listFileEntry in listFileEntries){
             for(var i = 0; i < field.data.length ; i++){
               var listFieldPath = sectionToScan.path + "." + field.name + "." + String.toString(i) + "." + listFileEntry; //list entry paths are a combination of sectionPath.listName.index.fieldName. TODO Abstract
-              var listFile = {};
-              listFile[field.data[i][listFileEntry].value] = listFieldPath;
+              var listFile = {FILE_PATH: "", FILE_EXTENSION: ""};
+              listFile[field.data[i][listFileEntry].fileHash][FILE_PATH] = listFieldPath;
+              listFile[field.data[i][listFileEntry].fileHash][FILE_EXTENSION] =  getFileExtension(field.data[i][listFileEntry].binaryFileName);
               sectionFiles[sectionToScan.hash].push(listFile);
             }
           }
@@ -601,7 +616,7 @@
           if (processors[updatedSectionEntry.updateFlag]) {
             processors[updatedSectionEntry.updateFlag](updatedSectionEntry, cb);
           } else {
-            processors["added"](updatedSectionEntry, cb);   // TODO remove this when updateAll ith hashes implementer in server
+            processors["added"](updatedSectionEntry, cb);   // TODO remove this when updateAll ith hashes implemented in server
             //TODO return cb(new Error("Invalid updateFlag"));
           }
         }
@@ -627,7 +642,7 @@
     _cmsUpdateInProgress = true; //queueing calls until data is updated.
     async.waterfall([
       function (cb) {  // TODO not currently sending the hash list for updates, initialising instead
-        // when server-side updated replane with:    async.apply(buildCMSHashList, options),
+        // TODO when server-side updated replace with:    async.apply(buildCMSHashList, options),
         initialiseCMS(function() {
           return cb(undefined, {});
         }, function () {
@@ -834,43 +849,49 @@
       });
     };
   };
-
+  ///////////////TODO SHOULD CMS FILE STORAGE HAVE SUCCESS AND FAIL CALLBACKS?
   var cmsJSONFileAvailable = function(cb){
-    $fh.__cmsFileManager({"act": "fileExists", "params": {"fileName": "fh-cms.js"}}, cb);//TODO fh-cms.js should be constant or config
+    $fh.__cmsFileManager({"act": "fileExists", "params": {"fileName": CMS_JSON_FILE_NAME}}, function(){
+
+      return cb(undefined, true);
+    }, function(){
+      //File does not exist
+      return cb(undefined, false); //TODO This should also handle an error reading the file system...
+    });
   };
 
   var appCMSZipAvailable = function(cb){
-    $fh.__cmsFileManager({"act": "cmsZipExists"}, cb);
+    $fh.__cmsFileManager({"act": "cmsZipExists"}, function(){return cb(undefined, true)}, function(){return cb(undefined, false)}); // TODO: This will change to checking for files in the binary
   };
 
   var unzipCMSData = function(cb){
-    $fh.__cmsFileManager({"act": "unzipCMS"}, cb);
+    $fh.__cmsFileManager({"act": "unzipCMS"}, function(){}, function(){});   // TODO: This will change to copying files in the binary to local file system.
   };
 
   var writeCMSDataToFile = function(cb){
-    $fh.__cmsFileManager({"act": "writeFile", "params": {"fileName": "fh-cms.js"}}, cb);
+    $fh.__cmsFileManager({"act": "writeFile", "params": {"fileName": CMS_JSON_FILE_NAME}}, function(){}, function(){});
   };
 
   //TODO FileData Should not all reside in RAM -- optimise
+  //TODO Miight read binary so might be an option in future. If media, probably not worth it. Use the media plugin instead
   var readCMSJSON = function(cb){
-    $fh.__cmsFileManager({"act": "readFile", "params": {"fileName": "fh-cms.js"}}, function(err, cmsJSONString){
-      if (err) {
-        return cb(err);
-      }
-      if (!fileData) {
-        return cb("No Data Read");
-      }
+    $fh.__cmsFileManager({"act": "readFile", "params": {"fileName": CMS_JSON_FILE_NAME}}, function(cmsJSONString){
 
       var cmsJSON = JSON.parse(cmsJSONString); //Parsing CMS Data.
-      cb(undefined, cmsJSON);
-    });//TODO fh-cms.js should be constant or config
+      return cb(undefined, cmsJSON);
+
+    }, function(err){
+
+      return cb(err);
+
+    });
   };
 
   var cmsFilesUpdate = function(fileChanges, cb){
     //Need to process any changes to files made by updating the cms.
     //Files are either added or deleted.
     var filesNotInFileSystem = []; //Array of file hashes not in storage
-    var sectionChanges;
+    var addedSectionChanges, deletedSectionChanges;
     var deletedFileChanges = fileChanges.deleted;
     var addedFileChanges = fileChanges.added;
     var fileChange;
@@ -881,27 +902,29 @@
     var filesCheckedSuccess;
 
     for(sectionHash in addedFileChanges){
-      sectionChanges = addedFileChanges[sectionHash];
-      for(fileChange in sectionChanges){
-        for(fileHash in fileChange){ //fileChange[fileHash] is the path of the file.
+      addedSectionChanges = addedFileChanges[sectionHash];
+      for(fileChange in addedSectionChanges){
+        for(fileHash in fileChange){ //fileChange[fileHash][FILE_PATH] is the path of the file.  fileChange[fileHash][FILE_EXTENSION] is the file extension e.g. .pdf
           if(_cmsData.fileStorage[fileHash]){
-            _cmsData.fileStorage[fileHash].push(fileChange[fileHash]);
+            _cmsData.fileStorage[fileHash][FILE_ENTRIES].push(fileChange[fileHash][FILE_PATH]);
           } else { //File does not exist in file system. Need to download it.
-            _cmsData.fileStorage[fileHash] = [];
-            _cmsData.fileStorage[fileHash].push(fileChange[fileHash]);
+            _cmsData.fileStorage[fileHash] = {};
+            _cmsData.fileStorage[fileHash][FILE_ENTRIES] = [];
+            //Need to also get the file extension for the file added
+            _cmsData.fileStorage[fileHash][FILE_EXTENSION] = fileChange[fileHash][FILE_EXTENSION]; //TODO Assuming that the file extension for all files with the same hash will be the same. This seems valid.
+            _cmsData.fileStorage[fileHash][FILE_ENTRIES].push(fileChange[fileHash][FILE_PATH]);
             filesNotInFileSystem.push(fileHash);
           }
-
         }
       }
     }
 
     for (sectionHash in deletedFileChanges){ //TODO duplicated, can make a function out of this.
-      sectionChanges = deletedFileChanges[sectionHash];
-      for (fileChange in sectionChanges){
+      deletedSectionChanges = deletedFileChanges[sectionHash];
+      for (fileChange in deletedSectionChanges){
         for (fileHash in fileChange){
-          fileEntryIndex = _cmsData.fileStorage[fileHash].indexOf(fileChange[fileHash]); // Just an array of string so I can compare.
-          _cmsData.fileStorage[fileHash].splice(fileEntryIndex, 1);
+          fileEntryIndex = _cmsData.fileStorage[fileHash][FILE_ENTRIES].indexOf(fileChange[fileHash][FILE_PATH]); // Just an array of strings so I can compare.
+          _cmsData.fileStorage[fileHash][FILE_ENTRIES].splice(fileEntryIndex, 1);
         }
       }
     }
@@ -910,13 +933,13 @@
     fileHashes = _cmsData.fileStorage;
     filesCheckedSuccess = {};
     for(fileHash in fileHashes){
-      if(fileHashes[fileHash].length === 0){
-        $fh.__cmsFileManager({"act": "delete", "params": {"fileHash": fileHash}}, function (err) {
-          if (!err) {
-            filesCheckedSuccess = true;
-          } else {
-            filesCheckedSuccess[fileHash] = err;
-          }
+      if(fileHashes[fileHash][FILE_ENTRIES].length === 0){
+        $fh.__cmsFileManager({"act": "delete", "params": {"fileHash": fileHash}}, function () { //TODO also delete the entry in fileEntries
+
+          filesCheckedSuccess = true;
+
+        }, function(err){
+          filesCheckedSuccess[fileHash] = err;
         });
       }
     }
@@ -939,17 +962,15 @@
     }, 500); //TODO Set interval as config option.
   };
 
-  var downloadMissingFiles = function(missingFilesHashes, cb){
+  var  downloadMissingFiles = function(missingFilesHashes, cb){
     var missingFilesCompleted = {};
     var missingFileHash;
 
     for(missingFileHash in missingFilesHashes){
-      $fh.__cmsFileManager({"act" : "download", "params": {"hash" : missingFileHash}}, function(err){
-        if (!err) {
-          missingFilesCompleted[missingFileHash] = true;
-        } else {
-          missingFilesCompleted[missingFileHash] = err;
-        }
+      $fh.__cmsFileManager({"act" : "download", "params": {"hash" : missingFileHash}}, function(){
+        missingFilesCompleted[missingFileHash] = true;
+      }, function(err){
+        missingFilesCompleted[missingFileHash] = err;
       });
     }
 
@@ -981,24 +1002,84 @@
    *             action specific params
    *             delete: {"fileHash": fileHash}
    *             download: {"hash" : missingFileHash}}
-   *             fileExists: {"fileName": "fh-cms.js"}
+   *             fileExists: {"fileName": CMS_JSON_FILE_NAME}
    *             cmsZipExists: none
    *             unzipCMS: none
-   *             writeFile: {"fileName": "fh-cms.js"}
-   *             readFile: {"fileName": "fh-cms.js"}
+   *             writeFile: {"fileName": CMS_JSON_FILE_NAME}
+   *             readFile: {"fileName": CMS_JSON_FILE_NAME}
    *      }
    *
    */
   $fh.__cmsFileManager = function(p, s, f){
 
-    var cmsRootFolder = "FHCMSData"; //Setting the folder for the cms files on device.
+
+    var downloadFile = function (fileName, fileURL, s, f) {
+      console.log('downloadFile() called to download fileName: ' + fileName + 'from: ' + fileURL);
+      _cmsFileSystem.root.getDirectory(
+        cmsRootFolder, {"create": true},
+        function(parent){
+          console.log('downloadFile() - got dir ' + parent.fullPath);
+          parent.getFile(fileName, {"create": true, exclusive: false},
+            function (fileEntry) {
+              console.log('downloadFile() - got File ' + fileEntry.fullPath);
+
+              var fileTransfer = new FileTransfer();
+              var uri = encodeURI(fileURL);
+
+              fileTransfer.download(
+                uri,
+                fileEntry.fullPath,
+                function(entry) {
+                  console.log("downloadFile() - download complete: " + entry.fullPath);
+                  return s();
+                },
+                function(error) {
+                  console.log("downloadFile() - download error source " + error.source);
+                  console.log("downloadFile() - download error target " + error.target);
+                  console.log("downloadFile() - upload error code" + error.code);
+                  return f(error);
+                }
+              );
+            },
+            function(error){
+              console.log('downloadFile() - in getDirectory failure callback - code: ' + error.code);
+              f(error);
+            }
+          );
+        },
+        function(error){
+          console.log('downloadFile() - in getDirectory failure callback');
+          f(error);
+        }
+      );
+    };
+
+    var cmsRootFolder = "FHCMSData"; //Setting the folder for the cms files on device. TODO: Should be config, not hard-coded
 
     if(!_cmsAvailable){
       return handleError("CMS Not Available", f);
     }
 
     var acts = {
-      "download": function(){
+      "download": function(){ //TODO This should probably change in the cmsFileManager to be download by hash, fileName or some other criteria. For now, has is required.
+        //Want to download a file based on a hash
+        //First, create the full file url
+          var fullPathForDownloadedFile = parent.fullPath + p.hash;
+          var fhParams = _getFhParams();
+          var fhAppId = fhParams.appid;
+          var downloadUrl = FH_DOWNLOAD_FILE_URL; //TODO This should be a constant or config. Construct
+
+          //Download url constructed, now need to call the download function
+          var fileTransfer = new FileTransfer();
+
+          downloadFile(p.hash, downloadUrl, function(){
+            //File download a success -- can now
+            return s();
+
+          }, function(error){
+            //Error downloading the file, send back the error
+            return handleError(error);
+          });
 
       },
       "delete": function(){
@@ -1020,13 +1101,39 @@
         });
       },
       "cmsZipExists": function(){
-        //TODO WHERE WILL THE ZIP RESIDE IN THE BINARY?
+        //TODO: Looks likely to change to copying the data from the files bundled with the app to the CMS_DATA_FOLDER
       },
       "unzipCMS": function(){
-
+        //TODO: Looks likely to change to copying the data from the files bundled with the app to the CMS_DATA_FOLDER
       },
       "readFile": function(){
+        //Want to read a text file -- TODO Do we need to read binary files?
+        _cmsFileSystem.root.getDirectory(cmsRootFolder, {"create": false}, function(cmsParentDir){
+          //In the CMS parent directory, we want to read the contents of the file. Should not create the file if it does not exist.
+          cmsParentDir.getFile(p.fileName, {create: false}, function(foundFile){
+            //File has been found, now can read the file,
+            var reader = new FileReader();
 
+            //When finished loading the file content,
+            reader.onloadend = function(loadedEvent){
+              console.log("File " + p.fileName + " loaded successfully.");
+              s(loadedEvent.target.result);
+            };
+
+            reader.onerror = function(loadError){
+              console.log("Error Reading File " + p.fileName + "."); // TODO better error handling needed.
+              return handleError("Error Reading File " + p.fileName + ".", f);
+            }
+
+            reader.readAsText(foundFile);
+
+
+          }, function(error){
+            //File not found.
+            cb("File " + p.fileName + " not found in cms data directory."); // TODO better error handling needed.
+
+          });
+        });
       }
     };
 

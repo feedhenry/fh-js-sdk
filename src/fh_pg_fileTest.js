@@ -21,6 +21,20 @@ var initialiseCMSFileSystem = function(s, f){
   console.log('initialiseFileSystem call returning');
 };
 
+var resolveCMSDataDirectory = function(s, f){
+
+  //Get the file
+  window.resolveLocalFileSystemURI("file:///index.html", function(fileEntry){
+    console.log("resolveCMSDataDirectory Success");
+    console.log("resolveCMSDataDirectory - fileSystem.name: " + fileEntry.name);
+    console.log("resolveCMSDataDirectory - fileSystem.root.name: " + fileEntry.root.name);
+    return s();
+  }, function(errEvent){
+    console.log("resolveCMSDataDirectory Failed");
+    return f("Failed to initialise file system" + errEvent.target.error.code);
+  });
+}
+
 // testFileExists
 //   fileName - name of file to check
 //   s called if file exists

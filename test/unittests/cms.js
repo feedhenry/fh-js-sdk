@@ -86,6 +86,26 @@ var singleSectionSingleField = {"cms": {"sections": [{
   }]
 }]}};
 
+var singleSectionSingleFile = {"cms": {"sections": [{
+  "hash": "123456789",
+  "name": "simpleSection",
+  "modifiedDate": "12/12/12",
+  "modifiedBy": "example@example.com",
+  "parent": "",
+  "children": [],
+  "path": "",
+  "fields": [{
+    "hash": "654154",
+    "modifiedDate": "13/12/12",
+    "modifiedBy": "example2@example.com",
+    "fieldName": "exampleFileField",
+    "fieldType": "file",
+    "binaryFileName": "testFile.pdf",
+    "binaryFileType": "application/pdf",
+    "fileHash": "123456789"
+  }]
+}]}};
+
 var singleSectionMultipleFields = {"cms": {"sections":[{
   "hash": "123456789",
   "name": "simpleSection",
@@ -234,10 +254,11 @@ var singleSectionList = {"cms": {"sections":[{
         "binaryType": "application/pdf",
         "fileHash": "345346"
       }
-    }
-    ]
+    }]
   }]
 }]}};
+
+var testFileStorageStructure = {"fileHash" : {"fileExtension": ".ext", fileEntries: []}};
 
 
 //Test Functions
