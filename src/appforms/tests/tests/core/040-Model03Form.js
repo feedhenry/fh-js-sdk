@@ -25,7 +25,7 @@ describe("Form model", function() {
                 done();
             });
         } catch (e) {
-            console.log(e);
+            console.error(e);
             error = true;
         }
         assert(!error);
@@ -90,9 +90,9 @@ describe("Form model", function() {
             formId: "527d4539639f521e0a000004",
             fromRemote: true
         }, function(err, form) {
-            var fieldModel = form.getFieldModelById("527d4539639f521e0a000006");
+            var fieldModel = form.getFieldModelById("52974ee55e272dcb3d00009b");
             assert(fieldModel);
-            assert(fieldModel.get("_id") == "527d4539639f521e0a000006");
+            assert(fieldModel.get("_id") == "52974ee55e272dcb3d00009b");
             done();
         });
     });
@@ -159,7 +159,7 @@ describe("Form model", function() {
     });
 
     it ("how to initialise form with raw json definition",function(done){
-        appForm.web.ajax.get("/mbaas/forms/appid/527d4539639f521e0a000004",function(err,res){
+        appForm.web.ajax.get("/mbaas/forms/527d4539639f521e0a000004",function(err,res){
             var formJSON=res;
              var Form = appForm.models.Form;
              new Form({

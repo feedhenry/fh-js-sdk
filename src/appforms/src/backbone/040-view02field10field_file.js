@@ -2,6 +2,7 @@ FieldFileView = FieldView.extend({
   input: "<button style='display:none' data-field='<%= fieldId %>' class='special_button' data-index='<%= index %>'></button>" +
     "<input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/> ",
   type: "file",
+  fileObjs: [],
   // dumpContent: function() {
   //   var tmp = "<empty>";
   //   if (this.fileData) {
@@ -17,10 +18,7 @@ FieldFileView = FieldView.extend({
   //   }
   //   console.debug("Value changed :: " + JSON.stringify(tmp));
   // },
-  initialize:function(){
-    this.fileObjs=[];
-    FieldView.prototype.initialize.apply(this,arguments);
-  },
+
   contentChanged: function(e) {
 
     var self = this;
@@ -76,8 +74,8 @@ FieldFileView = FieldView.extend({
     }
   },
   valuePopulateToElement: function(index, value) {
+    this.fileObjs[index] = value;
     if (value) {
-      this.fileObjs[index] = value;
       this.showButton(index, value);
     }
   }

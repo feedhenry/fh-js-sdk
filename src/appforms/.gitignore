@@ -1,0 +1,8 @@
+.fhclocal/
+node_modules/
+src/.DS_Store
+src/backbone/.DS_Store
+src/core/.DS_Store
+.idea/
+src/core/.DS_Store
+.DS_Store

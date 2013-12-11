@@ -18,6 +18,8 @@
   "040-Model03Form",
   "040-Model04FileSubmission",
   "040-Model04FormSubmission",
+  "040-Model04FormSubmissionComplete",
+  "040-Model04FormSubmissionStatus",
   "040-Model05submissions",
   "040-Model06Submission",
   "040-Model07Field",
@@ -25,15 +27,16 @@
   "040-Model07FieldCheckBox",
   "040-Model07FieldFile",
   "040-Model07FieldMatrix",
-  "040-Model07FieldLocation",
+  "040-Model07FieldNorthEast",
+  "040-Model07FieldLatLong",
   "040-Model08Page",
   "040-Model09fieldValidate",
   "040-Model10uploadManager",
   "040-Model11Rule",
   "040-Model11ruleCheckFuncs",
+  "040-Model12theme",
   "040-Model12UploadTask",
-  "050-api",
-  "060-RuleEngine"
+  "050-api"
  ],
  backbone:[
  "010-app",
@@ -61,5 +64,5 @@
  "040-view04Form",
  "040-view05fromJson",
  "050-api"
- ],
+ ]
 };

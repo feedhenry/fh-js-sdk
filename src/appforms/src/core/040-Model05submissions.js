@@ -66,9 +66,9 @@ appForm.models = (function(module) {
         }
         return null;
     }
-    Submissions.prototype.pruneSubmission = function(submission) {
-        var fields = ["_id", "_ludid", "status", "formName", "formId", "_localLastUpdate", "createDate", "submitDate", "deviceFormTimestamp"];
-        var data = submission.getProps();
+    Submissions.prototype.pruneSubmission=function(submission){
+        var fields=["_id", "_ludid","status","formName","formId","_localLastUpdate","createDate","submitDate","deviceFormTimestamp", "errorMessage", "submissionStartedTimestamp", "submitDate"];
+        var data=submission.getProps();
 
         var rtn = {};
         for (var i = 0; i < fields.length; i++) {

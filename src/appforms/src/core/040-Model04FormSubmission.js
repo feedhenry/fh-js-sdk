@@ -17,6 +17,11 @@ appForm.models=(function(module){
     FormSubmission.prototype.getFormId=function(){
         return this.get("data")['formId'];
     }
+    FormSubmission.prototype.setSubmissionStartedTimestamp=function(){
+      var submissionJSON = this.get("data");
+      submissionJSON['submissionStartedTimestamp'] = appForm.utils.getTime();
+      this.set("data", submissionJSON);
+    }
 
     return module;
 })(appForm.models || {});

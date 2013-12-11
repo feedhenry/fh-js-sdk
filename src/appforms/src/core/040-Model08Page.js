@@ -50,9 +50,6 @@ appForm.models=(function(module){
     Page.prototype.getFieldModelById=function(fieldId){
         return this.form.getFieldModelById(fieldId);
     }
-    Page.prototype.getPageId=function(){
-        return this.get("_id","");
-    }
     module.Page=Page;
 
     return module;

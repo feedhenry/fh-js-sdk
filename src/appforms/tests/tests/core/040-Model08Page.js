@@ -25,9 +25,9 @@ describe("Page model", function() {
     });
 
     it ("get a field model by its id",function(){
-        var fieldModel=pageModel.getFieldModelById("527d4539639f521e0a000006");
+        var fieldModel=pageModel.getFieldModelById("52974ee55e272dcb3d0000a7");
         assert(fieldModel);
-        assert(fieldModel.get("_id")=="527d4539639f521e0a000006");
+        assert(fieldModel.get("_id")=="52974ee55e272dcb3d0000a7");
     });
     
 

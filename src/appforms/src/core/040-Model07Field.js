@@ -72,9 +72,6 @@ appForm.models = (function(module) {
     Field.prototype.processInput = function(inputValue, cb) {
         var type = this.getType();
         var processorName = "process_" + type;
-        if (typeof inputValue ==="undefined" || inputValue ===null){ //if user input is empty, keep going.
-            return cb(null,inputValue);
-        }
         // try to find specified processor
         if (this[processorName] && typeof this[processorName] == "function") {
             this[processorName](inputValue,cb);
@@ -98,9 +95,16 @@ appForm.models = (function(module) {
             cb(null,submissionValue);
         }
     }
-    Field.prototype.validate=function(inputValue,cb){
-        this.form.getRuleEngine().validateFieldValue(this.getFieldId(),inputValue,cb);
+    /**
+     * validate a input with this field.
+     * @param  {[type]} inputValue [description]
+     * @return true / error message
+     */
+    Field.prototype.validate=function(inputValue){
+        return true;
+        //return appForm.models.fieldValidate.validate(inputValue,this);
     }
+
     /**
      * return rule array attached to this field.
      * @return {[type]} [description]

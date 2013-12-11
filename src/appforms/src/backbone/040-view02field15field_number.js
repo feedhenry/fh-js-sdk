@@ -1,9 +1,5 @@
 FieldNumberView = FieldView.extend({
-    type:"number",
-    valueFromElement:function(index){
-        var wrapperObj = this.getWrapper(index);
-        return parseFloat(wrapperObj.find("input,select,textarea").val()) || 0;
-    }
+    type:"number"
   // addValidationRules: function () {
   //   // call super
   //   FieldView.prototype.addValidationRules.call(this);

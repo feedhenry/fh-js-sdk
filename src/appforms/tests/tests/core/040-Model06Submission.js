@@ -17,7 +17,6 @@ describe("Submission model", function() {
 
     it("how to load a submission from local storage without a form", function(done) {
         var Form = appForm.models.Form;
-        //load form
         var form = new Form({
             formId: "527d4539639f521e0a000004"
         }, function(err, form) {
@@ -58,8 +57,7 @@ describe("Submission model", function() {
                 }
                 assert(error);
                 done();
-            })
-
+            });
         });
     });
 
@@ -242,34 +240,46 @@ describe("Submission model", function() {
             });
         });
         it("how to queue a submission", function(done) {
-            var submission = form.newSubmission();
-            submission.submit(function(err) { //this will call uploadManager.queueSubmission(submissionModel)
+          var submission = form.newSubmission();
+
+          submission.on("submit", function(err){
+            assert(!err);
+
+            submission.upload(function(err, uploadTask){
+              assert(!err);
+              assert(uploadTask);
+              assert(appForm.models.uploadManager.timer);
+              assert(appForm.models.uploadManager.hasTask());
+
+              submission.getUploadTask(function(err, task) {
                 assert(!err);
-                //assert(appForm.models.uploadManager.timer);
-                submission.upload(function(err, task) {
-                    assert(!err);
-                    assert(task);
-                    done();
-                });
-                assert(appForm.models.uploadManager.hasTask());
+                assert(task);
+                done();
+              });
             });
-            
+          });
+
+          submission.submit(function(err){
+            assert(!err);
+          });
         });
-        it("how to monitor if a submission is submmited", function(done){
+        it("how to monitor if a submission is submitted", function(done){
             var submission = form.newSubmission();
             this.timeout(10000);
+
+            submission.on("submit", function(){
+              submission.upload(function(err, uploadTask){
+                assert(!err);
+                assert(uploadTask);
+              });
+            });
             submission.on("submitted",function(err){
                 assert(!err);
                 done();
             });
-            submission.submit(function(err) { //this will call uploadManager.queueSubmission(submissionModel)
-               
+            submission.submit(function(err) {
                 assert(!err);
-                submission.upload(function(err){
-                    assert(!err);
-                });
             });
-        })
-
+        });
     });
 });

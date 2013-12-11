@@ -1,6 +1,6 @@
 describe("Ajax", function() {
     it("should do a GET request", function(done) {
-        appForm.web.ajax.get('mbaas/forms/fdsa', function(err, res) {
+        appForm.web.ajax.get('mbaas/forms', function(err, res) {
             assert(!err);
             assert(res);
             assert(res.forms);

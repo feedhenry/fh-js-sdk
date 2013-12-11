@@ -19,8 +19,19 @@ appForm.stores=(function(module){
     MBaaS.prototype.update=function(model,cb){
         
     }
-    MBaaS.prototype.delete=function(model,cb){
+    MBaaS.prototype.delete=function(model,cb){ // No delete method associated with mabaas calls -- > only send and read...
         
+    }
+
+    MBaaS.prototype.completeSubmission = function(submissionToComplete, cb){
+      var url = _getUrl(submissionToComplete);
+      appForm.web.ajax.post(url,{},cb);
+    }
+
+    MBaaS.prototype.submissionStatus = function(submission, cb){
+      var url = _getUrl(submission);
+
+      appForm.web.ajax.get(url, cb);
     }
     
     function _getUrl(model){
@@ -37,6 +48,8 @@ appForm.stores=(function(module){
         var url= host+mBaaSBaseUrl+relativeUrl;
         var props={};
 
+
+        //Theme and forms do not require any parameters that are not in _fh
         switch (type){
             case "form":
                 props.formId=model.get("_id");
@@ -48,7 +61,11 @@ appForm.stores=(function(module){
                 props.submissionId=model.getSubmissionId();
                 props.hashName=model.getHashName();
                 props.fieldId=model.getFieldId();
-                break
+            case "submissionStatus":
+                props.submissionId = model.get("submissionId");
+            case "completeSubmission":
+                props.submissionId = model.get("submissionId");
+            break
         }
         for (var key in props){
             url=url.replace(":"+key,props[key]);

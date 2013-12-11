@@ -36,12 +36,13 @@ appForm.models=(function(module){
         var appId=this.get("appId");
         //ebaas url definition https://docs.google.com/a/feedhenry.com/document/d/1_bd4kZMm7q6C1htNJBTSA2X4zi1EKx0hp_4aiJ-N5Zg/edit#
         this.set("formUrls",{
-            "forms":"/forms/"+appId,
-            "form":"/forms/"+appId+"/:formId",
-            "theme":"/forms/"+appId+"/theme",
+            "forms":"/forms",
+            "form":"/forms/:formId",
+            "theme":"/forms/theme",
             "formSubmission":"/forms/:formId/submitFormData",
-            "fileSubmission":"/:submissionId/:fieldId/:hashName/submitFormFile"
-            //TODO complete the list. 
+            "fileSubmission":"/forms/:submissionId/:fieldId/:hashName/submitFormFile",
+            "submissionStatus": "/forms/:submissionId/status",
+            "completeSubmission": "/forms/:submissionId/completeSubmission"
         })
     }
     module.config=new Config();

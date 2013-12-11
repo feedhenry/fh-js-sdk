@@ -20,12 +20,20 @@ describe("forms model",function(){
         });
     });
 
-    it (" how to find a form's meta info from form list / can load a formMeta data by its form id",function(){
+    it (" how to find a form's meta info from form list / can load a formMeta data by its form id",function(done){
         var formsModel=appForm.models.forms;
-        var form=formsModel.getFormMetaById("527d4539639f521e0a000004");
-        assert(form);
-        assert(form._id=="527d4539639f521e0a000004");
-        assert(form.lastUpdated);
+
+        formsModel.refresh(true, function(err,model){
+          assert(!err);
+          assert(model);
+
+
+          var form=formsModel.getFormMetaById("527d4539639f521e0a000004");
+          assert(form);
+          assert(form._id=="527d4539639f521e0a000004");
+          assert(form.lastUpdated);
+          done();
+        });
     });
 
     it ("how to test if a form model object is up to date / should check if a form is up to date",function(done){

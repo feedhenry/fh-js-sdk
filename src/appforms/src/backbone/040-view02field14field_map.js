@@ -1,7 +1,20 @@
 FieldMapView = FieldView.extend({
   extension_type: 'fhmap',
   input: "<div data-index='<%= index %>' class='fh_map_canvas' style='width:<%= width%>; height:<%= height%>;'></div>",
-
+  mapSettings: {
+    mapWidth: '100%',
+    mapHeight: '300px',
+    defaultZoom: 16,
+    location: {
+      lon: -5.80078125,
+      lat: 53.12040528310657
+    }
+  },
+  mapInited: 0,
+  maps: [],
+  mapData: [],
+  markers: [],
+  allMapInitFunc: [],
   // parseCssOptions: function() {
   //   var options = {
   //     defaultZoom: null
@@ -25,23 +38,6 @@ FieldMapView = FieldView.extend({
 
   //   return options;
   // },
-  initialize: function() {
-    this.mapInited = 0;
-    this.maps = [];
-    this.mapData = [];
-    this.markers = [];
-    this.allMapInitFunc = [];
-    this.mapSettings = {
-      mapWidth: '100%',
-      mapHeight: '300px',
-      defaultZoom: 16,
-      location: {
-        lon: -5.80078125,
-        lat: 53.12040528310657
-      }
-    }
-    FieldView.prototype.initialize.apply(this, arguments);
-  },
   renderInput: function(index) {
     return _.template(this.input, {
       width: this.mapSettings.mapWidth,
@@ -56,16 +52,16 @@ FieldMapView = FieldView.extend({
     }
   },
   allMapInit: function() {
-    while (func = this.allMapInitFunc.shift()) {
-      func();
+    while (func=this.allMapInitFunc.shift()){
+        func();
     }
   },
   onAllMapInit: function(func) {
     if (this.mapInited == this.curRepeat) {
       func();
     } else {
-      if (this.allMapInitFunc.indexOf(func) == -1) {
-        this.allMapInitFunc.push(func);
+      if (this.allMapInitFunc.indexOf(func)==-1){
+        this.allMapInitFunc.push(func);  
       }
     }
 
@@ -143,33 +139,29 @@ FieldMapView = FieldView.extend({
   },
 
   valueFromElement: function(index) {
-    var map = this.maps[index];
-    var marker = this.markers[index];
-    if (map && marker) {
+    var map=this.maps[index];
+    var marker=this.markers[index];
+    if (map && marker){
       return {
-        "lat": marker.getPosition().lat(),
-        "long": marker.getPosition().lng(),
-        "zoom": map.getZoom()
-      };
-    } else {
+      "lat":marker.getPosition().lat(),
+      "long":marker.getPosition().lng(),
+      "zoom":map.getZoom()
+    };  
+    }else{
       return null;
     }
-
+    
   },
   valuePopulateToElement: function(index, value) {
-    if (value){
-      var that = this;
-
-      function _handler() {
-        var map = that.maps[index];
-        var pt = new google.maps.LatLng(value.lat, value.long);
-        map.setCenter(pt);
-        map.setZoom(value.zoom);
-        that.markers[index].setPosition(pt);
-      }
-
-      this.onAllMapInit(_handler);
+    var that = this;
+    function _handler(){
+      var map = that.maps[index];
+      var pt = new google.maps.LatLng(value.lat, value.long);
+      map.setCenter(pt);
+      map.setZoom(value.zoom);
+      that.markers[index].setPosition(pt);
     }
 
+    this.onAllMapInit(_handler);
   }
 });

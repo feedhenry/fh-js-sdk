@@ -1,7 +1,4 @@
 appForm.models = (function(module) {
-    module.Model = Model;
-    
-    
     function Model(opt) {
         this.props = {
             "_id": null, // model id
@@ -15,7 +12,6 @@ appForm.models = (function(module) {
             }
         }
         this.touch();
-        
     }
     Model.prototype.on=function(name,func){
         if (!this.events[name]){
@@ -70,7 +66,6 @@ appForm.models = (function(module) {
             }
         }
         this.touch();
-
     }
     Model.prototype.fromJSONStr = function(jsonStr) {
         try {
@@ -102,7 +97,7 @@ appForm.models = (function(module) {
     //     return true;
     // }
     Model.prototype.touch=function(){
-        this.set("_localLastUpdate",(new Date()).getTime());
+        this.set("_localLastUpdate", appForm.utils.getTime());
     }
     Model.prototype.getLocalUpdateTimeStamp=function(){
         return this.get("_localLastUpdate");
@@ -185,6 +180,7 @@ appForm.models = (function(module) {
     Model.prototype.setDataAgent=function(dataAgent){
         this.dataAgent=dataAgent;
     }
+    module.Model = Model;
 
     return module;
     

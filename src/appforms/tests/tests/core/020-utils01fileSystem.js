@@ -26,7 +26,6 @@ describe("File system", function() {
             fileSystem.readAsBase64Encoded("mytestfile.txt", function(err, res) {
                 assert(!err);
                 assert(res);
-                console.log(res);
                 done();
             });
         });
@@ -35,7 +34,6 @@ describe("File system", function() {
             fileSystem.readAsBlob("mytestfile.txt", function(err, res) {
                 assert(!err);
                 assert(res);
-                console.log(res);
                 done();
             });
         });

@@ -13,7 +13,7 @@ appForm.models = (function(module) {
         this.timeOut = 60; //60 seconds. TODO: defin in config
         this.sending = false;
         this.timerInterval = 200;
-        this.sendingStart = new Date();
+        this.sendingStart = appForm.utils.getTime();
     }
     appForm.utils.extend(UploadManager, Model);
     /**
@@ -26,13 +26,16 @@ appForm.models = (function(module) {
         var utId;
         var uploadTask = null;
         var self = this;
-        if (submissionModel.getUploadTaskId()) {
-            utId = submissionModel.getUploadTaskId();
+        utId = submissionModel.getUploadTaskId();
+        if (utId) {
+            console.log("submission has a previous uploading task. it will be overwritten");
         } else {
-            uploadTask = appForm.models.uploadTask.newInstance(submissionModel);
-            utId = uploadTask.getLocalId();
+          uploadTask = appForm.models.uploadTask.newInstance(submissionModel);
+          utId = uploadTask.getLocalId();
         }
+
         this.push(utId);
+
         if (!this.timer){
             this.start();
         }
@@ -139,7 +142,7 @@ appForm.models = (function(module) {
     }
     UploadManager.prototype.tick = function() {
         if (this.sending) {
-            var now = new Date();
+            var now = appForm.utils.getTime();
             var timePassed = now.getTime() - this.sendingStart.getTime();
             if (timePassed > this.timeOut * 1000) { //time expired. roll current task to the end of queue
                 console.error("Uploading content timeout. it will try to reupload.");
@@ -150,7 +153,7 @@ appForm.models = (function(module) {
 
             if (this.hasTask()) {
                 this.sending = true;
-                this.sendingStart = new Date();
+                this.sendingStart = appForm.utils.getTime();
                 var that = this;
                 this.getCurrentTask(function(err, task) {
                     if (err || !task) {

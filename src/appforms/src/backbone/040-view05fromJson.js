@@ -36,7 +36,7 @@ var FromJsonView = BaseView.extend({
     var params = {
       formId : new Date().getTime(), // empty as we are passing in JSON form
       rawMode : true,
-      rawData : jsonData,
+      rawData : jsonData
     }
     var formView=new FormView({parentEl:"#backbone #resultArea"});
     formView.loadForm(params,function(err){

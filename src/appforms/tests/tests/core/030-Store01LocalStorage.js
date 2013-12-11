@@ -89,7 +89,6 @@ describe("Fallback use $fh data / how to forcely use $fh data", function() {
         var Model = appForm.models.Model;
         var model = new Model();
         appForm.stores.localStorage.create(model, function(err, res) {
-            console.log(err, res);
             assert(!err);
             assert(res);
             done();
