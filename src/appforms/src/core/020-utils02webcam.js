@@ -2,6 +2,7 @@ appForm.utils = (function(module) {
     module.takePhoto = takePhoto;
     module.isPhoneGapAvailable = isPhoneGapAvailable;
     module.initHtml5Camera = initHtml5Camera;
+    module.cancelHtml5Camera=cancelHtml5Camera;
     var isPhoneGap = false;
     var isHtml5 = false;
     var video = null;
@@ -16,7 +17,12 @@ appForm.utils = (function(module) {
     function initHtml5Camera(params, cb) {
         _html5Camera(params, cb);
     }
-
+    function cancelHtml5Camera(){
+        if (localMediaStream){
+            localMediaStream.stop()
+            localMediaStream=null;
+        }
+    }
     function takePhoto(params, cb) {
         var width = params.width;
         var height = params.height;
@@ -30,7 +36,7 @@ appForm.utils = (function(module) {
                 encodingType: Camera.EncodingType.PNG
             });
         } else if (isHtml5) {
-            
+            snapshot(params,cb);
         } else {
             cb("Your device does not support camera.");
         }
@@ -56,8 +62,11 @@ appForm.utils = (function(module) {
             }, function(stream) {
                 video.src = window.URL.createObjectURL(stream);
                 localMediaStream = stream;
-                cb(null);
+                cb(null,video);
             }, cb);
+        }else{
+            console.error("Media device was not released.");
+            cb("Media device occupied.");
         }
 
     }
@@ -71,6 +80,8 @@ appForm.utils = (function(module) {
             video = document.createElement("video");
             canvas = document.createElement('canvas');
             ctx = canvas.getContext('2d');
+        }else{
+            console.error("Cannot detect usable media API. Camera will not run properly on this device.");
         }
     }
 
@@ -81,26 +92,31 @@ appForm.utils = (function(module) {
         }
         if (navigator.webkitGetUserMedia) {
             navigator.getUserMedia = navigator.webkitGetUserMedia;
-            return true
+            return true;
         }
         if (navigator.mozGetUserMedia) {
             navigator.getUserMedia = navigator.mozGetUserMedia;
-            return true
+            return true;
         }
         if (navigator.msGetUserMedia) {
             navigator.getUserMedia = navigator.msGetUserMedia;
-            return true
+            return true;
         }
         return false;
     }
-    //checkEnv();
+    checkEnv();
 
-    function snapshot() {
+    function snapshot(params,cb) {
         if (localMediaStream) {
-            ctx.drawImage(video, 0, 0, 800, 600);
+            ctx.drawImage(video, 0, 0, params.width, params.height);
             // "image/webp" works in Chrome.
             // Other browsers will fall back to image/png.
-            img.src = canvas.toDataURL('image/webp');
+            var base64=canvas.toDataURL('image/webp');
+            cancelHtml5Camera()
+            cb(null,base64);
+        }else{
+            console.error("Media resource is not available");
+            cb("Resource not available");
         }
     }
 

@@ -346,6 +346,7 @@ appForm.models = (function(module) {
      */
     Submission.prototype.reset = function() {
         this.set("formFields", []);
+        //TODO need to clear local storage like files etc.
     }
     Submission.prototype.startInputTransaction = function() {
         this.transactionMode = true;

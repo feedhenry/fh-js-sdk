@@ -15,7 +15,7 @@ var FormView = BaseView.extend({
   },
 
   initialize: function() {
-    _.bindAll(this,"checkRules","onValidateError");
+    _.bindAll(this, "checkRules", "onValidateError");
     this.el = this.options.parentEl;
     this.fieldModels = [];
     this.el.empty();
@@ -41,20 +41,27 @@ var FormView = BaseView.extend({
       cb();
     }
   },
-  readOnly:function(){
-    this.readonly=true;
-    for (var i=0, fieldView;fieldView=this.fieldViews[i];i++){
-      fieldView.$el.find("button,input,textarea,select").attr("disabled","disabled");
+  readOnly: function() {
+    this.readonly = true;
+    for (var i = 0, fieldView; fieldView = this.fieldViews[i]; i++) {
+      fieldView.$el.find("button,input,textarea,select").attr("disabled", "disabled");
     }
     this.el.find("button.saveDraft").hide();
-      this.el.find(" button.submit").hide();
+    this.el.find(" button.submit").hide();
   },
-  onValidateError:function(res){
-    debugger;
-    for (var fieldId in res){
-      var fieldView=this.getFieldViewById(fieldId);
-      var errorMsg=res[fieldId].errorMessages.join(", ");
-      fieldView.setErrorText(0,errorMsg)
+  onValidateError: function(res) {
+    
+    for (var fieldId in res) {
+      if (res[fieldId]) {
+        var fieldView = this.getFieldViewById(fieldId);
+        var errorMsgs = res[fieldId].errorMessages;
+        for (var i = 0; i < errorMsgs.length; i++) {
+          if (errorMsgs[i]) {
+            fieldView.setErrorText(i, errorMsgs[i]);
+          }
+        }
+      }
+
     }
   },
   initWithForm: function(form, params) {
@@ -68,7 +75,7 @@ var FormView = BaseView.extend({
       params.submission = self.model.newSubmission();
     }
     self.submission = params.submission;
-    self.submission.on("validationerror",self.onValidateError);
+    self.submission.on("validationerror", self.onValidateError);
     // Init Pages --------------
     var pageModelList = form.getPageModelList();
     var pageViews = [];
@@ -88,11 +95,11 @@ var FormView = BaseView.extend({
     for (var i = 0, pageView; pageView = pageViews[i]; i++) {
       var pageFieldViews = pageView.fieldViews;
       for (var key in pageFieldViews) {
-        var fView=pageFieldViews[key];
+        var fView = pageFieldViews[key];
         fieldViews.push(fView);
-        fView.on("checkrules",self.checkRules);
-        if (self.readonly){
-          fView.$el.find("input,button,textarea,select").attr("disabled","disabled");
+        fView.on("checkrules", self.checkRules);
+        if (self.readonly) {
+          fView.$el.find("input,button,textarea,select").attr("disabled", "disabled");
         }
       }
     }
@@ -102,39 +109,39 @@ var FormView = BaseView.extend({
 
     self.onLoadEnd();
   },
-  checkRules:function(){
-    var self=this;
-    this.populateFieldViewsToSubmission(function(){
-      var submission=self.submission;
-      submission.checkRules(function(err,res){
-        if (err){
+  checkRules: function() {
+    var self = this;
+    this.populateFieldViewsToSubmission(function() {
+      var submission = self.submission;
+      submission.checkRules(function(err, res) {
+        if (err) {
           console.error(err);
-        }else{
-          var actions=res.actions;
-          var pages=actions.pages;
-          var fields=actions.fields;
-          for (var targetId in pages){
-            self.performRuleAction("page",targetId,pages[targetId]["action"]);
+        } else {
+          var actions = res.actions;
+          var pages = actions.pages;
+          var fields = actions.fields;
+          for (var targetId in pages) {
+            self.performRuleAction("page", targetId, pages[targetId]["action"]);
           }
-          for (var targetId in fields){
-            self.performRuleAction("field",targetId,fields[targetId]["action"]);
+          for (var targetId in fields) {
+            self.performRuleAction("field", targetId, fields[targetId]["action"]);
           }
         }
       });
     });
   },
-  performRuleAction:function(type, targetId, action){
-    var target=null;
-    if (type == "page"){
-      target=this.getPageViewById(targetId);
-    }else if (type =="field"){
-      target=this.getFieldViewById(targetId);
+  performRuleAction: function(type, targetId, action) {
+    var target = null;
+    if (type == "page") {
+      target = this.getPageViewById(targetId);
+    } else if (type == "field") {
+      target = this.getFieldViewById(targetId);
     }
-    if (target == null){
-      console.error("cannot find target with id:"+targetId);
+    if (target == null) {
+      console.error("cannot find target with id:" + targetId);
       return;
     }
-    switch (action){
+    switch (action) {
       case "show":
         target.show();
         break;
@@ -142,7 +149,7 @@ var FormView = BaseView.extend({
         target.hide();
         break;
       default:
-        console.error("action not defined:"+action);
+        console.error("action not defined:" + action);
     }
   },
   rebindButtons: function() {
@@ -168,19 +175,19 @@ var FormView = BaseView.extend({
   getSubmission: function() {
     return this.submission;
   },
-  getPageViewById:function(pageId){
-    for (var i=0, pageView;pageView=this.pageViews[i];i++){
-      var pId=pageView.model.getPageId();
-      if (pId==pageId){
+  getPageViewById: function(pageId) {
+    for (var i = 0, pageView; pageView = this.pageViews[i]; i++) {
+      var pId = pageView.model.getPageId();
+      if (pId == pageId) {
         return pageView;
       }
     }
     return null;
   },
-  getFieldViewById:function(fieldId){
-    for (var i=0, fieldView;fieldView=this.fieldViews[i];i++){
-      var pId=fieldView.model.getFieldId();
-      if (pId==fieldId){
+  getFieldViewById: function(fieldId) {
+    for (var i = 0, fieldView; fieldView = this.fieldViews[i]; i++) {
+      var pId = fieldView.model.getFieldId();
+      if (pId == fieldId) {
         return fieldView;
       }
     }
@@ -212,7 +219,7 @@ var FormView = BaseView.extend({
       this.el.find(" button.submit").hide();
       this.el.find("button").addClass('three_button');
     }
-    if (this.readonly){
+    if (this.readonly) {
       this.el.find("button.saveDraft").hide();
       this.el.find(" button.submit").hide();
     }
@@ -247,9 +254,9 @@ var FormView = BaseView.extend({
     var self = this;
     this.populateFieldViewsToSubmission(function() {
       self.submission.submit(function(err, res) {
-        if (err){
+        if (err) {
           console.error(err);
-        }else{
+        } else {
           self.el.empty();
         }
       });
@@ -275,7 +282,7 @@ var FormView = BaseView.extend({
     for (var i = 0, fieldView; fieldView = fieldViews[i]; i++) {
       var val = fieldView.value();
       var fieldId = fieldView.model.getFieldId();
-      for (var j = 0; j<val.length; j++) {
+      for (var j = 0; j < val.length; j++) {
         var v = val[j];
         tmpObj.push({
           id: fieldId,

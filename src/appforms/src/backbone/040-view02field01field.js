@@ -128,7 +128,7 @@ FieldView = Backbone.View.extend({
 
     // add to dom
     this.options.parentEl.append(this.$el);
-    this.checkActionBar();
+    
     this.show();
 
     // force the element to be initially hidden
@@ -144,6 +144,7 @@ FieldView = Backbone.View.extend({
         self.value(res);
       });
     }
+    this.checkActionBar();
     this.onRender();
   },
   onRender:function(){
@@ -358,6 +359,11 @@ FieldView = Backbone.View.extend({
     return wrapperObj.find("input,select,textarea").val() || "";
   },
   valuePopulate: function(value) {
+    var number=value.length;
+    while (number>this.curRepeat){
+      this.addElement();
+    }
+
     for (var i = 0; i < value.length; i++) {
       var v = value[i];
       this.valuePopulateToElement(i, v);

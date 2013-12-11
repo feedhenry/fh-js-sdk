@@ -1,7 +1,7 @@
 appForm.RulesEngine=rulesEngine;
 /*! fh-forms - v0.2.3 -  */
 /*! async - v0.2.9 -  */
-/*! 2013-12-10 */
+/*! 2013-12-11 */
 /* This is the prefix file */
 function rulesEngine (formDef) {
   var define = {};
@@ -1048,6 +1048,7 @@ var formsRulesEngine = function(formDef) {
 
   var fieldMap = {};
   var requiredFieldMap = {};
+  var submissionRequiredFieldsMap = {}; // map to hold the status of the required fields per submission
   var fieldRulePredicateMap = {};
   var fieldRuleSubjectMap = {};
   var pageRulePredicateMap = {};
@@ -1128,6 +1129,9 @@ var formsRulesEngine = function(formDef) {
   }
 
   function buildSubmissionFieldsMap(cb) {
+    submissionRequiredFieldsMap = JSON.parse(JSON.stringify(requiredFieldMap)); // clone the map for use with this submission
+    submissionFieldsMap = {}; // start with empty map, rulesEngine can be called with multiple submissions
+
     // iterate over all the fields in the submissions and build a map for easier lookup
     async.each(submission.formFields, function(formField, cb) {
       if (!formField.fieldId) return cb(new Error("No fieldId in this submission entry: " + util.inspect(formField)));
@@ -1219,12 +1223,6 @@ var formsRulesEngine = function(formDef) {
             res.validation[fieldID] = fieldRes;  // add invalid field info to validate form result
           }
 
-          // if a required field then update that fieldmap
-          if (requiredFieldMap[fieldID]) {
-            requiredFieldMap[fieldID].submitted = true;
-            requiredFieldMap[fieldID].validated = fieldRes.valid;
-          }
-
           return callback();
         });
 
@@ -1238,9 +1236,9 @@ var formsRulesEngine = function(formDef) {
   }
 
   function checkIfRequiredFieldsNotSubmitted(res, cb) {
-    async.each(Object.keys(requiredFieldMap), function (requiredFieldId, cb) {
+    async.each(Object.keys(submissionRequiredFieldsMap), function (requiredFieldId, cb) {
       var resField = {};
-      if (!requiredFieldMap[requiredFieldId].submitted) {
+      if (!submissionRequiredFieldsMap[requiredFieldId].submitted) {
         isFieldVisible(requiredFieldId, true, function (err, visible) {
           if (err) return cb(err);
           if (visible) {  // we only care about required fields if they are visible
@@ -1318,7 +1316,11 @@ var formsRulesEngine = function(formDef) {
         if (err) return cb(err);
 
         validator(inputValue, fieldDefinition, undefined, function (err) {
-          return createValidatorResponse(fieldId, err, function (err, res) {
+          var messages = {errorMessages: []}
+          if(err) {
+            messages.errorMessages.push(err.message);
+          }
+          return createValidatorResponse(fieldId, messages, function (err, res) {
             if (err) return cb(err);
             var ret = {validation: {}};
             ret.validation[fieldId] = res;
@@ -1329,25 +1331,26 @@ var formsRulesEngine = function(formDef) {
     });
   }
 
- function createValidatorResponse(fieldId, err, cb) {
+
+ function createValidatorResponse(fieldId, messages, cb) {
     // intentionally not checking err here, used further down to get validation errors
     var res = {};
     res.fieldId = fieldId;
-    res.errorMessages = [];
+    res.errorMessages = messages.errorMessages || [];
+    res.fieldErrorMessage = messages.fieldErrorMessage || [];
+    async.some(res.errorMessages, function (item, cb) {
+      return cb(item !== null);
+    }, function (someErrors) {
+      res.valid = !someErrors && (res.fieldErrorMessage.length < 1);
 
-    if (err) {
-      res.errorMessages.push(err.message);
-      res.valid = false;
-    } else {
-      res.valid = true;
-    }
-
-    return cb(undefined, res);
+      return cb(undefined, res);      
+    });
   }
 
   function getFieldValidationStatus(submittedField, fieldDef, previousFieldValues, cb) {  
-    validateFieldInternal(submittedField, fieldDef, previousFieldValues, function (err) {
-      createValidatorResponse(submittedField.fieldId, err, cb);
+    validateFieldInternal(submittedField, fieldDef, previousFieldValues, function (err, messages) {
+      if(err) return cb(err);
+      createValidatorResponse(submittedField.fieldId, messages, cb);
     });
   }
 
@@ -1361,61 +1364,106 @@ var formsRulesEngine = function(formDef) {
     return cb(undefined, validator);
   }
 
-
   function validateFieldInternal(submittedField, fieldDef, previousFieldValues, cb) {
     if ("function" === typeof previousFieldValues) {
       cb = previousFieldValues;
       previousFieldValues = null;
     }
 
-    async.series([
-      async.apply(checkValueSubmitted, submittedField, fieldDef),
-      async.apply(checkRepeat, submittedField, fieldDef),
-      async.apply(checkValues, submittedField, fieldDef, previousFieldValues)
-    ], cb);
+    countSubmittedValues(submittedField, function(err, numSubmittedValues) {
+      if(err) return cb(err);
+      async.series({
+        valuesSubmitted:
+          async.apply(checkValueSubmitted, submittedField, fieldDef),
+        repeats:
+          async.apply(checkRepeat, numSubmittedValues, fieldDef),
+        values:
+          async.apply(checkValues, submittedField, fieldDef, previousFieldValues)
+      }, function (err, results) {
+        if(err) return cb(err);
+
+        var fieldErrorMessages = [];
+        if(results.valuesSubmitted) {
+          fieldErrorMessages.push(results.valuesSubmitted);
+        }
+        if(results.repeats) {
+          fieldErrorMessages.push(results.repeats);
+        }
+        return cb(undefined, {fieldErrorMessage: fieldErrorMessages, errorMessages: results.values});
+      });
+    });
 
     return;  // just functions below this
 
     function checkValueSubmitted(submittedField, fieldDefinition, cb) {
       var valueSubmitted = submittedField && submittedField.fieldValues && (submittedField.fieldValues.length > 0);
       if (!valueSubmitted) {
-        return cb(new Error("No value submitted for field " + fieldDefinition.name));
+        return cb(undefined, "No value submitted for field " + fieldDefinition.name);
       }
-      return cb();
+      return cb(undefined, null);
     }
 
-    function checkRepeat(submittedField, fieldDefinition, cb) {
-      var numSubmittedValues = submittedField.fieldValues.length;
+    function countSubmittedValues(submittedField, cb) {
+      var numSubmittedValues = 0;
+      if(submittedField && submittedField.fieldValues && submittedField.fieldValues.length > 0) {
+        for(var i=0; i<submittedField.fieldValues.length; i += 1) {
+          if(submittedField.fieldValues[i]) {
+            numSubmittedValues += 1;
+          }
+        }
+      }
+      return cb(undefined, numSubmittedValues);
+    }
 
+    function checkRepeat(numSubmittedValues, fieldDefinition, cb) {
+    
       if(fieldDefinition.repeating && fieldDefinition.fieldOptions.definition){
         if(fieldDefinition.fieldOptions.definition.minRepeat){
           if(numSubmittedValues < fieldDefinition.fieldOptions.definition.minRepeat){
-            return cb(new Error("Expected min of " + fieldDefinition.fieldOptions.definition.minRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues));
+            return cb(undefined, "Expected min of " + fieldDefinition.fieldOptions.definition.minRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues);
           }
         }
 
         if (fieldDefinition.fieldOptions.definition.maxRepeat){
           if(numSubmittedValues > fieldDefinition.fieldOptions.definition.maxRepeat){
-            return cb(new Error("Expected max of " + fieldDefinition.fieldOptions.definition.maxRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues));
+            return cb(undefined, "Expected max of " + fieldDefinition.fieldOptions.definition.maxRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues);
           }
         }
       } else {
         if(numSubmittedValues > 1) {
-          return cb(new Error("Should not have multiple values for non-repeating field"));
+          return cb(undefined, "Should not have multiple values for non-repeating field");
         }
       }
 
-      return cb();
+      return cb(undefined, null);
     }
 
     function checkValues(submittedField, fieldDefinition, previousFieldValues, cb) {
       getValidatorFunction(fieldDefinition.type, function (err, validator) {       
-        async.eachSeries(submittedField.fieldValues, function(fieldValue, cb){
-          validator(fieldValue, fieldDefinition, previousFieldValues, cb);
-        }, function (err) {
+
+        async.map(submittedField.fieldValues, function(fieldValue, cb){
+          if('undefined' === typeof fieldValue || null === fieldValue) {
+            return cb(undefined, null);
+          } else {
+            validator(fieldValue, fieldDefinition, previousFieldValues, function(validationError) {
+              var errorMessage;
+              if(validationError) {
+                errorMessage = validationError.message || "Error during validation of field";
+              } else {
+                errorMessage = null;
+              }
+
+              if (submissionRequiredFieldsMap[fieldDefinition._id]) {   // set to true if at least one value
+                submissionRequiredFieldsMap[fieldDefinition._id].submitted = true;
+              }
+
+              return cb(undefined, errorMessage);
+            });
+          }
+        }, function (err, results) {
           if (err) return cb(err);
 
-          return cb();
+          return cb(undefined, results);
         });
       });
     }
