@@ -18,6 +18,8 @@ var modules = {
         "040-Model03Form",
         "040-Model04FileSubmission",
         "040-Model04FormSubmission",
+        "040-Model04FormSubmissionComplete",
+        "040-Model04FormSubmissionStatus",
         "040-Model05submissions",
         "040-Model06Submission",
         "040-Model07Field",
