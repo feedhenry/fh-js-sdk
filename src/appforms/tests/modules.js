@@ -26,6 +26,7 @@
   "040-Model07FieldFile",
   "040-Model07FieldMatrix",
   "040-Model07FieldLocation",
+  "040-Model07FieldSignature",
   "040-Model08Page",
   "040-Model09fieldValidate",
   "040-Model10uploadManager",
