@@ -393,7 +393,7 @@ table.likert {
   min-height: 40px;
   height: 40px;
   display: block;
-  background: url("../img/wflogo.png") no-repeat left top;
+  background: url(../img/wflogo.png) no-repeat left top;
   overflow: hidden;
 }
 

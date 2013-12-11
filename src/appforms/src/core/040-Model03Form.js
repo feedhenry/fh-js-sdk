@@ -76,7 +76,6 @@ appForm.models = (function(module) {
         var fieldsRef = this.getFieldRef();
         this.fields = {};
         for (var fieldId in fieldsRef) {
-
             var fieldRef = fieldsRef[fieldId];
             var pageIndex = fieldRef["page"];
             var fieldIndex = fieldRef["field"];
@@ -201,6 +200,14 @@ appForm.models = (function(module) {
             }
         }
         return fieldsId;
+    }
+    Form.prototype.getRuleEngine = function() {
+        if (this.rulesEngine) {
+            return this.rulesEngine;
+        } else {
+            var formDefinition = this.getProps();
+            return this.rulesEngine = new appForm.RulesEngine(formDefinition);
+        }
     }
 
     return module;

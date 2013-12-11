@@ -27,8 +27,7 @@
   "040-Model07FieldCheckBox",
   "040-Model07FieldFile",
   "040-Model07FieldMatrix",
-  "040-Model07FieldNorthEast",
-  "040-Model07FieldLatLong",
+  "040-Model07FieldLocation",
   "040-Model08Page",
   "040-Model09fieldValidate",
   "040-Model10uploadManager",
@@ -36,7 +35,8 @@
   "040-Model11ruleCheckFuncs",
   "040-Model12theme",
   "040-Model12UploadTask",
-  "050-api"
+  "050-api",
+  "060-RuleEngine"
  ],
  backbone:[
  "010-app",

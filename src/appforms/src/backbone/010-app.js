@@ -6,7 +6,7 @@ var App=(function(module){
     module.config={};
 
     // ---- App Configs --------
-    module.config.validationOn = false;
+    module.config.validationOn = true;
 
     // TODO - get this to read from field definition
     module.config.getValueOrDefault = function(key){

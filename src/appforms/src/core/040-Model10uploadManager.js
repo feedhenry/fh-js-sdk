@@ -26,16 +26,13 @@ appForm.models = (function(module) {
         var utId;
         var uploadTask = null;
         var self = this;
-        utId = submissionModel.getUploadTaskId();
-        if (utId) {
-            console.log("submission has a previous uploading task. it will be overwritten");
+        if (submissionModel.getUploadTaskId()) {
+            utId = submissionModel.getUploadTaskId();
         } else {
-          uploadTask = appForm.models.uploadTask.newInstance(submissionModel);
-          utId = uploadTask.getLocalId();
+            uploadTask = appForm.models.uploadTask.newInstance(submissionModel);
+            utId = uploadTask.getLocalId();
         }
-
         this.push(utId);
-
         if (!this.timer){
             this.start();
         }

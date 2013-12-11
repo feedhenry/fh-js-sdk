@@ -66,6 +66,7 @@ appForm.models = (function(module) {
             }
         }
         this.touch();
+
     }
     Model.prototype.fromJSONStr = function(jsonStr) {
         try {

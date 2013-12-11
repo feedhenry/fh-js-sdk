@@ -79,6 +79,7 @@ var FormListView = BaseView.extend({
 
   appendForm: function(form) {
     // this.options.parentEl.find('ul').append("<li>"+form.name+"("+form.description+")"+"</li>");
+    // console.log(form);
     var view = new FormListItemView({model: form});
     this.views.push(view);
     $('ul', this.options.parentEl).append(view.render().el);

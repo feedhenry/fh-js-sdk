@@ -17,6 +17,7 @@ describe("Submission model", function() {
 
     it("how to load a submission from local storage without a form", function(done) {
         var Form = appForm.models.Form;
+        //load form
         var form = new Form({
             formId: "527d4539639f521e0a000004"
         }, function(err, form) {
