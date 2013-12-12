@@ -33,7 +33,7 @@ describe("forms model",function(){
             assert(!err);
             var formsModel=appForm.models.forms;
 
-            assert (formsModel.isFormUpdated(form));
+            assert (!formsModel.isFormUpdated(form));
             done();
         });
     });

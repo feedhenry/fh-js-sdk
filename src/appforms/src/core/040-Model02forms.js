@@ -23,7 +23,7 @@ appForm.models=(function(module){
         var formLastUpdate=formModel.getLastUpdate();
         var formMeta=this.getFormMetaById(id);
         if (formMeta){
-            return formLastUpdate==formMeta.lastUpdatedTimestamp;
+            return formLastUpdate!=formMeta.lastUpdatedTimestamp;
         }else{ //could have been deleted. leave it for now
             return false;
         }

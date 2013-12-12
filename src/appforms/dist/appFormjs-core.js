@@ -1220,6 +1220,10 @@ appForm.models=(function(module){
         this.set("appId",$fh.app_props.appid);
         this.set("env",$fh.app_props.mode?$fh.app_props.mode:"dev");
         this.set("timeoutTime",30000);
+        var self=this;
+        $fh.env(function(env){
+            self.set("deviceId",env.uuid);
+        });
         this._initMBaaS();
         this.fromJSON(config);
         cb();
@@ -1884,6 +1888,8 @@ appForm.models = (function(module) {
         this.set("submitDate", null);
         this.set("uploadStartDate", null);
         this.set("submittedDate", null);
+        this.set("userId", null);
+        this.set("deviceId", appForm.models.config.get("deviceId"));
         this.transactionMode = false;
         this.genLocalId();
         var localId = this.getLocalId();
@@ -1896,7 +1902,7 @@ appForm.models = (function(module) {
      */
     Submission.prototype.saveDraft = function(cb) {
         var targetStatus = "draft";
-        var that=this;
+        var that = this;
         this.set("timezoneOffset", appForm.utils.getTime(true));
         this.set("saveDate", appForm.utils.getTime());
         this.changeStatus(targetStatus, function(err) {
@@ -2050,7 +2056,7 @@ appForm.models = (function(module) {
             });
 
         } else {
-          return cb("Invalid Status to upload a form submission.");
+            return cb("Invalid Status to upload a form submission.");
         }
     }
     Submission.prototype.saveToList = function(cb) {
@@ -2118,9 +2124,9 @@ appForm.models = (function(module) {
      */
     Submission.prototype.addInputValue = function(params, cb) {
         var that = this;
-        var fieldId=params.fieldId;
-        var inputValue=params.value;
-        var index=params.index===undefined? -1:params.index;
+        var fieldId = params.fieldId;
+        var inputValue = params.value;
+        var index = params.index === undefined ? -1 : params.index;
         this.getForm(function(err, form) {
             var fieldModel = form.getFieldModelById(fieldId);
             if (that.transactionMode) {
@@ -2131,12 +2137,12 @@ appForm.models = (function(module) {
                     if (err) {
                         cb(err);
                     } else {
-                        if (index>-1){
-                            that.tmpFields[fieldId][index]=result;    
-                        }else{
+                        if (index > -1) {
+                            that.tmpFields[fieldId][index] = result;
+                        } else {
                             that.tmpFields[fieldId].push(result);
                         }
-                        
+
                         cb(null, result);
                     }
                 });
@@ -2146,12 +2152,12 @@ appForm.models = (function(module) {
                     if (err) {
                         cb(err);
                     } else {
-                        if (index>-1){
-                            target.fieldValues[index]=result;    
-                        }else{
+                        if (index > -1) {
+                            target.fieldValues[index] = result;
+                        } else {
                             target.fieldValues.push(result);
                         }
-                        
+
                         cb(null, result);
                     }
                 });
@@ -2249,9 +2255,20 @@ appForm.models = (function(module) {
     Submission.prototype.reloadForm = function(cb) {
         var Form = appForm.models.Form;
         var formId = this.get("formId");
-        this.form = new Form({
+        var self = this;
+        new Form({
             formId: formId
-        }, cb);
+        }, function(err, form) {
+            if (err) {
+                cb(err);
+            } else {
+                self.form = form;
+                if (!self.get("deviceFormTimestamp",null)){
+                    self.set("deviceFormTimestamp",form.getLastUpdate());
+                }
+                cb(null,form);
+            }
+        });
     }
     /**
      * Retrieve all file fields related value
@@ -2271,17 +2288,17 @@ appForm.models = (function(module) {
     //     return this.getInputValueArray(imageFieldIds);
     // }
 
-    Submission.prototype.getInputValueArray=function(fieldIds){
-        var rtn=[]
-        for (var i=0, fieldId;fieldId=fieldIds[i];i++){
-            var inputValue=this.getInputValueObjectById(fieldId);
-            for (var j=0;j<inputValue.fieldValues.length;j++){
-                var tmpObj=inputValue.fieldValues[j];
-                if (tmpObj){
-                    tmpObj.fieldId=fieldId;
-                    rtn.push(tmpObj);    
+    Submission.prototype.getInputValueArray = function(fieldIds) {
+        var rtn = []
+        for (var i = 0, fieldId; fieldId = fieldIds[i]; i++) {
+            var inputValue = this.getInputValueObjectById(fieldId);
+            for (var j = 0; j < inputValue.fieldValues.length; j++) {
+                var tmpObj = inputValue.fieldValues[j];
+                if (tmpObj) {
+                    tmpObj.fieldId = fieldId;
+                    rtn.push(tmpObj);
                 }
-            }            
+            }
         }
         return rtn;
     }
