@@ -5,6 +5,7 @@ appForm.models = (function(module) {
             "_type": null, // model type
             "_ludid": null //local unique id
         };
+        this.utils=appForm.utils;
         this.events={};
         if (typeof opt != "undefined") {
             for (var key in opt) {

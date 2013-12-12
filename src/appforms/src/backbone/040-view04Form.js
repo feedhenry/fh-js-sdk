@@ -50,7 +50,7 @@ var FormView = BaseView.extend({
     this.el.find(" button.submit").hide();
   },
   onValidateError: function(res) {
-    
+
     for (var fieldId in res) {
       if (res[fieldId]) {
         var fieldView = this.getFieldViewById(fieldId);
@@ -111,7 +111,7 @@ var FormView = BaseView.extend({
   },
   checkRules: function() {
     var self = this;
-    this.populateFieldViewsToSubmission(function() {
+    this.populateFieldViewsToSubmission(false, function() {
       var submission = self.submission;
       submission.checkRules(function(err, res) {
         if (err) {
@@ -275,7 +275,11 @@ var FormView = BaseView.extend({
       });
     });
   },
-  populateFieldViewsToSubmission: function(cb) {
+  populateFieldViewsToSubmission: function(isStore, cb) {
+    if (typeof cb === "undefined"){
+      cb=isStore;
+      isStore=true;
+    }
     var submission = this.submission;
     var fieldViews = this.fieldViews;
     var tmpObj = [];
@@ -286,7 +290,8 @@ var FormView = BaseView.extend({
         var v = val[j];
         tmpObj.push({
           id: fieldId,
-          value: v
+          value: v,
+          index:j
         });
       }
     }
@@ -295,7 +300,13 @@ var FormView = BaseView.extend({
     for (var i = 0, item; item = tmpObj[i]; i++) {
       var fieldId = item.id;
       var value = item.value;
-      submission.addInputValue(fieldId, value, function(err, res) {
+      var index=item.index;
+      submission.addInputValue({
+        fieldId: fieldId,
+        value: value,
+        index: index,
+        isStore:isStore
+      }, function(err, res) {
         if (err) {
           console.error(err);
         }

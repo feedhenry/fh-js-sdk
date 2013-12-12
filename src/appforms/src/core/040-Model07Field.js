@@ -65,19 +65,20 @@ appForm.models = (function(module) {
     }
     /**
      * Process an input value. convert to submission format. run field.validate before this
-     * @param  {[type]} inputValue 
+     * @param  {[type]} params {"value", "isStore":optional} 
      * @param {cb} cb(err,res)
      * @return {[type]}           submission json used for fieldValues for the field
      */
-    Field.prototype.processInput = function(inputValue, cb) {
+    Field.prototype.processInput = function(params, cb) {
         var type = this.getType();
         var processorName = "process_" + type;
+        var inputValue=params.value;
         if (typeof inputValue ==="undefined" || inputValue ===null){ //if user input is empty, keep going.
             return cb(null,inputValue);
         }
         // try to find specified processor
         if (this[processorName] && typeof this[processorName] == "function") {
-            this[processorName](inputValue,cb);
+            this[processorName](params,cb);
         } else {
             cb(null,inputValue);
         }

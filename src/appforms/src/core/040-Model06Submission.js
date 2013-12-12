@@ -297,34 +297,46 @@ appForm.models = (function(module) {
      * 1. onblur (field value)
      * 2. onsubmit (whole submission json)
      *
-     * @param {[type]} fieldId    [description]
-     * @param {[type]} inputValue [description]
+     * @param {[type]} params   {"fieldId","value","index":optional}
      * @param {} cb(err,res) callback function when finished
      * @return true / error message
      */
-    Submission.prototype.addInputValue = function(fieldId, inputValue, cb) {
+    Submission.prototype.addInputValue = function(params, cb) {
         var that = this;
+        var fieldId=params.fieldId;
+        var inputValue=params.value;
+        var index=params.index===undefined? -1:params.index;
         this.getForm(function(err, form) {
             var fieldModel = form.getFieldModelById(fieldId);
             if (that.transactionMode) {
                 if (!that.tmpFields[fieldId]) {
                     that.tmpFields[fieldId] = [];
                 }
-                fieldModel.processInput(inputValue, function(err, result) {
+                fieldModel.processInput(params, function(err, result) {
                     if (err) {
                         cb(err);
                     } else {
-                        that.tmpFields[fieldId].push(result);
+                        if (index>-1){
+                            that.tmpFields[fieldId][index]=result;    
+                        }else{
+                            that.tmpFields[fieldId].push(result);
+                        }
+                        
                         cb(null, result);
                     }
                 });
             } else {
                 var target = that.getInputValueObjectById(fieldId);
-                fieldModel.processInput(inputValue, function(err, result) {
+                fieldModel.processInput(params, function(err, result) {
                     if (err) {
                         cb(err);
                     } else {
-                        target.fieldValues.push(result);
+                        if (index>-1){
+                            target.fieldValues[index]=result;    
+                        }else{
+                            target.fieldValues.push(result);
+                        }
+                        
                         cb(null, result);
                     }
                 });
@@ -431,15 +443,30 @@ appForm.models = (function(module) {
      * @return {[type]} [description]
      */
     Submission.prototype.getFileInputValues = function() {
-        var rtn = [];
         var fileFieldIds = this.form.getFileFieldsId();
-        for (var i = 0, fieldId; fieldId = fileFieldIds[i]; i++) {
-            var inputValue = this.getInputValueObjectById(fieldId);
-            var tmp;
-            for (var j = 0, tmp; tmp = inputValue.fieldValues[j]; j++) {
-                tmp.fieldId = fieldId;
-                rtn.push(tmp);
-            }
+        return this.getInputValueArray(fileFieldIds);
+    }
+
+    // /**
+    //  * Retrieve all image fields related value
+    //  * @return {[type]} [description]
+    //  */
+    // Submission.prototype.getImageInputValues = function() {
+    //     var imageFieldIds = this.form.getImageFieldsId();
+    //     return this.getInputValueArray(imageFieldIds);
+    // }
+
+    Submission.prototype.getInputValueArray=function(fieldIds){
+        var rtn=[]
+        for (var i=0, fieldId;fieldId=fieldIds[i];i++){
+            var inputValue=this.getInputValueObjectById(fieldId);
+            for (var j=0;j<inputValue.fieldValues.length;j++){
+                var tmpObj=inputValue.fieldValues[j];
+                if (tmpObj){
+                    tmpObj.fieldId=fieldId;
+                    rtn.push(tmpObj);    
+                }
+            }            
         }
         return rtn;
     }
@@ -457,6 +484,7 @@ appForm.models = (function(module) {
                 }
                 //remove from uploading list
                 appForm.models.uploadManager.cancelSubmission(self, cb);
+                //TODO reset submission
             });
         });
     }

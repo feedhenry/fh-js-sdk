@@ -107,7 +107,6 @@ FieldSignatureView = FieldView.extend({
       // var loadingView = new LoadingView();
       // loadingView.show("generating signature");
       e.preventDefault();
-      debugger;
       var sig = sigPad.getSignature(); // get the default image type
       if (sig && sig.length) {
         var sigData = sigPad.getSignatureImage();
@@ -134,18 +133,20 @@ FieldSignatureView = FieldView.extend({
     var wrapper = this.getWrapper(index);
     wrapper.find("img.sigImage").attr("src", base64Img);
   },
-  value: function(value) {
-    if (value && !_.isEmpty(value)) {
-      this.fileData = value[this.model.get('_id')];
-      $('.sigImage', this.$el).attr('src', this.fileData.fileBase64);
-      $('input', this.$el).val(this.fileData.fileBase64);
+  valueFromElement: function(index) {
+    var wrapper = this.getWrapper(index);
+    var img = wrapper.find("img.sigImage");
+    return img.attr("src");
+  },
+  valuePopulateToElement: function(index, value) {
+    if (value) {
+      var base64Data = value.data;
+      var base64Img = value.imgHeader + base64Data;
+      var wrapper = this.getWrapper(index);
+      var img = wrapper.find("img.sigImage");
+      img.attr("src", base64Img);
     }
-    value = {};
-    if (this.fileData) {
-      value[this.model.get('_id')] = this.fileData;
-    }
-    // console.debug("value html=" + this.$el.html());
-    return value;
+
   },
   dbgImage: function(msg, image) {
     console.log(msg + (image ? (image.substring(0, image.indexOf(",")) + "[len=" + image.length + "]") : " empty"));

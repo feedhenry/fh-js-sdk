@@ -11,7 +11,7 @@ PageView=BaseView.extend({
     "emailAddress": FieldEmailView,
     "phone": FieldPhoneView,
     "location": FieldGeoView,
-    "photo": FieldCameraGroupView,
+    "photo": FieldCameraView,
     "signature": FieldSignatureView,
     "locationMap": FieldMapView,
     "dateTime":FieldDateTimeView,

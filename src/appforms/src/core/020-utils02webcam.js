@@ -1,6 +1,7 @@
 appForm.utils = (function(module) {
     module.takePhoto = takePhoto;
-    module.isPhoneGapAvailable = isPhoneGapAvailable;
+    module.isPhoneGapCamAvailable = isPhoneGapAvailable;
+    module.isHtml5CamAvailable= isHtml5CamAvailable;
     module.initHtml5Camera = initHtml5Camera;
     module.cancelHtml5Camera=cancelHtml5Camera;
     var isPhoneGap = false;
@@ -9,7 +10,9 @@ appForm.utils = (function(module) {
     var canvas = null;
     var ctx = null;
     var localMediaStream = null;
-
+    function isHtml5CamAvailable(){
+        return isHtml5;
+    }
     function isPhoneGapAvailable() {
         return isPhoneGap;
     }
@@ -32,7 +35,7 @@ appForm.utils = (function(module) {
                 targetWidth: width,
                 targetHeight: height,
                 saveToPhotoAlbum: false,
-                destinationType: Camera.DestinationType.DATA_URL,
+                destinationType: Camera.DestinationType.DATA_URL, //TODO use file_uri to avoid memory overflow
                 encodingType: Camera.EncodingType.PNG
             });
         } else if (isHtml5) {
@@ -52,8 +55,8 @@ appForm.utils = (function(module) {
     function _html5Camera(params, cb) {
         var width = params.width;
         var height = params.height;
-        video.width = width;
-        video.height = height;
+        video.width = 1024; //TODO configuration-webcam resolution
+        video.height = 768;
         canvas.width = width;
         canvas.height = height;
         if (!localMediaStream) {
@@ -78,6 +81,7 @@ appForm.utils = (function(module) {
         } else if (_browserWebSupport()) {
             isHtml5 = true;
             video = document.createElement("video");
+            video.autoplay="autoplay";
             canvas = document.createElement('canvas');
             ctx = canvas.getContext('2d');
         }else{

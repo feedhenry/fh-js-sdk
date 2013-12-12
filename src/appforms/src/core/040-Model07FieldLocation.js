@@ -8,7 +8,8 @@ appForm.models.Field = (function(module) {
      * @param  {[type]} inputValues [description]
      * @return {[type]}             [description]
      */
-    module.prototype.process_location = function(inputValue, cb) {
+    module.prototype.process_location = function(params, cb) {
+        var inputValue=params.value;
         var def = this.getFieldDefinition();
         switch (def.locationUnit) {
             case "latLong":

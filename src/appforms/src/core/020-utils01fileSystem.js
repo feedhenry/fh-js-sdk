@@ -1,12 +1,13 @@
 appForm.utils = (function(module) {
     module.fileSystem = {
         isFileSystemAvailable: isFileSystemAvailable,
-        save:save,
-        remove:remove,
-        readAsText:readAsText,
-        readAsBlob:readAsBlob,
-        readAsBase64Encoded:readAsBase64Encoded,
-        readAsFile:readAsFile
+        save: save,
+        remove: remove,
+        readAsText: readAsText,
+        readAsBlob: readAsBlob,
+        readAsBase64Encoded: readAsBase64Encoded,
+        readAsFile: readAsFile,
+        fileToBase64: fileToBase64
     };
 
     var fileSystemAvailable = false;
@@ -14,6 +15,18 @@ appForm.utils = (function(module) {
     var PERSISTENT = 1; //placeholder
     function isFileSystemAvailable() {
         return fileSystemAvailable;
+    }
+    //convert a file object to base64 encoded.
+    function fileToBase64(file, cb) {
+        if (!file instanceof File) {
+            throw ("Only file object can be used for converting");
+        }
+        var fileReader = new FileReader();
+        fileReader.onloadend = function(evt) {
+            var text = evt.target.result;
+            return cb(null, text);
+        }
+        fileReader.readAsDataURL(file);
     }
     /**
      * Save a content to file system into a file
@@ -29,9 +42,9 @@ appForm.utils = (function(module) {
             if (content instanceof File) { //File object
                 saveObj = content;
                 size = saveObj.size;
-            }else if (content instanceof Blob){
-                saveObj=content;
-                size=b.size;
+            } else if (content instanceof Blob) {
+                saveObj = content;
+                size = b.size;
             } else { //JSON object
                 var stringify = JSON.stringify(content);
                 var size = stringify.length;
@@ -146,26 +159,27 @@ appForm.utils = (function(module) {
      * @param  {Function} cb       (err, blob)
      * @return {[type]}            [description]
      */
-    function readAsBlob(fileName,cb){
-        _getFile(fileName,function(err,file){
-            if (err){
+    function readAsBlob(fileName, cb) {
+        _getFile(fileName, function(err, file) {
+            if (err) {
                 return cb(err);
-            }else{
-                var type=file.type;
-                var reader=new FileReader();
-                reader.onloadend=function(evt){
-                    var arrayBuffer=evt.target.result;
-                    var blob=new Blob([arrayBuffer],{
-                        "type":type
+            } else {
+                var type = file.type;
+                var reader = new FileReader();
+                reader.onloadend = function(evt) {
+                    var arrayBuffer = evt.target.result;
+                    var blob = new Blob([arrayBuffer], {
+                        "type": type
                     });
-                    cb(null,blob);
+                    cb(null, blob);
                 }
                 reader.readAsArrayBuffer(file);
             }
         });
     }
-    function readAsFile(fileName,cb){
-        _getFile(fileName,cb);
+
+    function readAsFile(fileName, cb) {
+        _getFile(fileName, cb);
     }
     /**
      * Retrieve a file object

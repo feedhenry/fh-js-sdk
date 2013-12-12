@@ -25,7 +25,7 @@ FieldCheckboxView = FieldView.extend({
         "fieldId": fieldId,
         "index": index,
         "choice": subfield.label,
-        "value": subfield.value,
+        "value": subfield.label,
         "checked": (subfield.selected) ? "checked='checked'" : ""
       });
     });

@@ -3,7 +3,7 @@ appForm.utils = (function(module) {
     module.localId = localId;
     module.md5 = md5;
     module.getTime = getTime;
-
+    module.isPhoneGap=isPhoneGap;
     function extend(child, parent) {
         if (parent.constructor && parent.constructor == Function) {
             for (var key in parent.prototype) {
@@ -16,13 +16,13 @@ appForm.utils = (function(module) {
         }
     }
 
-    function getTime(timezoneOffset){
-      var now = new Date();
-      if(timezoneOffset){
-        return now.getTimezoneOffset();
-      } else {
-        return now;
-      }
+    function getTime(timezoneOffset) {
+        var now = new Date();
+        if (timezoneOffset) {
+            return now.getTimezoneOffset();
+        } else {
+            return now;
+        }
     }
 
     function localId(model) {
@@ -52,15 +52,26 @@ appForm.utils = (function(module) {
                 algorithm: "MD5",
                 text: str
             }, function(result) {
-                if (result && result.hashvalue){
-                    cb(null,result.hashvalue);
-                }else{
+                if (result && result.hashvalue) {
+                    cb(null, result.hashvalue);
+                } else {
                     cb("Crypto failed.");
                 }
 
             });
-        }else{
+        } else {
             cb("Crypto not found");
+        }
+    }
+
+    function isPhoneGap() {
+        //http://stackoverflow.com/questions/10347539/detect-between-a-mobile-browser-or-a-phonegap-application
+        //may break.
+        var app = document.URL.indexOf('http://') === -1 && document.URL.indexOf('https://') === -1;
+        if (app) {
+            return true;
+        } else {
+            return false;
         }
     }
 

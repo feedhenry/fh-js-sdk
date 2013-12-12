@@ -11,7 +11,8 @@ appForm.models.Field = (function(module) {
             throw ("checkbox choice definition is not found in field definition");
         }
     }
-    module.prototype.process_checkboxes = function(inputValue, cb) {
+    module.prototype.process_checkboxes = function(params, cb) {
+        var inputValue=params.value;
         if (!(inputValue instanceof Array)) {
             cb("the input value for processing checkbox field should be like [val1,val2]");
         } else {

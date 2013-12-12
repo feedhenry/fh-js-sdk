@@ -3,68 +3,89 @@
  */
 
 appForm.models.Field = (function(module) {
-    function checkFileObj(obj){
+    function checkFileObj(obj) {
         return obj.fileName && obj.fileType && obj.hashName;
     }
-    function imageProcess(inputValue,cb){
-        if (inputValue==""){
-            return cb(null,null);
-        }
-        var imgName="";
-        var dataArr=inputValue.split(";base64,");
-        var imgType=dataArr[0].split(":")[1];
-        var size= inputValue.length;
-        genImageName(function(err,n){
-            imgName=n;
-            
-        });
-        
-    }
 
-    function genImageName(cb){
-        var name=new Date().getTime()+""+Math.ceil(Math.random()*100000);
-        appForm.utils.md5(name,cb);
-    }
-    function covertImage(value,cb){
-
-    }
-    module.prototype.process_file = function(inputValue, cb) {
-        if (typeof inputValue =="undefined" || inputValue==null ){
-            return cb(null,null);
+    function imageProcess(params, cb) {
+        var inputValue = params.value;
+        var isStore = params.isStore === undefined ? true : params.isStore;
+        if (inputValue == "") {
+            return cb(null, null);
         }
-        if (typeof inputValue != "object" || ( !inputValue instanceof HTMLInputElement && !inputValue instanceof File && !checkFileObj(inputValue))) {
-            throw ("the input value for file field should be a html file input element or a File object");
-        }
-        if (checkFileObj(inputValue)){
-            return cb(null,inputValue);
-        }
-        var file=inputValue;
-        if (inputValue instanceof HTMLInputElement){
-            file=inputValue.files[0]; // 1st file only, not support many files yet.
-        }
-        var rtnJSON={
-            "fileName":file.name,
-            "fileSize":file.size,
-            "fileType":file.type,
-            "fileUpdateTime":file.lastModifiedDate,
-            "hashName":""
-        };
-        var name=file.name+Math.ceil(Math.random()*100000);
-        appForm.utils.md5(name,function(err,res){
-            var hashName=res;
-            if (err){
-                hashName=name;
+        var imgName = "";
+        var dataArr = inputValue.split(";base64,");
+        var imgType = dataArr[0].split(":")[1];
+        var size = inputValue.length;
+        genImageName(function(err, n) {
+            imgName = n;
+            var meta = {
+                "fileName":imgName,
+                "hashName": imgName,
+                "contentType":"base64",
+                "fileSize": size,
+                "fileType": imgType,
+                "imgHeader": "data:" + imgType + ";base64,"
             }
-            rtnJSON.hashName=hashName;
-            appForm.utils.fileSystem.save(hashName, file,function(err,res){
-                if (err){
-                    console.error(err);
-                    cb(err);
-                }else{
-                    cb(null,rtnJSON);
-                }
-            });
+            if (isStore) {
+                appForm.utils.fileSystem.save(imgName, dataArr[1], function(err, res) {
+                    if (err) {
+                        console.error(err);
+                        cb(err);
+                    } else {
+                        cb(null, meta);
+                    }
+                });
+            }else{
+                cb(null,meta);
+            }
+
         });
+
     }
+
+    function genImageName(cb) {
+        var name = new Date().getTime() + "" + Math.ceil(Math.random() * 100000);
+        appForm.utils.md5(name, cb);
+    }
+
+    function covertImage(value, cb) {
+
+        if (value.length == 0) {
+            cb(null, value);
+        } else {
+            var count = value.length;
+            for (var i = 0; i < value.length; i++) {
+                var meta = value[i];
+                _loadImage(meta, function() {
+                    count--;
+                    if (count == 0) {
+                        cb(null, value);
+                    }
+                });
+            }
+        }
+
+    }
+
+    function _loadImage(meta, cb) {
+        if (meta) {
+            var name = meta.hashName;
+            appForm.utils.fileSystem.readAsText(name, function(err, text) {
+                if (err) {
+                    console.error(err);
+                }
+                meta.data = text;
+                cb(err, meta);
+            });
+        } else {
+            cb(null, meta);
+        }
+
+    }
+    module.prototype.process_signature = imageProcess;
+    module.prototype.convert_signature = covertImage;
+    module.prototype.process_photo = imageProcess;
+    module.prototype.convert_photo = covertImage;
     return module;
 })(appForm.models.Field || {});

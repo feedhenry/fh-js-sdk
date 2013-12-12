@@ -150,7 +150,10 @@ describe("Submission model", function() {
             });
         });
         it("how to add user input value to submission model", function() {
-            submission.addInputValue("527d4539639f521e0a000006", 40, function(err) {
+            submission.addInputValue({
+                fieldId: "527d4539639f521e0a000006",
+                value: 40
+            }, function(err) {
                 assert(!err)
             });
             submission.getInputValueByFieldId("527d4539639f521e0a000006", function(err, res) {
@@ -158,7 +161,10 @@ describe("Submission model", function() {
             });
         });
         it("how to reset a submission to clear all user input", function() {
-            submission.addInputValue("527d4539639f521e0a000006", 40, function(err) {
+            submission.addInputValue({
+                fieldId: "527d4539639f521e0a000006",
+                value: 40
+            }, function(err) {
                 assert(!err)
             });
             submission.reset();
@@ -170,17 +176,29 @@ describe("Submission model", function() {
 
         it("how to use transaction to input a series of user values to submission model", function() {
             submission.reset();
-            submission.addInputValue("527d4539639f521e0a000006", 40, function(err) {
+            submission.addInputValue({
+                fieldId: "527d4539639f521e0a000006",
+                value: 40
+            }, function(err) {
                 assert(!err)
             });
             submission.startInputTransaction();
-            submission.addInputValue("527d4539639f521e0a000006", 50, function(err) {
+            submission.addInputValue({
+                fieldId: "527d4539639f521e0a000006",
+                value: 50
+            }, function(err) {
                 assert(!err)
             });
-            submission.addInputValue("527d4539639f521e0a000006", 60, function(err) {
+            submission.addInputValue({
+                fieldId: "527d4539639f521e0a000006",
+                value: 60
+            }, function(err) {
                 assert(!err)
             });
-            submission.addInputValue("527d4539639f521e0a000006", 35, function(err) {
+            submission.addInputValue({
+                fieldId: "527d4539639f521e0a000006",
+                value: 35
+            }, function(err) {
                 assert(!err)
             });
             submission.endInputTransaction(true);
@@ -199,17 +217,29 @@ describe("Submission model", function() {
         });
         it("how to use transaction for user input and roll back", function() {
             submission.reset();
-            submission.addInputValue("527d4539639f521e0a000006", 40, function(err) {
+            submission.addInputValue({
+                fieldId: "527d4539639f521e0a000006",
+                value: 40
+            }, function(err) {
                 assert(!err)
             });
             submission.startInputTransaction();
-            submission.addInputValue("527d4539639f521e0a000006", 50, function(err) {
+            submission.addInputValue({
+                fieldId: "527d4539639f521e0a000006",
+                value: 50
+            }, function(err) {
                 assert(!err)
             });
-            submission.addInputValue("527d4539639f521e0a000006", 60, function(err) {
+            submission.addInputValue({
+                fieldId: "527d4539639f521e0a000006",
+                value: 60
+            }, function(err) {
                 assert(!err)
             });
-            submission.addInputValue("527d4539639f521e0a000006", 35, function(err) {
+            submission.addInputValue({
+                fieldId: "527d4539639f521e0a000006",
+                value: 35
+            }, function(err) {
                 assert(!err)
             });
             submission.endInputTransaction(false);
@@ -241,40 +271,40 @@ describe("Submission model", function() {
             });
         });
         it("how to queue a submission", function(done) {
-          var submission = form.newSubmission();
+            var submission = form.newSubmission();
 
-          submission.on("submit", function(err){
-            assert(!err);
-
-            submission.upload(function(err, uploadTask){
-              assert(!err);
-              assert(uploadTask);
-              assert(appForm.models.uploadManager.timer);
-              assert(appForm.models.uploadManager.hasTask());
-
-              submission.getUploadTask(function(err, task) {
+            submission.on("submit", function(err) {
                 assert(!err);
-                assert(task);
-                done();
-              });
-            });
-          });
 
-          submission.submit(function(err){
-            assert(!err);
-          });
+                submission.upload(function(err, uploadTask) {
+                    assert(!err);
+                    assert(uploadTask);
+                    assert(appForm.models.uploadManager.timer);
+                    assert(appForm.models.uploadManager.hasTask());
+
+                    submission.getUploadTask(function(err, task) {
+                        assert(!err);
+                        assert(task);
+                        done();
+                    });
+                });
+            });
+
+            submission.submit(function(err) {
+                assert(!err);
+            });
         });
-        it("how to monitor if a submission is submitted", function(done){
+        it("how to monitor if a submission is submitted", function(done) {
             var submission = form.newSubmission();
             this.timeout(10000);
 
-            submission.on("submit", function(){
-              submission.upload(function(err, uploadTask){
-                assert(!err);
-                assert(uploadTask);
-              });
+            submission.on("submit", function() {
+                submission.upload(function(err, uploadTask) {
+                    assert(!err);
+                    assert(uploadTask);
+                });
             });
-            submission.on("submitted",function(err){
+            submission.on("submitted", function(err) {
                 assert(!err);
                 done();
             });
@@ -282,5 +312,6 @@ describe("Submission model", function() {
                 assert(!err);
             });
         });
+
     });
 });
