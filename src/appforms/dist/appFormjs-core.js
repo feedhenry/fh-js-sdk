@@ -36,7 +36,8 @@ appForm.utils = (function(module) {
     module.extend = extend;
     module.localId = localId;
     module.md5 = md5;
-
+    module.getTime = getTime;
+    module.isPhoneGap=isPhoneGap;
     function extend(child, parent) {
         if (parent.constructor && parent.constructor == Function) {
             for (var key in parent.prototype) {
@@ -49,11 +50,20 @@ appForm.utils = (function(module) {
         }
     }
 
+    function getTime(timezoneOffset) {
+        var now = new Date();
+        if (timezoneOffset) {
+            return now.getTimezoneOffset();
+        } else {
+            return now;
+        }
+    }
+
     function localId(model) {
         var props = model.getProps();
         var _id = props._id;
         var _type = props._type;
-        var ts = (new Date()).getTime();
+        var ts = getTime().getTime();
         if (_id && _type) {
             return _id + "_" + _type + "_" + ts;
         } else if (_id) {
@@ -76,15 +86,26 @@ appForm.utils = (function(module) {
                 algorithm: "MD5",
                 text: str
             }, function(result) {
-                if (result && result.hashvalue){
-                    cb(null,result.hashvalue);
-                }else{
+                if (result && result.hashvalue) {
+                    cb(null, result.hashvalue);
+                } else {
                     cb("Crypto failed.");
                 }
 
             });
-        }else{
+        } else {
             cb("Crypto not found");
+        }
+    }
+
+    function isPhoneGap() {
+        //http://stackoverflow.com/questions/10347539/detect-between-a-mobile-browser-or-a-phonegap-application
+        //may break.
+        var app = document.URL.indexOf('http://') === -1 && document.URL.indexOf('https://') === -1;
+        if (app) {
+            return true;
+        } else {
+            return false;
         }
     }
 
@@ -93,12 +114,13 @@ appForm.utils = (function(module) {
 appForm.utils = (function(module) {
     module.fileSystem = {
         isFileSystemAvailable: isFileSystemAvailable,
-        save:save,
-        remove:remove,
-        readAsText:readAsText,
-        readAsBlob:readAsBlob,
-        readAsBase64Encoded:readAsBase64Encoded,
-        readAsFile:readAsFile
+        save: save,
+        remove: remove,
+        readAsText: readAsText,
+        readAsBlob: readAsBlob,
+        readAsBase64Encoded: readAsBase64Encoded,
+        readAsFile: readAsFile,
+        fileToBase64: fileToBase64
     };
 
     var fileSystemAvailable = false;
@@ -106,6 +128,18 @@ appForm.utils = (function(module) {
     var PERSISTENT = 1; //placeholder
     function isFileSystemAvailable() {
         return fileSystemAvailable;
+    }
+    //convert a file object to base64 encoded.
+    function fileToBase64(file, cb) {
+        if (!file instanceof File) {
+            throw ("Only file object can be used for converting");
+        }
+        var fileReader = new FileReader();
+        fileReader.onloadend = function(evt) {
+            var text = evt.target.result;
+            return cb(null, text);
+        }
+        fileReader.readAsDataURL(file);
     }
     /**
      * Save a content to file system into a file
@@ -121,9 +155,9 @@ appForm.utils = (function(module) {
             if (content instanceof File) { //File object
                 saveObj = content;
                 size = saveObj.size;
-            }else if (content instanceof Blob){
-                saveObj=content;
-                size=b.size;
+            } else if (content instanceof Blob) {
+                saveObj = content;
+                size = b.size;
             } else { //JSON object
                 var stringify = JSON.stringify(content);
                 var size = stringify.length;
@@ -238,26 +272,27 @@ appForm.utils = (function(module) {
      * @param  {Function} cb       (err, blob)
      * @return {[type]}            [description]
      */
-    function readAsBlob(fileName,cb){
-        _getFile(fileName,function(err,file){
-            if (err){
+    function readAsBlob(fileName, cb) {
+        _getFile(fileName, function(err, file) {
+            if (err) {
                 return cb(err);
-            }else{
-                var type=file.type;
-                var reader=new FileReader();
-                reader.onloadend=function(evt){
-                    var arrayBuffer=evt.target.result;
-                    var blob=new Blob([arrayBuffer],{
-                        "type":type
+            } else {
+                var type = file.type;
+                var reader = new FileReader();
+                reader.onloadend = function(evt) {
+                    var arrayBuffer = evt.target.result;
+                    var blob = new Blob([arrayBuffer], {
+                        "type": type
                     });
-                    cb(null,blob);
+                    cb(null, blob);
                 }
                 reader.readAsArrayBuffer(file);
             }
         });
     }
-    function readAsFile(fileName,cb){
-        _getFile(fileName,cb);
+
+    function readAsFile(fileName, cb) {
+        _getFile(fileName, cb);
     }
     /**
      * Retrieve a file object
@@ -339,15 +374,19 @@ appForm.utils = (function(module) {
 })(appForm.utils || {});
 appForm.utils = (function(module) {
     module.takePhoto = takePhoto;
-    module.isPhoneGapAvailable = isPhoneGapAvailable;
+    module.isPhoneGapCamAvailable = isPhoneGapAvailable;
+    module.isHtml5CamAvailable= isHtml5CamAvailable;
     module.initHtml5Camera = initHtml5Camera;
+    module.cancelHtml5Camera=cancelHtml5Camera;
     var isPhoneGap = false;
     var isHtml5 = false;
     var video = null;
     var canvas = null;
     var ctx = null;
     var localMediaStream = null;
-
+    function isHtml5CamAvailable(){
+        return isHtml5;
+    }
     function isPhoneGapAvailable() {
         return isPhoneGap;
     }
@@ -355,7 +394,12 @@ appForm.utils = (function(module) {
     function initHtml5Camera(params, cb) {
         _html5Camera(params, cb);
     }
-
+    function cancelHtml5Camera(){
+        if (localMediaStream){
+            localMediaStream.stop()
+            localMediaStream=null;
+        }
+    }
     function takePhoto(params, cb) {
         var width = params.width;
         var height = params.height;
@@ -365,11 +409,11 @@ appForm.utils = (function(module) {
                 targetWidth: width,
                 targetHeight: height,
                 saveToPhotoAlbum: false,
-                destinationType: Camera.DestinationType.DATA_URL,
+                destinationType: Camera.DestinationType.DATA_URL, //TODO use file_uri to avoid memory overflow
                 encodingType: Camera.EncodingType.PNG
             });
         } else if (isHtml5) {
-            
+            snapshot(params,cb);
         } else {
             cb("Your device does not support camera.");
         }
@@ -385,8 +429,8 @@ appForm.utils = (function(module) {
     function _html5Camera(params, cb) {
         var width = params.width;
         var height = params.height;
-        video.width = width;
-        video.height = height;
+        video.width = 1024; //TODO configuration-webcam resolution
+        video.height = 768;
         canvas.width = width;
         canvas.height = height;
         if (!localMediaStream) {
@@ -395,8 +439,11 @@ appForm.utils = (function(module) {
             }, function(stream) {
                 video.src = window.URL.createObjectURL(stream);
                 localMediaStream = stream;
-                cb(null);
+                cb(null,video);
             }, cb);
+        }else{
+            console.error("Media device was not released.");
+            cb("Media device occupied.");
         }
 
     }
@@ -408,8 +455,11 @@ appForm.utils = (function(module) {
         } else if (_browserWebSupport()) {
             isHtml5 = true;
             video = document.createElement("video");
+            video.autoplay="autoplay";
             canvas = document.createElement('canvas');
             ctx = canvas.getContext('2d');
+        }else{
+            console.error("Cannot detect usable media API. Camera will not run properly on this device.");
         }
     }
 
@@ -420,26 +470,31 @@ appForm.utils = (function(module) {
         }
         if (navigator.webkitGetUserMedia) {
             navigator.getUserMedia = navigator.webkitGetUserMedia;
-            return true
+            return true;
         }
         if (navigator.mozGetUserMedia) {
             navigator.getUserMedia = navigator.mozGetUserMedia;
-            return true
+            return true;
         }
         if (navigator.msGetUserMedia) {
             navigator.getUserMedia = navigator.msGetUserMedia;
-            return true
+            return true;
         }
         return false;
     }
-    //checkEnv();
+    checkEnv();
 
-    function snapshot() {
+    function snapshot(params,cb) {
         if (localMediaStream) {
-            ctx.drawImage(video, 0, 0, 800, 600);
+            ctx.drawImage(video, 0, 0, params.width, params.height);
             // "image/webp" works in Chrome.
             // Other browsers will fall back to image/png.
-            img.src = canvas.toDataURL('image/webp');
+            var base64=canvas.toDataURL('image/webp');
+            cancelHtml5Camera()
+            cb(null,base64);
+        }else{
+            console.error("Media resource is not available");
+            cb("Resource not available");
         }
     }
 
@@ -843,8 +898,19 @@ appForm.stores=(function(module){
     MBaaS.prototype.update=function(model,cb){
         
     }
-    MBaaS.prototype.delete=function(model,cb){
+    MBaaS.prototype.delete=function(model,cb){ // No delete method associated with mabaas calls -- > only send and read...
         
+    }
+
+    MBaaS.prototype.completeSubmission = function(submissionToComplete, cb){
+      var url = _getUrl(submissionToComplete);
+      appForm.web.ajax.post(url,{},cb);
+    }
+
+    MBaaS.prototype.submissionStatus = function(submission, cb){
+      var url = _getUrl(submission);
+
+      appForm.web.ajax.get(url, cb);
     }
     
     function _getUrl(model){
@@ -861,6 +927,8 @@ appForm.stores=(function(module){
         var url= host+mBaaSBaseUrl+relativeUrl;
         var props={};
 
+
+        //Theme and forms do not require any parameters that are not in _fh
         switch (type){
             case "form":
                 props.formId=model.get("_id");
@@ -872,7 +940,11 @@ appForm.stores=(function(module){
                 props.submissionId=model.getSubmissionId();
                 props.hashName=model.getHashName();
                 props.fieldId=model.getFieldId();
-                break
+            case "submissionStatus":
+                props.submissionId = model.get("submissionId");
+            case "completeSubmission":
+                props.submissionId = model.get("submissionId");
+            break
         }
         for (var key in props){
             url=url.replace(":"+key,props[key]);
@@ -945,15 +1017,13 @@ appForm.stores = (function(module) {
     return module;
 })(appForm.stores || {});
 appForm.models = (function(module) {
-    module.Model = Model;
-    
-    
     function Model(opt) {
         this.props = {
             "_id": null, // model id
             "_type": null, // model type
             "_ludid": null //local unique id
         };
+        this.utils=appForm.utils;
         this.events={};
         if (typeof opt != "undefined") {
             for (var key in opt) {
@@ -961,7 +1031,6 @@ appForm.models = (function(module) {
             }
         }
         this.touch();
-        
     }
     Model.prototype.on=function(name,func){
         if (!this.events[name]){
@@ -1048,7 +1117,7 @@ appForm.models = (function(module) {
     //     return true;
     // }
     Model.prototype.touch=function(){
-        this.set("_localLastUpdate",(new Date()).getTime());
+        this.set("_localLastUpdate", appForm.utils.getTime());
     }
     Model.prototype.getLocalUpdateTimeStamp=function(){
         return this.get("_localLastUpdate");
@@ -1131,6 +1200,7 @@ appForm.models = (function(module) {
     Model.prototype.setDataAgent=function(dataAgent){
         this.dataAgent=dataAgent;
     }
+    module.Model = Model;
 
     return module;
     
@@ -1173,12 +1243,13 @@ appForm.models=(function(module){
         var appId=this.get("appId");
         //ebaas url definition https://docs.google.com/a/feedhenry.com/document/d/1_bd4kZMm7q6C1htNJBTSA2X4zi1EKx0hp_4aiJ-N5Zg/edit#
         this.set("formUrls",{
-            "forms":"/forms/"+appId,
-            "form":"/forms/"+appId+"/:formId",
-            "theme":"/forms/"+appId+"/theme",
+            "forms":"/forms",
+            "form":"/forms/:formId",
+            "theme":"/forms/theme",
             "formSubmission":"/forms/:formId/submitFormData",
-            "fileSubmission":"/:submissionId/:fieldId/:hashName/submitFormFile"
-            //TODO complete the list. 
+            "fileSubmission":"/forms/:submissionId/:fieldId/:hashName/submitFormFile",
+            "submissionStatus": "/forms/:submissionId/status",
+            "completeSubmission": "/forms/:submissionId/completeSubmission"
         })
     }
     module.config=new Config();
@@ -1438,22 +1509,45 @@ appForm.models = (function(module) {
             delete _forms[this.getFormId()];
         }
     }
-    Form.prototype.getFileFieldsId = function() {
-        var fieldsId = []
-        for (var fieldId in this.fields) {
-            var field = this.fields[fieldId];
-            if (field.getType() == "file") {
+    Form.prototype.getFileFieldsId=function(){
+        var fieldsId=[]
+        for (var fieldId in this.fields){
+            var field=this.fields[fieldId];
+            if (field.getType()=="file" || field.getType()=="photo" || field.getType()=="signature"  ){
                 fieldsId.push(fieldId);
             }
         }
         return fieldsId;
     }
+    // Form.prototype.getImageFieldsId=function(){
+    //     var fieldsId=[]
+    //     for (var fieldId in this.fields){
+    //         var field=this.fields[fieldId];
+    //         if (field.getType()=="photo" || field.getType()=="signature"  ){
+    //             fieldsId.push(fieldId);
+    //         }
+    //     }
+    //     return fieldsId;
+    // }
     Form.prototype.getRuleEngine = function() {
         if (this.rulesEngine) {
             return this.rulesEngine;
         } else {
             var formDefinition = this.getProps();
-            return this.rulesEngine = new appForm.RulesEngine(formDefinition);
+            this.rulesEngine = new appForm.RulesEngine(formDefinition);
+            //DEBUG ONLY  BY PASS VALIDATE FORM
+            
+            this.rulesEngine.validateForm=function(a,cb){
+                cb(null,{
+                    validation:{
+                        valid:true    
+                    }
+                    
+                });
+            }
+            //END OF DEBUG
+
+            return this.rulesEngine;
         }
     }
 
@@ -1524,6 +1618,38 @@ appForm.models=(function(module){
 
     return module;
 })(appForm.models || {});
+appForm.models=(function(module){
+  var Model=appForm.models.Model;
+  module.FormSubmissionComplete=FormSubmissionComplete;
+
+  function FormSubmissionComplete(submissionTask){
+    Model.call(this,{
+      "_type":"completeSubmission",
+      "submissionId": submissionTask.get("submissionId"),
+      "localSubmissionId" : submissionTask.get("localSubmissionId")
+    });
+  }
+
+  appForm.utils.extend(FormSubmissionComplete,Model);
+
+  return module;
+})(appForm.models || {});
+appForm.models=(function(module){
+  var Model=appForm.models.Model;
+  module.FormSubmissionStatus=FormSubmissionStatus;
+
+  function FormSubmissionStatus(submissionTask){
+    Model.call(this,{
+      "_type":"submissionStatus",
+      "submissionId": submissionTask.get("submissionId"),
+      "localSubmissionId" : submissionTask.get("localSubmissionId")
+    });
+  }
+
+  appForm.utils.extend(FormSubmissionStatus,Model);
+
+  return module;
+})(appForm.models || {});
 appForm.models = (function(module) {
     var Model = appForm.models.Model;
 
@@ -1592,9 +1718,9 @@ appForm.models = (function(module) {
         }
         return null;
     }
-    Submissions.prototype.pruneSubmission = function(submission) {
-        var fields = ["_id", "_ludid", "status", "formName", "formId", "_localLastUpdate", "createDate", "submitDate", "deviceFormTimestamp"];
-        var data = submission.getProps();
+    Submissions.prototype.pruneSubmission=function(submission){
+        var fields=["_id", "_ludid","status","formName","formId","_localLastUpdate","createDate","submitDate","deviceFormTimestamp", "errorMessage", "submissionStartedTimestamp", "submitDate"];
+        var data=submission.getProps();
 
         var rtn = {};
         for (var i = 0; i < fields.length; i++) {
@@ -1747,7 +1873,8 @@ appForm.models = (function(module) {
             //TODO may contain whole form definition in props.
         }
         this.set("status", "new");
-        this.set("createDate", new Date());
+        this.set("createDate", appForm.utils.getTime());
+        this.set("timezoneOffset", appForm.utils.getTime(true));
         this.set("appId", appForm.config.get("appId"));
         this.set("appEnvironment", appForm.config.get("env"));
         this.set("appCloudName", ""); //TODO check with eng
@@ -1769,9 +1896,9 @@ appForm.models = (function(module) {
      */
     Submission.prototype.saveDraft = function(cb) {
         var targetStatus = "draft";
-        var that = this;
-        this.set("timezoneOffset", new Date().getTimezoneOffset());
-        this.set("saveDate", new Date());
+        var that=this;
+        this.set("timezoneOffset", appForm.utils.getTime(true));
+        this.set("saveDate", appForm.utils.getTime());
         this.changeStatus(targetStatus, function(err) {
             if (err) {
                 return cb(err);
@@ -1814,7 +1941,7 @@ appForm.models = (function(module) {
         var targetStatus = "pending";
         var validateResult = true;
         var that = this;
-        this.set("timezoneOffset", new Date().getTimezoneOffset());
+        this.set("timezoneOffset", appForm.utils.getTime(true));
         this.getForm(function(err, form) {
             var ruleEngine = form.getRuleEngine();
             var submission = that.getProps();
@@ -1869,7 +1996,7 @@ appForm.models = (function(module) {
     Submission.prototype.submitted = function(cb) {
         var targetStatus = "submitted";
         var that = this;
-        this.set("submittedDate", new Date());
+        this.set("submittedDate", appForm.utils.getTime());
         this.changeStatus(targetStatus, function(err) {
             if (err) {
                 cb(err);
@@ -1911,7 +2038,7 @@ appForm.models = (function(module) {
         var that = this;
         if (this.isStatusValid(targetStatus)) {
             this.set("status", targetStatus);
-            this.set("uploadStartDate", new Date());
+            this.set("uploadStartDate", appForm.utils.getTime());
             appForm.models.submissions.updateSubmissionWithoutSaving(this);
             appForm.models.uploadManager.queueSubmission(this, function(err, ut) {
                 if (err) {
@@ -1922,6 +2049,8 @@ appForm.models = (function(module) {
                 }
             });
 
+        } else {
+          return cb("Invalid Status to upload a form submission.");
         }
     }
     Submission.prototype.saveToList = function(cb) {
@@ -1952,7 +2081,7 @@ appForm.models = (function(module) {
     }
 
     Submission.prototype.addComment = function(msg, user) {
-        var now = new Date();
+        var now = appForm.utils.getTime()
         var ts = now.getTime();
         var newComment = {
             "madeBy": typeof user == "undefined" ? "" : user.toString(),
@@ -1983,34 +2112,46 @@ appForm.models = (function(module) {
      * 1. onblur (field value)
      * 2. onsubmit (whole submission json)
      *
-     * @param {[type]} fieldId    [description]
-     * @param {[type]} inputValue [description]
+     * @param {[type]} params   {"fieldId","value","index":optional}
      * @param {} cb(err,res) callback function when finished
      * @return true / error message
      */
-    Submission.prototype.addInputValue = function(fieldId, inputValue, cb) {
+    Submission.prototype.addInputValue = function(params, cb) {
         var that = this;
+        var fieldId=params.fieldId;
+        var inputValue=params.value;
+        var index=params.index===undefined? -1:params.index;
         this.getForm(function(err, form) {
             var fieldModel = form.getFieldModelById(fieldId);
             if (that.transactionMode) {
                 if (!that.tmpFields[fieldId]) {
                     that.tmpFields[fieldId] = [];
                 }
-                fieldModel.processInput(inputValue, function(err, result) {
+                fieldModel.processInput(params, function(err, result) {
                     if (err) {
                         cb(err);
                     } else {
-                        that.tmpFields[fieldId].push(result);
+                        if (index>-1){
+                            that.tmpFields[fieldId][index]=result;    
+                        }else{
+                            that.tmpFields[fieldId].push(result);
+                        }
+                        
                         cb(null, result);
                     }
                 });
             } else {
                 var target = that.getInputValueObjectById(fieldId);
-                fieldModel.processInput(inputValue, function(err, result) {
+                fieldModel.processInput(params, function(err, result) {
                     if (err) {
                         cb(err);
                     } else {
-                        target.fieldValues.push(result);
+                        if (index>-1){
+                            target.fieldValues[index]=result;    
+                        }else{
+                            target.fieldValues.push(result);
+                        }
+                        
                         cb(null, result);
                     }
                 });
@@ -2032,6 +2173,7 @@ appForm.models = (function(module) {
      */
     Submission.prototype.reset = function() {
         this.set("formFields", []);
+        //TODO need to clear local storage like files etc.
     }
     Submission.prototype.startInputTransaction = function() {
         this.transactionMode = true;
@@ -2116,15 +2258,30 @@ appForm.models = (function(module) {
      * @return {[type]} [description]
      */
     Submission.prototype.getFileInputValues = function() {
-        var rtn = [];
         var fileFieldIds = this.form.getFileFieldsId();
-        for (var i = 0, fieldId; fieldId = fileFieldIds[i]; i++) {
-            var inputValue = this.getInputValueObjectById(fieldId);
-            var tmp;
-            for (var j = 0, tmp; tmp = inputValue.fieldValues[j]; j++) {
-                tmp.fieldId = fieldId;
-                rtn.push(tmp);
-            }
+        return this.getInputValueArray(fileFieldIds);
+    }
+
+    // /**
+    //  * Retrieve all image fields related value
+    //  * @return {[type]} [description]
+    //  */
+    // Submission.prototype.getImageInputValues = function() {
+    //     var imageFieldIds = this.form.getImageFieldsId();
+    //     return this.getInputValueArray(imageFieldIds);
+    // }
+
+    Submission.prototype.getInputValueArray=function(fieldIds){
+        var rtn=[]
+        for (var i=0, fieldId;fieldId=fieldIds[i];i++){
+            var inputValue=this.getInputValueObjectById(fieldId);
+            for (var j=0;j<inputValue.fieldValues.length;j++){
+                var tmpObj=inputValue.fieldValues[j];
+                if (tmpObj){
+                    tmpObj.fieldId=fieldId;
+                    rtn.push(tmpObj);    
+                }
+            }            
         }
         return rtn;
     }
@@ -2142,6 +2299,7 @@ appForm.models = (function(module) {
                 }
                 //remove from uploading list
                 appForm.models.uploadManager.cancelSubmission(self, cb);
+                //TODO reset submission
             });
         });
     }
@@ -2215,19 +2373,20 @@ appForm.models = (function(module) {
     }
     /**
      * Process an input value. convert to submission format. run field.validate before this
-     * @param  {[type]} inputValue 
+     * @param  {[type]} params {"value", "isStore":optional} 
      * @param {cb} cb(err,res)
      * @return {[type]}           submission json used for fieldValues for the field
      */
-    Field.prototype.processInput = function(inputValue, cb) {
+    Field.prototype.processInput = function(params, cb) {
         var type = this.getType();
         var processorName = "process_" + type;
+        var inputValue=params.value;
         if (typeof inputValue ==="undefined" || inputValue ===null){ //if user input is empty, keep going.
             return cb(null,inputValue);
         }
         // try to find specified processor
         if (this[processorName] && typeof this[processorName] == "function") {
-            this[processorName](inputValue,cb);
+            this[processorName](params,cb);
         } else {
             cb(null,inputValue);
         }
@@ -2248,6 +2407,11 @@ appForm.models = (function(module) {
             cb(null,submissionValue);
         }
     }
+    /**
+     * validate a input with this field.
+     * @param  {[type]} inputValue [description]
+     * @return true / error message
+     */
     Field.prototype.validate=function(inputValue,cb){
         this.form.getRuleEngine().validateFieldValue(this.getFieldId(),inputValue,cb);
     }
@@ -2284,7 +2448,8 @@ appForm.models.Field = (function(module) {
             throw ("checkbox choice definition is not found in field definition");
         }
     }
-    module.prototype.process_checkboxes = function(inputValue, cb) {
+    module.prototype.process_checkboxes = function(params, cb) {
+        var inputValue=params.value;
         if (!(inputValue instanceof Array)) {
             cb("the input value for processing checkbox field should be like [val1,val2]");
         } else {
@@ -2309,49 +2474,58 @@ appForm.models.Field = (function(module) {
  */
 
 appForm.models.Field = (function(module) {
-    function checkFileObj(obj){
+    function checkFileObj(obj) {
         return obj.fileName && obj.fileType && obj.hashName;
     }
-    module.prototype.process_file = function(inputValue, cb) {
-        if (typeof inputValue =="undefined" || inputValue==null ){
-            return cb(null,null);
+    module.prototype.process_file = function(params, cb) {
+        var inputValue = params.value;
+        var isStore = params.isStore === undefined ? true : params.isStore;
+        if (typeof inputValue == "undefined" || inputValue == null) {
+            return cb(null, null);
         }
-        if (typeof inputValue != "object" || ( !inputValue instanceof HTMLInputElement && !inputValue instanceof File && !checkFileObj(inputValue))) {
+        if (typeof inputValue != "object" || (!inputValue instanceof HTMLInputElement && !inputValue instanceof File && !checkFileObj(inputValue))) {
             throw ("the input value for file field should be a html file input element or a File object");
         }
-        if (checkFileObj(inputValue)){
-            return cb(null,inputValue);
+        if (checkFileObj(inputValue)) {
+            return cb(null, inputValue);
         }
-        var file=inputValue;
-        if (inputValue instanceof HTMLInputElement){
-            file=inputValue.files[0]; // 1st file only, not support many files yet.
+        var file = inputValue;
+        if (inputValue instanceof HTMLInputElement) {
+            file = inputValue.files[0]; // 1st file only, not support many files yet.
         }
-        var rtnJSON={
-            "fileName":file.name,
-            "fileSize":file.size,
-            "fileType":file.type,
-            "fileUpdateTime":file.lastModifiedDate,
-            "hashName":""
+        var rtnJSON = {
+            "fileName": file.name,
+            "fileSize": file.size,
+            "fileType": file.type,
+            "fileUpdateTime": file.lastModifiedDate,
+            "hashName": "",
+            "contentType":"binary"
         };
-        var name=file.name+Math.ceil(Math.random()*100000);
-        appForm.utils.md5(name,function(err,res){
-            var hashName=res;
-            if (err){
-                hashName=name;
+        var name = file.name + new Date().getTime() + Math.ceil(Math.random() * 100000);
+        appForm.utils.md5(name, function(err, res) {
+            var hashName = res;
+            if (err) {
+                hashName = name;
             }
-            rtnJSON.hashName=hashName;
-            appForm.utils.fileSystem.save(hashName, file,function(err,res){
-                if (err){
-                    console.error(err);
-                    cb(err);
-                }else{
-                    cb(null,rtnJSON);
-                }
-            });
+            rtnJSON.hashName = hashName;
+            if (isStore) {
+                appForm.utils.fileSystem.save(hashName, file, function(err, res) {
+                    if (err) {
+                        console.error(err);
+                        cb(err);
+                    } else {
+                        cb(null, rtnJSON);
+                    }
+                });
+            }else{
+                cb(null,rtnJSON);
+            }
+
         });
     }
     return module;
 })(appForm.models.Field || {});
+
 /**
  * extension of Field class to support latitude longitude field
  */
@@ -2362,7 +2536,8 @@ appForm.models.Field = (function(module) {
      * @param  {[type]} inputValues [description]
      * @return {[type]}             [description]
      */
-    module.prototype.process_location = function(inputValue, cb) {
+    module.prototype.process_location = function(params, cb) {
+        var inputValue=params.value;
         var def = this.getFieldDefinition();
         switch (def.locationUnit) {
             case "latLong":
@@ -2417,6 +2592,7 @@ appForm.models.Field=(function(module){
     return module;
 })(appForm.models.Field ||{});
 
+
 /**
  * extension of Field class to support radio field
  */
@@ -2433,6 +2609,97 @@ appForm.models.Field=(function(module){
     return module;
 })(appForm.models.Field ||{});
 
+/**
+ * extension of Field class to support file field
+ */
+
+appForm.models.Field = (function(module) {
+    function checkFileObj(obj) {
+        return obj.fileName && obj.fileType && obj.hashName;
+    }
+
+    function imageProcess(params, cb) {
+        var inputValue = params.value;
+        var isStore = params.isStore === undefined ? true : params.isStore;
+        if (inputValue == "") {
+            return cb(null, null);
+        }
+        var imgName = "";
+        var dataArr = inputValue.split(";base64,");
+        var imgType = dataArr[0].split(":")[1];
+        var size = inputValue.length;
+        genImageName(function(err, n) {
+            imgName = n;
+            var meta = {
+                "fileName":imgName,
+                "hashName": imgName,
+                "contentType":"base64",
+                "fileSize": size,
+                "fileType": imgType,
+                "imgHeader": "data:" + imgType + ";base64,"
+            }
+            if (isStore) {
+                appForm.utils.fileSystem.save(imgName, dataArr[1], function(err, res) {
+                    if (err) {
+                        console.error(err);
+                        cb(err);
+                    } else {
+                        cb(null, meta);
+                    }
+                });
+            }else{
+                cb(null,meta);
+            }
+
+        });
+
+    }
+
+    function genImageName(cb) {
+        var name = new Date().getTime() + "" + Math.ceil(Math.random() * 100000);
+        appForm.utils.md5(name, cb);
+    }
+
+    function covertImage(value, cb) {
+
+        if (value.length == 0) {
+            cb(null, value);
+        } else {
+            var count = value.length;
+            for (var i = 0; i < value.length; i++) {
+                var meta = value[i];
+                _loadImage(meta, function() {
+                    count--;
+                    if (count == 0) {
+                        cb(null, value);
+                    }
+                });
+            }
+        }
+
+    }
+
+    function _loadImage(meta, cb) {
+        if (meta) {
+            var name = meta.hashName;
+            appForm.utils.fileSystem.readAsText(name, function(err, text) {
+                if (err) {
+                    console.error(err);
+                }
+                meta.data = text;
+                cb(err, meta);
+            });
+        } else {
+            cb(null, meta);
+        }
+
+    }
+    module.prototype.process_signature = imageProcess;
+    module.prototype.convert_signature = covertImage;
+    module.prototype.process_photo = imageProcess;
+    module.prototype.convert_photo = covertImage;
+    return module;
+})(appForm.models.Field || {});
 /**
  * One form contains multiple pages
  */
@@ -2577,7 +2844,7 @@ appForm.models = (function(module) {
         this.timeOut = 60; //60 seconds. TODO: defin in config
         this.sending = false;
         this.timerInterval = 200;
-        this.sendingStart = new Date();
+        this.sendingStart = appForm.utils.getTime();
     }
     appForm.utils.extend(UploadManager, Model);
     /**
@@ -2703,7 +2970,7 @@ appForm.models = (function(module) {
     }
     UploadManager.prototype.tick = function() {
         if (this.sending) {
-            var now = new Date();
+            var now = appForm.utils.getTime();
             var timePassed = now.getTime() - this.sendingStart.getTime();
             if (timePassed > this.timeOut * 1000) { //time expired. roll current task to the end of queue
                 console.error("Uploading content timeout. it will try to reupload.");
@@ -2714,7 +2981,7 @@ appForm.models = (function(module) {
 
             if (this.hasTask()) {
                 this.sending = true;
-                this.sendingStart = new Date();
+                this.sendingStart = appForm.utils.getTime();
                 var that = this;
                 this.getCurrentTask(function(err, task) {
                     if (err || !task) {
@@ -2985,7 +3252,6 @@ appForm.models = (function(module) {
         this.set("currentTask", null);
         this.set("completed", false);
         this.set("formId", submissionModel.get("formId"));
-        var files = submissionModel.getFileInputValues();
         for (var i = 0, file; file = files[i]; i++) {
             this.addFileTask(file);
         }
@@ -3025,7 +3291,7 @@ appForm.models = (function(module) {
      * @return {[type]} [description]
      */
     UploadTask.prototype.getCurrentTask = function() {
-        return this.get("currentTask")
+        return this.get("currentTask");
     }
 
     UploadTask.prototype.isStarted = function() {
@@ -3040,45 +3306,164 @@ appForm.models = (function(module) {
         var formSub = this.get("jsonTask");
         var that = this;
         var formSubmissionModel = new appForm.models.FormSubmission(formSub);
-        this.getRemoteStore().create(formSubmissionModel, function(err, res) {
+          this.getRemoteStore().create(formSubmissionModel, function(err, res) {
             if (err) {
-                console.error(err);
-                cb(err);
+              that.completed(err, function(_err){
+                if(_err){
+                  console.log("uploadForm Err: ",_err);
+                }
+
+                return cb(err);
+              });
             } else {
                 var submissionId = res.submissionId;
                 var updatedFormDefinition = res.updatedFormDefinition;
-                if (updatedFormDefinition) { // remote form definition is updated 
+                if (updatedFormDefinition) { // remote form definition is updated
                     that.refreshForm(function() { //refresh related form definition
-                        that.submissionModel(function(err, submission) {
-                            if (submission) {
-                                var err = "Form definition is out of date.";
-                                that.completed(err);
-                                cb(err);
-                            }
-                        });
+                      var err = "Form definition is out of date.";
+                      that.completed(err, function(_err){
+                        if(_err){
+                          console.log("uploadForm Err: ",_err);
+                        }
+
+                        return cb(err);
+                      });
                     });
                 } else { // form data submitted successfully.
-                    formSub.lastUpdate = new Date();
+                    formSub.lastUpdate = appForm.utils.getTime();
                     that.set("submissionId", submissionId);
                     that.set("currentTask", 0);
                     that.emit("progress", that.getProgress());
-                    cb(null);
+                    return cb(null);
                 }
             }
-
         });
     }
-    UploadTask.prototype.uploadFile = function(cb) {
-        if (this.get("fileTasks").length == 0) {
-            this.completed();
-            return cb(null, null);
+
+    /**
+     * Handles the case where a call to completeSubmission returns a status other than "completed".
+     * Will only ever get to this function when a call is made to the completeSubmission server.
+     *
+     *
+     * @param err (String) Error message associated with the error returned
+     * @param res {"status" : <pending/error>, "pendingFiles" : [<any pending files not yet uploaded>]}
+     * @param cb Function callback
+     */
+    UploadTask.prototype.handleCompletionError = function(err, res, cb){
+      var errorMessage = err;
+
+      if(res.status === "pending"){
+        //The submission is not yet complete, there are files waiting to upload. This is an unexpected state as all of the files should have been uploaded.
+        return this.handleIncompleteSubmission(cb);
+      } else if(res.status === "error"){
+        //There was an error completing the submission.
+        errorMessage = "Error completing submission";
+      } else {
+        errorMessage = "Invalid return type from complete submission";
+      }
+
+      this.submissionModel(function(_err,model){
+        model.error(errorMessage, function(){
+          return cb(errorMessage);
+        });
+      });
+    }
+
+
+  /**
+   * Handles the case where the current submission status is required from the server.
+   * Based on the files waiting to be uploaded, the upload task is re-built with pendingFiles from the server.
+   *
+   * @param cb
+   */
+    UploadTask.prototype.handleIncompleteSubmission = function(cb){
+
+      var remoteStore = this.getRemoteStore();
+
+      var submissionStatus = new appForm.models.FormSubmissionStatus(this);
+
+      var that = this;
+      remoteStore.submissionStatus(submissionStatus, function(err, res){
+        if(err){
+          that.completed(err, function(_err){
+            if(err) console.error("Submission Status Error: ", _err);
+            return cb(err);
+          });
+        } else if(res.status === "error"){//The server had an error submitting the form, finish with an error
+          var errMessage = "Error submitting form.";
+          that.completed(errMessage, function(_err){
+            if(err) console.error("Submission Status Error: ", _err);
+            return cb(errMessage);
+          });
+        } else if(res.status === "complete"){ //Submission is complete, call complete to finish the submission
+          that.completed(null, function(err){
+            if(err) console.error("Submission Status Error: ", err);
+            return cb(err);
+          });
+        } else if(res.status === "pending"){ //Submission is still pending, check for files not uploaded yet.
+          var pendingFiles = res.pendingFiles || [];
+
+          if(pendingFiles.length > 0){ //No files pending on the server, call completeFormSubmission to finish the submission
+            that.resetUploadTask(pendingFiles, cb);
+          } else {
+            that.completed(null, cb);
+          }
+        } else { //Should not get to this point. Only valid status responses are error, pending and complete.
+          var errMessage = "Invalid submission status response.";
+          that.completed(errMessage, function(err){
+            if(err) console.error("Submission Status Error: ", err);
+            return cb(errMessage);
+          });
         }
-        var submissionId = this.get("submissionId");
+      });
+    }
+
+    /**
+     * Resetting the upload task based on the response from getSubmissionStatus
+     * @param pendingFiles -- Array of files still waiting to upload
+     * @param cb
+     */
+    UploadTask.prototype.resetUploadTask = function(pendingFiles, cb){
+      var filesToUpload = this.get("fileTasks");
+
+      var resetFilesToUpload = [];
+
+      //Adding the already completed files to the reset array.
+      for(var fileIndex = 0; fileIndex < filesToUpload.length; fileIndex++){
+        if(pendingFiles.indexOf(filesToUpload[fileIndex].hashName) < 0){
+          resetFilesToUpload.push(filesToUpload[fileIndex]);
+        }
+      }
+
+      //Adding the pending files to the end of the array.
+      for(var fileIndex = 0; fileIndex < filesToUpload.length; fileIndex++){
+        if(pendingFiles.indexOf(filesToUpload[fileIndex].hashName) > -1){
+          resetFilesToUpload.push(filesToUpload[fileIndex]);
+        }
+      }
+
+      var resetFileIndex = filesToUpload.length - pendingFiles.length - 1;
+      var resetCurrentTask = 0;
+
+      if(resetFileIndex > 0){
+        resetCurrentTask = resetFileIndex;
+      }
+
+      //Reset current task
+      this.set("currentTask", resetCurrentTask);
+      this.set("fileTasks", resetFilesToUpload);
+      this.saveLocal(cb); //Saving the reset files list to local
+    }
+
+    UploadTask.prototype.uploadFile = function(cb) {
         var that = this;
+        var submissionId = this.get("submissionId");
+
         if (submissionId) {
             var progress = this.get("currentTask");
             if (progress == null) {
                 progress = 0;
+                that.set("currentTask", progress);
             }
             var fileTask = this.get("fileTasks", [])[progress];
             if (!fileTask) {
@@ -3089,64 +3474,104 @@ appForm.models = (function(module) {
 
             fileSubmissionModel.loadFile(function(err) {
                 if (err) {
-                    cb(err);
+                  that.completed(err, function(_err){
+                    return cb(err);
+                  });
                 } else {
                     that.getRemoteStore().create(fileSubmissionModel, function(err, res) {
                         if (err) {
                             cb(err);
                         } else {
                             if (res.status == "ok") {
-                                var curTask = that.get("currentTask");
-                                fileTask.updateDate = new Date();
+                                fileTask.updateDate = appForm.utils.getTime();
 
+                                var curTask = progress;
                                 curTask++;
                                 that.set("currentTask", curTask);
                                 that.emit("progress", that.getProgress());
                                 if (that.get("fileTasks").length <= curTask) {
-                                    that.completed();
+                                    that.completed(null, function(err){
+                                      return cb(err);
+                                    });
+                                } else {
+                                  return cb(null); //File uploaded, not finished all of the files yet for this task.
                                 }
-                                cb(null);
                             } else {
-                                cb("File uploading failed.");
+
+
+                              var errorMessage = "File upload failed for file: " + fileTask.fileName;
+                              that.handleIncompleteSubmission(function(err){
+                                if(err) console.error(err);
+                                return cb(errorMessage);
+                              });
                             }
                         }
                     });
                 }
             });
         } else {
-            this.completed("Failed to upload file. Submission Id not found.");
-            cb("Failed to upload file. Submission Id not found.");
+            this.completed("Failed to upload file. Submission Id not found.", function(err){
+              if(err){
+                console.error("uploadFile Completed Err: ", err);
+              }
+              return cb("Failed to upload file. Submission Id not found.");
+            });
         }
     }
     UploadTask.prototype.uploadTick = function(cb) {
-        if (this.isCompleted()) {
-            return cb(null, null);
+      var currentTask = this.get("currentTask", null);
+      if (this.isCompleted()) { //Already completed, nothing to do.
+        return cb(null, null);
+      } else if(currentTask === null){ // No current task, send the form json
+        this.uploadForm(cb);
+      } else {
+        if (this.get("fileTasks").length == 0) { //No files to upload, just call complete.
+          this.completed(null, function(err){
+            return cb(err);
+          });
+        } else {
+          this.uploadFile(cb);
         }
-        var currentTask = this.get("currentTask", null);
-        if (currentTask === null) { //not started yet
-            // console.log("upload form data");
-            this.uploadForm(cb);
-        } else { //upload file
-            // console.log("upload file data");
-            this.uploadFile(cb);
-        }
+      }
     }
     /**
-     * the upload task is completed
+     * the upload task is completed -- Verify that the submission has completed by calling mbaas completeSubmission.
      * @return {[type]} [description]
      */
-    UploadTask.prototype.completed = function(err) {
-        this.set("completed", true);
-        if (err) {
-            this.set("error", err);
-        }
+    UploadTask.prototype.completed = function(err, cb) {
+      var that = this;
+      this.set("completed", true);
+      if(err){
+        this.set("error", err);
         this.submissionModel(function(_err,model){
-            if (err){
-                model.error(err,function(){});
-            }else{
-                model.submitted(function(){});    
-            }
+          model.error(err, cb);
         });
+
+        return; // No need to go any further, return from this function.
+      }
+
+      var submissionId = this.get("submissionId", null);
+
+      if(submissionId === null){
+        return this.completed("Failed to complete submission. Submission Id not found.", cb);
+      }
+
+      var remoteStore = this.getRemoteStore();
+
+
+      var completeSubmission = new appForm.models.FormSubmissionComplete(this);
+      remoteStore.completeSubmission(completeSubmission, function(err, res){
+        //if status is not "completed", then handle the completion err
+
+        if(res.status !== "complete"){
+          return that.handleCompletionError(err, res, cb);
+        }
+
+        //Completion is now completed sucessfully.. set to complete and update the model..
+        that.submissionModel(function(_err,model){
+          model.submitted(cb);
+        });
+      });
     }
     UploadTask.prototype.isCompleted = function() {
         return this.get("completed", false);
@@ -3201,81 +3626,233 @@ appForm.models = (function(module) {
     }
     return module;
 })(appForm.models || {});
+appForm.models=(function(module){
+  var Model=appForm.models.Model;
+
+  function Theme(){
+    Model.call(this,{
+      "_type":"theme"
+    });
+  }
+
+  appForm.utils.extend(Theme, Model);
+
+  module.theme = new Theme();
+  return module;
+})(appForm.models||{});
 /**
  * FeedHenry License
  */
-
 appForm.api = (function(module) {
-    module.getForms = getForms;
-    module.getForm = getForm;
-    module.getSubmissions = getSubmissions;
+    module.getForms=getForms;
+    module.getForm=getForm;
+    module.getTheme=getTheme;
+//    module.saveDraft=saveDraft;
+    module.submitForm=submitForm;
+//    module.getPending=getPending;
+    module.getSubmissions=getSubmissions;
+//    module.getSubmissionData=getSubmissionData;
+//    module.getFailed=getFailed;
+//    module.getDrafts=getDrafts;
 
-    var _submissions=null;
+    var _submissions = null;
+
     /**
      * Retrieve forms model. It contains forms list. check forms model usage
-     * @param  {[type]}   params {fromRemote:boolean(false)}
+     * @param  {[type]}   params {fromRemote:boolean}
      * @param  {Function} cb    (err, formsModel)
      * @return {[type]}          [description]
      */
     function getForms(params, cb) {
-        var fromRemote = params.fromRemote;
-        if (fromRemote == undefined) {
-            fromRemote = false;
-        }
-        appForm.models.forms.refresh(fromRemote, cb);    
+      var fromRemote = params.fromRemote;
+      if (fromRemote == undefined) {
+        fromRemote = false;
+      }
+      appForm.models.forms.refresh(fromRemote, cb);
     }
+
     /**
      * Retrieve form model with specified form id.
-     * @param  {[type]}   params {formId: string, fromRemote:boolean(false)}
+     * @param  {[type]}   params {formId: string, fromRemote:boolean}
      * @param  {Function} cb     (err, formModel)
      * @return {[type]}          [description]
      */
     function getForm(params, cb) {
         new appForm.models.Form(params, cb);
     }
+
     /**
-     * Retrieve submissions list model from local storage
-     * @param  {[type]}   params {}
-     * @param  {Function} cb     (err,submissionsModel)
-     * @return {[type]}          [description]
+     * Find a theme definition for this app.
+     * @param params {fromRemote:boolean(false)}
+     * @param {Function} cb {err, themeData} . themeData = {"json" : {<theme json definition>}, "css" : "css" : "<css style definition for this app>"}
      */
-    function getSubmissions(params, cb) {
-        // if (_submissions==null){}
-        // appForm.models.submissions.loadLocal(cb);
-         if (_submissions==null){
-            appForm.models.submissions.loadLocal(function(err){
-                if (err){
-                    console.error(err);
-                    cb(err);
-                }else{
-                    _submissions=appForm.models.submissions;
-                    cb(null,_submissions);
-                }
-            });    
-        }else{
-            setTimeout(function(){
-                cb(null,_submissions);    
-            },0);
-            
+    function getTheme(params,cb){
+      var theme = appForm.models.theme;
+
+      if(!params.fromRemote){
+        params.fromRemote = false;
+      }
+
+      theme.refresh(params.fromRemote, function(err, updatedTheme){
+        if(err) return cb(err);
+
+        if(updatedTheme === null){
+          return cb(new Error("No theme defined for this app"));
         }
+
+        return cb(null, updatedTheme);
+      });
     }
 
+  /**
+   * Get submissions that are in draft mode. I.e. saved but not submitted
+   * @param params {}
+   * @param {Function} cb     (err, draftsArray)
+   */
+//    function getDrafts(params, cb){
+//      //Only getting draft details -- not draft data
+//      var submissions = appForm.models.submissions;
+//      var drafts = submissions.getDrafts();
+//      var returnDrafts = [];
+//      if(drafts){
+//        drafts.forEach(function(draft){
+//          draft.localSubmissionId = draft._ludid;
+//          returnDrafts.push(draft);
+//        });
+//      }
+//      return cb(null, returnDrafts);
+//    }
 
-    //mockup $fh apis for Addons.
-    if (typeof $fh == "undefined") {
-        $fh = {};
+    /**
+     * Get submissions that are pending. I.e. submitted but not complete.
+     * Pending can be either "pending" or "inprogress"
+     * @param params {}
+     * @param {Function} cb     (err, pendingArray)
+     */
+//    function getPending(params, cb){
+//      var submissions = appForm.models.submissions;
+//
+//      var pending = submissions.getPending();
+//      var inProgress = submissions.getInProgress();
+//      var returnPending = [];
+//
+//      if(pending){
+//        pending.forEach(function(pendingSubmission){
+//          pendingSubmission.localSubmissionId = pendingSubmission._ludid;
+//          pendingSubmission.dateSubmissionStarted = new Date(pendingSubmission.submissionStartedTimestamp);
+//          returnPending.push(pendingSubmission);
+//        });
+//      }
+//
+//      if(inProgress){
+//        inProgress.forEach(function())
+//      }
+//
+//      return cb(null, returnPending);
+//    }
+
+    /**
+     * Get submissions that are submitted. I.e. submitted and complete.
+     * @param params {}
+     * @param {Function} cb     (err, submittedArray)
+     */
+    function getSubmissions(params, cb){
+      //Getting submissions that have been completed.
+      var submissions = appForm.models.submissions;
+
+      if (_submissions==null){
+        appForm.models.submissions.loadLocal(function(err){
+          if (err){
+            console.error(err);
+            cb(err);
+          }else{
+            _submissions=appForm.models.submissions;
+            cb(null,_submissions);
+          }
+        });
+      }else{
+        setTimeout(function(){
+          cb(null,_submissions);
+        },0);
+      }
     }
-        $fh.forms = module;
-        $fh.forms.config=appForm.models.config;
-        $fh.forms.init=appForm.init;
 
+      /**
+      * Get submission object from that are submitted. I.e. submitted and complete.
+      * @param params {localSubmissionId : <localIdOfSubmission>}
+      * @param {Function} cb     (err, submittedArray)
+      */
+//      function getSubmissionData(params, cb){
+//        if(!params || !params.localSubmissionId){
+//         return cb(new Error("Invalid params to getSubmissionData: localSubmission must be a parameter"));
+//        }
+//
+//        var submission = appForm.models.submission;
+//
+//        submission.fromLocal(params.localSubmissionId, cb);
+//      }
+
+    /**
+     * Get submissions that have failed. I.e. submitted and and error occurred.
+     * @param params {}
+     * @param {Function} cb     (err, failedArray)
+     */
+//    function getFailed(params, cb){
+//      var submissions = appForm.models.submissions;
+//
+//      var failedSubmissions = submissions.getError();
+//      var returnFailedSubmissions = [];
+//
+//      if(failedSubmissions){
+//        failedSubmissions.forEach(function(failedSubmission){
+//          failedSubmission.localSubmissionId = failedSubmission._ludid;
+//          failedSubmission.dateSubmissionStarted = new Date(failedSubmission.submissionStartedTimestamp);
+//          returnFailedSubmissions.push(failedSubmission);
+//        });
+//      }
+//
+//      return cb(null, returnFailedSubmissions);
+//    }
+
+    function submitForm(submission, cb){
+
+      if(submission){
+        submission.submit(function(err){
+          if(err) return cb(err);
+
+          //Submission finished and validated. Now upload the form
+          submission.upload(cb);
+        });
+      } else {
+        return cb("Invalid submission object.");
+      }
+    }
+
+//    function saveDraft(submission, cb){
+//      if(submission.get("_type") !== "submission"){
+//        return cb(new Error("Expected submission parameter to be of type Submission"));
+//      }
+//
+//      submission.saveDraft(cb);
+//    }
 
     return module;
 })(appForm.api || {});
+//mockup $fh apis for Addons.
+if (typeof $fh == "undefined"){
+    $fh={};
+}
+if ($fh.forms==undefined){
+    $fh.forms=appForm.api;
+}
+
+
 appForm.RulesEngine=rulesEngine;
+
+
 /*! fh-forms - v0.2.3 -  */
 /*! async - v0.2.9 -  */
-/*! 2013-12-10 */
+/*! 2013-12-11 */
 /* This is the prefix file */
 function rulesEngine (formDef) {
   var define = {};
@@ -4322,6 +4899,7 @@ var formsRulesEngine = function(formDef) {
 
   var fieldMap = {};
   var requiredFieldMap = {};
+  var submissionRequiredFieldsMap = {}; // map to hold the status of the required fields per submission
   var fieldRulePredicateMap = {};
   var fieldRuleSubjectMap = {};
   var pageRulePredicateMap = {};
@@ -4402,6 +4980,9 @@ var formsRulesEngine = function(formDef) {
   }
 
   function buildSubmissionFieldsMap(cb) {
+    submissionRequiredFieldsMap = JSON.parse(JSON.stringify(requiredFieldMap)); // clone the map for use with this submission
+    submissionFieldsMap = {}; // start with empty map, rulesEngine can be called with multiple submissions
+
     // iterate over all the fields in the submissions and build a map for easier lookup
     async.each(submission.formFields, function(formField, cb) {
       if (!formField.fieldId) return cb(new Error("No fieldId in this submission entry: " + util.inspect(formField)));
@@ -4493,12 +5074,6 @@ var formsRulesEngine = function(formDef) {
             res.validation[fieldID] = fieldRes;  // add invalid field info to validate form result
           }
 
-          // if a required field then update that fieldmap
-          if (requiredFieldMap[fieldID]) {
-            requiredFieldMap[fieldID].submitted = true;
-            requiredFieldMap[fieldID].validated = fieldRes.valid;
-          }
-
           return callback();
         });
 
@@ -4512,9 +5087,9 @@ var formsRulesEngine = function(formDef) {
   }
 
   function checkIfRequiredFieldsNotSubmitted(res, cb) {
-    async.each(Object.keys(requiredFieldMap), function (requiredFieldId, cb) {
+    async.each(Object.keys(submissionRequiredFieldsMap), function (requiredFieldId, cb) {
       var resField = {};
-      if (!requiredFieldMap[requiredFieldId].submitted) {
+      if (!submissionRequiredFieldsMap[requiredFieldId].submitted) {
         isFieldVisible(requiredFieldId, true, function (err, visible) {
           if (err) return cb(err);
           if (visible) {  // we only care about required fields if they are visible
@@ -4592,7 +5167,11 @@ var formsRulesEngine = function(formDef) {
         if (err) return cb(err);
 
         validator(inputValue, fieldDefinition, undefined, function (err) {
-          return createValidatorResponse(fieldId, err, function (err, res) {
+          var messages = {errorMessages: []}
+          if(err) {
+            messages.errorMessages.push(err.message);
+          }
+          return createValidatorResponse(fieldId, messages, function (err, res) {
             if (err) return cb(err);
             var ret = {validation: {}};
             ret.validation[fieldId] = res;
@@ -4603,25 +5182,26 @@ var formsRulesEngine = function(formDef) {
     });
   }
 
- function createValidatorResponse(fieldId, err, cb) {
+
+ function createValidatorResponse(fieldId, messages, cb) {
     // intentionally not checking err here, used further down to get validation errors
     var res = {};
     res.fieldId = fieldId;
-    res.errorMessages = [];
+    res.errorMessages = messages.errorMessages || [];
+    res.fieldErrorMessage = messages.fieldErrorMessage || [];
+    async.some(res.errorMessages, function (item, cb) {
+      return cb(item !== null);
+    }, function (someErrors) {
+      res.valid = !someErrors && (res.fieldErrorMessage.length < 1);
 
-    if (err) {
-      res.errorMessages.push(err.message);
-      res.valid = false;
-    } else {
-      res.valid = true;
-    }
-
-    return cb(undefined, res);
+      return cb(undefined, res);      
+    });
   }
 
   function getFieldValidationStatus(submittedField, fieldDef, previousFieldValues, cb) {  
-    validateFieldInternal(submittedField, fieldDef, previousFieldValues, function (err) {
-      createValidatorResponse(submittedField.fieldId, err, cb);
+    validateFieldInternal(submittedField, fieldDef, previousFieldValues, function (err, messages) {
+      if(err) return cb(err);
+      createValidatorResponse(submittedField.fieldId, messages, cb);
     });
   }
 
@@ -4635,61 +5215,106 @@ var formsRulesEngine = function(formDef) {
     return cb(undefined, validator);
   }
 
-
   function validateFieldInternal(submittedField, fieldDef, previousFieldValues, cb) {
     if ("function" === typeof previousFieldValues) {
       cb = previousFieldValues;
       previousFieldValues = null;
     }
 
-    async.series([
-      async.apply(checkValueSubmitted, submittedField, fieldDef),
-      async.apply(checkRepeat, submittedField, fieldDef),
-      async.apply(checkValues, submittedField, fieldDef, previousFieldValues)
-    ], cb);
+    countSubmittedValues(submittedField, function(err, numSubmittedValues) {
+      if(err) return cb(err);
+      async.series({
+        valuesSubmitted:
+          async.apply(checkValueSubmitted, submittedField, fieldDef),
+        repeats:
+          async.apply(checkRepeat, numSubmittedValues, fieldDef),
+        values:
+          async.apply(checkValues, submittedField, fieldDef, previousFieldValues)
+      }, function (err, results) {
+        if(err) return cb(err);
+
+        var fieldErrorMessages = [];
+        if(results.valuesSubmitted) {
+          fieldErrorMessages.push(results.valuesSubmitted);
+        }
+        if(results.repeats) {
+          fieldErrorMessages.push(results.repeats);
+        }
+        return cb(undefined, {fieldErrorMessage: fieldErrorMessages, errorMessages: results.values});
+      });
+    });
 
     return;  // just functions below this
 
     function checkValueSubmitted(submittedField, fieldDefinition, cb) {
       var valueSubmitted = submittedField && submittedField.fieldValues && (submittedField.fieldValues.length > 0);
       if (!valueSubmitted) {
-        return cb(new Error("No value submitted for field " + fieldDefinition.name));
+        return cb(undefined, "No value submitted for field " + fieldDefinition.name);
       }
-      return cb();
+      return cb(undefined, null);
     }
 
-    function checkRepeat(submittedField, fieldDefinition, cb) {
-      var numSubmittedValues = submittedField.fieldValues.length;
+    function countSubmittedValues(submittedField, cb) {
+      var numSubmittedValues = 0;
+      if(submittedField && submittedField.fieldValues && submittedField.fieldValues.length > 0) {
+        for(var i=0; i<submittedField.fieldValues.length; i += 1) {
+          if(submittedField.fieldValues[i]) {
+            numSubmittedValues += 1;
+          }
+        }
+      }
+      return cb(undefined, numSubmittedValues);
+    }
 
+    function checkRepeat(numSubmittedValues, fieldDefinition, cb) {
+    
       if(fieldDefinition.repeating && fieldDefinition.fieldOptions.definition){
         if(fieldDefinition.fieldOptions.definition.minRepeat){
           if(numSubmittedValues < fieldDefinition.fieldOptions.definition.minRepeat){
-            return cb(new Error("Expected min of " + fieldDefinition.fieldOptions.definition.minRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues));
+            return cb(undefined, "Expected min of " + fieldDefinition.fieldOptions.definition.minRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues);
           }
         }
 
         if (fieldDefinition.fieldOptions.definition.maxRepeat){
           if(numSubmittedValues > fieldDefinition.fieldOptions.definition.maxRepeat){
-            return cb(new Error("Expected max of " + fieldDefinition.fieldOptions.definition.maxRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues));
+            return cb(undefined, "Expected max of " + fieldDefinition.fieldOptions.definition.maxRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues);
           }
         }
       } else {
         if(numSubmittedValues > 1) {
-          return cb(new Error("Should not have multiple values for non-repeating field"));
+          return cb(undefined, "Should not have multiple values for non-repeating field");
         }
       }
 
-      return cb();
+      return cb(undefined, null);
     }
 
     function checkValues(submittedField, fieldDefinition, previousFieldValues, cb) {
       getValidatorFunction(fieldDefinition.type, function (err, validator) {       
-        async.eachSeries(submittedField.fieldValues, function(fieldValue, cb){
-          validator(fieldValue, fieldDefinition, previousFieldValues, cb);
-        }, function (err) {
+
+        async.map(submittedField.fieldValues, function(fieldValue, cb){
+          if('undefined' === typeof fieldValue || null === fieldValue) {
+            return cb(undefined, null);
+          } else {
+            validator(fieldValue, fieldDefinition, previousFieldValues, function(validationError) {
+              var errorMessage;
+              if(validationError) {
+                errorMessage = validationError.message || "Error during validation of field";
+              } else {
+                errorMessage = null;
+              }
+
+              if (submissionRequiredFieldsMap[fieldDefinition._id]) {   // set to true if at least one value
+                submissionRequiredFieldsMap[fieldDefinition._id].submitted = true;
+              }
+
+              return cb(undefined, errorMessage);
+            });
+          }
+        }, function (err, results) {
           if (err) return cb(err);
 
-          return cb();
+          return cb(undefined, results);
         });
       });
     }

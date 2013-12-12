@@ -843,6 +843,886 @@ if (typeof String.prototype.padLz == 'undefined') {
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 if (!window.console) window.console = { log: function() {} };
+/**
+ * @preserve SignaturePad: A jQuery plugin for assisting in the creation of an HTML5 canvas
+ * based signature pad. Records the drawn signature in JSON for later regeneration.
+ *
+ * Dependencies: FlashCanvas/1.5, json2.js, jQuery/1.3.2+
+ *
+ * @project ca.thomasjbradley.applications.signaturepad
+ * @author Thomas J Bradley <hey@thomasjbradley.ca>
+ * @link http://thomasjbradley.ca/lab/signature-pad
+ * @link http://github.com/thomasjbradley/signature-pad
+ * @copyright Copyright MMXI, Thomas J Bradley
+ * @license New BSD License
+ * @version {{version}}
+ */
+
+/**
+ * Usage for accepting signatures:
+ *  $('.sigPad').signaturePad()
+ *
+ * Usage for displaying previous signatures:
+ *  $('.sigPad').signaturePad({displayOnly:true}).regenerate(sig)
+ *  or
+ *  var api = $('.sigPad').signaturePad({displayOnly:true})
+ *  api.regenerate(sig)
+ */
+(function ($) {
+
+function SignaturePad (selector, options) {
+  /**
+   * Reference to the object for use in public methods
+   *
+   * @private
+   *
+   * @type {Object}
+   */
+  var self = this
+
+  /**
+   * Holds the merged default settings and user passed settings
+   *
+   * @private
+   *
+   * @type {Object}
+   */
+  , settings = $.extend({}, $.fn.signaturePad.defaults, options)
+
+  /**
+   * The current context, as passed by jQuery, of selected items
+   *
+   * @private
+   *
+   * @type {Object}
+   */
+  , context = $(selector)
+
+  /**
+   * jQuery reference to the canvas element inside the signature pad
+   *
+   * @private
+   *
+   * @type {Object}
+   */
+  , canvas = $(settings.canvas, context)
+
+  /**
+   * Dom reference to the canvas element inside the signature pad
+   *
+   * @private
+   *
+   * @type {Object}
+   */
+  , element = canvas.get(0)
+
+  /**
+   * The drawing context for the signature canvas
+   *
+   * @private
+   *
+   * @type {Object}
+   */
+  , canvasContext = null
+
+  /**
+   * Holds the previous point of drawing
+   * Disallows drawing over the same location to make lines more delicate
+   *
+   * @private
+   *
+   * @type {Object}
+   */
+  , previous = {'x': null, 'y': null}
+
+  /**
+   * An array holding all the points and lines to generate the signature
+   * Each item is an object like:
+   * {
+   *   mx: moveTo x coordinate
+   *   my: moveTo y coordinate
+   *   lx: lineTo x coordinate
+   *   lx: lineTo y coordinate
+   * }
+   *
+   * @private
+   *
+   * @type {Array}
+   */
+  , output = []
+
+  /**
+   * Stores a timeout for when the mouse leaves the canvas
+   * If the mouse has left the canvas for a specific amount of time
+   * Stops drawing on the canvas
+   *
+   * @private
+   *
+   * @type {Object}
+   */
+  , mouseLeaveTimeout = false
+
+  /**
+   * Whether the browser is a touch event browser or not
+   *
+   * @private
+   *
+   * @type {Boolean}
+   */
+  , touchable = false
+
+  /**
+   * Whether events have already been bound to the canvas or not
+   *
+   * @private
+   *
+   * @type {Boolean}
+   */
+  , eventsBound = false
+
+
+  /**
+   * Draws a line on canvas using the mouse position
+   * Checks previous position to not draw over top of previous drawing
+   *  (makes the line really thick and poorly anti-aliased)
+   *
+   * @private
+   *
+   * @param {Object} e The event object
+   * @param {Number} newYOffset A pixel value for drawing the newY, used for drawing a single dot on click
+   */
+  function drawLine (e, newYOffset) {
+    var offset = $(e.target).offset(), newX, newY
+
+    clearTimeout(mouseLeaveTimeout)
+    mouseLeaveTimeout = false
+
+    if (typeof e.changedTouches !== 'undefined') {
+      newX = Math.floor(e.changedTouches[0].pageX - offset.left)
+      newY = Math.floor(e.changedTouches[0].pageY - offset.top)
+    } else {
+      newX = Math.floor(e.pageX - offset.left)
+      newY = Math.floor(e.pageY - offset.top)
+    }
+
+    if (previous.x === newX && previous.y === newY)
+      return true
+
+    if (previous.x === null)
+      previous.x = newX
+
+    if (previous.y === null)
+      previous.y = newY
+
+    if (newYOffset)
+      newY += newYOffset
+
+    canvasContext.beginPath()
+    canvasContext.moveTo(previous.x, previous.y)
+    canvasContext.lineTo(newX, newY)
+    canvasContext.lineCap = settings.penCap
+    canvasContext.stroke()
+    canvasContext.closePath()
+
+    output.push({
+      'lx': newX
+      ,'ly': newY
+      ,'mx': previous.x
+      ,'my': previous.y
+    })
+
+    previous.x = newX
+    previous.y = newY
+  }
+
+  /**
+   * Callback registered to mouse/touch events of the canvas
+   * Stops the drawing abilities
+   *
+   * @private
+   *
+   * @param {Object} e The event object
+   */
+  function stopDrawing () {
+    if (touchable) {
+      canvas.each(function () {
+        this.ontouchmove = null
+      })
+    } else {
+      canvas.unbind('mousemove.signaturepad')
+    }
+
+    previous.x = null
+    previous.y = null
+
+    if (output.length > 0)
+      $(settings.output, context).val(JSON.stringify(output))
+  }
+
+  /**
+   * Draws the signature line
+   *
+   * @private
+   */
+  function drawSigLine () {
+    if (!settings.lineWidth)
+      return false
+
+    canvasContext.beginPath()
+    canvasContext.lineWidth = settings.lineWidth
+    canvasContext.strokeStyle = settings.lineColour
+    canvasContext.moveTo(settings.lineMargin, settings.lineTop)
+    canvasContext.lineTo(element.width - settings.lineMargin, settings.lineTop)
+    canvasContext.stroke()
+    canvasContext.closePath()
+  }
+
+  /**
+   * Clears all drawings off the canvas and redraws the signature line
+   *
+   * @private
+   */
+  function clearCanvas () {
+    stopDrawing()
+
+    canvasContext.clearRect(0, 0, element.width, element.height)
+    canvasContext.fillStyle = settings.bgColour
+    canvasContext.fillRect(0, 0, element.width, element.height)
+
+    if (!settings.displayOnly)
+      drawSigLine()
+
+    canvasContext.lineWidth = settings.penWidth
+    canvasContext.strokeStyle = settings.penColour
+
+    $(settings.output, context).val('')
+    output = []
+  }
+
+  /**
+   * Callback registered to mouse/touch events of canvas
+   * Triggers the drawLine function
+   *
+   * @private
+   *
+   * @param {Object} e The event object
+   * @param {Object} o The object context registered to the event; canvas
+   */
+  function startDrawing (e, o) {
+    if (touchable) {
+      canvas.each(function () {
+        this.addEventListener('touchmove', drawLine, false)
+      })
+    } else {
+      canvas.bind('mousemove.signaturepad', drawLine)
+    }
+
+    // Draws a single point on initial mouse down, for people with periods in their name
+    drawLine(e, 1)
+  }
+
+  /**
+   * Removes all the mouse events from the canvas
+   *
+   * @private
+   */
+  function disableCanvas () {
+    eventsBound = false
+
+    if (touchable) {
+      canvas.each(function () {
+        this.removeEventListener('touchstart', stopDrawing)
+        this.removeEventListener('touchend', stopDrawing)
+        this.removeEventListener('touchmove', drawLine)
+      })
+    } else {
+      canvas.unbind('mousedown.signaturepad')
+      canvas.unbind('mouseup.signaturepad')
+      canvas.unbind('mousemove.signaturepad')
+      canvas.unbind('mouseleave.signaturepad')
+    }
+
+    $(settings.clear, context).unbind('click.signaturepad')
+  }
+
+  /**
+   * Lazy touch event detection
+   * Uses the first press on the canvas to detect either touch or mouse reliably
+   * Will then bind other events as needed
+   *
+   * @private
+   *
+   * @param {Object} e The event object
+   */
+  function initDrawEvents (e) {
+    if (eventsBound)
+      return false
+
+    eventsBound = true
+
+    if (typeof e.changedTouches !== 'undefined')
+      touchable = true
+
+    if (touchable) {
+      canvas.each(function () {
+        this.addEventListener('touchend', stopDrawing, false)
+        this.addEventListener('touchcancel', stopDrawing, false)
+      })
+
+      canvas.unbind('mousedown.signaturepad')
+    } else {
+      canvas.bind('mouseup.signaturepad', function (e) { stopDrawing() })
+      canvas.bind('mouseleave.signaturepad', function (e) {
+        if (!mouseLeaveTimeout) {
+          mouseLeaveTimeout = setTimeout(function () {
+            stopDrawing()
+            clearTimeout(mouseLeaveTimeout)
+            mouseLeaveTimeout = false
+          }, 500)
+        }
+      })
+
+      canvas.each(function () {
+        this.ontouchstart = null
+      })
+    }
+  }
+
+  /**
+   * Triggers the abilities to draw on the canvas
+   * Sets up mouse/touch events, hides and shows descriptions and sets current classes
+   *
+   * @private
+   */
+  function drawIt () {
+    $(settings.typed, context).hide()
+    clearCanvas()
+
+    canvas.each(function () {
+      this.ontouchstart = function (e) {
+        e.preventDefault()
+        initDrawEvents(e)
+        startDrawing(e, this)
+      }
+    })
+
+    canvas.bind('mousedown.signaturepad', function (e) {
+      initDrawEvents(e)
+      startDrawing(e, this)
+    })
+
+    $(settings.clear, context).bind('click.signaturepad', function (e) { e.preventDefault(); clearCanvas() })
+
+    $(settings.typeIt, context).bind('click.signaturepad', function (e) { e.preventDefault(); typeIt() })
+    $(settings.drawIt, context).unbind('click.signaturepad')
+    $(settings.drawIt, context).bind('click.signaturepad', function (e) { e.preventDefault() })
+
+    $(settings.typeIt, context).removeClass(settings.currentClass)
+    $(settings.drawIt, context).addClass(settings.currentClass)
+    $(settings.sig, context).addClass(settings.currentClass)
+
+    $(settings.typeItDesc, context).hide()
+    $(settings.drawItDesc, context).show()
+    $(settings.clear, context).show()
+  }
+
+  /**
+   * Triggers the abilities to type in the input for generating a signature
+   * Sets up mouse events, hides and shows descriptions and sets current classes
+   *
+   * @private
+   */
+  function typeIt () {
+    clearCanvas()
+    disableCanvas()
+    $(settings.typed, context).show()
+
+    $(settings.drawIt, context).bind('click.signaturepad', function (e) { e.preventDefault(); drawIt() })
+    $(settings.typeIt, context).unbind('click.signaturepad')
+    $(settings.typeIt, context).bind('click.signaturepad', function (e) { e.preventDefault() })
+
+    $(settings.output, context).val('')
+
+    $(settings.drawIt, context).removeClass(settings.currentClass)
+    $(settings.typeIt, context).addClass(settings.currentClass)
+    $(settings.sig, context).removeClass(settings.currentClass)
+
+    $(settings.drawItDesc, context).hide()
+    $(settings.clear, context).hide()
+    $(settings.typeItDesc, context).show()
+  }
+
+  /**
+   * Callback registered on key up and blur events for input field
+   * Writes the text fields value as Html into an element
+   *
+   * @private
+   *
+   * @param {String} val The value of the input field
+   */
+  function type (val) {
+    $(settings.typed, context).html(val.replace(/>/g, '&gt;').replace(/</g, '&lt;'))
+
+    while ($(settings.typed, context).width() > element.width) {
+      var oldSize = $(settings.typed, context).css('font-size').replace(/px/, '')
+      $(settings.typed, context).css('font-size', oldSize-1+'px')
+    }
+  }
+
+  /**
+   * Default onBeforeValidate function to clear errors
+   *
+   * @private
+   *
+   * @param {Object} context current context object
+   * @param {Object} settings provided settings
+   */
+  function onBeforeValidate (context, settings) {
+    $('p.' + settings.errorClass, context).remove()
+    context.removeClass(settings.errorClass)
+    $('input, label', context).removeClass(settings.errorClass)
+  }
+
+  /**
+   * Default onFormError function to show errors
+   *
+   * @private
+   *
+   * @param {Object} errors object contains validation errors (e.g. nameInvalid=true)
+   * @param {Object} context current context object
+   * @param {Object} settings provided settings
+   */
+  function onFormError (errors, context, settings) {
+    if (errors.nameInvalid) {
+      context.prepend(['<p class="', settings.errorClass, '">', settings.errorMessage, '</p>'].join(''))
+      $(settings.name, context).focus()
+      $(settings.name, context).addClass(settings.errorClass)
+      $('label[for=' + $(settings.name).attr('id') + ']', context).addClass(settings.errorClass)
+    }
+
+    if (errors.drawInvalid)
+      context.prepend(['<p class="', settings.errorClass, '">', settings.errorMessageDraw, '</p>'].join(''))
+  }
+
+  /**
+   * Validates the form to confirm a name was typed in the field
+   * If drawOnly also confirms that the user drew a signature
+   *
+   * @private
+   *
+   * @return {Boolean}
+   */
+  function validateForm () {
+    var valid = true
+      , errors = {drawInvalid: false, nameInvalid: false}
+      , onBeforeArguments = [context, settings]
+      , onErrorArguments = [errors, context, settings]
+
+    if (settings.onBeforeValidate && typeof settings.onBeforeValidate === 'function') {
+      settings.onBeforeValidate.apply(self,onBeforeArguments)
+    } else {
+      onBeforeValidate.apply(self, onBeforeArguments)
+    }
+
+    if (settings.drawOnly && output.length < 1) {
+      errors.drawInvalid = true
+      valid = false
+    }
+
+    if ($(settings.name, context).val() === '') {
+      errors.nameInvalid = true
+      valid = false
+    }
+
+    if (settings.onFormError && typeof settings.onFormError === 'function') {
+      settings.onFormError.apply(self,onErrorArguments)
+    } else {
+      onFormError.apply(self, onErrorArguments)
+    }
+
+    return valid
+  }
+
+  /**
+   * Redraws the signature on a specific canvas
+   *
+   * @private
+   *
+   * @param {Array} paths the signature JSON
+   * @param {Object} context the canvas context to draw on
+   * @param {Boolean} saveOutput whether to write the path to the output array or not
+   */
+  function drawSignature (paths, context, saveOutput) {
+    for(var i in paths) {
+      if (typeof paths[i] === 'object') {
+        context.beginPath()
+        context.moveTo(paths[i].mx, paths[i].my)
+        context.lineTo(paths[i].lx, paths[i].ly)
+        context.lineCap = settings.penCap
+        context.stroke()
+        context.closePath()
+
+        if (saveOutput) {
+          output.push({
+            'lx': paths[i].lx
+            ,'ly': paths[i].ly
+            ,'mx': paths[i].mx
+            ,'my': paths[i].my
+          })
+        }
+      }
+    }
+  }
+
+  /**
+   * Initialisation function, called immediately after all declarations
+   * Technically public, but only should be used internally
+   *
+   * @private
+   */
+  function init () {
+    // Fixes the jQuery.fn.offset() function for Mobile Safari Browsers i.e. iPod Touch, iPad and iPhone
+    // https://gist.github.com/661844
+    // http://bugs.jquery.com/ticket/6446
+    if (parseFloat(((/CPU.+OS ([0-9_]{3}).*AppleWebkit.*Mobile/i.exec(navigator.userAgent)) || [0,'4_2'])[1].replace('_','.')) < 4.1) {
+       $.fn.Oldoffset = $.fn.offset;
+       $.fn.offset = function () {
+          var result = $(this).Oldoffset()
+          result.top -= window.scrollY
+          result.left -= window.scrollX
+
+          return result
+       }
+    }
+
+    // Disable selection on the typed div and canvas
+    $(settings.typed, context).bind('selectstart.signaturepad', function (e) { return $(e.target).is(':input') })
+    canvas.bind('selectstart.signaturepad', function (e) { return $(e.target).is(':input') })
+
+    if (!element.getContext && FlashCanvas)
+      FlashCanvas.initElement(element)
+
+    if (element.getContext) {
+      canvasContext = element.getContext('2d')
+
+      $(settings.sig, context).show()
+
+      if (!settings.displayOnly) {
+        if (!settings.drawOnly) {
+          $(settings.name, context).bind('keyup.signaturepad', function () {
+            type($(this).val())
+          })
+
+          $(settings.name, context).bind('blur.signaturepad', function () {
+            type($(this).val())
+          })
+
+          $(settings.drawIt, context).bind('click.signaturepad', function (e) {
+            e.preventDefault()
+            drawIt()
+          })
+        }
+
+        if (settings.drawOnly || settings.defaultAction === 'drawIt') {
+          drawIt()
+        } else {
+          typeIt()
+        }
+
+        if (settings.validateFields) {
+          if ($(selector).is('form')) {
+            $(selector).bind('submit.signaturepad', function () { return validateForm() })
+          } else {
+            $(selector).parents('form').bind('submit.signaturepad', function () { return validateForm() })
+          }
+        }
+
+        $(settings.sigNav, context).show()
+      }
+    }
+  }
+
+  $.extend(self, {
+    /**
+     * Initializes SignaturePad
+     */
+    init: function () { init() }
+
+    /**
+     * Regenerates a signature on the canvas using an array of objects
+     * Follows same format as object property
+     * @see var object
+     *
+     * @param {Array} paths An array of the lines and points
+     */
+    , regenerate: function (paths) {
+      self.clearCanvas()
+      $(settings.typed, context).hide()
+
+      if (typeof paths === 'string')
+        paths = JSON.parse(paths)
+
+      drawSignature(paths, canvasContext, true)
+
+      if ($(settings.output, context).length > 0)
+        $(settings.output, context).val(JSON.stringify(output))
+    }
+
+    /**
+     * Clears the canvas
+     * Redraws the background colour and the signature line
+     */
+    , clearCanvas: function () { clearCanvas() }
+
+    /**
+     * Returns the signature as a Js array
+     *
+     * @return {Array}
+     */
+    , getSignature: function () { return output }
+
+    /**
+     * Returns the signature as a Json string
+     *
+     * @return {String}
+     */
+    , getSignatureString: function () { return JSON.stringify(output) }
+
+    /**
+     * Returns the signature as an image
+     * Re-draws the signature in a shadow canvas to create a clean version
+     *
+     * @return {String}
+     */
+    , getSignatureImage: function () {
+      var tmpCanvas = document.createElement('canvas')
+        , tmpContext = null
+        , data = null
+
+      tmpCanvas.style.position = 'absolute'
+      tmpCanvas.style.top = '-999em'
+      tmpCanvas.width = element.width
+      tmpCanvas.height = element.height
+      document.body.appendChild(tmpCanvas)
+
+      if (!tmpCanvas.getContext && FlashCanvas)
+        FlashCanvas.initElement(tmpCanvas)
+
+      tmpContext = tmpCanvas.getContext('2d')
+
+      tmpContext.fillStyle = settings.bgColour
+      tmpContext.fillRect(0, 0, element.width, element.height)
+      tmpContext.lineWidth = settings.penWidth
+      tmpContext.strokeStyle = settings.penColour
+
+      drawSignature(output, tmpContext)
+      data = tmpCanvas.toDataURL.apply(tmpCanvas, arguments)
+
+      document.body.removeChild(tmpCanvas)
+      tmpCanvas = null
+
+      return data
+    }
+  })
+}
+
+/**
+ * Create the plugin
+ * Returns an Api which can be used to call specific methods
+ *
+ * @param {Object} options The options array
+ *
+ * @return {Object} The Api for controlling the instance
+ */
+$.fn.signaturePad = function (options) {
+  var api = null
+
+  this.each(function () {
+    api = new SignaturePad(this, options)
+    api.init()
+  })
+
+  return api
+}
+
+/**
+ * Expose the defaults so they can be overwritten for multiple instances
+ *
+ * @type {Object}
+ */
+$.fn.signaturePad.defaults = {
+  defaultAction: 'typeIt' // What action should be highlighted first: typeIt or drawIt
+  , displayOnly: false // Initialize canvas for signature display only; ignore buttons and inputs
+  , drawOnly: false // Whether the to allow a typed signature or not
+  , canvas: 'canvas' // Selector for selecting the canvas element
+  , sig: '.sig' // Parts of the signature form that require Javascript (hidden by default)
+  , sigNav: '.sigNav' // The TypeIt/DrawIt navigation (hidden by default)
+  , bgColour: '#ffffff' // The colour fill for the background of the canvas
+  , penColour: '#145394' // Colour of the drawing ink
+  , penWidth: 2 // Thickness of the pen
+  , penCap: 'round' // Determines how the end points of each line are drawn (values: 'butt', 'round', 'square')
+  , lineColour: '#ccc' // Colour of the signature line
+  , lineWidth: 2 // Thickness of the signature line
+  , lineMargin: 5 // Margin on right and left of signature line
+  , lineTop: 35 // Distance to draw the line from the top
+  , name: '.name' // The input field for typing a name
+  , typed: '.typed' // The Html element to accept the printed name
+  , clear: '.clearButton' // Button for clearing the canvas
+  , typeIt: '.typeIt a' // Button to trigger name typing actions (current by default)
+  , drawIt: '.drawIt a' // Button to trigger name drawing actions
+  , typeItDesc: '.typeItDesc' // The description for TypeIt actions
+  , drawItDesc: '.drawItDesc' // The description for DrawIt actions (hidden by default)
+  , output: '.output' // The hidden input field for remembering line coordinates
+  , currentClass: 'current' // The class used to mark items as being currently active
+  , validateFields: true // Whether the name, draw fields should be validated
+  , errorClass: 'error' // The class applied to the new error Html element
+  , errorMessage: 'Please enter your name' // The error message displayed on invalid submission
+  , errorMessageDraw: 'Please sign the document' // The error message displayed when drawOnly and no signature is drawn
+  , onBeforeValidate: null // Pass a callback to be used instead of the built-in function
+  , onFormError: null // Pass a callback to be used instead of the built-in function
+}
+}(jQuery));
+
+var toBitmapURL = (function ($fromCharCode, FF, MAX_LENGTH) {
+    
+    /**
+     * (C) WebReflection - Mit Style License
+     *      given a canvas, returns BMP 32bit with alpha channel data uri representation
+     *
+     * Why ?
+     *      because many canvas implementation may not support toDataURL
+     *      ( HTMLCanvasElement.prototype.toDataURL || HTMLCanvasElement.prototype.toDataURL = function () {return toBitmapURL(this)}; )
+     *
+     * I mean ... Why BMP 32 rather than PNG ?!!!
+     *      because JavaScript size matter as well as computation time.
+     *      PNG requires DEFLATE compression and multiple pass over the data.
+     *      BMP is straight forward
+     *
+     * Fine, but which browser supports BMP in 2011 ?
+     *      pretty much all of them, except some version of Chrome. Safari and Webkit are fine as well as Firefox, Opera and of course IE
+     *
+     * Sure, but why on earth should I use BMP as data uri ?
+     *      this method is about creation of canvas snapshots. If toDataURL is not presemt
+     *      there is still a way to create a portable, NOT COMPRESSED, bitmap image
+     *      that could be optionally sent to the server and at that point converted into proper PNG
+     *      Bitmap format was fast enough to parse (on mobile as well) and it was RGBA compatible plus widely supported.
+     *
+     * I think this was a wasteof time
+     *      well, if you still think so, I can say that was actually fun to create a proper
+     *      32 bit image format via JavaScript on the fly.
+     *      However, please share your own toDataURL version with full mime type support in JavaScript :P
+     *      Moreover, have you ever tried to use native toDataURL("image/bmp") ?
+     *      Most likely you gonna have max 24bit bitmap with all alpha channel info lost.
+     */
+    
+    function fromCharCode(code) {
+        for (var
+            result = [],
+            i = 0,
+            length = code.length;
+            i < length; i += MAX_LENGTH
+        ) {
+            result.push($fromCharCode.apply(null, code.slice(i, i + MAX_LENGTH)));
+        }
+        return result.join("");
+    }
+    
+    function numberToInvertedBytes(number) {
+        return [
+            number & FF,
+            (number >> 8) & FF,
+            (number >> 16) & FF,
+            (number >> 24) & FF
+        ];
+    }
+    
+    function swapAndInvertY(data, width, height) {
+        /**
+         * Bitmap pixels array is stored "pseudo inverted"
+         * RGBA => BGRA (read as Alpha + RGB)
+         * in few words this canvas pixels array
+         * [
+         *   0, 1,  2,  3,  4,  5,  6,  7,
+         *   8, 9, 10, 11, 12, 13, 14, 15
+         * ]
+         * is stored as bitmap one like
+         * [
+         *   10, 9, 8, 11, 14, 13, 12, 15,
+         *   2, 1, 0,  3,  6,  5,  4,  7
+         * ]
+         */
+        for (var
+            i, j, x0, x1, y0, y1,
+            sizeX = 4 * width,
+            sizeY = height - 1,
+            result = [];
+            height--;
+        ) {
+            y0 = sizeX * (sizeY - height);
+            y1 = sizeX * height;
+            for (i = 0; i < width; i++) {
+                j = i * 4;
+                x0 = y0 + j;
+                x1 = y1 + j;
+                result[x0] = data[x1 + 2];
+                result[x0 + 1] = data[x1 + 1];
+                result[x0 + 2] = data[x1];
+                result[x0 + 3] = data[x1 + 3];
+            }
+        }
+        return result;
+    }
+    
+    function toBitmapURL(canvas) {
+        var
+            width = canvas.width,
+            height = canvas.height,
+            header = [].concat(
+                numberToInvertedBytes(width),
+                numberToInvertedBytes(height),
+                1, 0,
+                32, 0,
+                3, 0, 0, 0,
+                numberToInvertedBytes(
+                    width * height * 4
+                ),
+                19, 11, 0, 0,
+                19, 11, 0, 0,
+                0, 0, 0, 0,
+                0, 0, 0, 0,
+                0, 0, FF, 0,
+                0, FF, 0, 0,
+                FF, 0, 0, 0,
+                0, 0, 0, FF,
+                32, 110, 105, 87
+            ),
+            data = swapAndInvertY(
+                canvas.getContext("2d").getImageData(
+                    0, 0, width, height
+                ).data,
+                width,
+                height
+            ),
+            offset
+        ;
+        header = numberToInvertedBytes(header.length).concat(header);
+        offset = 14 + header.length;
+        return "data:image/bmp;base64," + btoa(fromCharCode(
+            [66, 77].concat(
+                numberToInvertedBytes(offset + data.length),
+                0, 0, 0, 0,
+                numberToInvertedBytes(offset),
+                header,
+                data
+            )
+        ));
+    }
+    
+    return toBitmapURL;
+    
+}(String.fromCharCode, 0xFF, 0x7FFF));
+
+
 // Namespace
 var App=(function(module){
     module.views={};
@@ -1061,7 +1941,7 @@ FieldView = Backbone.View.extend({
     }else{
       this.$fieldActionBar.find(".removeInputBtn").hide();
     }
-  },  
+  },
   removeElement:function(){
     var curRepeat=this.curRepeat;
     var lastIndex=curRepeat-1;
@@ -1153,7 +2033,7 @@ FieldView = Backbone.View.extend({
 
     // add to dom
     this.options.parentEl.append(this.$el);
-    this.checkActionBar();
+    
     this.show();
 
     // force the element to be initially hidden
@@ -1169,6 +2049,7 @@ FieldView = Backbone.View.extend({
         self.value(res);
       });
     }
+    this.checkActionBar();
     this.onRender();
   },
   onRender:function(){
@@ -1383,6 +2264,11 @@ FieldView = Backbone.View.extend({
     return wrapperObj.find("input,select,textarea").val() || "";
   },
   valuePopulate: function(value) {
+    var number=value.length;
+    while (number>this.curRepeat){
+      this.addElement();
+    }
+
     for (var i = 0; i < value.length; i++) {
       var v = value[i];
       this.valuePopulateToElement(i, v);
@@ -1403,7 +2289,7 @@ FieldView = Backbone.View.extend({
       }
     }
   },
-  
+
   clearError: function(index) {
     var wrapperObj=this.getWrapper(index);
     wrapperObj.find("label.errorMsg").hide();
@@ -1412,241 +2298,383 @@ FieldView = Backbone.View.extend({
 
 });
 FieldCameraView = FieldView.extend({
-  events: {
-    'click button.remove': "removeThumb",
-    'click button.fhcam': "addFromCamera",
-    'click button.fhcam_lib': "addFromLibrary"
-  },
+  input: '<img class="imageThumb" width="100%" data-field="<%= fieldId %>" data-index="<%= index %>">',
+  html5Cam: '<div class="html5Cam">' +
+    '<div class="camActionBar"><button class="camCancel camBtn">Cancel</button><button class="camOk camBtn">Ok</button></div>' +
+    '<div class="cam"></div>' +
+    '</div>',
+  // initialize: function() {
+  //   FieldView.prototype.initialize.call(this);
+  //   //Make sure 'this' is bound for setImageData, was incorrect on device!
+  //   _.bindAll(this, 'setImageData', 'imageSelected');
+  //   this.on('visible',this.clearError);
+  // },
 
-  template: ['<label for="<%= id %>"><%= title %></label>', '<input id="<%= id %>" name="<%= id %>" type="hidden">', '<div class="upload"><p>Please choose a picture</p>', '</div>', '<div class="uploaded"><p>Picture chosen</p>', '<img class="imageThumb" width="100%">', '</div>'],
+  onElementShow: function(index) {
+    var captureBtn = $(this.renderButton(index, "Capture Signature", "fhcam"));
+    var libBtn = $(this.renderButton(index, "Choose Photo from Library", "fhcam_lib"));
+    var rmBtn = $(this.renderButton(index, "Remove Photo", "remove"));
 
-  initialize: function() {
-    FieldView.prototype.initialize.call(this);
-    //Make sure 'this' is bound for setImageData, was incorrect on device!
-    _.bindAll(this, 'setImageData', 'imageSelected');
-    this.on('visible',this.clearError);
-  },
+    this.getWrapper(index).append(captureBtn);
+    this.getWrapper(index).append(libBtn);
+    this.getWrapper(index).append(rmBtn);
 
-  render: function() {
     var self = this;
-    // construct field html
-    this.$el.append(_.template(this.template.join(''), {
-      "id": this.model.get('_id'),
-      "title": this.model.get('name')
-    }));
+    captureBtn.on("click", function(e) {
+      self.addFromCamera(e, index);
+    });
+    libBtn.on("click", function(e) {
+      self.addFromLibrary(e, index);
+    });
+    rmBtn.on("click", function(e) {
+      self.removeThumb(e, index);
+    });
+    rmBtn.hide();
+  },
+  // render: function() {
+  //   var self = this;
+  //   // construct field html
+  //   this.$el.append(_.template(this.template.join(''), {
+  //     "id": this.model.get('_id'),
+  //     "title": this.model.get('name')
+  //   }));
 
-    this.addButton(this.$el, 'fhcam', 'Capture Photo from Camera');
-    this.addButton(this.$el, 'fhcam_lib', 'Choose Photo from Library');
-    this.addButton(this.$el, 'remove', 'Remove Photo', 'uploaded');
+  //   this.addButton(this.$el, 'fhcam', 'Capture Photo from Camera');
+  //   this.addButton(this.$el, 'fhcam_lib', 'Choose Photo from Library');
+  //   this.addButton(this.$el, 'remove', 'Remove Photo', 'uploaded');
 
-    this.setImageData(null, true);
+  //   this.setImageData(null, true);
 
-    // add to dom hidden
-    this.$el.hide();
-    this.options.parentEl.append(this.$el);
+  //   // add to dom hidden
+  //   this.$el.hide();
+  //   this.options.parentEl.append(this.$el);
 
-    // populate field if Submission obj exists
-    var submission = this.options.formView.getSubmission();
-    if(submission){
-      this.submission = submission;
-      this.submission.getInputValueByFieldId(this.model.get('_id'),function(err,res){
-        console.log(err,res);
-        self.value(res);
-      });
-    }
+  //   // populate field if Submission obj exists
+  //   var submission = this.options.formView.getSubmission();
+  //   if(submission){
+  //     this.submission = submission;
+  //     this.submission.getInputValueByFieldId(this.model.get('_id'),function(err,res){
+  //       console.log(err,res);
+  //       self.value(res);
+  //     });
+  //   }
 
-    this.show();
+  //   this.show();
+  // },
+
+  // contentChanged: function(e) {
+  //   FieldView.prototype.contentChanged.apply(this,arguments);
+  //   this.clearError();
+  // },
+
+  // addButton: function(input, img_file, label, classes, action) {
+  //   var self = this;
+  //   var button = $('<button>');
+  //   button.addClass('special_button');
+  //   button.addClass(img_file);
+  //   button.text(' ' + label);
+  //   var img = $('<img>');
+  //   img.attr('src', './img/' + img_file + '.png');
+  //   img.css('height', '28px');
+  //   img.css('width', '28px');
+  //   button.prepend(img);
+
+  //   if (typeof action !== 'undefined') {
+  //     button.click(function(e) {
+  //       action();
+  //       e.preventDefault();
+  //       return false;
+  //     });
+  //   }
+
+  //   if (classes) {
+  //     button.addClass(classes);
+  //   }
+
+  //   input.append(button);
+  //   return button;
+  // },
+
+  // getOrder: function() {
+  //   return this.options.order;
+  // },
+  setImage: function(index, base64Img) {
+    var wrapper = this.getWrapper(index);
+    var img = wrapper.find("img.imageThumb");
+    img.attr("src", base64Img);
+    wrapper.find("button").hide();
+    wrapper.find(".remove").show();
+  },
+  // setImageData: function(imageData, dontCallContentChanged) {
+  //   var target = this.$el.find('#' + this.model.get('_id'));
+
+  //   if (imageData) {
+  //     console.debug('setting imageData:', imageData.length);
+  //     // prepend dataUri if not already there
+  //     var dataUri = imageData;
+  //     if (!/\bdata\:image\/.+?\;base64,/.test(dataUri)) {
+  //       dataUri = 'data:image/jpeg;base64,' + imageData;
+  //     }
+  //     target.val(dataUri);
+  //     this.$el.find('.imageThumb').attr('src', dataUri);
+  //     this.$el.find('.upload').hide();
+  //     this.$el.find('.uploaded').show();
+  //     this.fileData = {};
+  //     this.fileData.fileBase64 = dataUri;
+  //     this.fileData.filename = "photo";
+  //     this.fileData.content_type = "image/jpeg";
+  //   } else {
+  //     target.val(null);
+  //     this.$el.find('.imageThumb').removeAttr('src');
+  //     this.$el.find('.upload').show();
+  //     this.$el.find('.uploaded').hide();
+  //     delete this.fileData;
+  //   }
+
+  //   // manually call contentChanged as 'change' event doesn't get triggered when we manipulate fields programatically
+  //   if (!dontCallContentChanged) {
+  //     this.contentChanged();
+  //   }
+  // },
+
+  // dumpContent: function() {
+  //   FieldFileView.prototype.dumpContent.call(this);
+  // },
+
+  // hasImageData: function() {
+  //   return this.$el.find('#' + this.model.get('_id')).val().length > 0;
+  // },
+
+  // getImageData: function() {
+  //   return this.$el.find('#' + this.model.get('_id')).val();
+  // },
+  getImageThumb: function(index) {
+    var wrapper = this.getWrapper(index);
+    var img = wrapper.find("img.imageThumb");
+    return img;
+  },
+  getCameraBtn: function(index) {
+    var wrapper = this.getWrapper(index);
+    return wrapper.find("button.fhcam");
+  },
+  getLibBtn: function(index) {
+    var wrapper = this.getWrapper(index);
+    return wrapper.find("button.fhcam_lib");
+  },
+  getRemoveBtn: function(index) {
+    var wrapper = this.getWrapper(index);
+    return wrapper.find("button.remove");
+  },
+  removeThumb: function(e, index) {
+    e.preventDefault();
+    var img = this.getImageThumb(index);
+    img.removeAttr("src");
+    this.getLibBtn(index).show();
+    this.getCameraBtn(index).show();
+    this.getRemoveBtn(index).hide();
+    // this.trigger('imageRemoved'); // trigger events used by grouped camera fields NOTE: don't move to setImageData fn, could result in infinite event callback triggering as group camera field may call into setImageData()
   },
 
-  contentChanged: function(e) {
-    FieldView.prototype.contentChanged.apply(this,arguments);
-    this.clearError();
-  },
-
-  addButton: function(input, img_file, label, classes, action) {
+  addFromCamera: function(e, index) {
+    e.preventDefault();
     var self = this;
-    var button = $('<button>');
-    button.addClass('special_button');
-    button.addClass(img_file);
-    button.text(' ' + label);
-    var img = $('<img>');
-    img.attr('src', './img/' + img_file + '.png');
-    img.css('height', '28px');
-    img.css('width', '28px');
-    button.prepend(img);
-
-    if (typeof action !== 'undefined') {
-      button.click(function(e) {
-        action();
-        e.preventDefault();
-        return false;
+    var params = {
+      width: App.config.getValueOrDefault('cam_targetWidth'),
+      height: App.config.getValueOrDefault('cam_targetHeight')
+    }
+    if (this.model.utils.isPhoneGapCamAvailable()) {
+      this.model.utils.takePhoto(params, function(err, base64Img) {
+        if (err) {
+          console.error(err);
+        } else {
+          self.setImage(index, base64Img);
+        }
       });
-    }
+    } else if (this.model.utils.isHtml5CamAvailable()) {
+      var camObj = $(self.html5Cam);
+      var actionBar = camObj.find(".camActionBar");
+      camObj.css({
+        "position": "fixed",
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0,
+        "background": "#000",
+        "z-index": 9999
+      });
+      actionBar.css({
+        "text-align": "center",
+        "padding": "10px",
+        "background": "#999"
 
-    if (classes) {
-      button.addClass(classes);
-    }
+      });
+      actionBar.find("button").css({
+        "width": "80px",
+        "height": "30px",
+        "margin-right": "8px",
+        "font-size": "1.3em"
+      });
+      self.$el.append(camObj);
+      actionBar.find(".camCancel").on("click", function() {
+        self.model.utils.cancelHtml5Camera();
+        camObj.remove();
+      });
+      this.model.utils.initHtml5Camera(params, function(err, video) {
+        if (err) {
+          console.error(err);
+          alert(err);
+          camObj.remove();
+        } else {
+          $(video).css("width", "100%");
+          camObj.find(".cam").append(video);
 
-    input.append(button);
-    return button;
-  },
+          actionBar.find(".camOk").on("click", function() {
+            self.model.utils.takePhoto(params, function(err, base64Img) {
+              camObj.remove();
+              if (err) {
+                console.error(err);
+              } else {
+                self.setImage(index, base64Img);
+              }
+            });
 
-  getOrder: function() {
-    return this.options.order;
-  },
-
-  setImageData: function(imageData, dontCallContentChanged) {
-    var target = this.$el.find('#' + this.model.get('_id'));
-
-    if (imageData) {
-      console.debug('setting imageData:', imageData.length);
-      // prepend dataUri if not already there
-      var dataUri = imageData;
-      if (!/\bdata\:image\/.+?\;base64,/.test(dataUri)) {
-        dataUri = 'data:image/jpeg;base64,' + imageData;
-      }
-      target.val(dataUri);
-      this.$el.find('.imageThumb').attr('src', dataUri);
-      this.$el.find('.upload').hide();
-      this.$el.find('.uploaded').show();
-      this.fileData = {};
-      this.fileData.fileBase64 = dataUri;
-      this.fileData.filename = "photo";
-      this.fileData.content_type = "image/jpeg";
+          });
+        }
+      });
     } else {
-      target.val(null);
-      this.$el.find('.imageThumb').removeAttr('src');
-      this.$el.find('.upload').show();
-      this.$el.find('.uploaded').hide();
-      delete this.fileData;
-    }
-
-    // manually call contentChanged as 'change' event doesn't get triggered when we manipulate fields programatically
-    if (!dontCallContentChanged) {
-      this.contentChanged();
+      var sampleImg = self.sampleImage();
+      self.setImage(index, sampleImage);
     }
   },
+  // imageSelected: function(imageData) {
+  //   this.setImageData(imageData);
+  //   this.trigger('imageAdded'); // trigger events used by grouped camera fields
+  // },
 
-  dumpContent: function() {
-    FieldFileView.prototype.dumpContent.call(this);
-  },
+  // parseCssClassCameraOptions: function() {
+  //   var options = {
+  //     targetHeight: null,
+  //     targetWidth: null,
+  //     quality: null
+  //   };
 
-  hasImageData: function() {
-    return this.$el.find('#' + this.model.get('_id')).val().length > 0;
-  },
+  //   // TODO - review if this is needed
+  //   // var classNames = this.model.get('ClassNames'),
+  //   //   parts, val;
+  //   // if (classNames !== '') {
+  //   //   var classes = classNames.split(' ');
+  //   //   _(classes).forEach(function(className) {
+  //   //     if (className.indexOf("fhdimensions") != -1) {
+  //   //       parts = className.split('=');
+  //   //       val = parts[1].split('x');
 
-  getImageData: function() {
-    return this.$el.find('#' + this.model.get('_id')).val();
-  },
+  //   //       // Retry
+  //   //       if (val.length == 2) {
+  //   //         // Validity check
+  //   //         if (val[0] < 10000 && val[1] < 10000) {
+  //   //           options.targetWidth = val[0];
+  //   //           options.targetHeight = val[1];
+  //   //         } else {
+  //   //           console.error('Invalid camera resolution, using defaults');
+  //   //         }
+  //   //       }
+  //   //     } else if (className.indexOf("fhcompression") != -1) {
+  //   //       parts = className.split('=');
+  //   //       val = parts[1].split('%');
 
-  removeThumb: function(e) {
-    e.preventDefault();
-    console.debug('removeThumb');
+  //   //       options.quality = val[0];
+  //   //     }
+  //   //   });
+  //   // }
 
-    this.setImageData(null);
-    this.trigger('imageRemoved'); // trigger events used by grouped camera fields NOTE: don't move to setImageData fn, could result in infinite event callback triggering as group camera field may call into setImageData()
-  },
-
-  addFromCamera: function(e) {
-    e.preventDefault();
-    this.addImage();
-  },
-
-  addFromLibrary: function(e) {
-    e.preventDefault();
-    this.addImage(true);
-  },
-
-  imageSelected: function(imageData) {
-    this.setImageData(imageData);
-    this.trigger('imageAdded'); // trigger events used by grouped camera fields
-  },
-
-  parseCssClassCameraOptions: function() {
-    var options = {
-      targetHeight: null,
-      targetWidth: null,
-      quality: null
-    };
-
-    // TODO - review if this is needed
-    // var classNames = this.model.get('ClassNames'),
-    //   parts, val;
-    // if (classNames !== '') {
-    //   var classes = classNames.split(' ');
-    //   _(classes).forEach(function(className) {
-    //     if (className.indexOf("fhdimensions") != -1) {
-    //       parts = className.split('=');
-    //       val = parts[1].split('x');
-
-    //       // Retry
-    //       if (val.length == 2) {
-    //         // Validity check
-    //         if (val[0] < 10000 && val[1] < 10000) {
-    //           options.targetWidth = val[0];
-    //           options.targetHeight = val[1];
-    //         } else {
-    //           console.error('Invalid camera resolution, using defaults');
-    //         }
-    //       }
-    //     } else if (className.indexOf("fhcompression") != -1) {
-    //       parts = className.split('=');
-    //       val = parts[1].split('%');
-
-    //       options.quality = val[0];
-    //     }
-    //   });
-    // }
-
-    return options;
-  },
-
-  addImage: function(fromLibrary) {
-    // TODO: move this to cloud config, synced to client on startup
-    var camOptions = {
-      quality: App.config.getValueOrDefault('cam_quality'),
-      targetWidth: App.config.getValueOrDefault('cam_targetWidth'),
-      targetHeight: App.config.getValueOrDefault('cam_targetHeight')
-    };
-
-    var options = this.parseCssClassCameraOptions();
-    // Merge
-    camOptions = _.defaults(options, camOptions);
-
-    if (typeof navigator.camera === 'undefined') {
-      this.imageSelected(this.sampleImage());
+  //   return options;
+  // },
+  addFromLibrary: function(e, index) {
+    var self = this;
+    var params = {
+      width: App.config.getValueOrDefault('cam_targetWidth'),
+      height: App.config.getValueOrDefault('cam_targetHeight')
+    }
+    if (self.model.utils.isPhoneGapCamAvailable()) {
+      e.preventDefault();
+      params.sourceType = Camera.PictureSourceType.PHOTOLIBRARY;
+      self.model.utils.takePhoto(params, function(err, base64Img) {
+        self.setImage(index, base64Img);
+      });
     } else {
-      if (fromLibrary) {
-        camOptions.sourceType = Camera.PictureSourceType.PHOTOLIBRARY;
-      }
-      // turn off refetch on resume from pic taking, necessary as pic/cam sends app in background
-      App.resumeFetchAllowed = false;
-      navigator.camera.getPicture(this.imageSelected, function(err) {
-        alert('Camera Error: ' + err);
-      }, camOptions);
+      var file = document.createElement("input");
+      file.type = "file";
+      var fileObj = $(file);
+      fileObj.hide();
+      self.$el.append(fileObj);
+
+      fileObj.on("change", function() {
+        var file=fileObj[0];
+        if (file.files && file.files.length>0){
+          var file=file.files[0];
+          fileObj.remove();
+          self.model.utils.fileSystem.fileToBase64(file,function(err,base64Img){
+            if (err){
+              console.error(err);
+              alser(err);
+            }else{
+              self.setImage(index,base64Img);
+            }
+          });  
+        }
+        
+      });
+      fileObj.click();
     }
   },
+  // addImage: function(fromLibrary) {
+  //   // TODO: move this to cloud config, synced to client on startup
+  //   var camOptions = {
+  //     quality: App.config.getValueOrDefault('cam_quality'),
+  //     targetWidth: App.config.getValueOrDefault('cam_targetWidth'),
+  //     targetHeight: App.config.getValueOrDefault('cam_targetHeight')
+  //   };
 
-  show: function() {
-    // only perform check once
-    if (this.options.initHidden) {
-      this.options.initHidden = false;
-    } else {
-      FieldView.prototype.show.call(this);
-    }
+  //   var options = this.parseCssClassCameraOptions();
+  //   // Merge
+  //   camOptions = _.defaults(options, camOptions);
+
+  //   if (typeof navigator.camera === 'undefined') {
+  //     this.imageSelected(this.sampleImage());
+  //   } else {
+  //     if (fromLibrary) {
+  //       camOptions.sourceType = Camera.PictureSourceType.PHOTOLIBRARY;
+  //     }
+  //     // turn off refetch on resume from pic taking, necessary as pic/cam sends app in background
+  //     App.resumeFetchAllowed = false;
+  //     navigator.camera.getPicture(this.imageSelected, function(err) {
+  //       alert('Camera Error: ' + err);
+  //     }, camOptions);
+  //   }
+  // },
+
+  // show: function() {
+  //   // only perform check once
+  //   if (this.options.initHidden) {
+  //     this.options.initHidden = false;
+  //   } else {
+  //     FieldView.prototype.show.call(this);
+  //   }
+  // },
+
+  valueFromElement: function(index) {
+
+    var img = this.getImageThumb(index);
+    return img.attr("src");
   },
+  valuePopulateToElement: function(index, value) {
+    if (value) {
+      var base64Data = value.data;
+      var base64Img = value.imgHeader + base64Data;
+      this.setImage(index, base64Img);
+    }
 
-  value: function(value) {
-    if (value && !_.isEmpty(value) && value[this.model.get('_id')] && value[this.model.get('_id')].fileBase64) {
-      this.setImageData(value[this.model.get('_id')].fileBase64.replace(/^data:([^,]*,|)/, ""), true);
-    }
-    value = {};
-    if (this.fileData) {
-      value[this.model.get('_id')] = this.fileData;
-    }
-    return value;
   },
-
   sampleImages: ['/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAAAAAAD/4QMraHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjAtYzA2MCA2MS4xMzQ3NzcsIDIwMTAvMDIvMTItMTc6MzI6MDAgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzUgTWFjaW50b3NoIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjVEMzgyQjRCMTU1MjExRTJBNzNDQzMyMEE5ODI5OEU0IiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOjVEMzgyQjRDMTU1MjExRTJBNzNDQzMyMEE5ODI5OEU0Ij4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6NUQzODJCNDkxNTUyMTFFMkE3M0NDMzIwQTk4Mjk4RTQiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6NUQzODJCNEExNTUyMTFFMkE3M0NDMzIwQTk4Mjk4RTQiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz7/7gAOQWRvYmUAZMAAAAAB/9sAhAAbGhopHSlBJiZBQi8vL0JHPz4+P0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHAR0pKTQmND8oKD9HPzU/R0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0f/wAARCAAyADIDASIAAhEBAxEB/8QATQABAQAAAAAAAAAAAAAAAAAAAAQBAQEBAAAAAAAAAAAAAAAAAAAEBRABAAAAAAAAAAAAAAAAAAAAABEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8AiASt8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//9k=', 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAALklEQVQYV2NkwAT/oUKMyFIoHKAETBFIDU6FIEUgSaJMBJk0MhQihx2W8IcIAQBhewsKNsLKIgAAAABJRU5ErkJggg==', 'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAYUlEQVQYV2NkQAJlM1X/g7hd6bdBFCOyHCNIEigBppElkNkgeYIKYBrwKoQ6A+wEuDtwOQHmLLgbQbqQ3YnubhSfwRTj9DUu3+J0I7oGkPVwXwMZKOEHdCdcPdQJILczAAACnDmkK8T25gAAAABJRU5ErkJggg=='],
 
   sampleImage: function() {
@@ -1826,7 +2854,7 @@ FieldCheckboxView = FieldView.extend({
         "fieldId": fieldId,
         "index": index,
         "choice": subfield.label,
-        "value": subfield.value,
+        "value": subfield.label,
         "checked": (subfield.selected) ? "checked='checked'" : ""
       });
     });
@@ -2316,56 +3344,69 @@ FieldSelectView = FieldView.extend({
 FieldSignatureView = FieldView.extend({
   extension_type: 'fhsig',
 
+  input: "<img class='sigImage' data-field='<%= fieldId %>' data-index='<%= index %>'/>",
+  signaturePadStyle: "@font-face{font-family:Journal;src:url(journal.eot);src:url(journal.eot?#iefix) format('embedded-opentype'),url(journal.woff) format('woff'),url(journal.ttf) format('truetype'),url(journal.svg#JournalRegular) format('svg');font-weight:400;font-style:normal}.sigPad{margin:0;padding:0;width:250px;height:200px}.sigPad label{display:block;margin:0 0 .515em;padding:0;color:#000;font:italic normal 1em/1.375 Georgia,Times,serif}.sigPad label.error{color:#f33}.sigPad input{margin:0;padding:.2em 0;width:198px;border:1px solid #666;font-size:1em}.sigPad input.error{border-color:#f33}.sigPad button{margin:1em 0 0;padding:.6em .6em .7em;background-color:#ccc;border:0;-moz-border-radius:8px;-webkit-border-radius:8px;border-radius:8px;cursor:pointer;color:#555;font:700 1em/1.375 sans-serif;text-align:left}.sigPad button:hover{background-color:#333;color:#fff}.sig{display:none}.sigNav{display:none;height:2.25em;margin:0;padding:0;position:relative;list-style-type:none}.sigNav li{display:inline;float:left;margin:0;padding:0}.sigNav a,.sigNav a:link,.sigNav a:visited{display:block;margin:0;padding:0 .6em;border:0;color:#333;font-weight:700;line-height:2.25em;text-decoration:underline}.sigNav a.current,.sigNav a.current:link,.sigNav a.current:visited{background-color:#666;-moz-border-radius-topleft:8px;-moz-border-radius-topright:8px;-webkit-border-top-left-radius:8px;-webkit-border-top-right-radius:8px;border-radius:8px 8px 0 0;color:#fff;text-decoration:none}.sigNav .typeIt a.current,.sigNav .typeIt a.current:link,.sigNav .typeIt a.current:visited{background-color:#ccc;color:#555}.sigWrapper{clear:both;height:100px;border:1px solid #ccc}.sigWrapper.current{border-color:#666}.signed .sigWrapper{border:0}.pad{position:relative}.typed{height:55px;margin:0;padding:0 5px;position:absolute;z-index:90;cursor:default;color:#145394;font:400 1.875em/50px Journal,Georgia,Times,serif}.drawItDesc,.typeItDesc{display:none;margin:.75em 0 .515em;padding:.515em 0 0;border-top:3px solid #ccc;color:#000;font:italic normal 1em/1.375 Georgia,Times,serif}",
   templates: {
-    input: '<label for="<%= id %>"><%= title %></label><img class="sigImage"/><input id="<%= id %>" name="<%= id %>" type="hidden">',
     signaturePad: ['<div class="sigPad">', '<ul class="sigNav">', '<button class="clearButton">Clear</button><button class="cap_sig_done_btn">Done</button>', '</ul>', '<div class="sig sigWrapper">', '<canvas class="pad" width="<%= canvasWidth %>" height="<%= canvasHeight %>"></canvas>', '</div>', '</div>']
   },
 
   initialize: function() {
     FieldView.prototype.initialize.call(this);
-    this.on('visible',this.clearError);
+    this.on('visible', this.clearError);
   },
 
-  dumpContent: function() {
-    FieldFileView.prototype.dumpContent.call(this);
-  },
-
-  render: function() {
+  // dumpContent: function() {
+  //   FieldFileView.prototype.dumpContent.call(this);
+  // },
+  onElementShow: function(index) {
+    var html = $(this.renderButton(index, "Capture Signature", this.extension_type));
+    this.getWrapper(index).append(html);
     var self = this;
-    this.$el.append(_.template(this.templates.input, {
-      "id": this.model.get('_id'),
-      "title": this.model.get('Title')
-    }));
-
-    // Add button
-    var button = this.addButton(this.$el, this.extension_type, 'Capture Signature');
-
-    // add to dom
-    this.options.parentEl.append(this.$el);
-    console.debug("render html=" + this.$el.html());
-    this.show();
+    html.on("click", function() {
+      self.showSignatureCapture(index);
+    });
   },
+  // render: function() {
+  //   var self = this;
+  //   this.$el.append(_.template(this.templates.input, {
+  //     "id": this.model.get('_id'),
+  //     "title": this.model.get('Title')
+  //   }));
 
-  contentChanged: function(e) {
-    FieldView.prototype.contentChanged.apply(this,arguments);
-    this.clearError();
-  },
+  //   // Add button
+  //   var button = this.addButton(this.$el, this.extension_type, 'Capture Signature');
+
+  //   // add to dom
+  //   this.options.parentEl.append(this.$el);
+  //   console.debug("render html=" + this.$el.html());
+  //   this.show();
+  // },
+
+  // contentChanged: function(e) {
+  //   FieldView.prototype.contentChanged.apply(this,arguments);
+  //   this.clearError();
+  // },
 
   // TODO horrible hack
-  clearError: function(){
-    var id = this.model.get('_id');
-    var val = this.model.get("value");
-    if(val && val.hasOwnProperty(id) && !this.isEmptyImage(val[id].fileBase64)) {
-      FieldView.prototype.clearError.call(this);
-    }
-  },
+  // clearError: function(){
+  //   var id = this.model.get('_id');
+  //   var val = this.model.get("value");
+  //   if(val && val.hasOwnProperty(id) && !this.isEmptyImage(val[id].fileBase64)) {
+  //     FieldView.prototype.clearError.call(this);
+  //   }
+  // },
 
-  action: function(el, e) {
-    $('input', this.$el);
-    this.showSignatureCapture();
-  },
+  // action: function(el, e) {
+  //   $('input', this.$el);
+  //   this.showSignatureCapture();
+  // },
+  onRender: function() {
+    var style = $("<style />");
+    style.text(this.signaturePadStyle);
 
-  showSignatureCapture: function() {
+    this.$el.append(style);
+  },
+  showSignatureCapture: function(index) {
     var self = this;
     var winHeight = $(window).height();
     var winWidth = $(window).width();
@@ -2377,14 +3418,14 @@ FieldSignatureView = FieldView.extend({
       "canvasHeight": canvasHeight,
       "canvasWidth": canvasWidth
     }));
-    console.debug("showSignatureCapture html=" + this.$el.html());
+    // console.debug("showSignatureCapture html=" + this.$el.html());
 
     var signaturePad = $('.sigPad', this.$el);
     signaturePad.css({
       position: 'fixed',
       'z-index': 9999,
-      'width': winWidth + 'px',
-      'height': winHeight + 'px',
+      'bottom': '0px',
+      'right': '0px',
       top: '0px',
       left: '0px',
       'background-color': '#fff'
@@ -2406,75 +3447,72 @@ FieldSignatureView = FieldView.extend({
     $(this.$el).data('sigpadInited', true);
     // Bind capture
     $('.cap_sig_done_btn', this.$el).unbind('click').bind('click', function(e) {
-      var loadingView = new LoadingView();
-      loadingView.show("generating signature");
+      // var loadingView = new LoadingView();
+      // loadingView.show("generating signature");
       e.preventDefault();
       var sig = sigPad.getSignature(); // get the default image type
-      if(sig && sig.length) {
+      if (sig && sig.length) {
         var sigData = sigPad.getSignatureImage();
-        self.dbgImage("signature field sig[default]=" ,sigData);
-        if(self.isEmptyImage(sigData)) {
-          sigData = sigPad.getSignatureImage("image/png");
-          self.dbgImage("signature field sig[image/png]=" ,sigData);
-        }
-        if(self.isEmptyImage(sigData)) {
-          sigData = sigPad.getSignatureImage("image/jpeg");
-          self.dbgImage("signature field sig[image/jpeg]=" ,sigData);
-        }
-        if(self.isEmptyImage(sigData)) {
-          sigData = self.toJpg();
-          self.dbgImage("signature field sig[encoded jpg]=" ,sigData);
-        }
-        if(self.isEmptyImage(sigData)) {
+        if (self.isEmptyImage(sigData)) { //toDataUrl not supported by current browser. fallback use bmp encoder
           sigData = self.toBmp();
-          self.dbgImage("signature field sigencoded bmp]=" ,sigData);
         }
+        self.setSignature(index, sigData);
+        // var img = $('.sigImage', self.$el)[0];
+        // img.src = sigData;
+        // $('input', self.$el).val(sigData);
 
-        var img = $('.sigImage', self.$el)[0];
-        img.src = sigData;
-        $('input', self.$el).val(sigData);
-
-        self.fileData = {};
-        self.fileData.fileBase64 = sigData;
-        var parts = self.splitImage(sigData);
-        self.fileData.content_type = parts[0];
-        self.fileData.filename = "signature." +  parts[1];
+        // self.fileData = {};
+        // self.fileData.fileBase64 = sigData;
+        // var parts = self.splitImage(sigData);
+        // self.fileData.content_type = parts[0];
+        // self.fileData.filename = "signature." +  parts[1];
       }
       $('.sigPad', self.$el).hide();
-      loadingView.hide();
-      self.contentChanged();
+      // loadingView.hide();
+      // self.contentChanged();
     });
   },
-
-
-
-  value: function(value) {
-    if (value && !_.isEmpty(value)) {
-      this.fileData = value[this.model.get('_id')];
-      $('.sigImage', this.$el).attr('src', this.fileData.fileBase64);
-      $('input', this.$el).val(this.fileData.fileBase64);
+  setSignature: function(index, base64Img) {
+    var wrapper = this.getWrapper(index);
+    wrapper.find("img.sigImage").attr("src", base64Img);
+  },
+  valueFromElement: function(index) {
+    var wrapper = this.getWrapper(index);
+    var img = wrapper.find("img.sigImage");
+    return img.attr("src");
+  },
+  valuePopulateToElement: function(index, value) {
+    if (value) {
+      var base64Data = value.data;
+      var base64Img = value.imgHeader + base64Data;
+      var wrapper = this.getWrapper(index);
+      var img = wrapper.find("img.sigImage");
+      img.attr("src", base64Img);
     }
-    value = {};
-    if(this.fileData) {
-      value[this.model.get('_id')] = this.fileData;
-    }
-    console.debug("value html=" + this.$el.html());
-    return value;
-  },
-  dbgImage: function(msg,image) {
-    console.log(msg + (image ? (image.substring(0,image.indexOf(",")) + "[len=" + image.length +"]") : " empty"));
-  },
-  toJpg: function(image) {
-    image= _.extend({}, image||{}, {quality : 100, width : 248, height : 100});
-    var cnvs = $('.sigPad', self.$el).find('canvas')[0];
 
-    var canvas = this.scaleCanvas(cnvs, image.width, image.height);
-    var myEncoder = new JPEGEncoder(image.quality);
-    return myEncoder.encode(canvas.getContext("2d").getImageData(0, 0, image.width, image.height));
   },
+  dbgImage: function(msg, image) {
+    console.log(msg + (image ? (image.substring(0, image.indexOf(",")) + "[len=" + image.length + "]") : " empty"));
+  },
+  // toJpg: function(image) {
+  //   image = _.extend({}, image || {}, {
+  //     quality: 100,
+  //     width: 248,
+  //     height: 100
+  //   });
+  //   var cnvs = $('.sigPad', self.$el).find('canvas')[0];
+
+  //   var canvas = this.scaleCanvas(cnvs, image.width, image.height);
+  //   var myEncoder = new JPEGEncoder(image.quality);
+  //   return myEncoder.encode(canvas.getContext("2d").getImageData(0, 0, image.width, image.height));
+  // },
 
   toBmp: function(image) {
-    image= _.extend({}, image||{}, {quality : 100, width : 248, height : 100});
+    image = _.extend({}, image || {}, {
+      quality: 100,
+      width: 248,
+      height: 100
+    });
     var sigData;
     var cnvs = $('.sigPad', self.$el).find('canvas')[0];
 
@@ -2488,8 +3526,8 @@ FieldSignatureView = FieldView.extend({
 
   // bitMap handling code
   readCanvasData: function(canvas) {
-    var iWidth = parseInt(canvas.width,10);
-    var iHeight = parseInt(canvas.height,10);
+    var iWidth = parseInt(canvas.width, 10);
+    var iHeight = parseInt(canvas.height, 10);
     return canvas.getContext("2d").getImageData(0, 0, iWidth, iHeight);
   },
 
@@ -2499,7 +3537,7 @@ FieldSignatureView = FieldView.extend({
       strData = data;
     } else {
       var aData = data;
-      for ( var i = 0; i < aData.length; i++) {
+      for (var i = 0; i < aData.length; i++) {
         strData += String.fromCharCode(aData[i]);
       }
     }
@@ -2579,7 +3617,7 @@ FieldSignatureView = FieldView.extend({
     iDataSize = Math.floor(iDataSize / 256);
     aInfoHeader.push(iDataSize % 256);
 
-    for ( var i = 0; i < 16; i++) {
+    for (var i = 0; i < 16; i++) {
       aInfoHeader.push(0); // these bytes not used
     }
 
@@ -2592,14 +3630,14 @@ FieldSignatureView = FieldView.extend({
     do {
       var iOffsetY = iWidth * (y - 1) * 4;
       var strPixelRow = "";
-      for ( var x = 0; x < iWidth; x++) {
+      for (var x = 0; x < iWidth; x++) {
         var iOffsetX = 4 * x;
 
         strPixelRow += String.fromCharCode(aImgData[iOffsetY + iOffsetX + 2]);
         strPixelRow += String.fromCharCode(aImgData[iOffsetY + iOffsetX + 1]);
         strPixelRow += String.fromCharCode(aImgData[iOffsetY + iOffsetX]);
       }
-      for ( var c = 0; c < iPadding; c++) {
+      for (var c = 0; c < iPadding; c++) {
         strPixelRow += String.fromCharCode(0);
       }
       strPixelData += strPixelRow;
@@ -2636,12 +3674,12 @@ FieldSignatureView = FieldView.extend({
     var start = image.indexOf(PREFIX);
     var content_type = "image/bmp";
     var ext = "bmp";
-    if(start >= 0) {
-      var end = image.indexOf(ENCODING,start) + 1;
-      content_type = image.substring(start,end-1);
+    if (start >= 0) {
+      var end = image.indexOf(ENCODING, start) + 1;
+      content_type = image.substring(start, end - 1);
       ext = content_type.split("/")[1];
     }
-    return [content_type,ext];
+    return [content_type, ext];
   }
 
 });
@@ -2734,7 +3772,7 @@ PageView=BaseView.extend({
     "emailAddress": FieldEmailView,
     "phone": FieldPhoneView,
     "location": FieldGeoView,
-    "photo": FieldCameraGroupView,
+    "photo": FieldCameraView,
     "signature": FieldSignatureView,
     "locationMap": FieldMapView,
     "dateTime":FieldDateTimeView,
@@ -2860,7 +3898,7 @@ var FormView = BaseView.extend({
   },
 
   initialize: function() {
-    _.bindAll(this,"checkRules","onValidateError");
+    _.bindAll(this, "checkRules", "onValidateError");
     this.el = this.options.parentEl;
     this.fieldModels = [];
     this.el.empty();
@@ -2886,20 +3924,27 @@ var FormView = BaseView.extend({
       cb();
     }
   },
-  readOnly:function(){
-    this.readonly=true;
-    for (var i=0, fieldView;fieldView=this.fieldViews[i];i++){
-      fieldView.$el.find("button,input,textarea,select").attr("disabled","disabled");
+  readOnly: function() {
+    this.readonly = true;
+    for (var i = 0, fieldView; fieldView = this.fieldViews[i]; i++) {
+      fieldView.$el.find("button,input,textarea,select").attr("disabled", "disabled");
     }
     this.el.find("button.saveDraft").hide();
-      this.el.find(" button.submit").hide();
+    this.el.find(" button.submit").hide();
   },
-  onValidateError:function(res){
-    debugger;
-    for (var fieldId in res){
-      var fieldView=this.getFieldViewById(fieldId);
-      var errorMsg=res[fieldId].errorMessages.join(", ");
-      fieldView.setErrorText(0,errorMsg)
+  onValidateError: function(res) {
+
+    for (var fieldId in res) {
+      if (res[fieldId]) {
+        var fieldView = this.getFieldViewById(fieldId);
+        var errorMsgs = res[fieldId].errorMessages;
+        for (var i = 0; i < errorMsgs.length; i++) {
+          if (errorMsgs[i]) {
+            fieldView.setErrorText(i, errorMsgs[i]);
+          }
+        }
+      }
+
     }
   },
   initWithForm: function(form, params) {
@@ -2913,7 +3958,7 @@ var FormView = BaseView.extend({
       params.submission = self.model.newSubmission();
     }
     self.submission = params.submission;
-    self.submission.on("validationerror",self.onValidateError);
+    self.submission.on("validationerror", self.onValidateError);
     // Init Pages --------------
     var pageModelList = form.getPageModelList();
     var pageViews = [];
@@ -2933,11 +3978,11 @@ var FormView = BaseView.extend({
     for (var i = 0, pageView; pageView = pageViews[i]; i++) {
       var pageFieldViews = pageView.fieldViews;
       for (var key in pageFieldViews) {
-        var fView=pageFieldViews[key];
+        var fView = pageFieldViews[key];
         fieldViews.push(fView);
-        fView.on("checkrules",self.checkRules);
-        if (self.readonly){
-          fView.$el.find("input,button,textarea,select").attr("disabled","disabled");
+        fView.on("checkrules", self.checkRules);
+        if (self.readonly) {
+          fView.$el.find("input,button,textarea,select").attr("disabled", "disabled");
         }
       }
     }
@@ -2947,39 +3992,39 @@ var FormView = BaseView.extend({
 
     self.onLoadEnd();
   },
-  checkRules:function(){
-    var self=this;
-    this.populateFieldViewsToSubmission(function(){
-      var submission=self.submission;
-      submission.checkRules(function(err,res){
-        if (err){
+  checkRules: function() {
+    var self = this;
+    this.populateFieldViewsToSubmission(false, function() {
+      var submission = self.submission;
+      submission.checkRules(function(err, res) {
+        if (err) {
           console.error(err);
-        }else{
-          var actions=res.actions;
-          var pages=actions.pages;
-          var fields=actions.fields;
-          for (var targetId in pages){
-            self.performRuleAction("page",targetId,pages[targetId]["action"]);
+        } else {
+          var actions = res.actions;
+          var pages = actions.pages;
+          var fields = actions.fields;
+          for (var targetId in pages) {
+            self.performRuleAction("page", targetId, pages[targetId]["action"]);
           }
-          for (var targetId in fields){
-            self.performRuleAction("field",targetId,fields[targetId]["action"]);
+          for (var targetId in fields) {
+            self.performRuleAction("field", targetId, fields[targetId]["action"]);
           }
         }
       });
     });
   },
-  performRuleAction:function(type, targetId, action){
-    var target=null;
-    if (type == "page"){
-      target=this.getPageViewById(targetId);
-    }else if (type =="field"){
-      target=this.getFieldViewById(targetId);
+  performRuleAction: function(type, targetId, action) {
+    var target = null;
+    if (type == "page") {
+      target = this.getPageViewById(targetId);
+    } else if (type == "field") {
+      target = this.getFieldViewById(targetId);
     }
-    if (target == null){
-      console.error("cannot find target with id:"+targetId);
+    if (target == null) {
+      console.error("cannot find target with id:" + targetId);
       return;
     }
-    switch (action){
+    switch (action) {
       case "show":
         target.show();
         break;
@@ -2987,7 +4032,7 @@ var FormView = BaseView.extend({
         target.hide();
         break;
       default:
-        console.error("action not defined:"+action);
+        console.error("action not defined:" + action);
     }
   },
   rebindButtons: function() {
@@ -3013,19 +4058,19 @@ var FormView = BaseView.extend({
   getSubmission: function() {
     return this.submission;
   },
-  getPageViewById:function(pageId){
-    for (var i=0, pageView;pageView=this.pageViews[i];i++){
-      var pId=pageView.model.getPageId();
-      if (pId==pageId){
+  getPageViewById: function(pageId) {
+    for (var i = 0, pageView; pageView = this.pageViews[i]; i++) {
+      var pId = pageView.model.getPageId();
+      if (pId == pageId) {
         return pageView;
       }
     }
     return null;
   },
-  getFieldViewById:function(fieldId){
-    for (var i=0, fieldView;fieldView=this.fieldViews[i];i++){
-      var pId=fieldView.model.getFieldId();
-      if (pId==fieldId){
+  getFieldViewById: function(fieldId) {
+    for (var i = 0, fieldView; fieldView = this.fieldViews[i]; i++) {
+      var pId = fieldView.model.getFieldId();
+      if (pId == fieldId) {
         return fieldView;
       }
     }
@@ -3057,7 +4102,7 @@ var FormView = BaseView.extend({
       this.el.find(" button.submit").hide();
       this.el.find("button").addClass('three_button');
     }
-    if (this.readonly){
+    if (this.readonly) {
       this.el.find("button.saveDraft").hide();
       this.el.find(" button.submit").hide();
     }
@@ -3092,10 +4137,10 @@ var FormView = BaseView.extend({
     var self = this;
     this.populateFieldViewsToSubmission(function() {
       self.submission.submit(function(err, res) {
-        if (err){
+        if (err) {
           console.error(err);
-        }else{
-          self.el.empty();  
+        } else {
+          self.el.empty();
         }
       });
     });
@@ -3113,18 +4158,23 @@ var FormView = BaseView.extend({
       });
     });
   },
-  populateFieldViewsToSubmission: function(cb) {
+  populateFieldViewsToSubmission: function(isStore, cb) {
+    if (typeof cb === "undefined"){
+      cb=isStore;
+      isStore=true;
+    }
     var submission = this.submission;
     var fieldViews = this.fieldViews;
     var tmpObj = [];
     for (var i = 0, fieldView; fieldView = fieldViews[i]; i++) {
       var val = fieldView.value();
       var fieldId = fieldView.model.getFieldId();
-      for (var j = 0; j<val.length; j++) {
+      for (var j = 0; j < val.length; j++) {
         var v = val[j];
         tmpObj.push({
           id: fieldId,
-          value: v
+          value: v,
+          index:j
         });
       }
     }
@@ -3133,7 +4183,13 @@ var FormView = BaseView.extend({
     for (var i = 0, item; item = tmpObj[i]; i++) {
       var fieldId = item.id;
       var value = item.value;
-      submission.addInputValue(fieldId, value, function(err, res) {
+      var index=item.index;
+      submission.addInputValue({
+        fieldId: fieldId,
+        value: value,
+        index: index,
+        isStore:isStore
+      }, function(err, res) {
         if (err) {
           console.error(err);
         }
@@ -3200,7 +4256,7 @@ var FromJsonView = BaseView.extend({
     var params = {
       formId : new Date().getTime(), // empty as we are passing in JSON form
       rawMode : true,
-      rawData : jsonData,
+      rawData : jsonData
     }
     var formView=new FormView({parentEl:"#backbone #resultArea"});
     formView.loadForm(params,function(err){
@@ -3251,6 +4307,7 @@ $fh.forms.renderFormList = function(params, cb) {
 
 $fh.forms.backbone={};
 $fh.forms.backbone.FormView=FormView;
+
 
 //end  module;
 

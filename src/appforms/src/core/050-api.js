@@ -12,6 +12,9 @@ appForm.api = (function(module) {
 //    module.getSubmissionData=getSubmissionData;
 //    module.getFailed=getFailed;
 //    module.getDrafts=getDrafts;
+    module.init=appForm.init;
+    module.config=appForm.models.config;
+    
 
     var _submissions = null;
 
@@ -193,6 +196,7 @@ appForm.api = (function(module) {
 //
 //      submission.saveDraft(cb);
 //    }
+    
 
     return module;
 })(appForm.api || {});
