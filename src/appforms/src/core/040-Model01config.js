@@ -13,6 +13,10 @@ appForm.models=(function(module){
         this.set("appId",$fh.app_props.appid);
         this.set("env",$fh.app_props.mode?$fh.app_props.mode:"dev");
         this.set("timeoutTime",30000);
+        var self=this;
+        $fh.env(function(env){
+            self.set("deviceId",env.uuid);
+        });
         this._initMBaaS();
         this.fromJSON(config);
         cb();
