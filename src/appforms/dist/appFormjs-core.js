@@ -1285,7 +1285,7 @@ appForm.models=(function(module){
         var formLastUpdate=formModel.getLastUpdate();
         var formMeta=this.getFormMetaById(id);
         if (formMeta){
-            return formLastUpdate==formMeta.lastUpdatedTimestamp;
+            return formLastUpdate!=formMeta.lastUpdatedTimestamp;
         }else{ //could have been deleted. leave it for now
             return false;
         }
@@ -1374,7 +1374,21 @@ appForm.models = (function(module) {
                         //TODO throw the error if in dev mode.
                     }
                     _forms[formId] = obj;
-                    cb(err, obj);
+                    if (appForm.models.forms.isFormUpdated(that)){
+                        that.refresh(true,function(err,obj1){
+                            try{
+                                that.initialise();
+                            }catch(e){
+                                console.error(e);
+                                cb(err,obj);
+                            }
+                            _forms[formId] = obj1;
+                            cb(err,obj1);
+                        });
+                    }else{
+                        cb(err, obj);    
+                    }
+                    
                 });
             } else {
                 throw ("a callback function is required for initialising form data. new Form (formId, [isFromRemote], cb)");
