@@ -20,6 +20,7 @@ function applyServer(app) {
   app.post("/box/srv/1.1/app/init", _postInit);
   app.post("/mbaas/forms/:formId/submitFormData", _postFormSubmission);
   app.post("/mbaas/forms/:submissionId/:fieldId/:hashName/submitFormFile",_appFileSubmission);
+  app.post("/mbaas/forms/:submissionId/:fieldId/:hashName/submitFormFileBase64", _appFileSubmissionBase64);
   app.get("/mbaas/forms/:submissionId/status",_getSubmissionStatus);
   app.post("/mbaas/forms/:submissionId/completeSubmission",_completeSubmission);
 }
@@ -129,6 +130,12 @@ function _getForm(req, res) {
   }else{
     res.status(404).end("Cannot find specified form");
   }
+}
+
+function _appFileSubmissionBase64(req, res){
+  console.log('In base64FileUploaded');
+
+  _appFileSubmission(req, res);
 }
 
 function _appFileSubmission(req,res){

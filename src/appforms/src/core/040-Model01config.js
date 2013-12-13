@@ -45,8 +45,7 @@ appForm.models=(function(module){
             "theme":"/forms/theme",
             "formSubmission":"/forms/:formId/submitFormData",
             "fileSubmission":"/forms/:submissionId/:fieldId/:hashName/submitFormFile",
-            //TODO change to real base64 file endpoint
-            "base64fileSubmission":"/forms/:submissionId/:fieldId/:hashName/submitFormFile", 
+            "base64fileSubmission":"/forms/:submissionId/:fieldId/:hashName/submitFormFileBase64",
             "submissionStatus": "/forms/:submissionId/status",
             "completeSubmission": "/forms/:submissionId/completeSubmission"
         })
