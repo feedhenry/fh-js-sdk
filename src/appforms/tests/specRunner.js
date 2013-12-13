@@ -42,7 +42,7 @@ var offset = 0;
 
 function recursiveLoad() {
   if (offset == requiredFiles.length) {
-    appForm.init(function() {
+    appForm.init({updateForms:true},function() {
       mocha.run();
     });
     return;

@@ -260,7 +260,13 @@ appForm.models = (function(module) {
             if (!fileTask) {
                 return cb("cannot find file task");
             }
-            var fileSubmissionModel = new appForm.models.FileSubmission(fileTask);
+            var fileSubmissionModel;
+            if (fileTask.contentType=="base64"){
+               fileSubmissionModel= new appForm.models.Base64FileSubmission(fileTask);
+            }else{
+               fileSubmissionModel= new appForm.models.FileSubmission(fileTask);  
+            }
+            
             fileSubmissionModel.setSubmissionId(submissionId);
 
             fileSubmissionModel.loadFile(function(err) {

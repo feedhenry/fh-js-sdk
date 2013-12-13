@@ -27,6 +27,7 @@ appForm.utils = (function(module) {
         }
     }
     function takePhoto(params, cb) {
+        //use configuration
         var width = params.width;
         var height = params.height;
         if (isPhoneGap) {
@@ -115,7 +116,7 @@ appForm.utils = (function(module) {
             ctx.drawImage(video, 0, 0, params.width, params.height);
             // "image/webp" works in Chrome.
             // Other browsers will fall back to image/png.
-            var base64=canvas.toDataURL('image/webp');
+            var base64=canvas.toDataURL('image/png');
             cancelHtml5Camera()
             cb(null,base64);
         }else{

@@ -16,11 +16,12 @@ appForm.models.Field = (function(module) {
         var imgName = "";
         var dataArr = inputValue.split(";base64,");
         var imgType = dataArr[0].split(":")[1];
+        var extension=imgType.split("/")[1];
         var size = inputValue.length;
         genImageName(function(err, n) {
             imgName = n;
             var meta = {
-                "fileName":imgName,
+                "fileName":imgName+"."+extension,
                 "hashName": imgName,
                 "contentType":"base64",
                 "fileSize": size,

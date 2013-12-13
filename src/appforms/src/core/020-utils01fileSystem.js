@@ -98,7 +98,7 @@ appForm.utils = (function(module) {
                 fileEntry.remove(function() {
                     cb(null, null);
                 }, function(e) {
-                    console.error(e);
+                    // console.error(e);
                     cb("Failed to remove file" + e);
                 });
             }
@@ -213,7 +213,7 @@ appForm.utils = (function(module) {
                         _getFileEntry(fileName, size, params, cb);
                     });
                 } else {
-                    console.error('Failed to get file entry:' + err.message)
+                    // console.error('Failed to get file entry:' + err.message)
                     cb(err);
                 }
 
