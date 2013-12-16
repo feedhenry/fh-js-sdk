@@ -9,20 +9,42 @@ if (typeof window =="undefined"){
 (function(_scope){
     //start module
 
-var appForm=(function(module){
-    module.init=init;
+var appForm = (function(module) {
+    module.init = init;
 
-    function init(params, cb){
-        if (typeof cb =="undefined"){
-            cb=params;
+    function init(params, cb) {
+        var def = {
+            "updateForms": true
         }
-        var config=params.config || {};
-        appForm.config=appForm.models.config;
-        appForm.config.init(config,function(){
-            cb();
-        });
+
+        if (typeof cb == "undefined") {
+            cb = params;
+        } else {
+            for (var key in params) {
+                def[key] = params[key];
+            }
+        }
+        var count=0;
+        function _handle(){
+            setTimeout(function(){
+                count--;
+                if (count==0){
+                    cb();
+                }
+            },1);
+        }
+        //init config module
+        count++;
+        var config = def.config || {};
+        appForm.config = appForm.models.config;
+        appForm.config.init(config, _handle);
+        //init forms module
+        if (def.updateForms==true){
+            count++
+            appForm.models.forms.refresh(true,_handle);
+        }
     }
-    
+
     // $fh.ready({}, function() {
     //     appForms.init({},function(){
     //         console.log("appForm is inited");
@@ -30,8 +52,6 @@ var appForm=(function(module){
     // });
     return module;
 })(appForm || {});
-
-
 appForm.utils = (function(module) {
     module.extend = extend;
     module.localId = localId;
@@ -211,7 +231,7 @@ appForm.utils = (function(module) {
                 fileEntry.remove(function() {
                     cb(null, null);
                 }, function(e) {
-                    console.error(e);
+                    // console.error(e);
                     cb("Failed to remove file" + e);
                 });
             }
@@ -326,7 +346,7 @@ appForm.utils = (function(module) {
                         _getFileEntry(fileName, size, params, cb);
                     });
                 } else {
-                    console.error('Failed to get file entry:' + err.message)
+                    // console.error('Failed to get file entry:' + err.message)
                     cb(err);
                 }
 
@@ -401,6 +421,7 @@ appForm.utils = (function(module) {
         }
     }
     function takePhoto(params, cb) {
+        //use configuration
         var width = params.width;
         var height = params.height;
         if (isPhoneGap) {
@@ -489,7 +510,7 @@ appForm.utils = (function(module) {
             ctx.drawImage(video, 0, 0, params.width, params.height);
             // "image/webp" works in Chrome.
             // Other browsers will fall back to image/png.
-            var base64=canvas.toDataURL('image/webp');
+            var base64=canvas.toDataURL('image/png');
             cancelHtml5Camera()
             cb(null,base64);
         }else{
@@ -1252,6 +1273,7 @@ appForm.models=(function(module){
             "theme":"/forms/theme",
             "formSubmission":"/forms/:formId/submitFormData",
             "fileSubmission":"/forms/:submissionId/:fieldId/:hashName/submitFormFile",
+            "base64fileSubmission":"/forms/:submissionId/:fieldId/:hashName/submitFormFileBase64",
             "submissionStatus": "/forms/:submissionId/status",
             "completeSubmission": "/forms/:submissionId/completeSubmission"
         })
@@ -1553,17 +1575,17 @@ appForm.models = (function(module) {
         } else {
             var formDefinition = this.getProps();
             this.rulesEngine = new appForm.RulesEngine(formDefinition);
-            //DEBUG ONLY  BY PASS VALIDATE FORM
+            // //DEBUG ONLY  BY PASS VALIDATE FORM
             
-            this.rulesEngine.validateForm=function(a,cb){
-                cb(null,{
-                    validation:{
-                        valid:true    
-                    }
+            // this.rulesEngine.validateForm=function(a,cb){
+            //     cb(null,{
+            //         validation:{
+            //             valid:true    
+            //         }
                     
-                });
-            }
-            //END OF DEBUG
+            //     });
+            // }
+            // //END OF DEBUG
 
             return this.rulesEngine;
         }
@@ -1667,6 +1689,17 @@ appForm.models=(function(module){
   appForm.utils.extend(FormSubmissionStatus,Model);
 
   return module;
+})(appForm.models || {});
+appForm.models=(function(module){
+    var FileSubmission=appForm.models.FileSubmission;
+    module.Base64FileSubmission=Base64FileSubmission;
+
+    function Base64FileSubmission(fileData){
+        FileSubmission.call(this,fileData);
+        this.set("_type","base64fileSubmission");
+    }
+    appForm.utils.extend(Base64FileSubmission,FileSubmission);
+    return module;
 })(appForm.models || {});
 appForm.models = (function(module) {
     var Model = appForm.models.Model;
@@ -2658,11 +2691,12 @@ appForm.models.Field = (function(module) {
         var imgName = "";
         var dataArr = inputValue.split(";base64,");
         var imgType = dataArr[0].split(":")[1];
+        var extension=imgType.split("/")[1];
         var size = inputValue.length;
         genImageName(function(err, n) {
             imgName = n;
             var meta = {
-                "fileName":imgName,
+                "fileName":imgName+"."+extension,
                 "hashName": imgName,
                 "contentType":"base64",
                 "fileSize": size,
@@ -3500,7 +3534,13 @@ appForm.models = (function(module) {
             if (!fileTask) {
                 return cb("cannot find file task");
             }
-            var fileSubmissionModel = new appForm.models.FileSubmission(fileTask);
+            var fileSubmissionModel;
+            if (fileTask.contentType=="base64"){
+               fileSubmissionModel= new appForm.models.Base64FileSubmission(fileTask);
+            }else{
+               fileSubmissionModel= new appForm.models.FileSubmission(fileTask);  
+            }
+            
             fileSubmissionModel.setSubmissionId(submissionId);
 
             fileSubmissionModel.loadFile(function(err) {
