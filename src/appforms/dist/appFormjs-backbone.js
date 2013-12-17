@@ -4258,7 +4258,7 @@ var FromJsonView = BaseView.extend({
       rawMode : true,
       rawData : jsonData
     }
-    var formView=new FormView({parentEl:"#backbone #resultArea"});
+    var formView=new FormView({parentEl:$("#backbone #resultArea")});
     formView.loadForm(params,function(err){
       formView.render();
     });
