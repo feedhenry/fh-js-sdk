@@ -2938,6 +2938,11 @@ FieldFileView = FieldView.extend({
     this.fileObjs=[];
     FieldView.prototype.initialize.apply(this,arguments);
   },
+  validate: function(e) {
+    if (App.config.validationOn) {
+      this.trigger("checkrules");
+    }
+  },
   contentChanged: function(e) {
 
     var self = this;
@@ -3365,6 +3370,11 @@ FieldSignatureView = FieldView.extend({
     html.on("click", function() {
       self.showSignatureCapture(index);
     });
+  },
+  validate: function(e) {
+    if (App.config.validationOn) {
+      this.trigger("checkrules");
+    }
   },
   // render: function() {
   //   var self = this;

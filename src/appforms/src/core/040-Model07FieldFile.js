@@ -26,7 +26,7 @@ appForm.models.Field = (function(module) {
             "fileName": file.name,
             "fileSize": file.size,
             "fileType": file.type,
-            "fileUpdateTime": file.lastModifiedDate,
+            "fileUpdateTime": file.lastModifiedDate.getTime(),
             "hashName": "",
             "contentType":"binary"
         };
@@ -36,6 +36,7 @@ appForm.models.Field = (function(module) {
             if (err) {
                 hashName = name;
             }
+            hashName = "filePlaceHolder" + hashName;
             rtnJSON.hashName = hashName;
             if (isStore) {
                 appForm.utils.fileSystem.save(hashName, file, function(err, res) {
