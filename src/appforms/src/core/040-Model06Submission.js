@@ -14,7 +14,7 @@ appForm.models = (function(module) {
         "pending": ["inprogress"],
         "inprogress": ["submitted", "pending", "error", "inprogress"],
         "submitted": [],
-        "error": ["draft","pending","inprogress"]
+        "error": ["draft", "pending", "inprogress"]
     };
 
     function newInstance(form) {
@@ -210,12 +210,12 @@ appForm.models = (function(module) {
         if (this.isStatusValid(status)) {
             var that = this;
             this.set("status", status);
-
-            this.saveLocal(function(err, res) {
-                that.saveToList(function() {
-                    cb(err, res);
-                });
+            this.saveToList(function(err) {
+                if (err) {
+                    console.log(err);
+                }
             });
+            this.saveLocal(cb);
         } else {
             throw ("Target status is not valid: " + status);
         }
@@ -444,10 +444,10 @@ appForm.models = (function(module) {
                 cb(err);
             } else {
                 self.form = form;
-                if (!self.get("deviceFormTimestamp",null)){
-                    self.set("deviceFormTimestamp",form.getLastUpdate());
+                if (!self.get("deviceFormTimestamp", null)) {
+                    self.set("deviceFormTimestamp", form.getLastUpdate());
                 }
-                cb(null,form);
+                cb(null, form);
             }
         });
     }
