@@ -291,7 +291,8 @@ describe("Submission model", function() {
             });
 
             submission.submit(function(err) {
-                assert(!err);
+               if(err) console.log(err);
+               assert(!err);
             });
         });
         it("how to monitor if a submission is submitted", function(done) {

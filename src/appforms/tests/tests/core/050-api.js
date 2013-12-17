@@ -38,6 +38,19 @@ describe("$fh.forms API", function() {
       done();
     });
   });
+  it("$fh.forms.getTheme with CSS", function(done) {
+    var getTheme = appForm.api.getTheme;
+
+    getTheme({
+      "fromRemote": true,
+      "css" : true
+    }, function(err, themeCSS) {
+      assert(!err);
+
+      assert(typeof(themeCSS) === "string");
+      done();
+    });
+  });
   //  it("$fh.forms.getDrafts", function(done) {
   //    var getDrafts = appForm.api.getDrafts;
   //    var Form = appForm.models.Form;

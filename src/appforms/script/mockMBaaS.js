@@ -140,7 +140,7 @@ function _appFileSubmissionBase64(req, res){
 
 function _appFileSubmission(req,res){
   console.log("In _appFileSubmission",req.files, req.params);
-  var resJSON = {"status":"ok"};
+  var resJSON = {"status":200};
 
   if(req.params.submissionId === "failedFileUpload"){
     resJSON = {"status" : "error"};
@@ -149,7 +149,7 @@ function _appFileSubmission(req,res){
       resJSON = {"status" : "error"};
       submissionStatusFileHash = req.params.hashName;
     } else {
-      resJSON = {"status" : "ok"};
+      resJSON = {"status" : 200};
     }
   }
   setTimeout(function(){
