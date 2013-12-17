@@ -3712,6 +3712,10 @@ appForm.models=(function(module){
     });
   }
 
+  Theme.prototype.getCSS = function(){
+    return this.get("css");
+  }
+
   appForm.utils.extend(Theme, Model);
 
   module.theme = new Theme();
@@ -3780,7 +3784,11 @@ appForm.api = (function(module) {
           return cb(new Error("No theme defined for this app"));
         }
 
-        return cb(null, updatedTheme);
+        if(params.css === true){
+          return cb(null, theme.getCSS());
+        } else {
+          return cb(null, theme);
+        }
       });
     }
 
