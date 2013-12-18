@@ -19,14 +19,15 @@ appForm.models.Field = (function(module) {
         var extension=imgType.split("/")[1];
         var size = inputValue.length;
         genImageName(function(err, n) {
-            imgName = n;
+            imgName = "filePlaceHolder" + n; //TODO Abstract this out
             var meta = {
                 "fileName":imgName+"."+extension,
                 "hashName": imgName,
                 "contentType":"base64",
                 "fileSize": size,
                 "fileType": imgType,
-                "imgHeader": "data:" + imgType + ";base64,"
+                "imgHeader": "data:" + imgType + ";base64,",
+                "fileUpdateTime" : new Date().getTime()
             }
             if (isStore) {
                 appForm.utils.fileSystem.save(imgName, dataArr[1], function(err, res) {

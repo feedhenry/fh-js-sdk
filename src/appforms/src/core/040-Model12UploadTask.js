@@ -244,6 +244,20 @@ appForm.models = (function(module) {
     if (resetFileIndex > 0) {
       resetCurrentTask = resetFileIndex;
     }
+// =======
+//             fileSubmissionModel.loadFile(function(err) {
+//                 if (err) {
+//                   that.completed(err, function(_err){
+//                     return cb(err);
+//                   });
+//                 } else {
+//                     that.getRemoteStore().create(fileSubmissionModel, function(err, res) {
+//                         if (err) {
+//                             cb(err);
+//                         } else {
+//                             if (res.status == 200) {
+//                                 fileTask.updateDate = appForm.utils.getTime();
+// >>>>>>> 5447d19435c6fbf2b50d2818b304cc1266aa2214
 
     //Reset current task
     this.set("currentTask", resetCurrentTask);

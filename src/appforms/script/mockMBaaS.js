@@ -165,7 +165,7 @@ function _appFileSubmissionBase64(req, res) {
 function _appFileSubmission(req, res) {
   console.log("In _appFileSubmission", req.files, req.params);
   var resJSON = {
-    "status": "ok"
+    "status": 200
   };
 
   if (req.params.submissionId === "failedFileUpload") {
@@ -184,7 +184,7 @@ function _appFileSubmission(req, res) {
         "status": "ok"
       };
     }
-    submissionStatusCounter=0;
+    submissionStatusCounter = 0;
   } else if (req.params.submissionId == "submissionError") {
     resJSON = {
       "status": "error"

@@ -61,6 +61,10 @@ appForm.stores=(function(module){
                 props.submissionId=model.getSubmissionId();
                 props.hashName=model.getHashName();
                 props.fieldId=model.getFieldId();
+            case "base64fileSubmission":
+                props.submissionId=model.getSubmissionId();
+                props.hashName=model.getHashName();
+                props.fieldId=model.getFieldId();
             case "submissionStatus":
                 props.submissionId = model.get("submissionId");
             case "completeSubmission":

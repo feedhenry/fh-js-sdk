@@ -7,6 +7,10 @@ appForm.models=(function(module){
     });
   }
 
+  Theme.prototype.getCSS = function(){
+    return this.get("css");
+  }
+
   appForm.utils.extend(Theme, Model);
 
   module.theme = new Theme();

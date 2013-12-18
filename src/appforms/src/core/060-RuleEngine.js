@@ -1,5 +1,6 @@
 appForm.RulesEngine=rulesEngine;
 
+
 /*! fh-forms - v0.2.9 -  */
 /*! async - v0.2.9 -  */
 /*! 2013-12-17 */
@@ -1595,7 +1596,7 @@ var formsRulesEngine = function(formDef) {
 
     var optionsInCheckbox = [];
 
-    async.eachSeries(fieldDefinition.fieldOptions.definition.options, function(choice, cb){
+    async.eachSeries(fieldDefinition.fieldOptions.definition.checkboxChoices, function(choice, cb){
       for(var choiceName in choice){
         optionsInCheckbox.push(choiceName);
       }
