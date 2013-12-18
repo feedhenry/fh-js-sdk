@@ -272,7 +272,7 @@ describe("Submission model", function() {
         });
         it("how to queue a submission", function(done) {
             var submission = form.newSubmission();
-
+            this.timeout(20000);
             submission.on("submit", function(err) {
                 assert(!err);
 
@@ -296,7 +296,7 @@ describe("Submission model", function() {
         });
         it("how to monitor if a submission is submitted", function(done) {
             var submission = form.newSubmission();
-            this.timeout(10000);
+            this.timeout(20000);
 
             submission.on("submit", function() {
                 submission.upload(function(err, uploadTask) {

@@ -232,6 +232,7 @@ var FormView = BaseView.extend({
     this.rebindButtons();
     this.pageViews[0].show();
     this.checkPages();
+    this.checkRules();
   },
   nextPage: function() {
     this.hideAllPages();

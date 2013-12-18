@@ -22,7 +22,7 @@ appForm.stores=(function(module){
     MBaaS.prototype.delete=function(model,cb){ // No delete method associated with mabaas calls -- > only send and read...
         
     }
-
+    //@Deprecated use create instead
     MBaaS.prototype.completeSubmission = function(submissionToComplete, cb){
       var url = _getUrl(submissionToComplete);
       appForm.web.ajax.post(url,{},cb);

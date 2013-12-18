@@ -48,7 +48,7 @@ FieldView = Backbone.View.extend({
     var title=name;
     var required="";
     var helpText="";
-    if (this.model.isRepeating()){
+    if (this.model.isRepeating() && index < this.curRepeat){
       title+=" (" + (index+1) + ") ";
     }
     // if (this.model.isRequired()){

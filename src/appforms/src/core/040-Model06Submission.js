@@ -14,7 +14,7 @@ appForm.models = (function(module) {
         "pending": ["inprogress"],
         "inprogress": ["submitted", "pending", "error", "inprogress"],
         "submitted": [],
-        "error": ["draft", "pending", "inprogress"]
+        "error": ["draft", "pending", "inprogress","error"]
     };
 
     function newInstance(form) {

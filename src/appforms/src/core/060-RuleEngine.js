@@ -1,9 +1,8 @@
 appForm.RulesEngine=rulesEngine;
 
-
-/*! fh-forms - v0.2.3 -  */
+/*! fh-forms - v0.2.9 -  */
 /*! async - v0.2.9 -  */
-/*! 2013-12-11 */
+/*! 2013-12-17 */
 /* This is the prefix file */
 function rulesEngine (formDef) {
   var define = {};
@@ -1059,17 +1058,17 @@ var formsRulesEngine = function(formDef) {
   var validatorsMap = {
     "text":         validatorString,
     "textarea":     validatorString,
-    "number":       validatorNumber, 
-    "emailAddress": validatorEmail, 
-    "dropdown":     validatorDropDown, 
-    "radio":        validatorRadio, 
-    "checkboxes":   validatorCheckboxes, 
-    "location":     validatorLocation, 
-    "locationMap":  validatorLocation, 
+    "number":       validatorNumber,
+    "emailAddress": validatorEmail,
+    "dropdown":     validatorDropDown,
+    "radio":        validatorRadio,
+    "checkboxes":   validatorCheckboxes,
+    "location":     validatorLocation,
+    "locationMap":  validatorLocationMap,
     "photo":        validatorFile,
-    "signature":    validatorFile, 
-    "file":         validatorFile, 
-    "dateTime":     validatorDateTime, 
+    "signature":    validatorFile,
+    "file":         validatorFile,
+    "dateTime":     validatorDateTime,
     "sectionBreak": validatorSection
   };
 
@@ -1246,7 +1245,7 @@ var formsRulesEngine = function(formDef) {
           if (visible) {  // we only care about required fields if they are visible
             resField.fieldId = requiredFieldId;
             resField.valid = false;
-            resField.errorMessages = ["Required Field Not Submitted"];
+            resField.fieldErrorMessage = ["Required Field Not Submitted"];
             res.validation[requiredFieldId] = resField;
             res.validation.valid = false;                    
           }
@@ -1596,7 +1595,7 @@ var formsRulesEngine = function(formDef) {
 
     var optionsInCheckbox = [];
 
-    async.eachSeries(fieldDefinition.fieldOptions.definition.checkboxChoices, function(choice, cb){
+    async.eachSeries(fieldDefinition.fieldOptions.definition.options, function(choice, cb){
       for(var choiceName in choice){
         optionsInCheckbox.push(choiceName);
       }
@@ -1616,8 +1615,21 @@ var formsRulesEngine = function(formDef) {
     });
   }
 
+  function validatorLocationMap (fieldValue, fieldDefinition, previousFieldValues, cb) {
+    if(fieldValue.lat && fieldValue.long) {
+      if(isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue.lat))) {
+        return cb(new Error("Invalid latitude and longitude values"));
+      } else {
+        return cb();
+      }
+    } else {
+      return cb(new Error("Invalid object for locationMap submission"));
+    }
+  }
+
+
   function validatorLocation (fieldValue, fieldDefinition, previousFieldValues, cb) {
-    if(fieldDefinition.fieldOptions.definition.locationUnit === "latLong"){
+    if(fieldDefinition.fieldOptions.definition.locationUnit === "latLong") {
       if(fieldValue.lat && fieldValue.long){
         if(isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue.lat))){
           return cb(new Error("Invalid latitude and longitude values"));
@@ -1654,17 +1666,41 @@ var formsRulesEngine = function(formDef) {
   }
 
   function validatorFile (fieldValue, fieldDefinition, previousFieldValues, cb) {
-    if(typeof(fieldValue) !== "string"){
-      return cb(new Error("Expected string but got" + typeof(fieldValue)));
+    if(typeof(fieldValue) !== "object"){
+      return cb(new Error("Expected object but got" + typeof(fieldValue)));
     }
 
-    if(fieldValue.indexOf("filePlaceHolder") > -1){ //TODO abstract out to config
+    var keyTypes = [
+      { keyName: "fileName", valueType: "string" },
+      { keyName: "fileSize", valueType: "number" },
+      { keyName: "fileType", valueType: "string" },
+      { keyName: "fileUpdateTime", valueType: "number" },
+      { keyName: "hashName", valueType: "string" }
+    ];
+
+    async.each(keyTypes, function (keyType, cb) {
+      var actualType = typeof fieldValue[keyType.keyName];
+      if (actualType !== keyType.valueType) {
+        return cb(new Error("Expected " + keyType.valueType + " but got " + actualType));
+      }
+      if (actualType === "string" && fieldValue[keyType.keyName].length <=0) {
+        return cb(new Error("Expected value for " + keyType.keyName));
+      }
+
       return cb();
-    } else if (previousFieldValues && previousFieldValues.indexOf(fieldValue) > -1){
-      return cb();
-    } else {
-      return cb(new Error("Invalid file placeholder text" + fieldValue));
-    }
+    }, function (err) {
+      if (err) return cb(err);
+
+      if(fieldValue.hashName.indexOf("filePlaceHolder") > -1){ //TODO abstract out to config
+        return cb();
+      } else if (previousFieldValues && previousFieldValues.hashName && previousFieldValues.hashName.indexOf(fieldValue.hashName) > -1){
+        return cb();
+      } else {
+        return cb(new Error("Invalid file placeholder text" + fieldValue.hashName));
+      }
+
+    });
+
   }
 
   function validatorDateTime  (fieldValue, fieldDefinition, previousFieldValues, cb) {

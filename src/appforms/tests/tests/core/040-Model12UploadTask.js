@@ -11,7 +11,7 @@ describe("UploadTask model", function() {
     });
   });
   it("how to upload submission form", function(done) {
-    this.timeout(100000);
+    this.timeout(20000);
     var submission = form.newSubmission();
     var ut = appForm.models.uploadTask.newInstance(submission);
     ut.uploadForm(function(err) {
@@ -23,7 +23,7 @@ describe("UploadTask model", function() {
   });
 
   it("how to deal with out of date submission", function(done) {
-    this.timeout(100000);
+    this.timeout(20000);
     var submission = form.newSubmission();
     submission.set("outOfDate", true);
     submission.changeStatus("pending", function(err) {
@@ -36,8 +36,7 @@ describe("UploadTask model", function() {
           assert(err);
           var progress = ut.getProgress();
           assert(!progress.formJSON);
-          assert(ut.isCompleted());
-          assert(ut.get("error"));
+          assert(!ut.isCompleted());
           done();
         });
       });
@@ -45,7 +44,7 @@ describe("UploadTask model", function() {
   });
 
   it("how to upload a file ", function(done) {
-    this.timeout(100000);
+    this.timeout(20000);
     var submission = form.newSubmission();
     submission.changeStatus("pending", function(err) {
       assert(!err);
@@ -79,7 +78,7 @@ describe("UploadTask model", function() {
   });
 
   it("how to upload by tick", function(done) {
-    this.timeout(100000);
+    this.timeout(20000);
     var submission = form.newSubmission();
     submission.changeStatus("pending", function(err) {
       assert(!err);
@@ -100,7 +99,10 @@ describe("UploadTask model", function() {
               var timer = setInterval(function() {
                 if (ut.isCompleted()) {
                   clearInterval(timer);
-                  assert(ut.get("currentTask") == 1);
+                  assert(ut.isFormCompleted());
+                  assert(ut.isFileCompleted());
+                  assert(ut.isMBaaSCompleted());
+                  assert(!ut.isError());
                   done();
                 }
 
@@ -123,7 +125,7 @@ describe("UploadTask model", function() {
     });
   });
   it("how to check for failed file upload", function(done) {
-    this.timeout(100000);
+    this.timeout(20000);
     var submission = form.newSubmission();
     submission.changeStatus("pending", function(err) {
       assert(!err);
@@ -141,13 +143,13 @@ describe("UploadTask model", function() {
               assert(!err);
               submission.set("testText", "failedFileUpload");
               var ut = appForm.models.uploadTask.newInstance(submission);
-              ut.uploadTick(function(err) {
+              ut.uploadTick(function(err) { //form upload
                 assert(!err);
 
-                ut.uploadTick(function(err) {
+                ut.uploadTick(function(err) { //upload first file
                   assert(err);
                   assert(ut.getCurrentTask() === 0);
-                  assert(submission.getStatus() === "inprogress");
+                  assert(submission.getStatus() === "error");
                   done();
                 });
               });
@@ -159,7 +161,7 @@ describe("UploadTask model", function() {
   });
 
   it("how to check for failed submissionCompletion", function(done) {
-    this.timeout(100000);
+    this.timeout(20000);
     var submission = form.newSubmission();
     submission.changeStatus("pending", function(err) {
       assert(!err);
@@ -183,7 +185,7 @@ describe("UploadTask model", function() {
 
                 ut.uploadTick(function(err) {
                   assert(err);
-                  assert(ut.getCurrentTask() === 1);
+                  assert(ut.getCurrentTask() === 0);
 
                   assert(submission.getStatus() === "error");
                   done();
@@ -198,7 +200,7 @@ describe("UploadTask model", function() {
 
 
   it("how to check for file status", function(done) {
-    this.timeout(100000);
+    this.timeout(20000);
     var submission = form.newSubmission();
     submission.changeStatus("pending", function(err) {
       assert(!err);
@@ -217,18 +219,30 @@ describe("UploadTask model", function() {
               submission.set("testText", "submissionStatus");
               var ut = appForm.models.uploadTask.newInstance(submission);
 
-              ut.uploadTick(function(err) {
+              ut.uploadTick(function(err) { //upload form successfully
                 assert(!err);
 
-                ut.uploadTick(function(err) {
+                ut.uploadTick(function(err) { // upload file failed 1st time
                   assert(err);
-                  assert(submission.getStatus() === "inprogress");
-
-                  ut.uploadTick(function(err) {
+                  assert(submission.getStatus() === "error");
+                  submission.changeStatus("inprogress", function(err) {
                     assert(!err);
-                    assert(submission.getStatus() === "submitted");
-                    done();
+                    ut.uploadTick(function(err) { //upload file successfully
+                      assert(!err);
+                      assert(submission.getStatus() === "inprogress");
+                      ut.uploadTick(function(err) { //upload mbaas complete signal successfully
+                        assert(!err);
+                        assert(submission.getStatus() === "inprogress");
+                        ut.uploadTick(function(err) { //complete the upload task.
+                          assert(!err);
+                          assert(submission.getStatus() === "submitted");
+                          done();
+                        });
+                      });
+                      
+                    });
                   });
+
                 });
               });
             });
@@ -239,7 +253,7 @@ describe("UploadTask model", function() {
   });
 
   it("how to get total upload size", function() {
-    this.timeout(100000);
+    this.timeout(20000);
     var submission = form.newSubmission();
     submission.changeStatus("pending", function(err) {
       assert(!err);
@@ -254,7 +268,7 @@ describe("UploadTask model", function() {
   });
 
   it("how to get uploaded size", function(done) {
-    this.timeout(100000);
+    this.timeout(20000);
     var submission = form.newSubmission();
     submission.changeStatus("pending", function(err) {
       assert(!err);
@@ -274,7 +288,7 @@ describe("UploadTask model", function() {
   });
 
   it("how to upload photo/signature", function(done) {
-    this.timeout(100000);
+    this.timeout(20000);
     var submission = form.newSubmission();
     submission.changeStatus("pending", function(err) {
       assert(!err);

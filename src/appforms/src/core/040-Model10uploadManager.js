@@ -157,15 +157,12 @@ appForm.models = (function(module) {
                         console.error(err);
                         that.sending = false;
                     } else {
-                        if (task.isCompleted()) { //current task uploaded. shift it from queue
+                        if (task.isCompleted() || task.isError()) { //current task uploaded or aborted by error. shift it from queue
                             that.shift();
                             that.sending = false;
                             that.saveLocal(function() {});
                         } else {
-                            task.uploadTick(function(err) { //file or form uploaded. ready for next upload command
-                                if (err) {
-                                    console.error(err);
-                                }
+                            task.uploadTick(function(err) { //callback when finished. ready for next upload command
                                 that.sending = false;
                             });
                         }
