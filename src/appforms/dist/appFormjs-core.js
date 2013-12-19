@@ -922,7 +922,7 @@ appForm.stores=(function(module){
     MBaaS.prototype.delete=function(model,cb){ // No delete method associated with mabaas calls -- > only send and read...
         
     }
-
+    //@Deprecated use create instead
     MBaaS.prototype.completeSubmission = function(submissionToComplete, cb){
       var url = _getUrl(submissionToComplete);
       appForm.web.ajax.post(url,{},cb);
@@ -1884,7 +1884,7 @@ appForm.models = (function(module) {
         "pending": ["inprogress"],
         "inprogress": ["submitted", "pending", "error", "inprogress"],
         "submitted": [],
-        "error": ["draft", "pending", "inprogress"]
+        "error": ["draft", "pending", "inprogress","error"]
     };
 
     function newInstance(form) {
@@ -3059,15 +3059,12 @@ appForm.models = (function(module) {
                         console.error(err);
                         that.sending = false;
                     } else {
-                        if (task.isCompleted()) { //current task uploaded. shift it from queue
+                        if (task.isCompleted() || task.isError()) { //current task uploaded or aborted by error. shift it from queue
                             that.shift();
                             that.sending = false;
                             that.saveLocal(function() {});
                         } else {
-                            task.uploadTick(function(err) { //file or form uploaded. ready for next upload command
-                                if (err) {
-                                    console.error(err);
-                                }
+                            task.uploadTick(function(err) { //callback when finished. ready for next upload command
                                 that.sending = false;
                             });
                         }
@@ -3283,162 +3280,162 @@ appForm.models=(function(module){
  */
 
 appForm.models = (function(module) {
-    module.uploadTask={
-        "newInstance":newInstance,
-        "fromLocal":fromLocal
-    }
-    var _uploadTasks={}; //mem cache for singleton.
-    var Model = appForm.models.Model;
-    function newInstance(submissionModel){
-        var utObj=new UploadTask();
-        utObj.init(submissionModel);
-        _uploadTasks[utObj.getLocalId()]=utObj;
-        return utObj;
-    }
+  module.uploadTask = {
+    "newInstance": newInstance,
+    "fromLocal": fromLocal
+  }
+  var _uploadTasks = {}; //mem cache for singleton.
+  var Model = appForm.models.Model;
 
-    function fromLocal(localId,cb){
-        if (_uploadTasks[localId]){
-            return cb(null,_uploadTasks[localId]);
-        }
-        var utObj=new UploadTask();
-        utObj.setLocalId(localId);
-        _uploadTasks[localId]=utObj;
-        utObj.loadLocal(cb);
-    }
+  function newInstance(submissionModel) {
+    var utObj = new UploadTask();
+    utObj.init(submissionModel);
+    _uploadTasks[utObj.getLocalId()] = utObj;
+    return utObj;
+  }
 
-    function UploadTask() {
-        Model.call(this, {
-            "_type": "uploadTask"
-        });
+  function fromLocal(localId, cb) {
+    if (_uploadTasks[localId]) {
+      return cb(null, _uploadTasks[localId]);
     }
-    appForm.utils.extend(UploadTask, Model);
-    UploadTask.prototype.init = function(submissionModel) {
-        var json = submissionModel.getProps();
-        var files = submissionModel.getFileInputValues();
-        var submissionLocalId = submissionModel.getLocalId();
-        this.setLocalId(submissionLocalId + "_" + "uploadTask");
-        this.set("submissionLocalId", submissionLocalId);
-        this.set("jsonTask", json);
-        this.set("fileTasks", []);
-        this.set("currentTask", null);
-        this.set("completed", false);
-        this.set("formId", submissionModel.get("formId"));
-        for (var i = 0, file; file = files[i]; i++) {
-            this.addFileTask(file);
-        }
+    var utObj = new UploadTask();
+    utObj.setLocalId(localId);
+    _uploadTasks[localId] = utObj;
+    utObj.loadLocal(cb);
+  }
 
+  function UploadTask() {
+    Model.call(this, {
+      "_type": "uploadTask"
+    });
+  }
+  appForm.utils.extend(UploadTask, Model);
+  UploadTask.prototype.init = function(submissionModel) {
+    var json = submissionModel.getProps();
+    var files = submissionModel.getFileInputValues();
+    var submissionLocalId = submissionModel.getLocalId();
+    this.setLocalId(submissionLocalId + "_" + "uploadTask");
+    this.set("submissionLocalId", submissionLocalId);
+    this.set("jsonTask", json);
+    this.set("fileTasks", []);
+    this.set("currentTask", null);
+    this.set("completed", false);
+    this.set("mbaasCompleted", false);
+    this.set("formId", submissionModel.get("formId"));
+    for (var i = 0, file; file = files[i]; i++) {
+      this.addFileTask(file);
     }
-    UploadTask.prototype.getTotalSize = function() {
-        var jsonSize = JSON.stringify(this.get("jsonTask")).length;
-        var fileTasks = this.get("fileTasks");
-        var fileSize = 0;
-        for (var i = 0, fileTask; fileTask = fileTasks[i]; i++) {
-            fileSize += fileTask.fileSize;
-        }
-        return jsonSize + fileSize;
+  }
+  UploadTask.prototype.getTotalSize = function() {
+    var jsonSize = JSON.stringify(this.get("jsonTask")).length;
+    var fileTasks = this.get("fileTasks");
+    var fileSize = 0;
+    for (var i = 0, fileTask; fileTask = fileTasks[i]; i++) {
+      fileSize += fileTask.fileSize;
     }
-    UploadTask.prototype.getUploadedSize = function() {
-        var currentTask = this.getCurrentTask();
-        if (currentTask === null) {
-            return 0;
-        } else {
-            var jsonSize = JSON.stringify(this.get("jsonTask")).length;
-            var fileTasks = this.get("fileTasks");
-            var fileSize = 0;
-            for (var i = 0, fileTask; (fileTask = fileTasks[i]) && (i<currentTask); i++) {
-                fileSize += fileTask.fileSize;
-            }
-            return jsonSize+fileSize;
-        }
-    }
-    UploadTask.prototype.getRemoteStore = function() {
-        return appForm.stores.mBaaS;
-    }
-    UploadTask.prototype.addFileTask = function(fileDef) {
-        this.get("fileTasks").push(fileDef);
-    }
-    /**
-     * get current uploading task
-     * @return {[type]} [description]
-     */
-    UploadTask.prototype.getCurrentTask = function() {
-        return this.get("currentTask");
-    }
-
-    UploadTask.prototype.isStarted = function() {
-        return this.get("currentTask", null) == null ? false : true;
-    }
-    /**
-     * upload form submission
-     * @param  {Function} cb [description]
-     * @return {[type]}      [description]
-     */
-    UploadTask.prototype.uploadForm = function(cb) {
-        var formSub = this.get("jsonTask");
-        var that = this;
-        var formSubmissionModel = new appForm.models.FormSubmission(formSub);
-          this.getRemoteStore().create(formSubmissionModel, function(err, res) {
-            if (err) {
-              that.completed(err, function(_err){
-                if(_err){
-                  console.log("uploadForm Err: ",_err);
-                }
-
-                return cb(err);
-              });
-            } else {
-                var submissionId = res.submissionId;
-                var updatedFormDefinition = res.updatedFormDefinition;
-                if (updatedFormDefinition) { // remote form definition is updated
-                    that.refreshForm(function() { //refresh related form definition
-                      var err = "Form definition is out of date.";
-                      that.completed(err, function(_err){
-                        if(_err){
-                          console.log("uploadForm Err: ",_err);
-                        }
-
-                        return cb(err);
-                      });
-                    });
-                } else { // form data submitted successfully.
-                    formSub.lastUpdate = appForm.utils.getTime();
-                    that.set("submissionId", submissionId);
-                    that.set("currentTask", 0);
-                    that.emit("progress", that.getProgress());
-                    return cb(null);
-                }
-            }
-        });
-    }
-
-    /**
-     * Handles the case where a call to completeSubmission returns a status other than "completed".
-     * Will only ever get to this function when a call is made to the completeSubmission server.
-     *
-     *
-     * @param err (String) Error message associated with the error returned
-     * @param res {"status" : <pending/error>, "pendingFiles" : [<any pending files not yet uploaded>]}
-     * @param cb Function callback
-     */
-    UploadTask.prototype.handleCompletionError = function(err, res, cb){
-      var errorMessage = err;
-
-      if(res.status === "pending"){
-        //The submission is not yet complete, there are files waiting to upload. This is an unexpected state as all of the files should have been uploaded.
-        return this.handleIncompleteSubmission(cb);
-      } else if(res.status === "error"){
-        //There was an error completing the submission.
-        errorMessage = "Error completing submission";
-      } else {
-        errorMessage = "Invalid return type from complete submission";
+    return jsonSize + fileSize;
+  }
+  UploadTask.prototype.getUploadedSize = function() {
+    var currentTask = this.getCurrentTask();
+    if (currentTask === null) {
+      return 0;
+    } else {
+      var jsonSize = JSON.stringify(this.get("jsonTask")).length;
+      var fileTasks = this.get("fileTasks");
+      var fileSize = 0;
+      for (var i = 0, fileTask;
+        (fileTask = fileTasks[i]) && (i < currentTask); i++) {
+        fileSize += fileTask.fileSize;
       }
-
-      this.submissionModel(function(_err,model){
-        model.error(errorMessage, function(){
-          return cb(errorMessage);
-        });
-      });
+      return jsonSize + fileSize;
     }
+  }
+  UploadTask.prototype.getRemoteStore = function() {
+    return appForm.stores.mBaaS;
+  }
+  UploadTask.prototype.addFileTask = function(fileDef) {
+    this.get("fileTasks").push(fileDef);
+  }
+  /**
+   * get current uploading task
+   * @return {[type]} [description]
+   */
+  UploadTask.prototype.getCurrentTask = function() {
+    return this.get("currentTask");
+  }
+
+  UploadTask.prototype.isStarted = function() {
+    return this.get("currentTask", null) == null ? false : true;
+  }
+  /**
+   * upload form submission
+   * @param  {Function} cb [description]
+   * @return {[type]}      [description]
+   */
+  UploadTask.prototype.uploadForm = function(cb) {
+    var formSub = this.get("jsonTask");
+    var that = this;
+    var formSubmissionModel = new appForm.models.FormSubmission(formSub);
+    this.getRemoteStore().create(formSubmissionModel, function(err, res) {
+      if (err) {
+        cb(err);
+      } else {
+        var submissionId = res.submissionId;
+        var updatedFormDefinition = res.updatedFormDefinition;
+        if (updatedFormDefinition) { // remote form definition is updated
+          that.refreshForm(function(err) { //refresh form def in parallel. maybe not needed.
+            if (err) {
+              console.error(err);
+            }
+          });
+          var err = "Form definition is out of date.";
+          cb(err);
+        } else { // form data submitted successfully.
+          formSub.lastUpdate = appForm.utils.getTime();
+          that.set("submissionId", submissionId);
+          // that.set("currentTask", 0);
+          that.increProgress();
+          that.saveLocal(function(err) {
+            if (err) {
+              console.error(err);
+            }
+          });
+          that.emit("progress", that.getProgress());
+          return cb(null);
+        }
+      }
+    });
+  }
+
+  /**
+   * Handles the case where a call to completeSubmission returns a status other than "completed".
+   * Will only ever get to this function when a call is made to the completeSubmission server.
+   *
+   *
+   * @param err (String) Error message associated with the error returned
+   * @param res {"status" : <pending/error>, "pendingFiles" : [<any pending files not yet uploaded>]}
+   * @param cb Function callback
+   */
+  UploadTask.prototype.handleCompletionError = function(err, res, cb) {
+    var errorMessage = err;
+
+    if (res.status === "pending") {
+      //The submission is not yet complete, there are files waiting to upload. This is an unexpected state as all of the files should have been uploaded.
+      return this.handleIncompleteSubmission(cb);
+    } else if (res.status === "error") {
+      //There was an error completing the submission.
+      errorMessage = "Error completing submission";
+    } else {
+      errorMessage = "Invalid return type from complete submission";
+    }
+    cb(errorMessage);
+    // this.error(errorMessage,cb);
+    // this.submissionModel(function(_err, model) {
+    //   model.error(errorMessage, function() {
+    //     return cb(errorMessage);
+    //   });
+    // });
+  }
 
 
   /**
@@ -3447,261 +3444,374 @@ appForm.models = (function(module) {
    *
    * @param cb
    */
-    UploadTask.prototype.handleIncompleteSubmission = function(cb){
+  UploadTask.prototype.handleIncompleteSubmission = function(cb) {
 
-      var remoteStore = this.getRemoteStore();
+    var remoteStore = this.getRemoteStore();
 
-      var submissionStatus = new appForm.models.FormSubmissionStatus(this);
+    var submissionStatus = new appForm.models.FormSubmissionStatus(this);
 
-      var that = this;
-      remoteStore.submissionStatus(submissionStatus, function(err, res){
-        if(err){
-          that.completed(err, function(_err){
-            if(err) console.error("Submission Status Error: ", _err);
-            return cb(err);
-          });
-        } else if(res.status === "error"){//The server had an error submitting the form, finish with an error
-          var errMessage = "Error submitting form.";
-          that.completed(errMessage, function(_err){
-            if(err) console.error("Submission Status Error: ", _err);
-            return cb(errMessage);
-          });
-        } else if(res.status === "complete"){ //Submission is complete, call complete to finish the submission
-          that.completed(null, function(err){
-            if(err) console.error("Submission Status Error: ", err);
-            return cb(err);
-          });
-        } else if(res.status === "pending"){ //Submission is still pending, check for files not uploaded yet.
-          var pendingFiles = res.pendingFiles || [];
+    var that = this;
+    remoteStore.submissionStatus(submissionStatus, function(err, res) {
+      if (err) {
+        cb(err);
+      } else if (res.status === "error") { //The server had an error submitting the form, finish with an error
+        var errMessage = "Error submitting form.";
+        cb(errMessage);
+        // that.completed(errMessage, function(_err) {
+        //   if (err) console.error("Submission Status Error: ", _err);
+        //   return cb(errMessage);
+        // });
+      } else if (res.status === "complete") { //Submission is complete, make uploading progress further
+        that.increProgress();
+        cb();
+        // that.completed(null, function(err) {
+        //   if (err) console.error("Submission Status Error: ", err);
+        //   return cb(err);
+        // });
+      } else if (res.status === "pending") { //Submission is still pending, check for files not uploaded yet.
+        var pendingFiles = res.pendingFiles || [];
 
-          if(pendingFiles.length > 0){ //No files pending on the server, call completeFormSubmission to finish the submission
-            that.resetUploadTask(pendingFiles, cb);
-          } else {
-            that.completed(null, cb);
-          }
-        } else { //Should not get to this point. Only valid status responses are error, pending and complete.
-          var errMessage = "Invalid submission status response.";
-          that.completed(errMessage, function(err){
-            if(err) console.error("Submission Status Error: ", err);
-            return cb(errMessage);
+        if (pendingFiles.length > 0) {
+          var errMsg = "File progress mismatched.";
+          that.resetUploadTask(pendingFiles, function() {
+            cb(errMsg);
           });
+        } else { //No files pending on the server, make the progress further
+          that.increProgress();
+          cb();
         }
-      });
+      } else { //Should not get to this point. Only valid status responses are error, pending and complete.
+        var errMessage = "Invalid submission status response.";
+        cb(errMessage);
+        // that.completed(errMessage, function(err) {
+        //   if (err) console.error("Submission Status Error: ", err);
+        //   return cb(errMessage);
+        // });
+      }
+    });
+  }
+
+  /**
+   * Resetting the upload task based on the response from getSubmissionStatus
+   * @param pendingFiles -- Array of files still waiting to upload
+   * @param cb
+   */
+  UploadTask.prototype.resetUploadTask = function(pendingFiles, cb) {
+    var filesToUpload = this.get("fileTasks");
+
+    var resetFilesToUpload = [];
+
+    //Adding the already completed files to the reset array.
+    for (var fileIndex = 0; fileIndex < filesToUpload.length; fileIndex++) {
+      if (pendingFiles.indexOf(filesToUpload[fileIndex].hashName) < 0) {
+        resetFilesToUpload.push(filesToUpload[fileIndex]);
+      }
     }
 
-    /**
-     * Resetting the upload task based on the response from getSubmissionStatus
-     * @param pendingFiles -- Array of files still waiting to upload
-     * @param cb
-     */
-    UploadTask.prototype.resetUploadTask = function(pendingFiles, cb){
-      var filesToUpload = this.get("fileTasks");
-
-      var resetFilesToUpload = [];
-
-      //Adding the already completed files to the reset array.
-      for(var fileIndex = 0; fileIndex < filesToUpload.length; fileIndex++){
-        if(pendingFiles.indexOf(filesToUpload[fileIndex].hashName) < 0){
-          resetFilesToUpload.push(filesToUpload[fileIndex]);
-        }
+    //Adding the pending files to the end of the array.
+    for (var fileIndex = 0; fileIndex < filesToUpload.length; fileIndex++) {
+      if (pendingFiles.indexOf(filesToUpload[fileIndex].hashName) > -1) {
+        resetFilesToUpload.push(filesToUpload[fileIndex]);
       }
-
-      //Adding the pending files to the end of the array.
-      for(var fileIndex = 0; fileIndex < filesToUpload.length; fileIndex++){
-        if(pendingFiles.indexOf(filesToUpload[fileIndex].hashName) > -1){
-          resetFilesToUpload.push(filesToUpload[fileIndex]);
-        }
-      }
-
-      var resetFileIndex = filesToUpload.length - pendingFiles.length - 1;
-      var resetCurrentTask = 0;
-
-      if(resetFileIndex > 0){
-        resetCurrentTask = resetFileIndex;
-      }
-
-      //Reset current task
-      this.set("currentTask", resetCurrentTask);
-      this.set("fileTasks", resetFilesToUpload);
-      this.saveLocal(cb); //Saving the reset files list to local
     }
 
-    UploadTask.prototype.uploadFile = function(cb) {
-        var that = this;
-        var submissionId = this.get("submissionId");
+    var resetFileIndex = filesToUpload.length - pendingFiles.length - 1;
+    var resetCurrentTask = 0;
 
-        if (submissionId) {
-            var progress = this.get("currentTask");
-            if (progress == null) {
-                progress = 0;
-                that.set("currentTask", progress);
-            }
-            var fileTask = this.get("fileTasks", [])[progress];
-            if (!fileTask) {
-                return cb("cannot find file task");
-            }
-            var fileSubmissionModel;
-            if (fileTask.contentType=="base64"){
-               fileSubmissionModel= new appForm.models.Base64FileSubmission(fileTask);
-            }else{
-               fileSubmissionModel= new appForm.models.FileSubmission(fileTask);  
-            }
-            
-            fileSubmissionModel.setSubmissionId(submissionId);
-
-            fileSubmissionModel.loadFile(function(err) {
-                if (err) {
-                  that.completed(err, function(_err){
-                    return cb(err);
-                  });
-                } else {
-                    that.getRemoteStore().create(fileSubmissionModel, function(err, res) {
-                        if (err) {
-                            cb(err);
-                        } else {
-                            if (res.status == 200) {
-                                fileTask.updateDate = appForm.utils.getTime();
-
-                                var curTask = progress;
-                                curTask++;
-                                that.set("currentTask", curTask);
-                                that.emit("progress", that.getProgress());
-                                if (that.get("fileTasks").length <= curTask) {
-                                    that.completed(null, function(err){
-                                      return cb(err);
-                                    });
-                                } else {
-                                  return cb(null); //File uploaded, not finished all of the files yet for this task.
-                                }
-                            } else {
-
-
-                              var errorMessage = "File upload failed for file: " + fileTask.fileName;
-                              that.handleIncompleteSubmission(function(err){
-                                if(err) console.error(err);
-                                return cb(errorMessage);
-                              });
-                            }
-                        }
-                    });
-                }
-            });
-        } else {
-            this.completed("Failed to upload file. Submission Id not found.", function(err){
-              if(err){
-                console.error("uploadFile Completed Err: ", err);
-              }
-              return cb("Failed to upload file. Submission Id not found.");
-            });
-        }
+    if (resetFileIndex > 0) {
+      resetCurrentTask = resetFileIndex;
     }
-    UploadTask.prototype.uploadTick = function(cb) {
-      var currentTask = this.get("currentTask", null);
-      if (this.isCompleted()) { //Already completed, nothing to do.
-        return cb(null, null);
-      } else if(currentTask === null){ // No current task, send the form json
-        this.uploadForm(cb);
+// =======
+//             fileSubmissionModel.loadFile(function(err) {
+//                 if (err) {
+//                   that.completed(err, function(_err){
+//                     return cb(err);
+//                   });
+//                 } else {
+//                     that.getRemoteStore().create(fileSubmissionModel, function(err, res) {
+//                         if (err) {
+//                             cb(err);
+//                         } else {
+//                             if (res.status == 200) {
+//                                 fileTask.updateDate = appForm.utils.getTime();
+// >>>>>>> 5447d19435c6fbf2b50d2818b304cc1266aa2214
+
+    //Reset current task
+    this.set("currentTask", resetCurrentTask);
+    this.set("fileTasks", resetFilesToUpload);
+    this.saveLocal(cb); //Saving the reset files list to local
+  }
+
+  UploadTask.prototype.uploadFile = function(cb) {
+    var that = this;
+    var submissionId = this.get("submissionId");
+
+    if (submissionId) {
+      var progress = this.get("currentTask");
+      if (progress == null) {
+        progress = 0;
+        that.set("currentTask", progress);
+      }
+      var fileTask = this.get("fileTasks", [])[progress];
+      if (!fileTask) {
+        return cb("cannot find file task");
+      }
+      var fileSubmissionModel;
+      if (fileTask.contentType == "base64") {
+        fileSubmissionModel = new appForm.models.Base64FileSubmission(fileTask);
       } else {
-        if (this.get("fileTasks").length == 0) { //No files to upload, just call complete.
-          this.completed(null, function(err){
+        fileSubmissionModel = new appForm.models.FileSubmission(fileTask);
+      }
+
+      fileSubmissionModel.setSubmissionId(submissionId);
+
+      fileSubmissionModel.loadFile(function(err) {
+        if (err) {
+          that.completed(err, function(_err) {
             return cb(err);
           });
         } else {
-          this.uploadFile(cb);
-        }
-      }
-    }
-    /**
-     * the upload task is completed -- Verify that the submission has completed by calling mbaas completeSubmission.
-     * @return {[type]} [description]
-     */
-    UploadTask.prototype.completed = function(err, cb) {
-      var that = this;
-      this.set("completed", true);
-      if(err){
-        this.set("error", err);
-        this.submissionModel(function(_err,model){
-          model.error(err, cb);
-        });
-
-        return; // No need to go any further, return from this function.
-      }
-
-      var submissionId = this.get("submissionId", null);
-
-      if(submissionId === null){
-        return this.completed("Failed to complete submission. Submission Id not found.", cb);
-      }
-
-      var remoteStore = this.getRemoteStore();
-
-
-      var completeSubmission = new appForm.models.FormSubmissionComplete(this);
-      remoteStore.completeSubmission(completeSubmission, function(err, res){
-        //if status is not "completed", then handle the completion err
-
-        if(res.status !== "complete"){
-          return that.handleCompletionError(err, res, cb);
-        }
-
-        //Completion is now completed sucessfully.. set to complete and update the model..
-        that.submissionModel(function(_err,model){
-          model.submitted(cb);
-        });
-      });
-    }
-    UploadTask.prototype.isCompleted = function() {
-        return this.get("completed", false);
-    }
-    UploadTask.prototype.getProgress = function() {
-        var rtn = {
-            "formJSON": false,
-            "currentFileIndex": 0,
-            "totalFiles": this.get("fileTasks").length,
-            "totalSize":this.getTotalSize(),
-            "uploaded":this.getUploadedSize()
-        };
-        var progress = this.get("currentTask");
-        if (progress === null) {
-            return rtn;
-        } else {
-            rtn.formJSON = true;
-            rtn.currentFileIndex = progress;
-        }
-        return rtn;
-    }
-
-    /**
-     * Refresh related form definition.
-     * @param  {Function} cb [description]
-     * @return {[type]}      [description]
-     */
-    UploadTask.prototype.refreshForm = function(cb) {
-        var formId = this.get("formId");
-        new appForm.models.Form({
-            "formId": formId
-        }, function(err, form) {
+          that.getRemoteStore().create(fileSubmissionModel, function(err, res) {
             if (err) {
-                console.error(err);
-            }
-            form.refresh(true, function(err) {
-                if (err) {
+              cb(err);
+            } else {
+              if (res.status == "ok") {
+                fileTask.updateDate = appForm.utils.getTime();
+
+                // var curTask = progress;
+                // curTask++;
+                // that.set("currentTask", curTask);
+                that.increProgress();
+                that.saveLocal(function(err) { //save current status.
+                  if (err) {
                     console.error(err);
-                }
-                cb();
-            });
-        });
-    }
-
-    UploadTask.prototype.submissionModel = function(cb) {
-        appForm.models.submission.fromLocal(this.get("submissionLocalId"), function(err, submission) {
-            if (err) {
-                console.error(err);
+                  }
+                });
+                that.emit("progress", that.getProgress());
+                cb(null);
+              } else {
+                var errorMessage = "File upload failed for file: " + fileTask.fileName;
+                that.handleIncompleteSubmission(cb);
+              }
             }
-            cb(err, submission);
-        });
+          });
+        }
+      });
+    } else {
+      cb("Failed to upload file. Submission Id not found.");
     }
-    return module;
+  }
+  UploadTask.prototype.uploadTick = function(cb) {
+    var that = this;
+
+    function _handler(err) {
+      if (err) {
+        that.error(err, function() {
+        });
+      }else{//no error.
+        that.submissionModel(function(err,submission){
+          if (err){
+            cb(err);
+          }else{
+            var status=submission.get("status");
+            if (status !="inprogress" && status != "submitted"){
+              cb("Submission status is incorrect. Upload task should be started by submission object's upload method.");
+            }
+          }
+        });
+      }
+      if (cb){
+        cb(err);  
+      }
+    }
+    var currentTask = this.get("currentTask", null);
+    if (!this.isFormCompleted()) { // No current task, send the form json
+      this.uploadForm(_handler);
+    } else if (!this.isFileCompleted()) { //files to be uploaded
+      this.uploadFile(_handler);
+    } else if (!this.isMBaaSCompleted()) { //call mbaas to complete upload
+      this.uploadComplete(_handler);
+    } else if (!this.isCompleted()) { //complete the upload task
+      this.success(_handler);
+    } else { //task is already completed.
+      _handler(null, null);
+    }
+  }
+  UploadTask.prototype.increProgress = function() {
+    var curTask = this.get("currentTask", null);
+    if (curTask === null) {
+      curTask = 0;
+    } else {
+      curTask++;
+    }
+    this.set("currentTask", curTask);
+  }
+  UploadTask.prototype.uploadComplete = function(cb) {
+    var submissionId = this.get("submissionId", null);
+    var that = this;
+    if (submissionId === null) {
+      return this.completed("Failed to complete submission. Submission Id not found.", cb);
+    }
+    var remoteStore = this.getRemoteStore();
+    var completeSubmission = new appForm.models.FormSubmissionComplete(this);
+    remoteStore.completeSubmission(completeSubmission, function(err, res) {
+      //if status is not "completed", then handle the completion err
+      if (res.status !== "complete") {
+        return that.handleCompletionError(err, res, cb);
+      }
+      //Completion is now completed sucessfully.. we can make the progress further.
+      that.increProgress();
+      cb(null);
+      // that.submissionModel(function(_err, model) {
+      //   model.submitted(cb);
+      // });
+    });
+  }
+  //@deprecated use success / error instead
+  UploadTask.prototype.completed = function(err, cb) {
+    if (err) {
+      this.error(err, cb);
+    } else {
+      this.success(cb);
+    }
+  }
+  /**
+   * the upload task is successfully completed. This will be called when all uploading process finished successfully.
+   * @return {[type]} [description]
+   */
+  UploadTask.prototype.success = function(cb) {
+    var that = this;
+    this.set("completed", true);
+    this.saveLocal(function(err) {
+      if (err) {
+        console.error(err);
+        console.error("Upload task save failed");
+      }
+    });
+
+    this.submissionModel(function(_err, model) {
+      if (_err) {
+        cb(_err);
+      } else {
+        model.submitted(cb);
+      }
+    });
+  }
+  /**
+   * the upload task is failed. It will not complete the task but will set error with error returned.
+   * @param  {[type]}   err [description]
+   * @param  {Function} cb  [description]
+   * @return {[type]}       [description]
+   */
+  UploadTask.prototype.error = function(err, cb) {
+    this.set("error", err);
+    this.saveLocal(function(err) {
+      if (err) {
+        console.error(err);
+        console.error("Upload task save failed");
+      }
+    });
+    this.submissionModel(function(_err, model) {
+      if (_err) {
+        cb(_err);
+      } else {
+        model.error(err, function() {
+
+        });
+        cb(err);
+      }
+    });
+  }
+  UploadTask.prototype.isFormCompleted = function() {
+    var curTask = this.get("currentTask", null);
+    if (curTask === null) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+  UploadTask.prototype.isFileCompleted = function() {
+    var curTask = this.get("currentTask", null);
+    if (curTask === null) {
+      return false;
+    } else if (curTask < this.get("fileTasks", []).length) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+  UploadTask.prototype.isError = function() {
+    var error = this.get("error", null);
+    if (error) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+  UploadTask.prototype.isCompleted = function() {
+    return this.get("completed", false);
+  }
+  UploadTask.prototype.isMBaaSCompleted = function() {
+    if (!this.isFileCompleted()) {
+      return false;
+    } else {
+      var curTask = this.get("currentTask", null);
+      if (curTask > this.get("fileTasks", []).length) { //change offset if completion bit is changed
+        return true;
+      } else {
+        return false;
+      }
+    }
+  }
+  UploadTask.prototype.getProgress = function() {
+    var rtn = {
+      "formJSON": false,
+      "currentFileIndex": 0,
+      "totalFiles": this.get("fileTasks").length,
+      "totalSize": this.getTotalSize(),
+      "uploaded": this.getUploadedSize()
+    };
+    var progress = this.get("currentTask");
+    if (progress === null) {
+      return rtn;
+    } else {
+      rtn.formJSON = true;
+      rtn.currentFileIndex = progress;
+    }
+    return rtn;
+  }
+
+  /**
+   * Refresh related form definition.
+   * @param  {Function} cb [description]
+   * @return {[type]}      [description]
+   */
+  UploadTask.prototype.refreshForm = function(cb) {
+    var formId = this.get("formId");
+    new appForm.models.Form({
+      "formId": formId
+    }, function(err, form) {
+      if (err) {
+        console.error(err);
+      }
+      form.refresh(true, function(err) {
+        if (err) {
+          console.error(err);
+        }
+        cb();
+      });
+    });
+  }
+
+  UploadTask.prototype.submissionModel = function(cb) {
+    appForm.models.submission.fromLocal(this.get("submissionLocalId"), function(err, submission) {
+      if (err) {
+        console.error(err);
+      }
+      cb(err, submission);
+    });
+  }
+  return module;
 })(appForm.models || {});
 appForm.models=(function(module){
   var Model=appForm.models.Model;
@@ -3937,17 +4047,18 @@ if ($fh.forms==undefined){
 
 
 appForm.RulesEngine=rulesEngine;
-/*! fh-forms - v0.2.8 -  */
+
+/*! fh-forms - v0.2.10 -  */
 /*! async - v0.2.9 -  */
-/*! 2013-12-16 */
+/*! 2013-12-18 */
 /* This is the prefix file */
 function rulesEngine (formDef) {
   var define = {};
   var module = {exports:{}}; // create a module.exports - async will load into it
 
-  /* End of prefix file */
-  /*global setImmediate: false, setTimeout: false, console: false */
-  (function () {
+/* End of prefix file */
+/*global setImmediate: false, setTimeout: false, console: false */
+(function () {
 
     var async = {};
 
@@ -3960,244 +4071,244 @@ function rulesEngine (formDef) {
     }
 
     async.noConflict = function () {
-      root.async = previous_async;
-      return async;
+        root.async = previous_async;
+        return async;
     };
 
     function only_once(fn) {
-      var called = false;
-      return function() {
-        if (called) throw new Error("Callback was already called.");
-        called = true;
-        fn.apply(root, arguments);
-      }
+        var called = false;
+        return function() {
+            if (called) throw new Error("Callback was already called.");
+            called = true;
+            fn.apply(root, arguments);
+        }
     }
 
     //// cross-browser compatiblity functions ////
 
     var _each = function (arr, iterator) {
-      if (arr.forEach) {
-        return arr.forEach(iterator);
-      }
-      for (var i = 0; i < arr.length; i += 1) {
-        iterator(arr[i], i, arr);
-      }
+        if (arr.forEach) {
+            return arr.forEach(iterator);
+        }
+        for (var i = 0; i < arr.length; i += 1) {
+            iterator(arr[i], i, arr);
+        }
     };
 
     var _map = function (arr, iterator) {
-      if (arr.map) {
-        return arr.map(iterator);
-      }
-      var results = [];
-      _each(arr, function (x, i, a) {
-        results.push(iterator(x, i, a));
-      });
-      return results;
+        if (arr.map) {
+            return arr.map(iterator);
+        }
+        var results = [];
+        _each(arr, function (x, i, a) {
+            results.push(iterator(x, i, a));
+        });
+        return results;
     };
 
     var _reduce = function (arr, iterator, memo) {
-      if (arr.reduce) {
-        return arr.reduce(iterator, memo);
-      }
-      _each(arr, function (x, i, a) {
-        memo = iterator(memo, x, i, a);
-      });
-      return memo;
+        if (arr.reduce) {
+            return arr.reduce(iterator, memo);
+        }
+        _each(arr, function (x, i, a) {
+            memo = iterator(memo, x, i, a);
+        });
+        return memo;
     };
 
     var _keys = function (obj) {
-      if (Object.keys) {
-        return Object.keys(obj);
-      }
-      var keys = [];
-      for (var k in obj) {
-        if (obj.hasOwnProperty(k)) {
-          keys.push(k);
+        if (Object.keys) {
+            return Object.keys(obj);
         }
-      }
-      return keys;
+        var keys = [];
+        for (var k in obj) {
+            if (obj.hasOwnProperty(k)) {
+                keys.push(k);
+            }
+        }
+        return keys;
     };
 
     //// exported async module functions ////
 
     //// nextTick implementation with browser-compatible fallback ////
     if (typeof process === 'undefined' || !(process.nextTick)) {
-      if (typeof setImmediate === 'function') {
-        async.nextTick = function (fn) {
-          // not a direct alias for IE10 compatibility
-          setImmediate(fn);
-        };
-        async.setImmediate = async.nextTick;
-      }
-      else {
-        async.nextTick = function (fn) {
-          setTimeout(fn, 0);
-        };
-        async.setImmediate = async.nextTick;
-      }
+        if (typeof setImmediate === 'function') {
+            async.nextTick = function (fn) {
+                // not a direct alias for IE10 compatibility
+                setImmediate(fn);
+            };
+            async.setImmediate = async.nextTick;
+        }
+        else {
+            async.nextTick = function (fn) {
+                setTimeout(fn, 0);
+            };
+            async.setImmediate = async.nextTick;
+        }
     }
     else {
-      async.nextTick = process.nextTick;
-      if (typeof setImmediate !== 'undefined') {
-        async.setImmediate = setImmediate;
-      }
-      else {
-        async.setImmediate = async.nextTick;
-      }
+        async.nextTick = process.nextTick;
+        if (typeof setImmediate !== 'undefined') {
+            async.setImmediate = setImmediate;
+        }
+        else {
+            async.setImmediate = async.nextTick;
+        }
     }
 
     async.each = function (arr, iterator, callback) {
-      callback = callback || function () {};
-      if (!arr.length) {
-        return callback();
-      }
-      var completed = 0;
-      _each(arr, function (x) {
-        iterator(x, only_once(function (err) {
-          if (err) {
-            callback(err);
-            callback = function () {};
-          }
-          else {
-            completed += 1;
-            if (completed >= arr.length) {
-              callback(null);
-            }
-          }
-        }));
-      });
+        callback = callback || function () {};
+        if (!arr.length) {
+            return callback();
+        }
+        var completed = 0;
+        _each(arr, function (x) {
+            iterator(x, only_once(function (err) {
+                if (err) {
+                    callback(err);
+                    callback = function () {};
+                }
+                else {
+                    completed += 1;
+                    if (completed >= arr.length) {
+                        callback(null);
+                    }
+                }
+            }));
+        });
     };
     async.forEach = async.each;
 
     async.eachSeries = function (arr, iterator, callback) {
-      callback = callback || function () {};
-      if (!arr.length) {
-        return callback();
-      }
-      var completed = 0;
-      var iterate = function () {
-        iterator(arr[completed], function (err) {
-          if (err) {
-            callback(err);
-            callback = function () {};
-          }
-          else {
-            completed += 1;
-            if (completed >= arr.length) {
-              callback(null);
-            }
-            else {
-              iterate();
-            }
-          }
-        });
-      };
-      iterate();
+        callback = callback || function () {};
+        if (!arr.length) {
+            return callback();
+        }
+        var completed = 0;
+        var iterate = function () {
+            iterator(arr[completed], function (err) {
+                if (err) {
+                    callback(err);
+                    callback = function () {};
+                }
+                else {
+                    completed += 1;
+                    if (completed >= arr.length) {
+                        callback(null);
+                    }
+                    else {
+                        iterate();
+                    }
+                }
+            });
+        };
+        iterate();
     };
     async.forEachSeries = async.eachSeries;
 
     async.eachLimit = function (arr, limit, iterator, callback) {
-      var fn = _eachLimit(limit);
-      fn.apply(null, [arr, iterator, callback]);
+        var fn = _eachLimit(limit);
+        fn.apply(null, [arr, iterator, callback]);
     };
     async.forEachLimit = async.eachLimit;
 
     var _eachLimit = function (limit) {
 
-      return function (arr, iterator, callback) {
-        callback = callback || function () {};
-        if (!arr.length || limit <= 0) {
-          return callback();
-        }
-        var completed = 0;
-        var started = 0;
-        var running = 0;
+        return function (arr, iterator, callback) {
+            callback = callback || function () {};
+            if (!arr.length || limit <= 0) {
+                return callback();
+            }
+            var completed = 0;
+            var started = 0;
+            var running = 0;
 
-        (function replenish () {
-          if (completed >= arr.length) {
-            return callback();
-          }
-
-          while (running < limit && started < arr.length) {
-            started += 1;
-            running += 1;
-            iterator(arr[started - 1], function (err) {
-              if (err) {
-                callback(err);
-                callback = function () {};
-              }
-              else {
-                completed += 1;
-                running -= 1;
+            (function replenish () {
                 if (completed >= arr.length) {
-                  callback();
+                    return callback();
                 }
-                else {
-                  replenish();
+
+                while (running < limit && started < arr.length) {
+                    started += 1;
+                    running += 1;
+                    iterator(arr[started - 1], function (err) {
+                        if (err) {
+                            callback(err);
+                            callback = function () {};
+                        }
+                        else {
+                            completed += 1;
+                            running -= 1;
+                            if (completed >= arr.length) {
+                                callback();
+                            }
+                            else {
+                                replenish();
+                            }
+                        }
+                    });
                 }
-              }
-            });
-          }
-        })();
-      };
+            })();
+        };
     };
 
 
     var doParallel = function (fn) {
-      return function () {
-        var args = Array.prototype.slice.call(arguments);
-        return fn.apply(null, [async.each].concat(args));
-      };
+        return function () {
+            var args = Array.prototype.slice.call(arguments);
+            return fn.apply(null, [async.each].concat(args));
+        };
     };
     var doParallelLimit = function(limit, fn) {
-      return function () {
-        var args = Array.prototype.slice.call(arguments);
-        return fn.apply(null, [_eachLimit(limit)].concat(args));
-      };
+        return function () {
+            var args = Array.prototype.slice.call(arguments);
+            return fn.apply(null, [_eachLimit(limit)].concat(args));
+        };
     };
     var doSeries = function (fn) {
-      return function () {
-        var args = Array.prototype.slice.call(arguments);
-        return fn.apply(null, [async.eachSeries].concat(args));
-      };
+        return function () {
+            var args = Array.prototype.slice.call(arguments);
+            return fn.apply(null, [async.eachSeries].concat(args));
+        };
     };
 
 
     var _asyncMap = function (eachfn, arr, iterator, callback) {
-      var results = [];
-      arr = _map(arr, function (x, i) {
-        return {index: i, value: x};
-      });
-      eachfn(arr, function (x, callback) {
-        iterator(x.value, function (err, v) {
-          results[x.index] = v;
-          callback(err);
+        var results = [];
+        arr = _map(arr, function (x, i) {
+            return {index: i, value: x};
         });
-      }, function (err) {
-        callback(err, results);
-      });
+        eachfn(arr, function (x, callback) {
+            iterator(x.value, function (err, v) {
+                results[x.index] = v;
+                callback(err);
+            });
+        }, function (err) {
+            callback(err, results);
+        });
     };
     async.map = doParallel(_asyncMap);
     async.mapSeries = doSeries(_asyncMap);
     async.mapLimit = function (arr, limit, iterator, callback) {
-      return _mapLimit(limit)(arr, iterator, callback);
+        return _mapLimit(limit)(arr, iterator, callback);
     };
 
     var _mapLimit = function(limit) {
-      return doParallelLimit(limit, _asyncMap);
+        return doParallelLimit(limit, _asyncMap);
     };
 
     // reduce only has a series version, as doing reduce in parallel won't
     // work in many situations.
     async.reduce = function (arr, memo, iterator, callback) {
-      async.eachSeries(arr, function (x, callback) {
-        iterator(memo, x, function (err, v) {
-          memo = v;
-          callback(err);
+        async.eachSeries(arr, function (x, callback) {
+            iterator(memo, x, function (err, v) {
+                memo = v;
+                callback(err);
+            });
+        }, function (err) {
+            callback(err, memo);
         });
-      }, function (err) {
-        callback(err, memo);
-      });
     };
     // inject alias
     async.inject = async.reduce;
@@ -4205,33 +4316,33 @@ function rulesEngine (formDef) {
     async.foldl = async.reduce;
 
     async.reduceRight = function (arr, memo, iterator, callback) {
-      var reversed = _map(arr, function (x) {
-        return x;
-      }).reverse();
-      async.reduce(reversed, memo, iterator, callback);
+        var reversed = _map(arr, function (x) {
+            return x;
+        }).reverse();
+        async.reduce(reversed, memo, iterator, callback);
     };
     // foldr alias
     async.foldr = async.reduceRight;
 
     var _filter = function (eachfn, arr, iterator, callback) {
-      var results = [];
-      arr = _map(arr, function (x, i) {
-        return {index: i, value: x};
-      });
-      eachfn(arr, function (x, callback) {
-        iterator(x.value, function (v) {
-          if (v) {
-            results.push(x);
-          }
-          callback();
+        var results = [];
+        arr = _map(arr, function (x, i) {
+            return {index: i, value: x};
         });
-      }, function (err) {
-        callback(_map(results.sort(function (a, b) {
-          return a.index - b.index;
-        }), function (x) {
-          return x.value;
-        }));
-      });
+        eachfn(arr, function (x, callback) {
+            iterator(x.value, function (v) {
+                if (v) {
+                    results.push(x);
+                }
+                callback();
+            });
+        }, function (err) {
+            callback(_map(results.sort(function (a, b) {
+                return a.index - b.index;
+            }), function (x) {
+                return x.value;
+            }));
+        });
     };
     async.filter = doParallel(_filter);
     async.filterSeries = doSeries(_filter);
@@ -4240,574 +4351,574 @@ function rulesEngine (formDef) {
     async.selectSeries = async.filterSeries;
 
     var _reject = function (eachfn, arr, iterator, callback) {
-      var results = [];
-      arr = _map(arr, function (x, i) {
-        return {index: i, value: x};
-      });
-      eachfn(arr, function (x, callback) {
-        iterator(x.value, function (v) {
-          if (!v) {
-            results.push(x);
-          }
-          callback();
+        var results = [];
+        arr = _map(arr, function (x, i) {
+            return {index: i, value: x};
         });
-      }, function (err) {
-        callback(_map(results.sort(function (a, b) {
-          return a.index - b.index;
-        }), function (x) {
-          return x.value;
-        }));
-      });
+        eachfn(arr, function (x, callback) {
+            iterator(x.value, function (v) {
+                if (!v) {
+                    results.push(x);
+                }
+                callback();
+            });
+        }, function (err) {
+            callback(_map(results.sort(function (a, b) {
+                return a.index - b.index;
+            }), function (x) {
+                return x.value;
+            }));
+        });
     };
     async.reject = doParallel(_reject);
     async.rejectSeries = doSeries(_reject);
 
     var _detect = function (eachfn, arr, iterator, main_callback) {
-      eachfn(arr, function (x, callback) {
-        iterator(x, function (result) {
-          if (result) {
-            main_callback(x);
-            main_callback = function () {};
-          }
-          else {
-            callback();
-          }
+        eachfn(arr, function (x, callback) {
+            iterator(x, function (result) {
+                if (result) {
+                    main_callback(x);
+                    main_callback = function () {};
+                }
+                else {
+                    callback();
+                }
+            });
+        }, function (err) {
+            main_callback();
         });
-      }, function (err) {
-        main_callback();
-      });
     };
     async.detect = doParallel(_detect);
     async.detectSeries = doSeries(_detect);
 
     async.some = function (arr, iterator, main_callback) {
-      async.each(arr, function (x, callback) {
-        iterator(x, function (v) {
-          if (v) {
-            main_callback(true);
-            main_callback = function () {};
-          }
-          callback();
+        async.each(arr, function (x, callback) {
+            iterator(x, function (v) {
+                if (v) {
+                    main_callback(true);
+                    main_callback = function () {};
+                }
+                callback();
+            });
+        }, function (err) {
+            main_callback(false);
         });
-      }, function (err) {
-        main_callback(false);
-      });
     };
     // any alias
     async.any = async.some;
 
     async.every = function (arr, iterator, main_callback) {
-      async.each(arr, function (x, callback) {
-        iterator(x, function (v) {
-          if (!v) {
-            main_callback(false);
-            main_callback = function () {};
-          }
-          callback();
+        async.each(arr, function (x, callback) {
+            iterator(x, function (v) {
+                if (!v) {
+                    main_callback(false);
+                    main_callback = function () {};
+                }
+                callback();
+            });
+        }, function (err) {
+            main_callback(true);
         });
-      }, function (err) {
-        main_callback(true);
-      });
     };
     // all alias
     async.all = async.every;
 
     async.sortBy = function (arr, iterator, callback) {
-      async.map(arr, function (x, callback) {
-        iterator(x, function (err, criteria) {
-          if (err) {
-            callback(err);
-          }
-          else {
-            callback(null, {value: x, criteria: criteria});
-          }
+        async.map(arr, function (x, callback) {
+            iterator(x, function (err, criteria) {
+                if (err) {
+                    callback(err);
+                }
+                else {
+                    callback(null, {value: x, criteria: criteria});
+                }
+            });
+        }, function (err, results) {
+            if (err) {
+                return callback(err);
+            }
+            else {
+                var fn = function (left, right) {
+                    var a = left.criteria, b = right.criteria;
+                    return a < b ? -1 : a > b ? 1 : 0;
+                };
+                callback(null, _map(results.sort(fn), function (x) {
+                    return x.value;
+                }));
+            }
         });
-      }, function (err, results) {
-        if (err) {
-          return callback(err);
-        }
-        else {
-          var fn = function (left, right) {
-            var a = left.criteria, b = right.criteria;
-            return a < b ? -1 : a > b ? 1 : 0;
-          };
-          callback(null, _map(results.sort(fn), function (x) {
-            return x.value;
-          }));
-        }
-      });
     };
 
     async.auto = function (tasks, callback) {
-      callback = callback || function () {};
-      var keys = _keys(tasks);
-      if (!keys.length) {
-        return callback(null);
-      }
-
-      var results = {};
-
-      var listeners = [];
-      var addListener = function (fn) {
-        listeners.unshift(fn);
-      };
-      var removeListener = function (fn) {
-        for (var i = 0; i < listeners.length; i += 1) {
-          if (listeners[i] === fn) {
-            listeners.splice(i, 1);
-            return;
-          }
+        callback = callback || function () {};
+        var keys = _keys(tasks);
+        if (!keys.length) {
+            return callback(null);
         }
-      };
-      var taskComplete = function () {
-        _each(listeners.slice(0), function (fn) {
-          fn();
-        });
-      };
 
-      addListener(function () {
-        if (_keys(results).length === keys.length) {
-          callback(null, results);
-          callback = function () {};
-        }
-      });
+        var results = {};
 
-      _each(keys, function (k) {
-        var task = (tasks[k] instanceof Function) ? [tasks[k]]: tasks[k];
-        var taskCallback = function (err) {
-          var args = Array.prototype.slice.call(arguments, 1);
-          if (args.length <= 1) {
-            args = args[0];
-          }
-          if (err) {
-            var safeResults = {};
-            _each(_keys(results), function(rkey) {
-              safeResults[rkey] = results[rkey];
-            });
-            safeResults[k] = args;
-            callback(err, safeResults);
-            // stop subsequent errors hitting callback multiple times
-            callback = function () {};
-          }
-          else {
-            results[k] = args;
-            async.setImmediate(taskComplete);
-          }
+        var listeners = [];
+        var addListener = function (fn) {
+            listeners.unshift(fn);
         };
-        var requires = task.slice(0, Math.abs(task.length - 1)) || [];
-        var ready = function () {
-          return _reduce(requires, function (a, x) {
-            return (a && results.hasOwnProperty(x));
-          }, true) && !results.hasOwnProperty(k);
-        };
-        if (ready()) {
-          task[task.length - 1](taskCallback, results);
-        }
-        else {
-          var listener = function () {
-            if (ready()) {
-              removeListener(listener);
-              task[task.length - 1](taskCallback, results);
+        var removeListener = function (fn) {
+            for (var i = 0; i < listeners.length; i += 1) {
+                if (listeners[i] === fn) {
+                    listeners.splice(i, 1);
+                    return;
+                }
             }
-          };
-          addListener(listener);
-        }
-      });
+        };
+        var taskComplete = function () {
+            _each(listeners.slice(0), function (fn) {
+                fn();
+            });
+        };
+
+        addListener(function () {
+            if (_keys(results).length === keys.length) {
+                callback(null, results);
+                callback = function () {};
+            }
+        });
+
+        _each(keys, function (k) {
+            var task = (tasks[k] instanceof Function) ? [tasks[k]]: tasks[k];
+            var taskCallback = function (err) {
+                var args = Array.prototype.slice.call(arguments, 1);
+                if (args.length <= 1) {
+                    args = args[0];
+                }
+                if (err) {
+                    var safeResults = {};
+                    _each(_keys(results), function(rkey) {
+                        safeResults[rkey] = results[rkey];
+                    });
+                    safeResults[k] = args;
+                    callback(err, safeResults);
+                    // stop subsequent errors hitting callback multiple times
+                    callback = function () {};
+                }
+                else {
+                    results[k] = args;
+                    async.setImmediate(taskComplete);
+                }
+            };
+            var requires = task.slice(0, Math.abs(task.length - 1)) || [];
+            var ready = function () {
+                return _reduce(requires, function (a, x) {
+                    return (a && results.hasOwnProperty(x));
+                }, true) && !results.hasOwnProperty(k);
+            };
+            if (ready()) {
+                task[task.length - 1](taskCallback, results);
+            }
+            else {
+                var listener = function () {
+                    if (ready()) {
+                        removeListener(listener);
+                        task[task.length - 1](taskCallback, results);
+                    }
+                };
+                addListener(listener);
+            }
+        });
     };
 
     async.waterfall = function (tasks, callback) {
-      callback = callback || function () {};
-      if (tasks.constructor !== Array) {
-        var err = new Error('First argument to waterfall must be an array of functions');
-        return callback(err);
-      }
-      if (!tasks.length) {
-        return callback();
-      }
-      var wrapIterator = function (iterator) {
-        return function (err) {
-          if (err) {
-            callback.apply(null, arguments);
-            callback = function () {};
-          }
-          else {
-            var args = Array.prototype.slice.call(arguments, 1);
-            var next = iterator.next();
-            if (next) {
-              args.push(wrapIterator(next));
-            }
-            else {
-              args.push(callback);
-            }
-            async.setImmediate(function () {
-              iterator.apply(null, args);
-            });
-          }
+        callback = callback || function () {};
+        if (tasks.constructor !== Array) {
+          var err = new Error('First argument to waterfall must be an array of functions');
+          return callback(err);
+        }
+        if (!tasks.length) {
+            return callback();
+        }
+        var wrapIterator = function (iterator) {
+            return function (err) {
+                if (err) {
+                    callback.apply(null, arguments);
+                    callback = function () {};
+                }
+                else {
+                    var args = Array.prototype.slice.call(arguments, 1);
+                    var next = iterator.next();
+                    if (next) {
+                        args.push(wrapIterator(next));
+                    }
+                    else {
+                        args.push(callback);
+                    }
+                    async.setImmediate(function () {
+                        iterator.apply(null, args);
+                    });
+                }
+            };
         };
-      };
-      wrapIterator(async.iterator(tasks))();
+        wrapIterator(async.iterator(tasks))();
     };
 
     var _parallel = function(eachfn, tasks, callback) {
-      callback = callback || function () {};
-      if (tasks.constructor === Array) {
-        eachfn.map(tasks, function (fn, callback) {
-          if (fn) {
-            fn(function (err) {
-              var args = Array.prototype.slice.call(arguments, 1);
-              if (args.length <= 1) {
-                args = args[0];
-              }
-              callback.call(null, err, args);
+        callback = callback || function () {};
+        if (tasks.constructor === Array) {
+            eachfn.map(tasks, function (fn, callback) {
+                if (fn) {
+                    fn(function (err) {
+                        var args = Array.prototype.slice.call(arguments, 1);
+                        if (args.length <= 1) {
+                            args = args[0];
+                        }
+                        callback.call(null, err, args);
+                    });
+                }
+            }, callback);
+        }
+        else {
+            var results = {};
+            eachfn.each(_keys(tasks), function (k, callback) {
+                tasks[k](function (err) {
+                    var args = Array.prototype.slice.call(arguments, 1);
+                    if (args.length <= 1) {
+                        args = args[0];
+                    }
+                    results[k] = args;
+                    callback(err);
+                });
+            }, function (err) {
+                callback(err, results);
             });
-          }
-        }, callback);
-      }
-      else {
-        var results = {};
-        eachfn.each(_keys(tasks), function (k, callback) {
-          tasks[k](function (err) {
-            var args = Array.prototype.slice.call(arguments, 1);
-            if (args.length <= 1) {
-              args = args[0];
-            }
-            results[k] = args;
-            callback(err);
-          });
-        }, function (err) {
-          callback(err, results);
-        });
-      }
+        }
     };
 
     async.parallel = function (tasks, callback) {
-      _parallel({ map: async.map, each: async.each }, tasks, callback);
+        _parallel({ map: async.map, each: async.each }, tasks, callback);
     };
 
     async.parallelLimit = function(tasks, limit, callback) {
-      _parallel({ map: _mapLimit(limit), each: _eachLimit(limit) }, tasks, callback);
+        _parallel({ map: _mapLimit(limit), each: _eachLimit(limit) }, tasks, callback);
     };
 
     async.series = function (tasks, callback) {
-      callback = callback || function () {};
-      if (tasks.constructor === Array) {
-        async.mapSeries(tasks, function (fn, callback) {
-          if (fn) {
-            fn(function (err) {
-              var args = Array.prototype.slice.call(arguments, 1);
-              if (args.length <= 1) {
-                args = args[0];
-              }
-              callback.call(null, err, args);
+        callback = callback || function () {};
+        if (tasks.constructor === Array) {
+            async.mapSeries(tasks, function (fn, callback) {
+                if (fn) {
+                    fn(function (err) {
+                        var args = Array.prototype.slice.call(arguments, 1);
+                        if (args.length <= 1) {
+                            args = args[0];
+                        }
+                        callback.call(null, err, args);
+                    });
+                }
+            }, callback);
+        }
+        else {
+            var results = {};
+            async.eachSeries(_keys(tasks), function (k, callback) {
+                tasks[k](function (err) {
+                    var args = Array.prototype.slice.call(arguments, 1);
+                    if (args.length <= 1) {
+                        args = args[0];
+                    }
+                    results[k] = args;
+                    callback(err);
+                });
+            }, function (err) {
+                callback(err, results);
             });
-          }
-        }, callback);
-      }
-      else {
-        var results = {};
-        async.eachSeries(_keys(tasks), function (k, callback) {
-          tasks[k](function (err) {
-            var args = Array.prototype.slice.call(arguments, 1);
-            if (args.length <= 1) {
-              args = args[0];
-            }
-            results[k] = args;
-            callback(err);
-          });
-        }, function (err) {
-          callback(err, results);
-        });
-      }
+        }
     };
 
     async.iterator = function (tasks) {
-      var makeCallback = function (index) {
-        var fn = function () {
-          if (tasks.length) {
-            tasks[index].apply(null, arguments);
-          }
-          return fn.next();
+        var makeCallback = function (index) {
+            var fn = function () {
+                if (tasks.length) {
+                    tasks[index].apply(null, arguments);
+                }
+                return fn.next();
+            };
+            fn.next = function () {
+                return (index < tasks.length - 1) ? makeCallback(index + 1): null;
+            };
+            return fn;
         };
-        fn.next = function () {
-          return (index < tasks.length - 1) ? makeCallback(index + 1): null;
-        };
-        return fn;
-      };
-      return makeCallback(0);
+        return makeCallback(0);
     };
 
     async.apply = function (fn) {
-      var args = Array.prototype.slice.call(arguments, 1);
-      return function () {
-        return fn.apply(
-          null, args.concat(Array.prototype.slice.call(arguments))
-        );
-      };
+        var args = Array.prototype.slice.call(arguments, 1);
+        return function () {
+            return fn.apply(
+                null, args.concat(Array.prototype.slice.call(arguments))
+            );
+        };
     };
 
     var _concat = function (eachfn, arr, fn, callback) {
-      var r = [];
-      eachfn(arr, function (x, cb) {
-        fn(x, function (err, y) {
-          r = r.concat(y || []);
-          cb(err);
+        var r = [];
+        eachfn(arr, function (x, cb) {
+            fn(x, function (err, y) {
+                r = r.concat(y || []);
+                cb(err);
+            });
+        }, function (err) {
+            callback(err, r);
         });
-      }, function (err) {
-        callback(err, r);
-      });
     };
     async.concat = doParallel(_concat);
     async.concatSeries = doSeries(_concat);
 
     async.whilst = function (test, iterator, callback) {
-      if (test()) {
-        iterator(function (err) {
-          if (err) {
-            return callback(err);
-          }
-          async.whilst(test, iterator, callback);
-        });
-      }
-      else {
-        callback();
-      }
+        if (test()) {
+            iterator(function (err) {
+                if (err) {
+                    return callback(err);
+                }
+                async.whilst(test, iterator, callback);
+            });
+        }
+        else {
+            callback();
+        }
     };
 
     async.doWhilst = function (iterator, test, callback) {
-      iterator(function (err) {
-        if (err) {
-          return callback(err);
-        }
-        if (test()) {
-          async.doWhilst(iterator, test, callback);
-        }
-        else {
-          callback();
-        }
-      });
+        iterator(function (err) {
+            if (err) {
+                return callback(err);
+            }
+            if (test()) {
+                async.doWhilst(iterator, test, callback);
+            }
+            else {
+                callback();
+            }
+        });
     };
 
     async.until = function (test, iterator, callback) {
-      if (!test()) {
-        iterator(function (err) {
-          if (err) {
-            return callback(err);
-          }
-          async.until(test, iterator, callback);
-        });
-      }
-      else {
-        callback();
-      }
+        if (!test()) {
+            iterator(function (err) {
+                if (err) {
+                    return callback(err);
+                }
+                async.until(test, iterator, callback);
+            });
+        }
+        else {
+            callback();
+        }
     };
 
     async.doUntil = function (iterator, test, callback) {
-      iterator(function (err) {
-        if (err) {
-          return callback(err);
-        }
-        if (!test()) {
-          async.doUntil(iterator, test, callback);
-        }
-        else {
-          callback();
-        }
-      });
+        iterator(function (err) {
+            if (err) {
+                return callback(err);
+            }
+            if (!test()) {
+                async.doUntil(iterator, test, callback);
+            }
+            else {
+                callback();
+            }
+        });
     };
 
     async.queue = function (worker, concurrency) {
-      if (concurrency === undefined) {
-        concurrency = 1;
-      }
-      function _insert(q, data, pos, callback) {
-        if(data.constructor !== Array) {
-          data = [data];
+        if (concurrency === undefined) {
+            concurrency = 1;
         }
-        _each(data, function(task) {
-          var item = {
-            data: task,
-            callback: typeof callback === 'function' ? callback : null
-          };
-
-          if (pos) {
-            q.tasks.unshift(item);
-          } else {
-            q.tasks.push(item);
+        function _insert(q, data, pos, callback) {
+          if(data.constructor !== Array) {
+              data = [data];
           }
+          _each(data, function(task) {
+              var item = {
+                  data: task,
+                  callback: typeof callback === 'function' ? callback : null
+              };
 
-          if (q.saturated && q.tasks.length === concurrency) {
-            q.saturated();
-          }
-          async.setImmediate(q.process);
-        });
-      }
+              if (pos) {
+                q.tasks.unshift(item);
+              } else {
+                q.tasks.push(item);
+              }
 
-      var workers = 0;
-      var q = {
-        tasks: [],
-        concurrency: concurrency,
-        saturated: null,
-        empty: null,
-        drain: null,
-        push: function (data, callback) {
-          _insert(q, data, false, callback);
-        },
-        unshift: function (data, callback) {
-          _insert(q, data, true, callback);
-        },
-        process: function () {
-          if (workers < q.concurrency && q.tasks.length) {
-            var task = q.tasks.shift();
-            if (q.empty && q.tasks.length === 0) {
-              q.empty();
+              if (q.saturated && q.tasks.length === concurrency) {
+                  q.saturated();
+              }
+              async.setImmediate(q.process);
+          });
+        }
+
+        var workers = 0;
+        var q = {
+            tasks: [],
+            concurrency: concurrency,
+            saturated: null,
+            empty: null,
+            drain: null,
+            push: function (data, callback) {
+              _insert(q, data, false, callback);
+            },
+            unshift: function (data, callback) {
+              _insert(q, data, true, callback);
+            },
+            process: function () {
+                if (workers < q.concurrency && q.tasks.length) {
+                    var task = q.tasks.shift();
+                    if (q.empty && q.tasks.length === 0) {
+                        q.empty();
+                    }
+                    workers += 1;
+                    var next = function () {
+                        workers -= 1;
+                        if (task.callback) {
+                            task.callback.apply(task, arguments);
+                        }
+                        if (q.drain && q.tasks.length + workers === 0) {
+                            q.drain();
+                        }
+                        q.process();
+                    };
+                    var cb = only_once(next);
+                    worker(task.data, cb);
+                }
+            },
+            length: function () {
+                return q.tasks.length;
+            },
+            running: function () {
+                return workers;
             }
-            workers += 1;
-            var next = function () {
-              workers -= 1;
-              if (task.callback) {
-                task.callback.apply(task, arguments);
-              }
-              if (q.drain && q.tasks.length + workers === 0) {
-                q.drain();
-              }
-              q.process();
-            };
-            var cb = only_once(next);
-            worker(task.data, cb);
-          }
-        },
-        length: function () {
-          return q.tasks.length;
-        },
-        running: function () {
-          return workers;
-        }
-      };
-      return q;
+        };
+        return q;
     };
 
     async.cargo = function (worker, payload) {
-      var working     = false,
-        tasks       = [];
+        var working     = false,
+            tasks       = [];
 
-      var cargo = {
-        tasks: tasks,
-        payload: payload,
-        saturated: null,
-        empty: null,
-        drain: null,
-        push: function (data, callback) {
-          if(data.constructor !== Array) {
-            data = [data];
-          }
-          _each(data, function(task) {
-            tasks.push({
-              data: task,
-              callback: typeof callback === 'function' ? callback : null
-            });
-            if (cargo.saturated && tasks.length === payload) {
-              cargo.saturated();
+        var cargo = {
+            tasks: tasks,
+            payload: payload,
+            saturated: null,
+            empty: null,
+            drain: null,
+            push: function (data, callback) {
+                if(data.constructor !== Array) {
+                    data = [data];
+                }
+                _each(data, function(task) {
+                    tasks.push({
+                        data: task,
+                        callback: typeof callback === 'function' ? callback : null
+                    });
+                    if (cargo.saturated && tasks.length === payload) {
+                        cargo.saturated();
+                    }
+                });
+                async.setImmediate(cargo.process);
+            },
+            process: function process() {
+                if (working) return;
+                if (tasks.length === 0) {
+                    if(cargo.drain) cargo.drain();
+                    return;
+                }
+
+                var ts = typeof payload === 'number'
+                            ? tasks.splice(0, payload)
+                            : tasks.splice(0);
+
+                var ds = _map(ts, function (task) {
+                    return task.data;
+                });
+
+                if(cargo.empty) cargo.empty();
+                working = true;
+                worker(ds, function () {
+                    working = false;
+
+                    var args = arguments;
+                    _each(ts, function (data) {
+                        if (data.callback) {
+                            data.callback.apply(null, args);
+                        }
+                    });
+
+                    process();
+                });
+            },
+            length: function () {
+                return tasks.length;
+            },
+            running: function () {
+                return working;
             }
-          });
-          async.setImmediate(cargo.process);
-        },
-        process: function process() {
-          if (working) return;
-          if (tasks.length === 0) {
-            if(cargo.drain) cargo.drain();
-            return;
-          }
-
-          var ts = typeof payload === 'number'
-            ? tasks.splice(0, payload)
-            : tasks.splice(0);
-
-          var ds = _map(ts, function (task) {
-            return task.data;
-          });
-
-          if(cargo.empty) cargo.empty();
-          working = true;
-          worker(ds, function () {
-            working = false;
-
-            var args = arguments;
-            _each(ts, function (data) {
-              if (data.callback) {
-                data.callback.apply(null, args);
-              }
-            });
-
-            process();
-          });
-        },
-        length: function () {
-          return tasks.length;
-        },
-        running: function () {
-          return working;
-        }
-      };
-      return cargo;
+        };
+        return cargo;
     };
 
     var _console_fn = function (name) {
-      return function (fn) {
-        var args = Array.prototype.slice.call(arguments, 1);
-        fn.apply(null, args.concat([function (err) {
-          var args = Array.prototype.slice.call(arguments, 1);
-          if (typeof console !== 'undefined') {
-            if (err) {
-              if (console.error) {
-                console.error(err);
-              }
-            }
-            else if (console[name]) {
-              _each(args, function (x) {
-                console[name](x);
-              });
-            }
-          }
-        }]));
-      };
+        return function (fn) {
+            var args = Array.prototype.slice.call(arguments, 1);
+            fn.apply(null, args.concat([function (err) {
+                var args = Array.prototype.slice.call(arguments, 1);
+                if (typeof console !== 'undefined') {
+                    if (err) {
+                        if (console.error) {
+                            console.error(err);
+                        }
+                    }
+                    else if (console[name]) {
+                        _each(args, function (x) {
+                            console[name](x);
+                        });
+                    }
+                }
+            }]));
+        };
     };
     async.log = _console_fn('log');
     async.dir = _console_fn('dir');
     /*async.info = _console_fn('info');
-     async.warn = _console_fn('warn');
-     async.error = _console_fn('error');*/
+    async.warn = _console_fn('warn');
+    async.error = _console_fn('error');*/
 
     async.memoize = function (fn, hasher) {
-      var memo = {};
-      var queues = {};
-      hasher = hasher || function (x) {
-        return x;
-      };
-      var memoized = function () {
-        var args = Array.prototype.slice.call(arguments);
-        var callback = args.pop();
-        var key = hasher.apply(null, args);
-        if (key in memo) {
-          callback.apply(null, memo[key]);
-        }
-        else if (key in queues) {
-          queues[key].push(callback);
-        }
-        else {
-          queues[key] = [callback];
-          fn.apply(null, args.concat([function () {
-            memo[key] = arguments;
-            var q = queues[key];
-            delete queues[key];
-            for (var i = 0, l = q.length; i < l; i++) {
-              q[i].apply(null, arguments);
+        var memo = {};
+        var queues = {};
+        hasher = hasher || function (x) {
+            return x;
+        };
+        var memoized = function () {
+            var args = Array.prototype.slice.call(arguments);
+            var callback = args.pop();
+            var key = hasher.apply(null, args);
+            if (key in memo) {
+                callback.apply(null, memo[key]);
             }
-          }]));
-        }
-      };
-      memoized.memo = memo;
-      memoized.unmemoized = fn;
-      return memoized;
+            else if (key in queues) {
+                queues[key].push(callback);
+            }
+            else {
+                queues[key] = [callback];
+                fn.apply(null, args.concat([function () {
+                    memo[key] = arguments;
+                    var q = queues[key];
+                    delete queues[key];
+                    for (var i = 0, l = q.length; i < l; i++) {
+                      q[i].apply(null, arguments);
+                    }
+                }]));
+            }
+        };
+        memoized.memo = memo;
+        memoized.unmemoized = fn;
+        return memoized;
     };
 
     async.unmemoize = function (fn) {
@@ -4817,1238 +4928,1345 @@ function rulesEngine (formDef) {
     };
 
     async.times = function (count, iterator, callback) {
-      var counter = [];
-      for (var i = 0; i < count; i++) {
-        counter.push(i);
-      }
-      return async.map(counter, iterator, callback);
+        var counter = [];
+        for (var i = 0; i < count; i++) {
+            counter.push(i);
+        }
+        return async.map(counter, iterator, callback);
     };
 
     async.timesSeries = function (count, iterator, callback) {
-      var counter = [];
-      for (var i = 0; i < count; i++) {
-        counter.push(i);
-      }
-      return async.mapSeries(counter, iterator, callback);
+        var counter = [];
+        for (var i = 0; i < count; i++) {
+            counter.push(i);
+        }
+        return async.mapSeries(counter, iterator, callback);
     };
 
     async.compose = function (/* functions... */) {
-      var fns = Array.prototype.reverse.call(arguments);
-      return function () {
-        var that = this;
-        var args = Array.prototype.slice.call(arguments);
-        var callback = args.pop();
-        async.reduce(fns, args, function (newargs, fn, cb) {
-            fn.apply(that, newargs.concat([function () {
-              var err = arguments[0];
-              var nextargs = Array.prototype.slice.call(arguments, 1);
-              cb(err, nextargs);
-            }]))
-          },
-          function (err, results) {
-            callback.apply(that, [err].concat(results));
-          });
-      };
+        var fns = Array.prototype.reverse.call(arguments);
+        return function () {
+            var that = this;
+            var args = Array.prototype.slice.call(arguments);
+            var callback = args.pop();
+            async.reduce(fns, args, function (newargs, fn, cb) {
+                fn.apply(that, newargs.concat([function () {
+                    var err = arguments[0];
+                    var nextargs = Array.prototype.slice.call(arguments, 1);
+                    cb(err, nextargs);
+                }]))
+            },
+            function (err, results) {
+                callback.apply(that, [err].concat(results));
+            });
+        };
     };
 
     var _applyEach = function (eachfn, fns /*args...*/) {
-      var go = function () {
-        var that = this;
-        var args = Array.prototype.slice.call(arguments);
-        var callback = args.pop();
-        return eachfn(fns, function (fn, cb) {
-            fn.apply(that, args.concat([cb]));
-          },
-          callback);
-      };
-      if (arguments.length > 2) {
-        var args = Array.prototype.slice.call(arguments, 2);
-        return go.apply(this, args);
-      }
-      else {
-        return go;
-      }
+        var go = function () {
+            var that = this;
+            var args = Array.prototype.slice.call(arguments);
+            var callback = args.pop();
+            return eachfn(fns, function (fn, cb) {
+                fn.apply(that, args.concat([cb]));
+            },
+            callback);
+        };
+        if (arguments.length > 2) {
+            var args = Array.prototype.slice.call(arguments, 2);
+            return go.apply(this, args);
+        }
+        else {
+            return go;
+        }
     };
     async.applyEach = doParallel(_applyEach);
     async.applyEachSeries = doSeries(_applyEach);
 
     async.forever = function (fn, callback) {
-      function next(err) {
-        if (err) {
-          if (callback) {
-            return callback(err);
-          }
-          throw err;
+        function next(err) {
+            if (err) {
+                if (callback) {
+                    return callback(err);
+                }
+                throw err;
+            }
+            fn(next);
         }
-        fn(next);
-      }
-      next();
+        next();
     };
 
     // AMD / RequireJS
     if (typeof define !== 'undefined' && define.amd) {
-      define([], function () {
-        return async;
-      });
+        define([], function () {
+            return async;
+        });
     }
     // Node.js
     else if (typeof module !== 'undefined' && module.exports) {
-      module.exports = async;
+        module.exports = async;
     }
     // included directly via <script> tag
     else {
-      root.async = async;
+        root.async = async;
     }
 
-  }());
+}());
 
-  /* This is the infix file */
+/* This is the infix file */    
 
   var asyncLoader = module.exports;  // async has updated this, now save in our var, to that it can be returned from our dummy require
   function require() {
     return asyncLoader;
   }
 
-  /* End of infix file */
-  (function () {
+/* End of infix file */
+(function () {
 
-    var async=require('async');
+var async=require('async');
 
-    /*
-     * Sample Usage
-     *
-     * var engine = formsRulesEngine(form-definition);
-     *
-     * engine.validateForms(form-submission, function(err, res) {});
-     *      res:
-     *      {
-     *          "validation": {
-     *              "fieldId": {
-     *                  "fieldId": "",
-     *                  "valid": true,
-     *                  "errorMessages": [
-     *                      "length should be 3 to 5",
-     *                      "should not contain dammit",
-     *                      "should repeat at least 2 times"
-     *                  ]
-     *              },
-     *              "fieldId1": {
-     *
-     *              }
-     *          }
-     *      }
-     *
-     *
-     * engine.validateField(fieldId, submissionJSON, function(err,res) {});
-     *      // validate only field values on validation (no rules, no repeat checking)
-     *      res:
-     *      "validation":{
-     *              "fieldId":{
-     *                  "fieldId":"",
-     *                  "valid":true,
-     *                  "errorMessages":[
-     *                      "length should be 3 to 5",
-     *                      "should not contain dammit"
-     *                  ]
-     *              }
-     *          }
-     *
-     * engine.checkRules(submissionJSON, unction(err, res) {})
-     *      // check all rules actions
-     *      res:
-     *      {
-     *          "actions": {
-     *              "pages": {
-     *                  "targetId": {
-     *                      "targetId": "",
-     *                      "action": "show|hide"
-     *                  }
-     *              },
-     *              "fields": {
-     *
-     *              }
-     *          }
-     *      }
-     *
-     */
+/*
+ * Sample Usage 
+ * 
+ * var engine = formsRulesEngine(form-definition);
+ * 
+ * engine.validateForms(form-submission, function(err, res) {});
+ *      res:
+ *      {
+ *          "validation": {
+ *              "fieldId": {
+ *                  "fieldId": "",
+ *                  "valid": true,
+ *                  "errorMessages": [
+ *                      "length should be 3 to 5",
+ *                      "should not contain dammit",
+ *                      "should repeat at least 2 times"
+ *                  ]
+ *              },
+ *              "fieldId1": {
+ *      
+ *              }
+ *          }
+ *      }
+ * 
+ * 
+ * engine.validateField(fieldId, submissionJSON, function(err,res) {});
+ *      // validate only field values on validation (no rules, no repeat checking)
+ *      res:
+ *      "validation":{
+ *              "fieldId":{
+ *                  "fieldId":"",
+ *                  "valid":true,
+ *                  "errorMessages":[
+ *                      "length should be 3 to 5",
+ *                      "should not contain dammit"
+ *                  ]
+ *              }
+ *          }
+ *      
+ * engine.checkRules(submissionJSON, unction(err, res) {})
+ *      // check all rules actions
+ *      res:
+ *      {
+ *          "actions": {
+ *              "pages": {
+ *                  "targetId": {
+ *                      "targetId": "",
+ *                      "action": "show|hide"
+ *                  }
+ *              },
+ *              "fields": {
+ *      
+ *              }
+ *          }
+ *      }
+ * 
+ */
 
-    var FIELD_TYPE_CHECKBOX = "checkboxes";
-    var FIELD_TYPE_DATETIME = "dateTime";
-    var FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY = "date";
-    var FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY = "time";
-    var FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME = "dateTime";
+var FIELD_TYPE_CHECKBOX = "checkboxes";
+var FIELD_TYPE_DATETIME = "dateTime";
+var FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY = "date";
+var FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY = "time";
+var FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME = "dateTime";
 
-    var formsRulesEngine = function(formDef) {
-      var initialised;
+var formsRulesEngine = function(formDef) {
+  var initialised;
 
-      var definition = formDef;
-      var submission;
+  var definition = formDef;
+  var submission;
 
-      var fieldMap = {};
-      var requiredFieldMap = {};
-      var submissionRequiredFieldsMap = {}; // map to hold the status of the required fields per submission
-      var fieldRulePredicateMap = {};
-      var fieldRuleSubjectMap = {};
-      var pageRulePredicateMap = {};
-      var pageRuleSubjectMap = {};
-      var submissionFieldsMap = {};
-      var validatorsMap = {
-        "text":         validatorString,
-        "textarea":     validatorString,
-        "number":       validatorNumber,
-        "emailAddress": validatorEmail,
-        "dropdown":     validatorDropDown,
-        "radio":        validatorRadio,
-        "checkboxes":   validatorCheckboxes,
-        "location":     validatorLocation,
-        "locationMap":  validatorLocationMap,
-        "photo":        validatorFile,
-        "signature":    validatorFile,
-        "file":         validatorFile,
-        "dateTime":     validatorDateTime,
-        "sectionBreak": validatorSection
-      };
+  var fieldMap = {};
+  var requiredFieldMap = {};
+  var submissionRequiredFieldsMap = {}; // map to hold the status of the required fields per submission
+  var fieldRulePredicateMap = {};
+  var fieldRuleSubjectMap = {};
+  var pageRulePredicateMap = {};
+  var pageRuleSubjectMap = {};
+  var submissionFieldsMap = {};
+  var validatorsMap = {
+    "text":         validatorString,
+    "textarea":     validatorString,
+    "number":       validatorNumber,
+    "emailAddress": validatorEmail,
+    "dropdown":     validatorDropDown,
+    "radio":        validatorRadio,
+    "checkboxes":   validatorCheckboxes,
+    "location":     validatorLocation,
+    "locationMap":  validatorLocationMap,
+    "photo":        validatorFile,
+    "signature":    validatorFile,
+    "file":         validatorFile,
+    "dateTime":     validatorDateTime,
+    "sectionBreak": validatorSection
+  };
 
-      var isFieldRuleSubject = function(fieldId) {
-        return !!fieldRuleSubjectMap[fieldId];
-      };
+  var validatorsClientMap = {
+    "text":         validatorString,
+    "textarea":     validatorString,
+    "number":       validatorNumber,
+    "emailAddress": validatorEmail,
+    "dropdown":     validatorDropDown,
+    "radio":        validatorRadio,
+    "checkboxes":   validatorCheckboxes,
+    "location":     validatorLocation,
+    "locationMap":  validatorLocationMap,
+    "photo":        validatorAnyFile,
+    "signature":    validatorAnyFile,
+    "file":         validatorAnyFile,
+    "dateTime":     validatorDateTime,
+    "sectionBreak": validatorSection
+  };
 
-      var isPageRuleSubject = function(pageId) {
-        return !!pageRuleSubjectMap[pageId];
-      };
+  var isFieldRuleSubject = function(fieldId) {
+    return !!fieldRuleSubjectMap[fieldId];
+  };
 
-      function buildFieldMap(cb) {
-        // Iterate over all fields in form definition & build fieldMap
-        async.each(definition.pages, function(page, cbPages) {
-          async.each(page.fields, function(field, cbFields) {
-            field.pageId = page._id;
-            fieldMap[field._id] = field;
-            if (field.required) {
-              requiredFieldMap[field._id] = {field: field, submitted: false, validated: false};
-            }
-            return cbFields();
-          }, function (err) {
-            return cbPages();
-          });
-        }, cb);
-      }
+  var isPageRuleSubject = function(pageId) {
+    return !!pageRuleSubjectMap[pageId];
+  };
 
-      function buildFieldRuleMaps(cb) {
-        // Iterate over all rules in form definition & build ruleSubjectMap
-        async.each(definition.fieldRules, function(rule, cbRules) {
-          async.each(rule.ruleConditionalStatements, function(ruleConditionalStatement, cbRuleConditionalStatements) {
-            var fieldId = ruleConditionalStatement.sourceField;
-            fieldRulePredicateMap[fieldId] = fieldRulePredicateMap[fieldId] || [];
-            fieldRulePredicateMap[fieldId].push(rule);
-            return cbRuleConditionalStatements();
-          }, function (err) {
-            fieldRuleSubjectMap[rule.targetField] = fieldRuleSubjectMap[rule.targetField] || [];
-            fieldRuleSubjectMap[rule.targetField].push(rule);
-            return cbRules();
-          });
-        }, cb);
-      }
-
-      function buildPageRuleMap(cb) {
-        // Iterate over all rules in form definition & build ruleSubjectMap
-        async.each(definition.pageRules, function(rule, cbRules) {
-          var rulesId = rule._id;
-          async.each(rule.ruleConditionalStatements, function(ruleConditionalStatement, cbRulePredicates) {
-            var fieldId = ruleConditionalStatement.sourceField;
-            pageRulePredicateMap[fieldId] = pageRulePredicateMap[fieldId] || [];
-            pageRulePredicateMap[fieldId].push(rule);
-            return cbRulePredicates();
-          }, function (err) {
-            pageRuleSubjectMap[rule.targetPage] = pageRuleSubjectMap[rule.targetPage] || [];
-            pageRuleSubjectMap[rule.targetPage].push(rule);
-            return cbRules();
-          });
-        }, cb);
-      }
-
-      function buildSubmissionFieldsMap(cb) {
-        submissionRequiredFieldsMap = JSON.parse(JSON.stringify(requiredFieldMap)); // clone the map for use with this submission
-        submissionFieldsMap = {}; // start with empty map, rulesEngine can be called with multiple submissions
-
-        // iterate over all the fields in the submissions and build a map for easier lookup
-        async.each(submission.formFields, function(formField, cb) {
-          if (!formField.fieldId) return cb(new Error("No fieldId in this submission entry: " + util.inspect(formField)));
-
-          submissionFieldsMap[formField.fieldId] = formField;
-          return cb();
-        }, cb);
-      }
-
-      function init(cb) {
-        if(initialised) return cb();
-        async.parallel([
-          buildFieldMap,
-          buildFieldRuleMaps,
-          buildPageRuleMap
-        ], function(err) {
-          if (err) return cb(err);
-          initialised = true;
-          return cb();
-        });
-      }
-
-      function initSubmission(formSubmission, cb) {
-        init(function(err){
-          if (err) return cb(err);
-
-          submission = formSubmission;
-          buildSubmissionFieldsMap(cb);
-        });
-      }
-
-      function getPreviousFieldValues(submittedField, previousSubmission, cb) {
-        if(previousSubmission && previousSubmission.formFields) {
-          async.filter(previousSubmission.formFields, function (formField, cb) {
-            return cb(formField.fieldId.toString() == submittedField.fieldId.toString());
-          }, function (results) {
-            var previousFieldValues = null;
-            if (results && results[0] && results[0].fieldValues) {
-              previousFieldValues = results[0].fieldValues;
-            }
-            return cb(undefined, previousFieldValues);
-          });
-        } else {
-          return cb();
+  function buildFieldMap(cb) {
+    // Iterate over all fields in form definition & build fieldMap
+    async.each(definition.pages, function(page, cbPages) {
+      async.each(page.fields, function(field, cbFields) {
+        field.pageId = page._id;
+        fieldMap[field._id] = field;
+        if (field.required) {
+          requiredFieldMap[field._id] = {field: field, submitted: false, validated: false};
         }
-      }
+        return cbFields();
+      }, function (err) {
+        return cbPages();
+      });
+    }, cb);
+  }
 
-      function validateForm(submission, previousSubmission, cb) {
-        if ("function" === typeof previousSubmission) {
-          cb = previousSubmission;
-          previousSubmission = null;
+  function buildFieldRuleMaps(cb) {
+    // Iterate over all rules in form definition & build ruleSubjectMap 
+    async.each(definition.fieldRules, function(rule, cbRules) {
+      async.each(rule.ruleConditionalStatements, function(ruleConditionalStatement, cbRuleConditionalStatements) {
+        var fieldId = ruleConditionalStatement.sourceField;
+        fieldRulePredicateMap[fieldId] = fieldRulePredicateMap[fieldId] || [];
+        fieldRulePredicateMap[fieldId].push(rule);
+        return cbRuleConditionalStatements();
+      }, function (err) {
+        fieldRuleSubjectMap[rule.targetField] = fieldRuleSubjectMap[rule.targetField] || [];
+        fieldRuleSubjectMap[rule.targetField].push(rule);
+        return cbRules();
+      });
+    }, cb);  
+  }
+
+  function buildPageRuleMap(cb) {
+    // Iterate over all rules in form definition & build ruleSubjectMap 
+    async.each(definition.pageRules, function(rule, cbRules) {
+      var rulesId = rule._id;
+      async.each(rule.ruleConditionalStatements, function(ruleConditionalStatement, cbRulePredicates) {
+        var fieldId = ruleConditionalStatement.sourceField;
+        pageRulePredicateMap[fieldId] = pageRulePredicateMap[fieldId] || [];
+        pageRulePredicateMap[fieldId].push(rule);
+        return cbRulePredicates();
+      }, function (err) {
+        pageRuleSubjectMap[rule.targetPage] = pageRuleSubjectMap[rule.targetPage] || [];
+        pageRuleSubjectMap[rule.targetPage].push(rule);
+        return cbRules();
+      });
+    }, cb);
+  }
+
+  function buildSubmissionFieldsMap(cb) {
+    submissionRequiredFieldsMap = JSON.parse(JSON.stringify(requiredFieldMap)); // clone the map for use with this submission
+    submissionFieldsMap = {}; // start with empty map, rulesEngine can be called with multiple submissions
+
+    // iterate over all the fields in the submissions and build a map for easier lookup
+    async.each(submission.formFields, function(formField, cb) {
+      if (!formField.fieldId) return cb(new Error("No fieldId in this submission entry: " + util.inspect(formField)));
+
+      submissionFieldsMap[formField.fieldId] = formField;
+      return cb();
+    }, cb);
+  }
+
+  function init(cb) {
+    if(initialised) return cb();
+    async.parallel([
+      buildFieldMap,
+      buildFieldRuleMaps,
+      buildPageRuleMap
+    ], function(err) {
+      if (err) return cb(err);
+      initialised = true;
+      return cb();
+    });
+  }
+
+  function initSubmission(formSubmission, cb) {
+    init(function(err){
+      if (err) return cb(err);
+
+      submission = formSubmission;
+      buildSubmissionFieldsMap(cb);
+    });
+  }
+
+  function getPreviousFieldValues(submittedField, previousSubmission, cb) {
+    if(previousSubmission && previousSubmission.formFields) {
+      async.filter(previousSubmission.formFields, function (formField, cb) {
+        return cb(formField.fieldId.toString() == submittedField.fieldId.toString());
+      }, function (results) {
+        var previousFieldValues = null;
+        if (results && results[0] && results[0].fieldValues) {
+          previousFieldValues = results[0].fieldValues;
         }
-        init(function(err){
-          if (err) return cb(err);
+        return cb(undefined, previousFieldValues);
+      });
+    } else {
+      return cb();
+    }
+  }
 
-          initSubmission(submission, function (err) {
-            if (err) return cb(err);
+  function validateForm(submission, previousSubmission, cb) {
+    if ("function" === typeof previousSubmission) {
+      cb = previousSubmission;
+      previousSubmission = null;
+    }
+    init(function(err){
+      if (err) return cb(err);
 
-            async.waterfall([
-              function (cb) {
-                return cb(undefined, {validation:{valid: true}});  // any invalid fields will set this to false
-              },
-              function (res, cb) {
-                validateSubmittedFields(res, previousSubmission, cb);
-              },
-              checkIfRequiredFieldsNotSubmitted,
-            ], function (err, results) {
-              if (err) return cb(err);
+      initSubmission(submission, function (err) {
+        if (err) return cb(err);
 
-              return cb(undefined, results);
-            });
-          });
-        });
-      }
-
-      function validateSubmittedFields(res, previousSubmission, cb) {
-        // for each field, call validateField
-        async.each(submission.formFields, function(submittedField, callback) {
-          var fieldID = submittedField.fieldId;
-          var fieldDef = fieldMap[fieldID];
-
-          getPreviousFieldValues(submittedField, previousSubmission, function (err, previousFieldValues) {
-            if(err) return callback(err);
-            getFieldValidationStatus(submittedField, fieldDef, previousFieldValues, function(err, fieldRes) {
-              if(err) return callback(err);
-
-              if (!fieldRes.valid) {
-                res.validation.valid = false;        // indicate invalid form if any fields invalid
-                res.validation[fieldID] = fieldRes;  // add invalid field info to validate form result
-              }
-
-              return callback();
-            });
-
-          });
-        }, function(err) {
-          if( err ) {
-            return cb(err);
-          }
-          return cb(undefined, res);
-        });
-      }
-
-      function checkIfRequiredFieldsNotSubmitted(res, cb) {
-        async.each(Object.keys(submissionRequiredFieldsMap), function (requiredFieldId, cb) {
-          var resField = {};
-          if (!submissionRequiredFieldsMap[requiredFieldId].submitted) {
-            isFieldVisible(requiredFieldId, true, function (err, visible) {
-              if (err) return cb(err);
-              if (visible) {  // we only care about required fields if they are visible
-                resField.fieldId = requiredFieldId;
-                resField.valid = false;
-                resField.fieldErrorMessage = ["Required Field Not Submitted"];
-                res.validation[requiredFieldId] = resField;
-                res.validation.valid = false;
-              }
-              return cb();
-            });
-          } else { // was included in submission
-            return cb();
-          }
-        }, function (err) {
-          if (err) return cb(err);
-          return cb(undefined, res);
-        });
-      }
-
-      /*
-       * validate only field values on validation (no rules, no repeat checking)
-       *     res:
-       *     "validation":{
-       *             "fieldId":{
-       *                 "fieldId":"",
-       *                 "valid":true,
-       *                 "errorMessages":[
-       *                     "length should be 3 to 5",
-       *                     "should not contain dammit"
-       *                 ]
-       *             }
-       *         }
-       */
-      function validateField(fieldId, submission, cb) {
-        init(function(err){
+        async.waterfall([
+          function (cb) {
+            return cb(undefined, {validation:{valid: true}});  // any invalid fields will set this to false
+          },
+          function (res, cb) {
+            validateSubmittedFields(res, previousSubmission, cb);            
+          },
+          checkIfRequiredFieldsNotSubmitted,
+        ], function (err, results) {
           if (err) return cb(err);
 
-          initSubmission(submission, function (err) {
-            if (err) return cb(err);
-
-            var submissionField = submissionFieldsMap[fieldId];
-            var fieldDef = fieldMap[fieldId];
-            getFieldValidationStatus(submissionField, fieldDef, null, function (err, res) {
-              if (err) return cb(err);
-              var ret = {validation: {}};
-              ret.validation[fieldId] = res;
-              return cb(undefined, ret);
-            });
-          });
+          return cb(undefined, results);
         });
-      }
+      });
+    });
+  }
 
-      /*
-       * validate only single field value (no rules, no repeat checking)
-       * cb(err, result)
-       * example of result:
-       * "validation":{
-       *         "fieldId":{
-       *             "fieldId":"",
-       *             "valid":true,
-       *             "errorMessages":[
-       *                 "length should be 3 to 5",
-       *                 "should not contain dammit"
-       *             ]
-       *         }
-       *     }
-       */
-      function validateFieldValue(fieldId, inputValue, cb) {
-        init(function(err){
+  function validateSubmittedFields(res, previousSubmission, cb) {
+    // for each field, call validateField
+    async.each(submission.formFields, function(submittedField, callback) {
+      var fieldID = submittedField.fieldId;
+      var fieldDef = fieldMap[fieldID];
+
+      getPreviousFieldValues(submittedField, previousSubmission, function (err, previousFieldValues) {
+        if(err) return callback(err);
+        getFieldValidationStatus(submittedField, fieldDef, previousFieldValues, function(err, fieldRes) {
+          if(err) return callback(err);
+
+          if (!fieldRes.valid) {
+            res.validation.valid = false;        // indicate invalid form if any fields invalid
+            res.validation[fieldID] = fieldRes;  // add invalid field info to validate form result
+          }
+
+          return callback();
+        });
+
+      });
+    }, function(err) {
+      if( err ) {
+        return cb(err);
+      }
+      return cb(undefined, res);
+    });
+  }
+
+  function checkIfRequiredFieldsNotSubmitted(res, cb) {
+    async.each(Object.keys(submissionRequiredFieldsMap), function (requiredFieldId, cb) {
+      var resField = {};
+      if (!submissionRequiredFieldsMap[requiredFieldId].submitted) {
+        isFieldVisible(requiredFieldId, true, function (err, visible) {
           if (err) return cb(err);
-          var fieldDefinition = fieldMap[fieldId];
-
-          // Check if the array index is within the required range
-          // This means either a single required field (i.e. not repeating & index = 0
-          // OR, a repeating field & index < minRepeat
-
-          getValidatorFunction(fieldDefinition.type, function (err, validator) {
-            if (err) return cb(err);
-
-            validator(inputValue, fieldDefinition, undefined, function (err) {
-              var messages = {errorMessages: []}
-              if(err) {
-                messages.errorMessages.push(err.message);
-              }
-              return createValidatorResponse(fieldId, messages, function (err, res) {
-                if (err) return cb(err);
-                var ret = {validation: {}};
-                ret.validation[fieldId] = res;
-                return cb(undefined, ret);
-              });
-            });
-          });
+          if (visible) {  // we only care about required fields if they are visible
+            resField.fieldId = requiredFieldId;
+            resField.valid = false;
+            resField.fieldErrorMessage = ["Required Field Not Submitted"];
+            res.validation[requiredFieldId] = resField;
+            res.validation.valid = false;                    
+          }
+          return cb();                  
         });
-      }
-
-
-      function createValidatorResponse(fieldId, messages, cb) {
-        // intentionally not checking err here, used further down to get validation errors
-        var res = {};
-        res.fieldId = fieldId;
-        res.errorMessages = messages.errorMessages || [];
-        res.fieldErrorMessage = messages.fieldErrorMessage || [];
-        async.some(res.errorMessages, function (item, cb) {
-          return cb(item !== null);
-        }, function (someErrors) {
-          res.valid = !someErrors && (res.fieldErrorMessage.length < 1);
-
-          return cb(undefined, res);
-        });
-      }
-
-      function getFieldValidationStatus(submittedField, fieldDef, previousFieldValues, cb) {
-        validateFieldInternal(submittedField, fieldDef, previousFieldValues, function (err, messages) {
-          if(err) return cb(err);
-          createValidatorResponse(submittedField.fieldId, messages, cb);
-        });
-      }
-
-
-      function getValidatorFunction(fieldType, cb) {
-        var validator = validatorsMap[fieldType];
-        if (!validator) {
-          return cb(new Error("Invalid Field Type " + fieldType));
-        }
-
-        return cb(undefined, validator);
-      }
-
-      function validateFieldInternal(submittedField, fieldDef, previousFieldValues, cb) {
-        if ("function" === typeof previousFieldValues) {
-          cb = previousFieldValues;
-          previousFieldValues = null;
-        }
-
-        countSubmittedValues(submittedField, function(err, numSubmittedValues) {
-          if(err) return cb(err);
-          async.series({
-            valuesSubmitted:
-              async.apply(checkValueSubmitted, submittedField, fieldDef),
-            repeats:
-              async.apply(checkRepeat, numSubmittedValues, fieldDef),
-            values:
-              async.apply(checkValues, submittedField, fieldDef, previousFieldValues)
-          }, function (err, results) {
-            if(err) return cb(err);
-
-            var fieldErrorMessages = [];
-            if(results.valuesSubmitted) {
-              fieldErrorMessages.push(results.valuesSubmitted);
-            }
-            if(results.repeats) {
-              fieldErrorMessages.push(results.repeats);
-            }
-            return cb(undefined, {fieldErrorMessage: fieldErrorMessages, errorMessages: results.values});
-          });
-        });
-
-        return;  // just functions below this
-
-        function checkValueSubmitted(submittedField, fieldDefinition, cb) {
-          var valueSubmitted = submittedField && submittedField.fieldValues && (submittedField.fieldValues.length > 0);
-          if (!valueSubmitted) {
-            return cb(undefined, "No value submitted for field " + fieldDefinition.name);
-          }
-          return cb(undefined, null);
-        }
-
-        function countSubmittedValues(submittedField, cb) {
-          var numSubmittedValues = 0;
-          if(submittedField && submittedField.fieldValues && submittedField.fieldValues.length > 0) {
-            for(var i=0; i<submittedField.fieldValues.length; i += 1) {
-              if(submittedField.fieldValues[i]) {
-                numSubmittedValues += 1;
-              }
-            }
-          }
-          return cb(undefined, numSubmittedValues);
-        }
-
-        function checkRepeat(numSubmittedValues, fieldDefinition, cb) {
-
-          if(fieldDefinition.repeating && fieldDefinition.fieldOptions.definition){
-            if(fieldDefinition.fieldOptions.definition.minRepeat){
-              if(numSubmittedValues < fieldDefinition.fieldOptions.definition.minRepeat){
-                return cb(undefined, "Expected min of " + fieldDefinition.fieldOptions.definition.minRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues);
-              }
-            }
-
-            if (fieldDefinition.fieldOptions.definition.maxRepeat){
-              if(numSubmittedValues > fieldDefinition.fieldOptions.definition.maxRepeat){
-                return cb(undefined, "Expected max of " + fieldDefinition.fieldOptions.definition.maxRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues);
-              }
-            }
-          } else {
-            if(numSubmittedValues > 1) {
-              return cb(undefined, "Should not have multiple values for non-repeating field");
-            }
-          }
-
-          return cb(undefined, null);
-        }
-
-        function checkValues(submittedField, fieldDefinition, previousFieldValues, cb) {
-          getValidatorFunction(fieldDefinition.type, function (err, validator) {
-
-            async.map(submittedField.fieldValues, function(fieldValue, cb){
-              if('undefined' === typeof fieldValue || null === fieldValue) {
-                return cb(undefined, null);
-              } else {
-                validator(fieldValue, fieldDefinition, previousFieldValues, function(validationError) {
-                  var errorMessage;
-                  if(validationError) {
-                    errorMessage = validationError.message || "Error during validation of field";
-                  } else {
-                    errorMessage = null;
-                  }
-
-                  if (submissionRequiredFieldsMap[fieldDefinition._id]) {   // set to true if at least one value
-                    submissionRequiredFieldsMap[fieldDefinition._id].submitted = true;
-                  }
-
-                  return cb(undefined, errorMessage);
-                });
-              }
-            }, function (err, results) {
-              if (err) return cb(err);
-
-              return cb(undefined, results);
-            });
-          });
-        }
-
-      }
-
-      function validatorString (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(typeof fieldValue !== "string"){
-          return cb(new Error("Expected string but got" + typeof(fieldValue)));
-        }
-
-        if(fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.min){
-          if(fieldValue.length < fieldDefinition.fieldOptions.validation.min){
-            return cb(new Error("Expected minimum string length of " + fieldDefinition.fieldOptions.validation.min + " but submission is " + fieldValue.length + ". Submitted val: " + fieldValue));
-          }
-        }
-
-        if(fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.max){
-          if(fieldValue.length > fieldDefinition.fieldOptions.validation.max){
-            return cb(new Error("Expected maximum string length of " + fieldDefinition.fieldOptions.validation.max + " but submission is " + fieldValue.length + ". Submitted val: " + fieldValue));
-          }
-        }
-
+      } else { // was included in submission
         return cb();
       }
+    }, function (err) {
+      if (err) return cb(err);
+      return cb(undefined, res);
+    });
+  }
 
-      function validatorNumber (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(typeof fieldValue !== "number"){
-          return cb(new Error("Expected number but got " + typeof(fieldValue)));
-        }
+ /*
+  * validate only field values on validation (no rules, no repeat checking)
+  *     res:
+  *     "validation":{
+  *             "fieldId":{
+  *                 "fieldId":"",
+  *                 "valid":true,
+  *                 "errorMessages":[
+  *                     "length should be 3 to 5",
+  *                     "should not contain dammit"
+  *                 ]
+  *             }
+  *         }
+  */
+ function validateField(fieldId, submission, cb) {
+   init(function(err){
+      if (err) return cb(err);
 
-        if(fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.min){
-          if(fieldValue < fieldDefinition.fieldOptions.validation.min){
-            return cb(new Error("Expected minimum Number " + fieldDefinition.fieldOptions.validation.min + " but submission is " + fieldValue + ". Submitted number: " + fieldValue));
-          }
-        }
+      initSubmission(submission, function (err) {
+        if (err) return cb(err);
 
-        if (fieldDefinition.fieldOptions.validation.max){
-          if(fieldValue > fieldDefinition.fieldOptions.validation.max){
-            return cb(new Error("Expected maximum Number " + fieldDefinition.fieldOptions.validation.max + " but submission is " + fieldValue + ". Submitted number: " + fieldValue));
-          }
-        }
-
-        return cb();
-      }
-
-      function validatorEmail (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(typeof(fieldValue) !== "string"){
-          return cb(new Error("Expected string but got" + typeof(fieldValue)));
-        }
-
-        if(fieldValue.match(/[-0-9a-zA-Z.+_]+@[-0-9a-zA-Z.+_]+\.[a-zA-Z]{2,4}/g) === null){
-          return cb(new Error("Invalid email address format: " + fieldValue));
-        } else {
-          return cb();
-        }
-      }
-
-      function validatorDropDown (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(typeof(fieldValue) !== "string"){
-          return cb(new Error("Expected dropdown submission to be string but got " + typeof(fieldValue)));
-        }
-
-        //Check value exists in the field definition
-        if(!fieldDefinition.fieldOptions.definition.options){
-          return cb(new Error("No dropdown options exist for field " + fieldDefinition.name));
-        }
-
-        var matchingOptions = fieldDefinition.fieldOptions.definition.options.filter(function(dropdownOption){
-          return dropdownOption.label === fieldValue;
-        });
-
-        if(matchingOptions.length !== 1){
-          return cb(new Error("Invalid number of dropdown options found: " + matchingOptions.length));
-        }
-
-        return cb();
-      }
-
-      function validatorRadio (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(typeof(fieldValue) !== "string"){
-          return cb(new Error("Expected radio submission to be string but got " + typeof(fieldValue)));
-        }
-
-        //Check value exists in the field definition
-        if(!fieldDefinition.fieldOptions.definition.options){
-          return cb(new Error("No radio options exist for field " + fieldDefinition.name));
-        }
-
-        var matchingOptions = fieldDefinition.fieldOptions.definition.options.filter(function(radioOption){
-          return radioOption.label === fieldValue;
-        });
-
-        if(matchingOptions.length !== 1){
-          return cb(new Error("Invalid number of radio options found: " + matchingOptions.length));
-        }
-
-        return cb();
-      }
-
-      function validatorCheckboxes (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        var minVal;
-        if (fieldDefinition && fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) {
-          minVal = fieldDefinition.fieldOptions.validation.min;
-        }
-        var maxVal;
-        if (fieldDefinition && fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) {
-          maxVal = fieldDefinition.fieldOptions.validation.max;
-        }
-
-        if (minVal) {
-          if(fieldValue.selections === null || fieldValue.selections === undefined || fieldValue.selections.length < minVal){
-            var len;
-            if(fieldValue.selections) {
-              len = fieldValue.selections.length;
-            }
-            return cb(new Error("Expected a minimum number of selections " + minVal + " but got " + len));
-          }
-        }
-
-        if(maxVal){
-          if(fieldValue.selections){
-            if(fieldValue.selections.length > maxVal){
-              return cb(new Error("Expected a maximum number of selections " + maxVal + " but got " + fieldValue.selections.length));
-            }
-          }
-        }
-
-        var optionsInCheckbox = [];
-
-        async.eachSeries(fieldDefinition.fieldOptions.definition.checkboxChoices, function(choice, cb){
-          for(var choiceName in choice){
-            optionsInCheckbox.push(choiceName);
-          }
-          return cb();
-        }, function(err){
-          async.eachSeries(fieldValue.selections, function(selection, cb){
-            if(typeof(selection) !== "string"){
-              return cb(new Error("Expected checkbox submission to be string but got " + typeof(selection)));
-            }
-
-            if(optionsInCheckbox.indexOf(selection) === -1){
-              return cb(new Error("Checkbox Option " + selection + " does not exist in the field."));
-            }
-
-            return cb();
-          }, cb);
-        });
-      }
-
-      function validatorLocationMap (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(fieldValue.lat && fieldValue.long) {
-          if(isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue.lat))) {
-            return cb(new Error("Invalid latitude and longitude values"));
-          } else {
-            return cb();
-          }
-        } else {
-          return cb(new Error("Invalid object for locationMap submission"));
-        }
-      }
-
-
-      function validatorLocation (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(fieldDefinition.fieldOptions.definition.locationUnit === "latLong") {
-          if(fieldValue.lat && fieldValue.long){
-            if(isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue.lat))){
-              return cb(new Error("Invalid latitude and longitude values"));
-            } else {
-              return cb();
-            }
-          } else {
-            return cb(new Error("Invalid object for latitude longitude submission"));
-          }
-        } else {
-          if(fieldValue.zone && fieldValue.eastings && fieldValue.northings){
-            //Zone must be 3 characters, eastings 6 and northings 9
-            return validateNorthingsEastings(fieldValue, cb);
-          } else {
-            return cb(new Error("Invalid object for northings easting submission. Zone, Eastings and Northings elemets are required"));
-          }
-        }
-
-        function validateNorthingsEastings(fieldValue, cb){
-          if(typeof(fieldValue.zone) !== "string" || fieldValue.zone.length !== 3){
-            return cb(new Error("Invalid zone definition for northings and eastings location. " + fieldValue.zone));
-          }
-
-          if(typeof(fieldValue.eastings) !== "string" || fieldValue.eastings.length !== 6){
-            return cb(new Error("Invalid eastings definition for northings and eastings location. " + fieldValue.eastings));
-          }
-
-          if(typeof(fieldValue.northings) !== "string" || fieldValue.northings.length !== 7){
-            return cb(new Error("Invalid northings definition for northings and eastings location. " + fieldValue.northings));
-          }
-
-          return cb();
-        }
-      }
-
-      function validatorFile (fieldValue, fieldDefinition, previousFieldValues, cb) {
-
-        if( fieldValue instanceof HTMLInputElement || fieldValue instanceof File ) {
-          // Happy Days!!!!
-          return cb();
-        }
-
-        if(typeof(fieldValue) !== "object"){
-          return cb(new Error("Expected object but got" + typeof(fieldValue)));
-        }
-
-        var keyTypes = [
-          { keyName: "fileName", valueType: "string" },
-          { keyName: "fileSize", valueType: "number" },
-          { keyName: "fileType", valueType: "string" },
-          { keyName: "fileUpdateTime", valueType: "number" },
-          { keyName: "hashName", valueType: "string" }
-        ];
-
-        async.each(keyTypes, function (keyType, cb) {
-          var actualType = typeof fieldValue[keyType.keyName];
-          if (actualType !== keyType.valueType) {
-            return cb(new Error("Expected " + keyType.valueType + " but got " + actualType));
-          }
-          if (actualType === "string" && fieldValue[keyType.keyName].length <=0) {
-            return cb(new Error("Expected value for " + keyType.keyName));
-          }
-
-          return cb();
-        }, function (err) {
+        var submissionField = submissionFieldsMap[fieldId];
+        var fieldDef = fieldMap[fieldId];
+        getFieldValidationStatus(submissionField, fieldDef, null, function (err, res) {
           if (err) return cb(err);
-
-          if(fieldValue.hashName.indexOf("filePlaceHolder") > -1){ //TODO abstract out to config
-            return cb();
-          } else if (previousFieldValues && previousFieldValues.hashName && previousFieldValues.hashName.indexOf(fieldValue.hashName) > -1){
-            return cb();
-          } else {
-            return cb(new Error("Invalid file placeholder text" + fieldValue.hashName));
-          }
-
+          var ret = {validation: {}};
+          ret.validation[fieldId] = res;
+          return cb(undefined, ret);
         });
+      });
+    });
+  }
 
-      }
-
-      function validatorDateTime  (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        var testDate;
-
-        if(typeof(fieldValue) !== "string"){
-          return cb(new Error("Expected string but got" + typeof(fieldValue)));
-        }
-
-        switch (fieldDefinition.fieldOptions.definition.dateTimeUnit)
-        {
-          case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-            try{
-              testDate = new Date(fieldValue);
-              valid = (testDate.toString() !== "Invalid Date");
-            }catch(e){
-              valid = false;
-            }
-            if (valid) {
-              return cb();
-            } else {
-              return cb(new Error("Invalid date value " + fieldValue));
-            }
-            break;
-          case FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY:
-            var parts = fieldValue.split(':');
-            valid = (parts.length === 2) || (parts.length === 3);
-            if (valid) {
-              valid = isNumberBetween(parts[0], 0, 23);
-            }
-            if (valid) {
-              valid = isNumberBetween(parts[1], 0, 59);
-            }
-            if (valid && (parts.length === 3)) {
-              valid = isNumberBetween(parts[2], 0, 59);
-            }
-            if (valid) {
-              return cb();
-            } else {
-              return cb(new Error("Invalid date value " + fieldValue));
-            }
-            break;
-          case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-            try{
-              testDate = new Date(fieldValue);
-
-              if(testDate.toString() === "Invalid Date"){
-                return cb(new Error("Invalid dateTime string " + fieldValue));
-              } else {
-                return cb();
-              }
-            }catch(e){
-              return cb(new Error("Invalid dateTime string " + fieldValue));
-            }
-            break;
-          default:
-            return cb(new Error("Invalid dateTime fieldtype " + fieldOptions.definition.dateTimeUnit));
-        }
-      }
-
-      function validatorSection (value, fieldDefinition, previousFieldValues, cb) {
-        return cb(new Error("Should not submit section field: " + fieldDefinition.name));
-      }
-
-      function rulesResult(rules, cb) {
-        var visible = true;
-
-        // Itterate over each rule that this field is a predicate of
-        async.each(rules, function(rule, cbRule) {
-          // For each rule, itterate over the predicate fields and evaluate the rule
-          var predicateMapQueries = [];
-          var predicateMapPassed = [];
-          async.each(rule.ruleConditionalStatements, function(ruleConditionalStatement, cbPredicates) {
-            var field = fieldMap[ruleConditionalStatement.sourceField];
-            var passed = false;
-            var submissionValues = [];
-            if (submissionFieldsMap[ruleConditionalStatement.sourceField] && submissionFieldsMap[ruleConditionalStatement.sourceField].fieldValues) {
-              submissionValues = submissionFieldsMap[ruleConditionalStatement.sourceField].fieldValues;
-              var condition = ruleConditionalStatement.restriction;
-              var testValue = ruleConditionalStatement.sourceValue;
-
-              // Validate rule predictes on the first entry only.
-              passed = isConditionActive(field, submissionValues[0], testValue, condition);
-            }
-            predicateMapQueries.push({"field": field,
-              "submissionValues": submissionValues,
-              "condition": condition,
-              "testValue": testValue,
-              "passed" : passed
-            });
-
-            if( passed ) {
-              predicateMapPassed.push(field);
-            }
-            return cbPredicates();
-          }, function(err) {
-            if(err) cbRule(err);
-
-            function rulesPassed (condition, passed, queries) {
-              return ( (condition === "and" ) && (( passed.length == queries.length ))) ||  // "and" condition - all rules must pass
-                ( (condition === "or" )  && (( passed.length > 0 )));                        // "or" condition - only one rule must pass
-            }
-
-            if (rulesPassed(rule.ruleConditionalOperator, predicateMapPassed, predicateMapQueries)) {
-              visible = (rule.type === "show");
-            } else {
-              visible = (rule.type !== "show");
-            }
-            return cbRule();
-          });
-        }, function(err) {
-          if (err) return cb(err);
-
-          return cb(undefined, visible);
-        });
-      }
-
-      function isPageVisible(pageId, cb) {
-        init(function(err){
-          if (err) return cb(err);
-
-          if (isPageRuleSubject(pageId)) {  // if the page is the target of a rule
-            return rulesResult(pageRuleSubjectMap[pageId], cb);  // execute page rules
-          } else {
-            return cb(undefined, true);  // if page is not subject of any rule then must be visible
-          }
-        });
-      }
-
-      function isFieldVisible(fieldId, checkContainingPage, cb) {
-        /*
-         * fieldId = Id of field to check for reule predeciate references
-         * checkContainingPage = if true check page containing field, and return false if the page is hidden
-         */
-        init(function(err){
-          if (err) return cb(err);
-
-          // Fields are visable by default
-          var visible = true;
-
-          var field = fieldMap[fieldId];
-          if (!fieldId) return cb(new Error("Field does not exist in form"));
-
-          async.waterfall([
-            function testPage(cb) {
-              if (checkContainingPage) {
-                isPageVisible(field.pageId, cb);
-              } else {
-                return cb(undefined, true);
-              }
-            },
-            function testField(pageVisible, cb) {
-              if (!pageVisible) {  // if page containing field is not visible then don't need to check field
-                return cb(undefined, false);
-              }
-
-              if (isFieldRuleSubject(fieldId) ) { // If the field is the subject of a rule it may have been hidden
-                return rulesResult(fieldRuleSubjectMap[fieldId], cb);  // execute field rules
-              } else {
-                return cb(undefined, true); // if not subject of field rules then can't be hidden
-              }
-            }
-          ], cb);
-        });
-      }
-
-      /*
-       * check all rules actions
-       *      res:
-       *      {
-       *          "actions": {
-       *              "pages": {
-       *                  "targetId": {
-       *                      "targetId": "",
-       *                      "action": "show|hide"
-       *                  }
-       *              },
-       *              "fields": {
-       *              }
-       *          }
-       *      }
-       */
-      function checkRules(submissionJSON, cb) {
-        init(function(err){
-          if (err) return cb(err);
-
-          initSubmission(submissionJSON, function (err) {
-            if(err) return cb(err);
-            var actions = {};
-
-            async.parallel([
-              function (cb) {
-                actions.fields = {};
-                async.eachSeries(Object.keys(fieldRuleSubjectMap), function (fieldId, cb) {
-                  isFieldVisible(fieldId, false, function (err, fieldVisible) {
-                    if (err) return cb(err);
-                    actions.fields[fieldId] = {targetId: fieldId, action: (fieldVisible?"show":"hide")};
-                    return cb();
-                  });
-                }, cb);
-              },
-              function (cb) {
-                actions.pages = {};
-                async.eachSeries(Object.keys(pageRuleSubjectMap), function (pageId, cb) {
-                  isPageVisible(pageId, function (err, pageVisible) {
-                    if (err) return cb(err);
-                    actions.pages[pageId] = {targetId: pageId, action: (pageVisible?"show":"hide")};
-                    return cb();
-                  });
-                }, cb);
-              }
-            ], function (err) {
-              if(err) return cb(err);
-
-              return cb(undefined, {actions: actions});
-            });
-          });
-        });
-      }
-
-      return {
-        validateForm: validateForm,
-        validateField: validateField,
-        validateFieldValue: validateFieldValue,
-        checkRules: checkRules,
-
-        // The following are used internally, but exposed for tests
-        validateFieldInternal: validateFieldInternal,
-        initSubmission: initSubmission,
-        isFieldVisible: isFieldVisible,
-        isConditionActive: isConditionActive
-      };
-    };
-
-    function isNumberBetween(num, min, max) {
-      var numVal = parseInt(num,10);
-      return (!isNaN(numVal) && (numVal >= min) && (numVal <= max));
+/*
+ * validate only single field value (no rules, no repeat checking)
+ * cb(err, result)
+ * example of result:
+ * "validation":{
+ *         "fieldId":{
+ *             "fieldId":"",
+ *             "valid":true,
+ *             "errorMessages":[
+ *                 "length should be 3 to 5",
+ *                 "should not contain dammit"
+ *             ]
+ *         }
+ *     }
+ */
+  function validateFieldValue(fieldId, inputValue, valueIndex, cb) {
+    if ("function" === typeof valueIndex) {
+      cb = valueIndex;
+      valueIndex = 0;
     }
 
-    function cvtTimeToSeconds(fieldValue) {
-      var seconds = 0;
-      if (typeof fieldValue === "string") {
+    init(function(err){
+      if (err) return cb(err);
+      var fieldDefinition = fieldMap[fieldId];
+
+      var required = false;
+      if(fieldDefinition.repeating && 
+         fieldDefinition.fieldOptions &&
+         fieldDefinition.fieldOptions.definition &&
+         fieldDefinition.fieldOptions.definition.minRepeat) {
+        required = (valueIndex < fieldDefinition.fieldOptions.definition.minRepeat);
+      } else {
+        required = fieldDefinition.required;
+      }
+
+      if(required && (("undefined" === typeof inputValue) || (null === inputValue))) {
+        return formatResponse("No value specified for required input", cb);
+      } else if(!required && (("undefined" === typeof inputValue) || (null === inputValue))) {
+        return formatResponse(undefined, cb);  // optional field not supplied is valid
+      }
+
+      getClientValidatorFunction(fieldDefinition.type, function (err, validator) {
+        if (err) return cb(err);
+
+        validator(inputValue, fieldDefinition, undefined, function (err) {
+          var message;
+          if(err) {
+            if(err.message) {
+              message = err.message;
+            } else {
+              message = "Unknown error message";
+            }
+          }
+          formatResponse(message, cb);
+        });
+      });
+    });
+
+    function formatResponse(msg, cb) {
+      var messages = {errorMessages: []};
+      if(msg) {
+        messages.errorMessages.push(msg);
+      }
+      return createValidatorResponse(fieldId, messages, function (err, res) {
+        if (err) return cb(err);
+        var ret = {validation: {}};
+        ret.validation[fieldId] = res;
+        return cb(undefined, ret);
+      });
+    }
+  }
+
+  function createValidatorResponse(fieldId, messages, cb) {
+    // intentionally not checking err here, used further down to get validation errors
+    var res = {};
+    res.fieldId = fieldId;
+    res.errorMessages = messages.errorMessages || [];
+    res.fieldErrorMessage = messages.fieldErrorMessage || [];
+    async.some(res.errorMessages, function (item, cb) {
+      return cb(item !== null);
+    }, function (someErrors) {
+      res.valid = !someErrors && (res.fieldErrorMessage.length < 1);
+
+      return cb(undefined, res);      
+    });
+  }
+
+  function getFieldValidationStatus(submittedField, fieldDef, previousFieldValues, cb) {  
+    validateFieldInternal(submittedField, fieldDef, previousFieldValues, function (err, messages) {
+      if(err) return cb(err);
+      createValidatorResponse(submittedField.fieldId, messages, cb);
+    });
+  }
+
+  function getMapFunction(key, map, cb) {
+    var validator = map[key];
+    if (!validator) {
+      return cb(new Error("Invalid Field Type " + key));
+    }
+
+    return cb(undefined, validator);
+  }
+
+  function getValidatorFunction(fieldType, cb) {
+    return getMapFunction(fieldType, validatorsMap, cb);
+  }
+
+  function getClientValidatorFunction(fieldType, cb) {
+    return getMapFunction(fieldType, validatorsClientMap, cb);
+  }
+
+  function validateFieldInternal(submittedField, fieldDef, previousFieldValues, cb) {
+    if ("function" === typeof previousFieldValues) {
+      cb = previousFieldValues;
+      previousFieldValues = null;
+    }
+
+    countSubmittedValues(submittedField, function(err, numSubmittedValues) {
+      if(err) return cb(err);
+      async.series({
+        valuesSubmitted:
+          async.apply(checkValueSubmitted, submittedField, fieldDef),
+        repeats:
+          async.apply(checkRepeat, numSubmittedValues, fieldDef),
+        values:
+          async.apply(checkValues, submittedField, fieldDef, previousFieldValues)
+      }, function (err, results) {
+        if(err) return cb(err);
+
+        var fieldErrorMessages = [];
+        if(results.valuesSubmitted) {
+          fieldErrorMessages.push(results.valuesSubmitted);
+        }
+        if(results.repeats) {
+          fieldErrorMessages.push(results.repeats);
+        }
+        return cb(undefined, {fieldErrorMessage: fieldErrorMessages, errorMessages: results.values});
+      });
+    });
+
+    return;  // just functions below this
+
+    function checkValueSubmitted(submittedField, fieldDefinition, cb) {
+      var valueSubmitted = submittedField && submittedField.fieldValues && (submittedField.fieldValues.length > 0);
+      if (!valueSubmitted) {
+        return cb(undefined, "No value submitted for field " + fieldDefinition.name);
+      }
+      return cb(undefined, null);
+    }
+
+    function countSubmittedValues(submittedField, cb) {
+      var numSubmittedValues = 0;
+      if(submittedField && submittedField.fieldValues && submittedField.fieldValues.length > 0) {
+        for(var i=0; i<submittedField.fieldValues.length; i += 1) {
+          if(submittedField.fieldValues[i]) {
+            numSubmittedValues += 1;
+          }
+        }
+      }
+      return cb(undefined, numSubmittedValues);
+    }
+
+    function checkRepeat(numSubmittedValues, fieldDefinition, cb) {
+    
+      if(fieldDefinition.repeating && fieldDefinition.fieldOptions.definition){
+        if(fieldDefinition.fieldOptions.definition.minRepeat){
+          if(numSubmittedValues < fieldDefinition.fieldOptions.definition.minRepeat){
+            return cb(undefined, "Expected min of " + fieldDefinition.fieldOptions.definition.minRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues);
+          }
+        }
+
+        if (fieldDefinition.fieldOptions.definition.maxRepeat){
+          if(numSubmittedValues > fieldDefinition.fieldOptions.definition.maxRepeat){
+            return cb(undefined, "Expected max of " + fieldDefinition.fieldOptions.definition.maxRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues);
+          }
+        }
+      } else {
+        if(numSubmittedValues > 1) {
+          return cb(undefined, "Should not have multiple values for non-repeating field");
+        }
+      }
+
+      return cb(undefined, null);
+    }
+
+    function checkValues(submittedField, fieldDefinition, previousFieldValues, cb) {
+      getValidatorFunction(fieldDefinition.type, function (err, validator) {       
+
+        async.map(submittedField.fieldValues, function(fieldValue, cb){
+          if('undefined' === typeof fieldValue || null === fieldValue) {
+            return cb(undefined, null);
+          } else {
+            validator(fieldValue, fieldDefinition, previousFieldValues, function(validationError) {
+              var errorMessage;
+              if(validationError) {
+                errorMessage = validationError.message || "Error during validation of field";
+              } else {
+                errorMessage = null;
+              }
+
+              if (submissionRequiredFieldsMap[fieldDefinition._id]) {   // set to true if at least one value
+                submissionRequiredFieldsMap[fieldDefinition._id].submitted = true;
+              }
+
+              return cb(undefined, errorMessage);
+            });
+          }
+        }, function (err, results) {
+          if (err) return cb(err);
+
+          return cb(undefined, results);
+        });
+      });
+    }
+
+  }
+
+  function validatorString (fieldValue, fieldDefinition, previousFieldValues, cb) {
+    if(typeof fieldValue !== "string"){
+      return cb(new Error("Expected string but got " + typeof(fieldValue)));
+    }
+
+    if(fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.min){
+      if(fieldValue.length < fieldDefinition.fieldOptions.validation.min){
+        return cb(new Error("Expected minimum string length of " + fieldDefinition.fieldOptions.validation.min + " but submission is " + fieldValue.length + ". Submitted val: " + fieldValue));
+      }
+    }
+
+    if(fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.max){
+      if(fieldValue.length > fieldDefinition.fieldOptions.validation.max){
+        return cb(new Error("Expected maximum string length of " + fieldDefinition.fieldOptions.validation.max + " but submission is " + fieldValue.length + ". Submitted val: " + fieldValue));
+      }
+    }
+
+    return cb();
+  }
+
+  function validatorNumber (fieldValue, fieldDefinition, previousFieldValues, cb) {
+    if(typeof fieldValue !== "number"){
+      return cb(new Error("Expected number but got " + typeof(fieldValue)));
+    }
+
+    if(fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.min){
+      if(fieldValue < fieldDefinition.fieldOptions.validation.min){
+        return cb(new Error("Expected minimum Number " + fieldDefinition.fieldOptions.validation.min + " but submission is " + fieldValue + ". Submitted number: " + fieldValue));
+      }
+    }
+
+    if (fieldDefinition.fieldOptions.validation.max){
+      if(fieldValue > fieldDefinition.fieldOptions.validation.max){
+        return cb(new Error("Expected maximum Number " + fieldDefinition.fieldOptions.validation.max + " but submission is " + fieldValue + ". Submitted number: " + fieldValue));
+      }
+    }
+
+    return cb();
+  }
+
+  function validatorEmail (fieldValue, fieldDefinition, previousFieldValues, cb) {
+    if(typeof(fieldValue) !== "string"){
+      return cb(new Error("Expected string but got " + typeof(fieldValue)));
+    }
+
+    if(fieldValue.match(/[-0-9a-zA-Z.+_]+@[-0-9a-zA-Z.+_]+\.[a-zA-Z]{2,4}/g) === null){
+      return cb(new Error("Invalid email address format: " + fieldValue));
+    } else {
+      return cb();
+    }
+  }
+
+  function validatorDropDown (fieldValue, fieldDefinition, previousFieldValues, cb) {
+    if(typeof(fieldValue) !== "string"){
+      return cb(new Error("Expected dropdown submission to be string but got " + typeof(fieldValue)));
+    }
+
+    //Check value exists in the field definition
+    if(!fieldDefinition.fieldOptions.definition.options){
+      return cb(new Error("No dropdown options exist for field " + fieldDefinition.name));
+    }
+
+    var matchingOptions = fieldDefinition.fieldOptions.definition.options.filter(function(dropdownOption){
+      return dropdownOption.label === fieldValue;
+    });
+
+    if(matchingOptions.length !== 1){
+      return cb(new Error("Invalid number of dropdown options found: " + matchingOptions.length));
+    }
+
+    return cb();
+  }
+
+  function validatorRadio (fieldValue, fieldDefinition, previousFieldValues, cb) {
+    if(typeof(fieldValue) !== "string"){
+      return cb(new Error("Expected radio submission to be string but got " + typeof(fieldValue)));
+    }
+
+    //Check value exists in the field definition
+    if(!fieldDefinition.fieldOptions.definition.options){
+      return cb(new Error("No radio options exist for field " + fieldDefinition.name));
+    }
+
+    var matchingOptions = fieldDefinition.fieldOptions.definition.options.filter(function(radioOption){
+      return radioOption.label === fieldValue;
+    });
+
+    if(matchingOptions.length !== 1){
+      return cb(new Error("Invalid number of radio options found: " + matchingOptions.length));
+    }
+
+    return cb();
+  }
+
+  function validatorCheckboxes (fieldValue, fieldDefinition, previousFieldValues, cb) {
+    var minVal;
+    if (fieldDefinition && fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) {
+      minVal = fieldDefinition.fieldOptions.validation.min;
+    }
+    var maxVal;
+    if (fieldDefinition && fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) {
+      maxVal = fieldDefinition.fieldOptions.validation.max;
+    }
+
+    if (minVal) {
+      if(fieldValue.selections === null || fieldValue.selections === undefined || fieldValue.selections.length < minVal){
+        var len;
+        if(fieldValue.selections) {
+          len = fieldValue.selections.length;
+        }
+        return cb(new Error("Expected a minimum number of selections " + minVal + " but got " + len));
+      }
+    }
+
+    if(maxVal){
+      if(fieldValue.selections){
+        if(fieldValue.selections.length > maxVal){
+          return cb(new Error("Expected a maximum number of selections " + maxVal + " but got " + fieldValue.selections.length));
+        }
+      }
+    }
+
+    var optionsInCheckbox = [];
+
+    async.eachSeries(fieldDefinition.fieldOptions.definition.options, function(choice, cb){
+      for(var choiceName in choice){
+        optionsInCheckbox.push(choiceName);
+      }
+      return cb();
+    }, function(err){
+      async.eachSeries(fieldValue.selections, function(selection, cb){
+        if(typeof(selection) !== "string"){
+          return cb(new Error("Expected checkbox submission to be string but got " + typeof(selection)));
+        }
+
+        if(optionsInCheckbox.indexOf(selection) === -1){
+          return cb(new Error("Checkbox Option " + selection + " does not exist in the field."));
+        }
+
+        return cb();
+      }, cb);
+    });
+  }
+
+  function validatorLocationMap (fieldValue, fieldDefinition, previousFieldValues, cb) {
+    if(fieldValue.lat && fieldValue.long) {
+      if(isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue.lat))) {
+        return cb(new Error("Invalid latitude and longitude values"));
+      } else {
+        return cb();
+      }
+    } else {
+      return cb(new Error("Invalid object for locationMap submission"));
+    }
+  }
+
+
+  function validatorLocation (fieldValue, fieldDefinition, previousFieldValues, cb) {
+    if(fieldDefinition.fieldOptions.definition.locationUnit === "latLong") {
+      if(fieldValue.lat && fieldValue.long){
+        if(isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue.lat))){
+          return cb(new Error("Invalid latitude and longitude values"));
+        } else {
+          return cb();
+        }
+      } else {
+        return cb(new Error("Invalid object for latitude longitude submission"));
+      }
+    } else {
+      if(fieldValue.zone && fieldValue.eastings && fieldValue.northings){
+        //Zone must be 3 characters, eastings 6 and northings 9
+        return validateNorthingsEastings(fieldValue, cb);
+      } else {
+        return cb(new Error("Invalid object for northings easting submission. Zone, Eastings and Northings elemets are required"));
+      }
+    }
+
+    function validateNorthingsEastings(fieldValue, cb){
+      if(typeof(fieldValue.zone) !== "string" || fieldValue.zone.length !== 3){
+        return cb(new Error("Invalid zone definition for northings and eastings location. " + fieldValue.zone));
+      }
+
+      if(typeof(fieldValue.eastings) !== "string" || fieldValue.eastings.length !== 6){
+        return cb(new Error("Invalid eastings definition for northings and eastings location. " + fieldValue.eastings));
+      }
+
+      if(typeof(fieldValue.northings) !== "string" || fieldValue.northings.length !== 7){
+        return cb(new Error("Invalid northings definition for northings and eastings location. " + fieldValue.northings));
+      }
+
+      return cb();
+    }
+  }
+
+  function validatorAnyFile(fieldValue, fieldDefinition, previousFieldValues, cb) {
+    // if any of the following validators return ok, then return ok.
+    validatorBase64(fieldValue, fieldDefinition, previousFieldValues, function (err) {
+      if(!err) {
+        return cb();
+      }
+      validatorFile(fieldValue, fieldDefinition, previousFieldValues, function (err) {
+        if(!err) {
+          return cb();
+        }
+        validatorFileObj(fieldValue, fieldDefinition, previousFieldValues, function (err) {
+          if(!err) {
+            return cb();
+          }
+          return cb(err);
+        });
+      });
+    });
+  }
+
+  function validatorFile (fieldValue, fieldDefinition, previousFieldValues, cb) {
+    if(typeof fieldValue !== "object"){
+      return cb(new Error("Expected object but got " + typeof(fieldValue)));
+    }
+
+    var keyTypes = [
+      { keyName: "fileName", valueType: "string" },
+      { keyName: "fileSize", valueType: "number" },
+      { keyName: "fileType", valueType: "string" },
+      { keyName: "fileUpdateTime", valueType: "number" },
+      { keyName: "hashName", valueType: "string" }
+    ];
+
+    async.each(keyTypes, function (keyType, cb) {
+      var actualType = typeof fieldValue[keyType.keyName];
+      if (actualType !== keyType.valueType) {
+        return cb(new Error("Expected " + keyType.valueType + " but got " + actualType));
+      }
+      if (keyType.keyName === "fileName" && fieldValue[keyType.keyName].length <=0) {
+        return cb(new Error("Expected value for " + keyType.keyName));
+      }
+
+      return cb();
+    }, function (err) {
+      if (err) return cb(err);
+
+      if(fieldValue.hashName.indexOf("filePlaceHolder") > -1){ //TODO abstract out to config
+        return cb();
+      } else if (previousFieldValues && previousFieldValues.hashName && previousFieldValues.hashName.indexOf(fieldValue.hashName) > -1){
+        return cb();
+      } else {
+        return cb(new Error("Invalid file placeholder text" + fieldValue.hashName));
+      }
+
+    });
+  }
+
+  function validatorFileObj (fieldValue, fieldDefinition, previousFieldValues, cb) {
+    if((typeof File !== "function") || !(fieldValue instanceof File)) {
+      return cb(new Error("Expected File object but got " + typeof(fieldValue)));
+    }
+
+    var keyTypes = [
+      { keyName: "name", valueType: "string" },
+      { keyName: "size", valueType: "number" }
+    ];
+
+    async.each(keyTypes, function (keyType, cb) {
+      var actualType = typeof fieldValue[keyType.keyName];
+      if (actualType !== keyType.valueType) {
+        return cb(new Error("Expected " + keyType.valueType + " but got " + actualType));
+      }
+      if (actualType === "string" && fieldValue[keyType.keyName].length <=0) {
+        return cb(new Error("Expected value for " + keyType.keyName));
+      }
+      if (actualType === "number" && fieldValue[keyType.keyName] <=0) {
+        return cb(new Error("Expected > 0 value for " + keyType.keyName));
+      }
+
+      return cb();
+    }, function (err) {
+      if (err) return cb(err);
+      return cb();
+    });
+
+  }
+
+  function validatorBase64 (fieldValue, fieldDefinition, previousFieldValues, cb) {
+    if(typeof fieldValue !== "string"){
+      return cb(new Error("Expected base64 string but got " + typeof(fieldValue)));
+    }
+
+    if(fieldValue.length <= 0){
+      return cb(new Error("Expected base64 string but was empty"));
+    }
+
+    return cb();
+  }
+
+  function validatorDateTime  (fieldValue, fieldDefinition, previousFieldValues, cb) {
+    var testDate;
+
+    if(typeof(fieldValue) !== "string"){
+      return cb(new Error("Expected string but got " + typeof(fieldValue)));
+    }
+
+    switch (fieldDefinition.fieldOptions.definition.dateTimeUnit)
+      {
+      case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
+        try{
+          testDate = new Date(fieldValue);
+          valid = (testDate.toString() !== "Invalid Date");
+        }catch(e){
+          valid = false;
+        }
+        if (valid) {
+          return cb();
+        } else {
+          return cb(new Error("Invalid date value " + fieldValue));
+        }
+        break;
+      case FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY:
         var parts = fieldValue.split(':');
         valid = (parts.length === 2) || (parts.length === 3);
         if (valid) {
           valid = isNumberBetween(parts[0], 0, 23);
-          seconds += (parseInt(parts[0], 10) * 60 * 60);
         }
         if (valid) {
           valid = isNumberBetween(parts[1], 0, 59);
-          seconds += (parseInt(parts[1], 10) * 60);
         }
         if (valid && (parts.length === 3)) {
           valid = isNumberBetween(parts[2], 0, 59);
-          seconds += parseInt(parts[2], 10);
         }
-      }
-      return seconds;
-    }
-
-    function isConditionActive(field, fieldValue, testValue, condition) {
-
-      var fieldType = field.type;
-      var fieldOptions = field.fieldOptions;
-
-      var valid = true;
-      if( "is equal to" === condition) {
-        valid = fieldValue === testValue;
-      }
-      else if( "is greater than" === condition) {
-        // TODO - do numeric checking
-        valid = fieldValue > testValue;
-      }
-      else if( "is less than" === condition) {
-        // TODO - do numeric checking
-        valid = fieldValue < testValue;
-      }
-      else if( "is at" === condition) {
-        valid = false;
-        if( fieldType === FIELD_TYPE_DATETIME ) {
-          switch (fieldOptions.definition.dateTimeUnit)
-          {
-            case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-              try{
-                valid = (new Date(new Date(fieldValue).toDateString()).getTime() == new Date(new Date(testValue).toDateString()).getTime());
-              }catch(e){
-                valid = false;
-              }
-              break;
-            case FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY:
-              valid = cvtTimeToSeconds(fieldValue) === cvtTimeToSeconds(testValue);
-              break;
-            case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-              try{
-                valid = (new Date(fieldValue).getTime() == new Date(testValue).getTime());
-              }catch(e){
-                valid = false;
-              }
-              break;
-            default:
-              valid = false;  // TODO should raise error here?
-              break;
-          }
-        }
-      }
-      else if( "is before" === condition) {
-        valid = false;
-        if( fieldType === FIELD_TYPE_DATETIME ) {
-          switch (fieldOptions.definition.dateTimeUnit)
-          {
-            case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-              try{
-                valid = (new Date(new Date(fieldValue).toDateString()).getTime() < new Date(new Date(testValue).toDateString()).getTime());
-              }catch(e){
-                valid = false;
-              }
-              break;
-            case FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY:
-              valid = cvtTimeToSeconds(fieldValue) < cvtTimeToSeconds(testValue);
-              break;
-            case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-              try{
-                valid = (new Date(fieldValue).getTime() < new Date(testValue).getTime());
-              }catch(e){
-                valid = false;
-              }
-              break;
-            default:
-              valid = false;  // TODO should raise error here?
-              break;
-          }
-        }
-      }
-      else if( "is after" === condition) {
-        valid = false;
-        if( fieldType === FIELD_TYPE_DATETIME ) {
-          switch (fieldOptions.definition.dateTimeUnit)
-          {
-            case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-              try{
-                valid = (new Date(new Date(fieldValue).toDateString()).getTime() > new Date(new Date(testValue).toDateString()).getTime());
-              }catch(e){
-                valid = false;
-              }
-              break;
-            case FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY:
-              valid = cvtTimeToSeconds(fieldValue) > cvtTimeToSeconds(testValue);
-              break;
-            case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-              try{
-                valid = (new Date(fieldValue).getTime() > new Date(testValue).getTime());
-              }catch(e){
-                valid = false;
-              }
-              break;
-            default:
-              valid = false;  // TODO should raise error here?
-              break;
-          }
-        }
-      }
-      else if( "is" === condition) {
-        if (fieldType === FIELD_TYPE_CHECKBOX) {
-          valid = fieldValue && fieldValue.selections && fieldValue.selections.indexOf(testValue) !== -1;
+        if (valid) {
+          return cb();
         } else {
-          valid = fieldValue === testValue;
+          return cb(new Error("Invalid date value " + fieldValue));
         }
+        break;
+      case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
+        try{
+          testDate = new Date(fieldValue);
+
+          if(testDate.toString() === "Invalid Date"){
+            return cb(new Error("Invalid dateTime string " + fieldValue));
+          } else {
+            return cb();
+          }
+        }catch(e){
+          return cb(new Error("Invalid dateTime string " + fieldValue));
+        }
+        break;
+      default:
+        return cb(new Error("Invalid dateTime fieldtype " + fieldOptions.definition.dateTimeUnit));
       }
-      else if( "is not" === condition) {
-        if (fieldType === FIELD_TYPE_CHECKBOX) {
-          valid = fieldValue && fieldValue.selections && fieldValue.selections.indexOf(testValue) === -1;
+  }
+
+  function validatorSection (value, fieldDefinition, previousFieldValues, cb) {
+    return cb(new Error("Should not submit section field: " + fieldDefinition.name));
+  }
+
+  function rulesResult(rules, cb) {
+    var visible = true;
+
+    // Itterate over each rule that this field is a predicate of
+    async.each(rules, function(rule, cbRule) {
+      // For each rule, itterate over the predicate fields and evaluate the rule
+      var predicateMapQueries = [];
+      var predicateMapPassed = [];
+      async.each(rule.ruleConditionalStatements, function(ruleConditionalStatement, cbPredicates) {
+        var field = fieldMap[ruleConditionalStatement.sourceField];
+        var passed = false;
+        var submissionValues = [];
+        if (submissionFieldsMap[ruleConditionalStatement.sourceField] && submissionFieldsMap[ruleConditionalStatement.sourceField].fieldValues) {
+          submissionValues = submissionFieldsMap[ruleConditionalStatement.sourceField].fieldValues;
+          var condition = ruleConditionalStatement.restriction;
+          var testValue = ruleConditionalStatement.sourceValue;
+
+          // Validate rule predictes on the first entry only.
+          passed = isConditionActive(field, submissionValues[0], testValue, condition);
+        }
+        predicateMapQueries.push({"field": field, 
+                                  "submissionValues": submissionValues, 
+                                  "condition": condition,
+                                  "testValue": testValue,
+                                  "passed" : passed
+                                });
+
+        if( passed ) {
+          predicateMapPassed.push(field);
+        }
+        return cbPredicates();
+      }, function(err) {
+        if(err) cbRule(err);
+
+        function rulesPassed (condition, passed, queries) {
+          return ( (condition === "and" ) && (( passed.length == queries.length ))) ||  // "and" condition - all rules must pass
+           ( (condition === "or" )  && (( passed.length > 0 )));                        // "or" condition - only one rule must pass
+        }
+
+        if (rulesPassed(rule.ruleConditionalOperator, predicateMapPassed, predicateMapQueries)) {
+          visible = (rule.type === "show");
         } else {
-          valid = fieldValue !== testValue;
+          visible = (rule.type !== "show");
         }
-      }
-      else if( "contains" === condition) {
-        valid = fieldValue.indexOf(testValue) !== -1;
-      }
-      else if( "does not contain" === condition) {
-        valid = fieldValue.indexOf(testValue) === -1;
-      }
-      else if( "begins with" === condition) {
-        valid = fieldValue.substring(0, testValue.length) === testValue;
-      }
-      else if( "ends with" === condition) {
-        valid = fieldValue.substring(Math.max(0, (fieldValue.length - testValue.length)), fieldValue.length) === testValue;
-      }
-      else {
-        valid = false;
-      }
+        return cbRule();
+      });
+    }, function(err) {
+      if (err) return cb(err);
 
-      return valid;
+      return cb(undefined, visible);
+    });
+  }
+
+  function isPageVisible(pageId, cb) {
+    init(function(err){
+      if (err) return cb(err);
+
+      if (isPageRuleSubject(pageId)) {  // if the page is the target of a rule
+        return rulesResult(pageRuleSubjectMap[pageId], cb);  // execute page rules
+      } else {
+        return cb(undefined, true);  // if page is not subject of any rule then must be visible
+      }
+    });
+  }
+
+  function isFieldVisible(fieldId, checkContainingPage, cb) {
+    /*
+     * fieldId = Id of field to check for reule predeciate references 
+     * checkContainingPage = if true check page containing field, and return false if the page is hidden
+     */
+    init(function(err){
+      if (err) return cb(err);
+
+      // Fields are visable by default
+      var visible = true;
+
+      var field = fieldMap[fieldId];
+      if (!fieldId) return cb(new Error("Field does not exist in form"));
+
+      async.waterfall([
+        function testPage(cb) {
+          if (checkContainingPage) {
+            isPageVisible(field.pageId, cb);
+          } else {
+            return cb(undefined, true);
+          }
+        },
+        function testField(pageVisible, cb) {
+          if (!pageVisible) {  // if page containing field is not visible then don't need to check field
+            return cb(undefined, false);
+          }
+
+          if (isFieldRuleSubject(fieldId) ) { // If the field is the subject of a rule it may have been hidden
+            return rulesResult(fieldRuleSubjectMap[fieldId], cb);  // execute field rules
+          } else {
+            return cb(undefined, true); // if not subject of field rules then can't be hidden 
+          }
+        }
+      ], cb);
+    });
+  }
+
+  /*
+   * check all rules actions
+   *      res:
+   *      {
+   *          "actions": {
+   *              "pages": {
+   *                  "targetId": {
+   *                      "targetId": "",
+   *                      "action": "show|hide"
+   *                  }
+   *              },
+   *              "fields": {
+   *              }
+   *          }
+   *      }
+   */
+  function checkRules(submissionJSON, cb) {
+    init(function(err){
+      if (err) return cb(err);
+
+      initSubmission(submissionJSON, function (err) {
+        if(err) return cb(err);
+        var actions = {};
+
+        async.parallel([
+          function (cb) {
+            actions.fields = {};
+            async.eachSeries(Object.keys(fieldRuleSubjectMap), function (fieldId, cb) {
+              isFieldVisible(fieldId, false, function (err, fieldVisible) {
+                if (err) return cb(err);
+                actions.fields[fieldId] = {targetId: fieldId, action: (fieldVisible?"show":"hide")};
+                return cb();
+              });
+            }, cb);
+          },
+          function (cb) {
+            actions.pages = {};
+            async.eachSeries(Object.keys(pageRuleSubjectMap), function (pageId, cb) {
+              isPageVisible(pageId, function (err, pageVisible) {
+                if (err) return cb(err);
+                actions.pages[pageId] = {targetId: pageId, action: (pageVisible?"show":"hide")};
+                return cb();
+              });
+            }, cb);
+          }
+        ], function (err) {
+          if(err) return cb(err);
+
+          return cb(undefined, {actions: actions});
+        });
+      });
+    });
+  }
+
+  return {
+    validateForm: validateForm,
+    validateField: validateField,
+    validateFieldValue: validateFieldValue,
+    checkRules: checkRules,
+
+    // The following are used internally, but exposed for tests
+    validateFieldInternal: validateFieldInternal,
+    initSubmission: initSubmission,
+    isFieldVisible: isFieldVisible,
+    isConditionActive: isConditionActive
+  };
+};
+
+function isNumberBetween(num, min, max) {
+  var numVal = parseInt(num,10);
+  return (!isNaN(numVal) && (numVal >= min) && (numVal <= max));
+}
+
+function cvtTimeToSeconds(fieldValue) {
+  var seconds = 0;
+  if (typeof fieldValue === "string") {
+    var parts = fieldValue.split(':');
+    valid = (parts.length === 2) || (parts.length === 3);
+    if (valid) {
+      valid = isNumberBetween(parts[0], 0, 23);
+      seconds += (parseInt(parts[0], 10) * 60 * 60);
     }
-
-    if (typeof module !== 'undefined' && module.exports) {
-      module.exports = formsRulesEngine;
+    if (valid) {
+      valid = isNumberBetween(parts[1], 0, 59);
+      seconds += (parseInt(parts[1], 10) * 60);
     }
+    if (valid && (parts.length === 3)) {
+      valid = isNumberBetween(parts[2], 0, 59);
+      seconds += parseInt(parts[2], 10);
+    }
+  }
+  return seconds;
+}
 
-  }());
+function isConditionActive(field, fieldValue, testValue, condition) {
 
-  /* This is the suffix file */
+  var fieldType = field.type;
+  var fieldOptions = field.fieldOptions;
+
+  var valid = true;
+  if( "is equal to" === condition) {
+    valid = fieldValue === testValue;
+  }
+  else if( "is greater than" === condition) {
+    // TODO - do numeric checking
+    valid = fieldValue > testValue;
+  }
+  else if( "is less than" === condition) {
+    // TODO - do numeric checking
+    valid = fieldValue < testValue;
+  }
+  else if( "is at" === condition) {
+    valid = false;
+    if( fieldType === FIELD_TYPE_DATETIME ) {
+      switch (fieldOptions.definition.dateTimeUnit)
+      {
+      case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
+        try{
+          valid = (new Date(new Date(fieldValue).toDateString()).getTime() == new Date(new Date(testValue).toDateString()).getTime()); 
+        }catch(e){
+          valid = false;
+        }
+        break;
+      case FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY:
+        valid = cvtTimeToSeconds(fieldValue) === cvtTimeToSeconds(testValue);
+        break;
+      case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
+        try{
+          valid = (new Date(fieldValue).getTime() == new Date(testValue).getTime()); 
+        }catch(e){
+          valid = false;
+        }
+        break;
+      default:
+        valid = false;  // TODO should raise error here?
+        break;
+      }
+    }
+  }
+  else if( "is before" === condition) {
+    valid = false;
+    if( fieldType === FIELD_TYPE_DATETIME ) {
+     switch (fieldOptions.definition.dateTimeUnit)
+      {
+      case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
+        try{
+          valid = (new Date(new Date(fieldValue).toDateString()).getTime() < new Date(new Date(testValue).toDateString()).getTime()); 
+        }catch(e){
+          valid = false;
+        }
+        break;
+      case FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY:
+        valid = cvtTimeToSeconds(fieldValue) < cvtTimeToSeconds(testValue);
+        break;
+      case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
+        try{
+          valid = (new Date(fieldValue).getTime() < new Date(testValue).getTime()); 
+        }catch(e){
+          valid = false;
+        }
+        break;
+      default:
+        valid = false;  // TODO should raise error here?
+        break;
+      }
+    }
+  }
+  else if( "is after" === condition) {
+    valid = false;
+    if( fieldType === FIELD_TYPE_DATETIME ) {
+     switch (fieldOptions.definition.dateTimeUnit)
+      {
+      case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
+        try{
+          valid = (new Date(new Date(fieldValue).toDateString()).getTime() > new Date(new Date(testValue).toDateString()).getTime()); 
+        }catch(e){
+          valid = false;
+        }
+        break;
+      case FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY:
+        valid = cvtTimeToSeconds(fieldValue) > cvtTimeToSeconds(testValue);
+        break;
+      case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
+        try{
+          valid = (new Date(fieldValue).getTime() > new Date(testValue).getTime());
+        }catch(e){
+          valid = false;
+        } 
+        break;
+      default:
+        valid = false;  // TODO should raise error here?
+        break;
+      }
+    }
+  }
+  else if( "is" === condition) {
+    if (fieldType === FIELD_TYPE_CHECKBOX) {
+      valid = fieldValue && fieldValue.selections && fieldValue.selections.indexOf(testValue) !== -1;
+    } else {
+      valid = fieldValue === testValue;
+    }
+  }
+  else if( "is not" === condition) {
+    if (fieldType === FIELD_TYPE_CHECKBOX) {
+      valid = fieldValue && fieldValue.selections && fieldValue.selections.indexOf(testValue) === -1;
+    } else {
+      valid = fieldValue !== testValue;
+    }
+  }
+  else if( "contains" === condition) {
+    valid = fieldValue.indexOf(testValue) !== -1;
+  }
+  else if( "does not contain" === condition) {
+      valid = fieldValue.indexOf(testValue) === -1;
+  }
+  else if( "begins with" === condition) {
+    valid = fieldValue.substring(0, testValue.length) === testValue;
+  }
+  else if( "ends with" === condition) {
+    valid = fieldValue.substring(Math.max(0, (fieldValue.length - testValue.length)), fieldValue.length) === testValue;
+  }
+  else {
+    valid = false;
+  }
+
+  return valid;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = formsRulesEngine;
+}
+
+}());
+
+/* This is the suffix file */
   return module.exports(formDef);
 };
 

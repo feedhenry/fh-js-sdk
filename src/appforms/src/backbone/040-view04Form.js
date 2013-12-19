@@ -50,10 +50,13 @@ var FormView = BaseView.extend({
     this.el.find(" button.submit").hide();
   },
   onValidateError: function(res) {
-
+    var firstView=null;
     for (var fieldId in res) {
       if (res[fieldId]) {
         var fieldView = this.getFieldViewById(fieldId);
+        if (firstView==null){
+          firstView=fieldView;
+        }
         var errorMsgs = res[fieldId].errorMessages;
         for (var i = 0; i < errorMsgs.length; i++) {
           if (errorMsgs[i]) {
@@ -61,8 +64,8 @@ var FormView = BaseView.extend({
           }
         }
       }
-
     }
+    
   },
   initWithForm: function(form, params) {
     var self = this;

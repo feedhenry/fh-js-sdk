@@ -1908,7 +1908,7 @@ FieldView = Backbone.View.extend({
   className: 'field_container',
   fieldWrapper:"<div />",
   wrapper: '<div id="wrapper_<%= fieldId %>_<%= index %>" title="<%= helpText %>"><%= title %><%= input %><label class="error errorMsg"></label></div>',
-  title: '<label><%= title %> </label><%= helpText %>',
+  title: '<label class="<%= required %>"><%= title %> </label><%= helpText %>',
   input: "<input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/> ",
   instructions: '<p class="instruct"><%= helpText %></p>',
   fieldActionBar:"<div class='fieldActionBar'><button class='addInputBtn special_button two_button'>Add Input</button><button class='special_button two_button removeInputBtn'>Remove Input</button></div>",
@@ -1956,15 +1956,16 @@ FieldView = Backbone.View.extend({
     if (this.model.isRepeating()){
       title+=" (" + (index+1) + ") ";
     }
-    // if (this.model.isRequired()){
-    //   required="*";
-    // }
+    if (this.model.isRequired() && index<this.initialRepeat){
+      required="required";
+    }
     if (index == 0){
       helpText=this.renderHelpText();
     }
     return _.template(this.title, {
       "title": title,
-      "helpText":helpText
+      "helpText":helpText,
+      "required":required
     });
   },
   renderInput: function(index) {
@@ -2059,9 +2060,9 @@ FieldView = Backbone.View.extend({
   initialize: function() {
     _.bindAll(this, 'dumpContent', 'clearError','onAddInput','onRemoveInput');
 
-    if (this.model.isRequired()) {
-      this.$el.addClass('required');
-    }
+    // if (this.model.isRequired()) {
+    //   this.$el.addClass('required');
+    // }
     this.$fieldWrapper=$(this.fieldWrapper);
     this.$fieldActionBar=$(this.fieldActionBar);
     // only call render once. model will never update
@@ -4125,6 +4126,7 @@ var FormView = BaseView.extend({
     this.rebindButtons();
     this.pageViews[0].show();
     this.checkPages();
+    this.checkRules();
   },
   nextPage: function() {
     this.hideAllPages();

@@ -85,7 +85,7 @@
               "minRepeat": 2
            },
            "validation": {
-              "min": 20,
+              "min": 5,
               "max": 100
            }
         },

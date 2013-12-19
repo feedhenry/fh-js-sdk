@@ -1,9 +1,8 @@
 appForm.RulesEngine=rulesEngine;
 
-
-/*! fh-forms - v0.2.9 -  */
+/*! fh-forms - v0.2.10 -  */
 /*! async - v0.2.9 -  */
-/*! 2013-12-17 */
+/*! 2013-12-18 */
 /* This is the prefix file */
 function rulesEngine (formDef) {
   var define = {};
@@ -1073,6 +1072,23 @@ var formsRulesEngine = function(formDef) {
     "sectionBreak": validatorSection
   };
 
+  var validatorsClientMap = {
+    "text":         validatorString,
+    "textarea":     validatorString,
+    "number":       validatorNumber,
+    "emailAddress": validatorEmail,
+    "dropdown":     validatorDropDown,
+    "radio":        validatorRadio,
+    "checkboxes":   validatorCheckboxes,
+    "location":     validatorLocation,
+    "locationMap":  validatorLocationMap,
+    "photo":        validatorAnyFile,
+    "signature":    validatorAnyFile,
+    "file":         validatorAnyFile,
+    "dateTime":     validatorDateTime,
+    "sectionBreak": validatorSection
+  };
+
   var isFieldRuleSubject = function(fieldId) {
     return !!fieldRuleSubjectMap[fieldId];
   };
@@ -1309,32 +1325,64 @@ var formsRulesEngine = function(formDef) {
  *         }
  *     }
  */
-  function validateFieldValue(fieldId, inputValue, cb) {
+  function validateFieldValue(fieldId, inputValue, valueIndex, cb) {
+    if ("function" === typeof valueIndex) {
+      cb = valueIndex;
+      valueIndex = 0;
+    }
+
     init(function(err){
       if (err) return cb(err);
       var fieldDefinition = fieldMap[fieldId];
 
-      getValidatorFunction(fieldDefinition.type, function (err, validator) {       
+      var required = false;
+      if(fieldDefinition.repeating && 
+         fieldDefinition.fieldOptions &&
+         fieldDefinition.fieldOptions.definition &&
+         fieldDefinition.fieldOptions.definition.minRepeat) {
+        required = (valueIndex < fieldDefinition.fieldOptions.definition.minRepeat);
+      } else {
+        required = fieldDefinition.required;
+      }
+
+      if(required && (("undefined" === typeof inputValue) || (null === inputValue))) {
+        return formatResponse("No value specified for required input", cb);
+      } else if(!required && (("undefined" === typeof inputValue) || (null === inputValue))) {
+        return formatResponse(undefined, cb);  // optional field not supplied is valid
+      }
+
+      getClientValidatorFunction(fieldDefinition.type, function (err, validator) {
         if (err) return cb(err);
 
         validator(inputValue, fieldDefinition, undefined, function (err) {
-          var messages = {errorMessages: []}
+          var message;
           if(err) {
-            messages.errorMessages.push(err.message);
+            if(err.message) {
+              message = err.message;
+            } else {
+              message = "Unknown error message";
+            }
           }
-          return createValidatorResponse(fieldId, messages, function (err, res) {
-            if (err) return cb(err);
-            var ret = {validation: {}};
-            ret.validation[fieldId] = res;
-            return cb(undefined, ret);
-          });
+          formatResponse(message, cb);
         });
       });
     });
+
+    function formatResponse(msg, cb) {
+      var messages = {errorMessages: []};
+      if(msg) {
+        messages.errorMessages.push(msg);
+      }
+      return createValidatorResponse(fieldId, messages, function (err, res) {
+        if (err) return cb(err);
+        var ret = {validation: {}};
+        ret.validation[fieldId] = res;
+        return cb(undefined, ret);
+      });
+    }
   }
 
-
- function createValidatorResponse(fieldId, messages, cb) {
+  function createValidatorResponse(fieldId, messages, cb) {
     // intentionally not checking err here, used further down to get validation errors
     var res = {};
     res.fieldId = fieldId;
@@ -1356,14 +1404,21 @@ var formsRulesEngine = function(formDef) {
     });
   }
 
-
-  function getValidatorFunction(fieldType, cb) {
-    var validator = validatorsMap[fieldType];
+  function getMapFunction(key, map, cb) {
+    var validator = map[key];
     if (!validator) {
-      return cb(new Error("Invalid Field Type " + fieldType));
+      return cb(new Error("Invalid Field Type " + key));
     }
 
     return cb(undefined, validator);
+  }
+
+  function getValidatorFunction(fieldType, cb) {
+    return getMapFunction(fieldType, validatorsMap, cb);
+  }
+
+  function getClientValidatorFunction(fieldType, cb) {
+    return getMapFunction(fieldType, validatorsClientMap, cb);
   }
 
   function validateFieldInternal(submittedField, fieldDef, previousFieldValues, cb) {
@@ -1474,7 +1529,7 @@ var formsRulesEngine = function(formDef) {
 
   function validatorString (fieldValue, fieldDefinition, previousFieldValues, cb) {
     if(typeof fieldValue !== "string"){
-      return cb(new Error("Expected string but got" + typeof(fieldValue)));
+      return cb(new Error("Expected string but got " + typeof(fieldValue)));
     }
 
     if(fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.min){
@@ -1514,7 +1569,7 @@ var formsRulesEngine = function(formDef) {
 
   function validatorEmail (fieldValue, fieldDefinition, previousFieldValues, cb) {
     if(typeof(fieldValue) !== "string"){
-      return cb(new Error("Expected string but got" + typeof(fieldValue)));
+      return cb(new Error("Expected string but got " + typeof(fieldValue)));
     }
 
     if(fieldValue.match(/[-0-9a-zA-Z.+_]+@[-0-9a-zA-Z.+_]+\.[a-zA-Z]{2,4}/g) === null){
@@ -1596,7 +1651,7 @@ var formsRulesEngine = function(formDef) {
 
     var optionsInCheckbox = [];
 
-    async.eachSeries(fieldDefinition.fieldOptions.definition.checkboxChoices, function(choice, cb){
+    async.eachSeries(fieldDefinition.fieldOptions.definition.options, function(choice, cb){
       for(var choiceName in choice){
         optionsInCheckbox.push(choiceName);
       }
@@ -1666,9 +1721,29 @@ var formsRulesEngine = function(formDef) {
     }
   }
 
+  function validatorAnyFile(fieldValue, fieldDefinition, previousFieldValues, cb) {
+    // if any of the following validators return ok, then return ok.
+    validatorBase64(fieldValue, fieldDefinition, previousFieldValues, function (err) {
+      if(!err) {
+        return cb();
+      }
+      validatorFile(fieldValue, fieldDefinition, previousFieldValues, function (err) {
+        if(!err) {
+          return cb();
+        }
+        validatorFileObj(fieldValue, fieldDefinition, previousFieldValues, function (err) {
+          if(!err) {
+            return cb();
+          }
+          return cb(err);
+        });
+      });
+    });
+  }
+
   function validatorFile (fieldValue, fieldDefinition, previousFieldValues, cb) {
-    if(typeof(fieldValue) !== "object"){
-      return cb(new Error("Expected object but got" + typeof(fieldValue)));
+    if(typeof fieldValue !== "object"){
+      return cb(new Error("Expected object but got " + typeof(fieldValue)));
     }
 
     var keyTypes = [
@@ -1684,7 +1759,7 @@ var formsRulesEngine = function(formDef) {
       if (actualType !== keyType.valueType) {
         return cb(new Error("Expected " + keyType.valueType + " but got " + actualType));
       }
-      if (actualType === "string" && fieldValue[keyType.keyName].length <=0) {
+      if (keyType.keyName === "fileName" && fieldValue[keyType.keyName].length <=0) {
         return cb(new Error("Expected value for " + keyType.keyName));
       }
 
@@ -1701,14 +1776,55 @@ var formsRulesEngine = function(formDef) {
       }
 
     });
+  }
 
+  function validatorFileObj (fieldValue, fieldDefinition, previousFieldValues, cb) {
+    if((typeof File !== "function") || !(fieldValue instanceof File)) {
+      return cb(new Error("Expected File object but got " + typeof(fieldValue)));
+    }
+
+    var keyTypes = [
+      { keyName: "name", valueType: "string" },
+      { keyName: "size", valueType: "number" }
+    ];
+
+    async.each(keyTypes, function (keyType, cb) {
+      var actualType = typeof fieldValue[keyType.keyName];
+      if (actualType !== keyType.valueType) {
+        return cb(new Error("Expected " + keyType.valueType + " but got " + actualType));
+      }
+      if (actualType === "string" && fieldValue[keyType.keyName].length <=0) {
+        return cb(new Error("Expected value for " + keyType.keyName));
+      }
+      if (actualType === "number" && fieldValue[keyType.keyName] <=0) {
+        return cb(new Error("Expected > 0 value for " + keyType.keyName));
+      }
+
+      return cb();
+    }, function (err) {
+      if (err) return cb(err);
+      return cb();
+    });
+
+  }
+
+  function validatorBase64 (fieldValue, fieldDefinition, previousFieldValues, cb) {
+    if(typeof fieldValue !== "string"){
+      return cb(new Error("Expected base64 string but got " + typeof(fieldValue)));
+    }
+
+    if(fieldValue.length <= 0){
+      return cb(new Error("Expected base64 string but was empty"));
+    }
+
+    return cb();
   }
 
   function validatorDateTime  (fieldValue, fieldDefinition, previousFieldValues, cb) {
     var testDate;
 
     if(typeof(fieldValue) !== "string"){
-      return cb(new Error("Expected string but got" + typeof(fieldValue)));
+      return cb(new Error("Expected string but got " + typeof(fieldValue)));
     }
 
     switch (fieldDefinition.fieldOptions.definition.dateTimeUnit)
