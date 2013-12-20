@@ -32,6 +32,21 @@ Concat all source files and uglify them. It will output 4 files in dist folder:
 * appFormjs-core.min.js: minified version of core lib
 * appFormjs-backbone.min.js: minified version of backbone lib
 
+##Core development document
+
+After starting test server, goto http://127.0.0.1:3001. It will run all tests. The test itself contains how to use the modules like how to save content to a file etc.
+
+##Grunt app
+
+grunt app runs on a mockup server which sends a sample form. 
+
+* http://127.0.0.1:3011: Show the form list from the mockserver
+* http://127.0.0.1:3011/#form: Render the first form from the mockserver
+* http://127.0.0.1:3011/#submission: Show the last draft saved
+* http://127.0.0.1:3011/#json: Show JSON to Form page which renders a raw JSON string to form view.
+
+
+
 ##Core structure
 
 See structure of core lib [here](https://docs.google.com/a/feedhenry.com/drawings/d/1cq7LAcKLmZzj8A9BipyK6GZh7-HRlwpD6dAztDILIEs/edit)
@@ -78,11 +93,12 @@ The project follows one source file has one test file conveniention. If one sour
 4. run grunt testServer so that you have a mockup mbaas server running
 5. In Template app's router.js, Add following parameters to $fh.forms.init function:
     
-      {
-          config: {
-            "cloudHost": "http://127.0.0.1:3001" // or to an mbaas server (like https://testing.feedhenry.me). need care about the cross origin issues.
-          }
-        }
+          {
+              config: {
+                "cloudHost": "http://127.0.0.1:3001" // or to an mbaas server (like https://testing.feedhenry.me). need care about the cross origin issues.
+              }
+            }
+
 This will change the mBaas host to your local mockup server (or to the server you entered).
 
 6. run fhc local in template app and you are ready to go.
