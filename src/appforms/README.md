@@ -1,5 +1,6 @@
 #FeedHenry App Form Javascript SDK
 
+[API: $fh.forms usage](#$fh.forms-usage)
 
 ##Grunt Tasks
 
@@ -104,3 +105,151 @@ This will change the mBaas host to your local mockup server (or to the server yo
 6. run fhc local in template app and you are ready to go.
 
 
+## $fh.forms usage
+
+### Core lib
+
+Core lib mainly contains following apis:
+
+* $fh.forms.getForms 
+* $fh.forms.getForm
+* $fh.forms.getSubmissions
+
+#### $fh.forms.getForms
+
+##### Description
+
+Retrieve the form list model.
+
+##### Params
+$fh.forms.getForms(params,cb)
+Params:
+
+        {
+            "fromRemote":boolean (def: false) // if True, it will retrieve from server and save locally. Otherwise, it will try to retrieve from local and if failed, then retrieve from server and save locally
+        }
+
+cb: callback function when retrieved something
+        
+        cb=function(error, formListModel){}
+        
+The usage of formListModel can be found [here: appForm.models.forms](https://docs.google.com/a/feedhenry.com/document/d/1CKgol25C-QWS4Q7dhBKxP0BxOdyl4j4Biu60JmrzifI/edit#heading=h.2doi02iwb9vp)
+
+##### Example
+        
+        $fh.forms.getForms({
+            fromRemote:true
+        },function(err,formList){
+            if (err){
+                console.error(err);
+            }else{
+                console.log(formList.getFormsList();
+            }
+        });
+
+#### $fh.forms.getForm
+
+##### Description
+
+Retrieve a form model from different sources. Form model is used to process form definition.
+
+##### Params
+
+$fh.forms.getForm(params,cb)
+
+params:
+
+        {
+          formId: string, // the form id to be rendered. if raw mode is true, put in any string.
+          fromRemote: boolean(def:false), // true - load form from remote and skip local version.
+          rawMode: boolean(def:false), // true -get a form model from its JSON definition. false - load form model from mBaaS
+          rawData: JSON(def:null) // if raw mode is true, this is where put the form JSON definition
+        }
+
+cb(error, formModel)
+
+The Usage of formModel can be found [here: appForm.models.Form](https://docs.google.com/a/feedhenry.com/document/d/1CKgol25C-QWS4Q7dhBKxP0BxOdyl4j4Biu60JmrzifI/edit#heading=h.af1zd7shqcot)
+
+##### Example
+
+Load a form 
+
+        $fh.forms.getForm({
+            "formId":"527d4539639f521e0a000004"
+        },function(err,formModel){
+            //error capture
+            console.log(formModel.getName());
+        });
+
+Load a form from raw JSON definition
+
+        $fh.forms.getForm({
+            "rawMode":true,
+            "rawData":formJSONDef
+        },function(err,formModel){
+            //error capture
+            console.log(formModel.getName());
+        });
+        
+#### Submission Model
+
+##### Description
+
+Submission model handles all user input. A new submission can only be generated from a Form model
+
+        var mySubmission=formModel.newSubmission();
+        
+Submission model is responsible for:
+
+* Add and process user input
+* Retrieve and convert saved value back to user input value.
+* Submit and initialise uploading task
+* Check rules
+* Overal validate
+* Add submission comments
+
+For detailed API useage for submission please read [here: appForm.models.Submission](https://docs.google.com/a/feedhenry.com/document/d/1CKgol25C-QWS4Q7dhBKxP0BxOdyl4j4Biu60JmrzifI/edit#heading=h.x4cxc8kfbwa7)
+
+##### Example
+
+Save a draft
+
+        var submission=formModel.newSubmission();
+        submission.addInputValue({
+            "fieldId":"12345678",
+            "value" :"Hello World",
+            "index" : 0  //not mandatory
+        });
+        submission.saveDraft(function(err){});
+
+
+#### $fh.forms.getSubmissions
+
+##### Description
+
+Retrieve the submission List model. Submission List model handles pruned meta data of all submissions. It is mainly used for showing a list of submissions.
+
+##### Params
+
+$fh.forms.getSubmissions(params,cb)
+
+params
+
+        {}
+
+cb(error, submissionListModel)
+
+For detailed usage of submissionList Model, checkout [here: appForm.models.submissions](https://docs.google.com/a/feedhenry.com/document/d/1CKgol25C-QWS4Q7dhBKxP0BxOdyl4j4Biu60JmrzifI/edit#heading=h.nizx2sxgre8m)
+
+##### Example
+
+Get first submission model
+
+        $fh.forms.getSubmissions({},function(err,subList){
+            //err handle
+            var submissionMeta=subList.getSubmissions()[0];
+            subList.getSubmissionByMeta(submissionMeta,function(err1,submissionModel){
+                //err1 handle
+                console.log(submissionModel.getStatus());
+            });
+        });
