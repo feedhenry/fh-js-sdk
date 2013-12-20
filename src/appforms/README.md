@@ -19,12 +19,15 @@ Test server contains / runs all tests which indicate how to use each module.
 Each test is an example of how to use a particular module.
 
 Run App: 
-grunt app
+
+        grunt app
 
 it connected to a mockup server and render the form to browser. It is able to save draft / submit .
 
 Build:
-grunt build
+
+
+        grunt build
 
 Concat all source files and uglify them. It will output 4 files in dist folder:
 
@@ -90,15 +93,15 @@ The project follows one source file has one test file conveniention. If one sour
 
 The template app repo: https://github.com/feedhenry/AppForms-Template/tree/phase3-demo
 
-1. Check out app template app
-2. create a hard link between files in src/appforms/dist to client/default/lib  
-3. run grunt build to build latest dist files in appforms folder
-4. run grunt testServer so that you have a mockup mbaas server running
+1. use grunt build script in appforms to generate latest library.
+2. Check out app template app
+3. copy files from jssdk repo src/appforms/dist to Template app project client/default/lib  
+4. run grunt testServer in appforms. so that you have a mockup mbaas server running
 5. In Template app's router.js, Add following parameters to $fh.forms.init function:
     
           {
               config: {
-                "cloudHost": "http://127.0.0.1:3001" // or to an mbaas server (like https://testing.feedhenry.me). need care about the cross origin issues.
+                "cloudHost": "http://127.0.0.1:3001" 
               }
             }
 
