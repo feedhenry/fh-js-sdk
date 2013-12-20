@@ -222,6 +222,25 @@ Save a draft
         });
         submission.saveDraft(function(err){});
 
+Subscribe to a status change event
+
+        submission.on("submit",function(){
+            console.log("submission is now waiting for upload")
+        });
+        
+        submission.on("inprogress", function(uploadTask){
+            console.log("submission is uploading...");
+        });
+        
+        submission.on("submitted", function(){
+            console.log("submission is submitted successfully");
+        });
+        
+        submission.on("error", function(error){
+            console.log("submission uploading meets an error");
+        });
+
+
 
 #### $fh.forms.getSubmissions
 
