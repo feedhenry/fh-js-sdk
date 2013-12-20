@@ -88,6 +88,8 @@ The project follows one source file has one test file conveniention. If one sour
 
 ## How to run the App Template locally
 
+The template app repo: https://github.com/feedhenry/AppForms-Template/tree/phase3-demo
+
 1. Check out app template app
 2. create a hard link between files in src/appforms/dist to client/default/lib  
 3. run grunt build to build latest dist files in appforms folder
@@ -230,6 +232,9 @@ Subscribe to a status change event
         
         submission.on("inprogress", function(uploadTask){
             console.log("submission is uploading...");
+            uploadTask.on("progress",function(progress){
+                console.log(progress);
+            });
         });
         
         submission.on("submitted", function(){
