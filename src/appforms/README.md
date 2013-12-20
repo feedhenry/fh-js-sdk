@@ -1,6 +1,6 @@
 #FeedHenry App Form Javascript SDK
 
-[API: $fh.forms usage](#$fh.forms-usage)
+[API: $fh.forms usage](#fhforms-usage)
 
 ##Grunt Tasks
 
