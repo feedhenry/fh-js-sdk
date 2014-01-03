@@ -4,6 +4,7 @@ var getFormsData = require("./sampleData/getForms.json");
 var allForms = require("./sampleData/getForm.json");
 var theme = require("./sampleData/getTheme.json");
 var submissionStatusFileHash = "";
+var failedFileUploadFileHash = "";
 var submissionStatusCounter = 0;
 
 function applyServer(app) {
@@ -70,7 +71,7 @@ function _getSubmissionStatus(req, res) {
   } else if (req.params.submissionId === "failedFileUpload") {
     responseJSON = {
       "status": "pending",
-      "pendingFiles": ["filePlaceHolder123456"]
+      "pendingFiles": [failedFileUploadFileHash]
     }
   } else if (req.params.submissionId === "submissionError") {
     responseJSON = {
@@ -172,6 +173,7 @@ function _appFileSubmission(req, res) {
     resJSON = {
       "status": "error"
     };
+    failedFileUploadFileHash = req.params.hashName;
   } else if (req.params.submissionId == "submissionStatus") {
     console.log(submissionStatusCounter);
     if (submissionStatusCounter === 0) {

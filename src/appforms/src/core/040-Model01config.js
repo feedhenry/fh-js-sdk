@@ -18,6 +18,12 @@ appForm.models=(function(module){
             self.set("deviceId",env.uuid);
         });
         this._initMBaaS();
+
+        //Setting default retry attempts if not set in the config
+        if(typeof config.submissionRetryAttempts === "undefined"){
+          config.submissionRetryAttempts = 2;
+        }
+
         this.fromJSON(config);
         cb();
     }
