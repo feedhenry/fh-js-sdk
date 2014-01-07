@@ -231,6 +231,10 @@ appForm.models = (function(module) {
                 if (err) {
                     cb(err);
                 } else {
+                    ut.set("error", null);
+                    ut.saveLocal(function(err){
+                      if(err) console.log(err);
+                    });
                     that.emit("inprogress", ut);
                     cb(null, ut);
                 }

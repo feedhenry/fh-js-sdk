@@ -61,7 +61,7 @@ appForm.models = (function(module) {
         return this.get("name", "unknown name");
     }
     Field.prototype.getHelpText = function() {
-        return this.get("helpText", "");
+        return this.getFieldDefinition()["helpText"] || "";
     }
     /**
      * Process an input value. convert to submission format. run field.validate before this

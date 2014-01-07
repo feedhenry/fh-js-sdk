@@ -27,22 +27,27 @@ var appForm = (function(module) {
         var count=0;
         function _handle(){
             setTimeout(function(){
-                count--;
-                if (count==0){
-                    cb();
-                }
+              cb();
             },1);
         }
         //init config module
         count++;
         var config = def.config || {};
         appForm.config = appForm.models.config;
-        appForm.config.init(config, _handle);
-        //init forms module
-        if (def.updateForms==true){
-            count++
-            appForm.models.forms.refresh(true,_handle);
-        }
+        appForm.config.init(config, function(){
+          //Loading the current state of the uploadManager for any upload tasks that are still in progress.
+          appForm.models.uploadManager.loadLocal(function(err){
+            if(err) console.log(err);
+
+            //init forms module
+            if (def.updateForms==true){
+              count++
+              appForm.models.forms.refresh(true,_handle);
+            } else {
+              _handle();
+            }
+          });
+        });
     }
 
     // $fh.ready({}, function() {
@@ -540,6 +545,7 @@ appForm.web.ajax = (function(module) {
         _ajax({
             "url":url,
             "type":"GET",
+            "timeout" : 5000, //TODO config
             "success":function(data,text){
                 cb(null,data);
             },
@@ -567,6 +573,7 @@ appForm.web.ajax = (function(module) {
             "url":url,
             "type":"POST",
             "data":body,
+            "timeout" : 5000,// TODO Config
             "dataType":"json",
             "success":function(data,text){
                 cb(null,data);
@@ -2107,6 +2114,10 @@ appForm.models = (function(module) {
                 if (err) {
                     cb(err);
                 } else {
+                    ut.set("error", null);
+                    ut.saveLocal(function(err){
+                      if(err) console.log(err);
+                    });
                     that.emit("inprogress", ut);
                     cb(null, ut);
                 }
@@ -2443,7 +2454,7 @@ appForm.models = (function(module) {
         return this.get("name", "unknown name");
     }
     Field.prototype.getHelpText = function() {
-        return this.get("helpText", "");
+        return this.getFieldDefinition()["helpText"] || "";
     }
     /**
      * Process an input value. convert to submission format. run field.validate before this
@@ -2915,10 +2926,11 @@ appForm.models = (function(module) {
 
     function UploadManager() {
         Model.call(this, {
-            "_type": "uploadManager"
+            "_type": "uploadManager",
+            "_ludid": "uploadManager_queue"
         });
         this.set("taskQueue", []);
-        this.timeOut = 60; //60 seconds. TODO: defin in config
+        this.timeOut = 60; //60 seconds. TODO: define in config
         this.sending = false;
         this.timerInterval = 200;
         this.sendingStart = appForm.utils.getTime();
@@ -2987,6 +2999,9 @@ appForm.models = (function(module) {
                     }
                 }
             });
+            this.saveLocal(function(err){
+              if(err) console.log(err);
+            });
         } else {
             cb(null, null);
         }
@@ -3038,9 +3053,16 @@ appForm.models = (function(module) {
     }
     UploadManager.prototype.push = function(uploadTaskId) {
         this.get("taskQueue").push(uploadTaskId);
+        this.saveLocal(function(err){
+          if(err) console.log(err);
+        });
     }
     UploadManager.prototype.shift = function() {
-        return this.get("taskQueue").shift();
+        var shiftedTask = this.get("taskQueue").shift();
+        this.saveLocal(function(err){
+          if(err) console.log(err);
+        });
+        return shiftedTask;
     }
     UploadManager.prototype.rollTask = function() {
         this.push(this.shift());
@@ -3604,20 +3626,28 @@ appForm.models = (function(module) {
 
     function _handler(err) {
       if (err) {
+        console.log("Err, retrying:", err);
         //If the upload has encountered an error -- flag the submission as needing a retry on the next tick -- User should be insulated from an error until the retries are finished.
         that.increRetryAttempts();
         if(that.getRetryAttempts() <= appForm.config.get("submissionRetryAttempts")){
           that.setRetryNeeded(true);
-          console.log(err);
-          cb();
-        } else { //The number of retry attempts exceeds the maximum number of retry attempts allowed, flag the upload as an error.
-          that.setRetryNeeded(false);
-          that.error(err, function() {
+          that.saveLocal(function(err){
+            if(err) console.log(err);
+            cb();
           });
-          cb(err);
+        } else { //The number of retry attempts exceeds the maximum number of retry attempts allowed, flag the upload as an error.
+          that.setRetryNeeded(true);
+          that.resetRetryAttempts();
+          that.error(err, function() {
+            cb(err);
+          });
         }
       }else{//no error.
         that.setRetryNeeded(false);
+
+        that.saveLocal(function(_err){
+          if(_err) console.log(_err);
+        });
         that.submissionModel(function(err,submission){
           if (err){
             cb(err);
@@ -3664,8 +3694,9 @@ appForm.models = (function(module) {
     }
     var remoteStore = this.getRemoteStore();
     var completeSubmission = new appForm.models.FormSubmissionComplete(this);
-    remoteStore.completeSubmission(completeSubmission, function(err, res) {
+    remoteStore.create(completeSubmission, function(err, res) {
       //if status is not "completed", then handle the completion err
+      res = res || {};
       if (res.status !== "complete") {
         return that.handleCompletionError(err, res, cb);
       }

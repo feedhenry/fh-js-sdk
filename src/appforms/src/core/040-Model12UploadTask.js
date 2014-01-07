@@ -321,20 +321,28 @@ appForm.models = (function(module) {
 
     function _handler(err) {
       if (err) {
+        console.log("Err, retrying:", err);
         //If the upload has encountered an error -- flag the submission as needing a retry on the next tick -- User should be insulated from an error until the retries are finished.
         that.increRetryAttempts();
         if(that.getRetryAttempts() <= appForm.config.get("submissionRetryAttempts")){
           that.setRetryNeeded(true);
-          console.log(err);
-          cb();
-        } else { //The number of retry attempts exceeds the maximum number of retry attempts allowed, flag the upload as an error.
-          that.setRetryNeeded(false);
-          that.error(err, function() {
+          that.saveLocal(function(err){
+            if(err) console.log(err);
+            cb();
           });
-          cb(err);
+        } else { //The number of retry attempts exceeds the maximum number of retry attempts allowed, flag the upload as an error.
+          that.setRetryNeeded(true);
+          that.resetRetryAttempts();
+          that.error(err, function() {
+            cb(err);
+          });
         }
       }else{//no error.
         that.setRetryNeeded(false);
+
+        that.saveLocal(function(_err){
+          if(_err) console.log(_err);
+        });
         that.submissionModel(function(err,submission){
           if (err){
             cb(err);
@@ -381,8 +389,9 @@ appForm.models = (function(module) {
     }
     var remoteStore = this.getRemoteStore();
     var completeSubmission = new appForm.models.FormSubmissionComplete(this);
-    remoteStore.completeSubmission(completeSubmission, function(err, res) {
+    remoteStore.create(completeSubmission, function(err, res) {
       //if status is not "completed", then handle the completion err
+      res = res || {};
       if (res.status !== "complete") {
         return that.handleCompletionError(err, res, cb);
       }

@@ -11,6 +11,7 @@ appForm.web.ajax = (function(module) {
         _ajax({
             "url":url,
             "type":"GET",
+            "timeout" : 5000, //TODO config
             "success":function(data,text){
                 cb(null,data);
             },
@@ -38,6 +39,7 @@ appForm.web.ajax = (function(module) {
             "url":url,
             "type":"POST",
             "data":body,
+            "timeout" : 5000,// TODO Config
             "dataType":"json",
             "success":function(data,text){
                 cb(null,data);

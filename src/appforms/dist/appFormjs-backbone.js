@@ -3960,7 +3960,7 @@ var FormView = BaseView.extend({
         if (firstView==null){
           firstView=fieldView;
         }
-        var errorMsgs = res[fieldId].errorMessages;
+        var errorMsgs = res[fieldId].fieldErrorMessage;
         for (var i = 0; i < errorMsgs.length; i++) {
           if (errorMsgs[i]) {
             fieldView.setErrorText(i, errorMsgs[i]);
@@ -4193,13 +4193,17 @@ var FormView = BaseView.extend({
     for (var i = 0, fieldView; fieldView = fieldViews[i]; i++) {
       var val = fieldView.value();
       var fieldId = fieldView.model.getFieldId();
-      for (var j = 0; j < val.length; j++) {
-        var v = val[j];
-        tmpObj.push({
-          id: fieldId,
-          value: v,
-          index:j
-        });
+      var fieldType = fieldView.model.getType();
+
+      if(fieldType !== "sectionBreak"){
+        for (var j = 0; j < val.length; j++) {
+          var v = val[j];
+          tmpObj.push({
+            id: fieldId,
+            value: v,
+            index:j
+          });
+        }
       }
     }
     var count = tmpObj.length;
