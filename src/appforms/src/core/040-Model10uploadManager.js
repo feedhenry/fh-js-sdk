@@ -71,7 +71,7 @@ appForm.models = (function(module) {
             this.getTaskById(uploadTId, function(err, task) {
                 if (err) {
                     console.error(err);
-                    cb(task);
+                    cb(err, task);
                 } else {
                     if (task) {
                         task.clearLocal(cb);

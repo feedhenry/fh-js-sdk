@@ -70,6 +70,7 @@ appForm.models = (function(module) {
         this.set("uploadStartDate", null);
         this.set("submittedDate", null);
         this.set("userId", null);
+        this.set("filesInSubmission", {});
         this.set("deviceId", appForm.models.config.get("deviceId"));
         this.transactionMode = false;
         this.genLocalId();
@@ -193,8 +194,6 @@ appForm.models = (function(module) {
             }
         });
 
-
-
     }
     //joint form id and submissions timestamp.
     Submission.prototype.genLocalId = function() {
@@ -296,6 +295,14 @@ appForm.models = (function(module) {
             }
         }
     }
+
+    Submission.prototype.addSubmissionFile = function(fileHash){
+      var filesInSubmission = this.get("filesInSubmission", {});
+      filesInSubmission[fileHash] = true;
+      this.set("filesInSubmission", filesInSubmission);
+      this.saveLocal(function(err){if(err) console.error(err)});
+    }
+
     /**
      * Add a value to submission.
      * This will not cause the field been validated.
@@ -328,6 +335,10 @@ appForm.models = (function(module) {
                             that.tmpFields[fieldId].push(result);
                         }
 
+                        if(typeof result == "object" && result.hashName){
+                          that.addSubmissionFile(result.hashName);
+                        }
+
                         cb(null, result);
                     }
                 });
@@ -341,6 +352,10 @@ appForm.models = (function(module) {
                             target.fieldValues[index] = result;
                         } else {
                             target.fieldValues.push(result);
+                        }
+
+                        if(typeof result == "object" && result.hashName){
+                          that.addSubmissionFile(result.hashName);
                         }
 
                         cb(null, result);
@@ -362,10 +377,22 @@ appForm.models = (function(module) {
      * Reset submission
      * @return {[type]} [description]
      */
-    Submission.prototype.reset = function() {
+    Submission.prototype.reset = function(cb) {
         this.set("formFields", []);
-        //TODO need to clear local storage like files etc.
     }
+
+    Submission.prototype.clearLocalSubmissionFiles = function(cb){
+      var filesInSubmission = this.get("filesInSubmission", {});
+
+      for (var fileHashName in filesInSubmission) {
+        appForm.utils.fileSystem.remove(fileHashName, function(err){
+          if(err) console.error(err);
+        });
+      }
+
+      cb();
+    }
+
     Submission.prototype.startInputTransaction = function() {
         this.transactionMode = true;
         this.tmpFields = {};
@@ -490,20 +517,33 @@ appForm.models = (function(module) {
 
     Submission.prototype.clearLocal = function(cb) {
         var self = this;
-        Model.prototype.clearLocal.call(this, function(err) {
-            if (err) {
-                return cb(err);
+
+        //remove from uploading list
+        appForm.models.uploadManager.cancelSubmission(self, function(err, uploadTask){
+            if(err){
+              console.error(err);
+              return cb(err);
             }
+
             //remove from submission list
             appForm.models.submissions.removeSubmission(self.getLocalId(), function(err) {
-                if (err) {
+              if (err) {
+                console.err(err);
+                return cb(err);
+              }
+
+              self.clearLocalSubmissionFiles(function(){
+                Model.prototype.clearLocal.call(self, function(err) {
+                  if (err) {
+                    console.error(err);
                     return cb(err);
-                }
-                //remove from uploading list
-                appForm.models.uploadManager.cancelSubmission(self, cb);
-                //TODO reset submission
+                  }
+
+                  cb(null, null);
+                });
+              });
             });
-        });
+          });
     }
 
     return module;
