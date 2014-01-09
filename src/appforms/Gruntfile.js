@@ -23,6 +23,15 @@ module.exports = function(grunt) {
                 files: {
                     "<%= pkg.distDir %>/<%= pkg.name %>-backbone.min.js": "<%= pkg.distDir %>/<%= pkg.name %>-backbone.js"
                 }
+            },
+            backboneRequireJS: {
+              options: {
+                "compress": true,
+                "report": "min"
+              },
+              files: {
+                "<%= pkg.distDir %>/<%= pkg.name %>-backboneRequireJS.min.js": "<%= pkg.distDir %>/<%= pkg.name %>-backboneRequireJS.js"
+              }
             }
         },
         concat: {
@@ -31,8 +40,12 @@ module.exports = function(grunt) {
                 "dest": "<%= pkg.distDir %>/<%= pkg.name %>-core.js"
             },
             backbone: {
-                "src": "<%= pkg.sourceDir %>/backbone/*.js",
+                "src": ["<%= pkg.sourceDir %>/backbone/*.js", "!<%= pkg.sourceDir %>/backbone/000-closureStartRequireJS.js", "!<%= pkg.sourceDir %>/backbone/999-closureEndRequireJS.js"],
                 "dest": "<%= pkg.distDir %>/<%= pkg.name %>-backbone.js"
+            },
+            backboneRequireJS: {
+              "src": ["<%= pkg.sourceDir %>/backbone/*.js", "!<%= pkg.sourceDir %>/backbone/000-closureStart.js", "!<%= pkg.sourceDir %>/backbone/999-closureEnd.js"],
+              "dest": "<%= pkg.distDir %>/<%= pkg.name %>-backboneRequireJS.js"
             }
         }
     });
@@ -42,7 +55,8 @@ module.exports = function(grunt) {
     // grunt.registerTask("linkCore",require("./script/linkCore.js")(grunt));
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-concat');
-    grunt.registerTask("build",["buildCore","buildBackbone"]);
+    grunt.registerTask("build",["buildCore","buildBackbone", "buildBackboneRequireJS"]);
     grunt.registerTask("buildCore",["concat:core","uglify:core"]);
     grunt.registerTask("buildBackbone",["concat:backbone","uglify:backbone"]);
+    grunt.registerTask("buildBackboneRequireJS",["concat:backboneRequireJS","uglify:backboneRequireJS"]);
 }
