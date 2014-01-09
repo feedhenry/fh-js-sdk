@@ -34,19 +34,15 @@ var appForm = (function(module) {
             if(err) console.error(err);
 
             //init forms module
-            appForm.models.theme.refresh(true, function(err){
-              if(err) console.error(err);
+            if (def.updateForms==true){
+              appForm.models.forms.refresh(true,function(err){
+                if(err) console.error(err);
 
-              if (def.updateForms==true){
-                appForm.models.forms.refresh(true,function(err){
-                  if(err) console.error(err);
-
-                  cb();
-                });
-              } else {
                 cb();
-              }
-            });
+              });
+            } else {
+              cb();
+            }
           });
         });
     }
