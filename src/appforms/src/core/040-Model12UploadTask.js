@@ -44,6 +44,8 @@ appForm.models = (function(module) {
     this.set("currentTask", null);
     this.set("completed", false);
     this.set("mbaasCompleted", false);
+    this.set("retryAttempts", 0);
+    this.set("retryNeeded", false);
     this.set("formId", submissionModel.get("formId"));
     for (var i = 0, file; file = files[i]; i++) {
       this.addFileTask(file);
@@ -84,11 +86,23 @@ appForm.models = (function(module) {
    * @return {[type]} [description]
    */
   UploadTask.prototype.getCurrentTask = function() {
-    return this.get("currentTask");
+    return this.get("currentTask", null);
+  }
+
+  UploadTask.prototype.getRetryAttempts = function() {
+    return this.get("retryAttempts");
+  }
+
+  UploadTask.prototype.increRetryAttempts = function(){
+    this.set("retryAttempts", this.get("retryAttempts") + 1);
+  }
+
+  UploadTask.prototype.resetRetryAttempts = function(){
+    this.set("retryAttempts", 0);
   }
 
   UploadTask.prototype.isStarted = function() {
-    return this.get("currentTask", null) == null ? false : true;
+    return this.getCurrentTask() == null ? false : true;
   }
   /**
    * upload form submission
@@ -144,7 +158,7 @@ appForm.models = (function(module) {
 
     if (res.status === "pending") {
       //The submission is not yet complete, there are files waiting to upload. This is an unexpected state as all of the files should have been uploaded.
-      return this.handleIncompleteSubmission(cb);
+      errorMessage = "Submission Still Pending.";
     } else if (res.status === "error") {
       //There was an error completing the submission.
       errorMessage = "Error completing submission";
@@ -152,12 +166,6 @@ appForm.models = (function(module) {
       errorMessage = "Invalid return type from complete submission";
     }
     cb(errorMessage);
-    // this.error(errorMessage,cb);
-    // this.submissionModel(function(_err, model) {
-    //   model.error(errorMessage, function() {
-    //     return cb(errorMessage);
-    //   });
-    // });
   }
 
 
@@ -180,24 +188,15 @@ appForm.models = (function(module) {
       } else if (res.status === "error") { //The server had an error submitting the form, finish with an error
         var errMessage = "Error submitting form.";
         cb(errMessage);
-        // that.completed(errMessage, function(_err) {
-        //   if (err) console.error("Submission Status Error: ", _err);
-        //   return cb(errMessage);
-        // });
       } else if (res.status === "complete") { //Submission is complete, make uploading progress further
         that.increProgress();
         cb();
-        // that.completed(null, function(err) {
-        //   if (err) console.error("Submission Status Error: ", err);
-        //   return cb(err);
-        // });
       } else if (res.status === "pending") { //Submission is still pending, check for files not uploaded yet.
         var pendingFiles = res.pendingFiles || [];
 
         if (pendingFiles.length > 0) {
-          var errMsg = "File progress mismatched.";
           that.resetUploadTask(pendingFiles, function() {
-            cb(errMsg);
+            cb();
           });
         } else { //No files pending on the server, make the progress further
           that.increProgress();
@@ -206,10 +205,6 @@ appForm.models = (function(module) {
       } else { //Should not get to this point. Only valid status responses are error, pending and complete.
         var errMessage = "Invalid submission status response.";
         cb(errMessage);
-        // that.completed(errMessage, function(err) {
-        //   if (err) console.error("Submission Status Error: ", err);
-        //   return cb(errMessage);
-        // });
       }
     });
   }
@@ -244,20 +239,6 @@ appForm.models = (function(module) {
     if (resetFileIndex > 0) {
       resetCurrentTask = resetFileIndex;
     }
-// =======
-//             fileSubmissionModel.loadFile(function(err) {
-//                 if (err) {
-//                   that.completed(err, function(_err){
-//                     return cb(err);
-//                   });
-//                 } else {
-//                     that.getRemoteStore().create(fileSubmissionModel, function(err, res) {
-//                         if (err) {
-//                             cb(err);
-//                         } else {
-//                             if (res.status == 200) {
-//                                 fileTask.updateDate = appForm.utils.getTime();
-// >>>>>>> 5447d19435c6fbf2b50d2818b304cc1266aa2214
 
     //Reset current task
     this.set("currentTask", resetCurrentTask);
@@ -270,7 +251,7 @@ appForm.models = (function(module) {
     var submissionId = this.get("submissionId");
 
     if (submissionId) {
-      var progress = this.get("currentTask");
+      var progress = this.getCurrentTask();
       if (progress == null) {
         progress = 0;
         that.set("currentTask", progress);
@@ -290,9 +271,7 @@ appForm.models = (function(module) {
 
       fileSubmissionModel.loadFile(function(err) {
         if (err) {
-          that.completed(err, function(_err) {
-            return cb(err);
-          });
+          return cb(err);
         } else {
           that.getRemoteStore().create(fileSubmissionModel, function(err, res) {
             if (err) {
@@ -301,9 +280,6 @@ appForm.models = (function(module) {
               if (res.status == "ok" || res.status == "200") {
                 fileTask.updateDate = appForm.utils.getTime();
 
-                // var curTask = progress;
-                // curTask++;
-                // that.set("currentTask", curTask);
                 that.increProgress();
                 that.saveLocal(function(err) { //save current status.
                   if (err) {
@@ -314,7 +290,7 @@ appForm.models = (function(module) {
                 cb(null);
               } else {
                 var errorMessage = "File upload failed for file: " + fileTask.fileName;
-                that.handleIncompleteSubmission(cb);
+                cb(errorMessage);
               }
             }
           });
@@ -324,14 +300,49 @@ appForm.models = (function(module) {
       cb("Failed to upload file. Submission Id not found.");
     }
   }
+
+  //The upload task needs to be retried
+  UploadTask.prototype.setRetryNeeded = function(retryNeeded){
+    //If there is a submissionId, then a retry is needed. If not, then the current task should be set to null to retry the submission.
+    if(this.get("submissionId", null) !=  null){
+      this.set("retryNeeded", retryNeeded);
+    } else {
+      this.set("retryNeeded", false);
+      this.set("currentTask", null);
+    }
+  }
+
+  UploadTask.prototype.retryNeeded = function(){
+    return this.get("retryNeeded");
+  }
+
   UploadTask.prototype.uploadTick = function(cb) {
     var that = this;
 
     function _handler(err) {
       if (err) {
-        that.error(err, function() {
-        });
+        console.log("Err, retrying:", err);
+        //If the upload has encountered an error -- flag the submission as needing a retry on the next tick -- User should be insulated from an error until the retries are finished.
+        that.increRetryAttempts();
+        if(that.getRetryAttempts() <= appForm.config.get("submissionRetryAttempts")){
+          that.setRetryNeeded(true);
+          that.saveLocal(function(err){
+            if(err) console.log(err);
+            cb();
+          });
+        } else { //The number of retry attempts exceeds the maximum number of retry attempts allowed, flag the upload as an error.
+          that.setRetryNeeded(true);
+          that.resetRetryAttempts();
+          that.error(err, function() {
+            cb(err);
+          });
+        }
       }else{//no error.
+        that.setRetryNeeded(false);
+
+        that.saveLocal(function(_err){
+          if(_err) console.log(_err);
+        });
         that.submissionModel(function(err,submission){
           if (err){
             cb(err);
@@ -339,17 +350,18 @@ appForm.models = (function(module) {
             var status=submission.get("status");
             if (status !="inprogress" && status != "submitted"){
               cb("Submission status is incorrect. Upload task should be started by submission object's upload method.");
+            } else {
+              cb();
             }
           }
         });
       }
-      if (cb){
-        cb(err);  
-      }
     }
-    var currentTask = this.get("currentTask", null);
+
     if (!this.isFormCompleted()) { // No current task, send the form json
       this.uploadForm(_handler);
+    } else if(this.retryNeeded()){ //If a retry is needed, this tick gets the current status of the submission from the server and resets the submission.
+      this.handleIncompleteSubmission(_handler);
     } else if (!this.isFileCompleted()) { //files to be uploaded
       this.uploadFile(_handler);
     } else if (!this.isMBaaSCompleted()) { //call mbaas to complete upload
@@ -361,7 +373,7 @@ appForm.models = (function(module) {
     }
   }
   UploadTask.prototype.increProgress = function() {
-    var curTask = this.get("currentTask", null);
+    var curTask = this.getCurrentTask();
     if (curTask === null) {
       curTask = 0;
     } else {
@@ -373,31 +385,22 @@ appForm.models = (function(module) {
     var submissionId = this.get("submissionId", null);
     var that = this;
     if (submissionId === null) {
-      return this.completed("Failed to complete submission. Submission Id not found.", cb);
+      return cb("Failed to complete submission. Submission Id not found.");
     }
     var remoteStore = this.getRemoteStore();
     var completeSubmission = new appForm.models.FormSubmissionComplete(this);
-    remoteStore.completeSubmission(completeSubmission, function(err, res) {
+    remoteStore.create(completeSubmission, function(err, res) {
       //if status is not "completed", then handle the completion err
+      res = res || {};
       if (res.status !== "complete") {
         return that.handleCompletionError(err, res, cb);
       }
       //Completion is now completed sucessfully.. we can make the progress further.
       that.increProgress();
       cb(null);
-      // that.submissionModel(function(_err, model) {
-      //   model.submitted(cb);
-      // });
     });
   }
-  //@deprecated use success / error instead
-  UploadTask.prototype.completed = function(err, cb) {
-    if (err) {
-      this.error(err, cb);
-    } else {
-      this.success(cb);
-    }
-  }
+
   /**
    * the upload task is successfully completed. This will be called when all uploading process finished successfully.
    * @return {[type]} [description]
@@ -446,7 +449,7 @@ appForm.models = (function(module) {
     });
   }
   UploadTask.prototype.isFormCompleted = function() {
-    var curTask = this.get("currentTask", null);
+    var curTask = this.getCurrentTask();
     if (curTask === null) {
       return false;
     } else {
@@ -454,7 +457,7 @@ appForm.models = (function(module) {
     }
   }
   UploadTask.prototype.isFileCompleted = function() {
-    var curTask = this.get("currentTask", null);
+    var curTask = this.getCurrentTask();
     if (curTask === null) {
       return false;
     } else if (curTask < this.get("fileTasks", []).length) {
@@ -478,7 +481,7 @@ appForm.models = (function(module) {
     if (!this.isFileCompleted()) {
       return false;
     } else {
-      var curTask = this.get("currentTask", null);
+      var curTask = this.getCurrentTask();
       if (curTask > this.get("fileTasks", []).length) { //change offset if completion bit is changed
         return true;
       } else {
@@ -492,9 +495,10 @@ appForm.models = (function(module) {
       "currentFileIndex": 0,
       "totalFiles": this.get("fileTasks").length,
       "totalSize": this.getTotalSize(),
-      "uploaded": this.getUploadedSize()
+      "uploaded": this.getUploadedSize(),
+      "retryAttempts": this.getRetryAttempts()
     };
-    var progress = this.get("currentTask");
+    var progress = this.getCurrentTask();
     if (progress === null) {
       return rtn;
     } else {

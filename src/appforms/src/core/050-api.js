@@ -5,13 +5,8 @@ appForm.api = (function(module) {
     module.getForms=getForms;
     module.getForm=getForm;
     module.getTheme=getTheme;
-//    module.saveDraft=saveDraft;
     module.submitForm=submitForm;
-//    module.getPending=getPending;
     module.getSubmissions=getSubmissions;
-//    module.getSubmissionData=getSubmissionData;
-//    module.getFailed=getFailed;
-//    module.getDrafts=getDrafts;
     module.init=appForm.init;
     module.config=appForm.models.config;
     
@@ -69,53 +64,6 @@ appForm.api = (function(module) {
       });
     }
 
-  /**
-   * Get submissions that are in draft mode. I.e. saved but not submitted
-   * @param params {}
-   * @param {Function} cb     (err, draftsArray)
-   */
-//    function getDrafts(params, cb){
-//      //Only getting draft details -- not draft data
-//      var submissions = appForm.models.submissions;
-//      var drafts = submissions.getDrafts();
-//      var returnDrafts = [];
-//      if(drafts){
-//        drafts.forEach(function(draft){
-//          draft.localSubmissionId = draft._ludid;
-//          returnDrafts.push(draft);
-//        });
-//      }
-//      return cb(null, returnDrafts);
-//    }
-
-    /**
-     * Get submissions that are pending. I.e. submitted but not complete.
-     * Pending can be either "pending" or "inprogress"
-     * @param params {}
-     * @param {Function} cb     (err, pendingArray)
-     */
-//    function getPending(params, cb){
-//      var submissions = appForm.models.submissions;
-//
-//      var pending = submissions.getPending();
-//      var inProgress = submissions.getInProgress();
-//      var returnPending = [];
-//
-//      if(pending){
-//        pending.forEach(function(pendingSubmission){
-//          pendingSubmission.localSubmissionId = pendingSubmission._ludid;
-//          pendingSubmission.dateSubmissionStarted = new Date(pendingSubmission.submissionStartedTimestamp);
-//          returnPending.push(pendingSubmission);
-//        });
-//      }
-//
-//      if(inProgress){
-//        inProgress.forEach(function())
-//      }
-//
-//      return cb(null, returnPending);
-//    }
-
     /**
      * Get submissions that are submitted. I.e. submitted and complete.
      * @param params {}
@@ -142,42 +90,6 @@ appForm.api = (function(module) {
       }
     }
 
-      /**
-      * Get submission object from that are submitted. I.e. submitted and complete.
-      * @param params {localSubmissionId : <localIdOfSubmission>}
-      * @param {Function} cb     (err, submittedArray)
-      */
-//      function getSubmissionData(params, cb){
-//        if(!params || !params.localSubmissionId){
-//         return cb(new Error("Invalid params to getSubmissionData: localSubmission must be a parameter"));
-//        }
-//
-//        var submission = appForm.models.submission;
-//
-//        submission.fromLocal(params.localSubmissionId, cb);
-//      }
-
-    /**
-     * Get submissions that have failed. I.e. submitted and and error occurred.
-     * @param params {}
-     * @param {Function} cb     (err, failedArray)
-     */
-//    function getFailed(params, cb){
-//      var submissions = appForm.models.submissions;
-//
-//      var failedSubmissions = submissions.getError();
-//      var returnFailedSubmissions = [];
-//
-//      if(failedSubmissions){
-//        failedSubmissions.forEach(function(failedSubmission){
-//          failedSubmission.localSubmissionId = failedSubmission._ludid;
-//          failedSubmission.dateSubmissionStarted = new Date(failedSubmission.submissionStartedTimestamp);
-//          returnFailedSubmissions.push(failedSubmission);
-//        });
-//      }
-//
-//      return cb(null, returnFailedSubmissions);
-//    }
 
     function submitForm(submission, cb){
 
@@ -192,15 +104,6 @@ appForm.api = (function(module) {
         return cb("Invalid submission object.");
       }
     }
-
-//    function saveDraft(submission, cb){
-//      if(submission.get("_type") !== "submission"){
-//        return cb(new Error("Expected submission parameter to be of type Submission"));
-//      }
-//
-//      submission.saveDraft(cb);
-//    }
-    
 
     return module;
 })(appForm.api || {});

@@ -1,14 +1,6 @@
-/**
- * FeedHenry License
- */
-
-if (typeof window =="undefined"){
-    var window={};
-}
-//this is a partial js file which defines the start of appform SDK closure
-(function(_scope){
-    
-    //start module
+define([
+  "underscore", "jquery", "backbone", "appFormCore"
+], function(_, jQuery, Backbone){
 
 /* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -  */
 /*  Geodesy representation conversion functions (c) Chris Veness 2002-2012                        */
@@ -4336,8 +4328,6 @@ $fh.forms.renderFormList = function(params, cb) {
 $fh.forms.backbone={};
 $fh.forms.backbone.FormView=FormView;
 
+return $fh.forms;
 
-//end  module;
-
-//this is partial file which define the end of closure
-})(window || module.exports);
+});

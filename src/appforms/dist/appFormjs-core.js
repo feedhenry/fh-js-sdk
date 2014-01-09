@@ -24,25 +24,31 @@ var appForm = (function(module) {
                 def[key] = params[key];
             }
         }
-        var count=0;
-        function _handle(){
-            setTimeout(function(){
-                count--;
-                if (count==0){
-                    cb();
-                }
-            },1);
-        }
+
         //init config module
-        count++;
         var config = def.config || {};
         appForm.config = appForm.models.config;
-        appForm.config.init(config, _handle);
-        //init forms module
-        if (def.updateForms==true){
-            count++
-            appForm.models.forms.refresh(true,_handle);
-        }
+        appForm.config.init(config, function(){
+          //Loading the current state of the uploadManager for any upload tasks that are still in progress.
+          appForm.models.uploadManager.loadLocal(function(err){
+            if(err) console.error(err);
+
+            //init forms module
+            appForm.models.theme.refresh(true, function(err){
+              if(err) console.error(err);
+
+              if (def.updateForms==true){
+                appForm.models.forms.refresh(true,function(err){
+                  if(err) console.error(err);
+
+                  cb();
+                });
+              } else {
+                cb();
+              }
+            });
+          });
+        });
     }
 
     // $fh.ready({}, function() {
@@ -149,6 +155,7 @@ appForm.utils = (function(module) {
     function isFileSystemAvailable() {
         return fileSystemAvailable;
     }
+
     //convert a file object to base64 encoded.
     function fileToBase64(file, cb) {
         if (!file instanceof File) {
@@ -204,10 +211,10 @@ appForm.utils = (function(module) {
                     }
 
                     function _onTruncated() {
-                        writer.onwrite = _onFinished;
+                        writer.onwriteend = _onFinished;
                         writer.write(saveObj); //write method can take a blob or file object according to html5 standard.
                     }
-                    writer.onwrite = _onTruncated;
+                    writer.onwriteend = _onTruncated;
                     //truncate the file first.
                     writer.truncate(0);
                 }, function(e) {
@@ -225,16 +232,20 @@ appForm.utils = (function(module) {
     function remove(fileName, cb) {
         _getFileEntry(fileName, 0, {}, function(err, fileEntry) {
             if (err) {
-                console.error(err);
-                cb(err);
-            } else {
-                fileEntry.remove(function() {
-                    cb(null, null);
-                }, function(e) {
-                    // console.error(e);
-                    cb("Failed to remove file" + e);
-                });
+                if(!(err.name == "NotFoundError" || err.code == 1)){
+                  return cb(err);
+                } else {
+                  return cb(null, null);
+                }
             }
+
+            fileEntry.remove(function() {
+                cb(null, null);
+            }, function(e) {
+                // console.error(e);
+                cb("Failed to remove file" + e);
+            });
+
         });
     }
     /**
@@ -546,7 +557,7 @@ appForm.web.ajax = (function(module) {
             "error":function(xhr,status,err){
                 cb(xhr);
             }
-        })
+        });
     }
     function post(url,body,cb){
         var file=false;
@@ -1250,6 +1261,12 @@ appForm.models=(function(module){
             self.set("deviceId",env.uuid);
         });
         this._initMBaaS();
+
+        //Setting default retry attempts if not set in the config
+        if(typeof config.submissionRetryAttempts === "undefined"){
+          config.submissionRetryAttempts = 2;
+        }
+
         this.fromJSON(config);
         cb();
     }
@@ -1940,6 +1957,7 @@ appForm.models = (function(module) {
         this.set("uploadStartDate", null);
         this.set("submittedDate", null);
         this.set("userId", null);
+        this.set("filesInSubmission", {});
         this.set("deviceId", appForm.models.config.get("deviceId"));
         this.transactionMode = false;
         this.genLocalId();
@@ -2063,8 +2081,6 @@ appForm.models = (function(module) {
             }
         });
 
-
-
     }
     //joint form id and submissions timestamp.
     Submission.prototype.genLocalId = function() {
@@ -2101,6 +2117,10 @@ appForm.models = (function(module) {
                 if (err) {
                     cb(err);
                 } else {
+                    ut.set("error", null);
+                    ut.saveLocal(function(err){
+                      if(err) console.log(err);
+                    });
                     that.emit("inprogress", ut);
                     cb(null, ut);
                 }
@@ -2162,6 +2182,14 @@ appForm.models = (function(module) {
             }
         }
     }
+
+    Submission.prototype.addSubmissionFile = function(fileHash){
+      var filesInSubmission = this.get("filesInSubmission", {});
+      filesInSubmission[fileHash] = true;
+      this.set("filesInSubmission", filesInSubmission);
+      this.saveLocal(function(err){if(err) console.error(err)});
+    }
+
     /**
      * Add a value to submission.
      * This will not cause the field been validated.
@@ -2194,6 +2222,10 @@ appForm.models = (function(module) {
                             that.tmpFields[fieldId].push(result);
                         }
 
+                        if(typeof result == "object" && result.hashName){
+                          that.addSubmissionFile(result.hashName);
+                        }
+
                         cb(null, result);
                     }
                 });
@@ -2207,6 +2239,10 @@ appForm.models = (function(module) {
                             target.fieldValues[index] = result;
                         } else {
                             target.fieldValues.push(result);
+                        }
+
+                        if(typeof result == "object" && result.hashName){
+                          that.addSubmissionFile(result.hashName);
                         }
 
                         cb(null, result);
@@ -2228,10 +2264,22 @@ appForm.models = (function(module) {
      * Reset submission
      * @return {[type]} [description]
      */
-    Submission.prototype.reset = function() {
+    Submission.prototype.reset = function(cb) {
         this.set("formFields", []);
-        //TODO need to clear local storage like files etc.
     }
+
+    Submission.prototype.clearLocalSubmissionFiles = function(cb){
+      var filesInSubmission = this.get("filesInSubmission", {});
+
+      for (var fileHashName in filesInSubmission) {
+        appForm.utils.fileSystem.remove(fileHashName, function(err){
+          if(err) console.error(err);
+        });
+      }
+
+      cb();
+    }
+
     Submission.prototype.startInputTransaction = function() {
         this.transactionMode = true;
         this.tmpFields = {};
@@ -2356,20 +2404,33 @@ appForm.models = (function(module) {
 
     Submission.prototype.clearLocal = function(cb) {
         var self = this;
-        Model.prototype.clearLocal.call(this, function(err) {
-            if (err) {
-                return cb(err);
+
+        //remove from uploading list
+        appForm.models.uploadManager.cancelSubmission(self, function(err, uploadTask){
+            if(err){
+              console.error(err);
+              return cb(err);
             }
+
             //remove from submission list
             appForm.models.submissions.removeSubmission(self.getLocalId(), function(err) {
-                if (err) {
+              if (err) {
+                console.err(err);
+                return cb(err);
+              }
+
+              self.clearLocalSubmissionFiles(function(){
+                Model.prototype.clearLocal.call(self, function(err) {
+                  if (err) {
+                    console.error(err);
                     return cb(err);
-                }
-                //remove from uploading list
-                appForm.models.uploadManager.cancelSubmission(self, cb);
-                //TODO reset submission
+                  }
+
+                  cb(null, null);
+                });
+              });
             });
-        });
+          });
     }
 
     return module;
@@ -2909,10 +2970,11 @@ appForm.models = (function(module) {
 
     function UploadManager() {
         Model.call(this, {
-            "_type": "uploadManager"
+            "_type": "uploadManager",
+            "_ludid": "uploadManager_queue"
         });
         this.set("taskQueue", []);
-        this.timeOut = 60; //60 seconds. TODO: defin in config
+        this.timeOut = 60; //60 seconds. TODO: define in config
         this.sending = false;
         this.timerInterval = 200;
         this.sendingStart = appForm.utils.getTime();
@@ -2972,7 +3034,7 @@ appForm.models = (function(module) {
             this.getTaskById(uploadTId, function(err, task) {
                 if (err) {
                     console.error(err);
-                    cb(task);
+                    cb(err, task);
                 } else {
                     if (task) {
                         task.clearLocal(cb);
@@ -2980,6 +3042,9 @@ appForm.models = (function(module) {
                         cb(null, null);
                     }
                 }
+            });
+            this.saveLocal(function(err){
+              if(err) console.log(err);
             });
         } else {
             cb(null, null);
@@ -3032,9 +3097,16 @@ appForm.models = (function(module) {
     }
     UploadManager.prototype.push = function(uploadTaskId) {
         this.get("taskQueue").push(uploadTaskId);
+        this.saveLocal(function(err){
+          if(err) console.log(err);
+        });
     }
     UploadManager.prototype.shift = function() {
-        return this.get("taskQueue").shift();
+        var shiftedTask = this.get("taskQueue").shift();
+        this.saveLocal(function(err){
+          if(err) console.log(err);
+        });
+        return shiftedTask;
     }
     UploadManager.prototype.rollTask = function() {
         this.push(this.shift());
@@ -3321,6 +3393,8 @@ appForm.models = (function(module) {
     this.set("currentTask", null);
     this.set("completed", false);
     this.set("mbaasCompleted", false);
+    this.set("retryAttempts", 0);
+    this.set("retryNeeded", false);
     this.set("formId", submissionModel.get("formId"));
     for (var i = 0, file; file = files[i]; i++) {
       this.addFileTask(file);
@@ -3361,11 +3435,23 @@ appForm.models = (function(module) {
    * @return {[type]} [description]
    */
   UploadTask.prototype.getCurrentTask = function() {
-    return this.get("currentTask");
+    return this.get("currentTask", null);
+  }
+
+  UploadTask.prototype.getRetryAttempts = function() {
+    return this.get("retryAttempts");
+  }
+
+  UploadTask.prototype.increRetryAttempts = function(){
+    this.set("retryAttempts", this.get("retryAttempts") + 1);
+  }
+
+  UploadTask.prototype.resetRetryAttempts = function(){
+    this.set("retryAttempts", 0);
   }
 
   UploadTask.prototype.isStarted = function() {
-    return this.get("currentTask", null) == null ? false : true;
+    return this.getCurrentTask() == null ? false : true;
   }
   /**
    * upload form submission
@@ -3421,7 +3507,7 @@ appForm.models = (function(module) {
 
     if (res.status === "pending") {
       //The submission is not yet complete, there are files waiting to upload. This is an unexpected state as all of the files should have been uploaded.
-      return this.handleIncompleteSubmission(cb);
+      errorMessage = "Submission Still Pending.";
     } else if (res.status === "error") {
       //There was an error completing the submission.
       errorMessage = "Error completing submission";
@@ -3429,12 +3515,6 @@ appForm.models = (function(module) {
       errorMessage = "Invalid return type from complete submission";
     }
     cb(errorMessage);
-    // this.error(errorMessage,cb);
-    // this.submissionModel(function(_err, model) {
-    //   model.error(errorMessage, function() {
-    //     return cb(errorMessage);
-    //   });
-    // });
   }
 
 
@@ -3457,24 +3537,15 @@ appForm.models = (function(module) {
       } else if (res.status === "error") { //The server had an error submitting the form, finish with an error
         var errMessage = "Error submitting form.";
         cb(errMessage);
-        // that.completed(errMessage, function(_err) {
-        //   if (err) console.error("Submission Status Error: ", _err);
-        //   return cb(errMessage);
-        // });
       } else if (res.status === "complete") { //Submission is complete, make uploading progress further
         that.increProgress();
         cb();
-        // that.completed(null, function(err) {
-        //   if (err) console.error("Submission Status Error: ", err);
-        //   return cb(err);
-        // });
       } else if (res.status === "pending") { //Submission is still pending, check for files not uploaded yet.
         var pendingFiles = res.pendingFiles || [];
 
         if (pendingFiles.length > 0) {
-          var errMsg = "File progress mismatched.";
           that.resetUploadTask(pendingFiles, function() {
-            cb(errMsg);
+            cb();
           });
         } else { //No files pending on the server, make the progress further
           that.increProgress();
@@ -3483,10 +3554,6 @@ appForm.models = (function(module) {
       } else { //Should not get to this point. Only valid status responses are error, pending and complete.
         var errMessage = "Invalid submission status response.";
         cb(errMessage);
-        // that.completed(errMessage, function(err) {
-        //   if (err) console.error("Submission Status Error: ", err);
-        //   return cb(errMessage);
-        // });
       }
     });
   }
@@ -3521,20 +3588,6 @@ appForm.models = (function(module) {
     if (resetFileIndex > 0) {
       resetCurrentTask = resetFileIndex;
     }
-// =======
-//             fileSubmissionModel.loadFile(function(err) {
-//                 if (err) {
-//                   that.completed(err, function(_err){
-//                     return cb(err);
-//                   });
-//                 } else {
-//                     that.getRemoteStore().create(fileSubmissionModel, function(err, res) {
-//                         if (err) {
-//                             cb(err);
-//                         } else {
-//                             if (res.status == 200) {
-//                                 fileTask.updateDate = appForm.utils.getTime();
-// >>>>>>> 5447d19435c6fbf2b50d2818b304cc1266aa2214
 
     //Reset current task
     this.set("currentTask", resetCurrentTask);
@@ -3547,7 +3600,7 @@ appForm.models = (function(module) {
     var submissionId = this.get("submissionId");
 
     if (submissionId) {
-      var progress = this.get("currentTask");
+      var progress = this.getCurrentTask();
       if (progress == null) {
         progress = 0;
         that.set("currentTask", progress);
@@ -3567,20 +3620,15 @@ appForm.models = (function(module) {
 
       fileSubmissionModel.loadFile(function(err) {
         if (err) {
-          that.completed(err, function(_err) {
-            return cb(err);
-          });
+          return cb(err);
         } else {
           that.getRemoteStore().create(fileSubmissionModel, function(err, res) {
             if (err) {
               cb(err);
             } else {
-              if (res.status == "ok") {
+              if (res.status == "ok" || res.status == "200") {
                 fileTask.updateDate = appForm.utils.getTime();
 
-                // var curTask = progress;
-                // curTask++;
-                // that.set("currentTask", curTask);
                 that.increProgress();
                 that.saveLocal(function(err) { //save current status.
                   if (err) {
@@ -3591,7 +3639,7 @@ appForm.models = (function(module) {
                 cb(null);
               } else {
                 var errorMessage = "File upload failed for file: " + fileTask.fileName;
-                that.handleIncompleteSubmission(cb);
+                cb(errorMessage);
               }
             }
           });
@@ -3601,14 +3649,49 @@ appForm.models = (function(module) {
       cb("Failed to upload file. Submission Id not found.");
     }
   }
+
+  //The upload task needs to be retried
+  UploadTask.prototype.setRetryNeeded = function(retryNeeded){
+    //If there is a submissionId, then a retry is needed. If not, then the current task should be set to null to retry the submission.
+    if(this.get("submissionId", null) !=  null){
+      this.set("retryNeeded", retryNeeded);
+    } else {
+      this.set("retryNeeded", false);
+      this.set("currentTask", null);
+    }
+  }
+
+  UploadTask.prototype.retryNeeded = function(){
+    return this.get("retryNeeded");
+  }
+
   UploadTask.prototype.uploadTick = function(cb) {
     var that = this;
 
     function _handler(err) {
       if (err) {
-        that.error(err, function() {
-        });
+        console.log("Err, retrying:", err);
+        //If the upload has encountered an error -- flag the submission as needing a retry on the next tick -- User should be insulated from an error until the retries are finished.
+        that.increRetryAttempts();
+        if(that.getRetryAttempts() <= appForm.config.get("submissionRetryAttempts")){
+          that.setRetryNeeded(true);
+          that.saveLocal(function(err){
+            if(err) console.log(err);
+            cb();
+          });
+        } else { //The number of retry attempts exceeds the maximum number of retry attempts allowed, flag the upload as an error.
+          that.setRetryNeeded(true);
+          that.resetRetryAttempts();
+          that.error(err, function() {
+            cb(err);
+          });
+        }
       }else{//no error.
+        that.setRetryNeeded(false);
+
+        that.saveLocal(function(_err){
+          if(_err) console.log(_err);
+        });
         that.submissionModel(function(err,submission){
           if (err){
             cb(err);
@@ -3616,17 +3699,18 @@ appForm.models = (function(module) {
             var status=submission.get("status");
             if (status !="inprogress" && status != "submitted"){
               cb("Submission status is incorrect. Upload task should be started by submission object's upload method.");
+            } else {
+              cb();
             }
           }
         });
       }
-      if (cb){
-        cb(err);  
-      }
     }
-    var currentTask = this.get("currentTask", null);
+
     if (!this.isFormCompleted()) { // No current task, send the form json
       this.uploadForm(_handler);
+    } else if(this.retryNeeded()){ //If a retry is needed, this tick gets the current status of the submission from the server and resets the submission.
+      this.handleIncompleteSubmission(_handler);
     } else if (!this.isFileCompleted()) { //files to be uploaded
       this.uploadFile(_handler);
     } else if (!this.isMBaaSCompleted()) { //call mbaas to complete upload
@@ -3638,7 +3722,7 @@ appForm.models = (function(module) {
     }
   }
   UploadTask.prototype.increProgress = function() {
-    var curTask = this.get("currentTask", null);
+    var curTask = this.getCurrentTask();
     if (curTask === null) {
       curTask = 0;
     } else {
@@ -3650,31 +3734,22 @@ appForm.models = (function(module) {
     var submissionId = this.get("submissionId", null);
     var that = this;
     if (submissionId === null) {
-      return this.completed("Failed to complete submission. Submission Id not found.", cb);
+      return cb("Failed to complete submission. Submission Id not found.");
     }
     var remoteStore = this.getRemoteStore();
     var completeSubmission = new appForm.models.FormSubmissionComplete(this);
-    remoteStore.completeSubmission(completeSubmission, function(err, res) {
+    remoteStore.create(completeSubmission, function(err, res) {
       //if status is not "completed", then handle the completion err
+      res = res || {};
       if (res.status !== "complete") {
         return that.handleCompletionError(err, res, cb);
       }
       //Completion is now completed sucessfully.. we can make the progress further.
       that.increProgress();
       cb(null);
-      // that.submissionModel(function(_err, model) {
-      //   model.submitted(cb);
-      // });
     });
   }
-  //@deprecated use success / error instead
-  UploadTask.prototype.completed = function(err, cb) {
-    if (err) {
-      this.error(err, cb);
-    } else {
-      this.success(cb);
-    }
-  }
+
   /**
    * the upload task is successfully completed. This will be called when all uploading process finished successfully.
    * @return {[type]} [description]
@@ -3723,7 +3798,7 @@ appForm.models = (function(module) {
     });
   }
   UploadTask.prototype.isFormCompleted = function() {
-    var curTask = this.get("currentTask", null);
+    var curTask = this.getCurrentTask();
     if (curTask === null) {
       return false;
     } else {
@@ -3731,7 +3806,7 @@ appForm.models = (function(module) {
     }
   }
   UploadTask.prototype.isFileCompleted = function() {
-    var curTask = this.get("currentTask", null);
+    var curTask = this.getCurrentTask();
     if (curTask === null) {
       return false;
     } else if (curTask < this.get("fileTasks", []).length) {
@@ -3755,7 +3830,7 @@ appForm.models = (function(module) {
     if (!this.isFileCompleted()) {
       return false;
     } else {
-      var curTask = this.get("currentTask", null);
+      var curTask = this.getCurrentTask();
       if (curTask > this.get("fileTasks", []).length) { //change offset if completion bit is changed
         return true;
       } else {
@@ -3769,9 +3844,10 @@ appForm.models = (function(module) {
       "currentFileIndex": 0,
       "totalFiles": this.get("fileTasks").length,
       "totalSize": this.getTotalSize(),
-      "uploaded": this.getUploadedSize()
+      "uploaded": this.getUploadedSize(),
+      "retryAttempts": this.getRetryAttempts()
     };
-    var progress = this.get("currentTask");
+    var progress = this.getCurrentTask();
     if (progress === null) {
       return rtn;
     } else {
@@ -3818,12 +3894,13 @@ appForm.models=(function(module){
 
   function Theme(){
     Model.call(this,{
-      "_type":"theme"
+      "_type":"theme",
+      "_ludid": "theme_object"
     });
   }
 
   Theme.prototype.getCSS = function(){
-    return this.get("css");
+    return this.get("css", "");
   }
 
   appForm.utils.extend(Theme, Model);
@@ -3838,13 +3915,8 @@ appForm.api = (function(module) {
     module.getForms=getForms;
     module.getForm=getForm;
     module.getTheme=getTheme;
-//    module.saveDraft=saveDraft;
     module.submitForm=submitForm;
-//    module.getPending=getPending;
     module.getSubmissions=getSubmissions;
-//    module.getSubmissionData=getSubmissionData;
-//    module.getFailed=getFailed;
-//    module.getDrafts=getDrafts;
     module.init=appForm.init;
     module.config=appForm.models.config;
     
@@ -3902,53 +3974,6 @@ appForm.api = (function(module) {
       });
     }
 
-  /**
-   * Get submissions that are in draft mode. I.e. saved but not submitted
-   * @param params {}
-   * @param {Function} cb     (err, draftsArray)
-   */
-//    function getDrafts(params, cb){
-//      //Only getting draft details -- not draft data
-//      var submissions = appForm.models.submissions;
-//      var drafts = submissions.getDrafts();
-//      var returnDrafts = [];
-//      if(drafts){
-//        drafts.forEach(function(draft){
-//          draft.localSubmissionId = draft._ludid;
-//          returnDrafts.push(draft);
-//        });
-//      }
-//      return cb(null, returnDrafts);
-//    }
-
-    /**
-     * Get submissions that are pending. I.e. submitted but not complete.
-     * Pending can be either "pending" or "inprogress"
-     * @param params {}
-     * @param {Function} cb     (err, pendingArray)
-     */
-//    function getPending(params, cb){
-//      var submissions = appForm.models.submissions;
-//
-//      var pending = submissions.getPending();
-//      var inProgress = submissions.getInProgress();
-//      var returnPending = [];
-//
-//      if(pending){
-//        pending.forEach(function(pendingSubmission){
-//          pendingSubmission.localSubmissionId = pendingSubmission._ludid;
-//          pendingSubmission.dateSubmissionStarted = new Date(pendingSubmission.submissionStartedTimestamp);
-//          returnPending.push(pendingSubmission);
-//        });
-//      }
-//
-//      if(inProgress){
-//        inProgress.forEach(function())
-//      }
-//
-//      return cb(null, returnPending);
-//    }
-
     /**
      * Get submissions that are submitted. I.e. submitted and complete.
      * @param params {}
@@ -3975,42 +4000,6 @@ appForm.api = (function(module) {
       }
     }
 
-      /**
-      * Get submission object from that are submitted. I.e. submitted and complete.
-      * @param params {localSubmissionId : <localIdOfSubmission>}
-      * @param {Function} cb     (err, submittedArray)
-      */
-//      function getSubmissionData(params, cb){
-//        if(!params || !params.localSubmissionId){
-//         return cb(new Error("Invalid params to getSubmissionData: localSubmission must be a parameter"));
-//        }
-//
-//        var submission = appForm.models.submission;
-//
-//        submission.fromLocal(params.localSubmissionId, cb);
-//      }
-
-    /**
-     * Get submissions that have failed. I.e. submitted and and error occurred.
-     * @param params {}
-     * @param {Function} cb     (err, failedArray)
-     */
-//    function getFailed(params, cb){
-//      var submissions = appForm.models.submissions;
-//
-//      var failedSubmissions = submissions.getError();
-//      var returnFailedSubmissions = [];
-//
-//      if(failedSubmissions){
-//        failedSubmissions.forEach(function(failedSubmission){
-//          failedSubmission.localSubmissionId = failedSubmission._ludid;
-//          failedSubmission.dateSubmissionStarted = new Date(failedSubmission.submissionStartedTimestamp);
-//          returnFailedSubmissions.push(failedSubmission);
-//        });
-//      }
-//
-//      return cb(null, returnFailedSubmissions);
-//    }
 
     function submitForm(submission, cb){
 
@@ -4025,15 +4014,6 @@ appForm.api = (function(module) {
         return cb("Invalid submission object.");
       }
     }
-
-//    function saveDraft(submission, cb){
-//      if(submission.get("_type") !== "submission"){
-//        return cb(new Error("Expected submission parameter to be of type Submission"));
-//      }
-//
-//      submission.saveDraft(cb);
-//    }
-    
 
     return module;
 })(appForm.api || {});
