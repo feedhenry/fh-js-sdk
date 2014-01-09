@@ -17,7 +17,7 @@ appForm.web.ajax = (function(module) {
             "error":function(xhr,status,err){
                 cb(xhr);
             }
-        })
+        });
     }
     function post(url,body,cb){
         var file=false;

@@ -7,10 +7,11 @@ appForm.models = (function(module) {
 
     function UploadManager() {
         Model.call(this, {
-            "_type": "uploadManager"
+            "_type": "uploadManager",
+            "_ludid": "uploadManager_queue"
         });
         this.set("taskQueue", []);
-        this.timeOut = 60; //60 seconds. TODO: defin in config
+        this.timeOut = 60; //60 seconds. TODO: define in config
         this.sending = false;
         this.timerInterval = 200;
         this.sendingStart = appForm.utils.getTime();
@@ -70,7 +71,7 @@ appForm.models = (function(module) {
             this.getTaskById(uploadTId, function(err, task) {
                 if (err) {
                     console.error(err);
-                    cb(task);
+                    cb(err, task);
                 } else {
                     if (task) {
                         task.clearLocal(cb);
@@ -78,6 +79,9 @@ appForm.models = (function(module) {
                         cb(null, null);
                     }
                 }
+            });
+            this.saveLocal(function(err){
+              if(err) console.log(err);
             });
         } else {
             cb(null, null);
@@ -130,9 +134,16 @@ appForm.models = (function(module) {
     }
     UploadManager.prototype.push = function(uploadTaskId) {
         this.get("taskQueue").push(uploadTaskId);
+        this.saveLocal(function(err){
+          if(err) console.log(err);
+        });
     }
     UploadManager.prototype.shift = function() {
-        return this.get("taskQueue").shift();
+        var shiftedTask = this.get("taskQueue").shift();
+        this.saveLocal(function(err){
+          if(err) console.log(err);
+        });
+        return shiftedTask;
     }
     UploadManager.prototype.rollTask = function() {
         this.push(this.shift());

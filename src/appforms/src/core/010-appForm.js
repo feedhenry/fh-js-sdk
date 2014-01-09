@@ -13,25 +13,31 @@ var appForm = (function(module) {
                 def[key] = params[key];
             }
         }
-        var count=0;
-        function _handle(){
-            setTimeout(function(){
-                count--;
-                if (count==0){
-                    cb();
-                }
-            },1);
-        }
+
         //init config module
-        count++;
         var config = def.config || {};
         appForm.config = appForm.models.config;
-        appForm.config.init(config, _handle);
-        //init forms module
-        if (def.updateForms==true){
-            count++
-            appForm.models.forms.refresh(true,_handle);
-        }
+        appForm.config.init(config, function(){
+          //Loading the current state of the uploadManager for any upload tasks that are still in progress.
+          appForm.models.uploadManager.loadLocal(function(err){
+            if(err) console.error(err);
+
+            //init forms module
+            appForm.models.theme.refresh(true, function(err){
+              if(err) console.error(err);
+
+              if (def.updateForms==true){
+                appForm.models.forms.refresh(true,function(err){
+                  if(err) console.error(err);
+
+                  cb();
+                });
+              } else {
+                cb();
+              }
+            });
+          });
+        });
     }
 
     // $fh.ready({}, function() {

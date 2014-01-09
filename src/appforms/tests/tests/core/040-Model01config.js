@@ -9,5 +9,6 @@ describe("Config module",function(){
         assert(config().get("mbaasBaseUrl"));
         assert(config().get("formUrls"));
         assert(config().get("env"));
+        assert(config().get("submissionRetryAttempts"));
     });
 });
