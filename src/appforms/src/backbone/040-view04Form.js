@@ -5,7 +5,7 @@ var FormView = BaseView.extend({
   "submission": null,
   "fieldValue": [],
   templates: {
-    buttons: '<div id="buttons" class="fh_action_bar fh_appform_navigation"><button class="saveDraft hidden button button-main fh_appform_button_action">Save Draft</button><button class="previous hidden button fh_appform_button_navigation">Previous</button><button class="next hidden button">Next</button><button class="submit hidden button button-positive fh_appform_button_action">Submit</button></div>'
+    buttons: '<div id="buttons" class="fh_action_bar fh_appform_navigation"><button class="saveDraft hidden button button-main fh_appform_button_action">Save Draft</button><button class="previous hidden button fh_appform_button_navigation">Previous</button><button class="next hidden button fh_appform_button_navigation">Next</button><button class="submit hidden button button-positive fh_appform_button_action">Submit</button></div>'
   },
   events: {
     "click button.next": "nextPage",

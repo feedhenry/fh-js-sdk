@@ -1990,9 +1990,15 @@ FieldView = Backbone.View.extend({
   },
   renderHelpText: function() {
     var helpText = this.model.getHelpText();
-    return _.template(this.instructions, {
-      "helpText": helpText
-    });
+
+    if(typeof helpText == "string" && helpText.length > 0){
+      return _.template(this.instructions, {
+        "helpText": helpText
+      });
+    } else {
+      return "";
+    }
+
   },
   addElement: function() {
     var index = this.curRepeat;
@@ -2023,14 +2029,6 @@ FieldView = Backbone.View.extend({
     this.$el.append(this.$fieldWrapper);
     this.$el.append(this.$fieldActionBar);
     this.$el.attr("data-field", this.model.getFieldId());
-
-    // var instructions = this.model.get('Instructions');
-
-    // if (instructions && instructions !== '') {
-    //   $('label:first', this.el).after(_.template(this.templates.instructions, {
-    //     instructions: this.model.get('Instructions')
-    //   }));
-    // }
 
     // add to dom
     this.options.parentEl.append(this.$el);
@@ -3899,7 +3897,7 @@ var FormView = BaseView.extend({
   "submission": null,
   "fieldValue": [],
   templates: {
-    buttons: '<div id="buttons" class="fh_action_bar fh_appform_navigation"><button class="saveDraft hidden button button-main fh_appform_button_action">Save Draft</button><button class="previous hidden button fh_appform_button_navigation">Previous</button><button class="next hidden button">Next</button><button class="submit hidden button button-positive fh_appform_button_action">Submit</button></div>'
+    buttons: '<div id="buttons" class="fh_action_bar fh_appform_navigation"><button class="saveDraft hidden button button-main fh_appform_button_action">Save Draft</button><button class="previous hidden button fh_appform_button_navigation">Previous</button><button class="next hidden button fh_appform_button_navigation">Next</button><button class="submit hidden button button-positive fh_appform_button_action">Submit</button></div>'
   },
   events: {
     "click button.next": "nextPage",
