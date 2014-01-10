@@ -1,5 +1,5 @@
 FieldCheckboxView = FieldView.extend({
-  choice: '<input data-fieldId="<%= fieldId %>" <%= checked %> data-index="<%= index %>" name="<%= fieldId %>[]" type="checkbox" class="field checkbox" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
+  choice: '<input data-fieldId="<%= fieldId %>" <%= checked %> data-index="<%= index %>" name="<%= fieldId %>[]" type="checkbox" class="field checkbox fh_appform_field_input" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
 
   // contentChanged: function(e) {
   //   var self = this;

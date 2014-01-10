@@ -2222,7 +2222,7 @@ appForm.models = (function(module) {
                             that.tmpFields[fieldId].push(result);
                         }
 
-                        if(typeof result == "object" && result.hashName){
+                        if(result != null && typeof result == "object" && result.hashName){
                           that.addSubmissionFile(result.hashName);
                         }
 
@@ -2241,7 +2241,7 @@ appForm.models = (function(module) {
                             target.fieldValues.push(result);
                         }
 
-                        if(typeof result == "object" && result.hashName){
+                        if(result != null && typeof result == "object" && result.hashName){
                           that.addSubmissionFile(result.hashName);
                         }
 

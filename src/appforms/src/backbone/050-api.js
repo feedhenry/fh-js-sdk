@@ -40,3 +40,4 @@ $fh.forms.renderFormList = function(params, cb) {
 
 $fh.forms.backbone={};
 $fh.forms.backbone.FormView=FormView;
+$fh.forms.backbone.FormListView=FormListView;

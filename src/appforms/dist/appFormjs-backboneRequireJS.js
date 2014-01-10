@@ -1751,24 +1751,25 @@ var FormListView = BaseView.extend({
   },
 
   templates: {
-    list: '<ul class="form_list"></ul>',
+    list: '<ul class="form_list fh_appform_body"></ul>',
     header: '<h2>Your Forms</h2><h4>Choose a form from the list below</h4>',
-    error: '<li><button id="formlist_reload" class="button-block <%= enabledClass %> <%= dataClass %>"><%= name %><div class="loading"></div></button></li>'
+    error: '<li><button id="formlist_reload" class="button-block <%= enabledClass %> <%= dataClass %> fh_appform_button_action"><%= name %><div class="loading"></div></button></li>'
   },
 
   initialize: function() {
     _.bindAll(this, 'render', 'appendForm');
     this.views = [];
 
-    // App.collections.forms.bind('reset', function (collection, options) {
-    //   if (options == null || !options.noFetch) {
-    //     $fh.logger.debug('reset forms collection');
-    //     App.collections.forms.each(function (form) {
-    //       form.fetch();
-    //     });
-    //   }
-    // });
-    // App.collections.forms.bind('add remove reset error', this.render, this);
+    App.collections.forms.bind('reset', function (collection, options) {
+       if (options == null || !options.noFetch) {
+         $fh.logger.debug('reset forms collection');
+         App.collections.forms.each(function (form) {
+           form.fetch();
+         });
+       }
+    });
+
+    App.collections.forms.bind('add remove reset error', this.render, this);
     this.model.on("updated",this.render);
   },
 
@@ -1843,8 +1844,6 @@ var FormListView = BaseView.extend({
     });
   }
 });
-// $fh.forms.getForms({fromRemote:false},)
-// var formListView=new FormListView();
  var FormListItemView=BaseView.extend({
   events: {
     'click button.show.fetched': 'show',
@@ -1852,7 +1851,7 @@ var FormListView = BaseView.extend({
   },
 
   templates: {
-    form_button: '<li><button class="show button-block <%= enabledClass %> <%= dataClass %>"><%= name %><div class="loading"></div></button></li>'
+    form_button: '<li><button class="show button-block <%= enabledClass %> <%= dataClass %> fh_appform_button_action"><%= name %><div class="loading"></div></button></li>'
   },
 
   render: function() {
@@ -1897,13 +1896,13 @@ var FormListView = BaseView.extend({
 });
 FieldView = Backbone.View.extend({
 
-  className: 'field_container',
+  className: 'field_container fh_appform_field_area',
   fieldWrapper: "<div />",
   wrapper: '<div id="wrapper_<%= fieldId %>_<%= index %>" title="<%= helpText %>"><%= title %><%= input %><label class="error errorMsg"></label></div>',
-  title: '<label class="<%= required %>"><%= title %> </label><%= helpText %>',
-  input: "<input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/> ",
-  instructions: '<p class="instruct"><%= helpText %></p>',
-  fieldActionBar: "<div class='fieldActionBar'><button class='addInputBtn special_button two_button'>Add Input</button><button class='special_button two_button removeInputBtn'>Remove Input</button></div>",
+  title: '<label class="<%= required %> fh_appform_field_title"><%= title %> </label><%= helpText %>',
+  input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/> ",
+  instructions: '<p class="instruct fh_appform_field_instructions"><%= helpText %></p>',
+  fieldActionBar: "<div class='fieldActionBar'><button class='addInputBtn special_button two_button fh_appform_button_action'>Add Input</button><button class='special_button two_button removeInputBtn fh_appform_button_action'>Remove Input</button></div>",
   events: {
     "change": "contentChanged",
     "blur input,select,textarea": "validate",
@@ -2115,7 +2114,7 @@ FieldView = Backbone.View.extend({
     wrapperObj.find("label.errorMsg").text(text);
     wrapperObj.find("label.errorMsg").show();
     wrapperObj.find("label.errorMsg").addClass("error");
-    wrapperObj.find("input,textarea,select").addClass("error");
+    wrapperObj.find("input,textarea,select").addClass("error"); //TODO Error to be added to css.
   },
   contentChanged: function(e) {
     var target = $(e.currentTarget);
@@ -2192,7 +2191,7 @@ FieldView = Backbone.View.extend({
   },
   renderButton: function(index, label, extension_type) {
     var button = $('<button>');
-    button.addClass('special_button');
+    button.addClass('special_button fh_appform_button_action');
     button.addClass(extension_type);
     button.attr("data-index", index);
     button.text(' ' + label);
@@ -2207,7 +2206,7 @@ FieldView = Backbone.View.extend({
   addButton: function(input, extension_type, label) {
     var self = this;
     var button = $('<button>');
-    button.addClass('special_button');
+    button.addClass('special_button fh_appform_button_action');
     button.addClass(extension_type);
     button.text(' ' + label);
     var img = $('<img>');
@@ -2302,7 +2301,7 @@ FieldView = Backbone.View.extend({
 FieldCameraView = FieldView.extend({
   input: '<img class="imageThumb" width="100%" data-field="<%= fieldId %>" data-index="<%= index %>">',
   html5Cam: '<div class="html5Cam">' +
-    '<div class="camActionBar"><button class="camCancel camBtn">Cancel</button><button class="camOk camBtn">Ok</button></div>' +
+    '<div class="camActionBar"><button class="camCancel camBtn fh_appform_button_cancel">Cancel</button><button class="camOk camBtn fh_appform_button_action">Ok</button></div>' +
     '<div class="cam"></div>' +
     '</div>',
   // initialize: function() {
@@ -2830,7 +2829,7 @@ FieldCameraGroupView = FieldCameraView.extend({
   }
 });
 FieldCheckboxView = FieldView.extend({
-  choice: '<input data-fieldId="<%= fieldId %>" <%= checked %> data-index="<%= index %>" name="<%= fieldId %>[]" type="checkbox" class="field checkbox" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
+  choice: '<input data-fieldId="<%= fieldId %>" <%= checked %> data-index="<%= index %>" name="<%= fieldId %>[]" type="checkbox" class="field checkbox fh_appform_field_input" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
 
   // contentChanged: function(e) {
   //   var self = this;
@@ -2918,7 +2917,7 @@ FieldEmailView = FieldView.extend({
   // }
 });
 FieldFileView = FieldView.extend({
-  input: "<button style='display:none' data-field='<%= fieldId %>' class='special_button' data-index='<%= index %>'></button>" +
+  input: "<button style='display:none' data-field='<%= fieldId %>' class='special_button fh_appform_button_action' data-index='<%= index %>'></button>" +
     "<input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/> ",
   type: "file",
   // dumpContent: function() {
@@ -3288,7 +3287,7 @@ FieldPhoneView = FieldView.extend({
 });
 FieldRadioView = FieldView.extend({
   hidden_field: '<input id="radio<%= id %>" type="hidden" value="" data-type="radio">',
-  choice: '<input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" type="radio" class="field radio" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
+  choice: '<input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" type="radio" class="field radio fh_appform_field_input" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
   renderInput: function(index) {
     var choices = this.model.getRadioOption();
     var self = this;
@@ -3696,10 +3695,10 @@ FieldSignatureView = FieldView.extend({
 
 });
 FieldTextView = FieldView.extend({
-  template: ['<label class="desc" for="<%= id %>"><%= title %></label>', '<input class="field text medium" maxlength="255" id="<%= id %>" name="<%= id %>" type="text" value="<%= defaultVal %>">']
+  template: ['<label class="desc" for="<%= id %>"><%= title %></label>', '<input class="field text medium fh_appform_field_input" maxlength="255" id="<%= id %>" name="<%= id %>" type="text" value="<%= defaultVal %>">']
 });
 FieldTextareaView = FieldView.extend({
-    input:"<textarea data-field='<%= fieldId %>' data-index='<%= index %>'  ></textarea>"
+    input:"<textarea class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>'  ></textarea>"
 });
 FieldSectionBreak = FieldView.extend({
   renderEle:function(){
@@ -3810,7 +3809,7 @@ PageView=BaseView.extend({
     var self = this;
     this.fieldViews = {};
     // all pages hidden initially
-    this.$el.empty().addClass('page hidden');
+    this.$el.empty().addClass('page fh_appform_body hidden');
     // add to parent before init fields so validation can work
     this.options.parentEl.append(this.$el);
 
@@ -3900,7 +3899,7 @@ var FormView = BaseView.extend({
   "submission": null,
   "fieldValue": [],
   templates: {
-    buttons: '<div id="buttons" class="fh_action_bar"><button class="saveDraft hidden button button-main">Save Draft</button><button class="previous hidden button">Previous</button><button class="next hidden button">Next</button><button class="submit hidden button button-positive">Submit</button></div>'
+    buttons: '<div id="buttons" class="fh_action_bar fh_appform_navigation"><button class="saveDraft hidden button button-main fh_appform_button_action">Save Draft</button><button class="previous hidden button fh_appform_button_navigation">Previous</button><button class="next hidden button">Next</button><button class="submit hidden button button-positive fh_appform_button_action">Submit</button></div>'
   },
   events: {
     "click button.next": "nextPage",
@@ -4327,6 +4326,7 @@ $fh.forms.renderFormList = function(params, cb) {
 
 $fh.forms.backbone={};
 $fh.forms.backbone.FormView=FormView;
+$fh.forms.backbone.FormListView=FormListView;
 
 return $fh.forms;
 
