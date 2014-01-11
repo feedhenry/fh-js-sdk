@@ -24,6 +24,26 @@ $fh.forms.renderForm = function(params, cb) {
     });
 }
 
+/**
+ *
+ * @param params Object {"formId":String,"rawMode":Boolean,"rawMode":Boolean}
+ * no io being done so no need for callback
+ */
+$fh.forms.renderFormFromJSON = function (params) {
+  if(! params) throw new Error("params cannot be empty");
+  if(! params.rawData) throw new Error("raw json data must be passed in the params.rawData");
+  if(! params.container) throw new Error("a container element must be passed in the params.container");
+
+  params.formId = new Date().getTime();
+  params.rawMode = true;
+
+  var formView=new FormView({parentEl:params.container});
+  formView.loadForm(params,function(err){
+    if(err) console.error("error loading form for renderFormFromJSON ",err);
+    formView.render();
+  });
+};
+
 $fh.forms.renderFormList = function(params, cb) {
     var fromRemote = params.fromRemote || false;
     var parentEl = params.parentEl;
