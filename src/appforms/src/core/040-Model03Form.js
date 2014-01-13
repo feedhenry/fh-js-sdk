@@ -89,6 +89,7 @@ appForm.models = (function(module) {
     Form.prototype.initialiseFields = function() {
         var fieldsRef = this.getFieldRef();
         this.fields = {};
+        console.log("field Ref" , fieldRef);
         for (var fieldId in fieldsRef) {
             var fieldRef = fieldsRef[fieldId];
             var pageIndex = fieldRef["page"];
@@ -98,8 +99,7 @@ appForm.models = (function(module) {
             }
             var fieldDef = this.getFieldDefByIndex(pageIndex, fieldIndex);
             if (fieldDef) {
-                var fieldObj = new appForm.models.Field(fieldDef, this);
-                this.fields[fieldId] = fieldObj;
+                this.fields[fieldId] = new appForm.models.Field(fieldDef, this);
             } else {
                 throw ("Field def is not found.");
             }
