@@ -5,6 +5,7 @@ var FormView = BaseView.extend({
   "submission": null,
   "fieldValue": [],
   templates: {
+    formLogo: '<div class="fh_appform_logo"></div>',
     formTitle: '<div class="fh_appform_title"><%= title %></div>',
     formDescription: '<div class="fh_appform_description"><%= description %></div>',
     formContainer: '<div id="fh_appform_container" class="fh_appform_body"></div>',
@@ -79,6 +80,7 @@ var FormView = BaseView.extend({
 
     //Page views are always added before anything else happens, need to render the form title first
     this.el.append(this.templates.formContainer);
+    this.el.append(this.templates.formLogo);
     this.el.append(_.template(this.templates.formTitle, {title: this.model.getName()}));
     this.el.append(_.template(this.templates.formDescription, {description: this.model.getDescription()}));
 
