@@ -2827,7 +2827,7 @@ FieldCameraGroupView = FieldCameraView.extend({
   }
 });
 FieldCheckboxView = FieldView.extend({
-  choice: '<input data-fieldId="<%= fieldId %>" <%= checked %> data-index="<%= index %>" name="<%= fieldId %>[]" type="checkbox" class="field checkbox fh_appform_field_input" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
+  choice: '<input data-fieldId="<%= fieldId %>" <%= checked %> data-index="<%= index %>" name="<%= fieldId %>[]" type="checkbox" class="field checkbox" value="<%= value %>" ><label class="choice fh_appform_field_input" ><%= choice %></label><br/>',
 
   // contentChanged: function(e) {
   //   var self = this;
@@ -3897,7 +3897,8 @@ var FormView = BaseView.extend({
   "submission": null,
   "fieldValue": [],
   templates: {
-    buttons: '<div id="buttons" class="fh_action_bar fh_appform_navigation"><button class="saveDraft hidden button button-main fh_appform_button_action">Save Draft</button><button class="previous hidden button fh_appform_button_navigation">Previous</button><button class="next hidden button fh_appform_button_navigation">Next</button><button class="submit hidden button button-positive fh_appform_button_action">Submit</button></div>'
+    formContainer: '<div id="fh_appform_container" class="fh_appform_body"></div>',
+    buttons: '<div id="buttons" class="fh_action_bar"><button class="saveDraft hidden button button-main fh_appform_button_action">Save Draft</button><button class="previous hidden button fh_appform_button_navigation">Previous</button><button class="next hidden button fh_appform_button_navigation">Next</button><button class="submit hidden button button-positive fh_appform_button_action">Submit</button></div>'
   },
   events: {
     "click button.next": "nextPage",
@@ -3965,6 +3966,7 @@ var FormView = BaseView.extend({
 
     self.el.empty();
     self.model = form;
+    this.el.append(this.templates.formContainer);
 
     if (!params.submission) {
       params.submission = self.model.newSubmission();
@@ -3981,7 +3983,7 @@ var FormView = BaseView.extend({
 
       var pageView = new PageView({
         model: pageModel,
-        parentEl: self.el,
+        parentEl: self.el.find("#fh_appform_container.fh_appform_body"),
         formView: self
       });
       pageViews.push(pageView);
@@ -4123,7 +4125,7 @@ var FormView = BaseView.extend({
   render: function() {
 
     // this.initWithForm(this.form, this.params);
-    this.el.append(this.templates.buttons);
+    this.el.find("#fh_appform_container.fh_appform_body").append(this.templates.buttons);
     this.rebindButtons();
     this.pageViews[0].show();
     this.checkPages();

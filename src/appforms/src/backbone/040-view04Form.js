@@ -5,7 +5,10 @@ var FormView = BaseView.extend({
   "submission": null,
   "fieldValue": [],
   templates: {
-    buttons: '<div id="buttons" class="fh_action_bar fh_appform_navigation"><button class="saveDraft hidden button button-main fh_appform_button_action">Save Draft</button><button class="previous hidden button fh_appform_button_navigation">Previous</button><button class="next hidden button fh_appform_button_navigation">Next</button><button class="submit hidden button button-positive fh_appform_button_action">Submit</button></div>'
+    formTitle: '<div class="fh_appform_title"><%= title %></div>',
+    formDescription: '<div class="fh_appform_description"><%= description %></div>',
+    formContainer: '<div id="fh_appform_container" class="fh_appform_body"></div>',
+    buttons: '<div id="buttons" class="fh_action_bar"><button class="saveDraft hidden button button-main fh_appform_button_action">Save Draft</button><button class="previous hidden button fh_appform_button_navigation">Previous</button><button class="next hidden button fh_appform_button_navigation">Next</button><button class="submit hidden button button-positive fh_appform_button_action">Submit</button></div>'
   },
   events: {
     "click button.next": "nextPage",
@@ -74,6 +77,11 @@ var FormView = BaseView.extend({
     self.el.empty();
     self.model = form;
 
+    //Page views are always added before anything else happens, need to render the form title first
+    this.el.append(this.templates.formContainer);
+    this.el.append(_.template(this.templates.formTitle, {title: this.model.getName()}));
+    this.el.append(_.template(this.templates.formDescription, {description: this.model.getDescription()}));
+
     if (!params.submission) {
       params.submission = self.model.newSubmission();
     }
@@ -84,12 +92,12 @@ var FormView = BaseView.extend({
     var pageViews = [];
     for (var i = 0, pageModel; pageModel = pageModelList[i]; i++) {
       // get fieldModels
-      var list = pageModel.getFieldModelList()
+      var list = pageModel.getFieldModelList();
       self.fieldModels = self.fieldModels.concat(list);
 
       var pageView = new PageView({
         model: pageModel,
-        parentEl: self.el,
+        parentEl: self.el.find("#fh_appform_container.fh_appform_body"),
         formView: self
       });
       pageViews.push(pageView);
@@ -231,7 +239,7 @@ var FormView = BaseView.extend({
   render: function() {
 
     // this.initWithForm(this.form, this.params);
-    this.el.append(this.templates.buttons);
+    this.el.find("#fh_appform_container.fh_appform_body").append(this.templates.buttons);
     this.rebindButtons();
     this.pageViews[0].show();
     this.checkPages();
