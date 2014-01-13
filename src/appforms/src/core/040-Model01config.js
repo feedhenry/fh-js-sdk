@@ -10,13 +10,17 @@ appForm.models=(function(module){
     appForm.utils.extend(Config,Model);
     //call in appForm.init
     Config.prototype.init=function(config,cb){
-        this.set("appId",$fh.app_props.appid);
-        this.set("env",$fh.app_props.mode?$fh.app_props.mode:"dev");
-        this.set("timeoutTime",30000);
-        var self=this;
+      var appid = ($fh && $fh.app_props) ? $fh.app_props.appid : config.appid;
+      var mode = ($fh && $fh.app_props)? $fh.app_props.mode : "dev";
+      this.set("appId",appid);
+      this.set("env",mode);
+      this.set("timeoutTime",30000);
+      var self=this;
+      if($fh && 'function' ===  typeof $fh.env ){
         $fh.env(function(env){
-            self.set("deviceId",env.uuid);
+          self.set("deviceId",env.uuid);
         });
+      }
         this._initMBaaS();
 
         //Setting default retry attempts if not set in the config
@@ -29,18 +33,23 @@ appForm.models=(function(module){
     }
 
     Config.prototype._initMBaaS=function(){
-        var cloud_props=$fh.cloud_props;
-        var app_props=$fh.app_props;
-        var cloudUrl=app_props.host;
-        var mode=app_props.mode?app_props.mode:"dev";
-        if (cloud_props && cloud_props.hosts){
-            if (mode.indexOf("dev")>-1){ //dev mode
-                cloudUrl=cloud_props.hosts.debugCloudUrl;
-            }else{ //live mode
-                cloudUrl=cloud_props.hosts.releaseCloudUrl;
-            }
+      var cloud_props=$fh.cloud_props;
+      var app_props=$fh.app_props;
+      var cloudUrl;
+      var mode= "dev";
+      if(app_props){
+        cloudUrl=app_props.host;
+        mode = app_props.mode?app_props.mode:"dev";
+      }
+
+      if (cloud_props && cloud_props.hosts){
+        if (mode.indexOf("dev")>-1){ //dev mode
+          cloudUrl=cloud_props.hosts.debugCloudUrl;
+        }else{ //live mode
+          cloudUrl=cloud_props.hosts.releaseCloudUrl;
         }
-        this.set("cloudHost",cloudUrl);
+      }
+      this.set("cloudHost",cloudUrl);
 
         this.set("mbaasBaseUrl","/mbaas");
         var appId=this.get("appId");
