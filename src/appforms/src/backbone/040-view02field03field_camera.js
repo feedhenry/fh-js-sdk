@@ -12,7 +12,7 @@ FieldCameraView = FieldView.extend({
   // },
 
   onElementShow: function(index) {
-    var captureBtn = $(this.renderButton(index, "Capture Signature", "fhcam"));
+    var captureBtn = $(this.renderButton(index, "Capture Photo From Camera", "fhcam"));
     var libBtn = $(this.renderButton(index, "Choose Photo from Library", "fhcam_lib"));
     var rmBtn = $(this.renderButton(index, "Remove Photo", "remove"));
 

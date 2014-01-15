@@ -3903,6 +3903,10 @@ appForm.models=(function(module){
     return this.get("css", "");
   }
 
+  Theme.prototype.getLogo = function(){
+    return this.get("logo","");
+  }
+
   appForm.utils.extend(Theme, Model);
 
   module.theme = new Theme();

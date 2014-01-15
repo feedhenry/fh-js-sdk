@@ -1,10 +1,13 @@
 FieldRadioView = FieldView.extend({
   hidden_field: '<input id="radio<%= id %>" type="hidden" value="" data-type="radio">',
-  choice: '<input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" type="radio" class="field radio fh_appform_field_input" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
+  choice: '<input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" type="radio" class="field radio" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
   renderInput: function(index) {
     var choices = this.model.getRadioOption();
     var self = this;
     var html = "";
+
+    html += "<div class='fh_appform_field_input'>";
+
     var fieldId = this.model.getFieldId();
     $.each(choices, function(i, choice) {
       var jQObj = $(_.template(self.choice, {
@@ -19,6 +22,9 @@ FieldRadioView = FieldView.extend({
       }
       html += self.htmlFromjQuery(jQObj);
     });
+
+    html+= "</div>";
+
     return html;
   },
   // addValidationRules: function() {

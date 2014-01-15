@@ -1,17 +1,22 @@
 FieldView = Backbone.View.extend({
 
-  className: 'field_container fh_appform_field_area',
+  className: 'fh_appform_field_area',
+  errMessageContainer: ".fh_appform_errorMsg",
+  requiredClassName: "fh_appform_required",
+  errorClassName: "fh_appform_error",
+  addInputButtonClass: ".fh_appform_addInputBtn", //TODO Need to remove hard-coded strings for these names
+  removeInputButtonClass: ".fh_appform_removeInputBtn",
   fieldWrapper: "<div />",
-  wrapper: '<div id="wrapper_<%= fieldId %>_<%= index %>" title="<%= helpText %>"><%= title %><%= input %><label class="error errorMsg"></label></div>',
+  wrapper: '<div id="wrapper_<%= fieldId %>_<%= index %>" title="<%= helpText %>"><%= title %><%= input %><div class="fh_appform_errorMsg hidden"></div></div>',
   title: '<label class="<%= required %> fh_appform_field_title"><%= title %> </label><%= helpText %>',
   input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/> ",
-  instructions: '<p class="instruct fh_appform_field_instructions"><%= helpText %></p>',
-  fieldActionBar: "<div class='fieldActionBar'><button class='addInputBtn special_button two_button fh_appform_button_action'>Add Input</button><button class='special_button two_button removeInputBtn fh_appform_button_action'>Remove Input</button></div>",
+  instructions: '<p class="fh_appform_field_instructions"><%= helpText %></p>',
+  fh_appform_fieldActionBar: "<div class='fh_appform_fieldActionBar'><button class='fh_appform_addInputBtn fh_appform_special_button fh_appform_button_action'>Add Input</button><button class='fh_appform_special_button fh_appform_removeInputBtn fh_appform_button_action'>Remove Input</button></div>",
   events: {
     "change": "contentChanged",
     "blur input,select,textarea": "validate",
-    "click .addInputBtn": "onAddInput",
-    "click .removeInputBtn": "onRemoveInput"
+    "click .fh_appform_addInputBtn": "onAddInput",
+    "click .fh_appform_removeInputBtn": "onRemoveInput"
   },
   onAddInput: function() {
     this.addElement();
@@ -26,15 +31,15 @@ FieldView = Backbone.View.extend({
     var maxRepeat = this.maxRepeat;
     var minRepeat = this.initialRepeat;
     if (curNum < maxRepeat) {
-      this.$fieldActionBar.find(".addInputBtn").show();
+      this.$fh_appform_fieldActionBar.find(this.addInputButtonClass).show();
     } else {
-      this.$fieldActionBar.find(".addInputBtn").hide();
+      this.$fh_appform_fieldActionBar.find(this.addInputButtonClass).hide();
     }
 
     if (curNum > minRepeat) {
-      this.$fieldActionBar.find(".removeInputBtn").show();
+      this.$fh_appform_fieldActionBar.find(this.removeInputButtonClass).show();
     } else {
-      this.$fieldActionBar.find(".removeInputBtn").hide();
+      this.$fh_appform_fieldActionBar.find(this.removeInputButtonClass).hide();
     }
   },
   removeElement: function() {
@@ -53,15 +58,15 @@ FieldView = Backbone.View.extend({
     }
     if (this.initialRepeat > 1) {
       if (index < this.initialRepeat) {
-        required = "required";
+        required = this.requiredClassName;
       }
     } else {
       if (this.model.isRequired()) {
-        required = "required";
+        required = this.requiredClassName;
       }
     }
     if (this.model.isRequired() && index < this.initialRepeat) {
-      required = "required";
+      required = this.requiredClassName;
     }
     if (index == 0) {
       helpText = this.renderHelpText();
@@ -131,7 +136,7 @@ FieldView = Backbone.View.extend({
     }
 
     this.$el.append(this.$fieldWrapper);
-    this.$el.append(this.$fieldActionBar);
+    this.$el.append(this.$fh_appform_fieldActionBar);
     this.$el.attr("data-field", this.model.getFieldId());
 
     // add to dom
@@ -166,7 +171,7 @@ FieldView = Backbone.View.extend({
     //   this.$el.addClass('required');
     // }
     this.$fieldWrapper = $(this.fieldWrapper);
-    this.$fieldActionBar = $(this.fieldActionBar);
+    this.$fh_appform_fieldActionBar = $(this.fh_appform_fieldActionBar);
     // only call render once. model will never update
     this.render();
   },
@@ -213,10 +218,10 @@ FieldView = Backbone.View.extend({
   },
   setErrorText: function(index, text) {
     var wrapperObj = this.getWrapper(index);
-    wrapperObj.find("label.errorMsg").text(text);
-    wrapperObj.find("label.errorMsg").show();
-    wrapperObj.find("label.errorMsg").addClass("error");
-    wrapperObj.find("input,textarea,select").addClass("error"); //TODO Error to be added to css.
+    wrapperObj.find(this.errMessageContainer).text(text);
+    wrapperObj.find(this.errMessageContainer).show();
+    wrapperObj.find(this.errMessageContainer).addClass(this.errorClassName);
+    wrapperObj.find("input,textarea,select").addClass(this.errorClassName);
   },
   contentChanged: function(e) {
     var target = $(e.currentTarget);
@@ -293,7 +298,7 @@ FieldView = Backbone.View.extend({
   },
   renderButton: function(index, label, extension_type) {
     var button = $('<button>');
-    button.addClass('special_button fh_appform_button_action');
+    button.addClass('fh_appform_special_button fh_appform_button_action');
     button.addClass(extension_type);
     button.attr("data-index", index);
     button.text(' ' + label);
@@ -308,7 +313,7 @@ FieldView = Backbone.View.extend({
   addButton: function(input, extension_type, label) {
     var self = this;
     var button = $('<button>');
-    button.addClass('special_button fh_appform_button_action');
+    button.addClass('fh_appform_special_button fh_appform_button_action');
     button.addClass(extension_type);
     button.text(' ' + label);
     var img = $('<img>');
@@ -395,8 +400,8 @@ FieldView = Backbone.View.extend({
 
   clearError: function(index) {
     var wrapperObj = this.getWrapper(index);
-    wrapperObj.find("label.errorMsg").hide();
-    wrapperObj.find(".error").removeClass("error");
+    wrapperObj.find(this.errMessageContainer).hide();
+    wrapperObj.find("." + this.errorClassName).removeClass(this.errorClassName);
   }
 
 });

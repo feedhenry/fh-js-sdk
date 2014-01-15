@@ -1,5 +1,5 @@
 FieldGeoView = FieldView.extend({
-  input: "<input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' disabled/> ",
+  input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' disabled/> ",
   type: "text",
   initialize: function() {
     this.geoValues=[];

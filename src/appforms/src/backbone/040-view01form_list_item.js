@@ -5,7 +5,7 @@
   },
 
   templates: {
-    form_button: '<li><button class="show button-block <%= enabledClass %> <%= dataClass %> fh_appform_button_action"><%= name %><div class="loading"></div></button></li>'
+    form_button: '<li><button class="show button-block <%= enabledClass %> <%= dataClass %> fh_appform_button_navigation"><%= name %><div class="loading"></div></button></li>'
   },
 
   render: function() {
@@ -14,7 +14,7 @@
     var enabled = true;
     html = _.template(this.templates.form_button, {
       name: this.model.name,
-      enabledClass: enabled ? 'button-main' : '',
+      enabledClass: enabled ? 'fh_appform_button_main' : '',
       // dataClass: errorLoading ? 'fetch_error' : fullyLoaded ? 'fetched' : 'fetching'
       dataClass:"fetched"
     });

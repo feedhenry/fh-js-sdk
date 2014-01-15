@@ -1761,7 +1761,7 @@ var FormListView = BaseView.extend({
   templates: {
     list: '<ul class="form_list fh_appform_body"></ul>',
     header: '<h2>Your Forms</h2><h4>Choose a form from the list below</h4>',
-    error: '<li><button id="formlist_reload" class="button-block <%= enabledClass %> <%= dataClass %> fh_appform_button_action"><%= name %><div class="loading"></div></button></li>'
+    error: '<li><button id="formlist_reload" class="button-block <%= enabledClass %> <%= dataClass %> fh_appform_button_navigation"><%= name %><div class="loading"></div></button></li>'
   },
 
   initialize: function() {
@@ -1809,7 +1809,7 @@ var FormListView = BaseView.extend({
     }
     var html = _.template(this.templates.error, {
       name: msg + "<br/>Please Retry Later",
-      enabledClass: 'button-negative',
+      enabledClass: 'fh_appform_button_cancel',//TODO May not be this class. Double check
       dataClass: 'fetched'
     });
     $('ul', this.el).append(html);
@@ -1859,7 +1859,7 @@ var FormListView = BaseView.extend({
   },
 
   templates: {
-    form_button: '<li><button class="show button-block <%= enabledClass %> <%= dataClass %> fh_appform_button_action"><%= name %><div class="loading"></div></button></li>'
+    form_button: '<li><button class="show button-block <%= enabledClass %> <%= dataClass %> fh_appform_button_navigation"><%= name %><div class="loading"></div></button></li>'
   },
 
   render: function() {
@@ -1868,7 +1868,7 @@ var FormListView = BaseView.extend({
     var enabled = true;
     html = _.template(this.templates.form_button, {
       name: this.model.name,
-      enabledClass: enabled ? 'button-main' : '',
+      enabledClass: enabled ? 'fh_appform_button_main' : '',
       // dataClass: errorLoading ? 'fetch_error' : fullyLoaded ? 'fetched' : 'fetching'
       dataClass:"fetched"
     });
@@ -1904,18 +1904,23 @@ var FormListView = BaseView.extend({
 });
 FieldView = Backbone.View.extend({
 
-  className: 'field_container fh_appform_field_area',
+  className: 'fh_appform_field_area',
+  errMessageContainer: ".fh_appform_errorMsg",
+  requiredClassName: "fh_appform_required",
+  errorClassName: "fh_appform_error",
+  addInputButtonClass: ".fh_appform_addInputBtn", //TODO Need to remove hard-coded strings for these names
+  removeInputButtonClass: ".fh_appform_removeInputBtn",
   fieldWrapper: "<div />",
-  wrapper: '<div id="wrapper_<%= fieldId %>_<%= index %>" title="<%= helpText %>"><%= title %><%= input %><label class="error errorMsg"></label></div>',
+  wrapper: '<div id="wrapper_<%= fieldId %>_<%= index %>" title="<%= helpText %>"><%= title %><%= input %><div class="fh_appform_errorMsg hidden"></div></div>',
   title: '<label class="<%= required %> fh_appform_field_title"><%= title %> </label><%= helpText %>',
   input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/> ",
-  instructions: '<p class="instruct fh_appform_field_instructions"><%= helpText %></p>',
-  fieldActionBar: "<div class='fieldActionBar'><button class='addInputBtn special_button two_button fh_appform_button_action'>Add Input</button><button class='special_button two_button removeInputBtn fh_appform_button_action'>Remove Input</button></div>",
+  instructions: '<p class="fh_appform_field_instructions"><%= helpText %></p>',
+  fh_appform_fieldActionBar: "<div class='fh_appform_fieldActionBar'><button class='fh_appform_addInputBtn fh_appform_special_button fh_appform_button_action'>Add Input</button><button class='fh_appform_special_button fh_appform_removeInputBtn fh_appform_button_action'>Remove Input</button></div>",
   events: {
     "change": "contentChanged",
     "blur input,select,textarea": "validate",
-    "click .addInputBtn": "onAddInput",
-    "click .removeInputBtn": "onRemoveInput"
+    "click .fh_appform_addInputBtn": "onAddInput",
+    "click .fh_appform_removeInputBtn": "onRemoveInput"
   },
   onAddInput: function() {
     this.addElement();
@@ -1930,15 +1935,15 @@ FieldView = Backbone.View.extend({
     var maxRepeat = this.maxRepeat;
     var minRepeat = this.initialRepeat;
     if (curNum < maxRepeat) {
-      this.$fieldActionBar.find(".addInputBtn").show();
+      this.$fh_appform_fieldActionBar.find(this.addInputButtonClass).show();
     } else {
-      this.$fieldActionBar.find(".addInputBtn").hide();
+      this.$fh_appform_fieldActionBar.find(this.addInputButtonClass).hide();
     }
 
     if (curNum > minRepeat) {
-      this.$fieldActionBar.find(".removeInputBtn").show();
+      this.$fh_appform_fieldActionBar.find(this.removeInputButtonClass).show();
     } else {
-      this.$fieldActionBar.find(".removeInputBtn").hide();
+      this.$fh_appform_fieldActionBar.find(this.removeInputButtonClass).hide();
     }
   },
   removeElement: function() {
@@ -1957,15 +1962,15 @@ FieldView = Backbone.View.extend({
     }
     if (this.initialRepeat > 1) {
       if (index < this.initialRepeat) {
-        required = "required";
+        required = this.requiredClassName;
       }
     } else {
       if (this.model.isRequired()) {
-        required = "required";
+        required = this.requiredClassName;
       }
     }
     if (this.model.isRequired() && index < this.initialRepeat) {
-      required = "required";
+      required = this.requiredClassName;
     }
     if (index == 0) {
       helpText = this.renderHelpText();
@@ -2035,7 +2040,7 @@ FieldView = Backbone.View.extend({
     }
 
     this.$el.append(this.$fieldWrapper);
-    this.$el.append(this.$fieldActionBar);
+    this.$el.append(this.$fh_appform_fieldActionBar);
     this.$el.attr("data-field", this.model.getFieldId());
 
     // add to dom
@@ -2070,7 +2075,7 @@ FieldView = Backbone.View.extend({
     //   this.$el.addClass('required');
     // }
     this.$fieldWrapper = $(this.fieldWrapper);
-    this.$fieldActionBar = $(this.fieldActionBar);
+    this.$fh_appform_fieldActionBar = $(this.fh_appform_fieldActionBar);
     // only call render once. model will never update
     this.render();
   },
@@ -2117,10 +2122,10 @@ FieldView = Backbone.View.extend({
   },
   setErrorText: function(index, text) {
     var wrapperObj = this.getWrapper(index);
-    wrapperObj.find("label.errorMsg").text(text);
-    wrapperObj.find("label.errorMsg").show();
-    wrapperObj.find("label.errorMsg").addClass("error");
-    wrapperObj.find("input,textarea,select").addClass("error"); //TODO Error to be added to css.
+    wrapperObj.find(this.errMessageContainer).text(text);
+    wrapperObj.find(this.errMessageContainer).show();
+    wrapperObj.find(this.errMessageContainer).addClass(this.errorClassName);
+    wrapperObj.find("input,textarea,select").addClass(this.errorClassName);
   },
   contentChanged: function(e) {
     var target = $(e.currentTarget);
@@ -2197,7 +2202,7 @@ FieldView = Backbone.View.extend({
   },
   renderButton: function(index, label, extension_type) {
     var button = $('<button>');
-    button.addClass('special_button fh_appform_button_action');
+    button.addClass('fh_appform_special_button fh_appform_button_action');
     button.addClass(extension_type);
     button.attr("data-index", index);
     button.text(' ' + label);
@@ -2212,7 +2217,7 @@ FieldView = Backbone.View.extend({
   addButton: function(input, extension_type, label) {
     var self = this;
     var button = $('<button>');
-    button.addClass('special_button fh_appform_button_action');
+    button.addClass('fh_appform_special_button fh_appform_button_action');
     button.addClass(extension_type);
     button.text(' ' + label);
     var img = $('<img>');
@@ -2299,8 +2304,8 @@ FieldView = Backbone.View.extend({
 
   clearError: function(index) {
     var wrapperObj = this.getWrapper(index);
-    wrapperObj.find("label.errorMsg").hide();
-    wrapperObj.find(".error").removeClass("error");
+    wrapperObj.find(this.errMessageContainer).hide();
+    wrapperObj.find("." + this.errorClassName).removeClass(this.errorClassName);
   }
 
 });
@@ -2318,7 +2323,7 @@ FieldCameraView = FieldView.extend({
   // },
 
   onElementShow: function(index) {
-    var captureBtn = $(this.renderButton(index, "Capture Signature", "fhcam"));
+    var captureBtn = $(this.renderButton(index, "Capture Photo From Camera", "fhcam"));
     var libBtn = $(this.renderButton(index, "Choose Photo from Library", "fhcam_lib"));
     var rmBtn = $(this.renderButton(index, "Remove Photo", "remove"));
 
@@ -2835,7 +2840,7 @@ FieldCameraGroupView = FieldCameraView.extend({
   }
 });
 FieldCheckboxView = FieldView.extend({
-  choice: '<input data-fieldId="<%= fieldId %>" <%= checked %> data-index="<%= index %>" name="<%= fieldId %>[]" type="checkbox" class="field checkbox" value="<%= value %>" ><label class="choice fh_appform_field_input" ><%= choice %></label><br/>',
+  choice: '<input data-fieldId="<%= fieldId %>" <%= checked %> data-index="<%= index %>" name="<%= fieldId %>[]" type="checkbox" class="field checkbox" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
 
   // contentChanged: function(e) {
   //   var self = this;
@@ -2855,7 +2860,7 @@ FieldCheckboxView = FieldView.extend({
     var subfields = this.model.getCheckBoxOptions();
     var fieldId=this.model.getFieldId();
     var self=this;
-    var html="";
+    var html="<div class='fh_appform_field_input'>";
     $.each(subfields, function(i, subfield) {
       html+= _.template(self.choice, {
         "fieldId": fieldId,
@@ -2865,6 +2870,7 @@ FieldCheckboxView = FieldView.extend({
         "checked": (subfield.selected) ? "checked='checked'" : ""
       });
     });
+    html+="</div>";
     return html;
   },
   // addValidationRules: function() {
@@ -3012,7 +3018,7 @@ FieldFileView = FieldView.extend({
   }
 });
 FieldGeoView = FieldView.extend({
-  input: "<input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' disabled/> ",
+  input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' disabled/> ",
   type: "text",
   initialize: function() {
     this.geoValues=[];
@@ -3293,11 +3299,14 @@ FieldPhoneView = FieldView.extend({
 });
 FieldRadioView = FieldView.extend({
   hidden_field: '<input id="radio<%= id %>" type="hidden" value="" data-type="radio">',
-  choice: '<input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" type="radio" class="field radio fh_appform_field_input" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
+  choice: '<input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" type="radio" class="field radio" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
   renderInput: function(index) {
     var choices = this.model.getRadioOption();
     var self = this;
     var html = "";
+
+    html += "<div class='fh_appform_field_input'>";
+
     var fieldId = this.model.getFieldId();
     $.each(choices, function(i, choice) {
       var jQObj = $(_.template(self.choice, {
@@ -3312,6 +3321,9 @@ FieldRadioView = FieldView.extend({
       }
       html += self.htmlFromjQuery(jQObj);
     });
+
+    html+= "</div>";
+
     return html;
   },
   // addValidationRules: function() {
@@ -3332,7 +3344,7 @@ FieldRadioView = FieldView.extend({
   }
 });
 FieldSelectView = FieldView.extend({
-  select: "<select data-field='<%= fieldId %>' data-index='<%= index %>'><%= options %></select>",
+  select: "<select class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>'><%= options %></select>",
   option: '<option value="<%= value %>" <%= selected %>><%= value %></option>',
   renderInput: function(index) {
     var fieldId=this.model.getFieldId();
@@ -3707,8 +3719,12 @@ FieldTextareaView = FieldView.extend({
     input:"<textarea class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>'  ></textarea>"
 });
 FieldSectionBreak = FieldView.extend({
+  templates: {
+    sectionBreak: '<div><div class="fh_appform_field_section_break_title"><%= sectionTitle %></div><hr/><div class="fh_appform_field_section_break_description"><%= sectionDescription%></div></div>'
+  },
   renderEle:function(){
-    return "<hr/>";
+    this.$el.addClass("fh_appform_field_section_break");
+    return _.template(this.templates.sectionBreak, {sectionTitle: this.model.getName(), sectionDescription: this.model.getHelpText()});
   }
 });
 FieldDateTimeView = FieldView.extend({
@@ -3795,6 +3811,10 @@ PageView=BaseView.extend({
     "dateTime":FieldDateTimeView,
     "sectionBreak":FieldSectionBreak
   },
+  templates : {
+    pageTitle : '<div class="fh_appform_page_title"><%= pageTitle %></div>',
+    pageDescription: '<div class="fh_appform_page_description"><%= pageDescription%></div>'
+  },
 
   initialize: function() {
     var self = this;
@@ -3815,7 +3835,12 @@ PageView=BaseView.extend({
     var self = this;
     this.fieldViews = {};
     // all pages hidden initially
-    this.$el.empty().addClass('page fh_appform_body hidden');
+    this.$el.empty().addClass('fh_appform_page hidden');
+
+    //Need to add the page title and description
+//    this.$el.append(_.template(this.templates.pageTitle, {pageTitle: this.model.getName()}));
+    this.$el.append(_.template(this.templates.pageDescription, {pageDescription: this.model.getDescription()}));
+
     // add to parent before init fields so validation can work
     this.options.parentEl.append(this.$el);
 
@@ -3904,18 +3929,26 @@ var FormView = BaseView.extend({
   "pageViews": [],
   "submission": null,
   "fieldValue": [],
+  "logoBase64": "",
   templates: {
-    formContainer: '<div id="fh_appform_container" class="fh_appform_body"></div>',
-    buttons: '<div id="buttons" class="fh_action_bar"><button class="saveDraft hidden button button-main fh_appform_button_action">Save Draft</button><button class="previous hidden button fh_appform_button_navigation">Previous</button><button class="next hidden button fh_appform_button_navigation">Next</button><button class="submit hidden button button-positive fh_appform_button_action">Submit</button></div>'
+    formLogo: '<div class="fh_appform_logo"><img src="data:image/png;base64,<%= logoBase64 %>"/></div>',
+    formTitle: '<div class="fh_appform_title"><%= title %></div>',
+    formDescription: '<div class="fh_appform_description"><%= description %></div>',
+    formContainer: '<div id="fh_appform_container" class="fh_appform_form"></div>',
+    buttons: '<div id="fh_appform_navigation_buttons" class="fh_appform_action_bar"><button class="fh_appform_button_saveDraft hidden fh_appform_button_main fh_appform_button_action">Save Draft</button><button class="fh_appform_button_previous hidden fh_appform_button_navigation">Previous</button><button class="fh_appform_button_next hidden fh_appform_button_navigation">Next</button><button class="fh_appform_button_submit hidden fh_appform_button_action">Submit</button></div>'
   },
   events: {
-    "click button.next": "nextPage",
-    "click button.previous": "prevPage",
-    "click button.saveDraft": "saveToDraft",
-    "click button.submit": "submit"
+    "click button.fh_appform_button_next": "nextPage",
+    "click button.fh_appform_button_previous": "prevPage",
+    "click button.fh_appform_button_saveDraft": "saveToDraft",
+    "click button.fh_appform_button_submit": "submit"
+  },
+  elementNames: {
+    formContainer: "#fh_appform_container"
   },
 
   initialize: function() {
+    var self = this;
     _.bindAll(this, "checkRules", "onValidateError");
     this.el = this.options.parentEl;
     this.fieldModels = [];
@@ -3923,32 +3956,36 @@ var FormView = BaseView.extend({
   },
   loadForm: function(params, cb) {
     var self = this;
-    if (params.formId) {
 
-      this.onLoad();
-      $fh.forms.getForm(params, function(err, form) {
-        if (err) {
-          throw (err.body);
-        }
-        self.form = form;
+    $fh.forms.getTheme({fromRemote: false}, function(err, theme){
+      self.logoBase64 = theme.getLogo();
+
+      if (params.formId) {
+        self.onLoad();
+        $fh.forms.getForm(params, function(err, form) {
+          if (err) {
+            throw (err.body);
+          }
+          self.form = form;
+          self.params = params;
+          self.initWithForm(form, params);
+          cb();
+        });
+      } else if (params.form) {
+        self.form = params.form;
         self.params = params;
-        self.initWithForm(form, params);
+        self.initWithForm(params.form, params);
         cb();
-      });
-    } else if (params.form) {
-      self.form = params.form;
-      self.params = params;
-      self.initWithForm(params.form, params);
-      cb();
-    }
+      }
+    });
   },
   readOnly: function() {
     this.readonly = true;
     for (var i = 0, fieldView; fieldView = this.fieldViews[i]; i++) {
       fieldView.$el.find("button,input,textarea,select").attr("disabled", "disabled");
     }
-    this.el.find("button.saveDraft").hide();
-    this.el.find(" button.submit").hide();
+    this.el.find("button.fh_appform_button_saveDraft").hide();
+    this.el.find(" button.fh_appform_button_submit").hide();
   },
   onValidateError: function(res) {
     var firstView=null;
@@ -3974,7 +4011,20 @@ var FormView = BaseView.extend({
 
     self.el.empty();
     self.model = form;
+
+    //Page views are always added before anything else happens, need to render the form title first
     this.el.append(this.templates.formContainer);
+    self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formLogo, {logoBase64: self.logoBase64}));
+    self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formTitle, {title: this.model.getName()}));
+    self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formDescription, {description: this.model.getDescription()}));
+
+    if (this.model.pages.length > 1) {
+      self.steps = new StepsView({
+        parentEl: self.el.find(this.elementNames.formContainer),
+        parentView: self,
+        model: self.model
+      });
+    }
 
     if (!params.submission) {
       params.submission = self.model.newSubmission();
@@ -3986,12 +4036,12 @@ var FormView = BaseView.extend({
     var pageViews = [];
     for (var i = 0, pageModel; pageModel = pageModelList[i]; i++) {
       // get fieldModels
-      var list = pageModel.getFieldModelList()
+      var list = pageModel.getFieldModelList();
       self.fieldModels = self.fieldModels.concat(list);
 
       var pageView = new PageView({
         model: pageModel,
-        parentEl: self.el.find("#fh_appform_container.fh_appform_body"),
+        parentEl: self.el.find(this.elementNames.formContainer),
         formView: self
       });
       pageViews.push(pageView);
@@ -4059,18 +4109,18 @@ var FormView = BaseView.extend({
   },
   rebindButtons: function() {
     var self = this;
-    this.el.find("button.next").unbind().bind("click", function() {
+    this.el.find("button.fh_appform_button_next").unbind().bind("click", function() {
       self.nextPage();
     });
 
-    this.el.find("button.previous").unbind().bind("click", function() {
+    this.el.find("button.fh_appform_button_previous").unbind().bind("click", function() {
       self.prevPage();
     });
 
-    this.el.find("button.saveDraft").unbind().bind("click", function() {
+    this.el.find("button.fh_appform_button_saveDraft").unbind().bind("click", function() {
       self.saveToDraft();
     });
-    this.el.find("button.submit").unbind().bind("click", function() {
+    this.el.find("button.fh_appform_button_submit").unbind().bind("click", function() {
       self.submit();
     });
   },
@@ -4100,42 +4150,47 @@ var FormView = BaseView.extend({
   },
   checkPages: function() {
     if (this.pageNum === 0 && this.pageNum === this.pageCount - 1) {
-      this.el.find(" button.previous").hide();
-      this.el.find("button.next").hide();
-      this.el.find("button.saveDraft").show();
-      this.el.find(" button.submit").show();
-      this.el.find("button").addClass('two_button');
+      this.el.find(" button.fh_appform_button_previous").hide();
+      this.el.find("button.fh_appform_button_next").hide();
+      this.el.find("button.fh_appform_button_saveDraft").show();
+      this.el.find(" button.fh_appform_button_submit").show();
+      this.el.find(".fh_appform_action_bar button").removeClass('fh_appform_three_button');
+      this.el.find(".fh_appform_action_bar button").addClass('fh_appform_two_button');
     } else if (this.pageNum === 0) {
-      this.el.find(" button.previous").hide();
-      this.el.find("button.next").show();
-      this.el.find("button.saveDraft").show();
-      this.el.find(" button.submit").hide();
-      this.el.find("button").addClass('two_button');
+      this.el.find(" button.fh_appform_button_previous").hide();
+      this.el.find("button.fh_appform_button_next").show();
+      this.el.find("button.fh_appform_button_saveDraft").show();
+      this.el.find(" button.fh_appform_button_submit").hide();
+      this.el.find(".fh_appform_action_bar button").removeClass('fh_appform_three_button');
+      this.el.find(".fh_appform_action_bar button").addClass('fh_appform_two_button');
     } else if (this.pageNum === this.pageCount - 1) {
-      this.el.find(" button.previous").show();
-      this.el.find(" button.next").hide();
-      this.el.find(" button.saveDraft").show();
-      this.el.find(" button.submit").show();
-      this.el.find("button").addClass('three_button');
+      this.el.find(" button.fh_appform_button_previous").show();
+      this.el.find(" button.fh_appform_button_next").hide();
+      this.el.find(" button.fh_appform_button_saveDraft").show();
+      this.el.find(" button.fh_appform_button_submit").show();
+      this.el.find(".fh_appform_action_bar button").removeClass('fh_appform_two_button');
+      this.el.find(".fh_appform_action_bar button").addClass('fh_appform_three_button');
     } else {
-      this.el.find(" button.previous").show();
-      this.el.find(" button.next").show();
-      this.el.find(" button.saveDraft").show();
-      this.el.find(" button.submit").hide();
-      this.el.find("button").addClass('three_button');
+      this.el.find(" button.fh_appform_button_previous").show();
+      this.el.find(" button.fh_appform_button_next").show();
+      this.el.find(" button.fh_appform_button_saveDraft").show();
+      this.el.find(" button.fh_appform_button_submit").hide();
+      this.el.find(".fh_appform_action_bar button").removeClass('fh_appform_two_button');
+      this.el.find(".fh_appform_action_bar button").addClass('fh_appform_three_button');
     }
     if (this.readonly) {
-      this.el.find("button.saveDraft").hide();
-      this.el.find(" button.submit").hide();
+      this.el.find("button.fh_appform_button_saveDraft").hide();
+      this.el.find(" button.fh_appform_button_submit").hide();
     }
 
   },
   render: function() {
 
     // this.initWithForm(this.form, this.params);
-    this.el.find("#fh_appform_container.fh_appform_body").append(this.templates.buttons);
+    this.el.find("#fh_appform_container.fh_appform_form").append(this.templates.buttons);
     this.rebindButtons();
     this.pageViews[0].show();
+    this.steps.activePageChange(null, 0);
     this.checkPages();
     this.checkRules();
   },
@@ -4143,12 +4198,14 @@ var FormView = BaseView.extend({
     this.hideAllPages();
     this.pageViews[this.pageNum + 1].show();
     this.pageNum = this.pageNum + 1;
+    this.steps.activePageChange(null, this.pageNum);
     this.checkPages();
   },
   prevPage: function() {
     this.hideAllPages();
     this.pageViews[this.pageNum - 1].show();
     this.pageNum = this.pageNum - 1;
+    this.steps.activePageChange(null, this.pageNum);
     this.checkPages();
   },
   hideAllPages: function() {
@@ -4289,6 +4346,47 @@ var FromJsonView = BaseView.extend({
     formView.loadForm(params,function(err){
       formView.render();
     });
+  }
+
+});
+StepsView = Backbone.View.extend({
+  className: 'fh_appform_steps',
+
+  templates: {
+    table: '<div class="fh_appform_progress_wrapper"><table class="fh_appform_progress_steps" cellspacing="0"><tr></tr></table></div>',
+    step: '<td><span class="number_container"><div class="number"><%= step_num %></div></span><span class="page_title"><%= step_name %></span></td>'
+  },
+
+  initialize: function() {
+    var self = this;
+
+    _.bindAll(this, 'render');
+    this.render();
+  },
+
+  render: function() {
+    var self = this;
+    var table = $(self.templates.table);
+
+    var width = 100 / this.model.pages.length;
+
+    this.model.pages.forEach(function(page, index) {
+      var item = $(_.template(self.templates.step, {
+        step_name: page.getName(),
+        step_num: index + 1
+      }));
+      item.css('width', width + '%');
+      $('tr:first', table).append(item);
+    });
+
+    this.$el.append(table);
+    this.options.parentEl.append(this.$el);
+    //$('#fh_appform_container', this.options.parentEl).after(self.$el);
+  },
+
+  activePageChange: function(model, pageIndex) {
+    this.$el.find('td').removeClass('active');
+    this.$el.find('td:eq(' + pageIndex + ')').addClass('active');
   }
 
 });

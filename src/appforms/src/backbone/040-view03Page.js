@@ -17,6 +17,10 @@ PageView=BaseView.extend({
     "dateTime":FieldDateTimeView,
     "sectionBreak":FieldSectionBreak
   },
+  templates : {
+    pageTitle : '<div class="fh_appform_page_title"><%= pageTitle %></div>',
+    pageDescription: '<div class="fh_appform_page_description"><%= pageDescription%></div>'
+  },
 
   initialize: function() {
     var self = this;
@@ -37,7 +41,12 @@ PageView=BaseView.extend({
     var self = this;
     this.fieldViews = {};
     // all pages hidden initially
-    this.$el.empty().addClass('page fh_appform_body hidden');
+    this.$el.empty().addClass('fh_appform_page hidden');
+
+    //Need to add the page title and description
+//    this.$el.append(_.template(this.templates.pageTitle, {pageTitle: this.model.getName()}));
+    this.$el.append(_.template(this.templates.pageDescription, {pageDescription: this.model.getDescription()}));
+
     // add to parent before init fields so validation can work
     this.options.parentEl.append(this.$el);
 

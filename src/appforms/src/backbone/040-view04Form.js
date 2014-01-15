@@ -4,21 +4,26 @@ var FormView = BaseView.extend({
   "pageViews": [],
   "submission": null,
   "fieldValue": [],
+  "logoBase64": "",
   templates: {
-    formLogo: '<div class="fh_appform_logo"></div>',
+    formLogo: '<div class="fh_appform_logo"><img src="data:image/png;base64,<%= logoBase64 %>"/></div>',
     formTitle: '<div class="fh_appform_title"><%= title %></div>',
     formDescription: '<div class="fh_appform_description"><%= description %></div>',
-    formContainer: '<div id="fh_appform_container" class="fh_appform_body"></div>',
-    buttons: '<div id="buttons" class="fh_action_bar"><button class="saveDraft hidden button button-main fh_appform_button_action">Save Draft</button><button class="previous hidden button fh_appform_button_navigation">Previous</button><button class="next hidden button fh_appform_button_navigation">Next</button><button class="submit hidden button button-positive fh_appform_button_action">Submit</button></div>'
+    formContainer: '<div id="fh_appform_container" class="fh_appform_form"></div>',
+    buttons: '<div id="fh_appform_navigation_buttons" class="fh_appform_action_bar"><button class="fh_appform_button_saveDraft hidden fh_appform_button_main fh_appform_button_action">Save Draft</button><button class="fh_appform_button_previous hidden fh_appform_button_navigation">Previous</button><button class="fh_appform_button_next hidden fh_appform_button_navigation">Next</button><button class="fh_appform_button_submit hidden fh_appform_button_action">Submit</button></div>'
   },
   events: {
-    "click button.next": "nextPage",
-    "click button.previous": "prevPage",
-    "click button.saveDraft": "saveToDraft",
-    "click button.submit": "submit"
+    "click button.fh_appform_button_next": "nextPage",
+    "click button.fh_appform_button_previous": "prevPage",
+    "click button.fh_appform_button_saveDraft": "saveToDraft",
+    "click button.fh_appform_button_submit": "submit"
+  },
+  elementNames: {
+    formContainer: "#fh_appform_container"
   },
 
   initialize: function() {
+    var self = this;
     _.bindAll(this, "checkRules", "onValidateError");
     this.el = this.options.parentEl;
     this.fieldModels = [];
@@ -26,32 +31,36 @@ var FormView = BaseView.extend({
   },
   loadForm: function(params, cb) {
     var self = this;
-    if (params.formId) {
 
-      this.onLoad();
-      $fh.forms.getForm(params, function(err, form) {
-        if (err) {
-          throw (err.body);
-        }
-        self.form = form;
+    $fh.forms.getTheme({fromRemote: false}, function(err, theme){
+      self.logoBase64 = theme.getLogo();
+
+      if (params.formId) {
+        self.onLoad();
+        $fh.forms.getForm(params, function(err, form) {
+          if (err) {
+            throw (err.body);
+          }
+          self.form = form;
+          self.params = params;
+          self.initWithForm(form, params);
+          cb();
+        });
+      } else if (params.form) {
+        self.form = params.form;
         self.params = params;
-        self.initWithForm(form, params);
+        self.initWithForm(params.form, params);
         cb();
-      });
-    } else if (params.form) {
-      self.form = params.form;
-      self.params = params;
-      self.initWithForm(params.form, params);
-      cb();
-    }
+      }
+    });
   },
   readOnly: function() {
     this.readonly = true;
     for (var i = 0, fieldView; fieldView = this.fieldViews[i]; i++) {
       fieldView.$el.find("button,input,textarea,select").attr("disabled", "disabled");
     }
-    this.el.find("button.saveDraft").hide();
-    this.el.find(" button.submit").hide();
+    this.el.find("button.fh_appform_button_saveDraft").hide();
+    this.el.find(" button.fh_appform_button_submit").hide();
   },
   onValidateError: function(res) {
     var firstView=null;
@@ -80,9 +89,17 @@ var FormView = BaseView.extend({
 
     //Page views are always added before anything else happens, need to render the form title first
     this.el.append(this.templates.formContainer);
-    this.el.append(this.templates.formLogo);
-    this.el.append(_.template(this.templates.formTitle, {title: this.model.getName()}));
-    this.el.append(_.template(this.templates.formDescription, {description: this.model.getDescription()}));
+    self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formLogo, {logoBase64: self.logoBase64}));
+    self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formTitle, {title: this.model.getName()}));
+    self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formDescription, {description: this.model.getDescription()}));
+
+    if (this.model.pages.length > 1) {
+      self.steps = new StepsView({
+        parentEl: self.el.find(this.elementNames.formContainer),
+        parentView: self,
+        model: self.model
+      });
+    }
 
     if (!params.submission) {
       params.submission = self.model.newSubmission();
@@ -99,7 +116,7 @@ var FormView = BaseView.extend({
 
       var pageView = new PageView({
         model: pageModel,
-        parentEl: self.el.find("#fh_appform_container.fh_appform_body"),
+        parentEl: self.el.find(this.elementNames.formContainer),
         formView: self
       });
       pageViews.push(pageView);
@@ -167,18 +184,18 @@ var FormView = BaseView.extend({
   },
   rebindButtons: function() {
     var self = this;
-    this.el.find("button.next").unbind().bind("click", function() {
+    this.el.find("button.fh_appform_button_next").unbind().bind("click", function() {
       self.nextPage();
     });
 
-    this.el.find("button.previous").unbind().bind("click", function() {
+    this.el.find("button.fh_appform_button_previous").unbind().bind("click", function() {
       self.prevPage();
     });
 
-    this.el.find("button.saveDraft").unbind().bind("click", function() {
+    this.el.find("button.fh_appform_button_saveDraft").unbind().bind("click", function() {
       self.saveToDraft();
     });
-    this.el.find("button.submit").unbind().bind("click", function() {
+    this.el.find("button.fh_appform_button_submit").unbind().bind("click", function() {
       self.submit();
     });
   },
@@ -208,42 +225,47 @@ var FormView = BaseView.extend({
   },
   checkPages: function() {
     if (this.pageNum === 0 && this.pageNum === this.pageCount - 1) {
-      this.el.find(" button.previous").hide();
-      this.el.find("button.next").hide();
-      this.el.find("button.saveDraft").show();
-      this.el.find(" button.submit").show();
-      this.el.find("button").addClass('two_button');
+      this.el.find(" button.fh_appform_button_previous").hide();
+      this.el.find("button.fh_appform_button_next").hide();
+      this.el.find("button.fh_appform_button_saveDraft").show();
+      this.el.find(" button.fh_appform_button_submit").show();
+      this.el.find(".fh_appform_action_bar button").removeClass('fh_appform_three_button');
+      this.el.find(".fh_appform_action_bar button").addClass('fh_appform_two_button');
     } else if (this.pageNum === 0) {
-      this.el.find(" button.previous").hide();
-      this.el.find("button.next").show();
-      this.el.find("button.saveDraft").show();
-      this.el.find(" button.submit").hide();
-      this.el.find("button").addClass('two_button');
+      this.el.find(" button.fh_appform_button_previous").hide();
+      this.el.find("button.fh_appform_button_next").show();
+      this.el.find("button.fh_appform_button_saveDraft").show();
+      this.el.find(" button.fh_appform_button_submit").hide();
+      this.el.find(".fh_appform_action_bar button").removeClass('fh_appform_three_button');
+      this.el.find(".fh_appform_action_bar button").addClass('fh_appform_two_button');
     } else if (this.pageNum === this.pageCount - 1) {
-      this.el.find(" button.previous").show();
-      this.el.find(" button.next").hide();
-      this.el.find(" button.saveDraft").show();
-      this.el.find(" button.submit").show();
-      this.el.find("button").addClass('three_button');
+      this.el.find(" button.fh_appform_button_previous").show();
+      this.el.find(" button.fh_appform_button_next").hide();
+      this.el.find(" button.fh_appform_button_saveDraft").show();
+      this.el.find(" button.fh_appform_button_submit").show();
+      this.el.find(".fh_appform_action_bar button").removeClass('fh_appform_two_button');
+      this.el.find(".fh_appform_action_bar button").addClass('fh_appform_three_button');
     } else {
-      this.el.find(" button.previous").show();
-      this.el.find(" button.next").show();
-      this.el.find(" button.saveDraft").show();
-      this.el.find(" button.submit").hide();
-      this.el.find("button").addClass('three_button');
+      this.el.find(" button.fh_appform_button_previous").show();
+      this.el.find(" button.fh_appform_button_next").show();
+      this.el.find(" button.fh_appform_button_saveDraft").show();
+      this.el.find(" button.fh_appform_button_submit").hide();
+      this.el.find(".fh_appform_action_bar button").removeClass('fh_appform_two_button');
+      this.el.find(".fh_appform_action_bar button").addClass('fh_appform_three_button');
     }
     if (this.readonly) {
-      this.el.find("button.saveDraft").hide();
-      this.el.find(" button.submit").hide();
+      this.el.find("button.fh_appform_button_saveDraft").hide();
+      this.el.find(" button.fh_appform_button_submit").hide();
     }
 
   },
   render: function() {
 
     // this.initWithForm(this.form, this.params);
-    this.el.find("#fh_appform_container.fh_appform_body").append(this.templates.buttons);
+    this.el.find("#fh_appform_container.fh_appform_form").append(this.templates.buttons);
     this.rebindButtons();
     this.pageViews[0].show();
+    this.steps.activePageChange(null, 0);
     this.checkPages();
     this.checkRules();
   },
@@ -251,12 +273,14 @@ var FormView = BaseView.extend({
     this.hideAllPages();
     this.pageViews[this.pageNum + 1].show();
     this.pageNum = this.pageNum + 1;
+    this.steps.activePageChange(null, this.pageNum);
     this.checkPages();
   },
   prevPage: function() {
     this.hideAllPages();
     this.pageViews[this.pageNum - 1].show();
     this.pageNum = this.pageNum - 1;
+    this.steps.activePageChange(null, this.pageNum);
     this.checkPages();
   },
   hideAllPages: function() {
