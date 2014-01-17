@@ -2,16 +2,16 @@ FieldView = Backbone.View.extend({
 
   className: 'fh_appform_field_area',
   errMessageContainer: ".fh_appform_errorMsg",
-  requiredClassName: "fh_appform_required",
+  requiredClassName: "fh_appform_field_required",
   errorClassName: "fh_appform_error",
   addInputButtonClass: ".fh_appform_addInputBtn", //TODO Need to remove hard-coded strings for these names
   removeInputButtonClass: ".fh_appform_removeInputBtn",
   fieldWrapper: "<div />",
   wrapper: '<div id="wrapper_<%= fieldId %>_<%= index %>" title="<%= helpText %>"><%= title %><%= input %><div class="fh_appform_errorMsg hidden"></div></div>',
   title: '<label class="<%= required %> fh_appform_field_title"><%= title %> </label><%= helpText %>',
-  input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/> ",
+  input: "<div class='fh_appform_field_input'><input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/></div>",
   instructions: '<p class="fh_appform_field_instructions"><%= helpText %></p>',
-  fh_appform_fieldActionBar: "<div class='fh_appform_fieldActionBar'><button class='fh_appform_addInputBtn fh_appform_special_button fh_appform_button_action'>Add Input</button><button class='fh_appform_special_button fh_appform_removeInputBtn fh_appform_button_action'>Remove Input</button></div>",
+  fh_appform_fieldActionBar: "<div class='fh_appform_fieldActionBar'><button class='fh_appform_addInputBtn special_button fh_appform_button_action'>Add Input</button><button class='special_button fh_appform_removeInputBtn fh_appform_button_action'>Remove Input</button></div>",
   events: {
     "change": "contentChanged",
     "blur input,select,textarea": "validate",
@@ -298,7 +298,7 @@ FieldView = Backbone.View.extend({
   },
   renderButton: function(index, label, extension_type) {
     var button = $('<button>');
-    button.addClass('fh_appform_special_button fh_appform_button_action');
+    button.addClass('special_button fh_appform_button_action');
     button.addClass(extension_type);
     button.attr("data-index", index);
     button.text(' ' + label);
@@ -313,7 +313,7 @@ FieldView = Backbone.View.extend({
   addButton: function(input, extension_type, label) {
     var self = this;
     var button = $('<button>');
-    button.addClass('fh_appform_special_button fh_appform_button_action');
+    button.addClass('special_button fh_appform_button_action');
     button.addClass(extension_type);
     button.text(' ' + label);
     var img = $('<img>');

@@ -4,9 +4,8 @@ var FormView = BaseView.extend({
   "pageViews": [],
   "submission": null,
   "fieldValue": [],
-  "logoBase64": "",
   templates: {
-    formLogo: '<div class="fh_appform_logo"><img src="data:image/png;base64,<%= logoBase64 %>"/></div>',
+    formLogo: '<div class="fh_appform_logo_container"><div class="fh_appform_logo"></div></div>',
     formTitle: '<div class="fh_appform_title"><%= title %></div>',
     formDescription: '<div class="fh_appform_description"><%= description %></div>',
     formContainer: '<div id="fh_appform_container" class="fh_appform_form"></div>',
@@ -32,27 +31,24 @@ var FormView = BaseView.extend({
   loadForm: function(params, cb) {
     var self = this;
 
-    $fh.forms.getTheme({fromRemote: false}, function(err, theme){
-      self.logoBase64 = theme.getLogo();
 
-      if (params.formId) {
-        self.onLoad();
-        $fh.forms.getForm(params, function(err, form) {
-          if (err) {
-            throw (err.body);
-          }
-          self.form = form;
-          self.params = params;
-          self.initWithForm(form, params);
-          cb();
-        });
-      } else if (params.form) {
-        self.form = params.form;
+    if (params.formId) {
+      self.onLoad();
+      $fh.forms.getForm(params, function(err, form) {
+        if (err) {
+          throw (err.body);
+        }
+        self.form = form;
         self.params = params;
-        self.initWithForm(params.form, params);
+        self.initWithForm(form, params);
         cb();
-      }
-    });
+      });
+    } else if (params.form) {
+      self.form = params.form;
+      self.params = params;
+      self.initWithForm(params.form, params);
+      cb();
+    }
   },
   readOnly: function() {
     this.readonly = true;
@@ -89,7 +85,7 @@ var FormView = BaseView.extend({
 
     //Page views are always added before anything else happens, need to render the form title first
     this.el.append(this.templates.formContainer);
-    self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formLogo, {logoBase64: self.logoBase64}));
+    self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formLogo, {}));
     self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formTitle, {title: this.model.getName()}));
     self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formDescription, {description: this.model.getDescription()}));
 

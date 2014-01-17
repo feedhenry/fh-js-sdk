@@ -6,7 +6,8 @@ FieldRadioView = FieldView.extend({
     var self = this;
     var html = "";
 
-    html += "<div class='fh_appform_field_input'>";
+    html += "<div class='fh_appform_field_input'>";//TODO Move to template.
+    html += "<div class='radio'>"
 
     var fieldId = this.model.getFieldId();
     $.each(choices, function(i, choice) {
@@ -23,6 +24,7 @@ FieldRadioView = FieldView.extend({
       html += self.htmlFromjQuery(jQObj);
     });
 
+    html+= "</div>";
     html+= "</div>";
 
     return html;

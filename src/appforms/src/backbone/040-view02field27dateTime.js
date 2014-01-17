@@ -1,8 +1,8 @@
 FieldDateTimeView = FieldView.extend({
   extension_type: 'fhdate',
-  inputTime:"<input data-field='<%= fieldId %>' data-index='<%= index %>' type='time'>",
-  inputDate:"<input data-field='<%= fieldId %>' data-index='<%= index %>' type='date'>",
-  inputDateTime:"<input data-field='<%= fieldId %>' data-index='<%= index %>' type='text'>",
+  inputTime:"<div class='fh_appform_field_input'><input data-field='<%= fieldId %>' data-index='<%= index %>' type='time'></div>",
+  inputDate:"<div class='fh_appform_field_input'><input data-field='<%= fieldId %>' data-index='<%= index %>' type='date'></div>",
+  inputDateTime:"<div class='fh_appform_field_input'><input data-field='<%= fieldId %>' data-index='<%= index %>' type='text'></div>",
 
   renderInput:function(index){
     var fieldId = this.model.getFieldId();

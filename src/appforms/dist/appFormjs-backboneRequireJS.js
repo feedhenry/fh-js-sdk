@@ -1898,16 +1898,16 @@ FieldView = Backbone.View.extend({
 
   className: 'fh_appform_field_area',
   errMessageContainer: ".fh_appform_errorMsg",
-  requiredClassName: "fh_appform_required",
+  requiredClassName: "fh_appform_field_required",
   errorClassName: "fh_appform_error",
   addInputButtonClass: ".fh_appform_addInputBtn", //TODO Need to remove hard-coded strings for these names
   removeInputButtonClass: ".fh_appform_removeInputBtn",
   fieldWrapper: "<div />",
   wrapper: '<div id="wrapper_<%= fieldId %>_<%= index %>" title="<%= helpText %>"><%= title %><%= input %><div class="fh_appform_errorMsg hidden"></div></div>',
   title: '<label class="<%= required %> fh_appform_field_title"><%= title %> </label><%= helpText %>',
-  input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/> ",
+  input: "<div class='fh_appform_field_input'><input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/></div>",
   instructions: '<p class="fh_appform_field_instructions"><%= helpText %></p>',
-  fh_appform_fieldActionBar: "<div class='fh_appform_fieldActionBar'><button class='fh_appform_addInputBtn fh_appform_special_button fh_appform_button_action'>Add Input</button><button class='fh_appform_special_button fh_appform_removeInputBtn fh_appform_button_action'>Remove Input</button></div>",
+  fh_appform_fieldActionBar: "<div class='fh_appform_fieldActionBar'><button class='fh_appform_addInputBtn special_button fh_appform_button_action'>Add Input</button><button class='special_button fh_appform_removeInputBtn fh_appform_button_action'>Remove Input</button></div>",
   events: {
     "change": "contentChanged",
     "blur input,select,textarea": "validate",
@@ -2194,7 +2194,7 @@ FieldView = Backbone.View.extend({
   },
   renderButton: function(index, label, extension_type) {
     var button = $('<button>');
-    button.addClass('fh_appform_special_button fh_appform_button_action');
+    button.addClass('special_button fh_appform_button_action');
     button.addClass(extension_type);
     button.attr("data-index", index);
     button.text(' ' + label);
@@ -2209,7 +2209,7 @@ FieldView = Backbone.View.extend({
   addButton: function(input, extension_type, label) {
     var self = this;
     var button = $('<button>');
-    button.addClass('fh_appform_special_button fh_appform_button_action');
+    button.addClass('special_button fh_appform_button_action');
     button.addClass(extension_type);
     button.text(' ' + label);
     var img = $('<img>');
@@ -2853,6 +2853,8 @@ FieldCheckboxView = FieldView.extend({
     var fieldId=this.model.getFieldId();
     var self=this;
     var html="<div class='fh_appform_field_input'>";
+
+    html += "<div class='checkboxes'>"
     $.each(subfields, function(i, subfield) {
       html+= _.template(self.choice, {
         "fieldId": fieldId,
@@ -2862,6 +2864,7 @@ FieldCheckboxView = FieldView.extend({
         "checked": (subfield.selected) ? "checked='checked'" : ""
       });
     });
+    html+="</div>";
     html+="</div>";
     return html;
   },
@@ -2921,8 +2924,8 @@ FieldEmailView = FieldView.extend({
   // }
 });
 FieldFileView = FieldView.extend({
-  input: "<button style='display:none' data-field='<%= fieldId %>' class='special_button fh_appform_button_action' data-index='<%= index %>'></button>" +
-    "<input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/> ",
+  input: "<div class='fh_appform_field_input'><button style='display:none' data-field='<%= fieldId %>' class='fh_appform_special_button fh_appform_button_action' data-index='<%= index %>'></button>" +
+    "<input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/></div> ",
   type: "file",
   // dumpContent: function() {
   //   var tmp = "<empty>";
@@ -3010,7 +3013,7 @@ FieldFileView = FieldView.extend({
   }
 });
 FieldGeoView = FieldView.extend({
-  input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' disabled/> ",
+  input: "<div class='fh_appform_field_input'><input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' disabled/></div> ",
   type: "text",
   initialize: function() {
     this.geoValues=[];
@@ -3297,7 +3300,8 @@ FieldRadioView = FieldView.extend({
     var self = this;
     var html = "";
 
-    html += "<div class='fh_appform_field_input'>";
+    html += "<div class='fh_appform_field_input'>";//TODO Move to template.
+    html += "<div class='radio'>"
 
     var fieldId = this.model.getFieldId();
     $.each(choices, function(i, choice) {
@@ -3314,6 +3318,7 @@ FieldRadioView = FieldView.extend({
       html += self.htmlFromjQuery(jQObj);
     });
 
+    html+= "</div>";
     html+= "</div>";
 
     return html;
@@ -3336,7 +3341,7 @@ FieldRadioView = FieldView.extend({
   }
 });
 FieldSelectView = FieldView.extend({
-  select: "<select class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>'><%= options %></select>",
+  select: "<div class='fh_appform_field_input'><select data-field='<%= fieldId %>' data-index='<%= index %>'><%= options %></select></div>",
   option: '<option value="<%= value %>" <%= selected %>><%= value %></option>',
   renderInput: function(index) {
     var fieldId=this.model.getFieldId();
@@ -3705,10 +3710,10 @@ FieldSignatureView = FieldView.extend({
 
 });
 FieldTextView = FieldView.extend({
-  template: ['<label class="desc" for="<%= id %>"><%= title %></label>', '<input class="field text medium fh_appform_field_input" maxlength="255" id="<%= id %>" name="<%= id %>" type="text" value="<%= defaultVal %>">']
+  template: ['<div class="fh_appform_field_input"><label class="desc" for="<%= id %>"><%= title %></label>', '<input class="field text medium fh_appform_field_input" maxlength="255" id="<%= id %>" name="<%= id %>" type="text" value="<%= defaultVal %>"></div>']
 });
 FieldTextareaView = FieldView.extend({
-    input:"<textarea class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>'  ></textarea>"
+    input:"<div class='fh_appform_field_input'><textarea class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>'  ></textarea></div>"
 });
 FieldSectionBreak = FieldView.extend({
   templates: {
@@ -3721,9 +3726,9 @@ FieldSectionBreak = FieldView.extend({
 });
 FieldDateTimeView = FieldView.extend({
   extension_type: 'fhdate',
-  inputTime:"<input data-field='<%= fieldId %>' data-index='<%= index %>' type='time'>",
-  inputDate:"<input data-field='<%= fieldId %>' data-index='<%= index %>' type='date'>",
-  inputDateTime:"<input data-field='<%= fieldId %>' data-index='<%= index %>' type='text'>",
+  inputTime:"<div class='fh_appform_field_input'><input data-field='<%= fieldId %>' data-index='<%= index %>' type='time'></div>",
+  inputDate:"<div class='fh_appform_field_input'><input data-field='<%= fieldId %>' data-index='<%= index %>' type='date'></div>",
+  inputDateTime:"<div class='fh_appform_field_input'><input data-field='<%= fieldId %>' data-index='<%= index %>' type='text'></div>",
 
   renderInput:function(index){
     var fieldId = this.model.getFieldId();
@@ -3921,9 +3926,8 @@ var FormView = BaseView.extend({
   "pageViews": [],
   "submission": null,
   "fieldValue": [],
-  "logoBase64": "",
   templates: {
-    formLogo: '<div class="fh_appform_logo"><img src="data:image/png;base64,<%= logoBase64 %>"/></div>',
+    formLogo: '<div class="fh_appform_logo_container"><div class="fh_appform_logo"></div></div>',
     formTitle: '<div class="fh_appform_title"><%= title %></div>',
     formDescription: '<div class="fh_appform_description"><%= description %></div>',
     formContainer: '<div id="fh_appform_container" class="fh_appform_form"></div>',
@@ -3949,27 +3953,24 @@ var FormView = BaseView.extend({
   loadForm: function(params, cb) {
     var self = this;
 
-    $fh.forms.getTheme({fromRemote: false}, function(err, theme){
-      self.logoBase64 = theme.getLogo();
 
-      if (params.formId) {
-        self.onLoad();
-        $fh.forms.getForm(params, function(err, form) {
-          if (err) {
-            throw (err.body);
-          }
-          self.form = form;
-          self.params = params;
-          self.initWithForm(form, params);
-          cb();
-        });
-      } else if (params.form) {
-        self.form = params.form;
+    if (params.formId) {
+      self.onLoad();
+      $fh.forms.getForm(params, function(err, form) {
+        if (err) {
+          throw (err.body);
+        }
+        self.form = form;
         self.params = params;
-        self.initWithForm(params.form, params);
+        self.initWithForm(form, params);
         cb();
-      }
-    });
+      });
+    } else if (params.form) {
+      self.form = params.form;
+      self.params = params;
+      self.initWithForm(params.form, params);
+      cb();
+    }
   },
   readOnly: function() {
     this.readonly = true;
@@ -4006,7 +4007,7 @@ var FormView = BaseView.extend({
 
     //Page views are always added before anything else happens, need to render the form title first
     this.el.append(this.templates.formContainer);
-    self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formLogo, {logoBase64: self.logoBase64}));
+    self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formLogo, {}));
     self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formTitle, {title: this.model.getName()}));
     self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formDescription, {description: this.model.getDescription()}));
 

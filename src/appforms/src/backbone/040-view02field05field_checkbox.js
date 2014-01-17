@@ -20,6 +20,8 @@ FieldCheckboxView = FieldView.extend({
     var fieldId=this.model.getFieldId();
     var self=this;
     var html="<div class='fh_appform_field_input'>";
+
+    html += "<div class='checkboxes'>"
     $.each(subfields, function(i, subfield) {
       html+= _.template(self.choice, {
         "fieldId": fieldId,
@@ -29,6 +31,7 @@ FieldCheckboxView = FieldView.extend({
         "checked": (subfield.selected) ? "checked='checked'" : ""
       });
     });
+    html+="</div>";
     html+="</div>";
     return html;
   },
