@@ -34,7 +34,13 @@ module.exports = function(grunt) {
                 "src": "<%= pkg.sourceDir %>/backbone/*.js",
                 "dest": "<%= pkg.distDir %>/<%= pkg.name %>-backbone.js"
             }
-        }
+        },
+      jshint: {
+        options: {
+          jshintrc: '.jshintrc' // relative to Gruntfile
+        },
+        all: ['Gruntfile.js', 'src/core/*.js','src/backbone/*.js']
+      }
     });
 
     grunt.registerTask("testServer", require("./script/webServer.js"));
