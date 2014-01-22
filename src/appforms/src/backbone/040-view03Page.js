@@ -15,11 +15,13 @@ PageView=BaseView.extend({
     "signature": FieldSignatureView,
     "locationMap": FieldMapView,
     "dateTime":FieldDateTimeView,
-    "sectionBreak":FieldSectionBreak
+    "sectionBreak":FieldSectionBreak,
+    "url":FieldUrlView
   },
   templates : {
     pageTitle : '<div class="fh_appform_page_title"><%= pageTitle %></div>',
-    pageDescription: '<div class="fh_appform_page_description"><%= pageDescription%></div>'
+    pageDescription: '<div class="fh_appform_page_description"><%= pageDescription%></div>',
+    section: '<div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area"></div>'
   },
 
   initialize: function() {
@@ -40,34 +42,64 @@ PageView=BaseView.extend({
   render: function() {
     var self = this;
     this.fieldViews = {};
+    this.sectionViews = {};
     // all pages hidden initially
     this.$el.empty().addClass('fh_appform_page hidden');
 
     //Need to add the page title and description
-    this.$el.append(_.template(this.templates.pageTitle, {pageTitle: this.model.getName()}));
+//    this.$el.append(_.template(this.templates.pageTitle, {pageTitle: this.model.getName()}));
     this.$el.append(_.template(this.templates.pageDescription, {pageDescription: this.model.getDescription()}));
 
     // add to parent before init fields so validation can work
     this.options.parentEl.append(this.$el);
 
     var fieldModelList=this.model.getFieldModelList();
-    
-    fieldModelList.forEach(function (field, index) {
-      var fieldType = field.getType();
-      if (self.viewMap[fieldType]) {
 
-        console.log("*- "+fieldType);
+    var sections = this.model.getSections();
 
-        self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
-          parentEl: self.$el,
-          parentView: self,
-          model: field,
-          formView: self.options.formView
-        });
-      } else {
-        console.warn('FIELD NOT SUPPORTED:' + fieldType);
+    if(sections != null){
+      for(var sectionKey in sections){
+        this.$el.append(_.template(this.templates.section, {"sectionId": sectionKey}));
       }
-    });
+
+      //Add the section fields
+      for(var sectionKey in sections){
+        sections[sectionKey].forEach(function(field, index){
+          var fieldType = field.getType();
+          if (self.viewMap[fieldType]) {
+
+            console.log("*- "+fieldType);
+
+            self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
+              parentEl: self.$el,
+              parentView: self,
+              model: field,
+              formView: self.options.formView,
+              sectionName: sectionKey
+            });
+          } else {
+            console.warn('FIELD NOT SUPPORTED:' + fieldType);
+          }
+        });
+      }
+    } else {
+      fieldModelList.forEach(function (field, index) {
+        var fieldType = field.getType();
+        if (self.viewMap[fieldType]) {
+
+          console.log("*- "+fieldType);
+
+          self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
+            parentEl: self.$el,
+            parentView: self,
+            model: field,
+            formView: self.options.formView
+          });
+        } else {
+          console.warn('FIELD NOT SUPPORTED:' + fieldType);
+        }
+      });
+    }
   },
 
   show: function () {

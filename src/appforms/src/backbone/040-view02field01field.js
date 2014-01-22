@@ -6,12 +6,14 @@ FieldView = Backbone.View.extend({
   errorClassName: "fh_appform_error",
   addInputButtonClass: ".fh_appform_addInputBtn", //TODO Need to remove hard-coded strings for these names
   removeInputButtonClass: ".fh_appform_removeInputBtn",
-  fieldWrapper: "<div />",
-  wrapper: '<div id="wrapper_<%= fieldId %>_<%= index %>" title="<%= helpText %>"><%= title %><%= input %><div class="fh_appform_errorMsg hidden"></div></div>',
-  title: '<label class="<%= required %> fh_appform_field_title"><%= title %> </label><%= helpText %>',
-  input: "<div class='fh_appform_field_input'><input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/></div>",
+  fieldWrapper: '<div class="fh_appform_input_wrapper"></div>',
+  input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/>",
+  inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>' style='width:100%'>  <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container' style='display: inline-block;float: right;width: 86%;margin-right:5px'>  <%= inputHtml %> <div class='fh_appform_errorMsg hidden'>  </div> </div>  </div><br style='clear:both'/>",
+
+
+  fh_appform_fieldActionBar: "<div class='fh_appform_fieldActionBar' style='text-align: right;'><button class='fh_appform_removeInputBtn special_button fh_appform_button_action'>-</button><button class='special_button fh_appform_addInputBtn fh_appform_button_action'>+</button></div>",
+  title: '<label class="fh_appform_field_title"><%= title %> </label>',
   instructions: '<p class="fh_appform_field_instructions"><%= helpText %></p>',
-  fh_appform_fieldActionBar: "<div class='fh_appform_fieldActionBar'><button class='fh_appform_addInputBtn special_button fh_appform_button_action'>Add Input</button><button class='special_button fh_appform_removeInputBtn fh_appform_button_action'>Remove Input</button></div>",
   events: {
     "change": "contentChanged",
     "blur input,select,textarea": "validate",
@@ -48,14 +50,24 @@ FieldView = Backbone.View.extend({
     this.getWrapper(lastIndex).remove();
     this.curRepeat--;
   },
-  renderTitle: function(index) {
+  renderTitle: function() {
     var name = this.model.getName();
     var title = name;
+    return _.template(this.title, {
+      "title": title
+    });
+  },
+  renderInput: function(index) {
+    var fieldId = this.model.getFieldId();
+    var type = this.type || "text";
+    return _.template(this.input, {
+      "fieldId": fieldId,
+      "index": index,
+      "inputType": type
+    });
+  },
+  "getFieldRequired" : function(index){
     var required = "";
-    var helpText = "";
-    if (this.model.isRepeating()) {
-      title += " (" + (index + 1) + ") ";
-    }
     if (this.initialRepeat > 1) {
       if (index < this.initialRepeat) {
         required = this.requiredClassName;
@@ -68,33 +80,16 @@ FieldView = Backbone.View.extend({
     if (this.model.isRequired() && index < this.initialRepeat) {
       required = this.requiredClassName;
     }
-    if (index == 0) {
-      helpText = this.renderHelpText();
-    }
-    return _.template(this.title, {
-      "title": title,
-      "helpText": helpText,
-      "required": required
-    });
-  },
-  renderInput: function(index) {
-    var fieldId = this.model.getFieldId();
-    var type = this.type || "text";
-    return _.template(this.input, {
-      "fieldId": fieldId,
-      "index": index,
-      "inputType": type
-    });
+    return required;
   },
   renderEle: function(titleHtml, inputHtml, index) {
-    var helpText = this.model.getHelpText();
     var fieldId = this.model.getFieldId();
-    return _.template(this.wrapper, {
+
+    return _.template(this.inputTemplate, {
       "fieldId": fieldId,
       "index": index,
-      "helpText": helpText,
-      "title": titleHtml,
-      "input": inputHtml
+      "inputHtml": inputHtml,
+      "required": this.getFieldRequired(index)
     });
   },
   renderHelpText: function() {
@@ -111,22 +106,25 @@ FieldView = Backbone.View.extend({
   },
   addElement: function() {
     var index = this.curRepeat;
-    var titleHtml = this.renderTitle(index);
     var inputHtml = this.renderInput(index);
-    var eleHtml = this.renderEle(titleHtml, inputHtml, index);
+    var eleHtml = this.renderEle("", inputHtml, index);
     this.$fieldWrapper.append(eleHtml);
     this.curRepeat++;
     this.onElementShow(index);
 
   },
   onElementShow: function(index) {
-
+    console.log("Show done for field " + index);
   },
   render: function() {
     var self = this;
     this.initialRepeat = 1;
     this.maxRepeat = 1;
     this.curRepeat = 0;
+
+    this.$fieldWrapper.append(this.renderTitle());
+    this.$fieldWrapper.append(this.renderHelpText());
+
     if (this.model.isRepeating()) {
       this.initialRepeat = this.model.getMinRepeat();
       this.maxRepeat = this.model.getMaxRepeat();
@@ -139,8 +137,13 @@ FieldView = Backbone.View.extend({
     this.$el.append(this.$fh_appform_fieldActionBar);
     this.$el.attr("data-field", this.model.getFieldId());
 
-    // add to dom
-    this.options.parentEl.append(this.$el);
+
+    if(this.options.sectionName){
+      //This field belongs to a section
+      this.options.parentEl.find('#fh_appform_' + this.options.sectionName).append(this.$el);
+    } else {
+      this.options.parentEl.append(this.$el);
+    }
 
     this.show();
 
@@ -301,12 +304,8 @@ FieldView = Backbone.View.extend({
     button.addClass('special_button fh_appform_button_action');
     button.addClass(extension_type);
     button.attr("data-index", index);
-    button.text(' ' + label);
-    var img = $('<img>');
-    img.attr('src', './img/' + extension_type + '.png');
-    img.css('height', '28px');
-    img.css('width', '28px');
-    button.prepend(img);
+    button.html(' ' + label);
+
     return this.htmlFromjQuery(button);
   },
   //deprecated
@@ -315,12 +314,8 @@ FieldView = Backbone.View.extend({
     var button = $('<button>');
     button.addClass('special_button fh_appform_button_action');
     button.addClass(extension_type);
-    button.text(' ' + label);
-    var img = $('<img>');
-    img.attr('src', './img/' + extension_type + '.png');
-    img.css('height', '28px');
-    img.css('width', '28px');
-    button.prepend(img);
+    button.html(' ' + label);
+
 
     button.click(function(e) {
       self.action(this);

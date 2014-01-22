@@ -1,7 +1,6 @@
 FieldMapView = FieldView.extend({
   extension_type: 'fhmap',
   input: "<div data-index='<%= index %>' class='fh_map_canvas' style='width:<%= width%>; height:<%= height%>;'></div>",
-
   // parseCssOptions: function() {
   //   var options = {
   //     defaultZoom: null
@@ -43,6 +42,9 @@ FieldMapView = FieldView.extend({
     FieldView.prototype.initialize.apply(this, arguments);
   },
   renderInput: function(index) {
+    var required = this.getFieldRequired(index);
+    var inputContent = "";
+
     return _.template(this.input, {
       width: this.mapSettings.mapWidth,
       height: this.mapSettings.mapHeight,

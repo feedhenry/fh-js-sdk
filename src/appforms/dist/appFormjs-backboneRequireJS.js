@@ -1902,12 +1902,14 @@ FieldView = Backbone.View.extend({
   errorClassName: "fh_appform_error",
   addInputButtonClass: ".fh_appform_addInputBtn", //TODO Need to remove hard-coded strings for these names
   removeInputButtonClass: ".fh_appform_removeInputBtn",
-  fieldWrapper: "<div />",
-  wrapper: '<div id="wrapper_<%= fieldId %>_<%= index %>" title="<%= helpText %>"><%= title %><%= input %><div class="fh_appform_errorMsg hidden"></div></div>',
-  title: '<label class="<%= required %> fh_appform_field_title"><%= title %> </label><%= helpText %>',
-  input: "<div class='fh_appform_field_input'><input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/></div>",
+  fieldWrapper: '<div class="fh_appform_input_wrapper"></div>',
+  input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/>",
+  inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>' style='width:100%'>  <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container' style='display: inline-block;float: right;width: 86%;margin-right:5px'>  <%= inputHtml %> <div class='fh_appform_errorMsg hidden'>  </div> </div>  </div><br style='clear:both'/>",
+
+
+  fh_appform_fieldActionBar: "<div class='fh_appform_fieldActionBar' style='text-align: right;'><button class='fh_appform_removeInputBtn special_button fh_appform_button_action'>-</button><button class='special_button fh_appform_addInputBtn fh_appform_button_action'>+</button></div>",
+  title: '<label class="fh_appform_field_title"><%= title %> </label>',
   instructions: '<p class="fh_appform_field_instructions"><%= helpText %></p>',
-  fh_appform_fieldActionBar: "<div class='fh_appform_fieldActionBar'><button class='fh_appform_addInputBtn special_button fh_appform_button_action'>Add Input</button><button class='special_button fh_appform_removeInputBtn fh_appform_button_action'>Remove Input</button></div>",
   events: {
     "change": "contentChanged",
     "blur input,select,textarea": "validate",
@@ -1944,14 +1946,24 @@ FieldView = Backbone.View.extend({
     this.getWrapper(lastIndex).remove();
     this.curRepeat--;
   },
-  renderTitle: function(index) {
+  renderTitle: function() {
     var name = this.model.getName();
     var title = name;
+    return _.template(this.title, {
+      "title": title
+    });
+  },
+  renderInput: function(index) {
+    var fieldId = this.model.getFieldId();
+    var type = this.type || "text";
+    return _.template(this.input, {
+      "fieldId": fieldId,
+      "index": index,
+      "inputType": type
+    });
+  },
+  "getFieldRequired" : function(index){
     var required = "";
-    var helpText = "";
-    if (this.model.isRepeating()) {
-      title += " (" + (index + 1) + ") ";
-    }
     if (this.initialRepeat > 1) {
       if (index < this.initialRepeat) {
         required = this.requiredClassName;
@@ -1964,33 +1976,16 @@ FieldView = Backbone.View.extend({
     if (this.model.isRequired() && index < this.initialRepeat) {
       required = this.requiredClassName;
     }
-    if (index == 0) {
-      helpText = this.renderHelpText();
-    }
-    return _.template(this.title, {
-      "title": title,
-      "helpText": helpText,
-      "required": required
-    });
-  },
-  renderInput: function(index) {
-    var fieldId = this.model.getFieldId();
-    var type = this.type || "text";
-    return _.template(this.input, {
-      "fieldId": fieldId,
-      "index": index,
-      "inputType": type
-    });
+    return required;
   },
   renderEle: function(titleHtml, inputHtml, index) {
-    var helpText = this.model.getHelpText();
     var fieldId = this.model.getFieldId();
-    return _.template(this.wrapper, {
+
+    return _.template(this.inputTemplate, {
       "fieldId": fieldId,
       "index": index,
-      "helpText": helpText,
-      "title": titleHtml,
-      "input": inputHtml
+      "inputHtml": inputHtml,
+      "required": this.getFieldRequired(index)
     });
   },
   renderHelpText: function() {
@@ -2007,22 +2002,25 @@ FieldView = Backbone.View.extend({
   },
   addElement: function() {
     var index = this.curRepeat;
-    var titleHtml = this.renderTitle(index);
     var inputHtml = this.renderInput(index);
-    var eleHtml = this.renderEle(titleHtml, inputHtml, index);
+    var eleHtml = this.renderEle("", inputHtml, index);
     this.$fieldWrapper.append(eleHtml);
     this.curRepeat++;
     this.onElementShow(index);
 
   },
   onElementShow: function(index) {
-
+    console.log("Show done for field " + index);
   },
   render: function() {
     var self = this;
     this.initialRepeat = 1;
     this.maxRepeat = 1;
     this.curRepeat = 0;
+
+    this.$fieldWrapper.append(this.renderTitle());
+    this.$fieldWrapper.append(this.renderHelpText());
+
     if (this.model.isRepeating()) {
       this.initialRepeat = this.model.getMinRepeat();
       this.maxRepeat = this.model.getMaxRepeat();
@@ -2035,8 +2033,13 @@ FieldView = Backbone.View.extend({
     this.$el.append(this.$fh_appform_fieldActionBar);
     this.$el.attr("data-field", this.model.getFieldId());
 
-    // add to dom
-    this.options.parentEl.append(this.$el);
+
+    if(this.options.sectionName){
+      //This field belongs to a section
+      this.options.parentEl.find('#fh_appform_' + this.options.sectionName).append(this.$el);
+    } else {
+      this.options.parentEl.append(this.$el);
+    }
 
     this.show();
 
@@ -2197,12 +2200,8 @@ FieldView = Backbone.View.extend({
     button.addClass('special_button fh_appform_button_action');
     button.addClass(extension_type);
     button.attr("data-index", index);
-    button.text(' ' + label);
-    var img = $('<img>');
-    img.attr('src', './img/' + extension_type + '.png');
-    img.css('height', '28px');
-    img.css('width', '28px');
-    button.prepend(img);
+    button.html(' ' + label);
+
     return this.htmlFromjQuery(button);
   },
   //deprecated
@@ -2211,12 +2210,8 @@ FieldView = Backbone.View.extend({
     var button = $('<button>');
     button.addClass('special_button fh_appform_button_action');
     button.addClass(extension_type);
-    button.text(' ' + label);
-    var img = $('<img>');
-    img.attr('src', './img/' + extension_type + '.png');
-    img.css('height', '28px');
-    img.css('width', '28px');
-    button.prepend(img);
+    button.html(' ' + label);
+
 
     button.click(function(e) {
       self.action(this);
@@ -2302,7 +2297,7 @@ FieldView = Backbone.View.extend({
 
 });
 FieldCameraView = FieldView.extend({
-  input: '<img class="imageThumb" width="100%" data-field="<%= fieldId %>" data-index="<%= index %>">',
+  input: "<img class='imageThumb' width='100%' data-field='<%= fieldId %>' data-index='<%= index %>'>",
   html5Cam: '<div class="html5Cam">' +
     '<div class="camActionBar"><button class="camCancel camBtn fh_appform_button_cancel">Cancel</button><button class="camOk camBtn fh_appform_button_action">Ok</button></div>' +
     '<div class="cam"></div>' +
@@ -2315,9 +2310,9 @@ FieldCameraView = FieldView.extend({
   // },
 
   onElementShow: function(index) {
-    var captureBtn = $(this.renderButton(index, "Capture Photo From Camera", "fhcam"));
-    var libBtn = $(this.renderButton(index, "Choose Photo from Library", "fhcam_lib"));
-    var rmBtn = $(this.renderButton(index, "Remove Photo", "remove"));
+    var captureBtn = $(this.renderButton(index, "<i class='fa fa-camera'></i>&nbspCapture Photo From Camera", "fhcam"));
+    var libBtn = $(this.renderButton(index, "<i class='fa fa-folder'></i>&nbspChoose Photo from Library", "fhcam_lib"));
+    var rmBtn = $(this.renderButton(index, "<i class='fa fa-times-circle'></i>&nbspRemove Photo", "remove"));
 
     this.getWrapper(index).append(captureBtn);
     this.getWrapper(index).append(libBtn);
@@ -2832,8 +2827,8 @@ FieldCameraGroupView = FieldCameraView.extend({
   }
 });
 FieldCheckboxView = FieldView.extend({
+  checkboxes: '<div class="fh_appform_field_input"><div class="checkboxes"><%= choices %></div></div>',
   choice: '<input data-fieldId="<%= fieldId %>" <%= checked %> data-index="<%= index %>" name="<%= fieldId %>[]" type="checkbox" class="field checkbox" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
-
   // contentChanged: function(e) {
   //   var self = this;
   //   this.dumpContent();
@@ -2851,12 +2846,15 @@ FieldCheckboxView = FieldView.extend({
   renderInput: function(index) {
     var subfields = this.model.getCheckBoxOptions();
     var fieldId=this.model.getFieldId();
+    var choicesHtml = "";
+    var checkboxesHtml = "";
+    var html = "";
+    var required = this.getFieldRequired(index);
     var self=this;
-    var html="<div class='fh_appform_field_input'>";
 
-    html += "<div class='checkboxes'>"
+
     $.each(subfields, function(i, subfield) {
-      html+= _.template(self.choice, {
+      choicesHtml+= _.template(self.choice, {
         "fieldId": fieldId,
         "index": index,
         "choice": subfield.label,
@@ -2864,9 +2862,10 @@ FieldCheckboxView = FieldView.extend({
         "checked": (subfield.selected) ? "checked='checked'" : ""
       });
     });
-    html+="</div>";
-    html+="</div>";
-    return html;
+
+    checkboxesHtml = _.template(this.checkboxes, {"choices": choicesHtml});
+
+    return checkboxesHtml;
   },
   // addValidationRules: function() {
   //   if (this.model.get('IsRequired') === '1') {
@@ -2924,8 +2923,8 @@ FieldEmailView = FieldView.extend({
   // }
 });
 FieldFileView = FieldView.extend({
-  input: "<div class='fh_appform_field_input'><button style='display:none' data-field='<%= fieldId %>' class='fh_appform_special_button fh_appform_button_action' data-index='<%= index %>'></button>" +
-    "<input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/></div> ",
+  input: "<button style='display:none' data-field='<%= fieldId %>' class='fh_appform_special_button fh_appform_button_action' data-index='<%= index %>'></button>" +
+    "<input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/>",
   type: "file",
   // dumpContent: function() {
   //   var tmp = "<empty>";
@@ -3013,7 +3012,8 @@ FieldFileView = FieldView.extend({
   }
 });
 FieldGeoView = FieldView.extend({
-  input: "<div class='fh_appform_field_input'><input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' disabled/></div> ",
+  input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' disabled/>",
+  buttonHtml: "<i class='fa fa-map-marker'></i>&nbsp<%= buttonText %>",
   type: "text",
   initialize: function() {
     this.geoValues=[];
@@ -3021,45 +3021,29 @@ FieldGeoView = FieldView.extend({
     FieldView.prototype.initialize.apply(this, arguments);
   },
   renderInput: function(index) {
-    var btnLabel = this.locationUnit === "latLong" ? 'Capture Location (Lat/Lon)' : 'Capture Location (East/North)';
     var html = _.template(this.input, {
       "fieldId": this.model.getFieldId(),
       "index": index,
       "inputType": "text"
     });
-    html += this.renderButton(index, btnLabel, "fhgeo");
+
+
     return html;
+  },
+  onElementShow: function(index){
+    var self = this;
+    var btnLabel = this.locationUnit === "latlong" ? 'Capture Location (Lat/Lon)' : 'Capture Location (East/North)';
+    btnLabel = _.template(this.buttonHtml, {"buttonText": btnLabel});
+    var geoButton = $(this.renderButton(index, btnLabel, "fhgeo"));
+
+    this.getWrapper(index).append(geoButton);
+
+    geoButton.on("click", function(e){
+      self.getLocation(e, index);
+    });
   },
   onRender: function() {
     var that = this;
-    this.$el.find("button").on("click", function(e) {
-      e.preventDefault();
-      var btn = $(this);
-      var index = btn.data().index;
-      var wrapper = that.getWrapper(index);
-      var textInput = wrapper.find("input[type='text']");
-      $fh.geo(function(res) {
-        var location;
-        if (that.locationUnit === "latLong") {
-          that.geoValues[index] = {
-            "lat": res.lat,
-            "long": res.lon
-          };
-        }else if (that.locationUnit==="northEast"){
-          var en_location = that.convertLocation(res);
-          var locArr=en_location.toString().split(" ");
-          that.geoValues[index]={
-            "zone":locArr[0],
-            "eastings":locArr[1],
-            "northings":locArr[2]
-          }
-        }
-        that.renderElement(index);
-      }, function(msg, err) {
-        textInput.attr('placeholder', 'Location could not be determined');
-      });
-      return false;
-    });
   },
   convertLocation: function(location) {
     var lat = location.lat;
@@ -3079,9 +3063,9 @@ FieldGeoView = FieldView.extend({
     var locStr = "";
     var textInput = this.getWrapper(index).find("input[type='text']");
     if (location) {
-      if (this.locationUnit === "latLong") {
+      if (this.locationUnit === "latlong") {
         locStr = '(' + location.lat + ', ' + location.long + ')';
-      } else if (this.locationUnit === "northEast") {
+      } else if (this.locationUnit === "eastnorth") {
         locStr = '(' + location.zone+' '+location.eastings + ', ' + location.northings + ')';
       }
       textInput.val(locStr);
@@ -3094,12 +3078,38 @@ FieldGeoView = FieldView.extend({
   },
   valueFromElement: function(index) {
     return this.geoValues[index];
+  },
+  getLocation: function(e, index) {
+    var that = this;
+    e.preventDefault();
+    var wrapper = that.getWrapper(index);
+    var textInput = wrapper.find("input[type='text']");
+    $fh.geo(function(res) {
+      var location;
+      if (that.locationUnit === "latlong") {
+        that.geoValues[index] = {
+          "lat": res.lat,
+          "long": res.lon
+        };
+      }else if (that.locationUnit==="eastnorth"){
+        var en_location = that.convertLocation(res);
+        var locArr=en_location.toString().split(" ");
+        that.geoValues[index]={
+          "zone":locArr[0],
+          "eastings":locArr[1],
+          "northings":locArr[2]
+        }
+      }
+      that.renderElement(index);
+    }, function(msg, err) {
+      textInput.attr('placeholder', 'Location could not be determined');
+    });
+    return false;
   }
 });
 FieldMapView = FieldView.extend({
   extension_type: 'fhmap',
   input: "<div data-index='<%= index %>' class='fh_map_canvas' style='width:<%= width%>; height:<%= height%>;'></div>",
-
   // parseCssOptions: function() {
   //   var options = {
   //     defaultZoom: null
@@ -3141,6 +3151,9 @@ FieldMapView = FieldView.extend({
     FieldView.prototype.initialize.apply(this, arguments);
   },
   renderInput: function(index) {
+    var required = this.getFieldRequired(index);
+    var inputContent = "";
+
     return _.template(this.input, {
       width: this.mapSettings.mapWidth,
       height: this.mapSettings.mapHeight,
@@ -3293,15 +3306,16 @@ FieldPhoneView = FieldView.extend({
   type:"tel"
 });
 FieldRadioView = FieldView.extend({
-  hidden_field: '<input id="radio<%= id %>" type="hidden" value="" data-type="radio">',
+  hidden_field: '<input  id="radio<%= id %>" type="hidden" value="" data-type="radio">',
   choice: '<input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" type="radio" class="field radio" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
+  radio: '<div class="fh_appform_field_input"><%= radioChoices %></div>',
+
   renderInput: function(index) {
     var choices = this.model.getRadioOption();
     var self = this;
+    var radioChoicesHtml = "";
+    var fullRadioHtml = "";
     var html = "";
-
-    html += "<div class='fh_appform_field_input'>";//TODO Move to template.
-    html += "<div class='radio'>"
 
     var fieldId = this.model.getFieldId();
     $.each(choices, function(i, choice) {
@@ -3315,13 +3329,10 @@ FieldRadioView = FieldView.extend({
       if (choice.checked == true) {
         jQObj.attr('checked', 'checked');
       }
-      html += self.htmlFromjQuery(jQObj);
+      radioChoicesHtml += self.htmlFromjQuery(jQObj);
     });
 
-    html+= "</div>";
-    html+= "</div>";
-
-    return html;
+    return _.template(this.radio, {"radioChoices": radioChoicesHtml});
   },
   // addValidationRules: function() {
   //   // first radio is always initially checked, so no need to do 'required' validation on this field
@@ -3341,13 +3352,17 @@ FieldRadioView = FieldView.extend({
   }
 });
 FieldSelectView = FieldView.extend({
-  select: "<div class='fh_appform_field_input'><select data-field='<%= fieldId %>' data-index='<%= index %>'><%= options %></select></div>",
+  select: "<select class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>'><%= options %></select>",
   option: '<option value="<%= value %>" <%= selected %>><%= value %></option>',
+
   renderInput: function(index) {
     var fieldId=this.model.getFieldId();
     var choices = this.model.get('fieldOptions');
     choices = choices.definition.options;
     var options="";
+    var selectHtml = "";
+    var html = "";
+
     var self=this;
     $.each(choices, function(i, choice) {
       options += _.template(self.option, {
@@ -3355,7 +3370,8 @@ FieldSelectView = FieldView.extend({
         "selected": (choice.checked) ? "selected='selected'" : ""
       });
     });
-   return _.template(this.select, {
+
+    return _.template(this.select, {
       "fieldId":fieldId,
       "index":index,
       "options":options
@@ -3364,23 +3380,18 @@ FieldSelectView = FieldView.extend({
 });
 FieldSignatureView = FieldView.extend({
   extension_type: 'fhsig',
-
-  input: "<img class='sigImage' data-field='<%= fieldId %>' data-index='<%= index %>'/>",
-  signaturePadStyle: "@font-face{font-family:Journal;src:url(journal.eot);src:url(journal.eot?#iefix) format('embedded-opentype'),url(journal.woff) format('woff'),url(journal.ttf) format('truetype'),url(journal.svg#JournalRegular) format('svg');font-weight:400;font-style:normal}.sigPad{margin:0;padding:0;width:250px;height:200px}.sigPad label{display:block;margin:0 0 .515em;padding:0;color:#000;font:italic normal 1em/1.375 Georgia,Times,serif}.sigPad label.error{color:#f33}.sigPad input{margin:0;padding:.2em 0;width:198px;border:1px solid #666;font-size:1em}.sigPad input.error{border-color:#f33}.sigPad button{margin:1em 0 0;padding:.6em .6em .7em;background-color:#ccc;border:0;-moz-border-radius:8px;-webkit-border-radius:8px;border-radius:8px;cursor:pointer;color:#555;font:700 1em/1.375 sans-serif;text-align:left}.sigPad button:hover{background-color:#333;color:#fff}.sig{display:none}.sigNav{display:none;height:2.25em;margin:0;padding:0;position:relative;list-style-type:none}.sigNav li{display:inline;float:left;margin:0;padding:0}.sigNav a,.sigNav a:link,.sigNav a:visited{display:block;margin:0;padding:0 .6em;border:0;color:#333;font-weight:700;line-height:2.25em;text-decoration:underline}.sigNav a.current,.sigNav a.current:link,.sigNav a.current:visited{background-color:#666;-moz-border-radius-topleft:8px;-moz-border-radius-topright:8px;-webkit-border-top-left-radius:8px;-webkit-border-top-right-radius:8px;border-radius:8px 8px 0 0;color:#fff;text-decoration:none}.sigNav .typeIt a.current,.sigNav .typeIt a.current:link,.sigNav .typeIt a.current:visited{background-color:#ccc;color:#555}.sigWrapper{clear:both;height:100px;border:1px solid #ccc}.sigWrapper.current{border-color:#666}.signed .sigWrapper{border:0}.pad{position:relative}.typed{height:55px;margin:0;padding:0 5px;position:absolute;z-index:90;cursor:default;color:#145394;font:400 1.875em/50px Journal,Georgia,Times,serif}.drawItDesc,.typeItDesc{display:none;margin:.75em 0 .515em;padding:.515em 0 0;border-top:3px solid #ccc;color:#000;font:italic normal 1em/1.375 Georgia,Times,serif}",
+  input: "<img class='sigImage' style='width: 100%;' data-field='<%= fieldId %>' data-index='<%= index %>'/>",
+//  signaturePadStyle: "@font-face{font-family:Journal;src:url(journal.eot);src:url(journal.eot?#iefix) format('embedded-opentype'),url(journal.woff) format('woff'),url(journal.ttf) format('truetype'),url(journal.svg#JournalRegular) format('svg');font-weight:400;font-style:normal}.sigPad{margin:0;padding:0;width:250px;height:200px}.sigPad label{display:block;margin:0 0 .515em;padding:0;color:#000;font:italic normal 1em/1.375 Georgia,Times,serif}.sigPad label.error{color:#f33}.sigPad input{margin:0;padding:.2em 0;width:198px;border:1px solid #666;font-size:1em}.sigPad input.error{border-color:#f33}.sigPad button{margin:1em 0 0;padding:.6em .6em .7em;background-color:#ccc;border:0;-moz-border-radius:8px;-webkit-border-radius:8px;border-radius:8px;cursor:pointer;color:#555;font:700 1em/1.375 sans-serif;text-align:left}.sigPad button:hover{background-color:#333;color:#fff}.sig{display:none}.sigNav{display:none;height:2.25em;margin:0;padding:0;position:relative;list-style-type:none}.sigNav li{display:inline;float:left;margin:0;padding:0}.sigNav a,.sigNav a:link,.sigNav a:visited{display:block;margin:0;padding:0 .6em;border:0;color:#333;font-weight:700;line-height:2.25em;text-decoration:underline}.sigNav a.current,.sigNav a.current:link,.sigNav a.current:visited{background-color:#666;-moz-border-radius-topleft:8px;-moz-border-radius-topright:8px;-webkit-border-top-left-radius:8px;-webkit-border-top-right-radius:8px;border-radius:8px 8px 0 0;color:#fff;text-decoration:none}.sigNav .typeIt a.current,.sigNav .typeIt a.current:link,.sigNav .typeIt a.current:visited{background-color:#ccc;color:#555}.sigWrapper{clear:both;height:100px;border:1px solid #ccc}.sigWrapper.current{border-color:#666}.signed .sigWrapper{border:0}.pad{position:relative}.typed{height:55px;margin:0;padding:0 5px;position:absolute;z-index:90;cursor:default;color:#145394;font:400 1.875em/50px Journal,Georgia,Times,serif}.drawItDesc,.typeItDesc{display:none;margin:.75em 0 .515em;padding:.515em 0 0;border-top:3px solid #ccc;color:#000;font:italic normal 1em/1.375 Georgia,Times,serif}",
   templates: {
-    signaturePad: ['<div class="sigPad">', '<ul class="sigNav">', '<button class="clearButton">Clear</button><button class="cap_sig_done_btn">Done</button>', '</ul>', '<div class="sig sigWrapper">', '<canvas class="pad" width="<%= canvasWidth %>" height="<%= canvasHeight %>"></canvas>', '</div>', '</div>']
+    signaturePad: ['<div class="sigPad">', '<ul class="sigNav" style="text-align: center;">', '<button class="clearButton fh_appform_button_cancel">Clear</button><button class="cap_sig_done_btn fh_appform_button_action">Done</button>', '<br style="clear:both;" />', '</ul>', '<div class="sig sigWrapper">', '<canvas class="pad" width="<%= canvasWidth %>" height="<%= canvasHeight %>"></canvas>', '</div>', '</div>']
   },
 
   initialize: function() {
     FieldView.prototype.initialize.call(this);
     this.on('visible', this.clearError);
   },
-
-  // dumpContent: function() {
-  //   FieldFileView.prototype.dumpContent.call(this);
-  // },
   onElementShow: function(index) {
-    var html = $(this.renderButton(index, "Capture Signature", this.extension_type));
+    var html = $(this.renderButton(index, "<i class='fa fa-pencil'></i>&nbspCapture Signature", this.extension_type));
     this.getWrapper(index).append(html);
     var self = this;
     html.on("click", function() {
@@ -3392,45 +3403,11 @@ FieldSignatureView = FieldView.extend({
       this.trigger("checkrules");
     }
   },
-  // render: function() {
-  //   var self = this;
-  //   this.$el.append(_.template(this.templates.input, {
-  //     "id": this.model.get('_id'),
-  //     "title": this.model.get('Title')
-  //   }));
-
-  //   // Add button
-  //   var button = this.addButton(this.$el, this.extension_type, 'Capture Signature');
-
-  //   // add to dom
-  //   this.options.parentEl.append(this.$el);
-  //   console.debug("render html=" + this.$el.html());
-  //   this.show();
-  // },
-
-  // contentChanged: function(e) {
-  //   FieldView.prototype.contentChanged.apply(this,arguments);
-  //   this.clearError();
-  // },
-
-  // TODO horrible hack
-  // clearError: function(){
-  //   var id = this.model.get('_id');
-  //   var val = this.model.get("value");
-  //   if(val && val.hasOwnProperty(id) && !this.isEmptyImage(val[id].fileBase64)) {
-  //     FieldView.prototype.clearError.call(this);
-  //   }
-  // },
-
-  // action: function(el, e) {
-  //   $('input', this.$el);
-  //   this.showSignatureCapture();
-  // },
   onRender: function() {
     var style = $("<style />");
-    style.text(this.signaturePadStyle);
+    //style.text(this.signaturePadStyle);
 
-    this.$el.append(style);
+    //this.$el.append(style);
   },
   showSignatureCapture: function(index) {
     var self = this;
@@ -3444,8 +3421,6 @@ FieldSignatureView = FieldView.extend({
       "canvasHeight": canvasHeight,
       "canvasWidth": canvasWidth
     }));
-    // console.debug("showSignatureCapture html=" + this.$el.html());
-
     var signaturePad = $('.sigPad', this.$el);
     signaturePad.css({
       position: 'fixed',
@@ -3483,19 +3458,8 @@ FieldSignatureView = FieldView.extend({
           sigData = self.toBmp();
         }
         self.setSignature(index, sigData);
-        // var img = $('.sigImage', self.$el)[0];
-        // img.src = sigData;
-        // $('input', self.$el).val(sigData);
-
-        // self.fileData = {};
-        // self.fileData.fileBase64 = sigData;
-        // var parts = self.splitImage(sigData);
-        // self.fileData.content_type = parts[0];
-        // self.fileData.filename = "signature." +  parts[1];
       }
       $('.sigPad', self.$el).hide();
-      // loadingView.hide();
-      // self.contentChanged();
     });
   },
   setSignature: function(index, base64Img) {
@@ -3520,18 +3484,6 @@ FieldSignatureView = FieldView.extend({
   dbgImage: function(msg, image) {
     console.log(msg + (image ? (image.substring(0, image.indexOf(",")) + "[len=" + image.length + "]") : " empty"));
   },
-  // toJpg: function(image) {
-  //   image = _.extend({}, image || {}, {
-  //     quality: 100,
-  //     width: 248,
-  //     height: 100
-  //   });
-  //   var cnvs = $('.sigPad', self.$el).find('canvas')[0];
-
-  //   var canvas = this.scaleCanvas(cnvs, image.width, image.height);
-  //   var myEncoder = new JPEGEncoder(image.quality);
-  //   return myEncoder.encode(canvas.getContext("2d").getImageData(0, 0, image.width, image.height));
-  // },
 
   toBmp: function(image) {
     image = _.extend({}, image || {}, {
@@ -3710,26 +3662,31 @@ FieldSignatureView = FieldView.extend({
 
 });
 FieldTextView = FieldView.extend({
-  template: ['<div class="fh_appform_field_input"><label class="desc" for="<%= id %>"><%= title %></label>', '<input class="field text medium fh_appform_field_input" maxlength="255" id="<%= id %>" name="<%= id %>" type="text" value="<%= defaultVal %>"></div>']
+//  template: ['<div class="fh_appform_field_input"><label class="desc" for="<%= id %>"><%= title %></label>', '<input class="field text medium fh_appform_field_input" maxlength="255" id="<%= id %>" name="<%= id %>" type="text" value="<%= defaultVal %>"></div>']
 });
 FieldTextareaView = FieldView.extend({
-    input:"<div class='fh_appform_field_input'><textarea class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>'  ></textarea></div>"
+    input: "<textarea class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>'  ></textarea>"
 });
 FieldSectionBreak = FieldView.extend({
   templates: {
-    sectionBreak: '<div><div class="fh_appform_field_section_break_title"><%= sectionTitle %></div><hr/><div class="fh_appform_field_section_break_description"><%= sectionDescription%></div></div>'
+    sectionBreak: '<hr/><div class="fh_appform_field_section_break_title"><%= sectionTitle %></div><div class="fh_appform_field_section_break_description"><%= sectionDescription%></div>'
   },
   renderEle:function(){
     this.$el.addClass("fh_appform_field_section_break");
     return _.template(this.templates.sectionBreak, {sectionTitle: this.model.getName(), sectionDescription: this.model.getHelpText()});
+  },
+  renderTitle: function(){
+    return "";
+  },
+  "renderHelpText": function(){
+    return "";
   }
 });
 FieldDateTimeView = FieldView.extend({
   extension_type: 'fhdate',
-  inputTime:"<div class='fh_appform_field_input'><input data-field='<%= fieldId %>' data-index='<%= index %>' type='time'></div>",
-  inputDate:"<div class='fh_appform_field_input'><input data-field='<%= fieldId %>' data-index='<%= index %>' type='date'></div>",
-  inputDateTime:"<div class='fh_appform_field_input'><input data-field='<%= fieldId %>' data-index='<%= index %>' type='text'></div>",
-
+  inputTime:"<div><input data-field='<%= fieldId %>' data-index='<%= index %>' type='time'></div>",
+  inputDate:"<div ><input data-field='<%= fieldId %>' data-index='<%= index %>' type='date'></div>",
+  inputDateTime:"<div ><input data-field='<%= fieldId %>' data-index='<%= index %>' type='text'></div>",
   renderInput:function(index){
     var fieldId = this.model.getFieldId();
 
@@ -3738,19 +3695,20 @@ FieldDateTimeView = FieldView.extend({
     var buttonLabel="";
     if (unit=="dateTime"){
       template=this.inputDateTime;
-      buttonLabel="Get Current Date & Time";
+      buttonLabel="<i class='fa fa-calendar'></i> <i class='fa fa-clock-o'></i>&nbspGet Current Date & Time";
     }else if (unit=="date"){
       template=this.inputDate;
-      buttonLabel="Get Current Date";
+      buttonLabel="<i class='fa fa-calendar'></i>&nbspGet Current Date";
     }else if (unit=="time"){
       template=this.inputTime;
-      buttonLabel="Get Current Time";
+      buttonLabel="<i class='fa fa-clock-o'></i>&nbspGet Current Time";
     }
     var html=_.template(template,{
       "fieldId":fieldId,
       "index":index
     });
     html+=this.renderButton(index,buttonLabel,"fhdate");
+
     return html;
   },
   getUnit:function(){
@@ -3789,6 +3747,10 @@ FieldDateTimeView = FieldView.extend({
     }
   }
 });
+FieldUrlView = FieldView.extend({
+  type: "url"
+//  template: ['<div class="fh_appform_field_input"><label class="desc" for="<%= id %>"><%= title %></label>', '<input class="field text medium fh_appform_field_input" maxlength="255" id="<%= id %>" name="<%= id %>" type="text" value="<%= defaultVal %>"></div>']
+});
 PageView=BaseView.extend({
 
   viewMap: {
@@ -3806,11 +3768,13 @@ PageView=BaseView.extend({
     "signature": FieldSignatureView,
     "locationMap": FieldMapView,
     "dateTime":FieldDateTimeView,
-    "sectionBreak":FieldSectionBreak
+    "sectionBreak":FieldSectionBreak,
+    "url":FieldUrlView
   },
   templates : {
     pageTitle : '<div class="fh_appform_page_title"><%= pageTitle %></div>',
-    pageDescription: '<div class="fh_appform_page_description"><%= pageDescription%></div>'
+    pageDescription: '<div class="fh_appform_page_description"><%= pageDescription%></div>',
+    section: '<div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area"></div>'
   },
 
   initialize: function() {
@@ -3831,34 +3795,64 @@ PageView=BaseView.extend({
   render: function() {
     var self = this;
     this.fieldViews = {};
+    this.sectionViews = {};
     // all pages hidden initially
     this.$el.empty().addClass('fh_appform_page hidden');
 
     //Need to add the page title and description
-    this.$el.append(_.template(this.templates.pageTitle, {pageTitle: this.model.getName()}));
+//    this.$el.append(_.template(this.templates.pageTitle, {pageTitle: this.model.getName()}));
     this.$el.append(_.template(this.templates.pageDescription, {pageDescription: this.model.getDescription()}));
 
     // add to parent before init fields so validation can work
     this.options.parentEl.append(this.$el);
 
     var fieldModelList=this.model.getFieldModelList();
-    
-    fieldModelList.forEach(function (field, index) {
-      var fieldType = field.getType();
-      if (self.viewMap[fieldType]) {
 
-        console.log("*- "+fieldType);
+    var sections = this.model.getSections();
 
-        self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
-          parentEl: self.$el,
-          parentView: self,
-          model: field,
-          formView: self.options.formView
-        });
-      } else {
-        console.warn('FIELD NOT SUPPORTED:' + fieldType);
+    if(sections != null){
+      for(var sectionKey in sections){
+        this.$el.append(_.template(this.templates.section, {"sectionId": sectionKey}));
       }
-    });
+
+      //Add the section fields
+      for(var sectionKey in sections){
+        sections[sectionKey].forEach(function(field, index){
+          var fieldType = field.getType();
+          if (self.viewMap[fieldType]) {
+
+            console.log("*- "+fieldType);
+
+            self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
+              parentEl: self.$el,
+              parentView: self,
+              model: field,
+              formView: self.options.formView,
+              sectionName: sectionKey
+            });
+          } else {
+            console.warn('FIELD NOT SUPPORTED:' + fieldType);
+          }
+        });
+      }
+    } else {
+      fieldModelList.forEach(function (field, index) {
+        var fieldType = field.getType();
+        if (self.viewMap[fieldType]) {
+
+          console.log("*- "+fieldType);
+
+          self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
+            parentEl: self.$el,
+            parentView: self,
+            model: field,
+            formView: self.options.formView
+          });
+        } else {
+          console.warn('FIELD NOT SUPPORTED:' + fieldType);
+        }
+      });
+    }
   },
 
   show: function () {
@@ -4342,12 +4336,23 @@ var FromJsonView = BaseView.extend({
   }
 
 });
+SectionView=BaseView.extend({
+
+  initialize: function() {
+    _.bindAll(this, 'render');
+    this.$el.addClass("fh_appform_section");
+  },
+  render: function(){
+    this.options.parentEl.append(this.$el);
+  }
+
+});
 StepsView = Backbone.View.extend({
   className: 'fh_appform_steps',
 
   templates: {
     table: '<div class="fh_appform_progress_wrapper"><table class="fh_appform_progress_steps" cellspacing="0"><tr></tr></table></div>',
-    step: '<td><span class="number_container"><div class="number"><%= step_num %></div></span><span class="page_title"><%= step_name %></span></td>'
+    step: '<td><span class="number_container"><div class="number"><%= step_num %></div></span><span class="fh_appform_page_title"><%= step_name %></span></td>'
   },
 
   initialize: function() {

@@ -1,13 +1,14 @@
 FieldRadioView = FieldView.extend({
-  hidden_field: '<input id="radio<%= id %>" type="hidden" value="" data-type="radio">',
+  hidden_field: '<input  id="radio<%= id %>" type="hidden" value="" data-type="radio">',
   choice: '<input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" type="radio" class="field radio" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
+  radio: '<div class="fh_appform_field_input"><%= radioChoices %></div>',
+
   renderInput: function(index) {
     var choices = this.model.getRadioOption();
     var self = this;
+    var radioChoicesHtml = "";
+    var fullRadioHtml = "";
     var html = "";
-
-    html += "<div class='fh_appform_field_input'>";//TODO Move to template.
-    html += "<div class='radio'>"
 
     var fieldId = this.model.getFieldId();
     $.each(choices, function(i, choice) {
@@ -21,13 +22,10 @@ FieldRadioView = FieldView.extend({
       if (choice.checked == true) {
         jQObj.attr('checked', 'checked');
       }
-      html += self.htmlFromjQuery(jQObj);
+      radioChoicesHtml += self.htmlFromjQuery(jQObj);
     });
 
-    html+= "</div>";
-    html+= "</div>";
-
-    return html;
+    return _.template(this.radio, {"radioChoices": radioChoicesHtml});
   },
   // addValidationRules: function() {
   //   // first radio is always initially checked, so no need to do 'required' validation on this field

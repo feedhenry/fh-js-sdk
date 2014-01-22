@@ -1,6 +1,6 @@
 FieldFileView = FieldView.extend({
-  input: "<div class='fh_appform_field_input'><button style='display:none' data-field='<%= fieldId %>' class='fh_appform_special_button fh_appform_button_action' data-index='<%= index %>'></button>" +
-    "<input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/></div> ",
+  input: "<button style='display:none' data-field='<%= fieldId %>' class='fh_appform_special_button fh_appform_button_action' data-index='<%= index %>'></button>" +
+    "<input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/>",
   type: "file",
   // dumpContent: function() {
   //   var tmp = "<empty>";
