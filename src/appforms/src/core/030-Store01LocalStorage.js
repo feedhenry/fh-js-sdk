@@ -112,7 +112,8 @@ appForm.stores = (function(module) {
         }
 
         function filenameForKey(key, cb) {
-            key = key + $fh.app_props.appid;
+          var appid  = ($fh && $fh.app_props)? $fh.app_props.appid : "";
+            key = key + appid;
             utils.md5(key, function(err, hash) {
                 if (err) {
                     hash = key;

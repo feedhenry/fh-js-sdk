@@ -41,6 +41,7 @@ appForm.models=(function(module){
         return this.get("fields",[]);
     }
     Page.prototype.getFieldModelList=function(){
+        console.log("fieldModelList", this.fieldsIds);
         var list=[];
         for (var i=0;i<this.fieldsIds.length;i++){
             list.push(this.form.getFieldModelById(this.fieldsIds[i]));
