@@ -81,52 +81,54 @@ FieldMapView = FieldView.extend({
     // // Merge
     // this.mapSettings = _.defaults(options, this.mapSettings);
 
-    $fh.geo({
-      interval: 0
-    }, function(geoRes) {
-      // Override with geo, otherwise use defaults
-      var location = {
-        lat: geoRes.lat,
-        lon: geoRes.lon
-      };
-      $fh.map({
-        target: mapCanvas,
-        lon: location.lon,
-        lat: location.lat,
-        zoom: self.mapSettings.defaultZoom
-      }, function(res) {
-        self.maps[index] = res.map;
-        var marker = new google.maps.Marker({
-          position: self.maps[index].getCenter(),
-          map: self.maps[index],
-          draggable: true,
-          animation: google.maps.Animation.DROP,
-          title: "Drag this to set position"
+    if($fh.geo){
+      $fh.geo({
+        interval: 0
+      }, function(geoRes) {
+        // Override with geo, otherwise use defaults
+        var location = {
+          lat: geoRes.lat,
+          lon: geoRes.lon
+        };
+        $fh.map({
+          target: mapCanvas,
+          lon: location.lon,
+          lat: location.lat,
+          zoom: self.mapSettings.defaultZoom
+        }, function(res) {
+          self.maps[index] = res.map;
+          var marker = new google.maps.Marker({
+            position: self.maps[index].getCenter(),
+            map: self.maps[index],
+            draggable: true,
+            animation: google.maps.Animation.DROP,
+            title: "Drag this to set position"
+          });
+          self.markers[index] = marker;
+          self.mapData[index] = {
+            "lat": marker.getPosition().lat(),
+            "long": marker.getPosition().lng(),
+            "zoom": self.mapSettings.defaultZoom
+          }
+          // google.maps.event.addListener(marker, "dragend", function() {
+          //   self.mapData[index].lat = marker.getPosition().lat();
+          //   self.mapData[index].long = marker.getPosition().lng();
+          //   self.mapData[index].zoom=zoomLevel;
+          //   // self.contentChanged();
+          // });
+          // google.maps.event.addListener(res.map, 'zoom_changed', function() {
+          //   var zoomLevel = res.map.getZoom();
+          //   self.mapData[index].zoom=zoomLevel;
+          //   self.mapData[index].lat = marker.getPosition().lat();
+          //   self.mapData[index].long = marker.getPosition().lng();
+          // });
+          self.onMapInit(index);
+        }, function(err) {
+          console.error(err);
+          self.onMapInit(index);
         });
-        self.markers[index] = marker;
-        self.mapData[index] = {
-          "lat": marker.getPosition().lat(),
-          "long": marker.getPosition().lng(),
-          "zoom": self.mapSettings.defaultZoom
-        }
-        // google.maps.event.addListener(marker, "dragend", function() {
-        //   self.mapData[index].lat = marker.getPosition().lat();
-        //   self.mapData[index].long = marker.getPosition().lng();
-        //   self.mapData[index].zoom=zoomLevel;
-        //   // self.contentChanged();
-        // });
-        // google.maps.event.addListener(res.map, 'zoom_changed', function() {
-        //   var zoomLevel = res.map.getZoom();
-        //   self.mapData[index].zoom=zoomLevel;
-        //   self.mapData[index].lat = marker.getPosition().lat();
-        //   self.mapData[index].long = marker.getPosition().lng();
-        // });
-        self.onMapInit(index);
-      }, function(err) {
-        console.error(err);
-        self.onMapInit(index);
       });
-    });
+    }
   },
   mapResize: function() {
     if (this.maps.length > 0) {

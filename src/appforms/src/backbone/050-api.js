@@ -40,7 +40,7 @@ $fh.forms.renderFormFromJSON = function (params) {
   var formView=new FormView({parentEl:params.container});
   formView.loadForm(params,function(err){
     if(err) console.error("error loading form for renderFormFromJSON ",err);
-    formView.render();
+    //formView.render();
   });
 };
 

@@ -71,26 +71,32 @@ FieldGeoView = FieldView.extend({
     e.preventDefault();
     var wrapper = that.getWrapper(index);
     var textInput = wrapper.find("input[type='text']");
-    $fh.geo(function(res) {
-      var location;
-      if (that.locationUnit === "latlong") {
-        that.geoValues[index] = {
-          "lat": res.lat,
-          "long": res.lon
-        };
-      }else if (that.locationUnit==="eastnorth"){
-        var en_location = that.convertLocation(res);
-        var locArr=en_location.toString().split(" ");
-        that.geoValues[index]={
-          "zone":locArr[0],
-          "eastings":locArr[1],
-          "northings":locArr[2]
+
+
+    //$fh.geo does not exist on the theme preview.
+    if($fh.geo){
+      $fh.geo(function(res) {
+        var location;
+        if (that.locationUnit === "latlong") {
+          that.geoValues[index] = {
+            "lat": res.lat,
+            "long": res.lon
+          };
+        }else if (that.locationUnit==="eastnorth"){
+          var en_location = that.convertLocation(res);
+          var locArr=en_location.toString().split(" ");
+          that.geoValues[index]={
+            "zone":locArr[0],
+            "eastings":locArr[1],
+            "northings":locArr[2]
+          }
         }
-      }
-      that.renderElement(index);
-    }, function(msg, err) {
-      textInput.attr('placeholder', 'Location could not be determined');
-    });
+        that.renderElement(index);
+      }, function(msg, err) {
+        textInput.attr('placeholder', 'Location could not be determined');
+      });
+    }
+
     return false;
   }
 });
