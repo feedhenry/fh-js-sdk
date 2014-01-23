@@ -44,7 +44,7 @@ PageView=BaseView.extend({
     this.fieldViews = {};
     this.sectionViews = {};
     // all pages hidden initially
-    this.$el.empty().addClass('fh_appform_page hidden');
+    this.$el.empty().addClass('fh_appform_page fh_appform_hidden');
 
     //Need to add the page title and description
 //    this.$el.append(_.template(this.templates.pageTitle, {pageTitle: this.model.getName()}));
@@ -104,11 +104,11 @@ PageView=BaseView.extend({
 
   show: function () {
     var self = this;
-    this.$el.removeClass('hidden');
+    this.$el.removeClass('fh_appform_hidden');
   },
 
   hide: function () {
-    this.$el.addClass('hidden');
+    this.$el.addClass('fh_appform_hidden');
   },
 
   showField: function (id) {
@@ -127,7 +127,7 @@ PageView=BaseView.extend({
 
   isValid: function () {
     // only validate form inputs on this page that are visible or type=hidden, or have validate_ignore class
-    var validateEls = this.$el.find('input,select,option,textarea').not('.validate_ignore,[type!="hidden"]:hidden');
+    var validateEls = this.$el.find('input,select,option,textarea').not('.validate_ignore,[type!="fh_appform_hidden"]:hidden');
     return validateEls.length ? validateEls.valid() : true;
   },
 

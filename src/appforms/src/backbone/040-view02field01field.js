@@ -8,7 +8,7 @@ FieldView = Backbone.View.extend({
   removeInputButtonClass: ".fh_appform_removeInputBtn",
   fieldWrapper: '<div class="fh_appform_input_wrapper"></div>',
   input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/>",
-  inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>' style='width:100%'>  <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container' style='display: inline-block;float: right;width: 86%;margin-right:5px'>  <%= inputHtml %> <div class='fh_appform_errorMsg hidden'>  </div> </div>  </div><br style='clear:both'/>",
+  inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>' style='width:100%'>  <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container' style='display: inline-block;float: right;width: 86%;margin-right:5px'>  <%= inputHtml %> <div class='fh_appform_errorMsg fh_appform_hidden'>  </div> </div>  </div><br style='clear:both'/>",
 
 
   fh_appform_fieldActionBar: "<div class='fh_appform_fieldActionBar' style='text-align: right;'><button class='fh_appform_removeInputBtn special_button fh_appform_button_action'>-</button><button class='special_button fh_appform_addInputBtn fh_appform_button_action'>+</button></div>",
@@ -231,13 +231,13 @@ FieldView = Backbone.View.extend({
     var changedValue = target.val();
     var self = this;
     this.dumpContent();
-    // this.getTopView().trigger('change:field');
-    // var val = this.value();
-    // if (this.model.validate(changedValue) === true) {
-    //   var val = this.value();
-    //   this.options.formView.setInputValue(self.model.getFieldId(), val);
-    //   // self.model.set('value', val[self.model.get("_id")]);
-    // }
+    this.getTopView().trigger('change:field');
+    var val = this.value();
+    if (this.model.validate(changedValue) === true) {
+       var val = this.value();
+       this.options.formView.setInputValue(self.model.getFieldId(), val);
+       // self.model.set('value', val[self.model.get("_id")]);
+    }
   },
 
 

@@ -10,9 +10,15 @@ appForm.models=(function(module){
     appForm.utils.extend(Config,Model);
     //call in appForm.init
     Config.prototype.init=function(config,cb){
+        if(typeof config === "function"){
+          cb = config;
+          config = {};
+        }
+
         this.set("appId",$fh.app_props.appid);
         this.set("env",$fh.app_props.mode?$fh.app_props.mode:"dev");
-        this.set("timeoutTime",30000);
+
+
         var self=this;
         $fh.env(function(env){
             self.set("deviceId",env.uuid);
@@ -20,8 +26,12 @@ appForm.models=(function(module){
         this._initMBaaS();
 
         //Setting default retry attempts if not set in the config
-        if(typeof config.submissionRetryAttempts === "undefined"){
+        if(config.submissionRetryAttempts == null){
           config.submissionRetryAttempts = 2;
+        }
+
+        if(config.submissionTimeout == null){
+          config.submissionTimeout = 20;//Default 20 seconds timeout
         }
 
         this.fromJSON(config);

@@ -1912,7 +1912,7 @@ FieldView = Backbone.View.extend({
   removeInputButtonClass: ".fh_appform_removeInputBtn",
   fieldWrapper: '<div class="fh_appform_input_wrapper"></div>',
   input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/>",
-  inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>' style='width:100%'>  <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container' style='display: inline-block;float: right;width: 86%;margin-right:5px'>  <%= inputHtml %> <div class='fh_appform_errorMsg hidden'>  </div> </div>  </div><br style='clear:both'/>",
+  inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>' style='width:100%'>  <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container' style='display: inline-block;float: right;width: 86%;margin-right:5px'>  <%= inputHtml %> <div class='fh_appform_errorMsg fh_appform_hidden'>  </div> </div>  </div><br style='clear:both'/>",
 
 
   fh_appform_fieldActionBar: "<div class='fh_appform_fieldActionBar' style='text-align: right;'><button class='fh_appform_removeInputBtn special_button fh_appform_button_action'>-</button><button class='special_button fh_appform_addInputBtn fh_appform_button_action'>+</button></div>",
@@ -2135,13 +2135,13 @@ FieldView = Backbone.View.extend({
     var changedValue = target.val();
     var self = this;
     this.dumpContent();
-    // this.getTopView().trigger('change:field');
-    // var val = this.value();
-    // if (this.model.validate(changedValue) === true) {
-    //   var val = this.value();
-    //   this.options.formView.setInputValue(self.model.getFieldId(), val);
-    //   // self.model.set('value', val[self.model.get("_id")]);
-    // }
+    this.getTopView().trigger('change:field');
+    var val = this.value();
+    if (this.model.validate(changedValue) === true) {
+       var val = this.value();
+       this.options.formView.setInputValue(self.model.getFieldId(), val);
+       // self.model.set('value', val[self.model.get("_id")]);
+    }
   },
 
 
@@ -2931,7 +2931,7 @@ FieldEmailView = FieldView.extend({
   // }
 });
 FieldFileView = FieldView.extend({
-  input: "<button style='display:none' data-field='<%= fieldId %>' class='fh_appform_special_button fh_appform_button_action' data-index='<%= index %>'></button>" +
+  input: "<button style='display:none' data-field='<%= fieldId %>' class='special_button fh_appform_button_action' data-index='<%= index %>'></button>" +
     "<input data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/>",
   type: "file",
   // dumpContent: function() {
@@ -3314,7 +3314,7 @@ FieldPhoneView = FieldView.extend({
   type:"tel"
 });
 FieldRadioView = FieldView.extend({
-  hidden_field: '<input  id="radio<%= id %>" type="hidden" value="" data-type="radio">',
+  hidden_field: '<input  id="radio<%= id %>" type="fh_appform_hidden" value="" data-type="radio">',
   choice: '<input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" type="radio" class="field radio" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
   radio: '<div class="fh_appform_field_input"><%= radioChoices %></div>',
 
@@ -3677,7 +3677,7 @@ FieldTextareaView = FieldView.extend({
 });
 FieldSectionBreak = FieldView.extend({
   templates: {
-    sectionBreak: '<hr/><div class="fh_appform_field_section_break_title"><%= sectionTitle %></div><div class="fh_appform_field_section_break_description"><%= sectionDescription%></div>'
+    sectionBreak: '<div class="fh_appform_field_section_break_title"><%= sectionTitle %></div><div class="fh_appform_field_section_break_description"><%= sectionDescription%></div>'
   },
   renderEle:function(){
     this.$el.addClass("fh_appform_field_section_break");
@@ -3805,7 +3805,7 @@ PageView=BaseView.extend({
     this.fieldViews = {};
     this.sectionViews = {};
     // all pages hidden initially
-    this.$el.empty().addClass('fh_appform_page hidden');
+    this.$el.empty().addClass('fh_appform_page fh_appform_hidden');
 
     //Need to add the page title and description
 //    this.$el.append(_.template(this.templates.pageTitle, {pageTitle: this.model.getName()}));
@@ -3865,11 +3865,11 @@ PageView=BaseView.extend({
 
   show: function () {
     var self = this;
-    this.$el.removeClass('hidden');
+    this.$el.removeClass('fh_appform_hidden');
   },
 
   hide: function () {
-    this.$el.addClass('hidden');
+    this.$el.addClass('fh_appform_hidden');
   },
 
   showField: function (id) {
@@ -3888,7 +3888,7 @@ PageView=BaseView.extend({
 
   isValid: function () {
     // only validate form inputs on this page that are visible or type=hidden, or have validate_ignore class
-    var validateEls = this.$el.find('input,select,option,textarea').not('.validate_ignore,[type!="hidden"]:hidden');
+    var validateEls = this.$el.find('input,select,option,textarea').not('.validate_ignore,[type!="fh_appform_hidden"]:hidden');
     return validateEls.length ? validateEls.valid() : true;
   },
 
@@ -3933,7 +3933,7 @@ var FormView = BaseView.extend({
     formTitle: '<div class="fh_appform_title"><%= title %></div>',
     formDescription: '<div class="fh_appform_description"><%= description %></div>',
     formContainer: '<div id="fh_appform_container" class="fh_appform_form"></div>',
-    buttons: '<div id="fh_appform_navigation_buttons" class="fh_appform_action_bar"><button class="fh_appform_button_saveDraft hidden fh_appform_button_main fh_appform_button_action">Save Draft</button><button class="fh_appform_button_previous hidden fh_appform_button_navigation">Previous</button><button class="fh_appform_button_next hidden fh_appform_button_navigation">Next</button><button class="fh_appform_button_submit hidden fh_appform_button_action">Submit</button></div>'
+    buttons: '<div id="fh_appform_navigation_buttons" class="fh_appform_action_bar"><button class="fh_appform_button_saveDraft fh_appform_hidden fh_appform_button_main fh_appform_button_action">Save Draft</button><button class="fh_appform_button_previous fh_appform_hidden fh_appform_button_navigation">Previous</button><button class="fh_appform_button_next fh_appform_hidden fh_appform_button_navigation">Next</button><button class="fh_appform_button_submit fh_appform_hidden fh_appform_button_action">Submit</button></div>'
   },
   events: {
     "click button.fh_appform_button_next": "nextPage",
@@ -4013,13 +4013,12 @@ var FormView = BaseView.extend({
     self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formTitle, {title: this.model.getName()}));
     self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formDescription, {description: this.model.getDescription()}));
 
-    if (this.model.pages.length > 1) {
-      self.steps = new StepsView({
-        parentEl: self.el.find(this.elementNames.formContainer),
-        parentView: self,
-        model: self.model
-      });
-    }
+    self.steps = new StepsView({
+      parentEl: self.el.find(this.elementNames.formContainer),
+      parentView: self,
+      model: self.model
+    });
+
 
     if (!params.submission) {
       params.submission = self.model.newSubmission();
@@ -4057,7 +4056,8 @@ var FormView = BaseView.extend({
     self.pageViews = pageViews;
     self.pageCount = pageViews.length;
 
-    self.onLoadEnd();
+    //self.onLoadEnd();
+    self.render();
   },
   checkRules: function() {
     var self = this;
@@ -4215,7 +4215,13 @@ var FormView = BaseView.extend({
         if (err) {
           console.error(err);
         } else {
-          self.el.empty();
+          self.submission.upload(function(err, uploadTask) {
+            if(err){
+              console.error(err);
+            }
+
+            self.el.empty();
+          });
         }
       });
     });
@@ -4360,7 +4366,7 @@ StepsView = Backbone.View.extend({
 
   templates: {
     table: '<div class="fh_appform_progress_wrapper"><table class="fh_appform_progress_steps" cellspacing="0"><tr></tr></table></div>',
-    step: '<td><span class="number_container"><div class="number"><%= step_num %></div></span><span class="fh_appform_page_title"><%= step_name %></span></td>'
+    step: '<td><span class="number_container"><div class="number"><%= step_num %></div></span><br style="clear:both"/><span class="fh_appform_page_title"><%= step_name %></span></td>'
   },
 
   initialize: function() {

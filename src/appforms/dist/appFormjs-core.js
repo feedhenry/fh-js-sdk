@@ -51,11 +51,6 @@ var appForm = (function(module) {
         });
     }
 
-    // $fh.ready({}, function() {
-    //     appForms.init({},function(){
-    //         console.log("appForm is inited");
-    //     });
-    // });
     return module;
 })(appForm || {});
 appForm.utils = (function(module) {
@@ -1253,9 +1248,15 @@ appForm.models=(function(module){
     appForm.utils.extend(Config,Model);
     //call in appForm.init
     Config.prototype.init=function(config,cb){
+        if(typeof config === "function"){
+          cb = config;
+          config = {};
+        }
+
         this.set("appId",$fh.app_props.appid);
         this.set("env",$fh.app_props.mode?$fh.app_props.mode:"dev");
-        this.set("timeoutTime",30000);
+
+
         var self=this;
         $fh.env(function(env){
             self.set("deviceId",env.uuid);
@@ -1263,8 +1264,12 @@ appForm.models=(function(module){
         this._initMBaaS();
 
         //Setting default retry attempts if not set in the config
-        if(typeof config.submissionRetryAttempts === "undefined"){
+        if(config.submissionRetryAttempts == null){
           config.submissionRetryAttempts = 2;
+        }
+
+        if(config.submissionTimeout == null){
+          config.submissionTimeout = 20;//Default 20 seconds timeout
         }
 
         this.fromJSON(config);
@@ -2122,6 +2127,9 @@ appForm.models = (function(module) {
                       if(err) console.log(err);
                     });
                     that.emit("inprogress", ut);
+                    ut.on("progress", function(progress){
+                      that.emit("progress", progress);
+                    });
                     cb(null, ut);
                 }
             });
@@ -2137,7 +2145,7 @@ appForm.models = (function(module) {
         this.set("errorMessage", errorMsg);
         var targetStatus = "error";
         this.changeStatus(targetStatus, cb);
-        this.emit("submitted", errorMsg);
+        this.emit("error", errorMsg);
     }
     Submission.prototype.getStatus = function() {
         return this.get("status");
@@ -3022,7 +3030,7 @@ appForm.models = (function(module) {
             "_ludid": "uploadManager_queue"
         });
         this.set("taskQueue", []);
-        this.timeOut = 60; //60 seconds. TODO: define in config
+        this.timeOut = 30;
         this.sending = false;
         this.timerInterval = 200;
         this.sendingStart = appForm.utils.getTime();
@@ -3724,7 +3732,7 @@ appForm.models = (function(module) {
         if(that.getRetryAttempts() <= appForm.config.get("submissionRetryAttempts")){
           that.setRetryNeeded(true);
           that.saveLocal(function(err){
-            if(err) console.log(err);
+            if(err) console.error(err);
             cb();
           });
         } else { //The number of retry attempts exceeds the maximum number of retry attempts allowed, flag the upload as an error.
@@ -3745,7 +3753,7 @@ appForm.models = (function(module) {
             cb(err);
           }else{
             var status=submission.get("status");
-            if (status !="inprogress" && status != "submitted"){
+            if (status != "inprogress" && status != "submitted"){
               cb("Submission status is incorrect. Upload task should be started by submission object's upload method.");
             } else {
               cb();
@@ -3827,6 +3835,7 @@ appForm.models = (function(module) {
    * @return {[type]}       [description]
    */
   UploadTask.prototype.error = function(err, cb) {
+    var that = this;
     this.set("error", err);
     this.saveLocal(function(err) {
       if (err) {
@@ -3839,9 +3848,8 @@ appForm.models = (function(module) {
         cb(_err);
       } else {
         model.error(err, function() {
-
+          cb(err);
         });
-        cb(err);
       }
     });
   }

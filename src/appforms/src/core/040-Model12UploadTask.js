@@ -327,7 +327,7 @@ appForm.models = (function(module) {
         if(that.getRetryAttempts() <= appForm.config.get("submissionRetryAttempts")){
           that.setRetryNeeded(true);
           that.saveLocal(function(err){
-            if(err) console.log(err);
+            if(err) console.error(err);
             cb();
           });
         } else { //The number of retry attempts exceeds the maximum number of retry attempts allowed, flag the upload as an error.
@@ -348,7 +348,7 @@ appForm.models = (function(module) {
             cb(err);
           }else{
             var status=submission.get("status");
-            if (status !="inprogress" && status != "submitted"){
+            if (status != "inprogress" && status != "submitted"){
               cb("Submission status is incorrect. Upload task should be started by submission object's upload method.");
             } else {
               cb();
@@ -430,6 +430,7 @@ appForm.models = (function(module) {
    * @return {[type]}       [description]
    */
   UploadTask.prototype.error = function(err, cb) {
+    var that = this;
     this.set("error", err);
     this.saveLocal(function(err) {
       if (err) {
@@ -442,9 +443,8 @@ appForm.models = (function(module) {
         cb(_err);
       } else {
         model.error(err, function() {
-
+          cb(err);
         });
-        cb(err);
       }
     });
   }

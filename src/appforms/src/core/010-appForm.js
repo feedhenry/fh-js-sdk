@@ -40,10 +40,5 @@ var appForm = (function(module) {
         });
     }
 
-    // $fh.ready({}, function() {
-    //     appForms.init({},function(){
-    //         console.log("appForm is inited");
-    //     });
-    // });
     return module;
 })(appForm || {});
