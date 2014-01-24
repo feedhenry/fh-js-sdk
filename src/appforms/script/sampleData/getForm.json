@@ -1,617 +1,343 @@
 {
-  "527d4539639f521e0a000004": {
-    "updatedBy": "user@example.com",
-    "name": "testFieldsForm",
-    "description": "This form is for testing fields.",
-    "lastUpdatedTimestamp": 1385647845865,
-    "lastUpdated": "2013-11-28T14:10:45.865Z",
-    "dateCreated": "2013-11-28T14:10:45.865Z",
-    "_id": "527d4539639f521e0a000004",
+  "52dfd909a926eb2e3f123456" : {
+    "_id": "52dfd909a926eb2e3f123456",
+    "description": "Small Form",
+    "name": "Small Form",
+    "updatedBy": "testing-admin@example.com",
     "pageRules": [
-      {
-        "type": "hide",
-        "targetPage": "527d4539639f521e0a000005",
-        "_id": "52974ee55e272dcb3d0000b0",
-        "ruleConditionalStatements": [
-          {
-            "sourceField": "52974ee55e272dcb3d000098",
-            "restriction": "is greater than",
-            "sourceValue": "5"
-          },
-          {
-            "sourceField": "527d4539639f521e0a000006",
-            "restriction": "contains",
-            "sourceValue": "hidepage"
-          }
-        ],
-        "ruleConditionalOperator": "and"
-      }
+
     ],
     "fieldRules": [
-      {
-        "type": "hide",
-        "targetField": "52974ee55e272dcb3d0000a6",
-        "_id": "52974ee55e272dcb3d0000a9",
-        "ruleConditionalStatements": [
-          {
-            "sourceField": "527d4539639f521e0a000006",
-            "restriction": "contains",
-            "sourceValue": "val"
-          }
-        ],
-        "ruleConditionalOperator": "and"
-      },
-      {
-        "type": "hide",
-        "targetField": "52974ee55e272dcb3d000097",
-        "_id": "52974ee55e272dcb3d0000aa",
-        "ruleConditionalStatements": [
-          {
-            "sourceField": "527d4539639f521e0a000006",
-            "restriction": "begins with",
-            "sourceValue": "dammit"
-          }
-        ],
-        "ruleConditionalOperator": "and"
-      },
-      {
-        "type": "show",
-        "targetField": "52974ee55e272dcb3d0000a7",
-        "_id": "52974ee55e272dcb3d0000ab",
-        "ruleConditionalStatements": [
-          {
-            "sourceField": "527d4539639f521e0a000006",
-            "restriction": "begins with",
-            "sourceValue": "begin"
-          },
-          {
-            "sourceField": "527d4539639f521e0a000006",
-            "restriction": "ends with",
-            "sourceValue": "dammit"
-          }
-        ],
-        "ruleConditionalOperator": "and"
-      },
-      {
-        "type": "show",
-        "targetField": "52974ee55e272dcb3d0000a8",
-        "_id": "52974ee55e272dcb3d0000ac",
-        "ruleConditionalStatements": [
-          {
-            "sourceField": "52974ee55e272dcb3d000098",
-            "restriction": "is greater than",
-            "sourceValue": "5"
-          },
-          {
-            "sourceField": "52974ee55e272dcb3d000098",
-            "restriction": "is less than",
-            "sourceValue": "23"
-          }
-        ],
-        "ruleConditionalOperator": "and"
-      }
+
     ],
     "pages": [
       {
-        "name": "testPage",
-        "description": "This is a test page for the win.",
-        "_id": "527d4539639f521e0a000005",
+        "_id": "52dfd909a926eb2e3f000001",
+        "name": "A Page",
         "fields": [
           {
-            "name": "textField",
-            "helpText": "This is a text field",
-            "type": "text",
+            "fieldOptions": {
+              "definition": {
+                "defaultValue": ""
+              }
+            },
             "required": true,
-            "fieldOptions": {
-              "definition": {
-                "maxRepeat": 5,
-                "minRepeat": 2
-              },
-              "validation": {
-                "min": 5,
-                "max": 100
-              }
-            },
-            "_id": "527d4539639f521e0a000006",
-            "repeating": true
-          },
-          {
-            "name": "textAreaField",
-            "helpText": "This is a text area field",
-            "type": "textarea",
-            "required": false,
-            "fieldOptions": {
-              "definition": {
-                "maxRepeat": 5,
-                "minRepeat": 3
-              },
-              "validation": {
-                "min": 5,
-                "max": 40
-              }
-            },
-            "_id": "52974ee55e272dcb3d000097",
-            "repeating": true
-          },
-          {
-            "name": "numberField",
-            "helpText": "This is a number field",
-            "type": "number",
-            "required": false,
-            "fieldOptions": {
-              "definition": {
-                "maxRepeat": 5,
-                "minRepeat": 2
-              },
-              "validation": {
-                "min": 5,
-                "max": 100
-              }
-            },
-            "_id": "52974ee55e272dcb3d000098",
-            "repeating": true
-          },
-          {
-            "name": "sectionBreakField",
-            "helpText": "This is a sectionBreak field",
-            "type": "sectionBreak",
-            "required": false,
-            "_id": "52974ee55e272dcb3d0000a4",
+            "type": "text",
+            "name": "Text",
+            "helpText": "Text",
+            "_id": "52dfd93ee02b762d3f000001",
             "repeating": false
           },
           {
-            "name": "emailField",
-            "helpText": "This is a Email field",
-            "type": "emailAddress",
-            "required": false,
-            "fieldOptions": {
-              "definition": {
-                "maxRepeat": 5,
-                "minRepeat": 1
-              }
-            },
-            "_id": "52974ee55e272dcb3d000099",
-            "repeating": true
-          },
-          {
-            "name": "radioField",
-            "helpText": "This is a Radio field",
-            "type": "radio",
-            "required": false,
-            "fieldOptions": {
-              "definition": {
-                "maxRepeat": 2,
-                "minRepeat": 2,
-                "options": [
-                  {
-                    "label": "radio1",
-                    "checked": false
-                  },
-                  {
-                    "label": "radio2",
-                    "checked": false
-                  },
-                  {
-                    "label": "radio3 checked",
-                    "checked": true
-                  },
-                  {
-                    "label": "radio4",
-                    "checked": false
-                  }
-                ]
-              }
-            },
-            "_id": "52974ee55e272dcb3d00009a",
-            "repeating": true
-          },
-          {
-            "name": "checkboxField",
-            "helpText": "This is a Checkbox field",
-            "type": "checkboxes",
-            "required": false,
-            "fieldOptions": {
-              "definition": {
-                "options": [
-                  {
-                    "label": "red",
-                    "value": 1,
-                    "selected": true
-                  },
-                  {
-                    "label": "blue",
-                    "value": 2,
-                    "selected": true
-                  },
-                  {
-                    "label": "green",
-                    "value": 3,
-                    "selected": false
-                  },
-                  {
-                    "label": "purple",
-                    "value": 4,
-                    "selected": false
-                  },
-                  {
-                    "label": "black",
-                    "value": 5,
-                    "selected": false
-                  }
-                ],
-                "minRepeat": 2,
-                "maxRepeat": 3
-              },
-              "validation": {
-                "min": 2,
-                "max": 3
-              }
-            },
-            "_id": "52974ee55e272dcb3d00009d",
-            "repeating": true
-          },
-          {
-            "name": "dropdownField",
-            "helpText": "This is a dropdown field",
-            "type": "dropdown",
-            "required": false,
-            "fieldOptions": {
-              "definition": {
-                "maxRepeat": 3,
-                "minRepeat": 2,
-                "options": [
-                  {
-                    "label": "dropdownVal1",
-                    "checked": false
-                  },
-                  {
-                    "label": "dropdownVal2",
-                    "checked": false
-                  },
-                  {
-                    "label": "dropdownVal3",
-                    "checked": true
-                  },
-                  {
-                    "label": "dropdownVal4",
-                    "checked": false
-                  }
-                ]
-              }
-            },
-            "_id": "52974ee55e272dcb3d00009b",
-            "repeating": true
-          },
-          {
-            "name": "locationLatLongField",
-            "helpText": "This is a locationLatLong field",
-            "type": "location",
-            "required": false,
-            "fieldOptions": {
-              "definition": {
-                "locationUnit": "latLong",
-                "maxRepeat": 4,
-                "minRepeat": 2
-              }
-
-            },
-            "_id": "52974ee55e272dcb3d00009e",
-            "repeating": true
-          },
-          {
-            "name": "sectionBreak2Field",
-            "helpText": "This is another sectionBreak field",
-            "type": "sectionBreak",
-            "required": false,
-            "_id": "52974ee55e272dcb3d0000a5",
-            "repeating": false
-          },
-          {
-            "name": "locationNorthEastField",
-            "helpText": "This is a locationNorthEast field",
-            "type": "location",
-            "required": false,
-            "fieldOptions": {
-              "definition": {
-                "locationUnit": "northEast",
-                "maxRepeat": 4,
-                "minRepeat": 2
-              }
-
-            },
-            "_id": "52974ee55e272dcb3d00009f",
-            "repeating": true
-          },
-          {
-            "name": "locationMapField",
-            "helpText": "This is a locationMap field",
-            "type": "locationMap",
-            "required": false,
-            "fieldOptions": {
-              "definition": {
-                "maxRepeat": 6,
-                "minRepeat": 1
-              }
-            },
-            "_id": "52974ee55e272dcb3d0000a0",
-            "repeating": true
-          },
-          {
-            "name": "dateField",
-            "helpText": "This is a date field",
-            "type": "dateTime",
-            "required": false,
-            "fieldOptions": {
-
-              "definition": {
-                "dateTimeUnit": "date",
-                "timeAutopopulate": true,
-                "maxRepeat": 6,
-                "minRepeat": 1
-              }
-            },
-            "_id": "52974ee55e272dcb3d0000a1",
-            "repeating": true
-          },
-          {
-            "name": "timeField",
-            "helpText": "This is a time field",
-            "type": "dateTime",
-            "required": false,
-            "fieldOptions": {
-
-              "definition": {
-                "dateTimeUnit": "time",
-                "timeAutopopulate": false,
-                "maxRepeat": 6,
-                "minRepeat": 2
-              }
-            },
-            "_id": "52974ee55e272dcb3d0000a2",
-            "repeating": true
-          },
-          {
-            "name": "dateTimeField",
-            "helpText": "This is a dateTime field",
-            "type": "dateTime",
-            "required": false,
-            "fieldOptions": {
-
-              "definition": {
-                "dateTimeUnit": "dateTime",
-                "timeAutopopulate": true,
-                "maxRepeat": 6,
-                "minRepeat": 1
-              }
-            },
-            "_id": "52974ee55e272dcb3d0000a3",
-            "repeating": true
-          },
-          {
-            "name": "fileField",
-            "helpText": "This is a file field",
+            "required": true,
             "type": "file",
-            "required": false,
-            "fieldOptions": {
-              "definition": {
-                "file_size": 100,
-                "maxRepeat": 5,
-                "minRepeat": 2
-              }
-            },
-            "_id": "52974ee55e272dcb3d0000a6",
-            "repeating": true
-          },
+            "name": "File",
+            "helpText": "File",
+            "_id": "52dfd93ee02b762d3f000002",
+            "repeating": false
+          }
+        ]
+      },
+      {
+        "name": "Page 2",
+        "_id": "52dff729e02b762d3f000004",
+        "fields": [
           {
-            "name": "photoField",
-            "helpText": "This is a photo field",
-            "type": "photo",
-            "required": false,
-            "fieldOptions": {
-              "definition": {
-                "photoHeight": 200,
-                "photoWidth": 300,
-                "photoQuality": 50,
-                "maxRepeat": 5,
-                "minRepeat": 2
-              }
-            },
-            "_id": "52974ee55e272dcb3d0000a7",
-            "repeating": true
-          },
-          {
-            "name": "signatureField",
-            "helpText": "This is a signature field",
-            "type": "signature",
-            "required": false,
-            "fieldOptions": {
-              "definition": {
-                "maxRepeat": 5,
-                "minRepeat": 2
-              }
-            },
-            "_id": "52974ee55e272dcb3d0000a8",
-            "repeating": true
+            "required": true,
+            "type": "text",
+            "name": "Page 2 Text",
+            "helpText": "Page 2 Text",
+            "_id": "52dff729e02b762d3f000003",
+            "repeating": false
           }
         ]
       }
     ],
+    "lastUpdated": "2014-01-22T16:51:53.725Z",
+    "dateCreated": "2014-01-22T14:43:21.806Z",
     "pageRef": {
-      "527d4539639f521e0a000005": 0
+      "52dfd909a926eb2e3f000001": 0,
+      "52dff729e02b762d3f000004": 1
     },
     "fieldRef": {
-      "527d4539639f521e0a000006": {
+      "52dfd93ee02b762d3f000001": {
         "page": 0,
         "field": 0
       },
-      "52974ee55e272dcb3d000097": {
+      "52dfd93ee02b762d3f000002": {
         "page": 0,
         "field": 1
       },
-      "52974ee55e272dcb3d000098": {
-        "page": 0,
-        "field": 2
-      },
-      "52974ee55e272dcb3d0000a4": {
-        "page": 0,
-        "field": 3
-      },
-      "52974ee55e272dcb3d000099": {
-        "page": 0,
-        "field": 4
-      },
-      "52974ee55e272dcb3d00009a": {
-        "page": 0,
-        "field": 5
-      },
-      "52974ee55e272dcb3d00009d": {
-        "page": 0,
-        "field": 6
-      },
-      "52974ee55e272dcb3d00009b": {
-        "page": 0,
-        "field": 7
-      },
-      "52974ee55e272dcb3d00009e": {
-        "page": 0,
-        "field": 8
-      },
-      "52974ee55e272dcb3d0000a5": {
-        "page": 0,
-        "field": 9
-      },
-      "52974ee55e272dcb3d00009f": {
-        "page": 0,
-        "field": 10
-      },
-      "52974ee55e272dcb3d0000a0": {
-        "page": 0,
-        "field": 11
-      },
-      "52974ee55e272dcb3d0000a1": {
-        "page": 0,
-        "field": 12
-      },
-      "52974ee55e272dcb3d0000a2": {
-        "page": 0,
-        "field": 13
-      },
-      "52974ee55e272dcb3d0000a3": {
-        "page": 0,
-        "field": 14
-      },
-      "52974ee55e272dcb3d0000a6": {
-        "page": 0,
-        "field": 15
-      },
-      "52974ee55e272dcb3d0000a7": {
-        "page": 0,
-        "field": 16
-      },
-      "52974ee55e272dcb3d0000a8": {
-        "page": 0,
-        "field": 17
+      "52dff729e02b762d3f000003": {
+        "page": 1,
+        "field": 0
       }
     },
+    "lastUpdatedTimestamp": 1390409513725,
     "appsUsingForm": 123,
     "submissionsToday": 1234,
     "submissionsTotal": 124125
   },
-  "527d4539639f521e0a123456": {
-    "updatedBy": "user@example.com",
-    "name": "Small form",
-    "description": "Small form",
-    "lastUpdatedTimestamp": 1385647845865,
-    "lastUpdated": "2013-11-28T14:10:45.865Z",
-    "dateCreated": "2013-11-28T14:10:45.865Z",
-    "_id": "527d4539639f521e0a123456",
-    "pageRules": [
+  "527d4539639f521e0a000004" : {
+    "updatedBy":"testing-admin@example.com",
+    "name":"One of each please.",
+    "description":"Testing all field types",
+    "_id":"527d4539639f521e0a000004",
+    "pageRules":[
 
     ],
-    "fieldRules": [
+    "fieldRules":[
 
     ],
-    "pages": [
+    "pages":[
       {
-        "name": "testPage",
-        "description": "This is a test page for the win.",
-        "_id": "527d4539639f521e0a000005",
-        "fields": [
+        "_id":"52cfc06765081b1624000001",
+        "fields":[
           {
-            "name": "textField",
-            "helpText": "This is a text field",
-            "type": "text",
-            "required": true,
-            "fieldOptions": {
-              "definition": {
-                "maxRepeat": 5,
-                "minRepeat": 2
-              },
-              "validation": {
-                "min": 5,
-                "max": 100
-              }
-            },
-            "_id": "527d4539639f521e0a000006",
-            "repeating": true
+            "required":true,
+            "type":"text",
+            "name":"Text",
+            "helpText":"Instructions",
+            "_id":"52cfc0a78a31bc1524000003",
+            "repeating":false
           },
           {
-            "name": "textAreaField",
-            "helpText": "This is a text area field",
-            "type": "textarea",
-            "required": false,
-            "fieldOptions": {
-              "definition": {
-                "maxRepeat": 5,
-                "minRepeat": 3
-              },
-              "validation": {
-                "min": 5,
-                "max": 40
-              }
-            },
-            "_id": "52974ee55e272dcb3d000097",
-            "repeating": true
+            "required":true,
+            "type":"textarea",
+            "name":"Paragraph",
+            "helpText":"Instructions",
+            "_id":"52cfc0a78a31bc1524000004",
+            "repeating":false
           },
           {
-            "name": "fileField",
-            "helpText": "This is a file field",
-            "type": "file",
-            "required": false,
-            "fieldOptions": {
-              "definition": {
-                "file_size": 100,
-                "maxRepeat": 5,
-                "minRepeat": 2
+            "required":true,
+            "type":"number",
+            "name":"Number",
+            "helpText":"Instructions",
+            "_id":"52cfc0a78a31bc1524000005",
+            "repeating":false
+          },
+          {
+            "required":true,
+            "type":"emailAddress",
+            "name":"Email",
+            "helpText":"Instuctions",
+            "_id":"52cfc0fb65081b1624000003",
+            "repeating":false
+          },
+          {
+            "required":true,
+            "type":"url",
+            "name":"Website",
+            "helpText":"Instructions",
+            "_id":"52cfc0fb65081b1624000004",
+            "repeating":false
+          },
+          {
+            "fieldOptions":{
+              "definition":{
+                "options":[
+                  {
+                    "label":"Select 1",
+                    "checked":true
+                  },
+                  {
+                    "label":"Select2",
+                    "checked":false
+                  }
+                ],
+                "include_blank_option":false
               }
             },
-            "_id": "52974ee55e272dcb3d0000a6",
-            "repeating": true
+            "required":true,
+            "type":"dropdown",
+            "name":"Dropdown",
+            "_id":"52cfc0fb65081b1624000005",
+            "repeating":false
+          },
+          {
+            "fieldOptions":{
+              "definition":{
+                "options":[
+                  {
+                    "label":"Radio 1",
+                    "checked":true
+                  },
+                  {
+                    "label":"Radio 2",
+                    "checked":false
+                  }
+                ]
+              }
+            },
+            "required":true,
+            "type":"radio",
+            "name":"Radio",
+            "helpText":"Instructions",
+            "_id":"52cfc1a865081b1624000006",
+            "repeating":false
+          },
+          {
+            "fieldOptions":{
+              "definition":{
+                "options":[
+                  {
+                    "label":"Check1",
+                    "checked":true
+                  },
+                  {
+                    "label":"Check2",
+                    "checked":false
+                  }
+                ]
+              }
+            },
+            "required":true,
+            "type":"checkboxes",
+            "name":"Checkboxes",
+            "helpText":"Instructions",
+            "_id":"52cfc1a865081b1624000007",
+            "repeating":false
+          },
+          {
+            "fieldOptions":{
+              "definition":{
+                "locationUnit":"latlong"
+              }
+            },
+            "required":true,
+            "type":"location",
+            "name":"Location",
+            "helpText":"Instructions",
+            "_id":"52cfc1a865081b1624000008",
+            "repeating":false
+          },
+          {
+            "required":true,
+            "type":"locationMap",
+            "name":"Map",
+            "helpText":"Instructions",
+            "_id":"52cfc1a865081b1624000009",
+            "repeating":false
+          },
+          {
+            "required":true,
+            "type":"file",
+            "name":"File",
+            "helpText":"File",
+            "_id":"52cfc1a865081b162400000a",
+            "repeating":false
+          },
+          {
+            "required":true,
+            "type":"photo",
+            "name":"Photo",
+            "helpText":"Instructions",
+            "_id":"52cfc1a865081b162400000b",
+            "repeating":false
+          },
+          {
+            "required":true,
+            "type":"signature",
+            "name":"Sign",
+            "helpText":"Instructions",
+            "_id":"52cfc1a865081b162400000c",
+            "repeating":false
+          },
+          {
+            "required":false,
+            "type":"sectionBreak",
+            "name":"New Shiny Section",
+            "helpText":"This is a new section",
+            "_id":"52cfc1a865081b162400000d",
+            "repeating":false
+          },
+          {
+            "fieldOptions":{
+              "definition":{
+                "defaultValue":"a"
+              }
+            },
+            "required":true,
+            "type":"text",
+            "name":"asfs",
+            "helpText":"afasdf",
+            "_id":"52cfc47c8a31bc1524000006",
+            "repeating":false
           }
         ]
       }
     ],
-    "pageRef": {
-      "527d4539639f521e0a000005": 0
+    "lastUpdated":"2014-01-10T09:59:24.168Z",
+    "dateCreated":"2014-01-10T09:41:59.411Z",
+    "pageRef":{
+      "52cfc06765081b1624000001":0
     },
-    "fieldRef": {
-      "527d4539639f521e0a000006": {
-        "page": 0,
-        "field": 0
+    "fieldRef":{
+      "52cfc0a78a31bc1524000003":{
+        "page":0,
+        "field":0
       },
-      "52974ee55e272dcb3d000097": {
-        "page": 0,
-        "field": 1
+      "52cfc0a78a31bc1524000004":{
+        "page":0,
+        "field":1
       },
-      "52974ee55e272dcb3d0000a6": {
-        "page": 0,
-        "field": 2
+      "52cfc0a78a31bc1524000005":{
+        "page":0,
+        "field":2
+      },
+      "52cfc0fb65081b1624000003":{
+        "page":0,
+        "field":3
+      },
+      "52cfc0fb65081b1624000004":{
+        "page":0,
+        "field":4
+      },
+      "52cfc0fb65081b1624000005":{
+        "page":0,
+        "field":5
+      },
+      "52cfc1a865081b1624000006":{
+        "page":0,
+        "field":6
+      },
+      "52cfc1a865081b1624000007":{
+        "page":0,
+        "field":7
+      },
+      "52cfc1a865081b1624000008":{
+        "page":0,
+        "field":8
+      },
+      "52cfc1a865081b1624000009":{
+        "page":0,
+        "field":9
+      },
+      "52cfc1a865081b162400000a":{
+        "page":0,
+        "field":10
+      },
+      "52cfc1a865081b162400000b":{
+        "page":0,
+        "field":11
+      },
+      "52cfc1a865081b162400000c":{
+        "page":0,
+        "field":12
+      },
+      "52cfc1a865081b162400000d":{
+        "page":0,
+        "field":13
+      },
+      "52cfc47c8a31bc1524000006":{
+        "page":0,
+        "field":14
       }
     },
-    "appsUsingForm": 123,
-    "submissionsToday": 1234,
-    "submissionsTotal": 124125
+    "lastUpdatedTimestamp":1389347964168,
+    "appsUsingForm":123,
+    "submissionsToday":1234,
+    "submissionsTotal":124125
   }
 }
-
-
