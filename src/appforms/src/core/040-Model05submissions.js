@@ -85,7 +85,6 @@ appForm.models = (function(module) {
      * @return {[type]} [description]
      */
     Submissions.prototype.validateBeforeSubmission = function() {
-        //TODO add validation
         return true;
     }
     Submissions.prototype.clear = function(cb) {
@@ -100,27 +99,65 @@ appForm.models = (function(module) {
             }
         });
     }
-    Submissions.prototype.getDrafts = function() {
-        return this.findByStatus("draft");
+    Submissions.prototype.getDrafts = function(params) {
+        if(!params){
+          params = {};
+        }
+        params.status = "draft";
+        return this.findByStatus(params);
     }
-    Submissions.prototype.getPending = function() {
-        return this.findByStatus("pending");
+    Submissions.prototype.getPending = function(params) {
+        if(!params){
+          params = {};
+        }
+        params.status = "pending";
+        return this.findByStatus(params);
     }
-    Submissions.prototype.getSubmitted = function() {
-        return this.findByStatus("submitted");
+    Submissions.prototype.getSubmitted = function(params) {
+        if(!params){
+          params = {};
+        }
+        params.status = "submitted";
+        return this.findByStatus(params);
     }
-    Submissions.prototype.getError = function() {
-        return this.findByStatus("error");
+    Submissions.prototype.getError = function(params) {
+        if(!params){
+          params = {};
+        }
+        params.status = "error";
+        return this.findByStatus(params);
     }
-    Submissions.prototype.getInProgress = function() {
-        return this.findByStatus("inprogress");
+    Submissions.prototype.getInProgress = function(params) {
+        if(!params){
+          params = {};
+        }
+        params.status = "inprogress";
+        return this.findByStatus(params);
     }
-    Submissions.prototype.findByStatus = function(status) {
+    Submissions.prototype.findByStatus = function(params) {
+        if(!params){
+          params = {};
+        }
+
+        if(params.status == null){
+          return [];
+        }
+
+        var status = params.status;
+        var formId = params.formId;
+
         var submissions = this.get("submissions");
         var rtn = [];
         for (var i = 0; i < submissions.length; i++) {
             if (submissions[i].status == status) {
+              if(formId != null){
+                if(submissions[i].formId == formId){
+                  rtn.push(submissions[i]);
+                }
+              } else {
                 rtn.push(submissions[i]);
+              }
+
             }
         }
         return rtn;
@@ -157,6 +194,7 @@ appForm.models = (function(module) {
         }
         return -1;
     }
+
     module.submissions = new Submissions();
 
     return module;

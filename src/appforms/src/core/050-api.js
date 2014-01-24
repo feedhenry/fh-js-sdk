@@ -65,28 +65,26 @@ appForm.api = (function(module) {
     }
 
     /**
-     * Get submissions that are submitted. I.e. submitted and complete.
+     * Get submissions that are submitted.
      * @param params {}
      * @param {Function} cb     (err, submittedArray)
      */
     function getSubmissions(params, cb){
-      //Getting submissions that have been completed.
-      var submissions = appForm.models.submissions;
+      if(!params){
+        params = {};
+      }
 
       if (_submissions==null){
         appForm.models.submissions.loadLocal(function(err){
           if (err){
             console.error(err);
-            cb(err);
           }else{
             _submissions=appForm.models.submissions;
-            cb(null,_submissions);
           }
+          cb(err,_submissions);
         });
       }else{
-        setTimeout(function(){
-          cb(null,_submissions);
-        },0);
+        cb(null,_submissions);
       }
     }
 

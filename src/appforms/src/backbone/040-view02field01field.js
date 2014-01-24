@@ -227,17 +227,7 @@ FieldView = Backbone.View.extend({
     wrapperObj.find("input,textarea,select").addClass(this.errorClassName);
   },
   contentChanged: function(e) {
-    var target = $(e.currentTarget);
-    var changedValue = target.val();
-    var self = this;
-    this.dumpContent();
-    this.getTopView().trigger('change:field');
-    var val = this.value();
-    if (this.model.validate(changedValue) === true) {
-       var val = this.value();
-       this.options.formView.setInputValue(self.model.getFieldId(), val);
-       // self.model.set('value', val[self.model.get("_id")]);
-    }
+    this.validate(e);
   },
 
 
