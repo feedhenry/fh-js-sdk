@@ -1,5 +1,5 @@
 FieldFileView = FieldView.extend({
-  input: "<button style='display:none' data-field='<%= fieldId %>' class='special_button fh_appform_button_action' data-index='<%= index %>'></button>" +
+  input: "<button style='display:none' data-field='<%= fieldId %>' class='special_button fh_appform_button_action' data-index='<%= index %>'  type='<%= inputType %>'></button>" +
     "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/>",
   type: "file",
   // dumpContent: function() {
@@ -49,7 +49,7 @@ FieldFileView = FieldView.extend({
 
   valueFromElement: function(index) {
     var wrapperObj = this.getWrapper(index);
-    var fileEle = wrapperObj.find("input[type='file']")[0];
+    var fileEle = wrapperObj.find(".fh_appform_field_input")[0];
     if (fileEle.files && fileEle.files.length > 0) { //new file
       return fileEle.files[0];
     } else { //sandboxed file
@@ -59,7 +59,7 @@ FieldFileView = FieldView.extend({
   showButton: function(index, fileObj) {
     var wrapperObj = this.getWrapper(index);
     var button = wrapperObj.find("button");
-    var fileEle = wrapperObj.find("input[type='file']");
+    var fileEle = wrapperObj.find(".fh_appform_field_input");
     fileEle.hide();
     button.show();
     button.text(fileObj.fileName + "(" + fileObj.fileSize + ")");
@@ -72,7 +72,7 @@ FieldFileView = FieldView.extend({
   showFile: function(index) {
     var wrapperObj = this.getWrapper(index);
     var button = wrapperObj.find("button");
-    var fileEle = wrapperObj.find("input[type='file']");
+    var fileEle = wrapperObj.find(".fh_appform_field_input");
     button.off("click");
     button.hide();
     fileEle.show();

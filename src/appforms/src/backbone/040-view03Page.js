@@ -127,7 +127,7 @@ PageView=BaseView.extend({
 
   isValid: function () {
     // only validate form inputs on this page that are visible or type=hidden, or have validate_ignore class
-    var validateEls = this.$el.find('input,select,option,textarea').not('.validate_ignore,[type!="fh_appform_hidden"]:hidden');
+    var validateEls = this.$el.find('.fh_appform_field_input').not('.validate_ignore]:hidden');
     return validateEls.length ? validateEls.valid() : true;
   },
 

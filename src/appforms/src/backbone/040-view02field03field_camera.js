@@ -1,5 +1,5 @@
 FieldCameraView = FieldView.extend({
-  input: "<img class='imageThumb' width='100%' data-field='<%= fieldId %>' data-index='<%= index %>'>",
+  input: "<img class='imageThumb' width='100%' data-field='<%= fieldId %>' data-index='<%= index %>'  type='<%= inputType %>'>",
   html5Cam: '<div class="html5Cam">' +
     '<div class="camActionBar"><button class="camCancel camBtn fh_appform_button_cancel">Cancel</button><button class="camOk camBtn fh_appform_button_action">Ok</button></div>' +
     '<div class="cam"></div>' +

@@ -1,5 +1,5 @@
 FieldGeoView = FieldView.extend({
-  input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' disabled/>",
+  input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>'  type='<%= inputType %>' disabled/>",
   buttonHtml: "<i class='fa fa-map-marker'></i>&nbsp<%= buttonText %>",
   type: "text",
   initialize: function() {
@@ -48,7 +48,7 @@ FieldGeoView = FieldView.extend({
   renderElement: function(index) {
     var location = this.geoValues[index];
     var locStr = "";
-    var textInput = this.getWrapper(index).find("input[type='text']");
+    var textInput = this.getWrapper(index).find(".fh_appform_field_input");
     if (location) {
       if (this.locationUnit === "latlong") {
         locStr = '(' + location.lat + ', ' + location.long + ')';
@@ -70,7 +70,7 @@ FieldGeoView = FieldView.extend({
     var that = this;
     e.preventDefault();
     var wrapper = that.getWrapper(index);
-    var textInput = wrapper.find("input[type='text']");
+    var textInput = wrapper.find(".fh_appform_field_input");
 
 
     //$fh.geo does not exist on the theme preview.
