@@ -63,7 +63,7 @@ FieldView = Backbone.View.extend({
     if (this.model.isRequired() && index < this.initialRepeat) {
       required = "required";
     }
-    if (index == 0) {
+    if (index === 0) {
       helpText = this.renderHelpText();
     }
     return _.template(this.title, {
