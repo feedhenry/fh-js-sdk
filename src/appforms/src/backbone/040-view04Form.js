@@ -137,7 +137,7 @@ var FormView = BaseView.extend({
     self.pageCount = pageViews.length;
 
     //self.onLoadEnd();
-    self.render();
+    //self.render();
   },
   checkRules: function() {
     var self = this;
