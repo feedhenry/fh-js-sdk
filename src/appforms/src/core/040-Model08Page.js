@@ -69,7 +69,7 @@ appForm.models = function (module) {
     for (var i=0;i<this.fieldsIds.length;i++){
       var fieldModel = this.form.getFieldModelById(this.fieldsIds[i]);
 
-      if(insertSectionBreak && i == 0){ //Adding a first section.
+      if(insertSectionBreak && i === 0){ //Adding a first section.
         currentSection = "sectionBreak" + i;
         sectionList[currentSection] = sectionList[currentSection] ? sectionList[currentSection] : [];
       }

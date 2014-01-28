@@ -98,7 +98,7 @@ appForm.models = function (module) {
      */
     Submissions.prototype.validateBeforeSubmission = function() {
         return true;
-    }
+    };
     Submissions.prototype.clear = function(cb) {
         var that = this;
         this.clearLocal(function(err) {
@@ -110,42 +110,42 @@ appForm.models = function (module) {
                 cb(null, null);
             }
         });
-    }
+    };
     Submissions.prototype.getDrafts = function(params) {
         if(!params){
           params = {};
         }
         params.status = "draft";
         return this.findByStatus(params);
-    }
+    };
     Submissions.prototype.getPending = function(params) {
         if(!params){
           params = {};
         }
         params.status = "pending";
         return this.findByStatus(params);
-    }
+    };
     Submissions.prototype.getSubmitted = function(params) {
         if(!params){
           params = {};
         }
         params.status = "submitted";
         return this.findByStatus(params);
-    }
+    };
     Submissions.prototype.getError = function(params) {
         if(!params){
           params = {};
         }
         params.status = "error";
         return this.findByStatus(params);
-    }
+    };
     Submissions.prototype.getInProgress = function(params) {
         if(!params){
           params = {};
         }
         params.status = "inprogress";
         return this.findByStatus(params);
-    }
+    };
     Submissions.prototype.findByStatus = function(params) {
         if(!params){
           params = {};

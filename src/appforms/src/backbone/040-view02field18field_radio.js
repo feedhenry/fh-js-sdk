@@ -19,7 +19,7 @@ FieldRadioView = FieldView.extend({
         "index": index
       }));
 
-      if (choice.checked == true) {
+      if (choice.checked === true) {
         jQObj.attr('checked', 'checked');
       }
       radioChoicesHtml += self.htmlFromjQuery(jQObj);

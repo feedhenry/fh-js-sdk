@@ -10,7 +10,7 @@ appForm.utils = function (module) {
         child.prototype[key] = parent.prototype[key];
       }
     } else {
-      for (key in parent) {
+      for (var key in parent) {
         child.prototype[key] = parent[key];
       }
     }

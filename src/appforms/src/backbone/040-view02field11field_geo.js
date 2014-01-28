@@ -89,7 +89,7 @@ FieldGeoView = FieldView.extend({
             "zone":locArr[0],
             "eastings":locArr[1],
             "northings":locArr[2]
-          }
+          };
         }
         that.renderElement(index);
       }, function(msg, err) {

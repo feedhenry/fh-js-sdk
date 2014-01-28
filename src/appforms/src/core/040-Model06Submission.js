@@ -252,7 +252,7 @@ appForm.models = function (module) {
         } else {
             return cb("Invalid Status to upload a form submission.");
         }
-    }
+    };
   };
   Submission.prototype.saveToList = function (cb) {
     appForm.models.submissions.saveSubmission(this, cb);
