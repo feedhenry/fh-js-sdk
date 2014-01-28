@@ -15,7 +15,7 @@ appForm.stores = function (module) {
   };
   MBaaS.prototype.update = function (model, cb) {
   };
-  MBaaS.prototype.delete = function (model, cb) {
+  MBaaS.prototype["delete"] = function (model, cb) {
   };
   //@Deprecated use create instead
   MBaaS.prototype.completeSubmission = function (submissionToComplete, cb) {

@@ -43,7 +43,7 @@ appForm.stores = function (module) {
     }, cb, cb);
   };
   //delete a model
-  LocalStorage.prototype.delete = function (model, cb) {
+  LocalStorage.prototype["delete"] = function (model, cb) {
     var key = model.getLocalId();
     _fhData({
       'act': 'remove',

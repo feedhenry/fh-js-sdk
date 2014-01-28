@@ -62,7 +62,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-jshint');
-    grunt.registerTask("build",["buildCore","buildBackbone", "buildBackboneRequireJS"]);
+    grunt.registerTask("build",["jshint","buildCore","buildBackbone", "buildBackboneRequireJS"]);
     grunt.registerTask("buildCore",["concat:core","uglify:core"]);
     grunt.registerTask("buildBackbone",["concat:backbone","uglify:backbone"]);
     grunt.registerTask("buildBackboneRequireJS",["concat:backboneRequireJS","uglify:backboneRequireJS"]);

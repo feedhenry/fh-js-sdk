@@ -13,12 +13,12 @@ appForm.models.Field = function (module) {
     var obj={};
     switch (def.locationUnit) {
     case 'latLong':
-      if (!inputValue.lat || !inputValue.long) {
+      if (!inputValue.lat || !inputValue["long"]) {
         cb('the input values for latlong field is {lat: number, long: number}');
       } else {
         obj = {
             'lat': inputValue.lat,
-            'long': inputValue.long
+            'long': inputValue["long"]
           };
         cb(null, obj);
       }
