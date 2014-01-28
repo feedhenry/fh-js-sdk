@@ -66,4 +66,4 @@ module.exports = function(grunt) {
     grunt.registerTask("buildCore",["concat:core","uglify:core"]);
     grunt.registerTask("buildBackbone",["concat:backbone","uglify:backbone"]);
     grunt.registerTask("buildBackboneRequireJS",["concat:backboneRequireJS","uglify:backboneRequireJS"]);
-}
+};

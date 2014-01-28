@@ -1764,10 +1764,12 @@ function rulesEngine(formDef) {
             var field = fieldMap[ruleConditionalStatement.sourceField];
             var passed = false;
             var submissionValues = [];
+            var condition;
+            var testValue;
             if (submissionFieldsMap[ruleConditionalStatement.sourceField] && submissionFieldsMap[ruleConditionalStatement.sourceField].fieldValues) {
               submissionValues = submissionFieldsMap[ruleConditionalStatement.sourceField].fieldValues;
-              var condition = ruleConditionalStatement.restriction;
-              var testValue = ruleConditionalStatement.sourceValue;
+              condition = ruleConditionalStatement.restriction;
+              testValue = ruleConditionalStatement.sourceValue;
               // Validate rule predictes on the first entry only.
               passed = isConditionActive(field, submissionValues[0], testValue, condition);
             }
