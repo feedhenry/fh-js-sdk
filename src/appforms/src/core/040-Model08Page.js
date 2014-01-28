@@ -37,13 +37,23 @@ appForm.models = function (module) {
     for (var i=0;i<this.fieldsIds.length;i++){
       list.push(this.form.getFieldModelById(this.fieldsIds[i]));
     }
-    return list;
-  };
-  Page.prototype.checkForSectionBreaks=function(){ //Checking for any sections
-    for (var i=0;i<this.fieldsIds.length;i++){
-      var fieldModel = this.form.getFieldModelById(this.fieldsIds[i]);
-      if(fieldModel.getType() == "sectionBreak"){
-        return true;
+    Page.prototype.getFieldDef=function(){
+        return this.get("fields",[]);
+    }
+    Page.prototype.getFieldModelList=function(){
+        console.log("fieldModelList", this.fieldsIds);
+        var list=[];
+        for (var i=0;i<this.fieldsIds.length;i++){
+            list.push(this.form.getFieldModelById(this.fieldsIds[i]));
+        }
+        return list;
+    }
+    Page.prototype.checkForSectionBreaks=function(){ //Checking for any sections
+      for (var i=0;i<this.fieldsIds.length;i++){
+        var fieldModel = this.form.getFieldModelById(this.fieldsIds[i]);
+        if(fieldModel.getType() == "sectionBreak"){
+          return true;
+        }
       }
     }
 

@@ -84,6 +84,7 @@ PageView=BaseView.extend({
       }
     } else {
       fieldModelList.forEach(function (field, index) {
+        if(!field) return;
         var fieldType = field.getType();
         if (self.viewMap[fieldType]) {
 
