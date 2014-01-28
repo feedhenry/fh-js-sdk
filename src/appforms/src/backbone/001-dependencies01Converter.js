@@ -29,24 +29,25 @@ Geo.parseDMS = function (dmsStr) {
     return Number(dmsStr);
   // strip off any sign or compass dir'n & split out separate d/m/s
   var dms = String(dmsStr).trim().replace(/^-/, '').replace(/[NSEW]$/i, '').split(/[^0-9.,]+/);
-  if (dms[dms.length - 1] == '')
+  if (dms[dms.length - 1] === '')
     dms.splice(dms.length - 1);
   // from trailing symbol
-  if (dms == '')
+  if (dms === '')
     return NaN;
   // and convert to decimal degrees...
+  var deg;
   switch (dms.length) {
   case 3:
     // interpret 3-part result as d/m/s
-    var deg = dms[0] / 1 + dms[1] / 60 + dms[2] / 3600;
+    deg = dms[0] / 1 + dms[1] / 60 + dms[2] / 3600;
     break;
   case 2:
     // interpret 2-part result as d/m
-    var deg = dms[0] / 1 + dms[1] / 60;
+    deg = dms[0] / 1 + dms[1] / 60;
     break;
   case 1:
     // just d (possibly decimal) or non-separated dddmmss
-    var deg = dms[0];
+    deg = dms[0];
     // check for fixed-width unseparated format eg 0033709W
     //if (/[NS]/i.test(dmsStr)) deg = '0' + deg;  // - normalise N/S to 3-digit degrees
     //if (/[0-9]{7}/.test(deg)) deg = deg.slice(0,3)/1 + deg.slice(3,5)/60 + deg.slice(5)/3600; 
@@ -98,6 +99,9 @@ Geo.toDMS = function (deg, format, dp) {
   }
   deg = Math.abs(deg);
   // (unsigned result ready for appending compass dir'n)
+  var d;
+  var m;
+  var s;
   switch (format) {
   case 'd':
     d = deg.toFixed(dp);
@@ -107,15 +111,15 @@ Geo.toDMS = function (deg, format, dp) {
     // pad with leading zeros
     if (d < 10)
       d = '0' + d;
-    dms = d + '\xb0';
+    var dms = d + '\xb0';
     // add Âº symbol
     break;
   case 'dm':
     var min = (deg * 60).toFixed(dp);
     // convert degrees to minutes & round
-    var d = Math.floor(min / 60);
+     d = Math.floor(min / 60);
     // get component deg/min
-    var m = (min % 60).toFixed(dp);
+     m = (min % 60).toFixed(dp);
     // pad with trailing zeros
     if (d < 100)
       d = '0' + d;
@@ -130,10 +134,10 @@ Geo.toDMS = function (deg, format, dp) {
   case 'dms':
     var sec = (deg * 3600).toFixed(dp);
     // convert degrees to seconds & round
-    var d = Math.floor(sec / 3600);
+     d = Math.floor(sec / 3600);
     // get component deg/min/sec
-    var m = Math.floor(sec / 60) % 60;
-    var s = (sec % 60).toFixed(dp);
+     m = Math.floor(sec / 60) % 60;
+     s = (sec % 60).toFixed(dp);
     // pad with trailing zeros
     if (d < 100)
       d = '0' + d;
@@ -224,9 +228,9 @@ function LatLon(lat, lon, rad) {
     rad = 6371;
   // earth's mean radius in km
   // only accept numbers or valid numeric strings
-  this._lat = typeof lat == 'number' ? lat : typeof lat == 'string' && lat.trim() != '' ? +lat : NaN;
-  this._lon = typeof lon == 'number' ? lon : typeof lon == 'string' && lon.trim() != '' ? +lon : NaN;
-  this._radius = typeof rad == 'number' ? rad : typeof rad == 'string' && trim(lon) != '' ? +rad : NaN;
+  this._lat = typeof lat === 'number' ? lat : typeof lat === 'string' && lat.trim() !== '' ? +lat : NaN;
+  this._lon = typeof lon === 'number' ? lon : typeof lon === 'string' && lon.trim() !=='' ? +lon : NaN;
+  this._radius = typeof rad === 'number' ? rad : typeof rad === 'string' && trim(lon) !== '' ? +rad : NaN;
 }
 /**
  * Returns the distance from this point to the supplied point, in km 
@@ -293,13 +297,14 @@ LatLon.prototype.finalBearingTo = function (point) {
  * @returns {LatLon} Midpoint between this point and the supplied point
  */
 LatLon.prototype.midpointTo = function (point) {
-  lat1 = this._lat.toRad(), lon1 = this._lon.toRad();
-  lat2 = point._lat.toRad();
+  var lat1 = this._lat.toRad();
+  var lon1 = this._lon.toRad();
+  var lat2 = point._lat.toRad();
   var dLon = (point._lon - this._lon).toRad();
   var Bx = Math.cos(lat2) * Math.cos(dLon);
   var By = Math.cos(lat2) * Math.sin(dLon);
-  lat3 = Math.atan2(Math.sin(lat1) + Math.sin(lat2), Math.sqrt((Math.cos(lat1) + Bx) * (Math.cos(lat1) + Bx) + By * By));
-  lon3 = lon1 + Math.atan2(By, Math.cos(lat1) + Bx);
+  var lat3 = Math.atan2(Math.sin(lat1) + Math.sin(lat2), Math.sqrt((Math.cos(lat1) + Bx) * (Math.cos(lat1) + Bx) + By * By));
+  var lon3 = lon1 + Math.atan2(By, Math.cos(lat1) + Bx);
   lon3 = (lon3 + 3 * Math.PI) % (2 * Math.PI) - Math.PI;
   // normalise to -180..+180Âº
   return new LatLon(lat3.toDeg(), lon3.toDeg());
@@ -315,7 +320,7 @@ LatLon.prototype.midpointTo = function (point) {
  * @returns {LatLon} Destination point
  */
 LatLon.prototype.destinationPoint = function (brng, dist) {
-  dist = typeof dist == 'number' ? dist : typeof dist == 'string' && dist.trim() != '' ? +dist : NaN;
+  dist = typeof dist === 'number' ? dist : typeof dist === 'string' && dist.trim() !== '' ? +dist : NaN;
   dist = dist / this._radius;
   // convert dist to angular distance in radians
   brng = brng.toRad();
@@ -339,21 +344,25 @@ LatLon.prototype.destinationPoint = function (brng, dist) {
  * @returns {LatLon} Destination point (null if no unique intersection defined)
  */
 LatLon.intersection = function (p1, brng1, p2, brng2) {
-  brng1 = typeof brng1 == 'number' ? brng1 : typeof brng1 == 'string' && trim(brng1) != '' ? +brng1 : NaN;
-  brng2 = typeof brng2 == 'number' ? brng2 : typeof brng2 == 'string' && trim(brng2) != '' ? +brng2 : NaN;
-  lat1 = p1._lat.toRad(), lon1 = p1._lon.toRad();
-  lat2 = p2._lat.toRad(), lon2 = p2._lon.toRad();
-  brng13 = brng1.toRad(), brng23 = brng2.toRad();
-  dLat = lat2 - lat1, dLon = lon2 - lon1;
-  dist12 = 2 * Math.asin(Math.sqrt(Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2)));
-  if (dist12 == 0)
+  brng1 = typeof brng1 === 'number' ? brng1 : typeof brng1 === 'string' && trim(brng1) !== '' ? +brng1 : NaN;
+  brng2 = typeof brng2 === 'number' ? brng2 : typeof brng2 === 'string' && trim(brng2) !== '' ? +brng2 : NaN;
+  var lat1 = p1._lat.toRad(), lon1 = p1._lon.toRad();
+  var lat2 = p2._lat.toRad(), lon2 = p2._lon.toRad();
+  var brng13 = brng1.toRad(), brng23 = brng2.toRad();
+  var dLat = lat2 - lat1, dLon = lon2 - lon1;
+  var dist12 = 2 * Math.asin(Math.sqrt(Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) * Math.sin(dLon / 2)));
+  var brng12;
+  var brng21;
+  var alpha1;
+  var alpha2;
+  if (dist12 === 0)
     return null;
   // initial/final bearings between points
-  brngA = Math.acos((Math.sin(lat2) - Math.sin(lat1) * Math.cos(dist12)) / (Math.sin(dist12) * Math.cos(lat1)));
+  var brngA = Math.acos((Math.sin(lat2) - Math.sin(lat1) * Math.cos(dist12)) / (Math.sin(dist12) * Math.cos(lat1)));
   if (isNaN(brngA))
     brngA = 0;
   // protect against rounding
-  brngB = Math.acos((Math.sin(lat1) - Math.sin(lat2) * Math.cos(dist12)) / (Math.sin(dist12) * Math.cos(lat2)));
+  var brngB = Math.acos((Math.sin(lat1) - Math.sin(lat2) * Math.cos(dist12)) / (Math.sin(dist12) * Math.cos(lat2)));
   if (Math.sin(lon2 - lon1) > 0) {
     brng12 = brngA;
     brng21 = 2 * Math.PI - brngB;
@@ -365,7 +374,7 @@ LatLon.intersection = function (p1, brng1, p2, brng2) {
   // angle 2-1-3
   alpha2 = (brng21 - brng23 + Math.PI) % (2 * Math.PI) - Math.PI;
   // angle 1-2-3
-  if (Math.sin(alpha1) == 0 && Math.sin(alpha2) == 0)
+  if (Math.sin(alpha1) === 0 && Math.sin(alpha2) === 0)
     return null;
   // infinite intersections
   if (Math.sin(alpha1) * Math.sin(alpha2) < 0)
@@ -374,11 +383,11 @@ LatLon.intersection = function (p1, brng1, p2, brng2) {
   //alpha1 = Math.abs(alpha1);
   //alpha2 = Math.abs(alpha2);
   // ... Ed Williams takes abs of alpha1/alpha2, but seems to break calculation?
-  alpha3 = Math.acos(-Math.cos(alpha1) * Math.cos(alpha2) + Math.sin(alpha1) * Math.sin(alpha2) * Math.cos(dist12));
-  dist13 = Math.atan2(Math.sin(dist12) * Math.sin(alpha1) * Math.sin(alpha2), Math.cos(alpha2) + Math.cos(alpha1) * Math.cos(alpha3));
-  lat3 = Math.asin(Math.sin(lat1) * Math.cos(dist13) + Math.cos(lat1) * Math.sin(dist13) * Math.cos(brng13));
-  dLon13 = Math.atan2(Math.sin(brng13) * Math.sin(dist13) * Math.cos(lat1), Math.cos(dist13) - Math.sin(lat1) * Math.sin(lat3));
-  lon3 = lon1 + dLon13;
+  var alpha3 = Math.acos(-Math.cos(alpha1) * Math.cos(alpha2) + Math.sin(alpha1) * Math.sin(alpha2) * Math.cos(dist12));
+  var dist13 = Math.atan2(Math.sin(dist12) * Math.sin(alpha1) * Math.sin(alpha2), Math.cos(alpha2) + Math.cos(alpha1) * Math.cos(alpha3));
+  var lat3 = Math.asin(Math.sin(lat1) * Math.cos(dist13) + Math.cos(lat1) * Math.sin(dist13) * Math.cos(brng13));
+  var dLon13 = Math.atan2(Math.sin(brng13) * Math.sin(dist13) * Math.cos(lat1), Math.cos(dist13) - Math.sin(lat1) * Math.sin(lat3));
+  var lon3 = lon1 + dLon13;
   lon3 = (lon3 + 3 * Math.PI) % (2 * Math.PI) - Math.PI;
   // normalise to -180..+180Âº
   return new LatLon(lat3.toDeg(), lon3.toDeg());
@@ -460,8 +469,10 @@ LatLon.prototype.rhumbDestinationPoint = function (brng, dist) {
  * @returns {LatLon} Midpoint between this point and the supplied point
  */
 LatLon.prototype.rhumbMidpointTo = function (point) {
-  lat1 = this._lat.toRad(), lon1 = this._lon.toRad();
-  lat2 = point._lat.toRad(), lon2 = point._lon.toRad();
+  var lat1 = this._lat.toRad();
+  var lon1 = this._lon.toRad();
+  var lat2 = point._lat.toRad();
+  var lon2 = point._lon.toRad();
   if (Math.abs(lon2 - lon1) > Math.PI)
     lon1 += 2 * Math.PI;
   // crossing anti-meridian
@@ -606,7 +617,8 @@ OsGridRef.latLongToOsGrid = function (point) {
   // Airy 1830 major & minor semi-axes
   var F0 = 0.9996012717;
   // NatGrid scale factor on central meridian
-  var lat0 = 49..toRad(), lon0 = (-2).toRad();
+  var lat0 = (49).toRad(),
+    lon0 = (-2).toRad();
   // NatGrid true origin is 49ºN,2ºW
   var N0 = -100000, E0 = 400000;
   // northing & easting of true origin, metres
@@ -755,11 +767,12 @@ OsGridRef.parse = function (gridref) {
  * Converts this numeric grid reference to standard OS grid reference
  *
  * @param {Number} [digits=6] Precision of returned grid reference (6 digits = metres)
- * @return {String)           This grid reference in standard format
+ * @return {String) This grid reference in standard format
  */
 OsGridRef.prototype.toString = function (digits) {
   digits = typeof digits == 'undefined' ? 10 : digits;
-  e = this.easting, n = this.northing;
+  var e = this.easting,
+  n = this.northing;
   if (isNaN(e) || isNaN(n))
     return '??';
   // get the 100km-grid indices
