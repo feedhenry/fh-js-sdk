@@ -33,7 +33,6 @@ var modules = {
         "040-Model09fieldValidate",
         "040-Model10uploadManager",
         "040-Model11Rule",
-        "040-Model11ruleCheckFuncs",
         "040-Model12UploadTask",
         "050-api",
         "060-RuleEngine"

@@ -61,6 +61,7 @@ module.exports = function(grunt) {
     // grunt.registerTask("linkCore",require("./script/linkCore.js")(grunt));
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-concat');
+    grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.registerTask("build",["buildCore","buildBackbone", "buildBackboneRequireJS"]);
     grunt.registerTask("buildCore",["concat:core","uglify:core"]);
     grunt.registerTask("buildBackbone",["concat:backbone","uglify:backbone"]);

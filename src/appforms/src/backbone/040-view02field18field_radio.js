@@ -27,20 +27,16 @@ FieldRadioView = FieldView.extend({
 
     return _.template(this.radio, {"radioChoices": radioChoicesHtml});
   },
-  // addValidationRules: function() {
-  //   // first radio is always initially checked, so no need to do 'required' validation on this field
-  // },
-  valuePopulateToElement: function(index, value) {
-    var wrapperObj=this.getWrapper(index);
-    var opt=wrapperObj.find("input[value='"+value+"']");
-    if (opt.length==0){
-      opt=wrapperObj.find("input:first-child");
-      
+  valuePopulateToElement: function (index, value) {
+    var wrapperObj = this.getWrapper(index);
+    var opt = wrapperObj.find('input[value=\'' + value + '\']');
+    if (opt.length === 0) {
+      opt = wrapperObj.find('input:first-child');
     }
-    opt.attr("checked","checked");  
+    opt.attr('checked', 'checked');
   },
-  valueFromElement: function(index) {
-    var wrapperObj=this.getWrapper(index);
-    return wrapperObj.find("input:checked").val() || this.model.getRadioOption()[0].label;
+  valueFromElement: function (index) {
+    var wrapperObj = this.getWrapper(index);
+    return wrapperObj.find('input:checked').val() || this.model.getRadioOption()[0].label;
   }
 });

@@ -59,11 +59,11 @@ FieldGeoView = FieldView.extend({
     }
     textInput.blur();
   },
-  valuePopulateToElement: function(index, value) {
+  valuePopulateToElement: function (index, value) {
     this.geoValues[index] = value;
     this.renderElement(index);
   },
-  valueFromElement: function(index) {
+  valueFromElement: function (index) {
     return this.geoValues[index];
   },
   getLocation: function(e, index) {

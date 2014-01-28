@@ -52,7 +52,8 @@ var FormView = BaseView.extend({
   },
   readOnly: function() {
     this.readonly = true;
-    for (var i = 0, fieldView; fieldView = this.fieldViews[i]; i++) {
+    for (var i = 0; i<this.fieldViews.length; i++) {
+      var fieldView=this.fieldViews[i];
       fieldView.$el.find("button,input,textarea,select").attr("disabled", "disabled");
     }
     this.el.find("button.fh_appform_button_saveDraft").hide();
@@ -78,6 +79,7 @@ var FormView = BaseView.extend({
   },
   initWithForm: function(form, params) {
     var self = this;
+    var pageView;
     self.formId = form.getFormId();
 
     self.el.empty();
@@ -104,12 +106,13 @@ var FormView = BaseView.extend({
     // Init Pages --------------
     var pageModelList = form.getPageModelList();
     var pageViews = [];
-    for (var i = 0, pageModel; pageModel = pageModelList[i]; i++) {
+    for (var i = 0; i<pageModelList.length; i++) {
+      var pageModel = pageModelList[i];
       // get fieldModels
       var list = pageModel.getFieldModelList();
       self.fieldModels = self.fieldModels.concat(list);
 
-      var pageView = new PageView({
+      pageView = new PageView({
         model: pageModel,
         parentEl: self.el.find(this.elementNames.formContainer),
         formView: self
@@ -117,7 +120,8 @@ var FormView = BaseView.extend({
       pageViews.push(pageView);
     }
     var fieldViews = [];
-    for (var i = 0, pageView; pageView = pageViews[i]; i++) {
+    for ( i = 0; i<pageViews.length; i++) {
+      pageView = pageViews[i];
       var pageFieldViews = pageView.fieldViews;
       for (var key in pageFieldViews) {
         var fView = pageFieldViews[key];
@@ -146,10 +150,11 @@ var FormView = BaseView.extend({
           var actions = res.actions;
           var pages = actions.pages;
           var fields = actions.fields;
-          for (var targetId in pages) {
+          var targetId;
+          for (targetId in pages) {
             self.performRuleAction("page", targetId, pages[targetId]["action"]);
           }
-          for (var targetId in fields) {
+          for (targetId in fields) {
             self.performRuleAction("field", targetId, fields[targetId]["action"]);
           }
         }
@@ -202,7 +207,8 @@ var FormView = BaseView.extend({
     return this.submission;
   },
   getPageViewById: function(pageId) {
-    for (var i = 0, pageView; pageView = this.pageViews[i]; i++) {
+    for (var i = 0; i<pageViews.length ; i++) {
+      var pageView = this.pageViews[i];
       var pId = pageView.model.getPageId();
       if (pId == pageId) {
         return pageView;
@@ -211,7 +217,8 @@ var FormView = BaseView.extend({
     return null;
   },
   getFieldViewById: function(fieldId) {
-    for (var i = 0, fieldView; fieldView = this.fieldViews[i]; i++) {
+    for (var i = 0; i<this.fieldViews.length; i++) {
+      var fieldView = this.fieldViews[i];
       var pId = fieldView.model.getFieldId();
       if (pId == fieldId) {
         return fieldView;
@@ -322,10 +329,12 @@ var FormView = BaseView.extend({
     }
     var submission = this.submission;
     var fieldViews = this.fieldViews;
+    var fieldId;
     var tmpObj = [];
-    for (var i = 0, fieldView; fieldView = fieldViews[i]; i++) {
+    for (var i = 0; i<fieldViews.length ; i++) {
+      var fieldView = fieldViews[i];
       var val = fieldView.value();
-      var fieldId = fieldView.model.getFieldId();
+      fieldId = fieldView.model.getFieldId();
       var fieldType = fieldView.model.getType();
 
       if(fieldType !== "sectionBreak"){
@@ -341,8 +350,9 @@ var FormView = BaseView.extend({
     }
     var count = tmpObj.length;
     submission.reset();
-    for (var i = 0, item; item = tmpObj[i]; i++) {
-      var fieldId = item.id;
+    for (i = 0; i<tmpObj.length ; i++) {
+      var item = tmpObj[i];
+      fieldId = item.id;
       var value = item.value;
       var index=item.index;
       submission.addInputValue({
@@ -355,7 +365,7 @@ var FormView = BaseView.extend({
           console.error(err);
         }
         count--;
-        if (count == 0) {
+        if (count === 0) {
           cb();
         }
       });
@@ -364,12 +374,14 @@ var FormView = BaseView.extend({
 
   setInputValue: function(fieldId, value) {
     var self = this;
-    for (var i = 0, item; item = this.fieldValue[i]; i++) {
+    for (var i = 0; i<this.fieldValue.length; i++) {
+      var item = this.fieldValue[i];
       if (item.id == fieldId) {
         this.fieldValue.splice(i, 1);
       }
     }
-    for (var i = 0, v; v = value[i]; i++) {
+    for (i = 0; i<value.length; i++) {
+      var v = value[i];
       this.fieldValue.push({
         id: fieldId,
         value: v
