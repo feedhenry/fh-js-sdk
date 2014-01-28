@@ -58,12 +58,13 @@ PageView=BaseView.extend({
     var sections = this.model.getSections();
 
     if(sections != null){
-      for(var sectionKey in sections){
+      var sectionKey;
+      for(sectionKey in sections){
         this.$el.append(_.template(this.templates.section, {"sectionId": sectionKey}));
       }
 
       //Add the section fields
-      for(var sectionKey in sections){
+      for(sectionKey in sections){
         sections[sectionKey].forEach(function(field, index){
           var fieldType = field.getType();
           if (self.viewMap[fieldType]) {

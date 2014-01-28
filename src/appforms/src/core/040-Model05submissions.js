@@ -173,7 +173,7 @@ appForm.models = function (module) {
             }
         }
         return rtn;
-    }
+    };
     /**
      * return a submission model object by the meta data passed in.
      * @param  {[type]}   meta [description]
