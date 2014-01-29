@@ -226,30 +226,33 @@ appForm.models = function (module) {
     } else {
       throw 'Target status is not valid: ' + status;
     }
-  };
-  Submission.prototype.upload = function (cb) {
-    var targetStatus = 'inprogress';
-    var that = this;
-    if (this.isStatusValid(targetStatus)) {
-      this.set('status', targetStatus);
-      this.set('uploadStartDate', appForm.utils.getTime());
-      appForm.models.submissions.updateSubmissionWithoutSaving(this);
-      appForm.models.uploadManager.queueSubmission(this, function (err, ut) {
-        if (err) {
-          cb(err);
+    Submission.prototype.upload = function(cb) {
+        var targetStatus = "inprogress";
+        var that = this;
+        if (this.isStatusValid(targetStatus)) {
+            this.set("status", targetStatus);
+            this.set("uploadStartDate", appForm.utils.getTime());
+            appForm.models.submissions.updateSubmissionWithoutSaving(this);
+            appForm.models.uploadManager.queueSubmission(this, function(err, ut) {
+                if (err) {
+                    cb(err);
+                } else {
+                    ut.set("error", null);
+                    ut.saveLocal(function(err){
+                      if(err) console.log(err);
+                    });
+                    that.emit("inprogress", ut);
+                    ut.on("progress", function(progress){
+                      that.emit("progress", progress);
+                    });
+                    cb(null, ut);
+                }
+            });
+
         } else {
-          ut.set('error', null);
-          ut.saveLocal(function (err) {
-            if (err)
-              console.log(err);
-          });
-          that.emit('inprogress', ut);
-          cb(null, ut);
+            return cb("Invalid Status to upload a form submission.");
         }
-      });
-    } else {
-      return cb('Invalid Status to upload a form submission.');
-    }
+    };
   };
   Submission.prototype.saveToList = function (cb) {
     appForm.models.submissions.saveSubmission(this, cb);

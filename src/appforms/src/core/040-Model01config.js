@@ -22,6 +22,11 @@ appForm.models = function (module) {
     if (typeof config.submissionRetryAttempts === 'undefined') {
       config.submissionRetryAttempts = 2;
     }
+
+    if(config.submissionTimeout == null){
+      config.submissionTimeout = 20;//Default 20 seconds timeout
+    }
+    
     this.fromJSON(config);
     cb();
   };

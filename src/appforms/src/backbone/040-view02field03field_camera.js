@@ -1,10 +1,14 @@
 FieldCameraView = FieldView.extend({
-  input: '<img class="imageThumb" width="100%" data-field="<%= fieldId %>" data-index="<%= index %>">',
-  html5Cam: '<div class="html5Cam">' + '<div class="camActionBar"><button class="camCancel camBtn">Cancel</button><button class="camOk camBtn">Ok</button></div>' + '<div class="cam"></div>' + '</div>',
-  onElementShow: function (index) {
-    var captureBtn = $(this.renderButton(index, 'Capture Signature', 'fhcam'));
-    var libBtn = $(this.renderButton(index, 'Choose Photo from Library', 'fhcam_lib'));
-    var rmBtn = $(this.renderButton(index, 'Remove Photo', 'remove'));
+  input: "<img class='imageThumb' width='100%' data-field='<%= fieldId %>' data-index='<%= index %>'  type='<%= inputType %>'>",
+  html5Cam: '<div class="html5Cam">' +
+    '<div class="camActionBar"><button class="camCancel camBtn fh_appform_button_cancel">Cancel</button><button class="camOk camBtn fh_appform_button_action">Ok</button></div>' +
+    '<div class="cam"></div>' +
+    '</div>',
+  onElementShow: function(index) {
+    var captureBtn = $(this.renderButton(index, "<i class='fa fa-camera'></i>&nbspCapture Photo From Camera", "fhcam"));
+    var libBtn = $(this.renderButton(index, "<i class='fa fa-folder'></i>&nbspChoose Photo from Library", "fhcam_lib"));
+    var rmBtn = $(this.renderButton(index, "<i class='fa fa-times-circle'></i>&nbspRemove Photo", "remove"));
+
     this.getWrapper(index).append(captureBtn);
     this.getWrapper(index).append(libBtn);
     this.getWrapper(index).append(rmBtn);

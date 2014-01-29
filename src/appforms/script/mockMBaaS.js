@@ -150,6 +150,7 @@ function _postFormSubmission(req, res) {
 function _getForm(req, res) {
   console.log("In _getForm, ", req.params);
   var formId = req.params.formId;
+
   if (allForms[formId]) {
     res.json(allForms[formId]);
   } else {

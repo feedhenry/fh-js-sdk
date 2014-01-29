@@ -5,12 +5,13 @@ appForm.utils = function (module) {
   module.getTime = getTime;
   module.isPhoneGap = isPhoneGap;
   function extend(child, parent) {
+
     if (parent.constructor && parent.constructor == Function) {
-      for (var key in parent.prototype) {
-        child.prototype[key] = parent.prototype[key];
+      for (var mkey in parent.prototype) {
+        child.prototype[mkey] = parent.prototype[mkey];
       }
     } else {
-      for (key in parent) {
+      for (var key in parent) {
         child.prototype[key] = parent[key];
       }
     }

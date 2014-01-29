@@ -4,24 +4,25 @@ var FormListView = BaseView.extend({
   },
 
   templates: {
-    list: '<ul class="form_list"></ul>',
+    list: '<ul class="form_list fh_appform_body"></ul>',
     header: '<h2>Your Forms</h2><h4>Choose a form from the list below</h4>',
-    error: '<li><button id="formlist_reload" class="button-block <%= enabledClass %> <%= dataClass %>"><%= name %><div class="loading"></div></button></li>'
+    error: '<li><button id="formlist_reload" class="button-block <%= enabledClass %> <%= dataClass %> fh_appform_button_navigation"><%= name %><div class="loading"></div></button></li>'
   },
 
   initialize: function() {
     _.bindAll(this, 'render', 'appendForm');
     this.views = [];
 
-    // App.collections.forms.bind('reset', function (collection, options) {
-    //   if (options == null || !options.noFetch) {
-    //     $fh.logger.debug('reset forms collection');
-    //     App.collections.forms.each(function (form) {
-    //       form.fetch();
-    //     });
-    //   }
-    // });
-    // App.collections.forms.bind('add remove reset error', this.render, this);
+    App.collections.forms.bind('reset', function (collection, options) {
+       if (options == null || !options.noFetch) {
+         $fh.logger.debug('reset forms collection');
+         App.collections.forms.each(function (form) {
+           form.fetch();
+         });
+       }
+    });
+
+    App.collections.forms.bind('add remove reset error', this.render, this);
     this.model.on("updated",this.render);
   },
 
@@ -53,7 +54,7 @@ var FormListView = BaseView.extend({
     }
     var html = _.template(this.templates.error, {
       name: msg + "<br/>Please Retry Later",
-      enabledClass: 'button-negative',
+      enabledClass: 'fh_appform_button_cancel',//TODO May not be this class. Double check
       dataClass: 'fetched'
     });
     $('ul', this.el).append(html);
@@ -96,5 +97,3 @@ var FormListView = BaseView.extend({
     });
   }
 });
-// $fh.forms.getForms({fromRemote:false},)
-// var formListView=new FormListView();

@@ -1,6 +1,6 @@
 FieldCheckboxView = FieldView.extend({
+  checkboxes: '<div class="fh_appform_field_input"><div class="checkboxes"><%= choices %></div></div>',
   choice: '<input data-fieldId="<%= fieldId %>" <%= checked %> data-index="<%= index %>" name="<%= fieldId %>[]" type="checkbox" class="field checkbox" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
-
   // contentChanged: function(e) {
   //   var self = this;
   //   this.dumpContent();
@@ -18,10 +18,15 @@ FieldCheckboxView = FieldView.extend({
   renderInput: function(index) {
     var subfields = this.model.getCheckBoxOptions();
     var fieldId=this.model.getFieldId();
+    var choicesHtml = "";
+    var checkboxesHtml = "";
+    var html = "";
+    var required = this.getFieldRequired(index);
     var self=this;
-    var html="";
+
+
     $.each(subfields, function(i, subfield) {
-      html+= _.template(self.choice, {
+      choicesHtml+= _.template(self.choice, {
         "fieldId": fieldId,
         "index": index,
         "choice": subfield.label,
@@ -29,7 +34,10 @@ FieldCheckboxView = FieldView.extend({
         "checked": (subfield.selected) ? "checked='checked'" : ""
       });
     });
-    return html;
+
+    checkboxesHtml = _.template(this.checkboxes, {"choices": choicesHtml});
+
+    return checkboxesHtml;
   },
   // addValidationRules: function() {
   //   if (this.model.get('IsRequired') === '1') {

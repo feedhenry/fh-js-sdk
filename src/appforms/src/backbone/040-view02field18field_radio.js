@@ -1,24 +1,31 @@
 FieldRadioView = FieldView.extend({
-  hidden_field: '<input id="radio<%= id %>" type="hidden" value="" data-type="radio">',
-  choice: '<input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" type="radio" class="field radio" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
-  renderInput: function (index) {
+  hidden_field: '<input  id="radio<%= id %>" type="fh_appform_hidden" value="" data-type="radio">',
+  choice: '<input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" class="field radio" value="<%= value %>" type="radio"><label class="choice" ><%= choice %></label><br/>',
+  radio: '<div class="fh_appform_field_input"><%= radioChoices %></div>',
+
+  renderInput: function(index) {
     var choices = this.model.getRadioOption();
     var self = this;
-    var html = '';
+    var radioChoicesHtml = "";
+    var fullRadioHtml = "";
+    var html = "";
+
     var fieldId = this.model.getFieldId();
-    $.each(choices, function (i, choice) {
+    $.each(choices, function(i, choice) {
       var jQObj = $(_.template(self.choice, {
-          'fieldId': fieldId,
-          'choice': choice.label,
-          'value': choice.label,
-          'index': index
-        }));
+        "fieldId": fieldId,
+        "choice": choice.label,
+        "value": choice.label,
+        "index": index
+      }));
+
       if (choice.checked === true) {
         jQObj.attr('checked', 'checked');
       }
-      html += self.htmlFromjQuery(jQObj);
+      radioChoicesHtml += self.htmlFromjQuery(jQObj);
     });
-    return html;
+
+    return _.template(this.radio, {"radioChoices": radioChoicesHtml});
   },
   valuePopulateToElement: function (index, value) {
     var wrapperObj = this.getWrapper(index);

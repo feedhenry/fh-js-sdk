@@ -1,9 +1,8 @@
 FieldDateTimeView = FieldView.extend({
   extension_type: 'fhdate',
-  inputTime:"<input data-field='<%= fieldId %>' data-index='<%= index %>' type='time'>",
-  inputDate:"<input data-field='<%= fieldId %>' data-index='<%= index %>' type='date'>",
-  inputDateTime:"<input data-field='<%= fieldId %>' data-index='<%= index %>' type='text'>",
-
+  inputTime:"<div><input data-field='<%= fieldId %>' data-index='<%= index %>' type='time'></div>",
+  inputDate:"<div ><input data-field='<%= fieldId %>' data-index='<%= index %>' type='date'></div>",
+  inputDateTime:"<div ><input data-field='<%= fieldId %>' data-index='<%= index %>' type='text'></div>",
   renderInput:function(index){
     var fieldId = this.model.getFieldId();
 
@@ -12,19 +11,20 @@ FieldDateTimeView = FieldView.extend({
     var buttonLabel="";
     if (unit=="dateTime"){
       template=this.inputDateTime;
-      buttonLabel="Get Current Date & Time";
+      buttonLabel="<i class='fa fa-calendar'></i> <i class='fa fa-clock-o'></i>&nbspGet Current Date & Time";
     }else if (unit=="date"){
       template=this.inputDate;
-      buttonLabel="Get Current Date";
+      buttonLabel="<i class='fa fa-calendar'></i>&nbspGet Current Date";
     }else if (unit=="time"){
       template=this.inputTime;
-      buttonLabel="Get Current Time";
+      buttonLabel="<i class='fa fa-clock-o'></i>&nbspGet Current Time";
     }
     var html=_.template(template,{
       "fieldId":fieldId,
       "index":index
     });
     html+=this.renderButton(index,buttonLabel,"fhdate");
+
     return html;
   },
   getUnit:function(){

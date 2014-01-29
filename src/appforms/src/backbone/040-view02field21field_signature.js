@@ -1,22 +1,17 @@
 FieldSignatureView = FieldView.extend({
   extension_type: 'fhsig',
-
-  input: "<img class='sigImage' data-field='<%= fieldId %>' data-index='<%= index %>'/>",
-  signaturePadStyle: "@font-face{font-family:Journal;src:url(journal.eot);src:url(journal.eot?#iefix) format('embedded-opentype'),url(journal.woff) format('woff'),url(journal.ttf) format('truetype'),url(journal.svg#JournalRegular) format('svg');font-weight:400;font-style:normal}.sigPad{margin:0;padding:0;width:250px;height:200px}.sigPad label{display:block;margin:0 0 .515em;padding:0;color:#000;font:italic normal 1em/1.375 Georgia,Times,serif}.sigPad label.error{color:#f33}.sigPad input{margin:0;padding:.2em 0;width:198px;border:1px solid #666;font-size:1em}.sigPad input.error{border-color:#f33}.sigPad button{margin:1em 0 0;padding:.6em .6em .7em;background-color:#ccc;border:0;-moz-border-radius:8px;-webkit-border-radius:8px;border-radius:8px;cursor:pointer;color:#555;font:700 1em/1.375 sans-serif;text-align:left}.sigPad button:hover{background-color:#333;color:#fff}.sig{display:none}.sigNav{display:none;height:2.25em;margin:0;padding:0;position:relative;list-style-type:none}.sigNav li{display:inline;float:left;margin:0;padding:0}.sigNav a,.sigNav a:link,.sigNav a:visited{display:block;margin:0;padding:0 .6em;border:0;color:#333;font-weight:700;line-height:2.25em;text-decoration:underline}.sigNav a.current,.sigNav a.current:link,.sigNav a.current:visited{background-color:#666;-moz-border-radius-topleft:8px;-moz-border-radius-topright:8px;-webkit-border-top-left-radius:8px;-webkit-border-top-right-radius:8px;border-radius:8px 8px 0 0;color:#fff;text-decoration:none}.sigNav .typeIt a.current,.sigNav .typeIt a.current:link,.sigNav .typeIt a.current:visited{background-color:#ccc;color:#555}.sigWrapper{clear:both;height:100px;border:1px solid #ccc}.sigWrapper.current{border-color:#666}.signed .sigWrapper{border:0}.pad{position:relative}.typed{height:55px;margin:0;padding:0 5px;position:absolute;z-index:90;cursor:default;color:#145394;font:400 1.875em/50px Journal,Georgia,Times,serif}.drawItDesc,.typeItDesc{display:none;margin:.75em 0 .515em;padding:.515em 0 0;border-top:3px solid #ccc;color:#000;font:italic normal 1em/1.375 Georgia,Times,serif}",
+  input: "<img class='sigImage' style='width: 100%;' data-field='<%= fieldId %>' data-index='<%= index %>'/>",
+//  signaturePadStyle: "@font-face{font-family:Journal;src:url(journal.eot);src:url(journal.eot?#iefix) format('embedded-opentype'),url(journal.woff) format('woff'),url(journal.ttf) format('truetype'),url(journal.svg#JournalRegular) format('svg');font-weight:400;font-style:normal}.sigPad{margin:0;padding:0;width:250px;height:200px}.sigPad label{display:block;margin:0 0 .515em;padding:0;color:#000;font:italic normal 1em/1.375 Georgia,Times,serif}.sigPad label.error{color:#f33}.sigPad input{margin:0;padding:.2em 0;width:198px;border:1px solid #666;font-size:1em}.sigPad input.error{border-color:#f33}.sigPad button{margin:1em 0 0;padding:.6em .6em .7em;background-color:#ccc;border:0;-moz-border-radius:8px;-webkit-border-radius:8px;border-radius:8px;cursor:pointer;color:#555;font:700 1em/1.375 sans-serif;text-align:left}.sigPad button:hover{background-color:#333;color:#fff}.sig{display:none}.sigNav{display:none;height:2.25em;margin:0;padding:0;position:relative;list-style-type:none}.sigNav li{display:inline;float:left;margin:0;padding:0}.sigNav a,.sigNav a:link,.sigNav a:visited{display:block;margin:0;padding:0 .6em;border:0;color:#333;font-weight:700;line-height:2.25em;text-decoration:underline}.sigNav a.current,.sigNav a.current:link,.sigNav a.current:visited{background-color:#666;-moz-border-radius-topleft:8px;-moz-border-radius-topright:8px;-webkit-border-top-left-radius:8px;-webkit-border-top-right-radius:8px;border-radius:8px 8px 0 0;color:#fff;text-decoration:none}.sigNav .typeIt a.current,.sigNav .typeIt a.current:link,.sigNav .typeIt a.current:visited{background-color:#ccc;color:#555}.sigWrapper{clear:both;height:100px;border:1px solid #ccc}.sigWrapper.current{border-color:#666}.signed .sigWrapper{border:0}.pad{position:relative}.typed{height:55px;margin:0;padding:0 5px;position:absolute;z-index:90;cursor:default;color:#145394;font:400 1.875em/50px Journal,Georgia,Times,serif}.drawItDesc,.typeItDesc{display:none;margin:.75em 0 .515em;padding:.515em 0 0;border-top:3px solid #ccc;color:#000;font:italic normal 1em/1.375 Georgia,Times,serif}",
   templates: {
-    signaturePad: ['<div class="sigPad">', '<ul class="sigNav">', '<button class="clearButton">Clear</button><button class="cap_sig_done_btn">Done</button>', '</ul>', '<div class="sig sigWrapper">', '<canvas class="pad" width="<%= canvasWidth %>" height="<%= canvasHeight %>"></canvas>', '</div>', '</div>']
+    signaturePad: ['<div class="sigPad">', '<ul class="sigNav" style="text-align: center;">', '<button class="clearButton fh_appform_button_cancel">Clear</button><button class="cap_sig_done_btn fh_appform_button_action">Done</button>', '<br style="clear:both;" />', '</ul>', '<div class="sig sigWrapper">', '<canvas class="pad" width="<%= canvasWidth %>" height="<%= canvasHeight %>"></canvas>', '</div>', '</div>']
   },
 
   initialize: function() {
     FieldView.prototype.initialize.call(this);
     this.on('visible', this.clearError);
   },
-
-  // dumpContent: function() {
-  //   FieldFileView.prototype.dumpContent.call(this);
-  // },
   onElementShow: function(index) {
-    var html = $(this.renderButton(index, "Capture Signature", this.extension_type));
+    var html = $(this.renderButton(index, "<i class='fa fa-pencil'></i>&nbspCapture Signature", this.extension_type));
     this.getWrapper(index).append(html);
     var self = this;
     html.on("click", function() {
@@ -28,45 +23,11 @@ FieldSignatureView = FieldView.extend({
       this.trigger("checkrules");
     }
   },
-  // render: function() {
-  //   var self = this;
-  //   this.$el.append(_.template(this.templates.input, {
-  //     "id": this.model.get('_id'),
-  //     "title": this.model.get('Title')
-  //   }));
-
-  //   // Add button
-  //   var button = this.addButton(this.$el, this.extension_type, 'Capture Signature');
-
-  //   // add to dom
-  //   this.options.parentEl.append(this.$el);
-  //   console.debug("render html=" + this.$el.html());
-  //   this.show();
-  // },
-
-  // contentChanged: function(e) {
-  //   FieldView.prototype.contentChanged.apply(this,arguments);
-  //   this.clearError();
-  // },
-
-  // TODO horrible hack
-  // clearError: function(){
-  //   var id = this.model.get('_id');
-  //   var val = this.model.get("value");
-  //   if(val && val.hasOwnProperty(id) && !this.isEmptyImage(val[id].fileBase64)) {
-  //     FieldView.prototype.clearError.call(this);
-  //   }
-  // },
-
-  // action: function(el, e) {
-  //   $('input', this.$el);
-  //   this.showSignatureCapture();
-  // },
   onRender: function() {
     var style = $("<style />");
-    style.text(this.signaturePadStyle);
+    //style.text(this.signaturePadStyle);
 
-    this.$el.append(style);
+    //this.$el.append(style);
   },
   showSignatureCapture: function(index) {
     var self = this;
@@ -80,8 +41,6 @@ FieldSignatureView = FieldView.extend({
       "canvasHeight": canvasHeight,
       "canvasWidth": canvasWidth
     }));
-    // console.debug("showSignatureCapture html=" + this.$el.html());
-
     var signaturePad = $('.sigPad', this.$el);
     signaturePad.css({
       position: 'fixed',
@@ -119,19 +78,8 @@ FieldSignatureView = FieldView.extend({
           sigData = self.toBmp();
         }
         self.setSignature(index, sigData);
-        // var img = $('.sigImage', self.$el)[0];
-        // img.src = sigData;
-        // $('input', self.$el).val(sigData);
-
-        // self.fileData = {};
-        // self.fileData.fileBase64 = sigData;
-        // var parts = self.splitImage(sigData);
-        // self.fileData.content_type = parts[0];
-        // self.fileData.filename = "signature." +  parts[1];
       }
       $('.sigPad', self.$el).hide();
-      // loadingView.hide();
-      // self.contentChanged();
     });
   },
   setSignature: function(index, base64Img) {
@@ -156,18 +104,6 @@ FieldSignatureView = FieldView.extend({
   dbgImage: function(msg, image) {
     console.log(msg + (image ? (image.substring(0, image.indexOf(",")) + "[len=" + image.length + "]") : " empty"));
   },
-  // toJpg: function(image) {
-  //   image = _.extend({}, image || {}, {
-  //     quality: 100,
-  //     width: 248,
-  //     height: 100
-  //   });
-  //   var cnvs = $('.sigPad', self.$el).find('canvas')[0];
-
-  //   var canvas = this.scaleCanvas(cnvs, image.width, image.height);
-  //   var myEncoder = new JPEGEncoder(image.quality);
-  //   return myEncoder.encode(canvas.getContext("2d").getImageData(0, 0, image.width, image.height));
-  // },
 
   toBmp: function(image) {
     image = _.extend({}, image || {}, {
