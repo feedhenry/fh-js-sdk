@@ -21,14 +21,14 @@ test("$fh.act", function() {
       strictEqual(p.url, 'http://localhost/cloud/testAct');
     }
     p.success({status:'ok'});
-  }
+  };
   $fh.act({act:'testAct', req:{test:'test'}}, function(res){
     strictEqual(res.status, 'ok');
     $fh.app_props = {mode:'live', appid:appid};
     $fh.act({act:'testAct', req:{test:test}}, function(resp){
       strictEqual(res.status, 'ok');
     }, function(err){
-
+      strictEqual(true, false);
     });
   }, function(err){
 
