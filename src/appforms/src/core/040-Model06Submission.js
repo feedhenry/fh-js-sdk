@@ -496,7 +496,7 @@ appForm.models = function (module) {
   // }
   Submission.prototype.getInputValueArray = function (fieldIds) {
     var rtn = [];
-    for (var i = 0; i< fields.length; i++) {
+    for (var i = 0; i< fieldIds.length; i++) {
       var  fieldId = fieldIds[i];
       var inputValue = this.getInputValueObjectById(fieldId);
       for (var j = 0; j < inputValue.fieldValues.length; j++) {
