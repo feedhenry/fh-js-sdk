@@ -51,7 +51,7 @@ FieldGeoView = FieldView.extend({
     var textInput = this.getWrapper(index).find(".fh_appform_field_input");
     if (location) {
       if (this.locationUnit === "latlong") {
-        locStr = '(' + location.lat + ', ' + location.long + ')';
+        locStr = '(' + location.lat + ', ' + location["long"] + ')';
       } else if (this.locationUnit === "eastnorth") {
         locStr = '(' + location.zone+' '+location.eastings + ', ' + location.northings + ')';
       }

@@ -109,7 +109,7 @@ FieldMapView = FieldView.extend({
         var map = this.maps[i];
         if (map) {
           google.maps.event.trigger(map, 'resize');
-          map.setCenter(new google.maps.LatLng(this.latLongs[i].lat, this.latLongs[i].long));
+          map.setCenter(new google.maps.LatLng(this.latLongs[i].lat, this.latLongs[i]["long"]));
         }
       }
     }
@@ -129,17 +129,15 @@ FieldMapView = FieldView.extend({
     }
   },
   valuePopulateToElement: function(index, value) {
+    var that = this;
+    function _handler() {
+      var map = that.maps[index];
+      var pt = new google.maps.LatLng(value.lat, value["long"]);
+      map.setCenter(pt);
+      map.setZoom(value.zoom);
+      that.markers[index].setPosition(pt);
+    }
     if (value){
-      var that = this;
-
-      function _handler() {
-        var map = that.maps[index];
-        var pt = new google.maps.LatLng(value.lat, value.long);
-        map.setCenter(pt);
-        map.setZoom(value.zoom);
-        that.markers[index].setPosition(pt);
-      }
-
       this.onAllMapInit(_handler);
     }
 

@@ -17,7 +17,7 @@ appForm.stores = function (module) {
   Store.prototype.update = function (model, cb) {
     throw 'Update not implemented:' + this.name;
   };
-  Store.prototype.delete = function (model, cb) {
+  Store.prototype["delete"] = function (model, cb) {
     throw 'Delete not implemented:' + this.name;
   };
   Store.prototype.upsert = function (model, cb) {

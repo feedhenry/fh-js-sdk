@@ -165,7 +165,7 @@ appForm.models = function (module) {
      */
   Model.prototype.clearLocal = function (cb) {
     var localStorage = appForm.stores.localStorage;
-    localStorage.delete(this, cb);
+    localStorage["delete"](this, cb);
   };
   Model.prototype.getDataAgent = function () {
     if (!this.dataAgent) {

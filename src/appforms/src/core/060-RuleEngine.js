@@ -1,8 +1,8 @@
 appForm.RulesEngine=rulesEngine;
 
-/*! fh-forms - v0.2.15 -  */
+/*! fh-forms - v0.2.18 -  */
 /*! async - v0.2.9 -  */
-/*! 2014-01-16 */
+/*! 2014-01-29 */
 /* This is the prefix file */
 function rulesEngine (formDef) {
   var define = {};
@@ -33,7 +33,7 @@ function rulesEngine (formDef) {
         if (called) throw new Error("Callback was already called.");
         called = true;
         fn.apply(root, arguments);
-      }
+      };
     }
 
     //// cross-browser compatiblity functions ////
@@ -906,7 +906,7 @@ function rulesEngine (formDef) {
               var err = arguments[0];
               var nextargs = Array.prototype.slice.call(arguments, 1);
               cb(err, nextargs);
-            }]))
+            }]));
           },
           function (err, results) {
             callback.apply(that, [err].concat(results));
@@ -1734,8 +1734,8 @@ function rulesEngine (formDef) {
       }
 
       function validatorLocationMap (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(fieldValue.lat && fieldValue.long) {
-          if(isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue.lat))) {
+        if(fieldValue.lat && fieldValue["long"]) {
+          if(isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue["long"]))) {
             return cb(new Error("Invalid latitude and longitude values"));
           } else {
             return cb();
@@ -1748,8 +1748,8 @@ function rulesEngine (formDef) {
 
       function validatorLocation (fieldValue, fieldDefinition, previousFieldValues, cb) {
         if(fieldDefinition.fieldOptions.definition.locationUnit === "latlong") {
-          if(fieldValue.lat && fieldValue.long){
-            if(isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue.lat))){
+          if(fieldValue.lat && fieldValue["long"]){
+            if(isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue["long"]))){
               return cb(new Error("Invalid latitude and longitude values"));
             } else {
               return cb();
@@ -1771,12 +1771,12 @@ function rulesEngine (formDef) {
             return cb(new Error("Invalid zone definition for northings and eastings location. " + fieldValue.zone));
           }
 
-          var east = parseInt(fieldValue.eastings);
+          var east = parseInt(fieldValue.eastings,10);
           if(isNaN(east)){
             return cb(new Error("Invalid eastings definition for northings and eastings location. " + fieldValue.eastings));
           }
 
-          var north = parseInt(fieldValue.northings);
+          var north = parseInt(fieldValue.northings, 10);
           if(isNaN(north)){
             return cb(new Error("Invalid northings definition for northings and eastings location. " + fieldValue.northings));
           }
@@ -1958,10 +1958,12 @@ function rulesEngine (formDef) {
             var field = fieldMap[ruleConditionalStatement.sourceField];
             var passed = false;
             var submissionValues = [];
+            var condition;
+            var testValue;
             if (submissionFieldsMap[ruleConditionalStatement.sourceField] && submissionFieldsMap[ruleConditionalStatement.sourceField].fieldValues) {
               submissionValues = submissionFieldsMap[ruleConditionalStatement.sourceField].fieldValues;
-              var condition = ruleConditionalStatement.restriction;
-              var testValue = ruleConditionalStatement.sourceValue;
+              condition = ruleConditionalStatement.restriction;
+              testValue = ruleConditionalStatement.sourceValue;
 
               // Validate rule predictes on the first entry only.
               passed = isConditionActive(field, submissionValues[0], testValue, condition);
@@ -2284,6 +2286,6 @@ function rulesEngine (formDef) {
 
   /* This is the suffix file */
   return module.exports(formDef);
-};
+}
 
 /* End of suffix file */
