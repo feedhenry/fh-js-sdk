@@ -5,7 +5,6 @@ FieldCameraGroupView = FieldCameraView.extend({
     // pass visible event down to all fields
     var parent = this;
     this.on('visible', function () {
-      $fh.logger.debug('group visible');
       var subviews = this.subviews;
       _(subviews).forEach(function (fieldView) {
         // this group is a camera view and contains itself
