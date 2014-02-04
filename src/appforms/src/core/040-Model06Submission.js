@@ -1,4 +1,4 @@
-appForm.models = function (module) {
+appForm.models = function(module) {
   module.submission = {
     newInstance: newInstance,
     fromLocal: fromLocal
@@ -8,32 +8,34 @@ appForm.models = function (module) {
   //cache in mem for single reference usage.
   var Model = appForm.models.Model;
   var statusMachine = {
-      'new': [
-        'draft',
-        'pending'
-      ],
-      'draft': [
-        'pending',
-        'draft'
-      ],
-      'pending': ['inprogress'],
-      'inprogress': [
-        'submitted',
-        'pending',
-        'error',
-        'inprogress'
-      ],
-      'submitted': [],
-      'error': [
-        'draft',
-        'pending',
-        'inprogress',
-        'error'
-      ]
-    };
+    'new': [
+      'draft',
+      'pending'
+    ],
+    'draft': [
+      'pending',
+      'draft'
+    ],
+    'pending': ['inprogress'],
+    'inprogress': [
+      'submitted',
+      'pending',
+      'error',
+      'inprogress'
+    ],
+    'submitted': [],
+    'error': [
+      'draft',
+      'pending',
+      'inprogress',
+      'error'
+    ]
+  };
+
   function newInstance(form) {
     return new Submission(form);
   }
+
   function fromLocal(localId, cb) {
     if (_submissions[localId]) {
       //already loaded
@@ -42,11 +44,11 @@ appForm.models = function (module) {
       //load from storage
       var obj = new Submission();
       obj.setLocalId(localId);
-      obj.loadLocal(function (err, submission) {
+      obj.loadLocal(function(err, submission) {
         if (err) {
           cb(err);
         } else {
-          submission.reloadForm(function (err, res) {
+          submission.reloadForm(function(err, res) {
             if (err) {
               cb(err);
             } else {
@@ -58,13 +60,16 @@ appForm.models = function (module) {
       });
     }
   }
+
   function Submission(form) {
-    Model.call(this, { '_type': 'submission' });
+    Model.call(this, {
+      '_type': 'submission'
+    });
     if (typeof form != 'undefined' && form) {
       this.set('formName', form.get('name'));
       this.set('formId', form.get('_id'));
       this.set('deviceFormTimestamp', form.getLastUpdate());
-      this.form = form;  //TODO may contain whole form definition in props.
+      this.form = form; //TODO may contain whole form definition in props.
     }
     this.set('status', 'new');
     this.set('createDate', appForm.utils.getTime());
@@ -89,15 +94,15 @@ appForm.models = function (module) {
   }
   appForm.utils.extend(Submission, Model);
   /**
-     * save current submission as draft
-     * @return {[type]} [description]
-     */
-  Submission.prototype.saveDraft = function (cb) {
+   * save current submission as draft
+   * @return {[type]} [description]
+   */
+  Submission.prototype.saveDraft = function(cb) {
     var targetStatus = 'draft';
     var that = this;
     this.set('timezoneOffset', appForm.utils.getTime(true));
     this.set('saveDate', appForm.utils.getTime());
-    this.changeStatus(targetStatus, function (err) {
+    this.changeStatus(targetStatus, function(err) {
       if (err) {
         return cb(err);
       } else {
@@ -106,9 +111,9 @@ appForm.models = function (module) {
       }
     });
   };
-  Submission.prototype.validateField = function (fieldId, cb) {
+  Submission.prototype.validateField = function(fieldId, cb) {
     var that = this;
-    this.getForm(function (err, form) {
+    this.getForm(function(err, form) {
       if (err) {
         cb(err);
       } else {
@@ -118,9 +123,9 @@ appForm.models = function (module) {
       }
     });
   };
-  Submission.prototype.checkRules = function (cb) {
+  Submission.prototype.checkRules = function(cb) {
     var self = this;
-    this.getForm(function (err, form) {
+    this.getForm(function(err, form) {
       if (err) {
         cb(err);
       } else {
@@ -131,26 +136,26 @@ appForm.models = function (module) {
     });
   };
   /**
-     * submit current submission to remote
-     * @param  {Function} cb [description]
-     * @return {[type]}      [description]
-     */
-  Submission.prototype.submit = function (cb) {
+   * submit current submission to remote
+   * @param  {Function} cb [description]
+   * @return {[type]}      [description]
+   */
+  Submission.prototype.submit = function(cb) {
     var targetStatus = 'pending';
     var validateResult = true;
     var that = this;
     this.set('timezoneOffset', appForm.utils.getTime(true));
-    this.getForm(function (err, form) {
+    this.getForm(function(err, form) {
       var ruleEngine = form.getRuleEngine();
       var submission = that.getProps();
-      ruleEngine.validateForm(submission, function (err, res) {
+      ruleEngine.validateForm(submission, function(err, res) {
         if (err) {
           cb(err);
         } else {
           var validation = res.validation;
           if (validation.valid) {
             that.set('submitDate', new Date());
-            that.changeStatus(targetStatus, function (error) {
+            that.changeStatus(targetStatus, function(error) {
               if (error) {
                 cb(error);
               } else {
@@ -166,7 +171,7 @@ appForm.models = function (module) {
       });
     });
   };
-  Submission.prototype.getUploadTask = function (cb) {
+  Submission.prototype.getUploadTask = function(cb) {
     var taskId = this.getUploadTaskId();
     if (taskId) {
       appForm.models.uploadManager.getTaskById(taskId, cb);
@@ -174,27 +179,27 @@ appForm.models = function (module) {
       cb(null, null);
     }
   };
-  Submission.prototype.cancelUploadTask = function (cb) {
+  Submission.prototype.cancelUploadTask = function(cb) {
     var targetStatus = 'submit';
     var that = this;
-    appForm.models.uploadManager.cancelSubmission(this, function (err) {
+    appForm.models.uploadManager.cancelSubmission(this, function(err) {
       if (err) {
         console.error(err);
       }
       that.changeStatus(targetStatus, cb);
     });
   };
-  Submission.prototype.getUploadTaskId = function () {
+  Submission.prototype.getUploadTaskId = function() {
     return this.get('uploadTaskId');
   };
-  Submission.prototype.setUploadTaskId = function (utId) {
+  Submission.prototype.setUploadTaskId = function(utId) {
     this.set('uploadTaskId', utId);
   };
-  Submission.prototype.submitted = function (cb) {
+  Submission.prototype.submitted = function(cb) {
     var targetStatus = 'submitted';
     var that = this;
     this.set('submittedDate', appForm.utils.getTime());
-    this.changeStatus(targetStatus, function (err) {
+    this.changeStatus(targetStatus, function(err) {
       if (err) {
         cb(err);
       } else {
@@ -204,20 +209,20 @@ appForm.models = function (module) {
     });
   };
   //joint form id and submissions timestamp.
-  Submission.prototype.genLocalId = function () {
+  Submission.prototype.genLocalId = function() {
     var lid = appForm.utils.localId(this);
     var formId = this.get('formId') || Math.ceil(Math.random() * 100000);
     this.setLocalId(formId + '_' + lid);
   };
   /**
-     * change status and save the submission locally and register to submissions list.
-     * @param {[type]} status [description]
-     */
-  Submission.prototype.changeStatus = function (status, cb) {
+   * change status and save the submission locally and register to submissions list.
+   * @param {[type]} status [description]
+   */
+  Submission.prototype.changeStatus = function(status, cb) {
     if (this.isStatusValid(status)) {
       var that = this;
       this.set('status', status);
-      this.saveToList(function (err) {
+      this.saveToList(function(err) {
         if (err) {
           console.log(err);
         }
@@ -226,52 +231,52 @@ appForm.models = function (module) {
     } else {
       throw 'Target status is not valid: ' + status;
     }
-    Submission.prototype.upload = function(cb) {
-        var targetStatus = "inprogress";
-        var that = this;
-        if (this.isStatusValid(targetStatus)) {
-            this.set("status", targetStatus);
-            this.set("uploadStartDate", appForm.utils.getTime());
-            appForm.models.submissions.updateSubmissionWithoutSaving(this);
-            appForm.models.uploadManager.queueSubmission(this, function(err, ut) {
-                if (err) {
-                    cb(err);
-                } else {
-                    ut.set("error", null);
-                    ut.saveLocal(function(err){
-                      if(err) console.log(err);
-                    });
-                    that.emit("inprogress", ut);
-                    ut.on("progress", function(progress){
-                      that.emit("progress", progress);
-                    });
-                    cb(null, ut);
-                }
-            });
-
-        } else {
-            return cb("Invalid Status to upload a form submission.");
-        }
-    };
   };
-  Submission.prototype.saveToList = function (cb) {
+  Submission.prototype.upload = function(cb) {
+    var targetStatus = "inprogress";
+    var that = this;
+    if (this.isStatusValid(targetStatus)) {
+      this.set("status", targetStatus);
+      this.set("uploadStartDate", appForm.utils.getTime());
+      appForm.models.submissions.updateSubmissionWithoutSaving(this);
+      appForm.models.uploadManager.queueSubmission(this, function(err, ut) {
+        if (err) {
+          cb(err);
+        } else {
+          ut.set("error", null);
+          ut.saveLocal(function(err) {
+            if (err) console.log(err);
+          });
+          that.emit("inprogress", ut);
+          ut.on("progress", function(progress) {
+            that.emit("progress", progress);
+          });
+          cb(null, ut);
+        }
+      });
+
+    } else {
+      return cb("Invalid Status to upload a form submission.");
+    }
+  };
+  Submission.prototype.saveToList = function(cb) {
     appForm.models.submissions.saveSubmission(this, cb);
   };
-  Submission.prototype.error = function (errorMsg, cb) {
+  Submission.prototype.error = function(errorMsg, cb) {
     this.set('errorMessage', errorMsg);
     var targetStatus = 'error';
     this.changeStatus(targetStatus, cb);
     this.emit('submitted', errorMsg);
   };
-  Submission.prototype.getStatus = function () {
+  Submission.prototype.getStatus = function() {
     return this.get('status');
   };
   /**
-     * check if a target status is valid
-     * @param  {[type]}  targetStatus [description]
-     * @return {Boolean}              [description]
-     */
-  Submission.prototype.isStatusValid = function (targetStatus) {
+   * check if a target status is valid
+   * @param  {[type]}  targetStatus [description]
+   * @return {Boolean}              [description]
+   */
+  Submission.prototype.isStatusValid = function(targetStatus) {
     var status = this.get('status').toLowerCase();
     var nextStatus = statusMachine[status];
     if (nextStatus.indexOf(targetStatus) > -1) {
@@ -280,22 +285,22 @@ appForm.models = function (module) {
       return false;
     }
   };
-  Submission.prototype.addComment = function (msg, user) {
+  Submission.prototype.addComment = function(msg, user) {
     var now = appForm.utils.getTime();
     var ts = now.getTime();
     var newComment = {
-        'madeBy': typeof user == 'undefined' ? '' : user.toString(),
-        'madeOn': now,
-        'value': msg,
-        'timeStamp': ts
-      };
+      'madeBy': typeof user == 'undefined' ? '' : user.toString(),
+      'madeOn': now,
+      'value': msg,
+      'timeStamp': ts
+    };
     this.getComments().push(newComment);
     return ts;
   };
-  Submission.prototype.getComments = function () {
+  Submission.prototype.getComments = function() {
     return this.get('comments');
   };
-  Submission.prototype.removeComment = function (timeStamp) {
+  Submission.prototype.removeComment = function(timeStamp) {
     var comments = this.getComments();
     for (var i = 0; i < comments.length; i++) {
       var comment = comments[i];
@@ -305,38 +310,38 @@ appForm.models = function (module) {
       }
     }
   };
-  Submission.prototype.addSubmissionFile = function (fileHash) {
+  Submission.prototype.addSubmissionFile = function(fileHash) {
     var filesInSubmission = this.get('filesInSubmission', {});
     filesInSubmission[fileHash] = true;
     this.set('filesInSubmission', filesInSubmission);
-    this.saveLocal(function (err) {
+    this.saveLocal(function(err) {
       if (err)
         console.error(err);
     });
   };
   /**
-     * Add a value to submission.
-     * This will not cause the field been validated.
-     * Validation should happen:
-     * 1. onblur (field value)
-     * 2. onsubmit (whole submission json)
-     *
-     * @param {[type]} params   {"fieldId","value","index":optional}
-     * @param {} cb(err,res) callback function when finished
-     * @return true / error message
-     */
-  Submission.prototype.addInputValue = function (params, cb) {
+   * Add a value to submission.
+   * This will not cause the field been validated.
+   * Validation should happen:
+   * 1. onblur (field value)
+   * 2. onsubmit (whole submission json)
+   *
+   * @param {[type]} params   {"fieldId","value","index":optional}
+   * @param {} cb(err,res) callback function when finished
+   * @return true / error message
+   */
+  Submission.prototype.addInputValue = function(params, cb) {
     var that = this;
     var fieldId = params.fieldId;
     var inputValue = params.value;
     var index = params.index === undefined ? -1 : params.index;
-    this.getForm(function (err, form) {
+    this.getForm(function(err, form) {
       var fieldModel = form.getFieldModelById(fieldId);
       if (that.transactionMode) {
         if (!that.tmpFields[fieldId]) {
           that.tmpFields[fieldId] = [];
         }
-        fieldModel.processInput(params, function (err, result) {
+        fieldModel.processInput(params, function(err, result) {
           if (err) {
             cb(err);
           } else {
@@ -353,7 +358,7 @@ appForm.models = function (module) {
         });
       } else {
         var target = that.getInputValueObjectById(fieldId);
-        fieldModel.processInput(params, function (err, result) {
+        fieldModel.processInput(params, function(err, result) {
           if (err) {
             cb(err);
           } else {
@@ -371,35 +376,35 @@ appForm.models = function (module) {
       }
     });
   };
-  Submission.prototype.getInputValueByFieldId = function (fieldId, cb) {
+  Submission.prototype.getInputValueByFieldId = function(fieldId, cb) {
     var values = this.getInputValueObjectById(fieldId).fieldValues;
-    this.getForm(function (err, form) {
+    this.getForm(function(err, form) {
       var fieldModel = form.getFieldModelById(fieldId);
       fieldModel.convertSubmission(values, cb);
     });
   };
   /**
-     * Reset submission
-     * @return {[type]} [description]
-     */
-  Submission.prototype.reset = function (cb) {
+   * Reset submission
+   * @return {[type]} [description]
+   */
+  Submission.prototype.reset = function(cb) {
     this.set('formFields', []);
   };
-  Submission.prototype.clearLocalSubmissionFiles = function (cb) {
+  Submission.prototype.clearLocalSubmissionFiles = function(cb) {
     var filesInSubmission = this.get('filesInSubmission', {});
     for (var fileHashName in filesInSubmission) {
-      appForm.utils.fileSystem.remove(fileHashName, function (err) {
+      appForm.utils.fileSystem.remove(fileHashName, function(err) {
         if (err)
           console.error(err);
       });
     }
     cb();
   };
-  Submission.prototype.startInputTransaction = function () {
+  Submission.prototype.startInputTransaction = function() {
     this.transactionMode = true;
     this.tmpFields = {};
   };
-  Submission.prototype.endInputTransaction = function (succeed) {
+  Submission.prototype.endInputTransaction = function(succeed) {
     this.transactionMode = false;
     if (succeed) {
       var targetArr = this.get('formFields');
@@ -418,12 +423,12 @@ appForm.models = function (module) {
     }
   };
   /**
-     * remove an input value from submission
-     * @param  {[type]} fieldId field id
-     * @param  {[type]} index (optional) the position of the value will be removed if it is repeated field.
-     * @return {[type]}         [description]
-     */
-  Submission.prototype.removeFieldValue = function (fieldId, index) {
+   * remove an input value from submission
+   * @param  {[type]} fieldId field id
+   * @param  {[type]} index (optional) the position of the value will be removed if it is repeated field.
+   * @return {[type]}         [description]
+   */
+  Submission.prototype.removeFieldValue = function(fieldId, index) {
     var targetArr = [];
     if (this.transactionMode) {
       targetArr = this.tmpFields.fieldId;
@@ -438,7 +443,7 @@ appForm.models = function (module) {
       }
     }
   };
-  Submission.prototype.getInputValueObjectById = function (fieldId) {
+  Submission.prototype.getInputValueObjectById = function(fieldId) {
     var formFields = this.get('formFields', []);
     for (var i = 0; i < formFields.length; i++) {
       var formField = formFields[i];
@@ -447,26 +452,30 @@ appForm.models = function (module) {
       }
     }
     var newField = {
-        'fieldId': fieldId,
-        'fieldValues': []
-      };
+      'fieldId': fieldId,
+      'fieldValues': []
+    };
     formFields.push(newField);
     return newField;
   };
   /**
-     * get form model related to this submission.
-     * @return {[type]} [description]
-     */
-  Submission.prototype.getForm = function (cb) {
+   * get form model related to this submission.
+   * @return {[type]} [description]
+   */
+  Submission.prototype.getForm = function(cb) {
     var Form = appForm.models.Form;
     var formId = this.get('formId');
-    new Form({ 'formId': formId }, cb);
+    new Form({
+      'formId': formId
+    }, cb);
   };
-  Submission.prototype.reloadForm = function (cb) {
+  Submission.prototype.reloadForm = function(cb) {
     var Form = appForm.models.Form;
     var formId = this.get('formId');
     var self = this;
-    new Form({ formId: formId }, function (err, form) {
+    new Form({
+      formId: formId
+    }, function(err, form) {
       if (err) {
         cb(err);
       } else {
@@ -479,10 +488,10 @@ appForm.models = function (module) {
     });
   };
   /**
-     * Retrieve all file fields related value
-     * @return {[type]} [description]
-     */
-  Submission.prototype.getFileInputValues = function () {
+   * Retrieve all file fields related value
+   * @return {[type]} [description]
+   */
+  Submission.prototype.getFileInputValues = function() {
     var fileFieldIds = this.form.getFileFieldsId();
     return this.getInputValueArray(fileFieldIds);
   };
@@ -494,10 +503,10 @@ appForm.models = function (module) {
   //     var imageFieldIds = this.form.getImageFieldsId();
   //     return this.getInputValueArray(imageFieldIds);
   // }
-  Submission.prototype.getInputValueArray = function (fieldIds) {
+  Submission.prototype.getInputValueArray = function(fieldIds) {
     var rtn = [];
-    for (var i = 0; i< fields.length; i++) {
-      var  fieldId = fieldIds[i];
+    for (var i = 0; i < fields.length; i++) {
+      var fieldId = fieldIds[i];
       var inputValue = this.getInputValueObjectById(fieldId);
       for (var j = 0; j < inputValue.fieldValues.length; j++) {
         var tmpObj = inputValue.fieldValues[j];
@@ -509,22 +518,22 @@ appForm.models = function (module) {
     }
     return rtn;
   };
-  Submission.prototype.clearLocal = function (cb) {
+  Submission.prototype.clearLocal = function(cb) {
     var self = this;
     //remove from uploading list
-    appForm.models.uploadManager.cancelSubmission(self, function (err, uploadTask) {
+    appForm.models.uploadManager.cancelSubmission(self, function(err, uploadTask) {
       if (err) {
         console.error(err);
         return cb(err);
       }
       //remove from submission list
-      appForm.models.submissions.removeSubmission(self.getLocalId(), function (err) {
+      appForm.models.submissions.removeSubmission(self.getLocalId(), function(err) {
         if (err) {
           console.err(err);
           return cb(err);
         }
-        self.clearLocalSubmissionFiles(function () {
-          Model.prototype.clearLocal.call(self, function (err) {
+        self.clearLocalSubmissionFiles(function() {
+          Model.prototype.clearLocal.call(self, function(err) {
             if (err) {
               console.error(err);
               return cb(err);
