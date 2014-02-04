@@ -5800,6 +5800,11 @@ Lawnchair.adapter('webkit-sqlite', (function() {
     script.async = "async";
     script.src = url;
     script.type = "text/javascript";
+    script.onerror = function () {
+      if (callback && typeof callback === "function") {
+        callback("network");
+      }
+    };
     script.onload = script.onreadystatechange = function () {
       if (!script.readyState || /loaded|complete/.test(script.readyState)) {
         script.onload = script.onreadystatechange = null;
@@ -5973,7 +5978,11 @@ Lawnchair.adapter('webkit-sqlite', (function() {
             url += "&_jsonpdata=" + encodeURIComponent(JSON.stringify(o.data));
           }
         }
-        __load_script(url);
+        __load_script(url, function(error){
+          if(error) {
+            done(0, 'network');
+          }
+        });
       }
     };
 
