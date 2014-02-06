@@ -29,7 +29,7 @@ FieldDateTimeView = FieldView.extend({
   },
   getUnit:function(){
     var def=this.model.getFieldDefinition();
-    return def.dateTimeUnit;
+    return def.datetimeUnit;
   },
   onRender:function(){
     var that=this;

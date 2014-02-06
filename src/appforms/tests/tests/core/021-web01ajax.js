@@ -4,7 +4,7 @@ describe("Ajax", function() {
             assert(!err);
             assert(res);
             assert(res.forms);
-            assert(res.forms.length === 1);
+            assert(res.forms.length > 0);
             done();
         });
     });

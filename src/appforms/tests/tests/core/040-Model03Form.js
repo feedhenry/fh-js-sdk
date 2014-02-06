@@ -14,17 +14,19 @@ describe("Form model", function() {
         try {
             //load from local then from remote.
             new Form({
-                formId: "527d4539639f521e0a000004",
+                formId: testData.formId,
                 fromRemote: true
             }, function(err, form) {
+                console.log("FINISHED", err, form);
                 assert(!err);
                 assert(form);
-                assert(form.get("_id") == "527d4539639f521e0a000004");
+                assert(form.get("_id") == testData.formId);
                 assert(form.getLastUpdate());
-                assert(form.get("name") == "testFieldsForm");
+                assert(form.get("name") == testData.formName);
                 done();
             });
         } catch (e) {
+          console.log("FINISHED EXE", e);
             console.error(e);
             error = true;
         }
@@ -36,13 +38,13 @@ describe("Form model", function() {
     it("how to initialise a form and pop data associated forcely from remote", function(done) {
         var Form = appForm.models.Form;
         var form = new Form({
-            formId: "527d4539639f521e0a000004"
+            formId: testData.formId
         }, function(err, form) {
             assert(!err);
             assert(form);
-            assert(form.get("_id") == "527d4539639f521e0a000004");
+            assert(form.get("_id") == testData.formId);
             assert(form.getLastUpdate());
-            assert(form.get("name") == "testFieldsForm");
+            assert(form.get("name") == testData.formName);
             done();
         });
     });
@@ -61,7 +63,7 @@ describe("Form model", function() {
     it("how to get form general properties (name, description,etc)", function(done) {
         var Form = appForm.models.Form;
         var form = new Form({
-            formId: "527d4539639f521e0a000004",
+            formId: testData.formId,
             fromRemote: true
         }, function(err, form) {
             assert(form.getName());
@@ -74,7 +76,7 @@ describe("Form model", function() {
     it("how to get pages associated to the form", function(done) {
         var Form = appForm.models.Form;
         new Form({
-            formId: "527d4539639f521e0a000004",
+            formId: testData.formId,
             fromRemote: true
         }, function(err, form) {
             var pageList = form.getPageModelList();
@@ -87,24 +89,24 @@ describe("Form model", function() {
     it("how to get a field model by field id", function(done) {
         var Form = appForm.models.Form;
         new Form({
-            formId: "527d4539639f521e0a000004",
+            formId: testData.formId,
             fromRemote: true
         }, function(err, form) {
-            var fieldModel = form.getFieldModelById("52974ee55e272dcb3d00009b");
+            var fieldModel = form.getFieldModelById(testData.fieldId);
             assert(fieldModel);
-            assert(fieldModel.get("_id") == "52974ee55e272dcb3d00009b");
+            assert(fieldModel.get("_id") == testData.fieldId);
             done();
         });
     });
     it("how to get a page model by page id", function(done) {
         var Form = appForm.models.Form;
         new Form({
-            formId: "527d4539639f521e0a000004",
+            formId: testData.formId,
             fromRemote: true
         }, function(err, form) {
-            var pageModel = form.getPageModelById("527d4539639f521e0a000005");
+            var pageModel = form.getPageModelById(testData.pageId);
             assert(pageModel);
-            assert(pageModel.get("_id") == "527d4539639f521e0a000005");
+            assert(pageModel.get("_id") == testData.pageId);
             done();
         });
     });
@@ -112,12 +114,12 @@ describe("Form model", function() {
     it("how to initialise a new submission from a form", function(done) {
         var Form = appForm.models.Form;
         new Form({
-            formId: "527d4539639f521e0a000004",
+            formId: testData.formId,
             fromRemote: true
         }, function(err, form) {
             var submission = form.newSubmission();
             assert(submission);
-            assert(submission.get("formId", "527d4539639f521e0a000004"));
+            assert(submission.get("formId", testData.formId));
             done();
         });
     });
@@ -125,11 +127,11 @@ describe("Form model", function() {
     it("form initialisation is singleton for a single formid. only 1 instance of form model will be returned for same form id", function(done) {
         var Form = appForm.models.Form;
         new Form({
-            formId: "527d4539639f521e0a000004",
+            formId: testData.formId,
             fromRemote: true
         }, function(err, form1) {
             new Form({
-                formId: "527d4539639f521e0a000004",
+                formId: testData.formId,
                 fromRemote: true
             }, function(err, form2) {
                 assert(!err);
@@ -142,12 +144,12 @@ describe("Form model", function() {
     it("how to remove a form from cache and return new instance", function(done) {
         var Form = appForm.models.Form;
         new Form({
-            formId: "527d4539639f521e0a000004",
+            formId: testData.formId,
             fromRemote: true
         }, function(err, form1) {
             form1.removeFromCache(); //remove form1 from cache.
             new Form({ //this will not load the form mem cache but still from local storage
-                formId: "527d4539639f521e0a000004",
+                formId: testData.formId,
                 fromRemote: false
             }, function(err, form2) {
                 assert(!err);
@@ -159,7 +161,7 @@ describe("Form model", function() {
     });
 
     it ("how to initialise form with raw json definition",function(done){
-        appForm.web.ajax.get("/mbaas/forms/527d4539639f521e0a000004",function(err,res){
+        appForm.web.ajax.get("/mbaas/forms/" + testData.formId,function(err,res){
             var formJSON=res;
              var Form = appForm.models.Form;
              new Form({

@@ -17,12 +17,12 @@ describe("$fh.forms API", function() {
     var getForm = appForm.api.getForm;
 
     getForm({
-      "formId": "527d4539639f521e0a000004"
+      "formId": testData.formId
     }, function(err, foundForm) {
       assert(!err);
 
       assert(foundForm.get("_type") === "form");
-      assert(foundForm.getName() === "testFieldsForm");
+      assert(foundForm.getName() === testData.formName);
       done();
     });
   });
@@ -34,7 +34,7 @@ describe("$fh.forms API", function() {
     }, function(err, theme) {
       assert(!err);
 
-      assert(theme.get("name") === "ShinyBlueTheme");
+      assert(theme.get("name") === testData.themeName);
       done();
     });
   });
@@ -157,7 +157,7 @@ describe("$fh.forms API", function() {
     var Form = appForm.models.Form;
 
     var form = new Form({
-      formId: "527d4539639f521e0a000004"
+      formId: testData.formId
     }, function(err, form) {
       assert(!err);
       var submission = appForm.models.submission.newInstance(form);
@@ -284,7 +284,7 @@ describe("$fh.forms API", function() {
       assert(!err);
 
       var form = new Form({
-        "formId": "527d4539639f521e0a000004",
+        "formId": testData.formId,
         "fromRemote": false
       }, function(err, form) {
         assert(!err);
@@ -295,7 +295,7 @@ describe("$fh.forms API", function() {
         //Add some data to the submission
         newSubmission.startInputTransaction();
         newSubmission.addInputValue({
-          fieldId: "527d4539639f521e0a000006",
+          fieldId: testData.fieldId,
           value: "This is some text min 20 chars."
         }, function(err, res) {
           if (err) console.error(err);
@@ -303,7 +303,7 @@ describe("$fh.forms API", function() {
           assert.ok(res);
         });
         newSubmission.addInputValue({
-          fieldId: "527d4539639f521e0a000006",
+          fieldId: testData.fieldId,
           value: "This is some more text min 20 chars."
         }, function(err, res) {
           if (err) console.error(err);
@@ -311,7 +311,7 @@ describe("$fh.forms API", function() {
           assert.ok(res);
         });
         newSubmission.addInputValue({
-          fieldId: "527d4539639f521e0a000006",
+          fieldId: testData.fieldId,
           value: "This is even more text min 20 chars."
         }, function(err, res) {
           if (err) console.error(err);

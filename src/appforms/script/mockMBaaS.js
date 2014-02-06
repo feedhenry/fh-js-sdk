@@ -152,6 +152,7 @@ function _getForm(req, res) {
   var formId = req.params.formId;
 
   if (allForms[formId]) {
+    console.log("Form Found");
     res.json(allForms[formId]);
   } else {
     res.status(404).end("Cannot find specified form");

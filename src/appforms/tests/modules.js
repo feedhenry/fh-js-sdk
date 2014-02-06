@@ -42,3 +42,14 @@
  backbone:[
  ]
 };
+
+var testData = {"formId" : "52efeb30538082e229000002",
+  "formName" : "testForm",
+  "pageId": "52efeb30538082e229000001",
+  "fieldId" : "52efeb62538082e229000003",
+  "fieldIdRadio" : "52efeb62538082e229000004",
+  "fieldIdCheckbox" : "52efeb9c538082e229000005",
+  "fieldIdFile" : "52efeb9c538082e229000007",
+  "fieldIdPhoto": "52efeb9c538082e229000006",
+  "themeName" : "appFormsPhase2"
+};

@@ -5,7 +5,7 @@ describe("upload manager", function() {
         uploadManager = appForm.models.uploadManager;
         var Form = appForm.models.Form;
         new Form({
-            formId: "527d4539639f521e0a000004",
+            formId: testData.formId,
             fromRemote: true
         }, function(err, _form) {
             form = _form;

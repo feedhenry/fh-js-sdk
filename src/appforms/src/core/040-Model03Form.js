@@ -9,65 +9,66 @@ appForm.models = function (module) {
      * @param {Function} cb         [description]
      */
   function Form(params, cb) {
+    console.log(params, cb);
+    var that = this;
     var rawMode = params.rawMode;
     var rawData = params.rawData;
     var formId = params.formId;
-    if (!formId) {
-      throw 'Cannot initialise a form object without an id. id:' + formId;
+    var fromRemote = params.fromRemote;
+
+
+    if (typeof fromRemote == 'function' || typeof cb == 'function') {
+      if (typeof fromRemote == 'function') {
+        cb = fromRemote;
+        fromRemote = false;
+      }
+    } else {
+      console.log('a callback function is required for initialising form data. new Form (formId, [isFromRemote], cb)');
     }
+
+    if (!formId) {
+      return cb('Cannot initialise a form object without an id. id:' + formId, null);
+    }
+
     Model.call(this, {
       '_id': formId,
       '_type': 'form'
     });
+
     if (_forms[formId]) {
       //found form object in mem return it.
       cb(null, _forms[formId]);
       return _forms[formId];
     }
-    if (rawMode === true) {
-      this.fromJSON(rawData);
-      try {
-        this.initialise();
-      } catch (e) {
-        console.error('Failed to initialise form.');
-        console.error(e);  //TODO throw the error if in dev mode.
-      }
+
+    function processRawFormJSON(){
+      that.fromJSON(rawData);
+      that.initialise();
+
       _forms[formId] = this;
-      cb(null, this);
+      return cb(null, that);
+    }
+
+    if (rawMode === true) {
+      processRawFormJSON();
     } else {
-      var fromRemote = params.fromRemote;
-      if (typeof fromRemote == 'function' || typeof cb == 'function') {
-        if (typeof fromRemote == 'function') {
-          cb = fromRemote;
-          fromRemote = false;
-        }
-        var that = this;
-        this.refresh(fromRemote, function (err, obj) {
-          try {
+      that.refresh(fromRemote, function (err, obj) {
+        if (appForm.models.forms.isFormUpdated(that)) {
+          that.refresh(true, function (err, obj1) {
+            if(err){
+              return cb(err, null);
+            }
             that.initialise();
-          } catch (e) {
-            console.error('Failed to initialise form.');
-            console.error(e);  //TODO throw the error if in dev mode.
-          }
+
+            _forms[formId] = obj1;
+            return cb(err, obj1);
+          });
+        } else {
+          that.initialise();
           _forms[formId] = obj;
-          if (appForm.models.forms.isFormUpdated(that)) {
-            that.refresh(true, function (err, obj1) {
-              try {
-                that.initialise();
-              } catch (e) {
-                console.error(e);
-                cb(err, obj);
-              }
-              _forms[formId] = obj1;
-              cb(err, obj1);
-            });
-          } else {
-            cb(err, obj);
-          }
-        });
-      } else {
-        throw 'a callback function is required for initialising form data. new Form (formId, [isFromRemote], cb)';
-      }
+          cb(err, obj);
+        }
+      });
     }
   }
   appForm.utils.extend(Form, Model);
@@ -86,7 +87,7 @@ appForm.models = function (module) {
   Form.prototype.initialiseFields = function () {
     var fieldsRef = this.getFieldRef();
     this.fields = {};
-    console.log('field Ref', fieldRef);
+    console.log('field Ref', fieldsRef);
     for (var fieldId in fieldsRef) {
       var fieldRef = fieldsRef[fieldId];
       var pageIndex = fieldRef.page;
@@ -123,8 +124,10 @@ appForm.models = function (module) {
     }
     for (i = 0; i<constructors.length ; i++) {
       var constructor = constructors[i];
+      console.log("constructor", constructor);
       var ruleObj = new appForm.models.Rule(constructor);
       var fieldIds = ruleObj.getRelatedFieldId();
+      console.log("fieldIds", fieldIds);
       for (var j = 0; i<fieldIds.length; j++) {
         var  fieldId = fieldIds[j];
         if (!this.rules[fieldId]) {

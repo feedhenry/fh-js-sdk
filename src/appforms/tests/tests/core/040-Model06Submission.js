@@ -3,7 +3,7 @@ describe("Submission model", function() {
         var Form = appForm.models.Form;
         //load form
         var form = new Form({
-            formId: "527d4539639f521e0a000004"
+            formId: testData.formId
         }, function(err, form) {
             assert(!err);
             var submission = appForm.models.submission.newInstance(form);
@@ -19,7 +19,7 @@ describe("Submission model", function() {
         var Form = appForm.models.Form;
         //load form
         var form = new Form({
-            formId: "527d4539639f521e0a000004"
+            formId: testData.formId
         }, function(err, form) {
             assert(!err);
             var submission = appForm.models.submission.newInstance(form);
@@ -42,7 +42,7 @@ describe("Submission model", function() {
         var error = false;
         //load form
         var form = new Form({
-            formId: "527d4539639f521e0a000004"
+            formId: testData.formId
         }, function(err, form) {
             assert(!err);
             var submission = appForm.models.submission.newInstance(form);
@@ -66,7 +66,7 @@ describe("Submission model", function() {
         var Form = appForm.models.Form;
         //load form
         var form = new Form({
-            formId: "527d4539639f521e0a000004"
+            formId: testData.formId
         }, function(err, form) {
             assert(!err);
             var submission = appForm.models.submission.newInstance(form);
@@ -87,7 +87,7 @@ describe("Submission model", function() {
         });
     });
     it("submission model loaded from local should have only 1 reference", function(done) {
-        var meta = appForm.models.submissions.findByFormId("527d4539639f521e0a000004")[0];
+        var meta = appForm.models.submissions.findByFormId(testData.formId)[0];
         var localId = meta._ludid;
         appForm.models.submission.fromLocal(localId, function(err, submission1) {
             appForm.models.submission.fromLocal(localId, function(err, submission2) {
@@ -99,7 +99,7 @@ describe("Submission model", function() {
     });
     describe("comment", function() {
         it("how to add a comment to a submission with or without a user", function(done) {
-            var meta = appForm.models.submissions.findByFormId("527d4539639f521e0a000004")[0];
+            var meta = appForm.models.submissions.findByFormId(testData.formId)[0];
             // debugger;
             var localId = meta._ludid;
             appForm.models.submission.fromLocal(localId, function(err, submission) {
@@ -116,7 +116,7 @@ describe("Submission model", function() {
         });
 
         it("how to remove a comment from submission", function(done) {
-            var meta = appForm.models.submissions.findByFormId("527d4539639f521e0a000004")[0];
+            var meta = appForm.models.submissions.findByFormId(testData.formId)[0];
             var localId = meta._ludid;
             appForm.models.submission.fromLocal(localId, function(err, submission) {
                 assert(!err);
@@ -138,7 +138,7 @@ describe("Submission model", function() {
             var Form = appForm.models.Form;
             //load form
             var form = new Form({
-                formId: "527d4539639f521e0a000004"
+                formId: testData.formId
             }, function(err, form) {
                 assert(!err);
                 submission = appForm.models.submission.newInstance(form);
@@ -151,24 +151,24 @@ describe("Submission model", function() {
         });
         it("how to add user input value to submission model", function() {
             submission.addInputValue({
-                fieldId: "527d4539639f521e0a000006",
+                fieldId: testData.fieldId,
                 value: 40
             }, function(err) {
                 assert(!err)
             });
-            submission.getInputValueByFieldId("527d4539639f521e0a000006", function(err, res) {
+            submission.getInputValueByFieldId(testData.fieldId, function(err, res) {
                 assert(res[0] == 40);
             });
         });
         it("how to reset a submission to clear all user input", function() {
             submission.addInputValue({
-                fieldId: "527d4539639f521e0a000006",
+                fieldId: testData.fieldId,
                 value: 40
             }, function(err) {
                 assert(!err)
             });
             submission.reset();
-            submission.getInputValueByFieldId("527d4539639f521e0a000006", function(err, res) {
+            submission.getInputValueByFieldId(testData.fieldId, function(err, res) {
                 assert(!err);
                 assert(res.length == 0);
             });
@@ -177,82 +177,82 @@ describe("Submission model", function() {
         it("how to use transaction to input a series of user values to submission model", function() {
             submission.reset();
             submission.addInputValue({
-                fieldId: "527d4539639f521e0a000006",
+                fieldId: testData.fieldId,
                 value: 40
             }, function(err) {
                 assert(!err)
             });
             submission.startInputTransaction();
             submission.addInputValue({
-                fieldId: "527d4539639f521e0a000006",
+                fieldId: testData.fieldId,
                 value: 50
             }, function(err) {
                 assert(!err)
             });
             submission.addInputValue({
-                fieldId: "527d4539639f521e0a000006",
+                fieldId: testData.fieldId,
                 value: 60
             }, function(err) {
                 assert(!err)
             });
             submission.addInputValue({
-                fieldId: "527d4539639f521e0a000006",
+                fieldId: testData.fieldId,
                 value: 35
             }, function(err) {
                 assert(!err)
             });
             submission.endInputTransaction(true);
-            submission.getInputValueByFieldId("527d4539639f521e0a000006", function(err, res) {
+            submission.getInputValueByFieldId(testData.fieldId, function(err, res) {
                 assert(res[0] == 40);
             });
-            submission.getInputValueByFieldId("527d4539639f521e0a000006", function(err, res) {
+            submission.getInputValueByFieldId(testData.fieldId, function(err, res) {
                 assert(res[1] == 50);
             });
-            submission.getInputValueByFieldId("527d4539639f521e0a000006", function(err, res) {
+            submission.getInputValueByFieldId(testData.fieldId, function(err, res) {
                 assert(res[2] == 60);
             });
-            submission.getInputValueByFieldId("527d4539639f521e0a000006", function(err, res) {
+            submission.getInputValueByFieldId(testData.fieldId, function(err, res) {
                 assert(res[3] == 35);
             });
         });
         it("how to use transaction for user input and roll back", function() {
             submission.reset();
             submission.addInputValue({
-                fieldId: "527d4539639f521e0a000006",
+                fieldId: testData.fieldId,
                 value: 40
             }, function(err) {
                 assert(!err)
             });
             submission.startInputTransaction();
             submission.addInputValue({
-                fieldId: "527d4539639f521e0a000006",
+                fieldId: testData.fieldId,
                 value: 50
             }, function(err) {
                 assert(!err)
             });
             submission.addInputValue({
-                fieldId: "527d4539639f521e0a000006",
+                fieldId: testData.fieldId,
                 value: 60
             }, function(err) {
                 assert(!err)
             });
             submission.addInputValue({
-                fieldId: "527d4539639f521e0a000006",
+                fieldId: testData.fieldId,
                 value: 35
             }, function(err) {
                 assert(!err)
             });
             submission.endInputTransaction(false);
-            submission.getInputValueByFieldId("527d4539639f521e0a000006", function(err, res) {
+            submission.getInputValueByFieldId(testData.fieldId, function(err, res) {
                 assert(res[0] == 40);
             });
-            submission.getInputValueByFieldId("527d4539639f521e0a000006", function(err, res) {
+            submission.getInputValueByFieldId(testData.fieldId, function(err, res) {
                 assert(res[1] == undefined);
             });
-            submission.getInputValueByFieldId("527d4539639f521e0a000006", function(err, res) {
+            submission.getInputValueByFieldId(testData.fieldId, function(err, res) {
                 assert(res[2] == undefined);
             });
-            submission.getInputValueByFieldId("527d4539639f521e0a000006", function(err, res) {
+            submission.getInputValueByFieldId(testData.fieldId, function(err, res) {
                 assert(res[3] == undefined);
             });
         });
@@ -263,7 +263,7 @@ describe("Submission model", function() {
         before(function(done) {
             var Form = appForm.models.Form;
             new Form({
-                formId: "527d4539639f521e0a000004",
+                formId: testData.formId,
                 fromRemote: true
             }, function(err, _form) {
                 form = _form;

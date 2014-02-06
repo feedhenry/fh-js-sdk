@@ -22,14 +22,14 @@ describe("forms model",function(){
 
     it (" how to find a form's meta info from form list / can load a formMeta data by its form id",function(){
         var formsModel=appForm.models.forms;
-        var form=formsModel.getFormMetaById("527d4539639f521e0a000004");
+        var form=formsModel.getFormMetaById(testData.formId);
         assert(form);
-        assert(form._id=="527d4539639f521e0a000004");
+        assert(form._id==testData.formId);
         assert(form.lastUpdated);
     });
 
     it ("how to test if a form model object is up to date / should check if a form is up to date",function(done){
-        var form=new appForm.models.Form({formId:"527d4539639f521e0a000004",fromRemote:true},function(err){
+        var form=new appForm.models.Form({formId:testData.formId,fromRemote:true},function(err){
             assert(!err);
             var formsModel=appForm.models.forms;
 
@@ -37,9 +37,10 @@ describe("forms model",function(){
             done();
         });
     });
-    it ("how to return the full list of forms",function(){
+    it ("how to return the full list of forms",function(done){
         var formMetaList=appForm.models.forms.getFormsList();
         assert(formMetaList);
         assert(formMetaList.length>0);
+        done();
     });
 });

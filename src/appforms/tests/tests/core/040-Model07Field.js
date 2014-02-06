@@ -4,13 +4,13 @@ describe("Field Model", function() {
     it("Field model is initialised when a form is initialised", function(done) {
         var Form = appForm.models.Form;
         new Form({
-            formId: "527d4539639f521e0a000004",
+            formId: testData.formId,
             fromRemote: true
         }, function(err, f) {
             form = f;
-            fieldModel = form.getFieldModelById("527d4539639f521e0a000006");
+            fieldModel = form.getFieldModelById(testData.fieldId);
             assert(fieldModel);
-            assert(fieldModel.get("_id") == "527d4539639f521e0a000006");
+            assert(fieldModel.get("_id") == testData.fieldId);
             done();
         });
     });
@@ -42,20 +42,20 @@ describe("Field Model", function() {
     });
     describe("Checkbox", function() {
         it("get checkbox options", function() {
-            var checkBoxFieldModel = form.getFieldModelById("52974ee55e272dcb3d00009d");
+            var checkBoxFieldModel = form.getFieldModelById(testData.fieldIdCheckbox);
             assert(checkBoxFieldModel.getCheckBoxOptions().length > 0);
         });
     });
     describe("Radio", function() {
         it("get radio options", function() {
-            var radioFieldModel = form.getFieldModelById("52974ee55e272dcb3d00009a");
+            var radioFieldModel = form.getFieldModelById(testData.fieldIdRadio);
             assert(radioFieldModel.getRadioOption().length > 0);
         });
     });
 
-    describe("FIle", function() {
+    describe("File", function() {
         it("how to process a file input", function(done) {
-            var fileFieldId = "52974ee55e272dcb3d0000a6";
+            var fileFieldId = testData.fieldIdFile;
             var fileField = form.getFieldModelById(fileFieldId);
             appForm.utils.fileSystem.save("myTestFile.txt", "hello this is a test", function(err, res) {
                 assert(!err);
