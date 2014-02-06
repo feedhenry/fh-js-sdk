@@ -3,6 +3,7 @@ module.exports = applyServer;
 var getFormsData = require("./sampleData/getForms.json");
 var allForms = require("./sampleData/getForm.json");
 var theme = require("./sampleData/getTheme.json");
+var config = require("./sampleData/getConfig.json");
 var submissionStatusFileHash = "";
 var failedFileUploadFileHash = "";
 var submissionStatusCounter = 0;
@@ -16,6 +17,7 @@ function applyServer(app) {
   });
   app.get("/mbaas/forms", _getForms);
   app.get("/mbaas/forms/theme", _getTheme);
+  app.get("/mbaas/forms/config", _getConfig);
   app.get("/mbaas/forms/:formId", _getForm);
   app.post("/mbaas/forms", _postForms);
   app.post("/box/srv/1.1/app/init", _postInit);
@@ -24,13 +26,17 @@ function applyServer(app) {
   app.post("/mbaas/forms/:submissionId/:fieldId/:hashName/submitFormFileBase64", _appFileSubmissionBase64);
   app.get("/mbaas/forms/:submissionId/status", _getSubmissionStatus);
   app.post("/mbaas/forms/:submissionId/completeSubmission", _completeSubmission);
-}
+};
+
+function _getConfig(req, res){
+  console.log("In _getConfig, ", req.params);
+
+  res.json({});
+};
 
 function _postInit(req, res) {
   console.log("In _getForms, ", req.params);
-  res.json({
-    "status": "ok"
-  });
+  res.json(config);
 }
 
 function _getForms(req, res) {
