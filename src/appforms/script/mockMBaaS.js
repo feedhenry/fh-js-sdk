@@ -31,12 +31,14 @@ function applyServer(app) {
 function _getConfig(req, res){
   console.log("In _getConfig, ", req.params);
 
-  res.json({});
+  res.json(config);
 };
 
 function _postInit(req, res) {
-  console.log("In _getForms, ", req.params);
-  res.json(config);
+  console.log("In _postInit, ", req.params);
+  res.json({
+    "status": "ok"
+  });
 }
 
 function _getForms(req, res) {
