@@ -1,10 +1,14 @@
 {
-  "sent_save_max": 5,
+  "sent_save_min": 5,
+  "sent_save_max": 1000,
+  "targetWidth": 100,
+  "targetHeight": 100,
+  "quality": 75,
   "debug_mode": false,
   "logger" : false,
   "max_retries" : 0,
   "timeout" : 30,
   "log_line_limit": 300,
   "log_email": "logs.enterpriseplc@feedhenry.com",
-  "white_list": ["C3CFDCFE0AC5492884D9658A65AF8FB7", "26B5D3CA5182453587DF60BEA924CCB3","60fa12c62cd172f8" , "/^eeb45/", "/^acd5/i"]
+  "config_admin_user": true
 }
