@@ -33,7 +33,7 @@ function rulesEngine (formDef) {
         if (called) throw new Error("Callback was already called.");
         called = true;
         fn.apply(root, arguments);
-      }
+      };
     }
 
     //// cross-browser compatiblity functions ////
@@ -906,7 +906,7 @@ function rulesEngine (formDef) {
               var err = arguments[0];
               var nextargs = Array.prototype.slice.call(arguments, 1);
               cb(err, nextargs);
-            }]))
+            }]));
           },
           function (err, results) {
             callback.apply(that, [err].concat(results));
@@ -2274,6 +2274,6 @@ function rulesEngine (formDef) {
 
   /* This is the suffix file */
   return module.exports(formDef);
-};
+}
 
 /* End of suffix file */
