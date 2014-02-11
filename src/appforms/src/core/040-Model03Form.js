@@ -9,7 +9,7 @@ appForm.models = function (module) {
      * @param {Function} cb         [description]
      */
   function Form(params, cb) {
-    console.log(params, cb);
+    //console.log(params, cb);
     var that = this;
     var rawMode = params.rawMode;
     var rawData = params.rawData;

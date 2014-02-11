@@ -35,7 +35,9 @@ StepsView = Backbone.View.extend({
 
   activePageChange: function(model, pageIndex) {
     this.$el.find('td').removeClass('active');
+    this.$el.find('.fh_appform_page_title').hide();
     this.$el.find('td:eq(' + pageIndex + ')').addClass('active');
+    this.$el.find('td:eq(' + pageIndex + ') .fh_appform_page_title').show();
   }
 
 });

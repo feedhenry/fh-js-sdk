@@ -8,7 +8,20 @@
 
     ],
     "fieldRules": [
-
+      {
+        "type":"hide",
+        "targetField":"52dfd93ee02b762d3f000002",
+        "_id":"52fa375c1e680d9654ea2f6d",
+        "ruleConditionalStatements":[
+          {
+            "sourceField":"52dfd93ee02b762d3f000001",
+            "restriction":"contains",
+            "sourceValue":"abc"
+          }
+        ],
+        "ruleConditionalOperator":"and",
+        "relationType":"and"
+      }
     ],
     "pages": [
       {
