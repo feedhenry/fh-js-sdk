@@ -128,7 +128,7 @@ appForm.models = function (module) {
       var ruleObj = new appForm.models.Rule(constructor);
       var fieldIds = ruleObj.getRelatedFieldId();
       console.log("fieldIds", fieldIds);
-      for (var j = 0; i<fieldIds.length; j++) {
+      for (var j = 0; j<fieldIds.length; j++) {
         var  fieldId = fieldIds[j];
         if (!this.rules[fieldId]) {
           this.rules[fieldId] = [];

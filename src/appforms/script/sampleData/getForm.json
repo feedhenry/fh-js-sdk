@@ -8,20 +8,7 @@
 
     ],
     "fieldRules": [
-      {
-        "type":"hide",
-        "targetField":"52dfd93ee02b762d3f000002",
-        "_id":"52fa375c1e680d9654ea2f6d",
-        "ruleConditionalStatements":[
-          {
-            "sourceField":"52dfd93ee02b762d3f000001",
-            "restriction":"contains",
-            "sourceValue":"abc"
-          }
-        ],
-        "ruleConditionalOperator":"and",
-        "relationType":"and"
-      }
+
     ],
     "pages": [
       {
@@ -34,20 +21,20 @@
                 "defaultValue": ""
               }
             },
-            "required": true,
+            "required": false,
             "type": "text",
             "name": "Text",
             "helpText": "Text",
             "_id": "52dfd93ee02b762d3f000001",
-            "repeating": false
+            "repeating": true
           },
           {
-            "required": true,
+            "required": false,
             "type": "file",
             "name": "File",
             "helpText": "File",
             "_id": "52dfd93ee02b762d3f000002",
-            "repeating": false
+            "repeating": true
           }
         ]
       },
@@ -56,12 +43,12 @@
         "_id": "52dff729e02b762d3f000004",
         "fields": [
           {
-            "required": true,
+            "required": false,
             "type": "text",
             "name": "Page 2 Text",
             "helpText": "Page 2 Text",
             "_id": "52dff729e02b762d3f000003",
-            "repeating": false
+            "repeating": true
           }
         ]
       }
@@ -112,7 +99,7 @@
             "name":"Text",
             "helpText":"Instructions",
             "_id":"52cfc0a78a31bc1524000003",
-            "repeating":false
+            "repeating":true
           },
           {
             "required":true,
@@ -120,7 +107,7 @@
             "name":"Paragraph",
             "helpText":"Instructions",
             "_id":"52cfc0a78a31bc1524000004",
-            "repeating":false
+            "repeating":true
           },
           {
             "required":true,
@@ -128,7 +115,7 @@
             "name":"Number",
             "helpText":"Instructions",
             "_id":"52cfc0a78a31bc1524000005",
-            "repeating":false
+            "repeating":true
           },
           {
             "required":true,
@@ -136,7 +123,7 @@
             "name":"Email",
             "helpText":"Instuctions",
             "_id":"52cfc0fb65081b1624000003",
-            "repeating":false
+            "repeating":true
           },
           {
             "required":true,
@@ -144,7 +131,7 @@
             "name":"Website",
             "helpText":"Instructions",
             "_id":"52cfc0fb65081b1624000004",
-            "repeating":false
+            "repeating":true
           },
           {
             "fieldOptions":{
@@ -166,7 +153,7 @@
             "type":"dropdown",
             "name":"Dropdown",
             "_id":"52cfc0fb65081b1624000005",
-            "repeating":false
+            "repeating":true
           },
           {
             "fieldOptions":{
@@ -188,7 +175,7 @@
             "name":"Radio",
             "helpText":"Instructions",
             "_id":"52cfc1a865081b1624000006",
-            "repeating":false
+            "repeating":true
           },
           {
             "fieldOptions":{
@@ -210,7 +197,7 @@
             "name":"Checkboxes",
             "helpText":"Instructions",
             "_id":"52cfc1a865081b1624000007",
-            "repeating":false
+            "repeating":true
           },
           {
             "fieldOptions":{
@@ -223,7 +210,7 @@
             "name":"Location",
             "helpText":"Instructions",
             "_id":"52cfc1a865081b1624000008",
-            "repeating":false
+            "repeating":true
           },
           {
             "required":true,
@@ -231,7 +218,7 @@
             "name":"Map",
             "helpText":"Instructions",
             "_id":"52cfc1a865081b1624000009",
-            "repeating":false
+            "repeating":true
           },
           {
             "required":true,
@@ -239,7 +226,7 @@
             "name":"File",
             "helpText":"File",
             "_id":"52cfc1a865081b162400000a",
-            "repeating":false
+            "repeating":true
           },
           {
             "required":true,
@@ -247,7 +234,7 @@
             "name":"Photo",
             "helpText":"Instructions",
             "_id":"52cfc1a865081b162400000b",
-            "repeating":false
+            "repeating":true
           },
           {
             "required":true,
@@ -255,7 +242,7 @@
             "name":"Sign",
             "helpText":"Instructions",
             "_id":"52cfc1a865081b162400000c",
-            "repeating":false
+            "repeating":true
           },
           {
             "required":false,
@@ -263,7 +250,7 @@
             "name":"New Shiny Section",
             "helpText":"This is a new section",
             "_id":"52cfc1a865081b162400000d",
-            "repeating":false
+            "repeating":true
           },
           {
             "fieldOptions":{
@@ -276,7 +263,7 @@
             "name":"asfs",
             "helpText":"afasdf",
             "_id":"52cfc47c8a31bc1524000006",
-            "repeating":false
+            "repeating":true
           }
         ]
       }
@@ -365,18 +352,31 @@
 
     ],
     "fieldRules": [
-
+      {
+        "type":"skip",
+        "targetField":"52efeb62538082e229000004",
+        "_id":"52fa375c1e680d9654ea2f6d",
+        "ruleConditionalStatements":[
+          {
+            "sourceField":"52efeb62538082e229000003",
+            "restriction":"contains",
+            "sourceValue":"abc"
+          }
+        ],
+        "ruleConditionalOperator":"and",
+        "relationType":"and"
+      }
     ],
     "pages": [
       {
         "_id": "52efeb30538082e229000001",
         "fields": [
           {
-            "required": true,
+            "required": false,
             "type": "text",
             "name": "Text",
             "_id": "52efeb62538082e229000003",
-            "repeating": false
+            "repeating": true
           },
           {
             "fieldOptions": {
@@ -393,11 +393,11 @@
                 ]
               }
             },
-            "required": true,
+            "required": false,
             "type": "radio",
             "name": "Radio",
             "_id": "52efeb62538082e229000004",
-            "repeating": false
+            "repeating": true
           },
           {
             "fieldOptions": {
@@ -414,25 +414,25 @@
                 ]
               }
             },
-            "required": true,
+            "required": false,
             "type": "checkboxes",
             "name": "Checkboxes",
             "_id": "52efeb9c538082e229000005",
-            "repeating": false
+            "repeating": true
           },
           {
-            "required": true,
+            "required": false,
             "type": "photo",
             "name": "Photo",
             "_id": "52efeb9c538082e229000006",
-            "repeating": false
+            "repeating": true
           },
           {
-            "required": true,
+            "required": false,
             "type": "file",
             "name": "File",
             "_id": "52efeb9c538082e229000007",
-            "repeating": false
+            "repeating": true
           }
         ]
       }
