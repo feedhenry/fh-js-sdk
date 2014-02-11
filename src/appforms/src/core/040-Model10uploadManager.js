@@ -81,7 +81,7 @@ appForm.models = function (module) {
       });
       this.saveLocal(function (err) {
         if (err)
-          console.log(err);
+          console.error(err);
       });
     } else {
       cb(null, null);
@@ -135,14 +135,14 @@ appForm.models = function (module) {
     this.get('taskQueue').push(uploadTaskId);
     this.saveLocal(function (err) {
       if (err)
-        console.log(err);
+        console.error(err);
     });
   };
   UploadManager.prototype.shift = function () {
     var shiftedTask = this.get('taskQueue').shift();
     this.saveLocal(function (err) {
       if (err)
-        console.log(err);
+        console.error(err);
     });
     return shiftedTask;
   };

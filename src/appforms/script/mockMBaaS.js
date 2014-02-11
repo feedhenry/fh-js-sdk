@@ -17,7 +17,7 @@ function applyServer(app) {
   });
   app.get("/mbaas/forms", _getForms);
   app.get("/mbaas/forms/theme", _getTheme);
-  app.get("/mbaas/forms/config", _getConfig);
+  app.get("/mbaas/forms/:appid/config", _getConfig);
   app.get("/mbaas/forms/:formId", _getForm);
   app.post("/mbaas/forms", _postForms);
   app.post("/box/srv/1.1/app/init", _postInit);

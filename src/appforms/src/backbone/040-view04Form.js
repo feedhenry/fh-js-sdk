@@ -387,7 +387,5 @@ var FormView = BaseView.extend({
         value: v
       });
     }
-
-    console.log('INPUT VALUE SET', fieldId, value);
   }
 });

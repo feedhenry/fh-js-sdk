@@ -224,7 +224,7 @@ appForm.models = function(module) {
       this.set('status', status);
       this.saveToList(function(err) {
         if (err) {
-          console.log(err);
+          console.error(err);
         }
       });
       this.saveLocal(cb);
@@ -245,7 +245,7 @@ appForm.models = function(module) {
         } else {
           ut.set("error", null);
           ut.saveLocal(function(err) {
-            if (err) console.log(err);
+            if (err) console.error(err);
           });
           that.emit("inprogress", ut);
           ut.on("progress", function(progress) {

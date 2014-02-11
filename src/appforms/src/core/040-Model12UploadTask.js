@@ -301,14 +301,14 @@ appForm.models = function (module) {
     var that = this;
     function _handler(err) {
       if (err) {
-        console.log('Err, retrying:', err);
+        console.error('Err, retrying:', err);
         //If the upload has encountered an error -- flag the submission as needing a retry on the next tick -- User should be insulated from an error until the retries are finished.
         that.increRetryAttempts();
         if (that.getRetryAttempts() <= appForm.config.get('submissionRetryAttempts')) {
           that.setRetryNeeded(true);
           that.saveLocal(function (err) {
             if (err)
-              console.log(err);
+              console.error(err);
             cb();
           });
         } else {
@@ -324,7 +324,7 @@ appForm.models = function (module) {
         that.setRetryNeeded(false);
         that.saveLocal(function (_err) {
           if (_err)
-            console.log(_err);
+            console.error(_err);
         });
         that.submissionModel(function (err, submission) {
           if (err) {
