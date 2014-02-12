@@ -145,7 +145,7 @@ function _postFormSubmission(req, res) {
     "ori": body
   };
   if (body.outOfDate) {
-    rtn.updatedFormDefinition = allForms;
+    rtn.updatedFormDefinition = allForms['52efeb30538082e229000002'];
   }
   setTimeout(function() {
     console.log("Returning: ", body.testText);
