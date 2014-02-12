@@ -26,7 +26,7 @@
             "name": "Text",
             "helpText": "Text",
             "_id": "52dfd93ee02b762d3f000001",
-            "repeating": true
+            "repeating":false
           },
           {
             "required": false,
@@ -34,7 +34,7 @@
             "name": "File",
             "helpText": "File",
             "_id": "52dfd93ee02b762d3f000002",
-            "repeating": true
+            "repeating":false
           }
         ]
       },
@@ -48,7 +48,7 @@
             "name": "Page 2 Text",
             "helpText": "Page 2 Text",
             "_id": "52dff729e02b762d3f000003",
-            "repeating": true
+            "repeating":false
           }
         ]
       }
@@ -376,7 +376,14 @@
             "type": "text",
             "name": "Text",
             "_id": "52efeb62538082e229000003",
-            "repeating": true
+            "repeating":true,
+            "fieldOptions": {
+              "definition" : {
+                "minRepeat" : 1,
+                "maxRepeat" : 5
+              },
+              "validation" : {}
+            }
           },
           {
             "fieldOptions": {
@@ -397,7 +404,7 @@
             "type": "radio",
             "name": "Radio",
             "_id": "52efeb62538082e229000004",
-            "repeating": true
+            "repeating":false
           },
           {
             "fieldOptions": {
@@ -418,21 +425,21 @@
             "type": "checkboxes",
             "name": "Checkboxes",
             "_id": "52efeb9c538082e229000005",
-            "repeating": true
+            "repeating":false
           },
           {
             "required": false,
             "type": "photo",
             "name": "Photo",
             "_id": "52efeb9c538082e229000006",
-            "repeating": true
+            "repeating":false
           },
           {
             "required": false,
             "type": "file",
             "name": "File",
             "_id": "52efeb9c538082e229000007",
-            "repeating": true
+            "repeating":false
           }
         ]
       }
