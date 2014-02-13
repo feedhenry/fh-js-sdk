@@ -11,6 +11,7 @@ appForm.utils = function (module) {
   };
   var fileSystemAvailable = false;
   var _requestFileSystem = function () {
+    console.error("No file system available");
   };
   //placeholder
   var PERSISTENT = 1;
@@ -47,7 +48,7 @@ appForm.utils = function (module) {
         size = saveObj.size;
       } else if (content instanceof Blob) {
         saveObj = content;
-        size = b.size;
+        size = saveObj.size;
       } else {
         //JSON object
         var stringify = JSON.stringify(content);
@@ -194,6 +195,7 @@ appForm.utils = function (module) {
     });
   }
   function _getFileEntry(fileName, size, params, cb) {
+    _checkEnv();
     _requestFileSystem(PERSISTENT, size, function gotFS(fileSystem) {
       fileSystem.root.getFile(fileName, params, function gotFileEntry(fileEntry) {
         cb(null, fileEntry);

@@ -82,19 +82,21 @@ appForm.stores = function (module) {
   //use $fh data
   function _fhLSData(options, success, failure) {
     // console.log(options);
-    $fh.data(options, function (res) {
-      if (typeof res == 'undefined') {
-        res = {
-          key: options.key,
-          val: options.val
-        };
-      }
-      //unify the interfaces
-      if (options.act.toLowerCase() == 'remove') {
-        success(null, null);
-      }
-      success(null, res.val ? res.val : null);
-    }, failure);
+    if($fh.data){
+      $fh.data(options, function (res) {
+        if (typeof res == 'undefined') {
+          res = {
+            key: options.key,
+            val: options.val
+          };
+        }
+        //unify the interfaces
+        if (options.act.toLowerCase() == 'remove') {
+          success(null, null);
+        }
+        success(null, res.val ? res.val : null);
+      }, failure);
+    }
   }
   //use file system
   function _fhFileData(options, success, failure) {
