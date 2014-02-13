@@ -39,6 +39,7 @@ appForm.stores = function (module) {
     }
     var url = host + mBaaSBaseUrl + relativeUrl;
     var props = {};
+    props.appId = appForm.config.get('appId');
     //Theme and forms do not require any parameters that are not in _fh
     switch (type) {
     case 'form':
