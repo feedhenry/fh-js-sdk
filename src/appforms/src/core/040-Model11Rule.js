@@ -15,9 +15,7 @@ appForm.models = function (module) {
      */
   Rule.prototype.getRelatedFieldId = function () {
     var def = this.getDefinition();
-    console.log("def", def);
     var statements = def.ruleConditionalStatements;
-    console.log("statements", statements);
     var rtn = [];
     for (var i = 0; i<statements.length; i++) {
       var statement = statements[i];

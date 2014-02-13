@@ -263,7 +263,6 @@ var FormView = BaseView.extend({
 
   },
   render: function() {
-
     // this.initWithForm(this.form, this.params);
     this.el.find("#fh_appform_container.fh_appform_form").append(this.templates.buttons);
     this.rebindButtons();
@@ -387,7 +386,5 @@ var FormView = BaseView.extend({
         value: v
       });
     }
-
-    console.log('INPUT VALUE SET', fieldId, value);
   }
 });
