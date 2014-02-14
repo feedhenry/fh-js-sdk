@@ -80,7 +80,7 @@ appForm.models = function (module) {
     }else{
       cb(null,null);
     }
-  }
+  };
   Submissions.prototype.findByFormId = function (formId) {
     var rtn = [];
     var submissions = this.get('submissions');

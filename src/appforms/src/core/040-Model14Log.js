@@ -47,19 +47,19 @@ appForm.models = (function(module) {
       if (self.isWriting) {
         self.moreToWrite = true;
       } else {
-        function _recursiveHandler() {
+        var _recursiveHandler=function () {
           if (self.moreToWrite) {
             self.moreToWrite = false;
             self.write(_recursiveHandler);
           }
-        }
+        };
         self.write(_recursiveHandler);
       }
     }
   };
   Log.prototype.wrap = function(msg) {
     return msg;
-  }
+  };
   Log.prototype.write = function(cb) {
     var self = this;
     self.isWriting = true;
@@ -67,7 +67,7 @@ appForm.models = (function(module) {
       self.isWriting = false;
       cb();
     });
-  }
+  };
   Log.prototype.e = function() {
     var args = Array.prototype.splice.call(arguments, 0);
     args.unshift("error");
@@ -108,9 +108,9 @@ appForm.models = (function(module) {
       "to": email,
       "subject": "App Forms App Logs",
       "body": "Configuration:\n" + JSON.stringify(config) + "\n\nApp Logs:\n" + logs.join("\n")
-    }
+    };
     appForm.utils.send(params, cb);
-  }
+  };
   module.log = new Log();
   return module;
 })(appForm.models || {});
