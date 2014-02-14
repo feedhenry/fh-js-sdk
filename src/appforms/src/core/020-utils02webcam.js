@@ -11,12 +11,15 @@ appForm.utils = function (module) {
   var ctx = null;
   var localMediaStream = null;
   function isHtml5CamAvailable() {
+    checkEnv();
     return isHtml5;
   }
   function isPhoneGapAvailable() {
+    checkEnv();
     return isPhoneGap;
   }
   function initHtml5Camera(params, cb) {
+    checkEnv();
     _html5Camera(params, cb);
   }
   function cancelHtml5Camera() {

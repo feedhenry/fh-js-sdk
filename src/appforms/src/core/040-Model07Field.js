@@ -39,6 +39,19 @@ appForm.models = function (module) {
       'definition': {}
     });
   };
+  Field.prototype.getPhotoOptions = function(){
+    var photoOptions = {
+      "photoWidth" : null,
+      "photoHeight" : null,
+      "photoQuality" : null
+    };
+
+    var fieldDef = this.getFieldDefinition();
+    photoOptions.photoWidth = fieldDef.photoHeight || appForm.config.photoHeight || 200;
+    photoOptions.photoHeight = fieldDef.photoHeight || appForm.config.photoHeight || 200;
+    photoOptions.photoQuality = fieldDef.photoQuality || appForm.config.photoQuality || 50;
+    return photoOptions;
+  };
   Field.prototype.isRepeating = function () {
     return this.get('repeating', false);
   };

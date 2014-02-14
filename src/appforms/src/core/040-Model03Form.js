@@ -23,7 +23,7 @@ appForm.models = function (module) {
         fromRemote = false;
       }
     } else {
-      console.log('a callback function is required for initialising form data. new Form (formId, [isFromRemote], cb)');
+      console.error('a callback function is required for initialising form data. new Form (formId, [isFromRemote], cb)');
     }
 
     if (!formId) {
@@ -35,10 +35,32 @@ appForm.models = function (module) {
       '_type': 'form'
     });
 
+    function checkForUpdate(form){
+      form.refresh(false, function (err, obj) {
+        if (appForm.models.forms.isFormUpdated(form)) {
+          form.refresh(true, function (err, obj1) {
+            if(err){
+              return cb(err, null);
+            }
+            form.initialise();
+
+            _forms[formId] = obj1;
+            return cb(err, obj1);
+          });
+        } else {
+          form.initialise();
+          _forms[formId] = obj;
+          cb(err, obj);
+        }
+      });
+    }
+
     if (rawMode === false && _forms[formId]) {
       //found form object in mem return it.
-      cb(null, _forms[formId]);
-      return _forms[formId];
+      if(!appForm.models.forms.isFormUpdated(_forms[formId])){
+        cb(null, _forms[formId]);
+        return _forms[formId];
+      }
     }
 
     function processRawFormJSON(){
@@ -52,23 +74,7 @@ appForm.models = function (module) {
     if (rawMode === true) {
       processRawFormJSON();
     } else {
-      that.refresh(fromRemote, function (err, obj) {
-        if (appForm.models.forms.isFormUpdated(that)) {
-          that.refresh(true, function (err, obj1) {
-            if(err){
-              return cb(err, null);
-            }
-            that.initialise();
-
-            _forms[formId] = obj1;
-            return cb(err, obj1);
-          });
-        } else {
-          that.initialise();
-          _forms[formId] = obj;
-          cb(err, obj);
-        }
-      });
+      checkForUpdate(that);
     }
   }
   appForm.utils.extend(Form, Model);
