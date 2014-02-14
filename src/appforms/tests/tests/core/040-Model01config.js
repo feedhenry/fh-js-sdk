@@ -11,4 +11,12 @@ describe("Config module",function(){
         assert(config().get("env"));
         assert(config().get("submissionRetryAttempts"));
     });
+
+    it ("config should be init before usage. config should get data from mbaas.",function(done){
+        config().init({},function(err,config){
+            assert(!err);
+            assert(config.get("log_email","logs.enterpriseplc@feedhenry.com"));
+            done();
+        });
+    });
 });

@@ -35,6 +35,25 @@ describe("Store Data agent", function() {
             });
         });
 
+        it ("how to use attempt read to attempt remote resource first, if failed, attempt retrieve local resource instead.",function(done){
+            var model = appForm.models.forms;
+            appForm.stores.dataAgent.attemptRead(model,function(err,res,isRemote){
+                assert(!err);
+                assert(res);
+                assert(isRemote);
+                done();
+            });
+        }); 
+        it ("attemp read should fall back use local resource instead",function(done){
+            var model = new appForm.models.Model();
+            model.set("_type","offlineTest");
+            appForm.stores.dataAgent.attemptRead(model,function(err,res,isRemote){
+                assert(!err);
+                assert(res);
+                assert(!isRemote);
+                done();
+            });
+        }); 
     });
 
 });

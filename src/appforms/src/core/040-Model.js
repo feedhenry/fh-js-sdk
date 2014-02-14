@@ -130,6 +130,18 @@ appForm.models = function (module) {
       }
     }
   };
+  Model.prototype.attemptRefresh=function(cb){
+    var dataAgent = this.getDataAgent();
+    var self=this;
+    dataAgent.attemptRead(this,function(err,res){
+      if (!err && res){
+        self.fromJSON(res);
+        cb(null,self);
+      }else{
+        cb(err,self);
+      }
+    });
+  };
   /**
      * Retrieve model from local storage store
      * @param  {Function} cb (err, curModel)

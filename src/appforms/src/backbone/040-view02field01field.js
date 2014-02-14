@@ -1,4 +1,4 @@
-FieldView = Backbone.View.extend({
+var FieldView = Backbone.View.extend({
 
   className: 'fh_appform_field_area',
   errMessageContainer: ".fh_appform_errorMsg",

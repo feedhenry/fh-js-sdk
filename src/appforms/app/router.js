@@ -1,6 +1,7 @@
 if (typeof App =="undefined"){
     App={};
 }
+var configView;
 App.Router = Backbone.Router.extend({
 
   /* 
@@ -29,9 +30,13 @@ App.Router = Backbone.Router.extend({
     "form": "showForm",
     "json": "fromJson",
     "submission": "checkSubmissions",
+    "config":"config",
     "": "startApp" // Default route
   },
-
+  config:function(){
+    configView= new $fh.forms.backbone.ConfigView();
+    $("body").html(configView.render().$el);
+  },
   initialize: function() {},
 
   startApp: function() {

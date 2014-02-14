@@ -55,5 +55,22 @@ appForm.stores = function (module) {
       }
     });
   };
+
+  /**
+   * Attempt to run refresh read first, if failed, run read.
+   * @param  {[type]}   model [description]
+   * @param  {Function} cb    [description]
+   * @return {[type]}         [description]
+   */
+  DataAgent.prototype.attemptRead=function(model,cb){
+    var self=this;
+    self.refreshRead(model,function(err){
+      if (err){
+        self.read(model,cb);
+      }else{
+        cb.apply({},arguments);
+      }
+    });
+  };
   return module;
 }(appForm.stores || {});

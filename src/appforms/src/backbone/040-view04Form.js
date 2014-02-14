@@ -157,6 +157,8 @@ var FormView = BaseView.extend({
           for (targetId in fields) {
             self.performRuleAction("field", targetId, fields[targetId]["action"]);
           }
+          //TODO trigger an event with status of pages
+          //TODO subscribe to status of pages (form and stepsView)
         }
       });
     });
@@ -165,6 +167,7 @@ var FormView = BaseView.extend({
     var target = null;
     if (type == "page") {
       target = this.getPageViewById(targetId);
+      target.skipPage();
     } else if (type == "field") {
       target = this.getFieldViewById(targetId);
     }
