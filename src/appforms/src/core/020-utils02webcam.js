@@ -27,11 +27,12 @@ appForm.utils = function (module) {
   }
   function takePhoto(params, cb) {
     //use configuration
-    var width = params.width;
-    var height = params.height;
+    var width = params.width || $fh.forms.config.get("targetWidth");
+    var height = params.height || $fh.forms.config.get("targetHeight");
+    var quality=params.quality || $fh.forms.config.get("quality");
     if (isPhoneGap) {
       navigator.camera.getPicture(_phoneGapSuccess(cb), cb, {
-        quality: 100,
+        quality: quality,
         targetWidth: width,
         targetHeight: height,
         saveToPhotoAlbum: false,
@@ -51,8 +52,8 @@ appForm.utils = function (module) {
     };
   }
   function _html5Camera(params, cb) {
-    var width = params.width;
-    var height = params.height;
+    var width = params.width || $fh.forms.config.get("targetWidth");
+    var height = params.height || $fh.forms.config.get("targetHeight");
     video.width = 1024;
     //TODO configuration-webcam resolution
     video.height = 768;

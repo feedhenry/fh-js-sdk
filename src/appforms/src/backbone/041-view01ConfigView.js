@@ -82,6 +82,11 @@ var ConfigView=Backbone.View.extend({
       var key=$(this).data().key;
       var val=$(this).val();
       data[key]=val;
+      if ($(this).attr("type") && $(this).attr("type").toLowerCase()=="checkbox"){
+        if (!$(this).attr("checked")){
+          data[key]=false;
+        }
+      }
     });
     var model=this.getConfigModel();
     model.fromJSON(data);
