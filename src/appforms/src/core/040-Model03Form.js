@@ -11,8 +11,8 @@ appForm.models = function (module) {
   function Form(params, cb) {
     //console.log(params, cb);
     var that = this;
-    var rawMode = params.rawMode;
-    var rawData = params.rawData;
+    var rawMode = params.rawMode || false;
+    var rawData = params.rawData || null;
     var formId = params.formId;
     var fromRemote = params.fromRemote;
 
@@ -35,7 +35,7 @@ appForm.models = function (module) {
       '_type': 'form'
     });
 
-    if (_forms[formId]) {
+    if (rawMode === false && _forms[formId]) {
       //found form object in mem return it.
       cb(null, _forms[formId]);
       return _forms[formId];
@@ -45,7 +45,7 @@ appForm.models = function (module) {
       that.fromJSON(rawData);
       that.initialise();
 
-      _forms[formId] = this;
+      _forms[formId] = that;
       return cb(null, that);
     }
 

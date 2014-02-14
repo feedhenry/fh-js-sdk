@@ -33,9 +33,9 @@ describe("UploadTask model", function() {
         assert(!err);
         var ut = appForm.models.uploadTask.newInstance(submission);
         ut.uploadForm(function(err) {
-          assert(err);
+          assert(!err);
           var progress = ut.getProgress();
-          assert(!progress.formJSON);
+          assert(progress.formJSON);
           assert(!ut.isCompleted());
           done();
         });
