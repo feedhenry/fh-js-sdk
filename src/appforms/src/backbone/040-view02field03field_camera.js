@@ -61,11 +61,11 @@ FieldCameraView = FieldView.extend({
     var self = this;
     var params = self.model.getPhotoOptions();
     if (this.model.utils.isPhoneGapCamAvailable()) {
-      this.model.utils.takePhoto(params, function (err, base64Img) {
+      this.model.utils.takePhoto(params, function (err, imageURI) {
         if (err) {
           console.error(err);
         } else {
-          self.setImage(index, base64Img);
+          self.setImage(index, imageURI);
         }
       });
     } else if (this.model.utils.isHtml5CamAvailable()) {
@@ -130,8 +130,8 @@ FieldCameraView = FieldView.extend({
     if (self.model.utils.isPhoneGapCamAvailable()) {
       e.preventDefault();
       params.sourceType = Camera.PictureSourceType.PHOTOLIBRARY;
-      self.model.utils.takePhoto(params, function (err, base64Img) {
-        self.setImage(index, base64Img);
+      self.model.utils.takePhoto(params, function (err, imageURI) {
+        self.setImage(index, imageURI);
       });
     } else {
       var file = document.createElement('input');

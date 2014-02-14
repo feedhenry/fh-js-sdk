@@ -30,16 +30,16 @@ appForm.utils = function (module) {
   }
   function takePhoto(params, cb) {
     //use configuration
-    var width = params.width;
-    var height = params.height;
+    params.sourceType = params.sourceType || Camera.PictureSourceType.SAVEDPHOTOALBUM;
     if (isPhoneGap) {
       navigator.camera.getPicture(_phoneGapSuccess(cb), cb, {
-        quality: 100,
-        targetWidth: width,
-        targetHeight: height,
+        quality: params.quality,
+        targetWidth: params.targetWidth,
+        targetHeight: params.targetHeight,
+        sourceType: params.sourceType,
         saveToPhotoAlbum: false,
-        destinationType: Camera.DestinationType.DATA_URL,
-        encodingType: Camera.EncodingType.PNG
+        destinationType: Camera.DestinationType.FILE_URI,
+        encodingType: Camera.EncodingType.JPEG
       });
     } else if (isHtml5) {
       snapshot(params, cb);
