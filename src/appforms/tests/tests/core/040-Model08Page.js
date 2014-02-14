@@ -19,8 +19,6 @@ describe("Page model", function() {
     });
 
     it ("page model get general information (name, description, fieldDef, etc",function(){
-        assert(pageModel.getName());
-        assert(pageModel.getDescription());
         assert(pageModel.getFieldDef());
     });
 

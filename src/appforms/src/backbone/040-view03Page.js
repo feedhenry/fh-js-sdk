@@ -1,4 +1,4 @@
-PageView=BaseView.extend({
+var PageView=BaseView.extend({
 
   viewMap: {
     "text": FieldTextView,
@@ -15,8 +15,8 @@ PageView=BaseView.extend({
     "signature": FieldSignatureView,
     "locationMap": FieldMapView,
     "dateTime":FieldDateTimeView,
-    "sectionBreak":FieldSectionBreak,
-    "url":FieldUrlView
+    "sectionBreak":FieldSectionBreak
+    // "url":FieldUrlView
   },
   templates : {
     pageTitle : '<div class="fh_appform_page_title"><%= pageTitle %></div>',

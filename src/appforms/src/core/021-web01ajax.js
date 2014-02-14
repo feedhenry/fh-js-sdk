@@ -6,6 +6,7 @@ appForm.web.ajax = function (module) {
   function _myAjax() {
   }
   function get(url, cb) {
+    console.log(url);
     _ajax({
       'url': url,
       'type': 'GET',

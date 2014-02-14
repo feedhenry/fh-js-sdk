@@ -20,6 +20,7 @@ var modules = {
         "040-Model04FormSubmission",
         "040-Model04FormSubmissionComplete",
         "040-Model04FormSubmissionStatus",
+        "040-Model05Base64FileSubmission",
         "040-Model05submissions",
         "040-Model06Submission",
         "040-Model07Field",
@@ -33,6 +34,7 @@ var modules = {
         "040-Model09fieldValidate",
         "040-Model10uploadManager",
         "040-Model11Rule",
+        "040-Model12theme",
         "040-Model12UploadTask",
         "050-api",
         "060-RuleEngine"
@@ -63,6 +65,8 @@ var modules = {
         "040-view02field27dateTime",
         "040-view03Page",
         "040-view04Form",
-        "040-view05fromJson"
+        "040-view05fromJson",
+        "041-view01ConfigView",
+        "050-api"
     ]
 };

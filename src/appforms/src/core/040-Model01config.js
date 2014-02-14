@@ -1,11 +1,22 @@
-appForm.models = function (module) {
+appForm.models = function(module) {
   var Model = appForm.models.Model;
+
   function Config() {
-    Model.call(this, { '_type': 'config' });
+    Model.call(this, {
+      '_type': 'config',
+      "_ludid": "config"
+    });
+
   }
   appForm.utils.extend(Config, Model);
   //call in appForm.init
-  Config.prototype.init = function (config, cb) {
+  Config.prototype.init = function(config, cb) {
+    //load hard coded static config first
+    this.staticConfig();
+    //attempt load config from mbaas then local storage.
+    this.refresh(cb);
+  };
+  Config.prototype.staticConfig = function(config) {
     var appid = $fh && $fh.app_props ? $fh.app_props.appid : config.appid;
     var mode = $fh && $fh.app_props ? $fh.app_props.mode : 'dev';
     this.set('appId', appid);
@@ -13,24 +24,41 @@ appForm.models = function (module) {
     this.set('timeoutTime', 30000);
     var self = this;
     if ($fh && 'function' === typeof $fh.env) {
-      $fh.env(function (env) {
+      $fh.env(function(env) {
         self.set('deviceId', env.uuid);
       });
     }
     this._initMBaaS();
     //Setting default retry attempts if not set in the config
+    if (config === undefined) {
+      config = {};
+    }
     if (typeof config.submissionRetryAttempts === 'undefined') {
       config.submissionRetryAttempts = 2;
     }
 
-    if(config.submissionTimeout == null){
-      config.submissionTimeout = 20;//Default 20 seconds timeout
+    if (config.submissionTimeout == null) {
+      config.submissionTimeout = 20; //Default 20 seconds timeout
     }
-    
     this.fromJSON(config);
-    cb();
+    this.fromJSON({
+      "sent_save_min": 5,
+      "sent_save_max": 1000,
+      "targetWidth": 100,
+      "targetHeight": 100,
+      "quality": 75,
+      "debug_mode": false,
+      "logger": false,
+      "max_retries": 0,
+      "timeout": 30,
+      "log_line_limit": 300,
+      "log_email": "logs.enterpriseplc@feedhenry.com",
+      "log_level":2,
+      "log_levels":["error","warning","log","debug"],
+      "config_admin_user": true
+    });
   };
-  Config.prototype._initMBaaS = function () {
+  Config.prototype._initMBaaS = function() {
     var cloud_props = $fh.cloud_props;
     var app_props = $fh.app_props;
     var cloudUrl;
@@ -60,7 +88,8 @@ appForm.models = function (module) {
       'fileSubmission': '/forms/:submissionId/:fieldId/:hashName/submitFormFile',
       'base64fileSubmission': '/forms/:submissionId/:fieldId/:hashName/submitFormFileBase64',
       'submissionStatus': '/forms/:submissionId/status',
-      'completeSubmission': '/forms/:submissionId/completeSubmission'
+      'completeSubmission': '/forms/:submissionId/completeSubmission',
+      "config": '/forms/:appid/config'
     });
   };
   module.config = new Config();

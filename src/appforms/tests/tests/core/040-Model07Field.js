@@ -15,7 +15,7 @@ describe("Field Model", function() {
         });
     });
     it("check if the field is required", function() {
-        assert(fieldModel.isRequired());
+        assert(!fieldModel.isRequired());
     });
     it("get field definition (max/min repeat)", function() {
         assert(fieldModel.getFieldDefinition());
@@ -30,7 +30,7 @@ describe("Field Model", function() {
         assert(fieldModel.getType());
         assert(fieldModel.getFieldId());
         assert(fieldModel.getName());
-        assert(fieldModel.getHelpText());
+        assert(fieldModel.getHelpText()=="");
     });
     it("how to get rules associated to a field", function() {
         var rules = fieldModel.getRules();
