@@ -8,7 +8,7 @@ appForm.stores = function(module) {
   appForm.utils.extend(MBaaS, Store);
   MBaaS.prototype.checkStudio = function() {
     return appForm.config.get("studioMode");
-  }
+  };
   MBaaS.prototype.create = function(model, cb) {
     if (this.checkStudio()) {
       cb("Studio mode not supported");
