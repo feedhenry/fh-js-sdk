@@ -107,9 +107,7 @@ appForm.models = function(module) {
     }
   };
   Config.prototype.set = function(key, value){
-    if(this.get("config_admin_user") === true){
-      Model.prototype.set.call(this, key, value);
-    }
+    Model.prototype.set.call(this, key, value);
   };
   module.config = new Config();
   return module;

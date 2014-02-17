@@ -44,6 +44,7 @@ appForm.stores = function(module) {
 
   function _getUrl(model) {
     var type = model.get('_type');
+    console.log("appForm.config: ", appForm.config);
     var host = appForm.config.get('cloudHost');
     var mBaaSBaseUrl = appForm.config.get('mbaasBaseUrl');
     var formUrls = appForm.config.get('formUrls');

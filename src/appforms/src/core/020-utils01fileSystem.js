@@ -208,7 +208,7 @@ appForm.utils = function (module) {
             _getFileEntry(fileName, size, params, cb);
           });
         } else {
-          // console.error('Failed to get file entry:' + err.message)
+          console.error('Failed to get file entry:' + err.message);
           cb(err);
         }
       });

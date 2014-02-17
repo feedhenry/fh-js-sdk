@@ -9,7 +9,7 @@ appForm.models = function (module) {
       '_ludid': 'uploadManager_queue'
     });
     this.set('taskQueue', []);
-    this.timeOut = appform.config.get("timeout");
+    this.timeOut = 60;
     this.sending = false;
     this.timerInterval = 200;
     this.sendingStart = appForm.utils.getTime();
