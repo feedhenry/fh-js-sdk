@@ -156,5 +156,6 @@ appForm.models = (function(module) {
     appForm.utils.send(params, cb);
   };
   module.log = new Log();
+  appForm.log=module.log;
   return module;
 })(appForm.models || {});

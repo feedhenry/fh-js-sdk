@@ -13,6 +13,7 @@ appForm.models = function(module) {
   Config.prototype.init = function(config, cb) {
     if (config.studioMode) { //running in studio
       this.set("studioMode", true);
+      this.fromJSON(config);
       cb();
     } else {
       //load hard coded static config first

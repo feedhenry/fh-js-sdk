@@ -117,7 +117,7 @@ appForm.models = function (module) {
       fromRemote = false;
     }
     if (fromRemote) {
-      dataAgent.refreshRead(this, _handler);
+      dataAgent.attemptRead(this, _handler);
     } else {
       dataAgent.read(this, _handler);
     }
