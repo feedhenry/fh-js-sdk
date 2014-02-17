@@ -316,7 +316,7 @@ appForm.models = function (module) {
         console.error('Err, retrying:', err);
         //If the upload has encountered an error -- flag the submission as needing a retry on the next tick -- User should be insulated from an error until the retries are finished.
         that.increRetryAttempts();
-        if (that.getRetryAttempts() <= appForm.config.get('submissionRetryAttempts')) {
+        if (that.getRetryAttempts() <= appForm.config.get('max_retries')) {
           that.setRetryNeeded(true);
           that.saveLocal(function (err) {
             if (err)

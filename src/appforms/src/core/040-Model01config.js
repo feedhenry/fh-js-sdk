@@ -99,6 +99,18 @@ appForm.models = function(module) {
       "config": '/forms/:appid/config'
     });
   };
+  Config.prototype.saveLocal = function(cb){
+    if(this.get("config_admin_user") === true){
+      Model.prototype.saveLocal.call(this, cb);
+    } else {
+      cb("Must be an admin user to change client settings.");
+    }
+  };
+  Config.prototype.set = function(key, value){
+    if(this.get("config_admin_user") === true){
+      Model.prototype.set.call(this, key, value);
+    }
+  };
   module.config = new Config();
   return module;
 }(appForm.models || {});

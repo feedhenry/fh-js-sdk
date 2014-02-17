@@ -29,6 +29,7 @@ appForm.models = (function(module) {
         levelString = logLevel;
         logLevel = log_levels.indexOf(logLevel.toLowerCase());
       } else {
+        levelString = log_levels[logLevel];
         if (logLevel >= log_levels.length) {
           levelString = "Unknown";
         }
