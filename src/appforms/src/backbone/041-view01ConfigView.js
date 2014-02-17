@@ -94,9 +94,8 @@ var ConfigView=Backbone.View.extend({
 '<script>'+
 '(function(){'+
   '$(document).on("click","#_viewLogsBtn",function(){'+
-    'var logs=$fh.forms.log.getLogs();'+
-    'logs.reverse();'+
-    'var logStr=logs.join("<br/>");'+
+    'var logs=$fh.forms.log.getPolishedLogs();'+
+    'var logStr=logs.join("");'+
     '$("#_logViewDiv").html(logStr);'+
     '$("#_logsViewPanel").show();'+
   '});'+
