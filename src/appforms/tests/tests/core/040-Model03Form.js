@@ -161,7 +161,7 @@ describe("Form model", function() {
     });
 
     it ("how to initialise form with raw json definition",function(done){
-        appForm.web.ajax.get("/mbaas/forms/" + testData.formId,function(err,res){
+        appForm.web.ajax.get("/mbaas/forms/appId" + testData.formId,function(err,res){
             var formJSON=res;
              var Form = appForm.models.Form;
              new Form({
