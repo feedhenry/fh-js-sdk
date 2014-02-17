@@ -85,7 +85,10 @@ appForm.stores = function(module) {
   //use $fh data
   function _fhLSData(options, success, failure) {
     // console.log(options);
-    $fh.data(options, function(res) {
+    //allow for no $fh api in studio
+    if(! $fh || ! $fh.data) return success();
+
+    $fh.data(options, function (res) {
       if (typeof res == 'undefined') {
         res = {
           key: options.key,

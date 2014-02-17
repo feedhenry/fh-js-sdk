@@ -44,7 +44,7 @@ appForm.models = function (module) {
   Page.prototype.checkForSectionBreaks=function(){ //Checking for any sections
     for (var i=0;i<this.fieldsIds.length;i++){
       var fieldModel = this.form.getFieldModelById(this.fieldsIds[i]);
-      if(fieldModel.getType() == "sectionBreak"){
+      if(fieldModel && fieldModel.getType() == "sectionBreak"){
         return true;
       }
     }
