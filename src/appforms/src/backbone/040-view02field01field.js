@@ -1,4 +1,4 @@
-FieldView = Backbone.View.extend({
+var FieldView = Backbone.View.extend({
 
   className: 'fh_appform_field_area',
   errMessageContainer: ".fh_appform_errorMsg",
@@ -156,7 +156,7 @@ FieldView = Backbone.View.extend({
     if (submission) {
       this.submission = submission;
       this.submission.getInputValueByFieldId(this.model.get('_id'), function(err, res) {
-        console.log(err, res);
+        //console.log(err, res);
         self.value(res);
       });
     }
@@ -181,7 +181,6 @@ FieldView = Backbone.View.extend({
 
   dumpContent: function() {
     console.log("Value changed :: " + JSON.stringify(this.value()));
-
   },
 
   getTopView: function() {

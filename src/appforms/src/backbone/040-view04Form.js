@@ -157,6 +157,8 @@ var FormView = BaseView.extend({
           for (targetId in fields) {
             self.performRuleAction("field", targetId, fields[targetId]["action"]);
           }
+          //TODO trigger an event with status of pages
+          //TODO subscribe to status of pages (form and stepsView)
         }
       });
     });
@@ -165,6 +167,7 @@ var FormView = BaseView.extend({
     var target = null;
     if (type == "page") {
       target = this.getPageViewById(targetId);
+      target.skipPage();
     } else if (type == "field") {
       target = this.getFieldViewById(targetId);
     }
@@ -263,7 +266,6 @@ var FormView = BaseView.extend({
 
   },
   render: function() {
-
     // this.initWithForm(this.form, this.params);
     this.el.find("#fh_appform_container.fh_appform_form").append(this.templates.buttons);
     this.rebindButtons();
@@ -387,7 +389,5 @@ var FormView = BaseView.extend({
         value: v
       });
     }
-
-    console.log('INPUT VALUE SET', fieldId, value);
   }
 });

@@ -97,5 +97,22 @@ describe("Model", function() {
         });
         model.emit("mockEvent","hello","world");
     });
+    it ("how to attempt refresh model from remote then local",function(done){
+         var model = appForm.models.forms;
 
+        model.attemptRefresh(function(err,model){
+            assert(!err);
+            assert(model);
+            done();
+        });
+    });
+    it ("attempt refresh could fail if neither remote nor local accessible",function(done){
+        var model = new appForm.models.Model();
+        model.attemptRefresh(function(err,model){
+            assert(err);
+            assert(model);
+            done();
+        });
+        
+    });
 });

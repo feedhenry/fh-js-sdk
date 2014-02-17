@@ -1,9 +1,10 @@
-appForm.utils = function (module) {
+appForm.utils = function(module) {
   module.extend = extend;
   module.localId = localId;
   module.md5 = md5;
   module.getTime = getTime;
   module.isPhoneGap = isPhoneGap;
+  module.send=send;
   function extend(child, parent) {
 
     if (parent.constructor && parent.constructor == Function) {
@@ -16,6 +17,7 @@ appForm.utils = function (module) {
       }
     }
   }
+
   function getTime(timezoneOffset) {
     var now = new Date();
     if (timezoneOffset) {
@@ -24,6 +26,7 @@ appForm.utils = function (module) {
       return now;
     }
   }
+
   function localId(model) {
     var props = model.getProps();
     var _id = props._id;
@@ -40,17 +43,17 @@ appForm.utils = function (module) {
     }
   }
   /**
-     * md5 hash a string
-     * @param  {[type]}   str [description]
-     * @param  {Function} cb  (err,md5str)
-     * @return {[type]}       [description]
-     */
+   * md5 hash a string
+   * @param  {[type]}   str [description]
+   * @param  {Function} cb  (err,md5str)
+   * @return {[type]}       [description]
+   */
   function md5(str, cb) {
     if (typeof $fh != 'undefined' && $fh.hash) {
       $fh.hash({
         algorithm: 'MD5',
         text: str
-      }, function (result) {
+      }, function(result) {
         if (result && result.hashvalue) {
           cb(null, result.hashvalue);
         } else {
@@ -61,6 +64,7 @@ appForm.utils = function (module) {
       cb('Crypto not found');
     }
   }
+
   function isPhoneGap() {
     //http://stackoverflow.com/questions/10347539/detect-between-a-mobile-browser-or-a-phonegap-application
     //may break.
@@ -70,6 +74,14 @@ appForm.utils = function (module) {
     } else {
       return false;
     }
+  }
+
+  function send(params,cb){
+    $fh.send(params,function(){
+      cb(null);
+    },function(msg){
+      cb(msg);
+    });
   }
   return module;
 }(appForm.utils || {});

@@ -10,7 +10,7 @@ describe("Theme model", function(done) {
 
     theme.refresh(true, function(err, theme){
       assert(!err);
-      assert(theme.get("name") === "ShinyBlueTheme");
+      assert(theme.get("name") === testData.themeName);
       done();
     });
   });

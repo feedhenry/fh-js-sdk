@@ -1,7 +1,7 @@
 // describe("Rule model",function(){
 //     var ruleModel;
 //     before(function(done){
-//         new appForm.models.Form({"formId":"527d4539639f521e0a000004"},function(err,form){
+//         new appForm.models.Form({"formId":testData.formId},function(err,form){
 //             ruleModel=form.getRulesByFieldId("527d4539639f521e0a000006")[0];
 //             done();
 //         });

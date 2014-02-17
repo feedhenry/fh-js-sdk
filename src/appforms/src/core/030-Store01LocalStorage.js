@@ -1,38 +1,41 @@
 /**
  * Local storage stores a model's json definition persistently.
  */
-appForm.stores = function (module) {
+appForm.stores = function(module) {
   //implementation
   var utils = appForm.utils;
   var fileSystem = utils.fileSystem;
-  var _fileSystemAvailable = function () {
-  };
+  var _fileSystemAvailable = function() {};
   //placeholder
   function LocalStorage() {
     appForm.stores.Store.call(this, 'LocalStorage');
   }
   appForm.utils.extend(LocalStorage, appForm.stores.Store);
   //store a model to local storage
-  LocalStorage.prototype.create = function (model, cb) {
+  LocalStorage.prototype.create = function(model, cb) {
     var key = utils.localId(model);
     model.setLocalId(key);
     this.update(model, cb);
   };
   //read a model from local storage
-  LocalStorage.prototype.read = function (model, cb) {
-    var key = model.getLocalId();
-    if (key != null) {
-      _fhData({
-        'act': 'load',
-        'key': key.toString()
-      }, cb, cb);
+  LocalStorage.prototype.read = function(model, cb) {
+    if (model.get("_type") == "offlineTest") {
+      cb(null, {});
     } else {
-      //model does not exist in local storage if key is null.
-      cb(null, null);
+      var key = model.getLocalId();
+      if (key != null) {
+        _fhData({
+          'act': 'load',
+          'key': key.toString()
+        }, cb, cb);
+      } else {
+        //model does not exist in local storage if key is null.
+        cb(null, null);
+      }
     }
   };
   //update a model
-  LocalStorage.prototype.update = function (model, cb) {
+  LocalStorage.prototype.update = function(model, cb) {
     var key = model.getLocalId();
     var data = model.getProps();
     var dataStr = JSON.stringify(data);
@@ -43,14 +46,14 @@ appForm.stores = function (module) {
     }, cb, cb);
   };
   //delete a model
-  LocalStorage.prototype["delete"] = function (model, cb) {
+  LocalStorage.prototype["delete"] = function(model, cb) {
     var key = model.getLocalId();
     _fhData({
       'act': 'remove',
       'key': key.toString()
     }, cb, cb);
   };
-  LocalStorage.prototype.upsert = function (model, cb) {
+  LocalStorage.prototype.upsert = function(model, cb) {
     var key = model.getLocalId();
     if (key == null) {
       this.create(model, cb);
@@ -58,17 +61,17 @@ appForm.stores = function (module) {
       this.update(model, cb);
     }
   };
-  LocalStorage.prototype.switchFileSystem = function (isOn) {
-    _fileSystemAvailable = function () {
+  LocalStorage.prototype.switchFileSystem = function(isOn) {
+    _fileSystemAvailable = function() {
       return isOn;
     };
   };
-  LocalStorage.prototype.defaultStorage = function () {
-    _fileSystemAvailable = function () {
+  LocalStorage.prototype.defaultStorage = function() {
+    _fileSystemAvailable = function() {
       return fileSystem.isFileSystemAvailable();
     };
   };
-  _fileSystemAvailable = function () {
+  _fileSystemAvailable = function() {
     return fileSystem.isFileSystemAvailable();
   };
   //use different local storage model according to environment
@@ -105,13 +108,13 @@ appForm.stores = function (module) {
       // console.log('fail: msg= ' + msg);
       if (typeof failure !== 'undefined') {
         return failure(msg, {});
-      } else {
-      }
+      } else {}
     }
+
     function filenameForKey(key, cb) {
       var appid = $fh && $fh.app_props ? $fh.app_props.appid : '';
       key = key + appid;
-      utils.md5(key, function (err, hash) {
+      utils.md5(key, function(err, hash) {
         if (err) {
           hash = key;
         }
@@ -136,9 +139,10 @@ appForm.stores = function (module) {
         }
       });
     }
+
     function save(key, value) {
-      filenameForKey(key, function (hash) {
-        fileSystem.save(hash, value, function (err, res) {
+      filenameForKey(key, function(hash) {
+        fileSystem.save(hash, value, function(err, res) {
           if (err) {
             fail(err);
           } else {
@@ -147,10 +151,11 @@ appForm.stores = function (module) {
         });
       });
     }
+
     function remove(key) {
-      filenameForKey(key, function (hash) {
+      filenameForKey(key, function(hash) {
         // console.log('remove: ' + key + '. Filename: ' + hash);
-        fileSystem.remove(hash, function (err) {
+        fileSystem.remove(hash, function(err) {
           if (err) {
             if (err.name == 'NotFoundError' || err.code == 1) {
               //same respons of $fh.data if key not found.
@@ -164,9 +169,10 @@ appForm.stores = function (module) {
         });
       });
     }
+
     function load(key) {
-      filenameForKey(key, function (hash) {
-        fileSystem.readAsText(hash, function (err, text) {
+      filenameForKey(key, function(hash) {
+        fileSystem.readAsText(hash, function(err, text) {
           if (err) {
             if (err.name == 'NotFoundError' || err.code == 1) {
               //same respons of $fh.data if key not found.

@@ -18,8 +18,12 @@ appForm.models = function (module) {
      * @return {[type]}              [description]
      */
   Submissions.prototype.saveSubmission = function (submission, cb) {
+    var self=this;
     this.updateSubmissionWithoutSaving(submission);
-    this.saveLocal(cb);
+    this.clearSentSubmission(function(){
+      self.saveLocal(cb);  
+    });
+    
   };
   Submissions.prototype.updateSubmissionWithoutSaving = function (submission) {
     var pruneData = this.pruneSubmission(submission);
@@ -38,6 +42,43 @@ appForm.models = function (module) {
     } else {
       // invalid local id.
       console.error('Invalid submission:' + JSON.stringify(submission));
+    }
+  };
+  Submissions.prototype.clearSentSubmission=function(cb){
+    var self=this;
+    var maxSent=$fh.forms.config.get("sent_save_max");
+    var submissions=this.get("submissions");
+    var sentSubmissions=this.getSubmitted();
+    // var maxSent=1;
+    if (sentSubmissions.length>maxSent){
+      sentSubmissions=sentSubmissions.sort(function(a,b){
+        if (a.submittedDate<b.submittedDate){
+          return -1;
+        }else {
+          return 1;
+        }
+      });
+      var toBeRemoved=[];
+      while (sentSubmissions.length>maxSent){
+        toBeRemoved.push(sentSubmissions.pop());
+      }
+      var count=toBeRemoved.length;
+      for (var i=0;i<toBeRemoved.length;i++){
+        var subMeta=toBeRemoved[i];
+        self.getSubmissionByMeta(subMeta,function(err,submission){
+          submission.clearLocal(function(err){
+            if (err){
+              console.error(err);
+            }
+            count--;
+            if (count===0){
+              cb(null,null);
+            }
+          });
+        });
+      }
+    }else{
+      cb(null,null);
     }
   };
   Submissions.prototype.findByFormId = function (formId) {
@@ -79,7 +120,7 @@ appForm.models = function (module) {
         'deviceFormTimestamp',
         'errorMessage',
         'submissionStartedTimestamp',
-        'submitDate'
+        'submittedDate'
       ];
     var data = submission.getProps();
     var rtn = {};
@@ -95,6 +136,7 @@ appForm.models = function (module) {
      * 2. Field
      * 3. Rules
      * @return {[type]} [description]
+     * @deprecated replaced by rule engine
      */
     Submissions.prototype.validateBeforeSubmission = function() {
         return true;
@@ -150,7 +192,9 @@ appForm.models = function (module) {
         if(!params){
           params = {};
         }
-
+        if (typeof params =="string"){
+          params={status:params};
+        }
         if(params.status == null){
           return [];
         }

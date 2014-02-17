@@ -3,6 +3,7 @@ module.exports = applyServer;
 var getFormsData = require("./sampleData/getForms.json");
 var allForms = require("./sampleData/getForm.json");
 var theme = require("./sampleData/getTheme.json");
+var config = require("./sampleData/getConfig.json");
 var submissionStatusFileHash = "";
 var failedFileUploadFileHash = "";
 var submissionStatusCounter = 0;
@@ -14,20 +15,27 @@ function applyServer(app) {
     res.setHeader("Access-Control-Allow-Headers", "X-Request-With, Content-Type");
     next();
   });
-  app.get("/mbaas/forms", _getForms);
-  app.get("/mbaas/forms/theme", _getTheme);
-  app.get("/mbaas/forms/:formId", _getForm);
-  app.post("/mbaas/forms", _postForms);
+  app.get("/mbaas/forms/:appId", _getForms);
+  app.get("/mbaas/forms/:appId/theme", _getTheme);
+  app.get("/mbaas/forms/:appid/config", _getConfig);
+  app.get("/mbaas/forms/:appId/:formId", _getForm);
+  app.post("/mbaas/forms/:appId", _postForms);
   app.post("/box/srv/1.1/app/init", _postInit);
-  app.post("/mbaas/forms/:formId/submitFormData", _postFormSubmission);
-  app.post("/mbaas/forms/:submissionId/:fieldId/:hashName/submitFormFile", _appFileSubmission);
-  app.post("/mbaas/forms/:submissionId/:fieldId/:hashName/submitFormFileBase64", _appFileSubmissionBase64);
-  app.get("/mbaas/forms/:submissionId/status", _getSubmissionStatus);
-  app.post("/mbaas/forms/:submissionId/completeSubmission", _completeSubmission);
-}
+  app.post("/mbaas/forms/:appId/:formId/submitFormData", _postFormSubmission);
+  app.post("/mbaas/forms/:appId/:submissionId/:fieldId/:hashName/submitFormFile", _appFileSubmission);
+  app.post("/mbaas/forms/:appId/:submissionId/:fieldId/:hashName/submitFormFileBase64", _appFileSubmissionBase64);
+  app.get("/mbaas/forms/:appId/:submissionId/status", _getSubmissionStatus);
+  app.post("/mbaas/forms/:appId/:submissionId/completeSubmission", _completeSubmission);
+};
+
+function _getConfig(req, res){
+  console.log("In _getConfig, ", req.params);
+
+  res.json(config);
+};
 
 function _postInit(req, res) {
-  console.log("In _getForms, ", req.params);
+  console.log("In _postInit, ", req.params);
   res.json({
     "status": "ok",
     "hosts":{}
@@ -138,7 +146,7 @@ function _postFormSubmission(req, res) {
     "ori": body
   };
   if (body.outOfDate) {
-    rtn.updatedFormDefinition = allForms;
+    rtn.updatedFormDefinition = allForms['52efeb30538082e229000002'];
   }
   setTimeout(function() {
     console.log("Returning: ", body.testText);
@@ -153,6 +161,7 @@ function _getForm(req, res) {
   var formId = req.params.formId;
 
   if (allForms[formId]) {
+    console.log("Form Found");
     res.json(allForms[formId]);
   } else {
     res.status(404).end("Cannot find specified form");
