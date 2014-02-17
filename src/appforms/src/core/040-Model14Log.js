@@ -14,90 +14,85 @@ appForm.models = (function(module) {
     this.set("logs", []);
     this.isWriting = false;
     this.moreToWrite = false;
-//    appForm.
-//    this.loadLocal(function() {});
+    //    appForm.
+    //    this.loadLocal(function() {});
   }
   appForm.utils.extend(Log, Model);
 
   Log.prototype.info = function(logLevel, msgs) {
-    // debugger;
-    var levelString = "";
-    var curLevel = appForm.config.get("log_level");
-    var log_levels = appForm.config.get("log_levels");
-    var self = this;
-    if (typeof logLevel == "string") {
-      levelString = logLevel;
-      logLevel = log_levels.indexOf(logLevel.toLowerCase());
-    } else {
-      if (logLevel >= log_levels.length) {
-        levelString = "Unknown";
-      }
-    }
-    if (curLevel < logLevel) {
-      return;
-    } else {
-      var args = Array.prototype.splice.call(arguments, 0);
-      var logs = self.get("logs");
-      args.shift();
-      while (args.length > 0) {
-        logs.push(self.wrap(args.shift(),levelString));
-        if (logs.length > appForm.config.get("log_line_limit")) {
-          logs.shift();
+    if (appForm.config.get("logger") == "true") {
+      var levelString = "";
+      var curLevel = appForm.config.get("log_level");
+      var log_levels = appForm.config.get("log_levels");
+      var self = this;
+      if (typeof logLevel == "string") {
+        levelString = logLevel;
+        logLevel = log_levels.indexOf(logLevel.toLowerCase());
+      } else {
+        if (logLevel >= log_levels.length) {
+          levelString = "Unknown";
         }
       }
-      if (self.isWriting) {
-        self.moreToWrite = true;
+      if (curLevel < logLevel) {
+        return;
       } else {
-        var _recursiveHandler=function () {
-          if (self.moreToWrite) {
-            self.moreToWrite = false;
-            self.write(_recursiveHandler);
+        var args = Array.prototype.splice.call(arguments, 0);
+        var logs = self.get("logs");
+        args.shift();
+        while (args.length > 0) {
+          logs.push(self.wrap(args.shift(), levelString));
+          if (logs.length > appForm.config.get("log_line_limit")) {
+            logs.shift();
           }
-        };
-        self.write(_recursiveHandler);
+        }
+        if (self.isWriting) {
+          self.moreToWrite = true;
+        } else {
+          var _recursiveHandler = function() {
+            if (self.moreToWrite) {
+              self.moreToWrite = false;
+              self.write(_recursiveHandler);
+            }
+          };
+          self.write(_recursiveHandler);
+        }
       }
     }
   };
   Log.prototype.wrap = function(msg, levelString) {
-    var now=new Date();
-    var dateStr=now.toISOString();
-    if (typeof msg =="object"){
-      msg=JSON.stringify(msg);
+    var now = new Date();
+    var dateStr = now.toISOString();
+    if (typeof msg == "object") {
+      msg = JSON.stringify(msg);
     }
-    var finalMsg=dateStr+" "+levelString.toUpperCase()+" "+msg;
+    var finalMsg = dateStr + " " + levelString.toUpperCase() + " " + msg;
     return finalMsg;
   };
-  Log.prototype.getPolishedLogs=function(){
-    var arr=[];
-    var logs=this.getLogs();
-    var patterns=[
-    {
-      reg:/^.+\sERROR\s.*/,
-      color:appForm.config.get('color_error') || "#FF0000"
-    },
-    {
-      reg:/^.+\sWARNING\s.*/,
-      color:appForm.config.get('color_warning') ||"#FF9933"
-    },
-    {
-      reg:/^.+\sLOG\s.*/,
-      color:appForm.config.get('color_log') ||"#009900"
-    },
-    {
-      reg:/^.+\sDEBUG\s.*/,
-      color:appForm.config.get('color_debug') ||"#3366FF"
-    },
-    {
-      reg:/^.+\sUNKNOWN\s.*/,
-      color:appForm.config.get('color_unknown') ||"#000000"
-    }
-    ];
-    for (var i=0;i<logs.length;i++){
-      var log=logs[i];
-      for (var j=0;j<patterns.length;j++){
-        var p=patterns[j];
-        if(p.reg.test(log)){
-          arr.unshift("<div style='color:"+p.color+";'>"+log+"</div>");
+  Log.prototype.getPolishedLogs = function() {
+    var arr = [];
+    var logs = this.getLogs();
+    var patterns = [{
+      reg: /^.+\sERROR\s.*/,
+      color: appForm.config.get('color_error') || "#FF0000"
+    }, {
+      reg: /^.+\sWARNING\s.*/,
+      color: appForm.config.get('color_warning') || "#FF9933"
+    }, {
+      reg: /^.+\sLOG\s.*/,
+      color: appForm.config.get('color_log') || "#009900"
+    }, {
+      reg: /^.+\sDEBUG\s.*/,
+      color: appForm.config.get('color_debug') || "#3366FF"
+    }, {
+      reg: /^.+\sUNKNOWN\s.*/,
+      color: appForm.config.get('color_unknown') || "#000000"
+    }];
+    for (var i = 0; i < logs.length; i++) {
+      var log = logs[i];
+      for (var j = 0; j < patterns.length; j++) {
+        var p = patterns[j];
+        if (p.reg.test(log)) {
+          arr.unshift("<div style='color:" + p.color + ";'>" + log + "</div>");
           break;
         }
       }
@@ -138,7 +133,7 @@ appForm.models = (function(module) {
   Log.prototype.clearLogs = function(cb) {
     this.set("logs", []);
     this.saveLocal(function() {
-      if (cb){
+      if (cb) {
         cb();
       }
     });
@@ -156,6 +151,6 @@ appForm.models = (function(module) {
     appForm.utils.send(params, cb);
   };
   module.log = new Log();
-  appForm.log=module.log;
+  appForm.log = module.log;
   return module;
 })(appForm.models || {});
