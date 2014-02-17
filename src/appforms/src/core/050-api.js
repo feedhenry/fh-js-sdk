@@ -9,6 +9,7 @@ appForm.api = function (module) {
   module.getSubmissions = getSubmissions;
   module.init = appForm.init;
   module.config = appForm.models.config;
+  module.log=appForm.models.log;
   var _submissions = null;
   /**
      * Retrieve forms model. It contains forms list. check forms model usage

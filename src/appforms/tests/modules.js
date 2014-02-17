@@ -36,6 +36,7 @@
   "040-Model11Rule",
   "040-Model12theme",
   "040-Model12UploadTask",
+  "040-Model14Log",
   "050-api",
   "060-RuleEngine"
  ],
