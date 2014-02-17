@@ -59,7 +59,7 @@ FieldCameraView = FieldView.extend({
   addFromCamera: function (e, index) {
     e.preventDefault();
     var self = this;
-    var params = self.model.getPhotoOptions();
+    var params = {};
     if (this.model.utils.isPhoneGapCamAvailable()) {
       this.model.utils.takePhoto(params, function (err, imageURI) {
         if (err) {
@@ -123,10 +123,7 @@ FieldCameraView = FieldView.extend({
   },
   addFromLibrary: function (e, index) {
     var self = this;
-    var params = {
-        width: App.config.getValueOrDefault('cam_targetWidth'),
-        height: App.config.getValueOrDefault('cam_targetHeight')
-      };
+    var params = {};
     if (self.model.utils.isPhoneGapCamAvailable()) {
       e.preventDefault();
       params.sourceType = Camera.PictureSourceType.PHOTOLIBRARY;

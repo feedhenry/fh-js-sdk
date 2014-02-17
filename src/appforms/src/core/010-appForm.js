@@ -25,7 +25,10 @@ var appForm = function (module) {
               appForm.models.forms.refresh(true, function (err) {
                 if (err)
                   console.error(err);
-                cb();
+                appForm.models.log.loadLocal(function(){
+                  cb();
+                });
+
               });
             } else {
               cb();

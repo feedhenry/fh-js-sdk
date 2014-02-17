@@ -11,10 +11,17 @@ appForm.models = function(module) {
   appForm.utils.extend(Config, Model);
   //call in appForm.init
   Config.prototype.init = function(config, cb) {
-    //load hard coded static config first
-    this.staticConfig();
-    //attempt load config from mbaas then local storage.
-    this.refresh(cb);
+    if (config.studioMode) { //running in studio
+      this.set("studioMode", true);
+      this.fromJSON(config);
+      cb();
+    } else {
+      //load hard coded static config first
+      this.staticConfig();
+      //attempt load config from mbaas then local storage.
+      this.refresh(cb);
+    }
+
   };
   Config.prototype.staticConfig = function(config) {
     var appid = $fh && $fh.app_props ? $fh.app_props.appid : config.appid;
@@ -53,8 +60,8 @@ appForm.models = function(module) {
       "timeout": 30,
       "log_line_limit": 300,
       "log_email": "logs.enterpriseplc@feedhenry.com",
-      "log_level":2,
-      "log_levels":["error","warning","log","debug"],
+      "log_level": 2,
+      "log_levels": ["error", "warning", "log", "debug"],
       "config_admin_user": true
     });
   };
@@ -91,6 +98,18 @@ appForm.models = function(module) {
       'completeSubmission': '/forms/:appId/:submissionId/completeSubmission',
       "config": '/forms/:appid/config'
     });
+  };
+  Config.prototype.saveLocal = function(cb){
+    if(this.get("config_admin_user") === true){
+      Model.prototype.saveLocal.call(this, cb);
+    } else {
+      cb("Must be an admin user to change client settings.");
+    }
+  };
+  Config.prototype.set = function(key, value){
+    if(this.get("config_admin_user") === true){
+      Model.prototype.set.call(this, key, value);
+    }
   };
   module.config = new Config();
   return module;

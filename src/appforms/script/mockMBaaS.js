@@ -38,7 +38,8 @@ function _getConfig(req, res){
 function _postInit(req, res) {
   console.log("In _postInit, ", req.params);
   res.json({
-    "status": "ok"
+    "status": "ok",
+    "hosts":{}
   });
 }
 

@@ -85,21 +85,22 @@ appForm.stores = function(module) {
   //use $fh data
   function _fhLSData(options, success, failure) {
     // console.log(options);
-    if($fh.data){
-      $fh.data(options, function (res) {
-        if (typeof res == 'undefined') {
-          res = {
-            key: options.key,
-            val: options.val
-          };
-        }
-        //unify the interfaces
-        if (options.act.toLowerCase() == 'remove') {
-          success(null, null);
-        }
-        success(null, res.val ? res.val : null);
-      }, failure);
-    }
+    //allow for no $fh api in studio
+    if(! $fh || ! $fh.data) return success();
+
+    $fh.data(options, function (res) {
+      if (typeof res == 'undefined') {
+        res = {
+          key: options.key,
+          val: options.val
+        };
+      }
+      //unify the interfaces
+      if (options.act.toLowerCase() == 'remove') {
+        success(null, null);
+      }
+      success(null, res.val ? res.val : null);
+    }, failure);
   }
   //use file system
   function _fhFileData(options, success, failure) {
@@ -111,7 +112,7 @@ appForm.stores = function(module) {
     }
 
     function filenameForKey(key, cb) {
-      var appid = $fh && $fh.app_props ? $fh.app_props.appid : '';
+      var appid =appForm.config.get("appId","unknownAppId");
       key = key + appid;
       utils.md5(key, function(err, hash) {
         if (err) {

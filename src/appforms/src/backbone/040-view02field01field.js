@@ -196,7 +196,7 @@ var FieldView = Backbone.View.extend({
   },
 
   validate: function(e) {
-    if (App.config.validationOn) {
+    if (!$fh.forms.config.get("studioMode")) {
       var self = this;
       var target = $(e.currentTarget);
       var index = target.data().index;
