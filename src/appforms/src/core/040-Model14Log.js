@@ -14,7 +14,8 @@ appForm.models = (function(module) {
     this.set("logs", []);
     this.isWriting = false;
     this.moreToWrite = false;
-    this.loadLocal(function() {});
+//    appForm.
+//    this.loadLocal(function() {});
   }
   appForm.utils.extend(Log, Model);
 
