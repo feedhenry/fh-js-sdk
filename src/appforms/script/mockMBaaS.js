@@ -29,7 +29,8 @@ function applyServer(app) {
 function _postInit(req, res) {
   console.log("In _getForms, ", req.params);
   res.json({
-    "status": "ok"
+    "status": "ok",
+    "hosts":{}
   });
 }
 
