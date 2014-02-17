@@ -39,7 +39,7 @@ appForm.models = (function(module) {
       var logs = self.get("logs");
       args.shift();
       while (args.length > 0) {
-        logs.push(self.wrap(args.shift()));
+        logs.push(self.wrap(args.shift(),levelString));
         if (logs.length > appForm.config.get("log_line_limit")) {
           logs.shift();
         }
@@ -57,8 +57,39 @@ appForm.models = (function(module) {
       }
     }
   };
-  Log.prototype.wrap = function(msg) {
-    return msg;
+  Log.prototype.wrap = function(msg, levelString) {
+    var now=new Date();
+    var dateStr=now.toISOString();
+    if (typeof msg =="object"){
+      msg=JSON.stringify(msg);
+    }
+    var finalMsg=dateStr+" "+levelString.toUpperCase()+" "+msg;
+    return finalMsg;
+  };
+  Log.prototype.getPolishedLogs=function(){
+    var arr=[];
+    var logs=this.getLogs();
+    var patterns=[
+    {
+      reg:/^.+\sERROR\s.*/,
+      color:"#FF0000"
+    },
+    {
+      reg:/^.+\sDEBUG\s.*/,
+      color:"#3366FF"
+    },
+    {
+      reg:/^.+\sWARNING\s.*/,
+      color:"#FF9933"
+    },
+    {
+      reg:/^.+\sLOG\s.*/,
+      color:"#009900"
+    }
+    ];
+    // for (var i=0;i<logs.length;i++){
+    //   var 
+    // }
   };
   Log.prototype.write = function(cb) {
     var self = this;

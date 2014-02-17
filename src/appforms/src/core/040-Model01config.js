@@ -11,10 +11,16 @@ appForm.models = function(module) {
   appForm.utils.extend(Config, Model);
   //call in appForm.init
   Config.prototype.init = function(config, cb) {
-    //load hard coded static config first
-    this.staticConfig();
-    //attempt load config from mbaas then local storage.
-    this.refresh(cb);
+    if (config.studioMode) { //running in studio
+      this.set("studioMode", true);
+      cb();
+    } else {
+      //load hard coded static config first
+      this.staticConfig();
+      //attempt load config from mbaas then local storage.
+      this.refresh(cb);
+    }
+
   };
   Config.prototype.staticConfig = function(config) {
     var appid = $fh && $fh.app_props ? $fh.app_props.appid : config.appid;
@@ -53,8 +59,8 @@ appForm.models = function(module) {
       "timeout": 30,
       "log_line_limit": 300,
       "log_email": "logs.enterpriseplc@feedhenry.com",
-      "log_level":2,
-      "log_levels":["error","warning","log","debug"],
+      "log_level": 2,
+      "log_levels": ["error", "warning", "log", "debug"],
       "config_admin_user": true
     });
   };

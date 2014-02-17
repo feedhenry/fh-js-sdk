@@ -6,18 +6,29 @@ appForm.stores = function(module) {
     Store.call(this, 'MBaaS');
   }
   appForm.utils.extend(MBaaS, Store);
+  MBaaS.prototype.checkStudio = function() {
+    return appForm.config.get("studioMode");
+  }
   MBaaS.prototype.create = function(model, cb) {
-    var url = _getUrl(model);
-    appForm.web.ajax.post(url, model.getProps(), cb);
-  };
-  MBaaS.prototype.read = function(model, cb) {
-    if (model.get("_type") == "offlineTest") {
-      cb("offlinetest. ignore");
+    if (this.checkStudio()) {
+      cb("Studio mode not supported");
     } else {
       var url = _getUrl(model);
-      appForm.web.ajax.get(url, cb);
+      appForm.web.ajax.post(url, model.getProps(), cb);
     }
 
+  };
+  MBaaS.prototype.read = function(model, cb) {
+    if (this.checkStudio()) {
+      cb("Studio mode not supported");
+    } else {
+      if (model.get("_type") == "offlineTest") {
+        cb("offlinetest. ignore");
+      } else {
+        var url = _getUrl(model);
+        appForm.web.ajax.get(url, cb);
+      }
+    }
   };
   MBaaS.prototype.update = function(model, cb) {};
   MBaaS.prototype["delete"] = function(model, cb) {};
@@ -48,8 +59,8 @@ appForm.stores = function(module) {
     //Theme and forms do not require any parameters that are not in _fh
     switch (type) {
       case 'config':
-        props.appid=model.get("appId");
-      break;
+        props.appid = model.get("appId");
+        break;
       case 'form':
         props.formId = model.get('_id');
         break;

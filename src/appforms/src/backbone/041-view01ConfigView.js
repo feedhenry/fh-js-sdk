@@ -35,6 +35,24 @@ var ConfigView=Backbone.View.extend({
       '</div>'+
   '</fieldset>'+
 '</div>',
+'<style type="text/css">'+
+  '#_logsViewPanel{'+
+    'position:fixed;'+
+    'left:10px;'+
+    'top:10px;'+
+    'right:10px;'+
+    'bottom:10px;'+
+    'padding:8px;'+
+    'background: white;'+
+    '-webkit-border-radius: 8px;'+
+    'border-radius: 8px;'+
+    'overflow: auto;'+
+  '}'+
+  '#_closeViewBtn{'+
+    'border: 1px solid;'+
+    'padding:3px;'+
+  '}'+
+'</style>'+
 '<div class="config_debugging">'+
   '<fieldset>'+
     '<legend>Debugging</legend>'+
@@ -62,8 +80,46 @@ var ConfigView=Backbone.View.extend({
         '<label>Log Email Address</label>'+
         '<input data-key="log_email" value="<%= log_email%>"/>'+
       '</div>'+
+      '<div class="log_buttons">'+
+        '<button type="button" id="_viewLogsBtn">View Logs</button>'+
+        '<button type="button" id="_cleaLogsBtn">Clear Logs</button>'+
+        '<button type="button" id="_sendLogsBtn">Send Logs</button>'+
+      '</div>'+
   '</fieldset>'+
-'</div>'],
+'</div>'+
+'<div class="hidden" id="_logsViewPanel">'+
+  '<div><span id="_closeViewBtn">Close</span></div>'+
+  '<div id="_logViewDiv"></div>'+
+'</div>'+
+'<script>'+
+'(function(){'+
+  '$(document).on("click","#_viewLogsBtn",function(){'+
+    'var logs=$fh.forms.log.getLogs();'+
+    'logs.reverse();'+
+    'var logStr=logs.join("<br/>");'+
+    '$("#_logViewDiv").html(logStr);'+
+    '$("#_logsViewPanel").show();'+
+  '});'+
+  '$(document).on("click","#_cleaLogsBtn",function(){'+
+    '$fh.forms.log.clearLogs(function(){'+
+      '$("#_logViewDiv").html("");'+
+      'alert("Logs cleared.")'+
+    '});'+
+  '});'+
+  '$(document).on("click","#_sendLogsBtn",function(){'+
+    '$fh.forms.log.sendLogs(function(err){'+
+      'if (err){'+
+        'alert(err);'+
+      '}else{'+
+        'alert("Log has sent to:"+$fh.forms.config.get("log_email"));'+
+      '}'+
+    '});'+
+  '});'+
+  '$(document).on("click","#_closeViewBtn",function(){'+
+    '$("#_logsViewPanel").hide();'+
+  '});'+
+'})();'+
+'</script>'],
   "render":function(){
     this.$el.html("");
     var props=this.getConfigModel().getProps();
