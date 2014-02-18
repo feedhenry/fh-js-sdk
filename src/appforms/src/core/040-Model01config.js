@@ -19,8 +19,7 @@ appForm.models = function(module) {
       //load hard coded static config first
       this.staticConfig();
       //attempt load config from mbaas then local storage.
-      //this.refresh(cb); //TODO, put back in when mbaas is complete for config.
-      cb();
+      this.refresh(cb);
     }
 
   };
@@ -29,7 +28,7 @@ appForm.models = function(module) {
     var mode = $fh && $fh.app_props ? $fh.app_props.mode : 'dev';
     this.set('appId', appid);
     this.set('env', mode);
-    this.set('timeoutTime', 30000);
+    this.set('timeoutTime', 15000);
     var self = this;
     if ($fh && 'function' === typeof $fh.env) {
       $fh.env(function(env) {
@@ -57,7 +56,7 @@ appForm.models = function(module) {
       "quality": 75,
       "debug_mode": false,
       "logger": false,
-      "max_retries": 0,
+      "max_retries": 2,
       "timeout": 30,
       "log_line_limit": 300,
       "log_email": "logs.enterpriseplc@feedhenry.com",

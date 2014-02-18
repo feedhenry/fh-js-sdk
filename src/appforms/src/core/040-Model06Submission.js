@@ -86,7 +86,7 @@ appForm.models = function(module) {
     this.set('submittedDate', null);
     this.set('userId', null);
     this.set('filesInSubmission', {});
-    this.set('deviceId', appForm.models.config.get('deviceId'));
+    this.set('deviceId', appForm.config.get('deviceId'));
     this.transactionMode = false;
     this.genLocalId();
     var localId = this.getLocalId();
