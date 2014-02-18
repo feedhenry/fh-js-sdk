@@ -1,10 +1,11 @@
 describe("Log model", function() {
   before(function(done){
+    appForm.config.set("logger", "true");
     appForm.models.log.clearLogs(done);
   });
   it ("how to log error",function(){
     appForm.models.log.e("Error happens");
-    assert(appForm.models.log.getLogs().indexOf("Error happens")>-1);
+    assert(appForm.models.log.getLogs().indexOf("Error happens")>-1, "Expected Error happens to be logged");
   });
   it ("how to log debug",function(){
     appForm.models.log.d("Debug happens");

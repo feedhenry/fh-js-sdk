@@ -126,6 +126,7 @@ describe("UploadTask model", function() {
   });
   it("how to check for failed file upload", function(done) {
     this.timeout(20000);
+    appForm.config.set("max_retries", 2);
     var submission = form.newSubmission();
     submission.changeStatus("pending", function(err) {
       assert(!err);
@@ -234,6 +235,8 @@ describe("UploadTask model", function() {
 
   it("how to check for file status", function(done) {
     this.timeout(20000);
+
+    appForm.config.set("max_retries", 2);
     var submission = form.newSubmission();
     submission.changeStatus("pending", function(err) {
       assert(!err);
