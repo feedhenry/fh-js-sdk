@@ -47,9 +47,9 @@ appForm.models = function (module) {
     };
 
     var fieldDef = this.getFieldDefinition();
-    photoOptions.targetWidth = fieldDef.photoHeight || appForm.config.photoHeight || 200;
-    photoOptions.targetHeight = fieldDef.photoHeight || appForm.config.photoHeight || 200;
-    photoOptions.quality = fieldDef.photoQuality || appForm.config.photoQuality || 50;
+    photoOptions.targetWidth = fieldDef.photoWidth;
+    photoOptions.targetHeight = fieldDef.photoHeight;
+    photoOptions.quality = fieldDef.photoQuality;
     return photoOptions;
   };
   Field.prototype.isRepeating = function () {

@@ -60,6 +60,9 @@ FieldCameraView = FieldView.extend({
     e.preventDefault();
     var self = this;
     var params = {};
+
+    params = this.model.getPhotoOptions();
+
     if (this.model.utils.isPhoneGapCamAvailable()) {
       this.model.utils.takePhoto(params, function (err, imageURI) {
         if (err) {
@@ -117,7 +120,7 @@ FieldCameraView = FieldView.extend({
       });
     } else {
       var sampleImg = self.sampleImage();
-      self.setImage(index, sampleImage);
+      self.setImage(index, sampleImg);
     }
   },
   addFromLibrary: function (e, index) {
