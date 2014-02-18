@@ -59,11 +59,10 @@ appForm.utils = function (module) {
     };
   }
   function _html5Camera(params, cb) {
-    var width = params.width || $fh.forms.config.get("targetWidth");
-    var height = params.height || $fh.forms.config.get("targetHeight");
-    video.width = 1024;
-    //TODO configuration-webcam resolution
-    video.height = 768;
+    var width = params.targetWidth || $fh.forms.config.get("targetWidth");
+    var height = params.targetHeight || $fh.forms.config.get("targetHeight");
+    video.width = width;
+    video.height = height;
     canvas.width = width;
     canvas.height = height;
     if (!localMediaStream) {
