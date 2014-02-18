@@ -1,8 +1,8 @@
 appForm.RulesEngine=rulesEngine;
 
-/*! fh-forms - v0.2.23 -  */
+/*! fh-forms - v0.2.30 -  */
 /*! async - v0.2.9 -  */
-/*! 2014-02-10 */
+/*! 2014-02-17 */
 /* This is the prefix file */
 function rulesEngine (formDef) {
   var define = {};
@@ -1483,7 +1483,7 @@ function rulesEngine (formDef) {
 
         function checkRepeat(numSubmittedValues, fieldDefinition, cb) {
 
-          if(fieldDefinition.repeating && fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.definition){
+          if(fieldDefinition.repeating && fieldDefinition.fieldOptions.definition){
             if(fieldDefinition.fieldOptions.definition.minRepeat){
               if(numSubmittedValues < fieldDefinition.fieldOptions.definition.minRepeat){
                 return cb(undefined, "Expected min of " + fieldDefinition.fieldOptions.definition.minRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues);

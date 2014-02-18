@@ -55,6 +55,7 @@ FieldFileView = FieldView.extend({
 
     button.off("click");
     button.on("click", function () {
+      console.log("FILE BUTTON CLICKED");
       var index = $(this).data().index;
       fileEle.click();
     });
