@@ -8,11 +8,6 @@ FieldFileView = FieldView.extend({
     self.fileObjs = [];
     FieldView.prototype.initialize.apply(self, arguments);
   },
-  // validate: function(e) {
-  //   if (App.config.validationOn) {
-  //     this.trigger("checkrules");
-  //   }
-  // },
   contentChanged: function (e) {
     var self = this;
     var fileEle = e.target;

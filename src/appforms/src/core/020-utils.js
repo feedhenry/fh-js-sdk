@@ -3,7 +3,6 @@ appForm.utils = function(module) {
   module.localId = localId;
   module.md5 = md5;
   module.getTime = getTime;
-  module.isPhoneGap = isPhoneGap;
   module.send=send;
   function extend(child, parent) {
 
@@ -62,17 +61,6 @@ appForm.utils = function(module) {
       });
     } else {
       cb('Crypto not found');
-    }
-  }
-
-  function isPhoneGap() {
-    //http://stackoverflow.com/questions/10347539/detect-between-a-mobile-browser-or-a-phonegap-application
-    //may break.
-    var app = document.URL.indexOf('http://') === -1 && document.URL.indexOf('https://') === -1;
-    if (app) {
-      return true;
-    } else {
-      return false;
     }
   }
 

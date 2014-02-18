@@ -83,18 +83,6 @@ FieldMapView = FieldView.extend({
             'long': marker.getPosition().lng(),
             'zoom': self.mapSettings.defaultZoom
           };
-          // google.maps.event.addListener(marker, "dragend", function() {
-          //   self.mapData[index].lat = marker.getPosition().lat();
-          //   self.mapData[index].long = marker.getPosition().lng();
-          //   self.mapData[index].zoom=zoomLevel;
-          //   // self.contentChanged();
-          // });
-          // google.maps.event.addListener(res.map, 'zoom_changed', function() {
-          //   var zoomLevel = res.map.getZoom();
-          //   self.mapData[index].zoom=zoomLevel;
-          //   self.mapData[index].lat = marker.getPosition().lat();
-          //   self.mapData[index].long = marker.getPosition().lng();
-          // });
           self.onMapInit(index);
         }, function(err) {
           console.error(err);

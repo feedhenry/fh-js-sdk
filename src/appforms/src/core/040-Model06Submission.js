@@ -495,14 +495,7 @@ appForm.models = function(module) {
     var fileFieldIds = this.form.getFileFieldsId();
     return this.getInputValueArray(fileFieldIds);
   };
-  // /**
-  //  * Retrieve all image fields related value
-  //  * @return {[type]} [description]
-  //  */
-  // Submission.prototype.getImageInputValues = function() {
-  //     var imageFieldIds = this.form.getImageFieldsId();
-  //     return this.getInputValueArray(imageFieldIds);
-  // }
+
   Submission.prototype.getInputValueArray = function(fieldIds) {
     var rtn = [];
     for (var i = 0; i< fieldIds.length; i++) {

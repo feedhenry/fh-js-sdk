@@ -86,25 +86,7 @@ appForm.models = function (module) {
       cb(null, null);
     }
   };
-  // /**
-  //  * Queue all pending submission
-  //  * @param  {Function} cb [description]
-  //  * @return {[type]}      [description]
-  //  */
-  // UploadManager.prototype.queueAllPending=function(cb){
-  //     var submissionsModel=appForm.models.submissions;
-  //     var submissionMetaList=submissionsModel.getPending();
-  //     var self=this;
-  //     for (var i=0,subMeta;subMeta=submissionMetaList[i];i++){
-  //         submissionsModel.getSubmissionByMeta(subMeta,function(err,submission){
-  //             if(err){
-  //                 console.error(err);
-  //             }else{
-  //                 self.queueSubmission(submission)
-  //             }
-  //         });
-  //     }
-  // }
+
   UploadManager.prototype.getTaskQueue = function () {
     return this.get('taskQueue', []);
   };

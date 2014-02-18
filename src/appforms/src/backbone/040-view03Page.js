@@ -30,12 +30,6 @@ var PageView=BaseView.extend({
     // Page Model will emit events if user input meets page rule to hide / show the page.
     this.model.on("visible",self.show);
     this.model.on("hidden",self.hide);
-    // // pass visible event down to all fields
-    // this.on('visible', function () {
-    //   _(self.fieldViews).forEach(function (fieldView) {
-    //         fieldView.trigger('visible');
-    //   });
-    // });
     this.render();
   },
 
@@ -47,7 +41,6 @@ var PageView=BaseView.extend({
     this.$el.empty().addClass('fh_appform_page fh_appform_hidden');
 
     //Need to add the page title and description
-//    this.$el.append(_.template(this.templates.pageTitle, {pageTitle: this.model.getName()}));
     this.$el.append(_.template(this.templates.pageDescription, {pageDescription: this.model.getDescription()}));
 
     // add to parent before init fields so validation can work

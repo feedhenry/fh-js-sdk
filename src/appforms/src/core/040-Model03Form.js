@@ -223,31 +223,13 @@ appForm.models = function (module) {
     }
     return fieldsId;
   };
-  // Form.prototype.getImageFieldsId=function(){
-  //     var fieldsId=[]
-  //     for (var fieldId in this.fields){
-  //         var field=this.fields[fieldId];
-  //         if (field.getType()=="photo" || field.getType()=="signature"  ){
-  //             fieldsId.push(fieldId);
-  //         }
-  //     }
-  //     return fieldsId;
-  // }
+
   Form.prototype.getRuleEngine = function () {
     if (this.rulesEngine) {
       return this.rulesEngine;
     } else {
       var formDefinition = this.getProps();
       this.rulesEngine = new appForm.RulesEngine(formDefinition);
-      // //DEBUG ONLY  BY PASS VALIDATE FORM
-      // this.rulesEngine.validateForm=function(a,cb){
-      //     cb(null,{
-      //         validation:{
-      //             valid:true    
-      //         }
-      //     });
-      // }
-      // //END OF DEBUG
       return this.rulesEngine;
     }
   };
