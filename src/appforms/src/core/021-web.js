@@ -20,8 +20,16 @@ appForm.web = function (module) {
     };
 
     var options = new FileUploadOptions();
-    options.fileName = fileProps.fileName;
-    options.mimeType = fileProps.contentType;
+    options.fileName = fileProps.name;
+    options.mimeType = fileProps.contentType ? fileProps.contentType : "application/octet-stream";
+    options.httpMethod = "https";
+    options.chunkedMode = true;
+    options.fileKey = "file";
+
+    //http://grandiz.com/phonegap-development/phonegap-file-transfer-error-code-3-solved/
+    options.headers = {
+      "Connection": "close"
+    };
 
     var ft = new FileTransfer();
     ft.upload(filePath, encodeURI(url), success, fail, options);

@@ -313,13 +313,9 @@ var FormView = BaseView.extend({
   },
   saveToDraft: function() {
     var self = this;
-    // if ($('.error').length > 0) {
-    //   alert('Please resolve all field validation errors');
-    //   return;
-    // }
     this.populateFieldViewsToSubmission(function() {
       self.submission.saveDraft(function(err, res) {
-        // console.log(err, res);
+        if(err) console.error(err, res);
         self.el.empty();
       });
     });

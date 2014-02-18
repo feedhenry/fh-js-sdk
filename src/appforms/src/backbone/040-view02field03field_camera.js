@@ -99,7 +99,6 @@ FieldCameraView = FieldView.extend({
       this.model.utils.initHtml5Camera(params, function (err, video) {
         if (err) {
           console.error(err);
-          alert(err);
           camObj.remove();
         } else {
           $(video).css('width', '100%');
@@ -127,8 +126,8 @@ FieldCameraView = FieldView.extend({
     if (self.model.utils.isPhoneGapCamAvailable()) {
       e.preventDefault();
       params.sourceType = Camera.PictureSourceType.PHOTOLIBRARY;
-      self.model.utils.takePhoto(params, function (err, imageURI) {
-        self.setImage(index, imageURI);
+      self.model.utils.takePhoto(params, function (err, base64Image) {
+        self.setImage(index, base64Image);
       });
     } else {
       var file = document.createElement('input');
@@ -144,7 +143,6 @@ FieldCameraView = FieldView.extend({
           self.model.utils.fileSystem.fileToBase64(file, function (err, base64Img) {
             if (err) {
               console.error(err);
-              alser(err);
             } else {
               self.setImage(index, base64Img);
             }
