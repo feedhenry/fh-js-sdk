@@ -14,9 +14,12 @@ appForm.stores = function(module) {
       cb("Studio mode not supported");
     } else {
       var url = _getUrl(model);
-      appForm.web.ajax.post(url, model.getProps(), cb);
+      if((model.get("_type") == "fileSubmission" || model.get("_type") == "base64fileSubmission") && (typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined")){
+        appForm.web.uploadFile(url, model.getProps(), cb);
+      } else {
+        appForm.web.ajax.post(url, model.getProps(), cb);
+      }
     }
-
   };
   MBaaS.prototype.read = function(model, cb) {
     if (this.checkStudio()) {
