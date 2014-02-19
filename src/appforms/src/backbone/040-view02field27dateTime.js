@@ -9,7 +9,7 @@ FieldDateTimeView = FieldView.extend({
     var unit=this.getUnit();
     var template="";
     var buttonLabel="";
-    if (unit=="dateTime"){
+    if (unit=="datetime"){
       template=this.inputDateTime;
       buttonLabel="<i class='fa fa-calendar'></i> <i class='fa fa-clock-o'></i>&nbspGet Current Date & Time";
     }else if (unit=="date"){
@@ -41,7 +41,7 @@ FieldDateTimeView = FieldView.extend({
     var index=$(el).data().index;
     var self = this;
     var now=new Date();
-    if (self.getUnit() === "dateTime") {
+    if (self.getUnit() === "datetime") {
       $('input[data-index="'+index+'"]', this.$el).val(self.getDate(now)+" "+self.getTime(now)).blur();
     } else if (self.getUnit() === "date") {
       $('input[data-index="'+index+'"]', this.$el).val(self.getDate(now)).blur();
