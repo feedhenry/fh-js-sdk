@@ -3,25 +3,34 @@ StepsView = Backbone.View.extend({
 
   templates: {
     table: '<div class="fh_appform_progress_wrapper"><table class="fh_appform_progress_steps" cellspacing="0"><tr></tr></table></div>',
-    step: '<td><span class="number_container"><div class="number"><%= step_num %></div></span><br style="clear:both"/><span class="fh_appform_page_title"><%= step_name %></span></td>'
+    step: '<td><span class="number_container" style="padding: 0px 10px 2px 9px;"><div class="number"><%= step_num %></div></span><br style="clear:both"/><span class="fh_appform_page_title"><%= step_name %></span></td>'
   },
 
   initialize: function() {
     var self = this;
 
     _.bindAll(this, 'render');
-    this.render();
+    this.parentView = this.options.parentView;
+    this.options.parentEl.append(this.$el);
   },
 
   render: function() {
     var self = this;
+    this.$el.empty();
     var table = $(self.templates.table);
 
-    var width = 100 / this.model.pages.length;
+    var displayedPages = this.parentView.getDisplayedPages();
+    var width = 100;
 
-    this.model.pages.forEach(function(page, index) {
+    if(displayedPages.length > 0){
+      width = 100 / displayedPages.length;
+    }
+
+    displayedPages.forEach(function(pageId, index) {
+
+      var pageModel = self.parentView.getPageViewById(pageId).model;
       var item = $(_.template(self.templates.step, {
-        step_name: page.getName(),
+        step_name: pageModel.getName(),
         step_num: index + 1
       }));
       item.css('width', width + '%');
@@ -29,15 +38,15 @@ StepsView = Backbone.View.extend({
     });
 
     this.$el.append(table);
-    this.options.parentEl.append(this.$el);
-    //$('#fh_appform_container', this.options.parentEl).after(self.$el);
   },
 
-  activePageChange: function(model, pageIndex) {
-    this.$el.find('td').removeClass('active');
-    this.$el.find('.fh_appform_page_title').hide();
-    this.$el.find('td:eq(' + pageIndex + ')').addClass('active');
-    this.$el.find('td:eq(' + pageIndex + ') .fh_appform_page_title').show();
+  activePageChange: function() {
+    var self = this;
+    self.render();
+    self.$el.find('td').removeClass('active');
+    self.$el.find('.fh_appform_page_title').hide();
+    self.$el.find('td:eq(' + self.parentView.getDisplayIndex() + ')').addClass('active');
+    self.$el.find('td:eq(' + self.parentView.getDisplayIndex() + ') .fh_appform_page_title').show();
   }
 
 });
