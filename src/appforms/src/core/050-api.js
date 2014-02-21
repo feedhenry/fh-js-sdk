@@ -21,17 +21,20 @@ appForm.api = function (module) {
       return defaultConfigValues["config_admin_user"] === true;
     },
     "get" : function(key){
+      var self = this;
       if(key){
         var userConfigValues = formConfig.get("userConfigValues", {});
         var defaultConfigValues = formConfig.get("defaultConfigValues", {});
 
-        if(userConfigValues[key]){
-          return userConfigValues[key];
+        if(self.editAllowed()){
+          if(userConfigValues[key]){
+            return userConfigValues[key];
+          } else {
+            return defaultConfigValues[key];
+          }
         } else {
           return defaultConfigValues[key];
         }
-      } else {
-        return null;
       }
     },
     "set" : function(key, val){
@@ -40,11 +43,9 @@ appForm.api = function (module) {
         return;
       }
 
-      if(self.editAllowed()){
-        var userConfig = formConfig.get("userConfigValues", {});
-        userConfig[key] = val;
-        formConfig.set("userConfigValues", userConfig);
-      }
+      var userConfig = formConfig.get("userConfigValues", {});
+      userConfig[key] = val;
+      formConfig.set("userConfigValues", userConfig);
     },
     "getConfig" : function(){
       var self = this;
@@ -67,14 +68,9 @@ appForm.api = function (module) {
     },
     "saveConfig": function(cb){
       var self = this;
-
-      if(self.editAllowed()){
-        formConfig.saveLocal(function(err, configModel){
-          cb(err, self.getConfig());
-        });
-      } else {
-        cb("Error, config administration rights required to save changes to config.");
-      }
+      formConfig.saveLocal(function(err, configModel){
+        cb(err, self.getConfig());
+      });
     }
   };
 

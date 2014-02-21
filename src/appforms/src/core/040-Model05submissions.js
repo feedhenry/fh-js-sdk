@@ -24,7 +24,6 @@ appForm.models = function (module) {
     this.clearSentSubmission(function(){
       self.saveLocal(cb);  
     });
-    
   };
   Submissions.prototype.updateSubmissionWithoutSaving = function (submission) {
     $fh.forms.log.d("Submissions updateSubmissionWithoutSaving");
@@ -49,7 +48,7 @@ appForm.models = function (module) {
   Submissions.prototype.clearSentSubmission=function(cb){
     $fh.forms.log.d("Submissions clearSentSubmission");
     var self=this;
-    var maxSent=$fh.forms.config.get("sent_save_max");
+    var maxSent= $fh.forms.config.get("max_sent_saved") ? $fh.forms.config.get("max_sent_saved") : $fh.forms.config.get("sent_save_min");
     var submissions=this.get("submissions");
     var sentSubmissions=this.getSubmitted();
 
