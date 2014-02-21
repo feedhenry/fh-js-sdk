@@ -101,11 +101,11 @@ appForm.models = function(module) {
       "quality": 50,
       "debug_mode": false,
       "logger": false,
-      "max_retries": 2,
+      "max_retries": 3,
       "timeout": 30,
-      "log_line_limit": 300,
+      "log_line_limit": 5000,
       "log_email": "test@example.com",
-      "log_level": 2,
+      "log_level": 3,
       "log_levels": ["error", "warning", "log", "debug"],
       "config_admin_user": true
     };
