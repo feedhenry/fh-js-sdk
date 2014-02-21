@@ -18,7 +18,7 @@ appForm.models = function (module) {
      * @return {[type]}              [description]
      */
   Submissions.prototype.saveSubmission = function (submission, cb) {
-    $fh.forms.log.d("Submissions saveSubmission", submission);
+    $fh.forms.log.d("Submissions saveSubmission");
     var self=this;
     this.updateSubmissionWithoutSaving(submission);
     this.clearSentSubmission(function(){
@@ -27,7 +27,7 @@ appForm.models = function (module) {
     
   };
   Submissions.prototype.updateSubmissionWithoutSaving = function (submission) {
-    $fh.forms.log.d("Submissions updateSubmissionWithoutSaving", submission);
+    $fh.forms.log.d("Submissions updateSubmissionWithoutSaving");
     var pruneData = this.pruneSubmission(submission);
     var localId = pruneData._ludid;
     if (localId) {

@@ -15,7 +15,6 @@ var appForm = function (module) {
       var config = def.config || {};
       appForm.config = appForm.models.config;
       appForm.config.init(config, function (err) {
-        $fh.forms.log.d("Form config loaded");
         if(err) $fh.forms.log.e("Form config loading error: ", err);
         //Loading the current state of the uploadManager for any upload tasks that are still in progress.
         appForm.models.uploadManager.loadLocal(function (err) {

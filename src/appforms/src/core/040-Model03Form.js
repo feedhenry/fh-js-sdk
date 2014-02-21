@@ -9,12 +9,12 @@ appForm.models = function (module) {
      * @param {Function} cb         [description]
      */
   function Form(params, cb) {
-    $fh.forms.log.d("Form: ", params);
     var that = this;
     var rawMode = params.rawMode || false;
     var rawData = params.rawData || null;
     var formId = params.formId;
     var fromRemote = params.fromRemote;
+    $fh.forms.log.d("Form: ", rawMode, rawData, formId, fromRemote);
 
     if (typeof fromRemote == 'function' || typeof cb == 'function') {
       if (typeof fromRemote == 'function') {
@@ -36,7 +36,7 @@ appForm.models = function (module) {
 
 
     function loadFromLocal(){
-      $fh.forms.log.d("Form: loadFromLocal", params);
+      $fh.forms.log.d("Form: loadFromLocal ", rawMode, rawData, formId, fromRemote);
       if (_forms[formId]) {
         //found form object in mem return it.
         cb(null, _forms[formId]);
@@ -58,9 +58,9 @@ appForm.models = function (module) {
 
 
     function loadFromRemote(){
-      $fh.forms.log.d("Form: loadFromRemote", params);
+      $fh.forms.log.d("Form: loadFromRemote", rawMode, rawData, formId, fromRemote);
       function checkForUpdate(form){
-        $fh.forms.log.d("Form: checkForUpdate", params);
+        $fh.forms.log.d("Form: checkForUpdate", rawMode, rawData, formId, fromRemote);
         form.refresh(false, function (err, obj) {
           if (appForm.models.forms.isFormUpdated(form)) {
             form.refresh(true, function (err, obj1) {
@@ -81,7 +81,7 @@ appForm.models = function (module) {
       }
 
       if (_forms[formId]) {
-        $fh.forms.log.d("Form: loaded from cache", params);
+        $fh.forms.log.d("Form: loaded from cache", rawMode, rawData, formId, fromRemote);
         //found form object in mem return it.
         if(!appForm.models.forms.isFormUpdated(_forms[formId])){
           cb(null, _forms[formId]);

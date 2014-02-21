@@ -23,7 +23,7 @@ appForm.stores = function (module) {
       if (err || !locRes) {
         //local loading failed
         if (err) {
-          console.error(err);
+          $fh.forms.log.e("Error reading model from localStore ", model, err);
         }
         that.refreshRead(model, cb);
       } else {
@@ -43,9 +43,10 @@ appForm.stores = function (module) {
     var that = this;
     this.remoteStore.read(model, function (err, res) {
       if (err) {
-        console.error(err);
+        $fh.forms.log.e("Error reading model from remoteStore ", model, err);
         cb(err);
       } else {
+        $fh.forms.log.d("Model refresh successfull from remoteStore ", model, res);
         //update model from remote response
         model.fromJSON(res);
         //update local storage for the model

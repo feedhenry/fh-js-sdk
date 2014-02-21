@@ -143,7 +143,6 @@ var ConfigView = Backbone.View.extend({
   "save": function(cb) {
     $fh.forms.log.l("Saving config");
     var inputs = this.$el.find("input,select,textarea");
-    $fh.forms.log.d("Saving config ", inputs);
 
     if($fh.forms.config.editAllowed()){
       inputs.each(function() {

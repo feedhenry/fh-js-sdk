@@ -69,7 +69,7 @@ appForm.models = function(module) {
   }
 
   function Submission(form) {
-    $fh.forms.log.d("Submission: ", form);
+    $fh.forms.log.d("Submission: ");
     Model.call(this, {
       '_type': 'submission'
     });
@@ -85,7 +85,6 @@ appForm.models = function(module) {
     this.set('appId', appForm.config.get('appId'));
     this.set('appEnvironment', appForm.config.get('env'));
     this.set('appCloudName', '');
-    //TODO check with eng
     this.set('comments', []);
     this.set('formFields', []);
     this.set('saveDate', null);
@@ -134,7 +133,7 @@ appForm.models = function(module) {
     });
   };
   Submission.prototype.checkRules = function(cb) {
-    $fh.forms.log.d("Submission checkRules: ", fieldId);
+    $fh.forms.log.d("Submission checkRules: ");
     var self = this;
     this.getForm(function(err, form) {
       if (err) {

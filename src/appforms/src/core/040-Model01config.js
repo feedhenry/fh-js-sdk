@@ -19,31 +19,26 @@ appForm.models = function(module) {
       //load hard coded static config first
       this.staticConfig();
       //attempt load config from mbaas then local storage.
-      this.refresh(cb);
+      this.refresh(true, cb);
     }
   };
   Config.prototype.refresh = function (fromRemote, cb) {
     var dataAgent = this.getDataAgent();
-    var that = this;
+    var self = this;
     if (typeof cb == 'undefined') {
       cb = fromRemote;
       fromRemote = false;
     }
-    if (fromRemote) {
-      dataAgent.attemptRead(this, _handler);
-    } else {
-      dataAgent.read(this, _handler);
-    }
+
     function _handler(err, res) {
       var configObj = {};
-      var defaultConfig = {"defaultConfigValues": {}};
-      if (!err && res) {
 
+      if (!err && res) {
         if(typeof(res) === "string"){
           try{
             configObj = JSON.parse(res);
           } catch(error){
-            $fh.forms.log.e("Invalid json config defintion", error);
+            $fh.forms.log.e("Invalid json config defintion from remote", error);
             configObj = {};
             return cb(error, null);
           }
@@ -51,17 +46,17 @@ appForm.models = function(module) {
           configObj = res;
         }
 
-        for(var key in configObj){
-          defaultConfig.defaultConfigValues[key] = configObj[key];
-        }
-
-        //Resetting the default json definition
-        that.fromJSON(defaultConfig);
-        cb(null, that);
+        self.set("defaultConfigValues", configObj);
+        self.saveLocal(cb);
       } else {
-        cb(err, that);
+        cb(err, self);
       }
     }
+    self.loadLocal(function(err, localConfig){
+      if(err) $fh.forms.log.e("Config loadLocal ", err);
+
+      dataAgent.remoteStore.read(self, _handler);
+    });
   };
   Config.prototype.staticConfig = function(config) {
     var self = this;

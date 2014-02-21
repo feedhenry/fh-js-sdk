@@ -65,7 +65,7 @@ appForm.utils = function(module) {
   }
 
   function send(params,cb){
-    $fh.forms.log.d("Sending: ", params);
+    $fh.forms.log.d("Sending mail: ", params);
     $fh.send(params,function(){
       cb(null);
     },function(msg){
