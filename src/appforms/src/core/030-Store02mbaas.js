@@ -46,8 +46,8 @@ appForm.stores = function(module) {
   };
 
   function _getUrl(model) {
+    $fh.forms.log.d("_getUrl ", model);
     var type = model.get('_type');
-    console.log("appForm.config: ", appForm.config);
     var host = appForm.config.get('cloudHost');
     var mBaaSBaseUrl = appForm.config.get('mbaasBaseUrl');
     var formUrls = appForm.config.get('formUrls');
@@ -55,7 +55,7 @@ appForm.stores = function(module) {
     if (formUrls[type]) {
       relativeUrl = formUrls[type];
     } else {
-      console.error('type not found to get url:' + type);
+      $fh.forms.log.e('type not found to get url:' + type);
     }
     var url = host + mBaaSBaseUrl + relativeUrl;
     var props = {};

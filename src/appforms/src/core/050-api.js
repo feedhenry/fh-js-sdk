@@ -8,9 +8,79 @@ appForm.api = function (module) {
   module.submitForm = submitForm;
   module.getSubmissions = getSubmissions;
   module.init = appForm.init;
-  module.config = appForm.models.config;
   module.log=appForm.models.log;
   var _submissions = null;
+  var formConfig = appForm.models.config;
+
+  /**
+   * Get and set config values. Can only set a config value if you are an config_admin_user
+   */
+  var configInterface = {
+    "editAllowed" : function(){
+      var defaultConfigValues = formConfig.get("defaultConfigValues", {});
+      return defaultConfigValues["config_admin_user"] === true;
+    },
+    "get" : function(key){
+      if(key){
+        var userConfigValues = formConfig.get("userConfigValues", {});
+        var defaultConfigValues = formConfig.get("defaultConfigValues", {});
+
+        if(userConfigValues[key]){
+          return userConfigValues[key];
+        } else {
+          return defaultConfigValues[key];
+        }
+      } else {
+        return null;
+      }
+    },
+    "set" : function(key, val){
+      var self = this;
+      if(!key || !val){
+        return;
+      }
+
+      if(self.editAllowed()){
+        var userConfig = formConfig.get("userConfigValues", {});
+        userConfig[key] = val;
+        formConfig.set("userConfigValues", userConfig);
+      }
+    },
+    "getConfig" : function(){
+      var self = this;
+      var defaultValues = formConfig.get("defaultConfigValues", {});
+      var userConfigValues = formConfig.get("userConfigValues", {});
+      var returnObj = {};
+
+      if(self.editAllowed()){
+        for(var defKey in defaultValues){
+          if(userConfigValues[defKey]){
+            returnObj[defKey] = userConfigValues[defKey];
+          } else {
+            returnObj[defKey] = defaultValues[defKey];
+          }
+        }
+        return returnObj;
+      } else {
+        return defaultValues;
+      }
+    },
+    "saveConfig": function(cb){
+      var self = this;
+
+      if(self.editAllowed()){
+        formConfig.saveLocal(function(err, configModel){
+          cb(err, self.getConfig());
+        });
+      } else {
+        cb("Error, config administration rights required to save changes to config.");
+      }
+    }
+  };
+
+  module.config = configInterface;
+
+
   /**
      * Retrieve forms model. It contains forms list. check forms model usage
      * @param  {[type]}   params {fromRemote:boolean}

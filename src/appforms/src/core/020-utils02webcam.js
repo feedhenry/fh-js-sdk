@@ -29,6 +29,7 @@ appForm.utils = function (module) {
     }
   }
   function takePhoto(params, cb) {
+    $fh.forms.log.d("Taking photo ", params, isPhoneGap);
     //use configuration
     var width =  params.targetWidth ? params.targetWidth : $fh.forms.config.get("targetWidth", 640);
     var height = params.targetHeight ? params.targetHeight : $fh.forms.config.get("targetHeight", 480);
@@ -59,6 +60,7 @@ appForm.utils = function (module) {
     };
   }
   function _html5Camera(params, cb) {
+    $fh.forms.log.d("Taking photo _html5Camera", params, isPhoneGap);
     var width = params.targetWidth || $fh.forms.config.get("targetWidth");
     var height = params.targetHeight || $fh.forms.config.get("targetHeight");
     video.width = width;
@@ -77,6 +79,7 @@ appForm.utils = function (module) {
     }
   }
   function checkEnv() {
+    $fh.forms.log.d("Checking env");
     if (navigator.camera && navigator.camera.getPicture) {
       // PhoneGap
       isPhoneGap = true;
@@ -108,8 +111,9 @@ appForm.utils = function (module) {
     }
     return false;
   }
-  checkEnv();
+
   function snapshot(params, cb) {
+    $fh.forms.log.d("Snapshot ", params);
     if (localMediaStream) {
       ctx.drawImage(video, 0, 0, params.width, params.height);
       // "image/webp" works in Chrome.
@@ -118,7 +122,7 @@ appForm.utils = function (module) {
       cancelHtml5Camera();
       cb(null, base64);
     } else {
-      console.error('Media resource is not available');
+      $fh.forms.log.e('Media resource is not available');
       cb('Resource not available');
     }
   }

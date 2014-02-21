@@ -1,10 +1,11 @@
 appForm.web = function (module) {
 
   module.uploadFile = function(url, fileProps, cb){
+    $fh.forms.log.d("uploadFile ", url, fileProps);
     var filePath = fileProps.fullPath;
 
     var success = function (r) {
-      console.log("upload to url ", url, " sucessfull");
+      $fh.forms.log.d("upload to url ", url, " sucessful");
       r.response = r.response || {};
       if(typeof r.response == "string"){
         r.response = JSON.parse(r.response);
@@ -13,9 +14,9 @@ appForm.web = function (module) {
     };
 
     var fail = function (error) {
-      console.error("An error uploading a file has occurred: Code = " + error.code);
-      console.log("upload error source " + error.source);
-      console.log("upload error target " + error.target);
+      $fh.forms.log.e("An error uploading a file has occurred: Code = " + error.code);
+      $fh.forms.log.d("upload error source " + error.source);
+      $fh.forms.log.d("upload error target " + error.target);
       cb(error);
     };
 
@@ -31,6 +32,7 @@ appForm.web = function (module) {
       "Connection": "close"
     };
 
+    $fh.forms.log.d("Beginning file upload ",url, options);
     var ft = new FileTransfer();
     ft.upload(filePath, encodeURI(url), success, fail, options);
   };

@@ -135,30 +135,33 @@ var ConfigView = Backbone.View.extend({
   },
   "render": function() {
     this.$el.html("");
-    var props = this.getConfigModel().getProps();
+    var props = $fh.forms.config.getConfig();
     var html = _.template(this.templates.join(""), props);
     this.$el.append(html);
     return this;
   },
-  "getConfigModel": function() {
-    return $fh.forms.config;
-  },
   "save": function(cb) {
+    $fh.forms.log.l("Saving config");
     var inputs = this.$el.find("input,select,textarea");
-    var data = {};
+    $fh.forms.log.d("Saving config ", inputs);
 
-    inputs.each(function() {
-      var key = $(this).data().key;
-      var val = $(this).val();
-      data[key] = val;
-      if ($(this).attr("type") && $(this).attr("type").toLowerCase() == "checkbox") {
-        if (!$(this).attr("checked")) {
-          data[key] = false;
+    if($fh.forms.config.editAllowed()){
+      inputs.each(function() {
+        var key = $(this).data().key;
+        var val = $(this).val();
+
+        if ($(this).attr("type") && $(this).attr("type").toLowerCase() == "checkbox") {
+          if (!$(this).attr("checked")) {
+            val = false;
+          }
         }
-      }
-    });
-    var model = this.getConfigModel();
-    model.fromJSON(data);
-    model.saveLocal(cb);
+
+        $fh.forms.config.set(key, val);
+      });
+
+      $fh.forms.config.saveConfig(cb);
+    } else {
+      alert("Editing config not permitted.");
+    }
   }
 });

@@ -154,7 +154,6 @@ appForm.stores = function(module) {
 
     function remove(key) {
       filenameForKey(key, function(hash) {
-        // console.log('remove: ' + key + '. Filename: ' + hash);
         fileSystem.remove(hash, function(err) {
           if (err) {
             if (err.name == 'NotFoundError' || err.code == 1) {

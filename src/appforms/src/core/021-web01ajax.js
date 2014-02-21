@@ -6,19 +6,22 @@ appForm.web.ajax = function (module) {
   function _myAjax() {
   }
   function get(url, cb) {
-    console.log(url);
+    $fh.forms.log.d("Ajax get ", url);
     _ajax({
       'url': url,
       'type': 'GET',
       'success': function (data, text) {
+        $fh.forms.log.d("Ajax get", url, "Success");
         cb(null, data);
       },
       'error': function (xhr, status, err) {
+        $fh.forms.log.e("Ajax get", url, "Fail", xhr, status, err);
         cb(xhr);
       }
     });
   }
   function post(url, body, cb) {
+    $fh.forms.log.d("Ajax post ", url, body);
     var file = false;
     var formData;
     if (typeof body == 'object') {
@@ -38,9 +41,11 @@ appForm.web.ajax = function (module) {
         'data': body,
         'dataType': 'json',
         'success': function (data, text) {
+          $fh.forms.log.d("Ajax post ", url, " Success");
           cb(null, data);
         },
         'error': function (xhr, status, err) {
+          $fh.forms.log.e("Ajax post ", url, " Fail ", xhr, status, err);
           cb(xhr);
         }
       };

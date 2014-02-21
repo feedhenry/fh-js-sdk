@@ -21,49 +21,100 @@ appForm.models = function(module) {
       //attempt load config from mbaas then local storage.
       this.refresh(cb);
     }
+  };
+  Config.prototype.refresh = function (fromRemote, cb) {
+    var dataAgent = this.getDataAgent();
+    var that = this;
+    if (typeof cb == 'undefined') {
+      cb = fromRemote;
+      fromRemote = false;
+    }
+    if (fromRemote) {
+      dataAgent.attemptRead(this, _handler);
+    } else {
+      dataAgent.read(this, _handler);
+    }
+    function _handler(err, res) {
+      var configObj = {};
+      var defaultConfig = {"defaultConfigValues": {}};
+      if (!err && res) {
 
+        if(typeof(res) === "string"){
+          try{
+            configObj = JSON.parse(res);
+          } catch(error){
+            $fh.forms.log.e("Invalid json config defintion", error);
+            configObj = {};
+            return cb(error, null);
+          }
+        } else {
+          configObj = res;
+        }
+
+        for(var key in configObj){
+          defaultConfig.defaultConfigValues[key] = configObj[key];
+        }
+
+        //Resetting the default json definition
+        that.fromJSON(defaultConfig);
+        cb(null, that);
+      } else {
+        cb(err, that);
+      }
+    }
   };
   Config.prototype.staticConfig = function(config) {
+    var self = this;
+    var defaultConfig = {"defaultConfigValues": {}, "userConfigValues": {}};
+    //If user already has set values, don't want to overwrite them
+    if(self.get("userConfigValues")){
+      defaultConfig.userConfigValues = self.get("userConfigValues");
+    }
     var appid = $fh && $fh.app_props ? $fh.app_props.appid : config.appid;
     var mode = $fh && $fh.app_props ? $fh.app_props.mode : 'dev';
-    this.set('appId', appid);
-    this.set('env', mode);
-    this.set('timeoutTime', 15000);
-    var self = this;
+    self.set('appId', appid);
+    self.set('env', mode);
+
+
     if ($fh && 'function' === typeof $fh.env) {
       $fh.env(function(env) {
         self.set('deviceId', env.uuid);
       });
     }
-    this._initMBaaS();
+    self._initMBaaS();
     //Setting default retry attempts if not set in the config
-    if (config === undefined) {
+    if (!config) {
       config = {};
     }
-    if (typeof config.submissionRetryAttempts === 'undefined') {
-      config.submissionRetryAttempts = 2;
+
+    //config_admin_user can not be set by the user.
+    if(config.config_admin_user){
+      delete config.config_admin_user;
     }
 
-    if (config.submissionTimeout == null) {
-      config.submissionTimeout = 20; //Default 20 seconds timeout
-    }
-    this.fromJSON(config);
-    this.fromJSON({
+    defaultConfig.defaultConfigValues = config;
+    var staticConfig = {
       "sent_save_min": 5,
       "sent_save_max": 1000,
-      "targetWidth": 100,
-      "targetHeight": 100,
-      "quality": 75,
+      "targetWidth": 640,
+      "targetHeight": 480,
+      "quality": 50,
       "debug_mode": false,
       "logger": false,
       "max_retries": 2,
       "timeout": 30,
       "log_line_limit": 300,
-      "log_email": "logs.enterpriseplc@feedhenry.com",
+      "log_email": "test@example.com",
       "log_level": 2,
       "log_levels": ["error", "warning", "log", "debug"],
       "config_admin_user": true
-    });
+    };
+
+    for(var key in staticConfig){
+      defaultConfig.defaultConfigValues[key] = staticConfig[key];
+    }
+
+    self.fromJSON(defaultConfig);
   };
   Config.prototype._initMBaaS = function() {
     var cloud_props = $fh.cloud_props;
@@ -77,7 +128,9 @@ appForm.models = function(module) {
     if (cloud_props && cloud_props.hosts) {
       if (mode.indexOf('dev') > -1) {
         //dev mode
-        cloudUrl = cloud_props.hosts.debugCloudUrl;
+        if(cloud_props.hosts.debugCloudUrl){
+          cloudUrl = cloud_props.hosts.debugCloudUrl;
+        }
       } else {
         //live mode
         cloudUrl = cloud_props.hosts.releaseCloudUrl;
@@ -99,16 +152,7 @@ appForm.models = function(module) {
       "config": '/forms/:appid/config'
     });
   };
-  Config.prototype.saveLocal = function(cb){
-    if(this.get("config_admin_user") === true){
-      Model.prototype.saveLocal.call(this, cb);
-    } else {
-      cb("Must be an admin user to change client settings.");
-    }
-  };
-  Config.prototype.set = function(key, value){
-    Model.prototype.set.call(this, key, value);
-  };
+
   module.config = new Config();
   return module;
 }(appForm.models || {});
