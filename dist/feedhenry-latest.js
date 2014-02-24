@@ -4662,719 +4662,6 @@ RSAKey.prototype.doPublic = RSADoPublic;
 RSAKey.prototype.setPublic = RSASetPublic;
 RSAKey.prototype.encrypt = RSAEncrypt;
 //RSAKey.prototype.encrypt_b64 = RSAEncryptB64;
-(function(root) {
-  root.$fh = root.$fh || {};
-  var $fh = root.$fh;
-  $fh.fh_timeout = 20000;
-  $fh.boxprefix = '/box/srv/1.1/';
-  $fh.sdk_version = '1.0.5';
-  
-  var _is_initializing = false;
-  var _init_failed = false;
-  var _cloud_ready_listeners = [];
-
-  var _cloudReady = function(success){
-    try{
-      while(_cloud_ready_listeners[0]){
-        var act_fun = _cloud_ready_listeners.shift();
-        if(act_fun.type === "init"){
-          if(success){
-            act_fun.success($fh.cloud_props);
-          } else {
-            if(act_fun.fail){
-              act_fun.fail("fh_init_failed", {});
-            }
-          }
-        }
-        if(act_fun.type === "act"){
-          if(success){
-            $fh.act(act_fun.opts, act_fun.success, act_fun.fail);
-          } else {
-            if(act_fun.fail){
-              act_fun.fail("fh_init_failed", {});
-            }
-          }
-        }
-      }
-    } finally {
-
-    }
-  };
-
-  //cookie read/write only used internally, make it private
-  var _mock_uuid_cookie_name = "mock_uuid";
-  var __readCookieValue  = function (cookie_name) {
-    var name_str = cookie_name + "=";
-    var cookies = document.cookie.split(";");
-    for (var i = 0; i < cookies.length; i++) {
-      var c = cookies[i];
-      while (c.charAt(0) === ' ') {
-        c = c.substring(1, c.length);
-      }
-      if (c.indexOf(name_str) === 0) {
-        return c.substring(name_str.length, c.length);
-      }
-    }
-    return null;
-  };
-  var __createUUID = function () {
-    //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
-    //based on RFC 4122, section 4.4 (Algorithms for creating UUID from truely random pr pseudo-random number)
-    var s = [];
-    var hexDigitals = "0123456789ABCDEF";
-    for (var i = 0; i < 32; i++) {
-      s[i] = hexDigitals.substr(Math.floor(Math.random() * 0x10), 1);
-    }
-    s[12] = "4";
-    s[16] = hexDigitals.substr((s[16] & 0x3) | 0x8, 1);
-    var uuid = s.join("");
-    return uuid;
-  };
-  var __createCookie = function (cookie_name, cookie_value) {
-    var date = new Date();
-    date.setTime(date.getTime() + 36500 * 24 * 60 * 60 * 1000); //100 years
-    var expires = "; expires=" + date.toGMTString();
-    document.cookie = cookie_name + "=" + cookie_value + expires + "; path = /";
-  };
-
-  var getDeviceId = function(){
-    //check for cordova/phonegap first
-    if(typeof window.device !== "undefined" && typeof window.device.uuid !== "undefined"){
-      return window.device.uuid;
-    }  else if(typeof navigator.device !== "undefined" && typeof navigator.device.uuid !== "undefined"){
-      return navigator.device.uuid;
-    } else {
-      var uuid = __readCookieValue(_mock_uuid_cookie_name);
-      if(null == uuid){
-          uuid = __createUUID();
-          __createCookie(_mock_uuid_cookie_name, uuid);
-      }
-      return uuid;
-    }
-  };
-  
-  $fh._getDeviceId = getDeviceId;
-  var __isSmartMobile = /Android|webOS|iPhone|iPad|iPad|Blackberry|Windows Phone/i.test(navigator.userAgent);
-  var __isLocalFile = window.location.protocol.indexOf("file") > -1;
-
-  function isSameOrigin(url) {
-    var loc = window.location;
-    // http://blog.stevenlevithan.com/archives/parseuri-split-url
-    var uriParts = new RegExp("^(?:([^:/?#.]+):)?(?://)?(([^:/?#]*)(?::(\\d*))?)((/(?:[^?#](?![^?#/]*\\.[^?#/.]+(?:[\\?#]|$)))*/?)?([^?#/]*))?(?:\\?([^#]*))?(?:#(.*))?");
-
-    var locParts = uriParts.exec(loc);
-    var urlParts = uriParts.exec(url);
-
-    return ((urlParts[1] == null || urlParts[1] === '') && // no protocol }
-            (urlParts[3] == null || urlParts[3] === '') && // no domain   } - > relative url
-            (urlParts[4] == null || urlParts[4] === ''))|| // no port       }
-            (locParts[1] === urlParts[1] && // protocol matches }
-            locParts[3] === urlParts[3] && // domain matches   }-> absolute url
-            locParts[4] === urlParts[4]); // port matches      }
-  }
-
-
-  // ** millicore/src/main/webapp/box/static/apps/libs/feedhenry/feedhenry-core.js **
-  //IE 8/9 use XDomainRequest for cors requests
-  function XDomainRequestWrapper(xdr){
-    this.xdr = xdr;
-    this.readyState = 0;
-    this.onreadystatechange = null;
-    this.status = 0;
-    this.statusText = "";
-    this.responseText = "";
-    var self = this;
-    this.xdr.onload = function(){
-        self.readyState = 4;
-        self.status = 200;
-        self.statusText = "";
-        self.responseText = self.xdr.responseText;
-        if(self.onreadystatechange){
-            self.onreadystatechange();
-        }
-    };
-    this.xdr.onerror = function(){
-        if(self.onerror){
-            self.onerror();
-        }
-        self.readyState = 4;
-        self.status = 0;
-        self.statusText = "";
-        if(self.onreadystatechange){
-            self.onreadystatechange();
-        }
-    };
-    this.xdr.ontimeout = function(){
-        self.readyState = 4;
-        self.status = 408;
-        self.statusText = "timeout";
-        if(self.onreadystatechange){
-            self.onreadystatechange();
-        }
-    };
-  }
-
-  XDomainRequestWrapper.prototype.open = function(method, url, asyn){
-    this.xdr.open(method, url);
-  };
-
-  XDomainRequestWrapper.prototype.send = function(data){
-    this.xdr.send(data);
-  };
-
-  XDomainRequestWrapper.prototype.abort = function(){
-    this.xdr.abort();
-  };
-
-  XDomainRequestWrapper.prototype.setRequestHeader = function(n, v){
-    //not supported by xdr
-    //Good doc on limitations of XDomainRequest http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
-    //XDomainRequest doesn't allow setting custom request headers. But it is the only available option to do CORS requests in IE8 & 9. In IE10, they finally start to use standard XMLHttpRequest.
-    //To support FH auth tokens in IE8&9, we have to find a different way of doing it.
-  };
-
-  XDomainRequestWrapper.prototype.getResponseHeader = function(n){
-    //not supported by xdr
-  };
-
-
-  //first, check if cors if supported by the browser
-  /* The following code is used to detect if the browser is supporting CORS. 
-    Most of the browsers implement CORS support using XMLHttpRequest2 object. 
-    The "withCredentials" property is unique in XMLHttpRequest2 object so it is the easiest way to tell if the browser support CORS. Again, IE uses XDomainRequest. 
-    A very good article covering this can be found here: http://www.html5rocks.com/en/tutorials/cors/.*/
-  var __cors_supported = false;
-  if(window.XMLHttpRequest){
-    var rq = new XMLHttpRequest();
-    if('withCredentials' in rq){
-        __cors_supported = true;
-    }
-    if(!__cors_supported){
-        if(typeof XDomainRequest !== "undefined"){
-            __cors_supported = true;
-        }
-    }
-  }
-
-  //create a normal ajax request object
-  var __xhr = function () {
-    var xhr = null;
-    if(window.XMLHttpRequest){
-        xhr = new XMLHttpRequest();
-    } else if(window.ActiveXObject){
-        xhr = new window.ActiveXObject("Microsoft.XMLHTTP");
-    }
-    return xhr;
-  };
-
-  //create a CORS reqeust
-  var __cor = function () {
-    var cor = null;
-    if(window.XMLHttpRequest){
-        var rq = new XMLHttpRequest();
-        if('withCredentials' in rq){
-            cor = rq;
-        }
-    }
-    if(null == cor){
-        if(typeof XDomainRequest !== "undefined"){
-            cor = new XDomainRequestWrapper(new XDomainRequest());
-        }
-    }
-    return cor;
-  };
-  
-  var __cb_counts = 0;
-
-  var __load_script = function (url, callback) {
-    var script;
-    var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
-    script = document.createElement("script");
-    script.async = "async";
-    script.src = url;
-    script.type = "text/javascript";
-    script.onload = script.onreadystatechange = function () {
-      if (!script.readyState || /loaded|complete/.test(script.readyState)) {
-        script.onload = script.onreadystatechange = null;
-        if (head && script.parentNode) {
-          head.removeChild(script);
-        }
-        script = undefined;
-        if (callback && typeof callback === "function") {
-          callback();
-        }
-      }
-    };
-    head.insertBefore(script, head.firstChild);
-  };
-  $fh.__load_script = __load_script; //for interval usage
-
-  var defaultFail = function(err){
-    if(console){
-      console.log(err);
-    }
-  };
-
-  $fh.__ajax = function (options) {
-    var o = options ? options : {};
-    var sameOrigin = isSameOrigin(options.url);
-    if(!sameOrigin){
-        if(typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined"){
-            //found phonegap, it should be a hyrbid mobile app, consider as same origin
-            sameOrigin = true;
-        }
-    }
-    if(!sameOrigin){
-        if(__isSmartMobile && __isLocalFile){
-            //we can't find phonegap, but we are loading the page use file protocol and the device is a smart phone,
-            //it should be a mobile hyrid app
-            sameOrigin = true;
-        }
-    }
-
-    if (sameOrigin || ((!sameOrigin) && __cors_supported) ) {
-      o.dataType = 'json';
-    } else {
-      o.dataType = "jsonp";
-    }
-
-    var req;
-    var url = o.url;
-    var method = o.type || 'GET';
-    var data = o.data || null;
-    var timeoutTimer;
-    var rurl = /\?/;
-    var datatype = o.dataType === "jsonp" ? "jsonp" : "json";
-
-    //prevent cache
-    //url += (rurl.test(url) ? "&" : "?") + "fhts=" + (new Date()).getTime();
-
-    var done = function (status, statusText, responseText) {
-      var issuccess = false;
-      var error;
-      var res;
-      if (status >= 200 && status <= 300 || status === 304) {
-        if (status === 304) {
-          statusText = "notmodified";
-          issuccess = true;
-        } else {
-          if (o.dataType && o.dataType.indexOf('json') !== -1) {
-            try {
-              if (typeof responseText === "string") {
-                res = JSON.parse(responseText);
-              } else {
-                res = responseText;
-              }
-              issuccess = true;
-            } catch (e) {
-              issuccess = false;
-              statusText = "parseerror";
-              error = e;
-            }
-          } else {
-            res = responseText;
-            issuccess = true;
-          }
-        }
-      } else {
-        error = statusText;
-        if (!statusText || status) {
-          statusText = "error";
-          if (status < 0) {
-            status = 0;
-          }
-        }
-      }
-      if (issuccess) {
-        req = undefined;
-        if (o.success && typeof o.success === 'function') {
-          o.success(res);
-        }
-      } else {
-        if (o.error && typeof o.error === 'function') {
-          o.error(req, statusText, error);
-        }
-      }
-    };
-
-    var types = {
-      'json': function () {
-        if(sameOrigin){
-          req = __xhr();
-        } else {
-          req = __cor();
-        }
-        req.open(method, url, true);
-        if (o.contentType) {
-          req.setRequestHeader('Content-Type', o.contentType);
-        }
-        req.setRequestHeader('X-Request-With', 'XMLHttpRequest');
-        var handler = function () {
-          if (req.readyState === 4) {
-            if (timeoutTimer) {
-              clearTimeout(timeoutTimer);
-            }
-            //the status code will be 0 if there is a network level error, including server rejecting the cors request
-            if(req.status === 0){
-                if(!sameOrigin){
-                    return types['jsonp']();
-                }
-            }
-            var statusText;
-            try {
-              statusText = req.statusText;
-            } catch (e) {
-              statusText = "";
-            }
-            if( ! req.isAborted ) {
-              done(req.status, req.statusText, req.responseText);
-            }
-          }
-        };
-
-        req.onreadystatechange = handler;
-
-        req.send(data);
-      },
-
-      'jsonp': function () {
-        var callbackId = 'fhcb' + __cb_counts++;
-        window[callbackId] = function (response) {
-          if (timeoutTimer) {
-            clearTimeout(timeoutTimer);
-          }
-          done(200, "", response);
-          window[callbackId] = undefined;
-          try {
-            delete window[callbackId];
-          } catch(e) {
-          }
-        };
-        url += (rurl.test(url) ? "&" : "?") + "_callback=" + callbackId;
-        if(o.data){
-          var d = o.data;
-          if(typeof d === "string"){
-            url += "&_jsonpdata=" + encodeURIComponent(o.data);
-          } else {
-            url += "&_jsonpdata=" + encodeURIComponent(JSON.stringify(o.data));
-          }
-        }
-        __load_script(url);
-      }
-    };
-
-    if (o.timeout > 0) {
-      timeoutTimer = setTimeout(function () {
-        if (req) {
-          req.isAborted = true;
-          req.abort();
-        }
-        done(0, 'timeout');
-      }, o.timeout);
-    }
-
-    types[datatype]();
-  };
-
-  _handleError = function(fail, req, resStatus){
-    var errraw;
-    if(req){
-      try{
-        var res = JSON.parse(req.responseText);
-        errraw = res.error;
-      } catch(e){
-        errraw = req.responseText;
-      }
-    }
-    if(fail){
-      fail('error_ajaxfail', {
-        status: req.status,
-        message: resStatus,
-        error: errraw
-      });
-    }
-  };
-
-  _getQueryMap = function(url) {
-    var qmap;
-    var i = url.split("?");
-    if (i.length === 2) {
-      var queryString = i[1];
-      var pairs = queryString.split("&");
-      qmap = {};
-      for (var p = 0; p < pairs.length; p++) {
-        var q = pairs[p];
-        var qp = q.split("=");
-        qmap[qp[0]] = qp[1];
-      }
-    }
-    return qmap;
-  };
-
-  _checkAuthResponse = function(url) {
-    if (/\_fhAuthCallback/.test(url)) {
-      var qmap = _getQueryMap(url);
-      if (qmap) {
-        var fhCallback = qmap["_fhAuthCallback"];
-        if (fhCallback) {
-          if (qmap['result'] && qmap['result'] === 'success') {
-            var sucRes = {'sessionToken': qmap['fh_auth_session'], 'authResponse' : JSON.parse(decodeURIComponent(decodeURIComponent(qmap['authResponse'])))};
-            window[fhCallback](null, sucRes);
-          } else {
-            window[fhCallback]({'message':qmap['message']});
-          }
-        }
-      }
-    }
-  };
-
-  _getFhParams = function() {
-    var fhParams = {};
-    fhParams.cuid = getDeviceId();
-    fhParams.appid = $fh.app_props.appid;
-    fhParams.appkey = $fh.app_props.appkey;
-
-    if (typeof fh_destination_code !== 'undefined'){
-      fhParams.destination = fh_destination_code;
-    } else {
-      fhParams.destination = "web";
-    }
-    if (typeof fh_app_version !== 'undefined'){
-      fhParams.app_version = fh_app_version;
-    }
-    fhParams.sdk_version = _getSdkVersion();
-    return fhParams;
-  };
-
-  _addFhParams = function(params) {
-    params = params || {};
-    params.__fh = _getFhParams();
-    return params;
-  };
-
-  _getSdkVersion = function() {
-    var type = "FH_JS_SDK";
-    if (typeof fh_destination_code !== 'undefined') {
-      type = "FH_HYBRID_SDK";
-    } else if(window.PhoneGap || window.cordova) {
-      type = "FH_PHONEGAP_SDK";
-    }
-    return type + "/" + $fh.sdk_version;
-  };
-
-  if (window.addEventListener) {
-    window.addEventListener('load', function(){
-      _checkAuthResponse(window.location.href);
-    }, false); //W3C
-  } else {
-    window.attachEvent('onload', function(){
-      _checkAuthResponse(window.location.href);
-    }); //IE
-  }
-
-  $fh._handleAuthResponse = function(endurl, res, success, fail){
-    if(res.status && res.status === "ok"){
-      if(res.url){
-        if(window.PhoneGap || window.cordova){
-          if(window.plugins && window.plugins.childBrowser){
-            //found childbrowser plugin,add the event listener and load it
-            if(typeof window.plugins.childBrowser.showWebPage === "function"){
-              window.plugins.childBrowser.onLocationChange = function(new_url){
-                if(new_url.indexOf(endurl) > -1){
-                  window.plugins.childBrowser.close();
-                  var qmap = _getQueryMap(new_url);
-                  if(qmap) {
-                    if(qmap['result'] && qmap['result'] === 'success'){
-                      var sucRes = {'sessionToken': qmap['fh_auth_session'], 'authResponse' : JSON.parse(decodeURIComponent(decodeURIComponent(qmap['authResponse'])))};
-                      success(sucRes);
-                    } else {
-                      if(fail){
-                        fail("auth_failed", {'message':qmap['message']});
-                      }
-                    }
-                  } else {
-                    if(fail){
-                        fail("auth_failed", {'message':qmap['message']});
-                    }
-                  }
-                }
-              };
-              window.plugins.childBrowser.showWebPage(res.url);
-            }
-          } else {
-            console.log("ChildBrowser plugin is not intalled.");
-            success(res);
-          }
-        } else {
-         document.location.href = res.url;  
-        }
-      } else {
-        success(res);
-      }
-    } else {
-      if(fail){
-        fail("auth_failed", res);
-      }
-    }
-  };
-
-  $fh.init = function(opts, success, fail) {
-    if($fh.cloud_props){
-      return success($fh.cloud_props);
-    } 
-    if(!_is_initializing){
-      _is_initializing = true;
-      if(!fail){
-        fail = defaultFail;
-      }
-      if (!opts.host) {
-        return fail('init_no_host', {});
-      }
-      if (!opts.appid) {
-        return fail('init_no_appid', {});
-      }
-      if (!opts.appkey) {
-        return fail('init_no_appkey', {});
-      }
-      $fh.app_props = opts;
-      var path = opts.host + $fh.boxprefix + "app/init";
-      var data = _getFhParams();
-      $fh.__ajax({
-        "url": path,
-        "type": "POST",
-        "contentType": "application/json",
-        "data": JSON.stringify(data),
-        "timeout" : opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
-        "success": function(res){
-          $fh.cloud_props = res;
-          if(success){
-            success(res);
-          }
-          _cloudReady(true);
-        },
-        "error": function(req, statusText, error){
-          _init_failed = true;
-          _is_initializing = false;
-          _handleError(fail, req, statusText);
-          _cloudReady(false);
-        }
-      });
-    } else {
-      _cloud_ready_listeners.push({type:'init', success: success, fail: fail});
-    }
-    
-  };
-
-  $fh.act = function(opts, success, fail) {
-    if(!fail){
-      fail = defaultFail;
-    }
-    if (!opts.act) {
-      return fail('act_no_action', {});
-    }
-    // if the initial init failed try and re init then retry the act call
-    if(_init_failed){
-      $fh.init($fh.app_props , function (suc){
-        _init_failed = false;
-        doActCall();
-      }, function (err){
-        _handleError(fail,{"status":0,"responseText":"Init Failed"},"failed to call init. Check network status");
-      });
-    }
-    else if (null == $fh.cloud_props && _is_initializing){
-      _cloud_ready_listeners.push({
-        "type": "act",
-        "opts": opts,
-        "success": success,
-        "fail": fail
-      });
-      return;
-    }
-    else{
-      doActCall();
-    }
-
-    function doActCall(){
-      var cloud_host = $fh.cloud_props.hosts.releaseCloudUrl;
-      var app_type = $fh.cloud_props.hosts.releaseCloudType;
-
-      if($fh.app_props.mode && $fh.app_props.mode.indexOf("dev") > -1){
-        cloud_host = $fh.cloud_props.hosts.debugCloudUrl;
-        app_type = $fh.cloud_props.hosts.debugCloudType;
-      }
-      var url = cloud_host + "/cloud/" + opts.act;
-      if(app_type === "fh"){
-        url = cloud_host + $fh.boxprefix + "act/" + $fh.cloud_props.domain + "/"+ $fh.app_props.appid + "/" + opts.act + "/" + $fh.app_props.appid;
-      }
-      var params = opts.req || {};
-      params = _addFhParams(params);
-
-    return $fh.__ajax({
-      "url": url,
-      "type": "POST",
-      "data": JSON.stringify(params),
-      "contentType": "application/json",
-      "timeout" : opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
-      success: function(res) {
-        if(success){
-          return success(res);
-        }
-      },
-      error: function(req, statusText, error) {
-        _handleError(fail, req, statusText);
-      }
-    });
-    }
-  };
-
-
-  $fh.auth = function (opts, success, fail) {
-    if(!fail){
-      fail = defaultFail;
-    }
-    if (null == $fh.cloud_props) {
-      return fail('fh_not_ready', {});
-    }
-    var req = {};
-    if (!opts.policyId) {
-      return fail('auth_no_policyId', {});
-    }
-    if (!opts.clientToken) {
-      return fail('auth_no_clientToken', {});
-    }
-    req.policyId = opts.policyId;
-    req.clientToken = opts.clientToken;
-    if (opts.endRedirectUrl) {
-      req.endRedirectUrl = opts.endRedirectUrl;
-      if (opts.authCallback) {
-        req.endRedirectUrl += (/\?/.test(req.endRedirectUrl) ? "&" : "?") + "_fhAuthCallback=" + opts.authCallback;
-      }
-    }
-    req.params = {};
-    if (opts.params) {
-      req.params = opts.params;
-    }
-    var endurl = opts.endRedirectUrl || "status=complete";
-    req.device = getDeviceId();
-    var path = $fh.app_props.host + $fh.boxprefix + "admin/authpolicy/auth";
-    req = _addFhParams(req);
-
-    $fh.__ajax({
-      "url": path,
-      "type": "POST",
-      "data": JSON.stringify(req),
-      "contentType": "application/json",
-      "timeout" : opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
-      success: function(res) {
-        $fh._handleAuthResponse(endurl, res, success, fail);
-      },
-      error: function(req, statusText, error) {
-        _handleError(fail, req, statusText);
-      }
-    });
-
-  };
-})(this);
 /**
  * Lawnchair!
  * ---
@@ -5936,6 +5223,7 @@ Lawnchair.adapter('localFileStorage', (function () {
 
     save : function (obj, callback){
       var key = obj.key;
+      var value = obj.val||obj.value;
       filenameForKey(key, function(hash) {
         window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function gotFS(fileSystem) {
 
@@ -5946,10 +5234,10 @@ Lawnchair.adapter('localFileStorage', (function () {
               writer.onwrite = function() {
                 return callback({
                   key: key,
-                  val: obj.val
+                  val: value
                 });
               };
-              writer.write(obj.val);
+              writer.write(value);
             }, function() {
               fail('[save] Failed to create file writer');
             });
@@ -6052,25 +5340,25 @@ Lawnchair.adapter('localFileStorage', (function () {
   };
 
 }()));
-Lawnchair.adapter('webkit-sqlite', (function () {
+Lawnchair.adapter('webkit-sqlite', (function() {
   // private methods
-  var fail = function (e, i) {
-      if(console){
-        console.log('error in sqlite adaptor!', e, i)
-      }
+  var fail = function(e, i) {
+    if (console) {
+      console.log('error in sqlite adaptor!', e, i)
     }
-    ,   now  = function () { return new Date() } // FIXME need to use better date fn
-  // not entirely sure if this is needed...
+  }, now = function() {
+      return new Date()
+    } // FIXME need to use better date fn
+    // not entirely sure if this is needed...
   if (!Function.prototype.bind) {
-    Function.prototype.bind = function( obj ) {
-      var slice = [].slice
-        ,   args  = slice.call(arguments, 1)
-        ,   self  = this
-        ,   nop   = function () {}
-        ,   bound = function () {
+    Function.prototype.bind = function(obj) {
+      var slice = [].slice,
+        args = slice.call(arguments, 1),
+        self = this,
+        nop = function() {}, bound = function() {
           return self.apply(this instanceof nop ? this : (obj || {}), args.concat(slice.call(arguments)))
         }
-      nop.prototype   = self.prototype
+      nop.prototype = self.prototype
       bound.prototype = new nop()
       return bound
     }
@@ -6079,31 +5367,35 @@ Lawnchair.adapter('webkit-sqlite', (function () {
   // public methods
   return {
 
-    valid: function() { return !!(window.openDatabase) },
+    valid: function() {
+      return !!(window.openDatabase)
+    },
 
-    init: function (options, callback) {
-      var that   = this
-        ,   cb     = that.fn(that.name, callback)
-        ,   create = "CREATE TABLE IF NOT EXISTS " + this.record + " (id NVARCHAR(32) UNIQUE PRIMARY KEY, value TEXT, timestamp REAL)"
-        ,   win    = function(){ return cb.call(that, that); }
-      // open a connection and create the db if it doesn't exist
-      //FEEDHENRY CHANGE TO ALLOW ERROR CALLBACK
-      if(options && 'function' === typeof options.fail) fail = options.fail
-      //END CHANGE
+    init: function(options, callback) {
+      var that = this,
+        cb = that.fn(that.name, callback),
+        create = "CREATE TABLE IF NOT EXISTS " + this.record + " (id NVARCHAR(32) UNIQUE PRIMARY KEY, value TEXT, timestamp REAL)",
+        win = function() {
+          return cb.call(that, that);
+        }
+        // open a connection and create the db if it doesn't exist
+        //FEEDHENRY CHANGE TO ALLOW ERROR CALLBACK
+      if (options && 'function' === typeof options.fail) fail = options.fail
+        //END CHANGE
       this.db = openDatabase(this.name, '1.0.0', this.name, 65536)
-      this.db.transaction(function (t) {
+      this.db.transaction(function(t) {
         t.executeSql(create, [], win, fail)
       })
     },
 
-    keys:  function (callback) {
-      var cb   = this.lambda(callback)
-        ,   that = this
-        ,   keys = "SELECT id FROM " + this.record + " ORDER BY timestamp DESC"
+    keys: function(callback) {
+      var cb = this.lambda(callback),
+        that = this,
+        keys = "SELECT id FROM " + this.record + " ORDER BY timestamp DESC"
 
       this.db.readTransaction(function(t) {
-        var win = function (xxx, results) {
-          if (results.rows.length == 0 ) {
+        var win = function(xxx, results) {
+          if (results.rows.length == 0) {
             cb.call(that, [])
           } else {
             var r = [];
@@ -6118,79 +5410,96 @@ Lawnchair.adapter('webkit-sqlite', (function () {
       return this
     },
     // you think thats air you're breathing now?
-    save: function (obj, callback, error) {
+    save: function(obj, callback, error) {
       var that = this
-      objs = (this.isArray(obj) ? obj : [obj]).map(function(o){if(!o.key) { o.key = that.uuid()} return o})
-        ,   ins  = "INSERT OR REPLACE INTO " + this.record + " (value, timestamp, id) VALUES (?,?,?)"
-        ,   win  = function () { if (callback) { that.lambda(callback).call(that, that.isArray(obj)?objs:objs[0]) }}
-        ,   error= error || function() {}
-        ,   insvals = []
-        ,   ts = now()
-
-      try {
-        for (var i = 0, l = objs.length; i < l; i++) {
-          insvals[i] = [JSON.stringify(objs[i]), ts, objs[i].key];
+      objs = (this.isArray(obj) ? obj : [obj]).map(function(o) {
+        if (!o.key) {
+          o.key = that.uuid()
         }
-      } catch (e) {
-        fail(e)
-        throw e;
-      }
+        return o
+      }),
+        ins = "INSERT OR REPLACE INTO " + this.record + " (value, timestamp, id) VALUES (?,?,?)",
+        win = function() {
+          if (callback) {
+            that.lambda(callback).call(that, that.isArray(obj) ? objs : objs[0])
+          }
+        }, error = error || function() {}, insvals = [],
+        ts = now()
+
+        try {
+          for (var i = 0, l = objs.length; i < l; i++) {
+            insvals[i] = [JSON.stringify(objs[i]), ts, objs[i].key];
+          }
+        } catch (e) {
+          fail(e)
+          throw e;
+        }
 
       that.db.transaction(function(t) {
         for (var i = 0, l = objs.length; i < l; i++)
           t.executeSql(ins, insvals[i])
-      }, function(e,i){fail(e,i)}, win)
+      }, function(e, i) {
+        fail(e, i)
+      }, win)
 
       return this
     },
 
 
-    batch: function (objs, callback) {
+    batch: function(objs, callback) {
       return this.save(objs, callback)
     },
 
-    get: function (keyOrArray, cb) {
-      var that = this
-        ,   sql  = ''
-        ,   args = this.isArray(keyOrArray) ? keyOrArray : [keyOrArray];
+    get: function(keyOrArray, cb) {
+      var that = this,
+        sql = '',
+        args = this.isArray(keyOrArray) ? keyOrArray : [keyOrArray];
       // batch selects support
       sql = 'SELECT id, value FROM ' + this.record + " WHERE id IN (" +
-        args.map(function(){return '?'}).join(",") + ")"
+        args.map(function() {
+        return '?'
+      }).join(",") + ")"
       // FIXME
       // will always loop the results but cleans it up if not a batch return at the end..
       // in other words, this could be faster
-      var win = function (xxx, results) {
-        var o
-          ,   r
-          ,   lookup = {}
-        // map from results to keys
+      var win = function(xxx, results) {
+        var o, r, lookup = {}
+          // map from results to keys
         for (var i = 0, l = results.rows.length; i < l; i++) {
           o = JSON.parse(results.rows.item(i).value)
           o.key = results.rows.item(i).id
           lookup[o.key] = o;
         }
-        r = args.map(function(key) { return lookup[key]; });
+        r = args.map(function(key) {
+          return lookup[key];
+        });
         if (!that.isArray(keyOrArray)) r = r.length ? r[0] : null
         if (cb) that.lambda(cb).call(that, r)
       }
-      this.db.readTransaction(function(t){ t.executeSql(sql, args, win, fail) })
+      this.db.readTransaction(function(t) {
+        t.executeSql(sql, args, win, fail)
+      })
       return this
     },
 
-    exists: function (key, cb) {
-      var is = "SELECT * FROM " + this.record + " WHERE id = ?"
-        ,   that = this
-        ,   win = function(xxx, results) { if (cb) that.fn('exists', cb).call(that, (results.rows.length > 0)) }
-      this.db.readTransaction(function(t){ t.executeSql(is, [key], win, fail) })
+    exists: function(key, cb) {
+      var is = "SELECT * FROM " + this.record + " WHERE id = ?",
+        that = this,
+        win = function(xxx, results) {
+          if (cb) that.fn('exists', cb).call(that, (results.rows.length > 0))
+        }
+      this.db.readTransaction(function(t) {
+        t.executeSql(is, [key], win, fail)
+      })
       return this
     },
 
-    all: function (callback) {
-      var that = this
-        ,   all  = "SELECT * FROM " + this.record
-        ,   r    = []
-        ,   cb   = this.fn(this.name, callback) || undefined
-        ,   win  = function (xxx, results) {
+    all: function(callback) {
+      var that = this,
+        all = "SELECT * FROM " + this.record,
+        r = [],
+        cb = this.fn(this.name, callback) || undefined,
+        win = function(xxx, results) {
           if (results.rows.length != 0) {
             for (var i = 0, l = results.rows.length; i < l; i++) {
               var obj = JSON.parse(results.rows.item(i).value)
@@ -6201,48 +5510,841 @@ Lawnchair.adapter('webkit-sqlite', (function () {
           if (cb) cb.call(that, r)
         }
 
-      this.db.readTransaction(function (t) {
+      this.db.readTransaction(function(t) {
         t.executeSql(all, [], win, fail)
       })
       return this
     },
 
-    remove: function (keyOrArray, cb) {
-      var that = this
-        ,   args
-        ,   sql  = "DELETE FROM " + this.record + " WHERE id "
-        ,   win  = function () { if (cb) that.lambda(cb).call(that) }
+    remove: function(keyOrArray, cb) {
+      var that = this,
+        args, sql = "DELETE FROM " + this.record + " WHERE id ",
+        win = function() {
+          if (cb) that.lambda(cb).call(that)
+        }
       if (!this.isArray(keyOrArray)) {
         sql += '= ?';
         args = [keyOrArray];
       } else {
         args = keyOrArray;
         sql += "IN (" +
-          args.map(function(){return '?'}).join(',') +
+          args.map(function() {
+          return '?'
+        }).join(',') +
           ")";
       }
       args = args.map(function(obj) {
         return obj.key ? obj.key : obj;
       });
 
-      this.db.transaction( function (t) {
+      this.db.transaction(function(t) {
         t.executeSql(sql, args, win, fail);
       });
 
       return this;
     },
 
-    nuke: function (cb) {
-      var nuke = "DELETE FROM " + this.record
-        ,   that = this
-        ,   win  = cb ? function() { that.lambda(cb).call(that) } : function(){}
-      this.db.transaction(function (t) {
+    nuke: function(cb) {
+      var nuke = "DELETE FROM " + this.record,
+        that = this,
+        win = cb ? function() {
+        that.lambda(cb).call(that)
+      } : function() {}
+      this.db.transaction(function(t) {
         t.executeSql(nuke, [], win, fail)
       })
       return this
     }
-//////
-  }})())
+  }
+})());
+(function(root) {
+  root.$fh = root.$fh || {};
+  var $fh = root.$fh;
+  $fh.fh_timeout = 20000;
+  $fh.boxprefix = '/box/srv/1.1/';
+  $fh.sdk_version = '1.1.4';
+  
+  var _is_initializing = false;
+  var _init_failed = false;
+  var _cloud_ready_listeners = [];
+
+  var _cloudReady = function(success){
+    try{
+      while(_cloud_ready_listeners[0]){
+        var act_fun = _cloud_ready_listeners.shift();
+        if(act_fun.type === "init"){
+          if(success){
+            act_fun.success($fh.cloud_props);
+          } else {
+            if(act_fun.fail){
+              act_fun.fail("fh_init_failed", {});
+            }
+          }
+        }
+        if(act_fun.type === "act"){
+          if(success){
+            $fh.act(act_fun.opts, act_fun.success, act_fun.fail);
+          } else {
+            if(act_fun.fail){
+              act_fun.fail("fh_init_failed", {});
+            }
+          }
+        }
+      }
+    } finally {
+
+    }
+  };
+
+  //cookie read/write only used internally, make it private
+  var _mock_uuid_cookie_name = "mock_uuid";
+  var __readCookieValue  = function (cookie_name) {
+    var name_str = cookie_name + "=";
+    var cookies = document.cookie.split(";");
+    for (var i = 0; i < cookies.length; i++) {
+      var c = cookies[i];
+      while (c.charAt(0) === ' ') {
+        c = c.substring(1, c.length);
+      }
+      if (c.indexOf(name_str) === 0) {
+        return c.substring(name_str.length, c.length);
+      }
+    }
+    return null;
+  };
+  var __createUUID = function () {
+    //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
+    //based on RFC 4122, section 4.4 (Algorithms for creating UUID from truely random pr pseudo-random number)
+    var s = [];
+    var hexDigitals = "0123456789ABCDEF";
+    for (var i = 0; i < 32; i++) {
+      s[i] = hexDigitals.substr(Math.floor(Math.random() * 0x10), 1);
+    }
+    s[12] = "4";
+    s[16] = hexDigitals.substr((s[16] & 0x3) | 0x8, 1);
+    var uuid = s.join("");
+    return uuid;
+  };
+  var __createCookie = function (cookie_name, cookie_value) {
+    var date = new Date();
+    date.setTime(date.getTime() + 36500 * 24 * 60 * 60 * 1000); //100 years
+    var expires = "; expires=" + date.toGMTString();
+    document.cookie = cookie_name + "=" + cookie_value + expires + "; path = /";
+  };
+
+  var getDeviceId = function(){
+    //check for cordova/phonegap first
+    if(typeof window.device !== "undefined" && typeof window.device.uuid !== "undefined"){
+      return window.device.uuid;
+    }  else if(typeof navigator.device !== "undefined" && typeof navigator.device.uuid !== "undefined"){
+      return navigator.device.uuid;
+    } else {
+      var uuid = __readCookieValue(_mock_uuid_cookie_name);
+      if(null == uuid){
+          uuid = __createUUID();
+          __createCookie(_mock_uuid_cookie_name, uuid);
+      }
+      return uuid;
+    }
+  };
+
+  var getCuidMap = function() {
+    if(typeof window.device !== "undefined" && typeof window.device.cuidMap !== "undefined"){
+      return window.device.cuidMap;
+    }  else if(typeof navigator.device !== "undefined" && typeof navigator.device.cuidMap !== "undefined"){
+      return navigator.device.cuidMap;
+    }
+
+    return null;
+  };
+  
+  $fh._getDeviceId = getDeviceId;
+  $fh._getCuidMap = getCuidMap;
+  var __isSmartMobile = /Android|webOS|iPhone|iPad|iPad|Blackberry|Windows Phone/i.test(navigator.userAgent);
+  var __isLocalFile = window.location.protocol.indexOf("file") > -1;
+
+  function isSameOrigin(url) {
+    var loc = window.location;
+    // http://blog.stevenlevithan.com/archives/parseuri-split-url
+    var uriParts = new RegExp("^(?:([^:/?#.]+):)?(?://)?(([^:/?#]*)(?::(\\d*))?)((/(?:[^?#](?![^?#/]*\\.[^?#/.]+(?:[\\?#]|$)))*/?)?([^?#/]*))?(?:\\?([^#]*))?(?:#(.*))?");
+
+    var locParts = uriParts.exec(loc);
+    var urlParts = uriParts.exec(url);
+
+    return ((urlParts[1] == null || urlParts[1] === '') && // no protocol }
+            (urlParts[3] == null || urlParts[3] === '') && // no domain   } - > relative url
+            (urlParts[4] == null || urlParts[4] === ''))|| // no port       }
+            (locParts[1] === urlParts[1] && // protocol matches }
+            locParts[3] === urlParts[3] && // domain matches   }-> absolute url
+            locParts[4] === urlParts[4]); // port matches      }
+  }
+
+
+  // ** millicore/src/main/webapp/box/static/apps/libs/feedhenry/feedhenry-core.js **
+  //IE 8/9 use XDomainRequest for cors requests
+  function XDomainRequestWrapper(xdr){
+    this.xdr = xdr;
+    this.isWrapper = true;
+    this.readyState = 0;
+    this.onreadystatechange = null;
+    this.status = 0;
+    this.statusText = "";
+    this.responseText = "";
+    var self = this;
+    this.xdr.onload = function(){
+        self.readyState = 4;
+        self.status = 200;
+        self.statusText = "";
+        self.responseText = self.xdr.responseText;
+        if(self.onreadystatechange){
+            self.onreadystatechange();
+        }
+    };
+    this.xdr.onerror = function(){
+        if(self.onerror){
+            self.onerror();
+        }
+        self.readyState = 4;
+        self.status = 0;
+        self.statusText = "";
+        if(self.onreadystatechange){
+            self.onreadystatechange();
+        }
+    };
+    this.xdr.ontimeout = function(){
+        self.readyState = 4;
+        self.status = 408;
+        self.statusText = "timeout";
+        if(self.onreadystatechange){
+            self.onreadystatechange();
+        }
+    };
+  }
+
+  XDomainRequestWrapper.prototype.open = function(method, url, asyn){
+    this.xdr.open(method, url);
+  };
+
+  XDomainRequestWrapper.prototype.send = function(data){
+    this.xdr.send(data);
+  };
+
+  XDomainRequestWrapper.prototype.abort = function(){
+    this.xdr.abort();
+  };
+
+  XDomainRequestWrapper.prototype.setRequestHeader = function(n, v){
+    //not supported by xdr
+    //Good doc on limitations of XDomainRequest http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
+    //XDomainRequest doesn't allow setting custom request headers. But it is the only available option to do CORS requests in IE8 & 9. In IE10, they finally start to use standard XMLHttpRequest.
+    //To support FH auth tokens in IE8&9, we have to find a different way of doing it.
+  };
+
+  XDomainRequestWrapper.prototype.getResponseHeader = function(n){
+    //not supported by xdr
+  };
+
+
+  //first, check if cors if supported by the browser
+  /* The following code is used to detect if the browser is supporting CORS. 
+    Most of the browsers implement CORS support using XMLHttpRequest2 object. 
+    The "withCredentials" property is unique in XMLHttpRequest2 object so it is the easiest way to tell if the browser support CORS. Again, IE uses XDomainRequest. 
+    A very good article covering this can be found here: http://www.html5rocks.com/en/tutorials/cors/.*/
+  var __cors_supported = false;
+  if(window.XMLHttpRequest){
+    var rq = new XMLHttpRequest();
+    if('withCredentials' in rq){
+        __cors_supported = true;
+    }
+    if(!__cors_supported){
+        if(typeof XDomainRequest !== "undefined"){
+            __cors_supported = true;
+        }
+    }
+  }
+
+  //create a normal ajax request object
+  var __xhr = function () {
+    var xhr = null;
+    if(window.XMLHttpRequest){
+        xhr = new XMLHttpRequest();
+    } else if(window.ActiveXObject){
+        xhr = new window.ActiveXObject("Microsoft.XMLHTTP");
+    }
+    return xhr;
+  };
+
+  //create a CORS reqeust
+  var __cor = function () {
+    var cor = null;
+    if(window.XMLHttpRequest){
+        var rq = new XMLHttpRequest();
+        if('withCredentials' in rq){
+            cor = rq;
+        }
+    }
+    if(null == cor){
+        if(typeof XDomainRequest !== "undefined"){
+            cor = new XDomainRequestWrapper(new XDomainRequest());
+        }
+    }
+    return cor;
+  };
+  
+  var __cb_counts = 0;
+
+  var __load_script = function (url, callback) {
+    var script;
+    var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
+    script = document.createElement("script");
+    script.async = "async";
+    script.src = url;
+    script.type = "text/javascript";
+    script.onload = script.onreadystatechange = function () {
+      if (!script.readyState || /loaded|complete/.test(script.readyState)) {
+        script.onload = script.onreadystatechange = null;
+        if (head && script.parentNode) {
+          head.removeChild(script);
+        }
+        script = undefined;
+        if (callback && typeof callback === "function") {
+          callback();
+        }
+      }
+    };
+    head.insertBefore(script, head.firstChild);
+  };
+  $fh.__load_script = __load_script; //for interval usage
+
+  var defaultFail = function(err){
+    if(console){
+      console.log(err);
+    }
+  };
+
+  $fh.__ajax = function (options) {
+    var o = options ? options : {};
+    var sameOrigin = isSameOrigin(options.url);
+    if(!sameOrigin){
+        if(typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined"){
+            //found phonegap, it should be a hyrbid mobile app, consider as same origin
+            sameOrigin = true;
+        }
+    }
+    if(!sameOrigin){
+        if(__isSmartMobile && __isLocalFile){
+            //we can't find phonegap, but we are loading the page use file protocol and the device is a smart phone,
+            //it should be a mobile hyrid app
+            sameOrigin = true;
+        }
+    }
+
+    if (sameOrigin || ((!sameOrigin) && __cors_supported) ) {
+      o.dataType = 'json';
+    } else {
+      o.dataType = "jsonp";
+    }
+
+    var req;
+    var url = o.url;
+    var method = o.type || 'GET';
+    var data = o.data || null;
+    var timeoutTimer;
+    var rurl = /\?/;
+    var datatype = o.dataType === "jsonp" ? "jsonp" : "json";
+
+    //prevent cache
+    //url += (rurl.test(url) ? "&" : "?") + "fhts=" + (new Date()).getTime();
+
+    var done = function (status, statusText, responseText) {
+      var issuccess = false;
+      var error;
+      var res;
+      if (status >= 200 && status <= 300 || status === 304) {
+        if (status === 304) {
+          statusText = "notmodified";
+          issuccess = true;
+        } else {
+          if (o.dataType && o.dataType.indexOf('json') !== -1) {
+            try {
+              if (typeof responseText === "string") {
+                res = JSON.parse(responseText);
+              } else {
+                res = responseText;
+              }
+              issuccess = true;
+            } catch (e) {
+              issuccess = false;
+              statusText = "parseerror";
+              error = e;
+            }
+          } else {
+            res = responseText;
+            issuccess = true;
+          }
+        }
+      } else {
+        error = statusText;
+        if (!statusText || status) {
+          statusText = "error";
+          if (status < 0) {
+            status = 0;
+          }
+        }
+      }
+      if (issuccess) {
+        req = undefined;
+        if (o.success && typeof o.success === 'function') {
+          o.success(res);
+        }
+      } else {
+        if (o.error && typeof o.error === 'function') {
+          o.error(req, statusText, error);
+        }
+      }
+    };
+
+    var types = {
+      'json': function () {
+        if(sameOrigin){
+          req = __xhr();
+        } else {
+          req = __cor();
+        }
+        // if IE8 XrequestWrapper then change 
+        // method to get and add json encoded params
+        if(req.isWrapper){
+          req.open("GET", url + "?params=" + encodeURIComponent(data), true);
+        } else {
+          req.open(method, url, true);
+        }
+        if (o.contentType) {
+          req.setRequestHeader('Content-Type', o.contentType);
+        }
+        req.setRequestHeader('X-Request-With', 'XMLHttpRequest');
+        var handler = function () {
+          if (req.readyState === 4) {
+            if (req.status === 0 && !sameOrigin && !req.isAborted) {
+              // If the XHR/cors was aborted because of a timeout, don't re-try using jsonp. This will cause the request
+              // to be re-fired and can cause replay issues - e.g. creates getting applied multiple times.
+              return types['jsonp']();
+            }
+            else {
+              if (timeoutTimer) {
+                clearTimeout(timeoutTimer);
+              }
+            }
+            var statusText;
+            try {
+              statusText = req.statusText;
+            } catch (e) {
+              statusText = "";
+            }
+            if( ! req.isAborted ) {
+              done(req.status, req.statusText, req.responseText);
+            }
+          }
+        };
+
+        req.onreadystatechange = handler;
+
+        req.send(data);
+      },
+
+      'jsonp': function () {
+        var callbackId = 'fhcb' + __cb_counts++;
+        window[callbackId] = function (response) {
+          if (timeoutTimer) {
+            clearTimeout(timeoutTimer);
+          }
+          done(200, "", response);
+          window[callbackId] = undefined;
+          try {
+            delete window[callbackId];
+          } catch(e) {
+          }
+        };
+        url += (rurl.test(url) ? "&" : "?") + "_callback=" + callbackId;
+        if(o.data){
+          var d = o.data;
+          if(typeof d === "string"){
+            url += "&_jsonpdata=" + encodeURIComponent(o.data);
+          } else {
+            url += "&_jsonpdata=" + encodeURIComponent(JSON.stringify(o.data));
+          }
+        }
+        __load_script(url);
+      }
+    };
+
+    if (o.timeout > 0) {
+      timeoutTimer = setTimeout(function () {
+        if (req) {
+          req.isAborted = true;
+          req.abort();
+        }
+        done(0, 'timeout');
+      }, o.timeout);
+    }
+
+    types[datatype]();
+  };
+
+  _handleError = function(fail, req, resStatus){
+    var errraw;
+    if(req){
+      try{
+        var res = JSON.parse(req.responseText);
+        errraw = res.error || res.msg;
+        if (errraw instanceof Array) {
+          errraw = errraw.join('\n');
+        }
+      } catch(e){
+        errraw = req.responseText;
+      }
+    }
+    if(fail){
+      fail('error_ajaxfail', {
+        status: req.status,
+        message: resStatus,
+        error: errraw
+      });
+    }
+  };
+
+  _getQueryMap = function(url) {
+    var qmap;
+    var i = url.split("?");
+    if (i.length === 2) {
+      var queryString = i[1];
+      var pairs = queryString.split("&");
+      qmap = {};
+      for (var p = 0; p < pairs.length; p++) {
+        var q = pairs[p];
+        var qp = q.split("=");
+        qmap[qp[0]] = qp[1];
+      }
+    }
+    return qmap;
+  };
+
+  _checkAuthResponse = function(url) {
+    if (/\_fhAuthCallback/.test(url)) {
+      var qmap = _getQueryMap(url);
+      if (qmap) {
+        var fhCallback = qmap["_fhAuthCallback"];
+        if (fhCallback) {
+          if (qmap['result'] && qmap['result'] === 'success') {
+            var sucRes = {'sessionToken': qmap['fh_auth_session'], 'authResponse' : JSON.parse(decodeURIComponent(decodeURIComponent(qmap['authResponse'])))};
+            window[fhCallback](null, sucRes);
+          } else {
+            window[fhCallback]({'message':qmap['message']});
+          }
+        }
+      }
+    }
+  };
+
+  _getFhParams = function() {
+    var fhParams = {};
+    fhParams.cuid = getDeviceId();
+    fhParams.cuidMap = getCuidMap();
+    fhParams.appid = $fh.app_props.appid;
+    fhParams.appkey = $fh.app_props.appkey;
+    fhParams.analyticsTag =  $fh.app_props.analyticsTag;
+    fhParams.init = $fh.app_props.init;
+
+    if (typeof fh_destination_code !== 'undefined'){
+      fhParams.destination = fh_destination_code;
+    } else {
+      fhParams.destination = "web";
+    }
+    if (typeof fh_app_version !== 'undefined'){
+      fhParams.app_version = fh_app_version;
+    }
+    if (typeof fh_project_version !== 'undefined'){
+      fhParams.project_version = fh_project_version;
+    }
+    if (typeof fh_project_app_version !== 'undefined'){
+      fhParams.project_app_version = fh_project_app_version;
+    }
+    fhParams.sdk_version = _getSdkVersion();
+    return fhParams;
+  };
+
+  _addFhParams = function(params) {
+    params = params || {};
+    params.__fh = _getFhParams();
+    return params;
+  };
+
+  _getSdkVersion = function() {
+    var type = "FH_JS_SDK";
+    if (typeof fh_destination_code !== 'undefined') {
+      type = "FH_HYBRID_SDK";
+    } else if(window.PhoneGap || window.cordova) {
+      type = "FH_PHONEGAP_SDK";
+    }
+    return type + "/" + $fh.sdk_version;
+  };
+
+  if (window.addEventListener) {
+    window.addEventListener('load', function(){
+      _checkAuthResponse(window.location.href);
+    }, false); //W3C
+  } else {
+    window.attachEvent('onload', function(){
+      _checkAuthResponse(window.location.href);
+    }); //IE
+  }
+
+  $fh._handleFhAuthResponse = function(endurl, res, success, fail){
+    if(res.status && res.status === "ok"){
+      if(res.url){
+        if(window.PhoneGap || window.cordova){
+          if(window.plugins && window.plugins.childBrowser){
+            //found childbrowser plugin,add the event listener and load it
+            if(typeof window.plugins.childBrowser.showWebPage === "function"){
+              window.plugins.childBrowser.onLocationChange = function(new_url){
+                if(new_url.indexOf(endurl) > -1){
+                  window.plugins.childBrowser.close();
+                  var qmap = _getQueryMap(new_url);
+                  if(qmap) {
+                    if(qmap['result'] && qmap['result'] === 'success'){
+                      var sucRes = {'sessionToken': qmap['fh_auth_session'], 'authResponse' : JSON.parse(decodeURIComponent(decodeURIComponent(qmap['authResponse'])))};
+                      success(sucRes);
+                    } else {
+                      if(fail){
+                        fail("auth_failed", {'message':qmap['message']});
+                      }
+                    }
+                  } else {
+                    if(fail){
+                        fail("auth_failed", {'message':qmap['message']});
+                    }
+                  }
+                }
+              };
+              window.plugins.childBrowser.showWebPage(res.url);
+            }
+          } else {
+            console.log("ChildBrowser plugin is not intalled.");
+            success(res);
+          }
+        } else {
+         document.location.href = res.url;  
+        }
+      } else {
+        success(res);
+      }
+    } else {
+      if(fail){
+        fail("auth_failed", res);
+      }
+    }
+  };
+
+
+  $fh.init = function(opts, success, fail) {
+    if($fh.cloud_props){
+      return success($fh.cloud_props);
+    } 
+    if(!_is_initializing){
+      _is_initializing = true;
+      if(!fail){
+        fail = defaultFail;
+      }
+      if (!opts.host) {
+        return fail('init_no_host', {});
+      }
+      if (!opts.appid) {
+        return fail('init_no_appid', {});
+      }
+      if (!opts.appkey) {
+        return fail('init_no_appkey', {});
+      }
+
+      $fh.app_props = opts;
+
+      //dom adapter doens't work on windows phone, so don't specify the adapter if the dom one failed
+      var lcConf = {
+        name: "fh_init_storage",
+        adapter: "dom",
+        fail: function(msg, err) {
+          var error_message = 'read/save from/to local storage failed  msg:' + msg + ' err:' + err;
+          return fail(error_message, {});
+        }
+      };
+
+      var storage = null;
+      try {
+        storage = new Lawnchair(lcConf, function() {});
+      } catch(e){
+        //when dom adapter failed, Lawnchair throws an error
+        lcConf.adapter = undefined;
+        storage = new Lawnchair(lcConf, function() {});
+      }
+      
+
+      storage.get('fh_init', function(storage_res) {
+        if (storage_res && storage_res.value !== null) {
+          $fh.app_props.init = storage_res.value;
+        }
+
+        var path = opts.host + $fh.boxprefix + "app/init";
+        var data = _getFhParams();
+        $fh.__ajax({
+          "url": path,
+          "type": "POST",
+          "contentType": "application/json",
+          "data": JSON.stringify(data),
+          "timeout": opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
+          "success": function(data) {
+            $fh.cloud_props = data;
+
+            storage.save({
+              key: "fh_init",
+              value: data.init
+            }, function() {
+              if (success) {
+                success(data);
+              }
+              _cloudReady(true);
+            });
+          },
+          "error": function(req, statusText, error) {
+            _init_failed = true;
+            _is_initializing = false;
+            _handleError(fail, req, statusText);
+            _cloudReady(false);
+          }
+        });
+      });
+    } else {
+      _cloud_ready_listeners.push({type:'init', success: success, fail: fail});
+    }
+  };
+
+  $fh.act = function(opts, success, fail) {
+    if(!fail){
+      fail = defaultFail;
+    }
+    if (!opts.act) {
+      return fail('act_no_action', {});
+    }
+    // if the initial init failed try and re init then retry the act call
+    if(_init_failed){
+      $fh.init($fh.app_props , function (suc){
+        _init_failed = false;
+        doActCall();
+      }, fail);
+    }
+    else if (null == $fh.cloud_props && _is_initializing){
+      _cloud_ready_listeners.push({
+        "type": "act",
+        "opts": opts,
+        "success": success,
+        "fail": fail
+      });
+      return;
+    }
+    else{
+      doActCall();
+    }
+
+    function doActCall(){
+      var url = $fh.cloud_props.hosts.url;
+
+      if (typeof url !== 'undefined') {
+        url = url + "/cloud/" + opts.act;
+      } else {
+        // resolve url the old way i.e. depending on
+        // -burnt in app mode
+        // -returned dev or live url
+        // -returned dev or live type (node or fh(rhino or proxying))
+        cloud_host = $fh.cloud_props.hosts.releaseCloudUrl;
+        var app_type = $fh.cloud_props.hosts.releaseCloudType;
+
+        if($fh.app_props.mode && $fh.app_props.mode.indexOf("dev") > -1){
+          cloud_host = $fh.cloud_props.hosts.debugCloudUrl;
+          app_type = $fh.cloud_props.hosts.debugCloudType;
+        }
+        url = cloud_host + "/cloud/" + opts.act;
+        if(app_type === "fh"){
+          url = cloud_host + $fh.boxprefix + "act/" + $fh.cloud_props.domain + "/"+ $fh.app_props.appid + "/" + opts.act + "/" + $fh.app_props.appid;
+        }
+      }
+
+      var params = opts.req || {};
+      params = _addFhParams(params);
+
+      return $fh.__ajax({
+        "url": url,
+        "type": "POST",
+        "data": JSON.stringify(params),
+        "contentType": "application/json",
+        "timeout" : opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
+        success: function(res) {
+          if(success){
+            return success(res);
+          }
+        },
+        error: function(req, statusText, error) {
+          _handleError(fail, req, statusText);
+        }
+      });
+    }
+  };
+
+
+  $fh.auth = function (opts, success, fail) {
+    if(!fail){
+      fail = defaultFail;
+    }
+    if (null == $fh.cloud_props) {
+      return fail('fh_not_ready', {});
+    }
+    var req = {};
+    if (!opts.policyId) {
+      return fail('auth_no_policyId', {});
+    }
+    if (!opts.clientToken) {
+      return fail('auth_no_clientToken', {});
+    }
+    req.policyId = opts.policyId;
+    req.clientToken = opts.clientToken;
+    if (opts.endRedirectUrl) {
+      req.endRedirectUrl = opts.endRedirectUrl;
+      if (opts.authCallback) {
+        req.endRedirectUrl += (/\?/.test(req.endRedirectUrl) ? "&" : "?") + "_fhAuthCallback=" + opts.authCallback;
+      }
+    }
+    req.params = {};
+    if (opts.params) {
+      req.params = opts.params;
+    }
+    var endurl = opts.endRedirectUrl || "status=complete";
+    req.device = getDeviceId();
+    var path = $fh.app_props.host + $fh.boxprefix + "admin/authpolicy/auth";
+    req = _addFhParams(req);
+
+    $fh.__ajax({
+      "url": path,
+      "type": "POST",
+      "data": JSON.stringify(req),
+      "contentType": "application/json",
+      "timeout" : opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
+      success: function(res) {
+        $fh._handleFhAuthResponse(endurl, res, success, fail);
+      },
+      error: function(req, statusText, error) {
+        _handleError(fail, req, statusText);
+      }
+    });
+
+  };
+})(this);
+
 $fh = $fh || {};
 $fh.sync = (function() {
 
@@ -6254,28 +6356,32 @@ $fh.sync = (function() {
       // How often to synchronise data with the cloud in seconds.
       "auto_sync_local_updates": true,
       // Should local chages be syned to the cloud immediately, or should they wait for the next sync interval
-      "notify_client_storage_failed": false,
+      "notify_client_storage_failed": true,
       // Should a notification event be triggered when loading/saving to client storage fails
-      "notify_sync_started": false,
+      "notify_sync_started": true,
       // Should a notification event be triggered when a sync cycle with the server has been started
       "notify_sync_complete": true,
       // Should a notification event be triggered when a sync cycle with the server has been completed
-      "notify_offline_update": false,
+      "notify_offline_update": true,
       // Should a notification event be triggered when an attempt was made to update a record while offline
-      "notify_collision_detected": false,
+      "notify_collision_detected": true,
       // Should a notification event be triggered when an update failed due to data collision
-      "notify_remote_update_failed": false,
+      "notify_remote_update_failed": true,
       // Should a notification event be triggered when an update failed for a reason other than data collision
-      "notify_local_update_applied": false,
+      "notify_local_update_applied": true,
       // Should a notification event be triggered when an update was applied to the local data store
-      "notify_remote_update_applied": false,
+      "notify_remote_update_applied": true,
       // Should a notification event be triggered when an update was applied to the remote data store
-      "notify_delta_received": false,
+      "notify_delta_received": true,
       // Should a notification event be triggered when a delta was received from the remote data store (dataset or record - depending on whether uid is set)
-      "notify_sync_failed": false,
+      "notify_sync_failed": true,
       // Should a notification event be triggered when the sync loop failed to complete
-      "do_console_log": false
+      "do_console_log": false,
       // Should log statements be written to console.log
+      "crashed_count_wait" : 10,
+      // How many syncs should we check for updates on crashed in flight updates before we give up searching
+      "resend_crashed_updates" : true
+      // If we have reached the crashed_count_wait limit, should we re-try sending the crashed in flight pending record
     },
 
     notifications: {
@@ -6310,10 +6416,12 @@ $fh.sync = (function() {
 
     // PUBLIC FUNCTION IMPLEMENTATIONS
     init: function(options) {
+      self.consoleLog('sync - init called');
       self.config = JSON.parse(JSON.stringify(self.defaults));
       for (var i in options) {
         self.config[i] = options[i];
       }
+      self.datasetMonitor();
     },
 
     notify: function(callback) {
@@ -6321,9 +6429,8 @@ $fh.sync = (function() {
     },
 
     manage: function(dataset_id, options, query_params) {
-
       var doManage = function(dataset) {
-        self.consoleLog('doManage dataset :: initialised = ', dataset.initialised, " :: ", dataset_id, ' :: ', options);
+        self.consoleLog('doManage dataset :: initialised = ' + dataset.initialised + " :: " + dataset_id + ' :: ' + JSON.stringify(options));
 
         // Make sure config is initialised
         if( ! self.config ) {
@@ -6337,21 +6444,12 @@ $fh.sync = (function() {
 
         dataset.query_params = query_params || {};
         dataset.config = datasetConfig;
-
-        if( dataset.initialised !== true) {
-          dataset.initialised = true;
-          self.saveDataSet(dataset_id);
-          self.syncLoop(dataset_id);
-        } else {
-          if( dataset.timeoutInterval ) {
-            self.consoleLog('Clearing timeout for dataset sync loop');
-            clearTimeout(dataset.timeoutInterval);
-            self.syncLoop(dataset_id);
-          }
-        }
+        dataset.syncRunning = false;
+        dataset.syncPending = true;
+        dataset.initialised = true;
+        dataset.meta = {};
+        self.saveDataSet(dataset_id);
       };
-
-
 
       // Check if the dataset is already loaded
       self.getDataSet(dataset_id, function(dataset) {
@@ -6361,11 +6459,16 @@ $fh.sync = (function() {
         // Not already loaded, try to load from local storage
         self.loadDataSet(dataset_id, function(dataset) {
             // Loading from local storage worked
+
+            // Fire the local update event to indicate that dataset was loaded from local storage
+            self.doNotify(dataset_id, null, self.notifications.LOCAL_UPDATE_APPLIED, "load");
+
+            // Put the dataet under the management of the sync service
             doManage(dataset);
           },
           function(err) {
             // No dataset in memory or local storage - create a new one and put it in memory
-            self.consoleLog('manage -> getDataSet : ', arguments);
+            self.consoleLog('Creating new dataset for id ' + dataset_id);
             var dataset = {};
             dataset.pending = {};
             self.datasets[dataset_id] = dataset;
@@ -6413,6 +6516,25 @@ $fh.sync = (function() {
       self.addPendingObj(dataset_id, uid, null, "delete", success, failure);
     },
 
+    getPending: function(dataset_id, cb) {
+      self.getDataSet(dataset_id, function(dataset) {
+        var res;
+        if( dataset ) {
+          res = dataset.pending;
+        }
+        cb(res);
+      }, function(err, datatset_id) {
+          self.ConsoleLog(err);
+      });
+    },
+
+    clearPending: function(dataset_id, cb) {
+      self.getDataSet(dataset_id, function(dataset) {
+        dataset.pending = {};
+        self.saveDataSet(dataset_id, cb);
+      });
+    },
+
     listCollisions : function(dataset_id, success, failure){
       $fh.act({
         "act": dataset_id,
@@ -6431,6 +6553,7 @@ $fh.sync = (function() {
         }
       }, success, failure);
     },
+
 
     // PRIVATE FUNCTIONS
     isOnline: function(callback) {
@@ -6456,7 +6579,6 @@ $fh.sync = (function() {
     },
 
     doNotify: function(dataset_id, uid, code, message) {
-      //self.consoleLog('doNotify', dataset_id, uid, code, message);
 
       if( self.notify_callback ) {
         if ( self.config['notify_' + code] ) {
@@ -6484,8 +6606,38 @@ $fh.sync = (function() {
       }
     },
 
-    generateHash: function(string) {
-      var hash = CryptoJS.SHA1(string);
+    sortObject : function(object) {
+      if (typeof object !== "object" || object === null) {
+        return object;
+      }
+
+      var result = [];
+
+      Object.keys(object).sort().forEach(function(key) {
+        result.push({
+          key: key,
+          value: self.sortObject(object[key])
+        });
+      });
+
+      return result;
+    },
+
+    sortedStringify : function(obj) {
+
+      var str = '';
+
+      try {
+        str = JSON.stringify(self.sortObject(obj));
+      } catch (e) {
+        console.error('Error stringifying sorted object:' + e);
+      }
+
+      return str;
+    },
+
+    generateHash: function(object) {
+      var hash = CryptoJS.SHA1(self.sortedStringify(object));
       return hash.toString();
     },
 
@@ -6497,49 +6649,40 @@ $fh.sync = (function() {
       });
 
       function storePendingObject(obj) {
-        obj.action = action;
-        obj.hash = self.generateHash(JSON.stringify(pendingObj));
-        obj.timestamp = new Date().getTime();
-
-        self.consoleLog("storePendingObj :: " + JSON.stringify( obj ));
+        obj.hash = self.generateHash(obj);
 
         self.getDataSet(dataset_id, function(dataset) {
-          if( "update" === action ) {
-            dataset.data[uid].data = obj.post;
-            dataset.data[uid].hash = self.generateHash(JSON.stringify(obj.data));
-          } else if( "delete" === action ) {
-            delete dataset.data[uid];
-          }
 
           dataset.pending[obj.hash] = obj;
 
+          self.updateDatasetFromLocal(dataset, obj);
+
+          if(self.config.auto_sync_local_updates) {
+            dataset.syncPending = true;
+          }
           self.saveDataSet(dataset_id);
           self.doNotify(dataset_id, uid, self.notifications.LOCAL_UPDATE_APPLIED, action);
-          if(self.config.auto_sync_local_updates) {
-            if( dataset.timeoutInterval ) {
-              self.consoleLog('auto_sync_local_updates - clearing timeout for dataset sync loop');
-              clearTimeout(dataset.timeoutInterval);
-              self.syncLoop(dataset_id);
-            }
-          }
+
           success(obj);
         }, function(code, msg) {
           failure(code, msg);
         });
       }
 
+      var pendingObj = {};
+      pendingObj.inFlight = false;
+      pendingObj.action = action;
+      pendingObj.post = data;
+      pendingObj.postHash = self.generateHash(pendingObj.post);
+      pendingObj.timestamp = new Date().getTime();
       if( "create" === action ) {
-        var pendingObj = {};
-        pendingObj.uid = null;
-        pendingObj.pre = null;
-        pendingObj.post = data;
+        pendingObj.uid = pendingObj.postHash;
         storePendingObject(pendingObj);
       } else {
         self.read(dataset_id, uid, function(rec) {
-          var pendingObj = {};
           pendingObj.uid = uid;
           pendingObj.pre = rec.data;
-          pendingObj.post = data;
+          pendingObj.preHash = self.generateHash(rec.data);
           storePendingObject(pendingObj);
         }, function(code, msg) {
           failure(code, msg);
@@ -6547,76 +6690,114 @@ $fh.sync = (function() {
       }
     },
 
-
     syncLoop: function(dataset_id) {
-      self.doNotify(dataset_id, null, self.notifications.SYNC_STARTED, null);
-      self.isOnline(function(online) {
-        if (!online) {
-          self.syncComplete(dataset_id, "offline");
-        } else {
-          self.getDataSet(dataset_id, function(dataSet) {
+      self.getDataSet(dataset_id, function(dataSet) {
+        // The sync loop is currently active
+        dataSet.syncPending = false;
+        dataSet.syncRunning = true;
+        dataSet.syncLoopStart = new Date().getTime();
+        self.doNotify(dataset_id, null, self.notifications.SYNC_STARTED, null);
+
+        self.isOnline(function(online) {
+          if (!online) {
+            self.syncComplete(dataset_id, "offline");
+          } else {
             var syncLoopParams = {};
             syncLoopParams.fn = 'sync';
             syncLoopParams.dataset_id = dataset_id;
             syncLoopParams.query_params = dataSet.query_params;
+            //var datasetHash = self.generateLocalDatasetHash(dataSet);
             syncLoopParams.dataset_hash = dataSet.hash;
+            syncLoopParams.acknowledgements = dataSet.acknowledgements || [];
 
             var pending = dataSet.pending;
             var pendingArray = [];
             for(var i in pending ) {
-              pendingArray.push(pending[i]);
+              // Mark the pending records we are about to submit as inflight and add them to the array for submission
+              // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
+              if( !pending[i].inFlight && !pending[i].crashed ) {
+                pending[i].inFlight = true;
+                pending[i].inFlightDate = new Date().getTime();
+                pendingArray.push(pending[i]);
+              }
             }
             syncLoopParams.pending = pendingArray;
 
-            self.consoleLog('Starting sync loop - global hash = ', dataSet.hash, ' :: pending = ', JSON.stringify(pendingArray));
+            if( pendingArray.length > 0 ) {
+              self.consoleLog('Starting sync loop - global hash = ' + dataSet.hash + ' :: params = ' + JSON.stringify(syncLoopParams, null, 2));
+            }
+            try {
+              $fh.act({
+                'act': dataset_id,
+                'req': syncLoopParams
+              }, function(res) {
+                var rec;
 
-            $fh.act({
-              'act': dataset_id,
-              'req': syncLoopParams
-            }, function(res) {
-              self.consoleLog("Back from Sync Loop : full Dataset = " + (res.records ? " Y" : "N"));
-              var rec;
-
-              function processUpdates(updates, notification) {
-                if( updates ) {
-                  for (var up in updates) {
-                    rec = updates[up];
-                    delete dataSet.pending[up];
-                    self.doNotify(dataset_id, rec.uid, notification, rec);
+                function processUpdates(updates, notification, acknowledgements) {
+                  if( updates ) {
+                    for (var up in updates) {
+                      rec = updates[up];
+                      acknowledgements.push(rec);
+                      if( dataSet.pending[up] && dataSet.pending[up].inFlight && !dataSet.pending[up].crashed ) {
+                        delete dataSet.pending[up];
+                        self.doNotify(dataset_id, rec.uid, notification, rec);
+                      }
+                    }
                   }
                 }
-              }
 
-              if (res.updates) {
-                processUpdates(res.updates.applied, self.notifications.REMOTE_UPDATE_APPLIED);
-                processUpdates(res.updates.failed, self.notifications.REMOTE_UPDATE_FAILED);
-                processUpdates(res.updates.collisions, self.notifications.COLLISION_DETECTED);
-              }
+                // Check to see if any new pending records need to be updated to reflect the current state of play.
+                self.updatePendingFromNewData(dataset_id, dataSet, res);
 
-              if (res.records) {
-                // Full Dataset returned
-                dataSet.data = res.records;
-                dataSet.hash = res.hash;
-                self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'full dataset');
-                self.consoleLog("Full Dataset returned");
+                // Check to see if any previously crashed inflight records can now be resolved
+                self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);
+
+                // Update the new dataset with details of any inflight updates which we have not received a response on
+                self.updateNewDataFromInFlight(dataset_id, dataSet, res);
+
+                // Update the new dataset with details of any pending updates
+                self.updateNewDataFromPending(dataset_id, dataSet, res);
+
+                if (res.records) {
+                  // Full Dataset returned
+                  dataSet.data = res.records;
+                  dataSet.hash = res.hash;
+
+                  self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'full dataset');
+                }
+
+                if (res.updates) {
+                  var acknowledgements = [];
+                  processUpdates(res.updates.applied, self.notifications.REMOTE_UPDATE_APPLIED, acknowledgements);
+                  processUpdates(res.updates.failed, self.notifications.REMOTE_UPDATE_FAILED, acknowledgements);
+                  processUpdates(res.updates.collisions, self.notifications.COLLISION_DETECTED, acknowledgements);
+                  dataSet.acknowledgements = acknowledgements;
+                }
+
+                else if (res.hash && res.hash !== dataSet.hash) {
+                  self.consoleLog("Local dataset stale - syncing records :: local hash= " + dataSet.hash + " - remoteHash=" + res.hash);
+                  // Different hash value returned - Sync individual records
+                  self.syncRecords(dataset_id);
+                } else {
+                  self.consoleLog("Local dataset up to date");
+                }
                 self.syncComplete(dataset_id,  "online");
-
-              }
-              else if (res.hash && res.hash !== dataSet.hash) {
-                self.consoleLog("Local dataset stale - syncing records :: local hash= ", dataSet.hash, " - remoteHash=", res.hash);
-                // Different hash value returned - Sync individual records
-                self.syncRecords(dataset_id);
-              } else {
-                self.consoleLog("Local dataset up to date");
-                self.syncComplete(dataset_id,  "online");
-              }
-            }, function(msg, err) {
-              self.consoleLog("syncLoop failed : ", arguments);
-              self.doNotify(dataset_id, null, self.notifications.SYNC_FAILED, msg);
-              self.syncComplete(dataset_id,  msg);
-            });
-          });
-        }
+              }, function(msg, err) {
+                // The AJAX call failed to complete succesfully, so the state of the current pending updates is unknown
+                // Mark them as "crashed". The next time a syncLoop completets successfully, we will review the crashed
+                // records to see if we can determine their current state.
+                self.markInFlightAsCrashed(dataSet);
+                self.consoleLog("syncLoop failed : msg=" + msg + " :: err = " + err);
+                self.doNotify(dataset_id, null, self.notifications.SYNC_FAILED, msg);
+                self.syncComplete(dataset_id,  msg);
+              });
+            }
+            catch (e) {
+              self.consoleLog('Error performing sync - ' + e);
+              self.syncComplete(dataset_id, e);
+            }
+          }
+        });
       });
     },
 
@@ -6640,7 +6821,7 @@ $fh.sync = (function() {
         syncRecParams.query_params = dataSet.query_params;
         syncRecParams.clientRecs = clientRecs;
 
-        self.consoleLog("syncRecParams :: ", syncRecParams);
+        self.consoleLog("syncRecParams :: " + JSON.stringify(syncRecParams));
 
         $fh.act({
           'act': dataset_id,
@@ -6674,28 +6855,65 @@ $fh.sync = (function() {
           }
           self.syncComplete(dataset_id, "online");
         }, function(msg, err) {
-          self.consoleLog("syncRecords failed : ", arguments);
+          self.consoleLog("syncRecords failed : msg=" + msg + " :: err=" + err);
           self.syncComplete(dataset_id, msg);
         });
       });
     },
 
     syncComplete: function(dataset_id, status) {
-      //self.consoleLog('syncComplete');
-      self.saveDataSet(dataset_id);
 
       self.getDataSet(dataset_id, function(dataset) {
-        //self.consoleLog("dataset.config.sync_frequency :: " + dataset.config.sync_frequency);
-        // set timeout for next sync loop execution
-        dataset.timeoutInterval = setTimeout(function() {
-          self.syncLoop(dataset_id);
-        }, dataset.config.sync_frequency * 1000);
+        dataset.syncRunning = false;
+        dataset.syncLoopEnd = new Date().getTime();
+        self.saveDataSet(dataset_id);
         self.doNotify(dataset_id, dataset.hash, self.notifications.SYNC_COMPLETE, status);
-
       });
     },
 
-    saveDataSet: function (dataset_id) {
+    checkDatasets: function() {
+      for( var dataset_id in self.datasets ) {
+        if( self.datasets.hasOwnProperty(dataset_id) ) {
+          var dataset = self.datasets[dataset_id];
+
+          if( !dataset.syncRunning ) {
+            // Check to see if it is time for the sync loop to run again
+            var lastSyncStart = dataset.syncLoopStart;
+            var lastSyncCmp = dataset.syncLoopEnd;
+            if( lastSyncStart == null ) {
+              self.consoleLog(dataset_id +' - Performing initial sync');
+              // Dataset has never been synced before - do initial sync
+              dataset.syncPending = true;
+            } else if (lastSyncCmp != null) {
+              var timeSinceLastSync = new Date().getTime() - lastSyncCmp;
+              var syncFrequency = dataset.config.sync_frequency * 1000;
+              if( timeSinceLastSync > syncFrequency ) {
+                // Time between sync loops has passed - do another sync
+                dataset.syncPending = true;
+              }
+            }
+
+            if( dataset.syncPending ) {
+              // If the dataset requres syncing, run the sync loop. This may be because the sync interval has passed
+              // or because the sync_frequency has been changed or because a change was made to the dataset and the
+              // immediate_sync flag set to true
+             self.syncLoop(dataset_id);
+            }
+          }
+        }
+      }
+    },
+
+    datasetMonitor: function() {
+      self.checkDatasets();
+
+      // Re-execute datasetMonitor every 500ms so we keep invoking checkDatasets();
+      setTimeout(function() {
+        self.datasetMonitor();
+      }, 500);
+    },
+
+    saveDataSet: function (dataset_id, cb) {
       var onFail =  function(msg, err) {
         // save failed
         var errMsg = 'save to local storage failed  msg:' + msg + ' err:' + err;
@@ -6707,6 +6925,9 @@ $fh.sync = (function() {
         Lawnchair({fail:onFail}, function (){
              this.save({key:"dataset_" + dataset_id,val:JSON.stringify(dataset)}, function(){
                //save success
+               if( cb ) {
+                 cb();
+               }
              });
         });
       });
@@ -6729,7 +6950,7 @@ $fh.sync = (function() {
               // the user wants sync
               dataset.initialised = false;
               self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
-              self.consoleLog('load from local storage success dataset:', dataset);
+              self.consoleLog('load from local storage success for dataset_id :' + dataset_id);
               return success(dataset);
             } else {
                 // no data yet, probably first time. failure calback should handle this
@@ -6739,9 +6960,378 @@ $fh.sync = (function() {
       });
     },
 
-    consoleLog: function() {
+
+    updateDatasetFromLocal: function(dataset, pendingRec) {
+      var pending = dataset.pending;
+      var previousPendingUid;
+      var previousPending;
+
+      var uid = pendingRec.uid;
+      self.consoleLog('updating local dataset for uid ' + uid + ' - action = ' + pendingRec.action);
+
+      dataset.meta[uid] = dataset.meta[uid] || {};
+
+      // Creating a new record
+      if( pendingRec.action === "create" ) {
+        if( dataset.data[uid] ) {
+          self.consoleLog('dataset already exists for uid in create :: ' + JSON.stringify(dataset.data[uid]));
+
+          // We are trying to do a create using a uid which already exists
+          if (dataset.meta[uid].fromPending) {
+            // We are trying to create on top of an existing pending record
+            // Remove the previous pending record and use this one instead
+            previousPendingUid = dataset.meta[uid].pendingUid;
+            delete pending[previousPendingUid];
+          }
+        }
+        dataset.data[uid] = {};
+      }
+
+      if( pendingRec.action === "update" ) {
+        if( dataset.data[uid] ) {
+          if (dataset.meta[uid].fromPending) {
+            self.consoleLog('updating an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));
+            // We are trying to update an existing pending record
+            previousPendingUid = dataset.meta[uid].pendingUid;
+            dataset.meta[uid].previousPendingUid = previousPendingUid;
+            previousPending = pending[previousPendingUid];
+            if( previousPending && !previousPending.inFlight) {
+              self.consoleLog('existing pre-flight pending record = ' + JSON.stringify(previousPending));
+              // We are trying to perform an update on an existing pending record
+              // modify the original record to have the latest value and delete the pending update
+              previousPending.post = pendingRec.post;
+              previousPending.postHash = pendingRec.postHash;
+              delete pending[pendingRec.hash];
+            }
+          }
+        }
+      }
+
+      if( pendingRec.action === "delete" ) {
+        if( dataset.data[uid] ) {
+          if (dataset.meta[uid].fromPending) {
+            self.consoleLog('Deleting an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));
+            // We are trying to delete an existing pending record
+            previousPendingUid = dataset.meta[uid].pendingUid;
+            dataset.meta[uid].previousPendingUid = previousPendingUid;
+            previousPending = pending[previousPendingUid];
+            if( previousPending && !previousPending.inFlight ) {
+              self.consoleLog('existing pending record = ' + JSON.stringify(previousPending));
+              if( previousPending.action === "create" ) {
+                // We are trying to perform a delete on an existing pending create
+                // These cancel each other out so remove them both
+                delete pending[pendingRec.hash];
+                delete pending[previousPendingUid];
+              }
+              if( previousPending.action === "update" ) {
+                // We are trying to perform a delete on an existing pending update
+                // Use the pre value from the pending update for the delete and
+                // get rid of the pending update
+                pendingRec.pre = previousPending.pre;
+                pendingRec.preHash = previousPending.preHash;
+                pendingRec.inFlight = false;
+                delete pending[previousPendingUid];
+              }
+            }
+          }
+          delete dataset.data[uid];
+        }
+      }
+
+      if( dataset.data[uid] ) {
+        dataset.data[uid].data = pendingRec.post;
+        dataset.data[uid].hash = pendingRec.postHash;
+        dataset.meta[uid].fromPending = true;
+        dataset.meta[uid].pendingUid = pendingRec.hash;
+      }
+    },
+
+    updatePendingFromNewData: function(dataset_id, dataset, newData) {
+      var pending = dataset.pending;
+      var newRec;
+
+      if( pending && newData.records) {
+        for( var pendingHash in pending ) {
+          if( pending.hasOwnProperty(pendingHash) ) {
+            var pendingRec = pending[pendingHash];
+
+            dataset.meta[pendingRec.uid] = dataset.meta[pendingRec.uid] || {};
+
+            if( pendingRec.inFlight === false ) {
+              // Pending record that has not been submitted
+              self.consoleLog('updatePendingFromNewData - Found Non inFlight record -> action=' + pendingRec.action +' :: uid=' + pendingRec.uid  + ' :: hash=' + pendingRec.hash);
+              if( pendingRec.action === "update" || pendingRec.action === "delete") {
+                // Update the pre value of pending record to reflect the latest data returned from sync.
+                // This will prevent a collision being reported when the pending record is sent.
+                newRec = newData.records[pendingRec.uid];
+                if( newRec ) {
+                  self.consoleLog('updatePendingFromNewData - Updating pre values for existing pending record ' + pendingRec.uid);
+                  pendingRec.pre = newRec.data;
+                  pendingRec.preHash = newRec.hash;
+                }
+                else {
+                  // The update/delete may be for a newly created record in which case the uid will have changed.
+                  var previousPendingUid = dataset.meta[pendingRec.uid].previousPendingUid;
+                  var previousPending = pending[previousPendingUid];
+                  if( previousPending ) {
+                    if( newData && newData.updates &&  newData.updates.applied && newData.updates.applied[previousPending.hash] ) {
+                      // There is an update in from a previous pending action
+                      var newUid = newData.updates.applied[previousPending.hash].uid;
+                      newRec = newData.records[newUid];
+                      if( newRec ) {
+                        self.consoleLog('updatePendingFromNewData - Updating pre values for existing pending record which was previously a create ' + pendingRec.uid + ' ==> ' + newUid);
+                        pendingRec.pre = newRec.data;
+                        pendingRec.preHash = newRec.hash;
+                        pendingRec.uid = newUid;
+                      }
+                    }
+                  }
+                }
+              }
+
+              if( pendingRec.action === "create" ) {
+                if( newData && newData.updates &&  newData.updates.applied && newData.updates.applied[pendingHash] ) {
+                  self.consoleLog('updatePendingFromNewData - Found an update for a pending create ' + JSON.stringify(newData.updates.applied[pendingHash]));
+                  newRec = newData.records[newData.updates.applied[pendingHash].uid];
+                  if( newRec ) {
+                    self.consoleLog('updatePendingFromNewData - Changing pending create to an update based on new record  ' + JSON.stringify(newRec));
+
+                    // Set up the pending create as an update
+                    pendingRec.action = "update";
+                    pendingRec.pre = newRec.data;
+                    pendingRec.preHash = newRec.hash;
+                    pendingRec.uid = newData.updates.applied[pendingHash].uid;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    updateNewDataFromInFlight: function(dataset_id, dataset, newData) {
+      var pending = dataset.pending;
+
+      if( pending && newData.records) {
+        for( var pendingHash in pending ) {
+          if( pending.hasOwnProperty(pendingHash) ) {
+            var pendingRec = pending[pendingHash];
+
+            if( pendingRec.inFlight ) {
+              var updateReceivedForPending = (newData && newData.updates &&  newData.updates.hashes && newData.updates.hashes[pendingHash]) ? true : false;
+
+              self.consoleLog('updateNewDataFromInFlight - Found inflight pending Record - action = ' + pendingRec.action + ' :: hash = ' + pendingHash + ' :: updateReceivedForPending=' + updateReceivedForPending);
+
+              if( ! updateReceivedForPending ) {
+                var newRec = newData.records[pendingRec.uid];
+
+                if( pendingRec.action === "update" && newRec) {
+                  // Modify the new Record to have the updates from the pending record so the local dataset is consistent
+                  newRec.data = pendingRec.post;
+                  newRec.hash = pendingRec.postHash;
+                }
+                else if( pendingRec.action === "delete" && newRec) {
+                  // Remove the record from the new dataset so the local dataset is consistent
+                  delete newData.records[pendingRec.uid];
+                }
+                else if( pendingRec.action === "create" ) {
+                  // Add the pending create into the new dataset so it is not lost from the UI
+                  self.consoleLog('updateNewDataFromInFlight - re adding pending create to incomming dataset');
+                  var newPendingCreate = {
+                    data: pendingRec.post,
+                    hash: pendingRec.postHash
+                  };
+                  newData.records[pendingRec.uid] = newPendingCreate;
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+
+    updateNewDataFromPending: function(dataset_id, dataset, newData) {
+      var pending = dataset.pending;
+
+      if( pending && newData.records) {
+        for( var pendingHash in pending ) {
+          if( pending.hasOwnProperty(pendingHash) ) {
+            var pendingRec = pending[pendingHash];
+
+            if( pendingRec.inFlight === false ) {
+              self.consoleLog('updateNewDataFromPending - Found Non inFlight record -> action=' + pendingRec.action +' :: uid=' + pendingRec.uid  + ' :: hash=' + pendingRec.hash);
+              var newRec = newData.records[pendingRec.uid];
+              if( pendingRec.action === "update" && newRec) {
+                // Modify the new Record to have the updates from the pending record so the local dataset is consistent
+                newRec.data = pendingRec.post;
+                newRec.hash = pendingRec.postHash;
+              }
+              else if( pendingRec.action === "delete" && newRec) {
+                // Remove the record from the new dataset so the local dataset is consistent
+                delete newData.records[pendingRec.uid];
+              }
+              else if( pendingRec.action === "create" ) {
+                // Add the pending create into the new dataset so it is not lost from the UI
+                self.consoleLog('updateNewDataFromPending - re adding pending create to incomming dataset');
+                var newPendingCreate = {
+                  data: pendingRec.post,
+                  hash: pendingRec.postHash
+                };
+                newData.records[pendingRec.uid] = newPendingCreate;
+              }
+            }
+          }
+        }
+      }
+    },
+
+    updateCrashedInFlightFromNewData: function(dataset_id, dataset, newData) {
+      var updateNotifications = {
+        applied: self.notifications.REMOTE_UPDATE_APPLIED,
+        failed: self.notifications.REMOTE_UPDATE_FAILED,
+        collisions: self.notifications.COLLISION_DETECTED
+      };
+
+      var pending = dataset.pending;
+      var resolvedCrashes = {};
+      var pendingHash;
+      var pendingRec;
+
+
+      if( pending ) {
+        for( pendingHash in pending ) {
+          if( pending.hasOwnProperty(pendingHash) ) {
+            pendingRec = pending[pendingHash];
+
+            if( pendingRec.inFlight && pendingRec.crashed) {
+              self.consoleLog('updateCrashedInFlightFromNewData - Found crashed inFlight pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash );
+              if( newData && newData.updates && newData.updates.hashes) {
+
+                // Check if the updates received contain any info about the crashed in flight update
+                var crashedUpdate = newData.updates.hashes[pendingHash];
+                if( crashedUpdate ) {
+                  // We have found an update on one of our in flight crashed records
+
+                  resolvedCrashes[crashedUpdate.uid] = crashedUpdate;
+
+                  self.consoleLog('updateCrashedInFlightFromNewData - Resolving status for crashed inflight pending record ' + JSON.stringify(crashedUpdate));
+
+                  if( crashedUpdate.type === 'failed' ) {
+                    // Crashed update failed - revert local dataset
+                    if( crashedUpdate.action === 'create' ) {
+                      self.consoleLog('updateCrashedInFlightFromNewData - Deleting failed create from dataset');
+                      delete dataset.data[crashedUpdate.uid];
+                    }
+                    else if ( crashedUpdate.action === 'update' || crashedUpdate.action === 'delete' ) {
+                      self.consoleLog('updateCrashedInFlightFromNewData - Reverting failed ' + crashedUpdate.action + ' in dataset');
+                      dataset.data[crashedUpdate.uid] = {
+                        data : pendingRec.pre,
+                        hash : pendingRec.preHash
+                      };
+                    }
+                  }
+
+                  delete pending[pendingHash];
+                  self.doNotify(dataset_id, crashedUpdate.uid, updateNotifications[crashedUpdate.type], crashedUpdate);
+                }
+                else {
+                  // No word on our crashed update - increment a counter to reflect another sync that did not give us
+                  // any update on our crashed record.
+                  if( pendingRec.crashedCount ) {
+                    pendingRec.crashedCount++;
+                  }
+                  else {
+                    pendingRec.crashedCount = 1;
+                  }
+                }
+              }
+              else {
+                // No word on our crashed update - increment a counter to reflect another sync that did not give us
+                // any update on our crashed record.
+                if( pendingRec.crashedCount ) {
+                  pendingRec.crashedCount++;
+                }
+                else {
+                  pendingRec.crashedCount = 1;
+                }
+              }
+            }
+          }
+        }
+
+        for( pendingHash in pending ) {
+          if( pending.hasOwnProperty(pendingHash) ) {
+            pendingRec = pending[pendingHash];
+
+            if( pendingRec.inFlight && pendingRec.crashed) {
+              if( pendingRec.crashedCount > dataset.config.crashed_count_wait ) {
+                self.consoleLog('updateCrashedInFlightFromNewData - Crashed inflight pending record has reached crashed_count_wait limit : ' + JSON.stringify(pendingRec));
+                if( dataset.config.resend_crashed_updates ) {
+                  self.consoleLog('updateCrashedInFlightFromNewData - Retryig crashed inflight pending record');
+                  pendingRec.crashed = false;
+                  pendingRec.inFlight = false;
+                }
+                else {
+                  self.consoleLog('updateCrashedInFlightFromNewData - Deleting crashed inflight pending record');
+                  delete pending[pendingHash];
+                }
+              }
+            }
+            else if (!pendingRec.inFlight && pendingRec.crashed ) {
+              self.consoleLog('updateCrashedInFlightFromNewData - Trying to resolve issues with crashed non in flight record - uid = ' + pendingRec.uid);
+              // Stalled pending record because a previous pending update on the same record crashed
+              var crashedRef = resolvedCrashes[pendingRec.uid];
+              if( crashedRef ) {
+                self.consoleLog('updateCrashedInFlightFromNewData - Found a stalled pending record backed up behind a resolved crash uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash);
+                pendingRec.crashed = false;
+              }
+            }
+          }
+        }
+      }
+    },
+
+
+    markInFlightAsCrashed : function(dataset) {
+      var pending = dataset.pending;
+      var pendingHash;
+      var pendingRec;
+
+      if( pending ) {
+        var crashedRecords = {};
+        for( pendingHash in pending ) {
+          if( pending.hasOwnProperty(pendingHash) ) {
+            pendingRec = pending[pendingHash];
+
+            if( pendingRec.inFlight ) {
+              self.consoleLog('Marking in flight pending record as crashed : ' + pendingHash);
+              pendingRec.crashed = true;
+              crashedRecords[pendingRec.uid] = pendingRec;
+            }
+          }
+        }
+
+        // Check for any pending updates that would be modifying a crashed record. These can not go out until the
+        // status of the crashed record is determined
+        for( pendingHash in pending ) {
+          if( pending.hasOwnProperty(pendingHash) ) {
+            pendingRec = pending[pendingHash];
+
+            if( ! pendingRec.inFlight ) {
+              var crashedRef = crashedRecords[pendingRec.uid];
+              if( crashedRef ) {
+                pendingRec.crashed = true;
+              }
+            }
+          }
+        }
+      }
+    },
+
+    consoleLog: function(msg) {
       if( self.config.do_console_log ) {
-        console.log(arguments);
+        console.log(msg);
       }
     }
   };
@@ -6760,7 +7350,10 @@ $fh.sync = (function() {
     doUpdate: self.update,
     doDelete: self['delete'],
     listCollisions: self.listCollisions,
-    removeCollision: self.removeCollision
+    removeCollision: self.removeCollision,
+    getPending : self.getPending,
+    clearPending : self.clearPending,
+    getDataset : self.getDataSet
   };
 })();
 (function(root){

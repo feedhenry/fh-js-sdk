@@ -3,7 +3,7 @@
   var $fh = window.$fh;
   $fh.fh_timeout = 20000;
   $fh.boxprefix = '/box/srv/1.1/';
-  $fh.sdk_version = '1.0.5';
+  $fh.sdk_version = 'BUILD_VERSION';
   
   var _is_initializing = false;
   var _init_failed = false;
@@ -96,11 +96,22 @@
       return uuid;
     }
   };
+
+  var getCuidMap = function() {
+    if(typeof window.device !== "undefined" && typeof window.device.cuidMap !== "undefined"){
+      return window.device.cuidMap;
+    }  else if(typeof navigator.device !== "undefined" && typeof navigator.device.cuidMap !== "undefined"){
+      return navigator.device.cuidMap;
+    }
+
+    return null;
+  };
   
   $fh._getDeviceId = getDeviceId;
+  $fh._getCuidMap = getCuidMap;
   var uA = ( typeof navigator !== "undefined" ) ? navigator.userAgent : Titanium.userAgent;
   var __isSmartMobile = /Android|webOS|iPhone|iPad|iPad|Blackberry|Windows Phone/i.test(uA);
-  var __isLocalFile = window && window.location && window.location.protocol && window.location.protocol.indexOf("file") > -1;
+  var __isLocalFile = window.location.protocol.indexOf("file") > -1;
 
   function isSameOrigin(url) {
     var loc = window.location;
@@ -123,6 +134,7 @@
   //IE 8/9 use XDomainRequest for cors requests
   function XDomainRequestWrapper(xdr){
     this.xdr = xdr;
+    this.isWrapper = true;
     this.readyState = 0;
     this.onreadystatechange = null;
     this.status = 0;
@@ -365,22 +377,28 @@
         }else{
           req = __titanium();
         }
-
-        req.open(method, url, true);
+        // if IE8 XrequestWrapper then change
+        // method to get and add json encoded params
+        if(req.isWrapper){
+          req.open("GET", url + "?params=" + encodeURIComponent(data), true);
+        } else {
+          req.open(method, url, true);
+        }
         if (o.contentType) {
           req.setRequestHeader('Content-Type', o.contentType);
         }
         req.setRequestHeader('X-Request-With', 'XMLHttpRequest');
         var handler = function () {
           if (req.readyState === 4) {
-            if (timeoutTimer) {
-              clearTimeout(timeoutTimer);
+            if (req.status === 0 && !sameOrigin && !req.isAborted && typeof Titanium === "undefined") {
+              // If the XHR/cors was aborted because of a timeout, don't re-try using jsonp. This will cause the request
+              // to be re-fired and can cause replay issues - e.g. creates getting applied multiple times.
+              return types['jsonp']();
             }
-            //the status code will be 0 if there is a network level error, including server rejecting the cors request
-            if(req.status === 0){
-                if(!sameOrigin && typeof Titanium === "undefined"){
-                    return types['jsonp']();
-                }
+            else {
+              if (timeoutTimer) {
+                clearTimeout(timeoutTimer);
+              }
             }
             var statusText;
             try {
@@ -443,7 +461,10 @@
     if(req){
       try{
         var res = JSON.parse(req.responseText);
-        errraw = res.error;
+        errraw = res.error || res.msg;
+        if (errraw instanceof Array) {
+          errraw = errraw.join('\n');
+        }
       } catch(e){
         errraw = req.responseText;
       }
@@ -493,8 +514,11 @@
   _getFhParams = function() {
     var fhParams = {};
     fhParams.cuid = getDeviceId();
+    fhParams.cuidMap = getCuidMap();
     fhParams.appid = $fh.app_props.appid;
     fhParams.appkey = $fh.app_props.appkey;
+    fhParams.analyticsTag =  $fh.app_props.analyticsTag;
+    fhParams.init = $fh.app_props.init;
 
     if (typeof fh_destination_code !== 'undefined'){
       fhParams.destination = fh_destination_code;
@@ -503,6 +527,12 @@
     }
     if (typeof fh_app_version !== 'undefined'){
       fhParams.app_version = fh_app_version;
+    }
+    if (typeof fh_project_version !== 'undefined'){
+      fhParams.project_version = fh_project_version;
+    }
+    if (typeof fh_project_app_version !== 'undefined'){
+      fhParams.project_app_version = fh_project_app_version;
     }
     fhParams.sdk_version = _getSdkVersion();
     return fhParams;
@@ -534,7 +564,7 @@
     }); //IE
   }
 
-  $fh._handleAuthResponse = function(endurl, res, success, fail){
+  $fh._handleFhAuthResponse = function(endurl, res, success, fail){
     if(res.status && res.status === "ok"){
       if(res.url){
         if(window.PhoneGap || window.cordova){
@@ -580,6 +610,7 @@
     }
   };
 
+
   $fh.init = function(opts, success, fail) {
     if($fh.cloud_props){
       return success($fh.cloud_props);
@@ -598,33 +629,66 @@
       if (!opts.appkey) {
         return fail('init_no_appkey', {});
       }
+
       $fh.app_props = opts;
-      var path = opts.host + $fh.boxprefix + "app/init";
-      var data = _getFhParams();
-      $fh.__ajax({
-        "url": path,
-        "type": "POST",
-        "contentType": "application/json",
-        "data": JSON.stringify(data),
-        "timeout" : opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
-        "success": function(res){
-          $fh.cloud_props = res;
-          if(success){
-            success(res);
-          }
-          _cloudReady(true);
-        },
-        "error": function(req, statusText, error){
-          _init_failed = true;
-          _is_initializing = false;
-          _handleError(fail, req, statusText);
-          _cloudReady(false);
+
+      //dom adapter doens't work on windows phone, so don't specify the adapter if the dom one failed
+      var lcConf = {
+        name: "fh_init_storage",
+        adapter: "dom",
+        fail: function(msg, err) {
+          var error_message = 'read/save from/to local storage failed  msg:' + msg + ' err:' + err;
+          return fail(error_message, {});
         }
+      };
+
+      var storage = null;
+      try {
+        storage = new Lawnchair(lcConf, function() {});
+      } catch(e){
+        //when dom adapter failed, Lawnchair throws an error
+        lcConf.adapter = undefined;
+        storage = new Lawnchair(lcConf, function() {});
+      }
+      
+
+      storage.get('fh_init', function(storage_res) {
+        if (storage_res && storage_res.value !== null) {
+          $fh.app_props.init = storage_res.value;
+        }
+
+        var path = opts.host + $fh.boxprefix + "app/init";
+        var data = _getFhParams();
+        $fh.__ajax({
+          "url": path,
+          "type": "POST",
+          "contentType": "application/json",
+          "data": JSON.stringify(data),
+          "timeout": opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
+          "success": function(data) {
+            $fh.cloud_props = data;
+
+            storage.save({
+              key: "fh_init",
+              value: data.init
+            }, function() {
+              if (success) {
+                success(data);
+              }
+              _cloudReady(true);
+            });
+          },
+          "error": function(req, statusText, error) {
+            _init_failed = true;
+            _is_initializing = false;
+            _handleError(fail, req, statusText);
+            _cloudReady(false);
+          }
+        });
       });
     } else {
       _cloud_ready_listeners.push({type:'init', success: success, fail: fail});
     }
-    
   };
 
   $fh.act = function(opts, success, fail) {
@@ -639,9 +703,7 @@
       $fh.init($fh.app_props , function (suc){
         _init_failed = false;
         doActCall();
-      }, function (err){
-        _handleError(fail,{"status":0,"responseText":"Init Failed"},"failed to call init. Check network status");
-      });
+      }, fail);
     }
     else if (null == $fh.cloud_props && _is_initializing){
       _cloud_ready_listeners.push({
@@ -657,35 +719,46 @@
     }
 
     function doActCall(){
-      var cloud_host = $fh.cloud_props.hosts.releaseCloudUrl;
-      var app_type = $fh.cloud_props.hosts.releaseCloudType;
+      var url = $fh.cloud_props.hosts.url;
 
-      if($fh.app_props.mode && $fh.app_props.mode.indexOf("dev") > -1){
-        cloud_host = $fh.cloud_props.hosts.debugCloudUrl;
-        app_type = $fh.cloud_props.hosts.debugCloudType;
+      if (typeof url !== 'undefined') {
+        url = url + "/cloud/" + opts.act;
+      } else {
+        // resolve url the old way i.e. depending on
+        // -burnt in app mode
+        // -returned dev or live url
+        // -returned dev or live type (node or fh(rhino or proxying))
+        cloud_host = $fh.cloud_props.hosts.releaseCloudUrl;
+        var app_type = $fh.cloud_props.hosts.releaseCloudType;
+
+        if($fh.app_props.mode && $fh.app_props.mode.indexOf("dev") > -1){
+          cloud_host = $fh.cloud_props.hosts.debugCloudUrl;
+          app_type = $fh.cloud_props.hosts.debugCloudType;
+        }
+        url = cloud_host + "/cloud/" + opts.act;
+        if(app_type === "fh"){
+          url = cloud_host + $fh.boxprefix + "act/" + $fh.cloud_props.domain + "/"+ $fh.app_props.appid + "/" + opts.act + "/" + $fh.app_props.appid;
+        }
       }
-      var url = cloud_host + "/cloud/" + opts.act;
-      if(app_type === "fh"){
-        url = cloud_host + $fh.boxprefix + "act/" + $fh.cloud_props.domain + "/"+ $fh.app_props.appid + "/" + opts.act + "/" + $fh.app_props.appid;
-      }
+
       var params = opts.req || {};
       params = _addFhParams(params);
 
-    return $fh.__ajax({
-      "url": url,
-      "type": "POST",
-      "data": JSON.stringify(params),
-      "contentType": "application/json",
-      "timeout" : opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
-      success: function(res) {
-        if(success){
-          return success(res);
+      return $fh.__ajax({
+        "url": url,
+        "type": "POST",
+        "data": JSON.stringify(params),
+        "contentType": "application/json",
+        "timeout" : opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
+        success: function(res) {
+          if(success){
+            return success(res);
+          }
+        },
+        error: function(req, statusText, error) {
+          _handleError(fail, req, statusText);
         }
-      },
-      error: function(req, statusText, error) {
-        _handleError(fail, req, statusText);
-      }
-    });
+      });
     }
   };
 
@@ -728,7 +801,7 @@
       "contentType": "application/json",
       "timeout" : opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
       success: function(res) {
-        $fh._handleAuthResponse(endurl, res, success, fail);
+        $fh._handleFhAuthResponse(endurl, res, success, fail);
       },
       error: function(req, statusText, error) {
         _handleError(fail, req, statusText);
