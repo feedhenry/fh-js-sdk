@@ -64,6 +64,7 @@ appForm.stores = function(module) {
     switch (type) {
       case 'config':
         props.appid = model.get("appId");
+        props.deviceId = model.get("deviceId");
         break;
       case 'form':
         props.formId = model.get('_id');
