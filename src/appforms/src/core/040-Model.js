@@ -29,6 +29,10 @@ appForm.models = function (module) {
       }
     }
   };
+
+  Model.prototype.clearEvents = function(){
+    this.events = {};
+  };
   Model.prototype.emit = function () {
     $fh.forms.log.d("Model emit ");
     var args = Array.prototype.slice.call(arguments, 0);

@@ -41,6 +41,7 @@ appForm.models = function(module) {
     if (_submissions[localId]) {
       $fh.forms.log.d("Submission fromLocal from cache: ", localId);
       //already loaded
+      _submissions[localId].clearEvents();
       cb(null, _submissions[localId]);
     } else {
       //load from storage
@@ -85,6 +86,7 @@ appForm.models = function(module) {
     this.set('appId', appForm.config.get('appId'));
     this.set('appEnvironment', appForm.config.get('env'));
     this.set('appCloudName', '');
+
     this.set('comments', []);
     this.set('formFields', []);
     this.set('saveDate', null);
