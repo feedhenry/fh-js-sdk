@@ -16,7 +16,7 @@ function applyServer(app) {
     next();
   });
   app.get("/mbaas/forms/:appId/theme", _getTheme);
-  app.get("/mbaas/forms/:appid/config", _getConfig);
+  app.get("/mbaas/forms/:appid/config/:deviceId", _getConfig);
   app.get("/mbaas/forms/:appId", _getForms);
 
   app.get("/mbaas/forms/:appId/:formId", _getForm);
