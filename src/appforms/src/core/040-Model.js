@@ -153,7 +153,6 @@ appForm.models = function (module) {
      * @return {[type]}      [description]
      */
   Model.prototype.saveLocal = function (cb) {
-    $fh.forms.log.d("Model saveLocal ");
     var localStorage = appForm.stores.localStorage;
     localStorage.upsert(this, cb);
   };
@@ -163,12 +162,10 @@ appForm.models = function (module) {
      * @return {[type]}      [description]
      */
   Model.prototype.clearLocal = function (cb) {
-    $fh.forms.log.d("Model clearLocal ");
     var localStorage = appForm.stores.localStorage;
     localStorage["delete"](this, cb);
   };
   Model.prototype.getDataAgent = function () {
-    $fh.forms.log.d("Model getDataAgent ");
     if (!this.dataAgent) {
       this.setDataAgent(appForm.stores.dataAgent);
     }

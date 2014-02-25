@@ -47,7 +47,9 @@ appForm.models = function(module) {
         }
 
         self.set("defaultConfigValues", configObj);
-        self.saveLocal(cb);
+        self.saveLocal(function(err, updatedConfigJSON){
+          cb(err, self);
+        });
       } else {
         cb(err, self);
       }

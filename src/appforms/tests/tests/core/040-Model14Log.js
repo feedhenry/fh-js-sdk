@@ -12,16 +12,20 @@ describe("Log model", function() {
     assert(appForm.models.log.getLogs()[0].indexOf("Debug happens")===-1);
   });
   it ("should solve asynchours IO issue",function(done){
-    for (var i=0;i<100;i++){
-      appForm.models.log.l("information");
-    }
-    setTimeout(function(){
-      assert(appForm.models.log.getLogs().length==101);
-      appForm.models.log.loadLocal(function(){
-        assert(appForm.models.log.getLogs().length==101);
-        done();
-      });
-    },500);
+    appForm.models.log.clearLogs(function(err){
+      assert(!err);
+
+      for (var i=0;i<100;i++){
+        appForm.models.log.l("information");
+      }
+      setTimeout(function(){
+        assert(appForm.models.log.getLogs().length==100);
+        appForm.models.log.loadLocal(function(){
+          assert(appForm.models.log.getLogs().length==103);
+          done();
+        });
+      },500);
+    });
   });
   it ("should under the limitation of configuration",function(done){
     for (var i=0;i<5000;i++){
