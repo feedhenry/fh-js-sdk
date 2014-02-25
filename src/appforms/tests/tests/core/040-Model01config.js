@@ -9,7 +9,8 @@ describe("Config module",function(){
         assert(config().get("mbaasBaseUrl"));
         assert(config().get("formUrls"));
         assert(config().get("env"));
-        assert(config().get("submissionRetryAttempts"));
+        assert(config().get("defaultConfigValues"));
+        assert(config().get("userConfigValues"));
     });
 
     it ("config should be init before usage. config should get data from mbaas.",function(done){

@@ -37,21 +37,28 @@ appForm.models = function(module) {
   }
 
   function fromLocal(localId, cb) {
+    $fh.forms.log.d("Submission fromLocal: ", localId);
     if (_submissions[localId]) {
+      $fh.forms.log.d("Submission fromLocal from cache: ", localId);
       //already loaded
       cb(null, _submissions[localId]);
     } else {
       //load from storage
+      $fh.forms.log.d("Submission fromLocal not in cache. Loading from local storage.: ", localId);
       var obj = new Submission();
       obj.setLocalId(localId);
       obj.loadLocal(function(err, submission) {
         if (err) {
+          $fh.forms.log.e("Submission fromLocal. Error loading from local: ", localId, err);
           cb(err);
         } else {
+          $fh.forms.log.d("Submission fromLocal. Load from local sucessfull: ", localId);
           submission.reloadForm(function(err, res) {
             if (err) {
+              $fh.forms.log.e("Submission fromLocal. reloadForm. Error re-loading form: ", localId, err);
               cb(err);
             } else {
+              $fh.forms.log.d("Submission fromLocal. reloadForm. Re-loading form successfull: ", localId);
               _submissions[localId] = submission;
               cb(null, submission);
             }
@@ -62,6 +69,7 @@ appForm.models = function(module) {
   }
 
   function Submission(form) {
+    $fh.forms.log.d("Submission: ");
     Model.call(this, {
       '_type': 'submission'
     });
@@ -77,7 +85,6 @@ appForm.models = function(module) {
     this.set('appId', appForm.config.get('appId'));
     this.set('appEnvironment', appForm.config.get('env'));
     this.set('appCloudName', '');
-    //TODO check with eng
     this.set('comments', []);
     this.set('formFields', []);
     this.set('saveDate', null);
@@ -98,6 +105,7 @@ appForm.models = function(module) {
    * @return {[type]} [description]
    */
   Submission.prototype.saveDraft = function(cb) {
+    $fh.forms.log.d("Submission saveDraft: ");
     var targetStatus = 'draft';
     var that = this;
     this.set('timezoneOffset', appForm.utils.getTime(true));
@@ -112,6 +120,7 @@ appForm.models = function(module) {
     });
   };
   Submission.prototype.validateField = function(fieldId, cb) {
+    $fh.forms.log.d("Submission validateField: ", fieldId);
     var that = this;
     this.getForm(function(err, form) {
       if (err) {
@@ -124,6 +133,7 @@ appForm.models = function(module) {
     });
   };
   Submission.prototype.checkRules = function(cb) {
+    $fh.forms.log.d("Submission checkRules: ");
     var self = this;
     this.getForm(function(err, form) {
       if (err) {
@@ -141,19 +151,24 @@ appForm.models = function(module) {
    * @return {[type]}      [description]
    */
   Submission.prototype.submit = function(cb) {
+    $fh.forms.log.d("Submission submit: ");
     var targetStatus = 'pending';
     var validateResult = true;
     var that = this;
     this.set('timezoneOffset', appForm.utils.getTime(true));
     this.getForm(function(err, form) {
+      if(err) $fh.forms.log.e("Submission submit: Error getting form ", err);
       var ruleEngine = form.getRuleEngine();
       var submission = that.getProps();
       ruleEngine.validateForm(submission, function(err, res) {
         if (err) {
+          $fh.forms.log.e("Submission submit validateForm: Error validating form ", err);
           cb(err);
         } else {
+          $fh.forms.log.d("Submission submit: validateForm. Completed result", res);
           var validation = res.validation;
           if (validation.valid) {
+            $fh.forms.log.d("Submission submit: validateForm. Completed Form Valid", res);
             that.set('submitDate', new Date());
             that.changeStatus(targetStatus, function(error) {
               if (error) {
@@ -164,6 +179,7 @@ appForm.models = function(module) {
               }
             });
           } else {
+            $fh.forms.log.d("Submission submit: validateForm. Completed Validation error", res);
             cb('Validation error');
             that.emit('validationerror', validation);
           }
@@ -466,7 +482,8 @@ appForm.models = function(module) {
     var Form = appForm.models.Form;
     var formId = this.get('formId');
     new Form({
-      'formId': formId
+      'formId': formId,
+      'rawMode': true
     }, cb);
   };
   Submission.prototype.reloadForm = function(cb) {
@@ -474,7 +491,8 @@ appForm.models = function(module) {
     var formId = this.get('formId');
     var self = this;
     new Form({
-      formId: formId
+      formId: formId,
+      'rawMode': true
     }, function(err, form) {
       if (err) {
         cb(err);

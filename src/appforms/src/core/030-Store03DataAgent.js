@@ -17,12 +17,13 @@ appForm.stores = function (module) {
      * @return {[type]}         [description]
      */
   DataAgent.prototype.read = function (model, cb) {
+    $fh.forms.log.d("DataAgent read ", model);
     var that = this;
     this.localStore.read(model, function (err, locRes) {
       if (err || !locRes) {
         //local loading failed
         if (err) {
-          console.error(err);
+          $fh.forms.log.e("Error reading model from localStore ", model, err);
         }
         that.refreshRead(model, cb);
       } else {
@@ -38,12 +39,14 @@ appForm.stores = function (module) {
      * @return {[type]}         [description]
      */
   DataAgent.prototype.refreshRead = function (model, cb) {
+    $fh.forms.log.d("DataAgent refreshRead ", model);
     var that = this;
     this.remoteStore.read(model, function (err, res) {
       if (err) {
-        console.error(err);
+        $fh.forms.log.e("Error reading model from remoteStore ", model, err);
         cb(err);
       } else {
+        $fh.forms.log.d("Model refresh successfull from remoteStore ", model, res);
         //update model from remote response
         model.fromJSON(res);
         //update local storage for the model
@@ -63,6 +66,7 @@ appForm.stores = function (module) {
    * @return {[type]}         [description]
    */
   DataAgent.prototype.attemptRead=function(model,cb){
+    $fh.forms.log.d("DataAgent attemptRead ", model);
     var self=this;
     self.refreshRead(model,function(err){
       if (err){

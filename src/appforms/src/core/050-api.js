@@ -8,9 +8,80 @@ appForm.api = function (module) {
   module.submitForm = submitForm;
   module.getSubmissions = getSubmissions;
   module.init = appForm.init;
-  module.config = appForm.models.config;
   module.log=appForm.models.log;
   var _submissions = null;
+  var formConfig = appForm.models.config;
+
+  /**
+   * Get and set config values. Can only set a config value if you are an config_admin_user
+   */
+  var configInterface = {
+    "editAllowed" : function(){
+      var defaultConfigValues = formConfig.get("defaultConfigValues", {});
+      return defaultConfigValues["config_admin_user"] === true;
+    },
+    "get" : function(key){
+      var self = this;
+      if(key){
+        var userConfigValues = formConfig.get("userConfigValues", {});
+        var defaultConfigValues = formConfig.get("defaultConfigValues", {});
+
+        if(self.editAllowed()){
+          if(userConfigValues[key]){
+            return userConfigValues[key];
+          } else {
+            return defaultConfigValues[key];
+          }
+        } else {
+          return defaultConfigValues[key];
+        }
+      }
+    },
+    "set" : function(key, val){
+      var self = this;
+      if(!key || !val){
+        return;
+      }
+
+      var userConfig = formConfig.get("userConfigValues", {});
+      userConfig[key] = val;
+      formConfig.set("userConfigValues", userConfig);
+    },
+    "getConfig" : function(){
+      var self = this;
+      var defaultValues = formConfig.get("defaultConfigValues", {});
+      var userConfigValues = formConfig.get("userConfigValues", {});
+      var returnObj = {};
+
+      if(self.editAllowed()){
+        for(var defKey in defaultValues){
+          if(userConfigValues[defKey]){
+            returnObj[defKey] = userConfigValues[defKey];
+          } else {
+            returnObj[defKey] = defaultValues[defKey];
+          }
+        }
+        return returnObj;
+      } else {
+        return defaultValues;
+      }
+    },
+    "saveConfig": function(){
+      var self = this;
+      formConfig.saveLocal(function(err, configModel){
+        if(err){
+          $fh.forms.log.e("Error saving a form config: ", err);
+        }else{
+          $fh.forms.log.l("Form config saved sucessfully.");
+        }
+
+      });
+    }
+  };
+
+  module.config = configInterface;
+
+
   /**
      * Retrieve forms model. It contains forms list. check forms model usage
      * @param  {[type]}   params {fromRemote:boolean}
@@ -75,9 +146,7 @@ appForm.api = function (module) {
         }
       });
     } else {
-      setTimeout(function () {
-        cb(null, _submissions);
-      }, 0);
+      cb(null, _submissions);
     }
   }
   function submitForm(submission, cb) {

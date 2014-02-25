@@ -15,8 +15,8 @@ var PageView=BaseView.extend({
     "signature": FieldSignatureView,
     "locationMap": FieldMapView,
     "dateTime":FieldDateTimeView,
-    "sectionBreak":FieldSectionBreak
-    // "url":FieldUrlView
+    "sectionBreak":FieldSectionBreak,
+    "url":FieldUrlView
   },
   templates : {
     pageTitle : '<div class="fh_appform_page_title"><%= pageTitle %></div>',
@@ -124,35 +124,35 @@ var PageView=BaseView.extend({
     // only validate form inputs on this page that are visible or type=hidden, or have validate_ignore class
     var validateEls = this.$el.find('.fh_appform_field_input').not('.validate_ignore]:hidden');
     return validateEls.length ? validateEls.valid() : true;
-  },
-
-  checkRules: function () {
-    var self = this;
-    var result = {};
-
-    var rules = {
-      SkipToPage: function (rulePasses, params) {
-        var pageToSkipTo = params.Setting.Page;
-        if (rulePasses) {
-          result.skipToPage = pageToSkipTo;
-        }
-      }
-    };
-
-    // iterate over page rules, if any, calling relevant rule function
-    _(this.model.get('Rules') || []).forEach(function (rule, index) {
-      // get element that rule condition is based on
-      var jqEl = self.$el.find('#Field' + rule.condition.FieldName + ',' + '#radioField' + rule.condition.FieldName);
-      rule.fn = rules[rule.Type];
-      if(jqEl.data("type") === 'radio') {
-        var rEl = self.$el.find('#Field' + rule.condition.FieldName + '_' + index);
-        rEl.wufoo_rules('exec', rule);
-      } else {
-        jqEl.wufoo_rules('exec', rule);
-      }
-    });
-
-    return result;
   }
+
+//  checkRules: function () {
+//    var self = this;
+//    var result = {};
+//
+//    var rules = {
+//      SkipToPage: function (rulePasses, params) {
+//        var pageToSkipTo = params.Setting.Page;
+//        if (rulePasses) {
+//          result.skipToPage = pageToSkipTo;
+//        }
+//      }
+//    };
+//
+//    // iterate over page rules, if any, calling relevant rule function
+//    _(this.model.get('Rules') || []).forEach(function (rule, index) {
+//      // get element that rule condition is based on
+//      var jqEl = self.$el.find('#Field' + rule.condition.FieldName + ',' + '#radioField' + rule.condition.FieldName);
+//      rule.fn = rules[rule.Type];
+//      if(jqEl.data("type") === 'radio') {
+//        var rEl = self.$el.find('#Field' + rule.condition.FieldName + '_' + index);
+//        rEl.wufoo_rules('exec', rule);
+//      } else {
+//        jqEl.wufoo_rules('exec', rule);
+//      }
+//    });
+//
+//    return result;
+//  }
 
 });

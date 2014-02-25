@@ -8,13 +8,7 @@ appForm.models = function (module) {
     });
   }
   appForm.utils.extend(Forms, Model);
-  /**
-     * remove all local forms stored.
-     * @param  {Function} cb [description]
-     * @return {[type]}      [description]
-     */
-  Forms.prototype.clearAllForms = function (cb) {
-  };
+
   Forms.prototype.isFormUpdated = function (formModel) {
     var id = formModel.get('_id');
     var formLastUpdate = formModel.getLastUpdate();
@@ -26,7 +20,11 @@ appForm.models = function (module) {
       return false;
     }
   };
+  Forms.prototype.setLocalId = function(){
+    $fh.forms.log.e("Forms setLocalId. Not Permitted for Forms.");
+  };
   Forms.prototype.getFormMetaById = function (formId) {
+    $fh.forms.log.d("Forms getFormMetaById ", formId);
     var forms = this.get('forms');
     for (var i = 0; i < forms.length; i++) {
       var form = forms[i];
@@ -34,18 +32,17 @@ appForm.models = function (module) {
         return form;
       }
     }
+    $fh.forms.log.e("Forms getFormMetaById: No form found for id: ", formId);
     return null;
   };
   Forms.prototype.size = function () {
     return this.get('forms').length;
   };
-  Forms.prototype.setLocalId = function () {
-    throw 'forms id cannot be set programmly';
-  };
   Forms.prototype.getFormsList = function () {
     return this.get('forms');
   };
   Forms.prototype.getFormIdByIndex = function (index) {
+    $fh.forms.log.d("Forms getFormIdByIndex: ", index);
     return this.getFormsList()[index]._id;
   };
   module.forms = new Forms();

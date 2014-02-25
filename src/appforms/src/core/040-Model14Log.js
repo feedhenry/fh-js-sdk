@@ -20,10 +20,10 @@ appForm.models = (function(module) {
   appForm.utils.extend(Log, Model);
 
   Log.prototype.info = function(logLevel, msgs) {
-    if (appForm.config.get("logger") == "true") {
+    if ($fh.forms.config.get("logger") == "true") {
       var levelString = "";
-      var curLevel = appForm.config.get("log_level");
-      var log_levels = appForm.config.get("log_levels");
+      var curLevel = $fh.forms.config.get("log_level");
+      var log_levels = $fh.forms.config.get("log_levels");
       var self = this;
       if (typeof logLevel == "string") {
         levelString = logLevel;
@@ -42,7 +42,7 @@ appForm.models = (function(module) {
         args.shift();
         while (args.length > 0) {
           logs.push(self.wrap(args.shift(), levelString));
-          if (logs.length > appForm.config.get("log_line_limit")) {
+          if (logs.length > $fh.forms.config.get("log_line_limit")) {
             logs.shift();
           }
         }
@@ -74,19 +74,19 @@ appForm.models = (function(module) {
     var logs = this.getLogs();
     var patterns = [{
       reg: /^.+\sERROR\s.*/,
-      color: appForm.config.get('color_error') || "#FF0000"
+      color: $fh.forms.config.get('color_error') || "#FF0000"
     }, {
       reg: /^.+\sWARNING\s.*/,
-      color: appForm.config.get('color_warning') || "#FF9933"
+      color: $fh.forms.config.get('color_warning') || "#FF9933"
     }, {
       reg: /^.+\sLOG\s.*/,
-      color: appForm.config.get('color_log') || "#009900"
+      color: $fh.forms.config.get('color_log') || "#009900"
     }, {
       reg: /^.+\sDEBUG\s.*/,
-      color: appForm.config.get('color_debug') || "#3366FF"
+      color: $fh.forms.config.get('color_debug') || "#3366FF"
     }, {
       reg: /^.+\sUNKNOWN\s.*/,
-      color: appForm.config.get('color_unknown') || "#000000"
+      color: $fh.forms.config.get('color_unknown') || "#000000"
     }];
     for (var i = 0; i < logs.length; i++) {
       var log = logs[i];
@@ -140,7 +140,7 @@ appForm.models = (function(module) {
     });
   };
   Log.prototype.sendLogs = function(cb) {
-    var email = appForm.config.get("log_email");
+    var email = $fh.forms.config.get("log_email");
     var config = appForm.config.getProps();
     var logs = this.getLogs();
     var params = {

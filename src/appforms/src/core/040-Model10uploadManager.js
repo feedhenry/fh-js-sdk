@@ -133,7 +133,7 @@ appForm.models = function (module) {
     if (this.sending) {
       var now = appForm.utils.getTime();
       var timePassed = now.getTime() - this.sendingStart.getTime();
-      if (timePassed > appForm.config.get("timeout", 30) * 1000) {
+      if (timePassed > $fh.forms.config.get("timeout") * 1000) {
         //time expired. roll current task to the end of queue
         console.error('Uploading content timeout. it will try to reupload.');
         this.sending = false;
