@@ -146,7 +146,7 @@ appForm.models = function(module) {
       'base64fileSubmission': '/forms/:appId/:submissionId/:fieldId/:hashName/submitFormFileBase64',
       'submissionStatus': '/forms/:appId/:submissionId/status',
       'completeSubmission': '/forms/:appId/:submissionId/completeSubmission',
-      "config": '/forms/:appid/config'
+      "config": '/forms/:appid/config/:deviceId'
     });
   };
 
