@@ -12,7 +12,7 @@ appForm.models.Field = function (module) {
     var def = this.getFieldDefinition();
     var obj={};
     switch (def.locationUnit) {
-    case 'latLong':
+    case 'latlong':
       if (!inputValue.lat || !inputValue["long"]) {
         cb('the input values for latlong field is {lat: number, long: number}');
       } else {
@@ -23,7 +23,7 @@ appForm.models.Field = function (module) {
         cb(null, obj);
       }
       break;
-    case 'northEast':
+    case 'northeast':
       if (!inputValue.zone || !inputValue.eastings || !inputValue.northings) {
         cb('the input values for northeast field is {zone: text, eastings: text, northings:text}');
       } else {
