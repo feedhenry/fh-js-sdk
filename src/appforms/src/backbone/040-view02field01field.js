@@ -198,10 +198,10 @@ var FieldView = Backbone.View.extend({
   validate: function(e) {
     if (!$fh.forms.config.get("studioMode")) {
       var self = this;
-      var target = $(e.currentTarget);
+      var target = $(e.target);
       var index = target.data().index;
-      var val = this.valueFromElement(index);
-      var fieldId = this.model.getFieldId();
+      var val = self.valueFromElement(index);
+      var fieldId = self.model.getFieldId();
       this.model.validate(val, function(err, res) { //validation
         if (err) {
           console.error(err);
@@ -215,7 +215,7 @@ var FieldView = Backbone.View.extend({
           }
         }
       });
-      this.trigger("checkrules");
+      self.trigger("checkrules");
     }
   },
   setErrorText: function(index, text) {

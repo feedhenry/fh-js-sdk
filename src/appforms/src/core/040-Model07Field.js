@@ -114,7 +114,11 @@ appForm.models = function (module) {
      * @return true / error message
      */
   Field.prototype.validate = function (inputValue, cb) {
-    this.form.getRuleEngine().validateFieldValue(this.getFieldId(), inputValue, cb);
+    var self = this;
+    self.convertSubmission(inputValue, function(err, convertedSubmissionValue){
+      if(err) $fh.forms.log.e("Error converting sumbission: ", err);
+      self.form.getRuleEngine().validateFieldValue(self.getFieldId(), convertedSubmissionValue, cb);
+    });
   };
   /**
      * return rule array attached to this field.
