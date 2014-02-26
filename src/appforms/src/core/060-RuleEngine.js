@@ -1,8 +1,8 @@
 appForm.RulesEngine=rulesEngine;
 
-/*! fh-forms - v0.2.18 -  */
+/*! fh-forms - v0.2.39 -  */
 /*! async - v0.2.9 -  */
-/*! 2014-01-29 */
+/*! 2014-02-26 */
 /* This is the prefix file */
 function rulesEngine (formDef) {
   var define = {};
@@ -1061,7 +1061,7 @@ function rulesEngine (formDef) {
         "number":       validatorNumber,
         "emailAddress": validatorEmail,
         "dropdown":     validatorDropDown,
-        "radio":        validatorRadio,
+        "radio":        validatorDropDown,
         "checkboxes":   validatorCheckboxes,
         "location":     validatorLocation,
         "locationMap":  validatorLocationMap,
@@ -1069,6 +1069,7 @@ function rulesEngine (formDef) {
         "signature":    validatorFile,
         "file":         validatorFile,
         "dateTime":     validatorDateTime,
+        "url":          validatorString,
         "sectionBreak": validatorSection
       };
 
@@ -1078,7 +1079,7 @@ function rulesEngine (formDef) {
         "number":       validatorNumber,
         "emailAddress": validatorEmail,
         "dropdown":     validatorDropDown,
-        "radio":        validatorRadio,
+        "radio":        validatorDropDown,
         "checkboxes":   validatorCheckboxes,
         "location":     validatorLocation,
         "locationMap":  validatorLocationMap,
@@ -1086,6 +1087,7 @@ function rulesEngine (formDef) {
         "signature":    validatorAnyFile,
         "file":         validatorAnyFile,
         "dateTime":     validatorDateTime,
+        "url":          validatorString,
         "sectionBreak": validatorSection
       };
 
@@ -1102,6 +1104,11 @@ function rulesEngine (formDef) {
         async.each(definition.pages, function(page, cbPages) {
           async.each(page.fields, function(field, cbFields) {
             field.pageId = page._id;
+
+            field.fieldOptions = field.fieldOptions ? field.fieldOptions : {};
+            field.fieldOptions.definition = field.fieldOptions.definition ? field.fieldOptions.definition : {};
+            field.fieldOptions.validation = field.fieldOptions.validation ? field.fieldOptions.validation : {};
+
             fieldMap[field._id] = field;
             if (field.required) {
               requiredFieldMap[field._id] = {field: field, submitted: false, validated: false};
@@ -1345,12 +1352,15 @@ function rulesEngine (formDef) {
             required = fieldDefinition.required;
           }
 
-          if(required && (("undefined" === typeof inputValue) || (null === inputValue))) {
-            return formatResponse("No value specified for required input", cb);
-          } else if(!required && (("undefined" === typeof inputValue) || (null === inputValue))) {
-            return formatResponse(undefined, cb);  // optional field not supplied is valid
+          if(fieldEmpty(inputValue)) {
+            if(required) {
+              return formatResponse("No value specified for required input", cb);
+            } else {
+              return formatResponse(undefined, cb);  // optional field not supplied is valid
+            }
           }
 
+          // not empty need to validate
           getClientValidatorFunction(fieldDefinition.type, function (err, validator) {
             if (err) return cb(err);
 
@@ -1419,6 +1429,10 @@ function rulesEngine (formDef) {
 
       function getClientValidatorFunction(fieldType, cb) {
         return getMapFunction(fieldType, validatorsClientMap, cb);
+      }
+
+      function fieldEmpty(fieldValue) {
+        return ('undefined' === typeof fieldValue || null === fieldValue || "" === fieldValue); // empty string also regarded as not specified
       }
 
       function validateFieldInternal(submittedField, fieldDef, previousFieldValues, cb) {
@@ -1497,9 +1511,9 @@ function rulesEngine (formDef) {
 
         function checkValues(submittedField, fieldDefinition, previousFieldValues, cb) {
           getValidatorFunction(fieldDefinition.type, function (err, validator) {
-
+            if (err) return cb(err);
             async.map(submittedField.fieldValues, function(fieldValue, cb){
-              if('undefined' === typeof fieldValue || null === fieldValue) {
+              if(fieldEmpty(fieldValue)) {
                 return cb(undefined, null);
               } else {
                 validator(fieldValue, fieldDefinition, previousFieldValues, function(validationError) {
@@ -1643,44 +1657,23 @@ function rulesEngine (formDef) {
 
       function validatorDropDown (fieldValue, fieldDefinition, previousFieldValues, cb) {
         if(typeof(fieldValue) !== "string"){
-          return cb(new Error("Expected dropdown submission to be string but got " + typeof(fieldValue)));
+          return cb(new Error("Expected submission to be string but got " + typeof(fieldValue)));
         }
 
         //Check value exists in the field definition
         if(!fieldDefinition.fieldOptions.definition.options){
-          return cb(new Error("No dropdown options exist for field " + fieldDefinition.name));
+          return cb(new Error("No options exist for field " + fieldDefinition.name));
         }
 
-        var matchingOptions = fieldDefinition.fieldOptions.definition.options.filter(function(dropdownOption){
-          return dropdownOption.label === fieldValue;
+        async.some(fieldDefinition.fieldOptions.definition.options, function (dropdownOption, cb) {
+          return cb(dropdownOption.label === fieldValue);
+        }, function (found) {
+          if (!found) {
+            return cb(new Error("Invalid option specified: " + fieldValue));
+          } else {
+            return cb();
+          }
         });
-
-        if(matchingOptions.length !== 1){
-          return cb(new Error("Invalid number of dropdown options found: " + matchingOptions.length));
-        }
-
-        return cb();
-      }
-
-      function validatorRadio (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(typeof(fieldValue) !== "string"){
-          return cb(new Error("Expected radio submission to be string but got " + typeof(fieldValue)));
-        }
-
-        //Check value exists in the field definition
-        if(!fieldDefinition.fieldOptions.definition.options){
-          return cb(new Error("No radio options exist for field " + fieldDefinition.name));
-        }
-
-        var matchingOptions = fieldDefinition.fieldOptions.definition.options.filter(function(radioOption){
-          return radioOption.label === fieldValue;
-        });
-
-        if(matchingOptions.length !== 1){
-          return cb(new Error("Invalid number of radio options found: " + matchingOptions.length));
-        }
-
-        return cb();
       }
 
       function validatorCheckboxes (fieldValue, fieldDefinition, previousFieldValues, cb) {
@@ -2147,7 +2140,7 @@ function rulesEngine (formDef) {
     function isConditionActive(field, fieldValue, testValue, condition) {
 
       var fieldType = field.type;
-      var fieldOptions = field.fieldOptions;
+      var fieldOptions = field.fieldOptions ? field.fieldOptions : {};
 
       var valid = true;
       if( "is equal to" === condition) {
