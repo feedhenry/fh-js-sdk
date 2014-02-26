@@ -1707,7 +1707,7 @@ function rulesEngine (formDef) {
 
         async.eachSeries(fieldDefinition.fieldOptions.definition.options, function(choice, cb){
           for(var choiceName in choice){
-            optionsInCheckbox.push(choiceName);
+            optionsInCheckbox.push(choice[choiceName]);
           }
           return cb();
         }, function(err){
