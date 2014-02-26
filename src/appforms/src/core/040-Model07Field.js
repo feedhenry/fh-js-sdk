@@ -115,9 +115,9 @@ appForm.models = function (module) {
      */
   Field.prototype.validate = function (inputValue, cb) {
     var self = this;
-    self.convertSubmission(inputValue, function(err, convertedSubmissionValue){
-      if(err) $fh.forms.log.e("Error converting sumbission: ", err);
-      self.form.getRuleEngine().validateFieldValue(self.getFieldId(), convertedSubmissionValue, cb);
+    self.processInput({"value": inputValue, "isStore": false}, function(err, convertedInputValue){
+      if(err) console.error(err);
+      self.form.getRuleEngine().validateFieldValue(self.getFieldId(), convertedInputValue, cb);
     });
   };
   /**
