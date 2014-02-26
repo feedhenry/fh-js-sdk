@@ -533,6 +533,7 @@ appForm.models = function(module) {
   };
   Submission.prototype.clearLocal = function(cb) {
     var self = this;
+    var localId = self.getLocalId();
     //remove from uploading list
     appForm.models.uploadManager.cancelSubmission(self, function(err, uploadTask) {
       if (err) {
@@ -542,7 +543,7 @@ appForm.models = function(module) {
       //remove from submission list
       appForm.models.submissions.removeSubmission(self.getLocalId(), function(err) {
         if (err) {
-          console.err(err);
+          console.error(err);
           return cb(err);
         }
         self.clearLocalSubmissionFiles(function() {
@@ -550,6 +551,10 @@ appForm.models = function(module) {
             if (err) {
               console.error(err);
               return cb(err);
+            }
+
+            if(_submissions[localId]){
+              delete _submissions[localId];
             }
             cb(null, null);
           });

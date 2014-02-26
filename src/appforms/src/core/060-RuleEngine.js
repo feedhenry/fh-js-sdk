@@ -1,4 +1,5 @@
 appForm.RulesEngine=rulesEngine;
+
 /*! fh-forms - v0.2.39 -  */
 /*! async - v0.2.9 -  */
 /*! 2014-02-26 */
@@ -1038,7 +1039,7 @@ function rulesEngine (formDef) {
     var FIELD_TYPE_DATETIME = "dateTime";
     var FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY = "date";
     var FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY = "time";
-    var FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME = "dateTime";
+    var FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME = "datetime";
 
     var formsRulesEngine = function(formDef) {
       var initialised;
