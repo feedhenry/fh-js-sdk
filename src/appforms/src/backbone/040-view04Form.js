@@ -272,12 +272,14 @@ var FormView = BaseView.extend({
 
   },
   render: function() {
-    this.el.find("#fh_appform_container.fh_appform_form").append(this.templates.buttons);
-    this.rebindButtons();
-    this.pageViews[0].show();
-    this.pageNum = 0;
-    this.steps.activePageChange(this);
-    this.checkRules();
+    if(this.pageViews && this.pageViews.length > 0){
+      this.el.find("#fh_appform_container.fh_appform_form").append(this.templates.buttons);
+      this.rebindButtons();
+      this.pageViews[0].show();
+      this.pageNum = 0;
+      this.steps.activePageChange(this);
+      this.checkRules();
+    }
   },
   getNextPageIndex: function(currentPageIndex){
     var self = this;
