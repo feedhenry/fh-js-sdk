@@ -18,6 +18,12 @@ FieldMapView = FieldView.extend({
     };
     FieldView.prototype.initialize.apply(this, arguments);
   },
+  refreshElements: function(){
+    var self = this;
+    for(var elem = 0; elem < self.curRepeat; elem++){
+      self.mapResize();
+    }
+  },
   renderInput: function(index) {
     return _.template(this.input, {
       width: this.mapSettings.mapWidth,
@@ -50,9 +56,6 @@ FieldMapView = FieldView.extend({
     var wrapperObj = this.getWrapper(index);
     var self = this;
     var mapCanvas = wrapperObj.find('.fh_map_canvas')[0];
-    // var options = this.parseCssOptions();
-    // // Merge
-    // this.mapSettings = _.defaults(options, this.mapSettings);
 
     if($fh.geo){
       $fh.geo({
@@ -92,17 +95,19 @@ FieldMapView = FieldView.extend({
     }
   },
   mapResize: function() {
-    if (this.maps.length > 0) {
-      for (var i = 0; i < this.maps.length; i++) {
-        var map = this.maps[i];
+    var self = this;
+    if (self.maps.length > 0) {
+      for (var i = 0; i < self.maps.length; i++) {
+        var map = self.maps[i];
         if (map) {
           google.maps.event.trigger(map, 'resize');
-          map.setCenter(new google.maps.LatLng(this.latLongs[i].lat, this.latLongs[i]["long"]));
+          if(self.markers[i]){
+            map.setCenter(new google.maps.LatLng(marker.getPosition().lat(), marker.getPosition().lng()));
+          }
         }
       }
     }
   },
-  addValidationRules: function() {},
   valueFromElement: function(index) {
     var map = this.maps[index];
     var marker = this.markers[index];
@@ -126,7 +131,7 @@ FieldMapView = FieldView.extend({
       that.markers[index].setPosition(pt);
     }
     if (value){
-      this.onAllMapInit(_handler);
+      that.onAllMapInit(_handler);
     }
 
   }

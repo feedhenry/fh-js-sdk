@@ -26,34 +26,34 @@ var PageView=BaseView.extend({
 
   initialize: function() {
     var self = this;
-    _.bindAll(this, 'render',"show","hide");
+    _.bindAll(self, 'render',"show","hide");
     // Page Model will emit events if user input meets page rule to hide / show the page.
-    this.model.on("visible",self.show);
-    this.model.on("hidden",self.hide);
-    this.render();
+    self.model.on("visible",self.show);
+    self.model.on("hidden",self.hide);
+    self.render();
   },
 
   render: function() {
     var self = this;
-    this.fieldViews = {};
-    this.sectionViews = {};
+    self.fieldViews = {};
+    self.sectionViews = {};
     // all pages hidden initially
-    this.$el.empty().addClass('fh_appform_page fh_appform_hidden');
+    self.$el.empty().addClass('fh_appform_page fh_appform_hidden');
 
     //Need to add the page title and description
-    this.$el.append(_.template(this.templates.pageDescription, {pageDescription: this.model.getDescription()}));
+    self.$el.append(_.template(self.templates.pageDescription, {pageDescription: self.model.getDescription()}));
 
     // add to parent before init fields so validation can work
-    this.options.parentEl.append(this.$el);
+    self.options.parentEl.append(self.$el);
 
-    var fieldModelList=this.model.getFieldModelList();
+    var fieldModelList=self.model.getFieldModelList();
 
-    var sections = this.model.getSections();
+    var sections = self.model.getSections();
 
     if(sections != null){
       var sectionKey;
       for(sectionKey in sections){
-        this.$el.append(_.template(this.templates.section, {"sectionId": sectionKey}));
+        this.$el.append(_.template(self.templates.section, {"sectionId": sectionKey}));
       }
 
       //Add the section fields
@@ -99,11 +99,15 @@ var PageView=BaseView.extend({
 
   show: function () {
     var self = this;
-    this.$el.removeClass('fh_appform_hidden');
+    self.$el.removeClass('fh_appform_hidden');
+    for(var fieldId in self.fieldViews){
+      self.fieldViews[fieldId].refreshElements();
+    }
   },
 
   hide: function () {
-    this.$el.addClass('fh_appform_hidden');
+    var self = this;
+    self.$el.addClass('fh_appform_hidden');
   },
 
   showField: function (id) {
@@ -125,34 +129,4 @@ var PageView=BaseView.extend({
     var validateEls = this.$el.find('.fh_appform_field_input').not('.validate_ignore]:hidden');
     return validateEls.length ? validateEls.valid() : true;
   }
-
-//  checkRules: function () {
-//    var self = this;
-//    var result = {};
-//
-//    var rules = {
-//      SkipToPage: function (rulePasses, params) {
-//        var pageToSkipTo = params.Setting.Page;
-//        if (rulePasses) {
-//          result.skipToPage = pageToSkipTo;
-//        }
-//      }
-//    };
-//
-//    // iterate over page rules, if any, calling relevant rule function
-//    _(this.model.get('Rules') || []).forEach(function (rule, index) {
-//      // get element that rule condition is based on
-//      var jqEl = self.$el.find('#Field' + rule.condition.FieldName + ',' + '#radioField' + rule.condition.FieldName);
-//      rule.fn = rules[rule.Type];
-//      if(jqEl.data("type") === 'radio') {
-//        var rEl = self.$el.find('#Field' + rule.condition.FieldName + '_' + index);
-//        rEl.wufoo_rules('exec', rule);
-//      } else {
-//        jqEl.wufoo_rules('exec', rule);
-//      }
-//    });
-//
-//    return result;
-//  }
-
 });
