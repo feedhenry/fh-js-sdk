@@ -12,6 +12,12 @@ appForm.models = function (module) {
     return this.get('data');
   };
   FormSubmission.prototype.getFormId = function () {
+    console.log("DATA: ", this.get('data'));
+    if(!this.get('data')){
+      console.log(this);
+      console.trace();
+    }
+
     return this.get('data').formId;
   };
   return module;
