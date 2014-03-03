@@ -102,7 +102,7 @@ FieldMapView = FieldView.extend({
         if (map) {
           google.maps.event.trigger(map, 'resize');
           if(self.markers[i]){
-            map.setCenter(new google.maps.LatLng(marker.getPosition().lat(), marker.getPosition().lng()));
+            map.setCenter(new google.maps.LatLng(self.markers[i].getPosition().lat(), self.markers[i].getPosition().lng()));
           }
         }
       }
