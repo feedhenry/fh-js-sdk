@@ -406,14 +406,14 @@ appForm.models = function (module) {
    */
   UploadTask.prototype.success = function (cb) {
     var that = this;
-    this.set('completed', true);
-    this.saveLocal(function (err) {
+    that.set('completed', true);
+    that.saveLocal(function (err) {
       if (err) {
         console.error(err);
         console.error('Upload task save failed');
       }
     });
-    this.submissionModel(function (_err, model) {
+    that.submissionModel(function (_err, model) {
       if (_err) {
         cb(_err);
       } else {

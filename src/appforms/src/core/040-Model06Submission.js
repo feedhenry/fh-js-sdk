@@ -41,7 +41,6 @@ appForm.models = function(module) {
     if (_submissions[localId]) {
       $fh.forms.log.d("Submission fromLocal from cache: ", localId);
       //already loaded
-      _submissions[localId].clearEvents();
       cb(null, _submissions[localId]);
     } else {
       //load from storage

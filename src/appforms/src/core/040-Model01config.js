@@ -99,7 +99,7 @@ appForm.models = function(module) {
       "debug_mode": false,
       "logger": false,
       "max_retries": 3,
-      "timeout": 30,
+      "timeout": 7,
       "log_line_limit": 5000,
       "log_email": "test@example.com",
       "log_level": 3,
