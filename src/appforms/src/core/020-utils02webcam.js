@@ -31,9 +31,13 @@ appForm.utils = function (module) {
   function takePhoto(params, cb) {
     $fh.forms.log.d("Taking photo ", params, isPhoneGap);
     //use configuration
-    var width =  params.targetWidth ? params.targetWidth : $fh.forms.config.get("targetWidth", 640);
-    var height = params.targetHeight ? params.targetHeight : $fh.forms.config.get("targetHeight", 480);
-    var quality= params.quality ? params.quality : $fh.forms.config.get("quality", 50);
+    params.targetWidth = params.targetWidth ? params.targetWidth : $fh.forms.config.get("targetWidth", 640);
+    params.targetHeight = params.targetHeight ? params.targetHeight : $fh.forms.config.get("targetHeight", 480);
+    params.quality = params.quality ? params.quality : $fh.forms.config.get("quality", 50);
+
+    var width =  params.targetWidth;
+    var height = params.targetHeight;
+    var quality= params.quality;
 
 
 
@@ -116,7 +120,7 @@ appForm.utils = function (module) {
   function snapshot(params, cb) {
     $fh.forms.log.d("Snapshot ", params);
     if (localMediaStream) {
-      ctx.drawImage(video, 0, 0, params.width, params.height);
+      ctx.drawImage(video, 0, 0, params.targetWidth, params.targetHeight);
       // "image/webp" works in Chrome.
       // Other browsers will fall back to image/png.
       var base64 = canvas.toDataURL('image/png');
