@@ -168,6 +168,8 @@ describe("$fh.forms API", function() {
         getSubmissions({}, function(err, submissions) {
           assert(!err);
 
+          console.log(err, submissions);
+
           assert(submissions);
           assert(submissions.get("_type") === "submissions");
           assert(submissions.findByStatus("draft"));

@@ -9,8 +9,8 @@ appForm.api = function (module) {
   module.getSubmissions = getSubmissions;
   module.init = appForm.init;
   module.log=appForm.models.log;
-  var _submissions = null;
   var formConfig = appForm.models.config;
+  var submissionsLoaded = false;
 
   /**
    * Get and set config values. Can only set a config value if you are an config_admin_user
@@ -135,18 +135,19 @@ appForm.api = function (module) {
   function getSubmissions(params, cb) {
     //Getting submissions that have been completed.
     var submissions = appForm.models.submissions;
-    if (_submissions == null) {
-      appForm.models.submissions.loadLocal(function (err) {
+
+    if(submissionsLoaded){
+      submissions.loadLocal(function (err) {
         if (err) {
           console.error(err);
           cb(err);
         } else {
-          _submissions = appForm.models.submissions;
-          cb(null, _submissions);
+          submissionsLoaded = true;
+          cb(null, appForm.models.submissions);
         }
       });
     } else {
-      cb(null, _submissions);
+      return cb(null, appForm.models.submissions);
     }
   }
   function submitForm(submission, cb) {
@@ -161,6 +162,7 @@ appForm.api = function (module) {
       return cb('Invalid submission object.');
     }
   }
+
   return module;
 }(appForm.api || {});
 //mockup $fh apis for Addons.
