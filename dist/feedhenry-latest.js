@@ -5562,7 +5562,7 @@ Lawnchair.adapter('webkit-sqlite', (function() {
   var $fh = root.$fh;
   $fh.fh_timeout = 20000;
   $fh.boxprefix = '/box/srv/1.1/';
-  $fh.sdk_version = '1.1.3';
+  $fh.sdk_version = '1.1.4';
   
   var _is_initializing = false;
   var _init_failed = false;
@@ -5995,7 +5995,10 @@ Lawnchair.adapter('webkit-sqlite', (function() {
     if(req){
       try{
         var res = JSON.parse(req.responseText);
-        errraw = res.error;
+        errraw = res.error || res.msg;
+        if (errraw instanceof Array) {
+          errraw = errraw.join('\n');
+        }
       } catch(e){
         errraw = req.responseText;
       }
@@ -6058,6 +6061,12 @@ Lawnchair.adapter('webkit-sqlite', (function() {
     }
     if (typeof fh_app_version !== 'undefined'){
       fhParams.app_version = fh_app_version;
+    }
+    if (typeof fh_project_version !== 'undefined'){
+      fhParams.project_version = fh_project_version;
+    }
+    if (typeof fh_project_app_version !== 'undefined'){
+      fhParams.project_app_version = fh_project_app_version;
     }
     fhParams.sdk_version = _getSdkVersion();
     return fhParams;
@@ -6228,9 +6237,7 @@ Lawnchair.adapter('webkit-sqlite', (function() {
       $fh.init($fh.app_props , function (suc){
         _init_failed = false;
         doActCall();
-      }, function (err){
-        _handleError(fail,{"status":0,"responseText":"Init Failed"},"failed to call init. Check network status");
-      });
+      }, fail);
     }
     else if (null == $fh.cloud_props && _is_initializing){
       _cloud_ready_listeners.push({
@@ -6246,35 +6253,46 @@ Lawnchair.adapter('webkit-sqlite', (function() {
     }
 
     function doActCall(){
-      var cloud_host = $fh.cloud_props.hosts.releaseCloudUrl;
-      var app_type = $fh.cloud_props.hosts.releaseCloudType;
+      var url = $fh.cloud_props.hosts.url;
 
-      if($fh.app_props.mode && $fh.app_props.mode.indexOf("dev") > -1){
-        cloud_host = $fh.cloud_props.hosts.debugCloudUrl;
-        app_type = $fh.cloud_props.hosts.debugCloudType;
+      if (typeof url !== 'undefined') {
+        url = url + "/cloud/" + opts.act;
+      } else {
+        // resolve url the old way i.e. depending on
+        // -burnt in app mode
+        // -returned dev or live url
+        // -returned dev or live type (node or fh(rhino or proxying))
+        cloud_host = $fh.cloud_props.hosts.releaseCloudUrl;
+        var app_type = $fh.cloud_props.hosts.releaseCloudType;
+
+        if($fh.app_props.mode && $fh.app_props.mode.indexOf("dev") > -1){
+          cloud_host = $fh.cloud_props.hosts.debugCloudUrl;
+          app_type = $fh.cloud_props.hosts.debugCloudType;
+        }
+        url = cloud_host + "/cloud/" + opts.act;
+        if(app_type === "fh"){
+          url = cloud_host + $fh.boxprefix + "act/" + $fh.cloud_props.domain + "/"+ $fh.app_props.appid + "/" + opts.act + "/" + $fh.app_props.appid;
+        }
       }
-      var url = cloud_host + "/cloud/" + opts.act;
-      if(app_type === "fh"){
-        url = cloud_host + $fh.boxprefix + "act/" + $fh.cloud_props.domain + "/"+ $fh.app_props.appid + "/" + opts.act + "/" + $fh.app_props.appid;
-      }
+
       var params = opts.req || {};
       params = _addFhParams(params);
 
-    return $fh.__ajax({
-      "url": url,
-      "type": "POST",
-      "data": JSON.stringify(params),
-      "contentType": "application/json",
-      "timeout" : opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
-      success: function(res) {
-        if(success){
-          return success(res);
+      return $fh.__ajax({
+        "url": url,
+        "type": "POST",
+        "data": JSON.stringify(params),
+        "contentType": "application/json",
+        "timeout" : opts.timeout || $fh.app_props.timeout || $fh.fh_timeout,
+        success: function(res) {
+          if(success){
+            return success(res);
+          }
+        },
+        error: function(req, statusText, error) {
+          _handleError(fail, req, statusText);
         }
-      },
-      error: function(req, statusText, error) {
-        _handleError(fail, req, statusText);
-      }
-    });
+      });
     }
   };
 
