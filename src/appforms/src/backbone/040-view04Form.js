@@ -9,7 +9,7 @@ var FormView = BaseView.extend({
     formTitle: '<div class="fh_appform_title"><%= title %></div>',
     formDescription: '<div class="fh_appform_description"><%= description %></div>',
     formContainer: '<div id="fh_appform_container" class="fh_appform_form fh_appform_container"></div>',
-    buttons: '<div id="fh_appform_navigation_buttons" class="fh_appform_action_bar"><button class="fh_appform_button_saveDraft fh_appform_hidden fh_appform_button_main fh_appform_button_action">Save Draft</button><button class="fh_appform_button_previous fh_appform_hidden fh_appform_button_navigation">Previous</button><button class="fh_appform_button_next fh_appform_hidden fh_appform_button_navigation">Next</button><button class="fh_appform_button_submit fh_appform_hidden fh_appform_button_action">Submit</button></div>'
+    buttons: '<div id="fh_appform_navigation_buttons" class="fh_appform_button_bar"><button class="fh_appform_button_saveDraft fh_appform_hidden fh_appform_button_main fh_appform_button_action">Save Draft</button><button class="fh_appform_button_previous fh_appform_hidden fh_appform_button_navigation">Previous</button><button class="fh_appform_button_next fh_appform_hidden fh_appform_button_navigation">Next</button><button class="fh_appform_button_submit fh_appform_hidden fh_appform_button_action">Submit</button></div>'
   },
   events: {
     "click button.fh_appform_button_next": "nextPage",
@@ -241,29 +241,29 @@ var FormView = BaseView.extend({
       this.el.find("button.fh_appform_button_next").hide();
       this.el.find("button.fh_appform_button_saveDraft").show();
       this.el.find(" button.fh_appform_button_submit").show();
-      this.el.find(".fh_appform_action_bar button").removeClass('fh_appform_three_button');
-      this.el.find(".fh_appform_action_bar button").addClass('fh_appform_two_button');
+      this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_three_button');
+      this.el.find(".fh_appform_button_bar button").addClass('fh_appform_two_button');
     } else if (displayedIndex === 0) {
       this.el.find(" button.fh_appform_button_previous").hide();
       this.el.find("button.fh_appform_button_next").show();
       this.el.find("button.fh_appform_button_saveDraft").show();
       this.el.find(" button.fh_appform_button_submit").hide();
-      this.el.find(".fh_appform_action_bar button").removeClass('fh_appform_three_button');
-      this.el.find(".fh_appform_action_bar button").addClass('fh_appform_two_button');
+      this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_three_button');
+      this.el.find(".fh_appform_button_bar button").addClass('fh_appform_two_button');
     } else if (displayedIndex === displayedPages - 1) {
       this.el.find(" button.fh_appform_button_previous").show();
       this.el.find(" button.fh_appform_button_next").hide();
       this.el.find(" button.fh_appform_button_saveDraft").show();
       this.el.find(" button.fh_appform_button_submit").show();
-      this.el.find(".fh_appform_action_bar button").removeClass('fh_appform_two_button');
-      this.el.find(".fh_appform_action_bar button").addClass('fh_appform_three_button');
+      this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_two_button');
+      this.el.find(".fh_appform_button_bar button").addClass('fh_appform_three_button');
     } else {
       this.el.find(" button.fh_appform_button_previous").show();
       this.el.find(" button.fh_appform_button_next").show();
       this.el.find(" button.fh_appform_button_saveDraft").show();
       this.el.find(" button.fh_appform_button_submit").hide();
-      this.el.find(".fh_appform_action_bar button").removeClass('fh_appform_two_button');
-      this.el.find(".fh_appform_action_bar button").addClass('fh_appform_three_button');
+      this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_two_button');
+      this.el.find(".fh_appform_button_bar button").addClass('fh_appform_three_button');
     }
     if (this.readonly) {
       this.el.find("button.fh_appform_button_saveDraft").hide();
