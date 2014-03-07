@@ -14,7 +14,7 @@ describe("Ajax", function() {
             assert(err);
             assert(!res);
             assert(err.status === 404);
-            assert(err.response === "Cannot GET /idontexsist");
+            assert(err.response.indexOf("Cannot GET /idontexsist") > -1);
             done();
         });
     });
@@ -37,7 +37,7 @@ describe("Ajax", function() {
             assert(err);
             assert(!res);
             assert(err.status === 404);
-            assert(err.response === "Cannot POST /idontexsist");
+            assert(err.response.indexOf("Cannot POST /idontexsist") > -1);
             done();
         });
     });
