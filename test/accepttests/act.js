@@ -1,3 +1,25 @@
+//when this test is run, we expect $fh is intialiased with fhconfig.js, which should talk to the mock server and thus get the cloud host to be http://localhost:8101
+test('fh.act accept', function(){
+  stop();
+  $fh.act({
+    act:'echo',
+    req:{
+      msg:'testmsg'
+    }
+  }, function(res){
+    console.log('fh.act res:', JSON.stringify(res));
+    start();
+    strictEqual(res.echo, 'testmsg-8101');
+    strictEqual(res.hardcoded, 'hardcodedmsg');
+  }, function(err){
+    console.log('fh.act err:', err);
+    start();
+    ok(false);
+  });
+});
+
+
+//test for backward compatibility
 test('fh.act accept. app/init mode dev', function () {
   var appid = '123456789012345678901234';
   $fh.app_props = {mode:'dev', appid:appid};

@@ -11,3 +11,4 @@ nodeapp.HostApp.serveApp({
   }
 });
 console.log('Inited hostapp on port ' + process.env.FH_PORT);
+console.log('Server started');

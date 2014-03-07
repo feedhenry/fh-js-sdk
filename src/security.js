@@ -1,6 +1,5 @@
 (function(root){
-  root.$fh = root.$fh || {};
-  var $fh = root.$fh;
+  var $fh = root.$fh || {};
   $fh.sec = function(p, s, f){
     if (!p.act) {
       f('bad_act', {}, p);
@@ -276,4 +275,6 @@
     params.params = p;
     $fh.sec(params, s, f);
   };
+
+  root.$fh = $fh;
 })(this);
