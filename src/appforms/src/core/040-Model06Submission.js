@@ -85,6 +85,7 @@ appForm.models = function(module) {
     this.set('appId', appForm.config.get('appId'));
     this.set('appEnvironment', appForm.config.get('env'));
     this.set('appCloudName', '');
+
     this.set('comments', []);
     this.set('formFields', []);
     this.set('saveDate', null);

@@ -29,12 +29,14 @@ appForm.models = function (module) {
       }
     }
   };
+
+  Model.prototype.clearEvents = function(){
+    this.events = {};
+  };
   Model.prototype.emit = function () {
-    $fh.forms.log.d("Model emit ");
     var args = Array.prototype.slice.call(arguments, 0);
     var e = args.shift();
     var funcs = this.events[e];
-    $fh.forms.log.d("Model emit ", e);
     if (funcs && funcs.length > 0) {
       for (var i = 0; i < funcs.length; i++) {
         var func = funcs[i];
@@ -68,7 +70,6 @@ appForm.models = function (module) {
     this.touch();
   };
   Model.prototype.fromJSONStr = function (jsonStr) {
-    $fh.forms.log.d("Model fromJSONStr ", jsonStr);
     try {
       var json = JSON.parse(jsonStr);
       this.fromJSON(json);
@@ -93,7 +94,6 @@ appForm.models = function (module) {
      * @return {[type]}      [description]
      */
   Model.prototype.refresh = function (fromRemote, cb) {
-    $fh.forms.log.d("Model refresh ", fromRemote);
     var dataAgent = this.getDataAgent();
     var that = this;
     if (typeof cb == 'undefined') {
@@ -115,7 +115,6 @@ appForm.models = function (module) {
     }
   };
   Model.prototype.attemptRefresh=function(cb){
-    $fh.forms.log.d("Model attemptRefresh ");
     var dataAgent = this.getDataAgent();
     var self=this;
     dataAgent.attemptRead(this,function(err,res){
@@ -133,7 +132,6 @@ appForm.models = function (module) {
      * @return {[type]}      [description]
      */
   Model.prototype.loadLocal = function (cb) {
-    $fh.forms.log.d("Model loadLocal ");
     var localStorage = appForm.stores.localStorage;
     var that = this;
     localStorage.read(this, function (err, res) {
@@ -172,7 +170,6 @@ appForm.models = function (module) {
     return this.dataAgent;
   };
   Model.prototype.setDataAgent = function (dataAgent) {
-    $fh.forms.log.d("Model setDataAgent ");
     this.dataAgent = dataAgent;
   };
   module.Model = Model;

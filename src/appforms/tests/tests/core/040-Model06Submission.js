@@ -305,6 +305,12 @@ describe("Submission model", function() {
                     assert(uploadTask);
                 });
             });
+            submission.on("progress", function(err ,progress){
+              console.log("PROGRESS: ", err, progress);
+            });
+            submission.on("error", function(err ,progress){
+              console.log("ERROR: ", err, progress);
+            });
             submission.on("submitted", function(err) {
                 assert(!err);
                 done();

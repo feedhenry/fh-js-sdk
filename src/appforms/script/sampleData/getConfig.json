@@ -7,7 +7,7 @@
   "debug_mode": false,
   "logger" : true,
   "max_retries" : 2,
-  "timeout" : 30,
+  "timeout" : 7,
   "log_line_limit": 300,
   "log_level": 3,
   "log_levels": ["error", "warning", "log", "debug"],

@@ -21,7 +21,7 @@ describe("Log model", function() {
       setTimeout(function(){
         assert(appForm.models.log.getLogs().length==100);
         appForm.models.log.loadLocal(function(){
-          assert(appForm.models.log.getLogs().length==103);
+          assert(appForm.models.log.getLogs().length==100);
           done();
         });
       },500);
