@@ -21,41 +21,29 @@ module.exports = function(grunt) {
       }
     },
     concat: {
-      options: {
-        process: function(src, filepath){
-          if(filepath.indexOf("src/feedhenry.js") !== -1){
-            grunt.log.writeln("Updating sdk version");
-            var sdkversion = grunt.config.get('pkg.version');
-            var content = src.replace(/sdk_version = '(BUILD_VERSION)'/, "sdk_version = '"+sdkversion+"'");
-            return content;
-          } else {
-            return src;
-          }
-        }
+      lawnchair: {
+        src: [
+          "libs/lawnchair/lawnchair.js",
+          "libs/lawnchair/lawnchairWindowNameStorageAdapter.js",
+          "libs/lawnchair/lawnchairLocalStorageAdapter.js",
+          "libs/lawnchair/lawnchairWebkitSqlAdapter.js"
+        ],
+        dest: "tmp/lawnchair.js"
       },
-      dist: {
-        src: ["libs/json2.js",
-             "libs/cryptojs-core.js",
-             "libs/cryptojs-enc-base64.js",
-             "libs/cryptojs-cipher-core.js",
-             "libs/cryptojs-aes.js",
-             "libs/cryptojs-md5.js",
-             "libs/cryptojs-sha1.js",
-             "libs/cryptojs-x64-core.js",
-             "libs/cryptojs-sha256.js",
-             "libs/cryptojs-sha512.js",
-             "libs/cryptojs-sha3.js",
-             "libs/rsa.js",
-             "libs/lawnchair/lawnchair.js",
-             "libs/lawnchair/lawnchairWindowNameStorageAdapter.js",
-             "libs/lawnchair/lawnchairLocalStorageAdapter.js",
-             "libs/lawnchair/lawnchairLocalFileStorageAdapter.js",
-             "libs/lawnchair/lawnchairWebkitSqlAdapter.js",
-             "src/feedhenry.js",
-             "src/sync-cli.js",
-             "src/security.js",
-             "src/amd.js"],
-        dest: 'dist/feedhenry-latest.js'
+      crypto: {
+        src:[
+          "libs/cryptojs-core.js",
+          "libs/cryptojs-enc-base64.js",
+          "libs/cryptojs-cipher-core.js",
+          "libs/cryptojs-aes.js",
+          "libs/cryptojs-md5.js",
+          "libs/cryptojs-sha1.js",
+          "libs/cryptojs-x64-core.js",
+          "libs/cryptojs-sha256.js",
+          "libs/cryptojs-sha512.js",
+          "libs/cryptojs-sha3.js"
+        ],
+        dest: "tmp/crypto.js"
       }
     },
     qunit: {
@@ -66,7 +54,7 @@ module.exports = function(grunt) {
       },
       accept: {
         options: {
-          urls: ["http://localhost:8008/test/accept.html", "http://localhost:8008/test/accept-require.html"]
+          urls: ["http://localhost:8008/test/accept-require.html"]
         }
       }
     },
@@ -93,6 +81,29 @@ module.exports = function(grunt) {
         dest: 'dist/fh-starter-project-latest.zip',
         src: ['src/index.html', 'dist/feedhenry-latest.js']
       }
+    },
+    browserify: {
+      build:{
+        src:['src/feedhenry.js'],
+        dest: 'test/feedhenry-latest.js',
+        options: {
+          standalone: '$fh',
+          shim: {
+            Lawnchair: {
+              path: 'tmp/lawnchair.js',
+              exports: 'Lawnchair'
+            },
+            JSON: {
+              path: "libs/json2.js",
+              exports: "JSON"
+            },
+            Crypto: {
+              path: "tmp/crypto.js",
+              exports: "Crypto"
+            }
+          }
+        }
+      }
     }
   });
 
@@ -102,6 +113,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-connect');
+  grunt.loadNpmTasks('grunt-browserify');
 
   grunt.registerTask('unit', ['connect', 'qunit:unit']);
 

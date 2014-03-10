@@ -1,4 +1,6 @@
-Lawnchair.adapter('localFileStorage', (function () {
+var Lawnchair = require('Lawnchair');
+
+var fileStorageAdapter = function (app_props, hashFunc) {
   // private methods
 
   function doLog(mess){
@@ -14,9 +16,9 @@ Lawnchair.adapter('localFileStorage', (function () {
 
 
   function filenameForKey(key, cb) {
-    key = $fh.app_props.appid + key;
+    key = app_props.appid + key;
 
-    $fh.hash({
+    hashFunc({
       algorithm: "MD5",
       text: key
     }, function(result) {
@@ -174,5 +176,12 @@ Lawnchair.adapter('localFileStorage', (function () {
 
 
   };
+}
 
-}()));
+var addAdapter = function(app_props, hashFunc){
+  Lawnchair.adapter('localFileStorage', fileStorageAdapter(app_props, hashFunc));
+}
+
+module.exports = {
+  addAdapter: addAdapter
+}
