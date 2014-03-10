@@ -6,7 +6,7 @@ var FormListView = BaseView.extend({
   templates: {
     list: '<ul class="form_list fh_appform_body"></ul>',
     header: '<h2>Your Forms</h2><h4>Choose a form from the list below</h4>',
-    error: '<li><button id="formlist_reload" class="button-block <%= enabledClass %> <%= dataClass %> fh_appform_button_navigation"><%= name %><div class="loading"></div></button></li>'
+    error: '<li><button id="formlist_reload" class="button-block <%= enabledClass %> <%= dataClass %> fh_appform_button_default"><%= name %><div class="loading"></div></button></li>'
   },
 
   initialize: function() {
