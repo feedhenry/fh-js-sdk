@@ -1,5 +1,8 @@
 FeedHenry JavaScript SDK
 ========================
+[![browser support](https://ci.testling.com/feedhenry/fh-js-sdk.png)
+](https://ci.testling.com/feedhenry/fh-js-sdk)
+
 The JavaScript SDK allows developers to integrate the FeedHenry Cloud into any web-based solution - desktop websites, mobile websites or a stand-alone JavaScript client.
 
 The API is provided in the $fh namespace and uses a common convention for most functions, which takes the format:
