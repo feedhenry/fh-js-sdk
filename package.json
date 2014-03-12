@@ -33,7 +33,7 @@
       "ie/8..10",
       "firefox/3.5", "firefox/latest",
       "chrome/4.0","chrome/latest",
-      "safari/5..latest",
+      "safari/5.0.5","safari/latest",
       "opera/11", "opera/next",
       "iphone/6.0", "ipad/6.0",
       "android-browser/latest"
