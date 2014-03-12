@@ -1,4 +1,4 @@
-var Lawnchair = require('Lawnchair');
+var Lawnchair = require('../../libs/generated/lawnchair');
 
 var fileStorageAdapter = function (app_props, hashFunc) {
   // private methods

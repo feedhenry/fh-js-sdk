@@ -1,6 +1,6 @@
-!function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.feedhenry=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
+require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 (function (global){
-;__browserify_shim_require__=_dereq_;(function browserifyShim(module, exports, _dereq_, define, browserify_shim__define__module__export__) {
+;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
 /*
  CryptoJS v3.1.2
  core.js
@@ -3397,9 +3397,9 @@ CryptoJS.lib.Cipher || (function (undefined) {
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],2:[function(_dereq_,module,exports){
+},{}],2:[function(require,module,exports){
 (function (global){
-;__browserify_shim_require__=_dereq_;(function browserifyShim(module, exports, _dereq_, define, browserify_shim__define__module__export__) {
+;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
 /**
  * Lawnchair!
  * ---
@@ -4122,9 +4122,9 @@ Lawnchair.adapter('webkit-sqlite', (function() {
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],3:[function(_dereq_,module,exports){
+},{}],3:[function(require,module,exports){
 (function (global){
-;__browserify_shim_require__=_dereq_;(function browserifyShim(module, exports, _dereq_, define, browserify_shim__define__module__export__) {
+;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
 /*
  json2.js
  2011-10-19
@@ -4617,7 +4617,7 @@ if (!JSON) {
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],4:[function(_dereq_,module,exports){
+},{}],4:[function(require,module,exports){
 // Copyright (c) 2005  Tom Wu
 // All Rights Reserved.
 // See "LICENSE" for details.
@@ -5410,7 +5410,7 @@ module.exports = {
   byte2Hex: byte2Hex,
   RSAKey: RSAKey
 }
-},{}],5:[function(_dereq_,module,exports){
+},{}],5:[function(require,module,exports){
 // http://wiki.commonjs.org/wiki/Unit_Testing/1.0
 //
 // THIS IS NOT TESTED NOR LIKELY TO WORK OUTSIDE V8!
@@ -5438,7 +5438,7 @@ module.exports = {
 // when used in node, this will actually load the util module we depend on
 // versus loading the builtin util module as happens otherwise
 // this is a bug in node module loading as far as I am concerned
-var util = _dereq_('util/');
+var util = require('util/');
 
 var pSlice = Array.prototype.slice;
 var hasOwn = Object.prototype.hasOwnProperty;
@@ -5772,14 +5772,14 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-},{"util/":7}],6:[function(_dereq_,module,exports){
+},{"util/":7}],6:[function(require,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],7:[function(_dereq_,module,exports){
+},{}],7:[function(require,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -6306,7 +6306,7 @@ function isPrimitive(arg) {
 }
 exports.isPrimitive = isPrimitive;
 
-exports.isBuffer = _dereq_('./support/isBuffer');
+exports.isBuffer = require('./support/isBuffer');
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -6350,7 +6350,7 @@ exports.log = function() {
  *     prototype.
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
-exports.inherits = _dereq_('inherits');
+exports.inherits = require('inherits');
 
 exports._extend = function(origin, add) {
   // Don't do anything if add isn't an object
@@ -6368,12 +6368,12 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,require("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(require,module,exports){
 (function (global){
 /*global window, global*/
-var util = _dereq_("util")
-var assert = _dereq_("assert")
+var util = require("util")
+var assert = require("assert")
 
 var slice = Array.prototype.slice
 var console
@@ -6458,7 +6458,7 @@ function assert(expression) {
 }
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"assert":5,"util":13}],9:[function(_dereq_,module,exports){
+},{"assert":5,"util":13}],9:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6760,7 +6760,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],10:[function(_dereq_,module,exports){
+},{}],10:[function(require,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -6785,7 +6785,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],11:[function(_dereq_,module,exports){
+},{}],11:[function(require,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -6840,21 +6840,23 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],12:[function(_dereq_,module,exports){
-module.exports=_dereq_(6)
-},{}],13:[function(_dereq_,module,exports){
-module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
-var constants = _dereq_("./modules/constants");
-var console = _dereq_("console");
-var ajax = _dereq_("./modules/ajax");
-var events = _dereq_("./modules/events");
-var cloud = _dereq_("./modules/waitForCloud");
-var api_act = _dereq_("./modules/api_act");
-var api_auth = _dereq_("./modules/api_auth");
-var api_sec = _dereq_("./modules/api_sec");
-var api_hash = _dereq_("./modules/api_hash");
-var api_sync = _dereq_("./modules/sync-cli");
+},{}],12:[function(require,module,exports){
+module.exports=require(6)
+},{}],13:[function(require,module,exports){
+module.exports=require(7)
+},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],"/Users/weili/work/fh-sdks/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
+module.exports=require('il4jYc');
+},{}],"il4jYc":[function(require,module,exports){
+var constants = require("./modules/constants");
+var console = require("console");
+var ajax = require("./modules/ajax");
+var events = require("./modules/events");
+var cloud = require("./modules/waitForCloud");
+var api_act = require("./modules/api_act");
+var api_auth = require("./modules/api_auth");
+var api_sec = require("./modules/api_sec");
+var api_hash = require("./modules/api_hash");
+var api_sync = require("./modules/sync-cli");
 
 var defaultFail = function(msg, error){
   console.log(msg + ":" + JSON.stringify(error));
@@ -6950,7 +6952,7 @@ module.exports = fh;
 
 
 
-},{"./modules/ajax":16,"./modules/api_act":17,"./modules/api_auth":18,"./modules/api_hash":19,"./modules/api_sec":20,"./modules/constants":22,"./modules/events":25,"./modules/sync-cli":41,"./modules/waitForCloud":43,"console":8}],15:[function(_dereq_,module,exports){
+},{"./modules/ajax":17,"./modules/api_act":18,"./modules/api_auth":19,"./modules/api_hash":20,"./modules/api_sec":21,"./modules/constants":23,"./modules/events":26,"./modules/sync-cli":42,"./modules/waitForCloud":44,"console":8}],16:[function(require,module,exports){
 var XDomainRequestWrapper = function(xdr){
   this.xdr = xdr;
   this.isWrapper = true;
@@ -7015,12 +7017,12 @@ XDomainRequestWrapper.prototype.getResponseHeader = function(n){
 
 module.exports = XDomainRequestWrapper;
 
-},{}],16:[function(_dereq_,module,exports){
-var XDomainRequestWrapper = _dereq_("./XDomainRequestWrapper");
-var loadScript = _dereq_("./loadScript");
-var so = _dereq_("./sameOrigin");
-var console = _dereq_("console");
-var JSON = _dereq_("JSON");
+},{}],17:[function(require,module,exports){
+var XDomainRequestWrapper = require("./XDomainRequestWrapper");
+var loadScript = require("./loadScript");
+var so = require("./sameOrigin");
+var console = require("console");
+var JSON = require("JSON");
 
 //first, check if cors if supported by the browser
 /* The following code is used to detect if the browser is supporting CORS.
@@ -7249,13 +7251,13 @@ function ajax(options) {
 
 module.exports = ajax;
 
-},{"./XDomainRequestWrapper":15,"./loadScript":32,"./sameOrigin":35,"JSON":3,"console":8}],17:[function(_dereq_,module,exports){
-var console =_dereq_("console");
-var cloud = _dereq_("./waitForCloud");
-var fhparams = _dereq_("./fhparams");
-var ajax = _dereq_("./ajax");
-var JSON = _dereq_("JSON");
-var handleError = _dereq_("./handleError");
+},{"./XDomainRequestWrapper":16,"./loadScript":33,"./sameOrigin":36,"JSON":3,"console":8}],18:[function(require,module,exports){
+var console =require("console");
+var cloud = require("./waitForCloud");
+var fhparams = require("./fhparams");
+var ajax = require("./ajax");
+var JSON = require("JSON");
+var handleError = require("./handleError");
 
 function doActCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
@@ -7301,16 +7303,16 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":16,"./fhparams":26,"./handleError":28,"./waitForCloud":43,"JSON":3,"console":8}],18:[function(_dereq_,module,exports){
-var console =_dereq_("console");
-var cloud = _dereq_("./waitForCloud");
-var fhparams = _dereq_("./fhparams");
-var ajax = _dereq_("./ajax");
-var JSON = _dereq_("JSON");
-var handleError = _dereq_("./handleError");
-var device = _dereq_("./device");
-var constants = _dereq_("./constants");
-var checkAuth = _dereq_("./checkAuth");
+},{"./ajax":17,"./fhparams":27,"./handleError":29,"./waitForCloud":44,"JSON":3,"console":8}],19:[function(require,module,exports){
+var console =require("console");
+var cloud = require("./waitForCloud");
+var fhparams = require("./fhparams");
+var ajax = require("./ajax");
+var JSON = require("JSON");
+var handleError = require("./handleError");
+var device = require("./device");
+var constants = require("./constants");
+var checkAuth = require("./checkAuth");
 
 module.exports = function(opts, success, fail){
   if(!fail){
@@ -7364,8 +7366,8 @@ module.exports = function(opts, success, fail){
     }
   });
 }
-},{"./ajax":16,"./checkAuth":21,"./constants":22,"./device":24,"./fhparams":26,"./handleError":28,"./waitForCloud":43,"JSON":3,"console":8}],19:[function(_dereq_,module,exports){
-var hashImpl = _dereq_("./security/hash");
+},{"./ajax":17,"./checkAuth":22,"./constants":23,"./device":25,"./fhparams":27,"./handleError":29,"./waitForCloud":44,"JSON":3,"console":8}],20:[function(require,module,exports){
+var hashImpl = require("./security/hash");
 
 module.exports = function(p, s, f){
   var params = {};
@@ -7376,11 +7378,11 @@ module.exports = function(p, s, f){
   params.params = p;
   hashImpl(params, s, f);
 };
-},{"./security/hash":39}],20:[function(_dereq_,module,exports){
-var keygen = _dereq_("./security/aes-keygen");
-var aes = _dereq_("./security/aes-node");
-var rsa = _dereq_("./security/rsa-node");
-var hash = _dereq_("./security/hash");
+},{"./security/hash":40}],21:[function(require,module,exports){
+var keygen = require("./security/aes-keygen");
+var aes = require("./security/aes-node");
+var rsa = require("./security/rsa-node");
+var hash = require("./security/hash");
 
 module.exports = function(p, s, f){
   if (!p.act) {
@@ -7420,10 +7422,10 @@ module.exports = function(p, s, f){
     }
   }
 }
-},{"./security/aes-keygen":37,"./security/aes-node":38,"./security/hash":39,"./security/rsa-node":40}],21:[function(_dereq_,module,exports){
-var console = _dereq_("console");
-var queryMap = _dereq_("./queryMap");
-var JSON = _dereq_("JSON");
+},{"./security/aes-keygen":38,"./security/aes-node":39,"./security/hash":40,"./security/rsa-node":41}],22:[function(require,module,exports){
+var console = require("console");
+var queryMap = require("./queryMap");
+var JSON = require("JSON");
 
 var checkAuth = function(url) {
   if (/\_fhAuthCallback/.test(url)) {
@@ -7507,15 +7509,15 @@ module.exports = {
   "handleAuthResponse": handleAuthResponse
 };
 
-},{"./queryMap":34,"JSON":3,"console":8}],22:[function(_dereq_,module,exports){
+},{"./queryMap":35,"JSON":3,"console":8}],23:[function(require,module,exports){
 module.exports = {
   "fh_timeout": 20000,
   "boxprefix": "/box/srv/1.1/",
   "sdk_version": "BUILD_VERSION",
   "config_js":"fhconfig.js"
 }
-},{}],23:[function(_dereq_,module,exports){
-var console = _dereq_("console");
+},{}],24:[function(require,module,exports){
+var console = require("console");
 module.exports = {
   readCookieValue  : function (cookie_name) {
     var name_str = cookie_name + "=";
@@ -7540,10 +7542,10 @@ module.exports = {
   }
 };
 
-},{"console":8}],24:[function(_dereq_,module,exports){
-var cookies = _dereq_("./cookies");
-var uuidModule = _dereq_("./uuid");
-var console = _dereq_("console");
+},{"console":8}],25:[function(require,module,exports){
+var cookies = require("./cookies");
+var uuidModule = require("./uuid");
+var console = require("console");
 
 module.exports = {
   //try to get the unique device identifier
@@ -7581,7 +7583,7 @@ module.exports = {
 
   "getDestination": function(){
     var destination = null;
-    var platformsToTest = _dereq_("./platformsMap");
+    var platformsToTest = require("./platformsMap");
 
 
     var userAgent = navigator.userAgent;
@@ -7606,16 +7608,16 @@ module.exports = {
   }
 }
 
-},{"./cookies":23,"./platformsMap":33,"./uuid":42,"console":8}],25:[function(_dereq_,module,exports){
-var EventEmitter = _dereq_('events').EventEmitter;
+},{"./cookies":24,"./platformsMap":34,"./uuid":43,"console":8}],26:[function(require,module,exports){
+var EventEmitter = require('events').EventEmitter;
 
 var emitter = new EventEmitter();
 emitter.setMaxListeners(0);
 
 module.exports = emitter;
-},{"events":9}],26:[function(_dereq_,module,exports){
-var device = _dereq_("./device");
-var sdkversion = _dereq_("./sdkversion");
+},{"events":9}],27:[function(require,module,exports){
+var device = require("./device");
+var sdkversion = require("./sdkversion");
 
 var defaultParams = null;
 //TODO: review these options, we probably only needs all of them for init calls, but we shouldn't need all of them for act calls
@@ -7663,7 +7665,7 @@ module.exports = {
   "addDefaultParams": addDefaultParams
 }
 
-},{"./device":24,"./sdkversion":36}],27:[function(_dereq_,module,exports){
+},{"./device":25,"./sdkversion":37}],28:[function(require,module,exports){
 module.exports = function(){
   var path = null;
   var scripts = document.getElementsByTagName('script');
@@ -7684,8 +7686,8 @@ module.exports = function(){
   return path;
 };
 
-},{}],28:[function(_dereq_,module,exports){
-var JSON = _dereq_("JSON");
+},{}],29:[function(require,module,exports){
+var JSON = require("JSON");
 
 module.exports = function(fail, req, resStatus){
   var errraw;
@@ -7709,8 +7711,8 @@ module.exports = function(fail, req, resStatus){
   }
 };
 
-},{"JSON":3}],29:[function(_dereq_,module,exports){
-var constants = _dereq_("./constants");
+},{"JSON":3}],30:[function(require,module,exports){
+var constants = require("./constants");
 
 function CloudHost(cloud_props){
   this.cloud_props = cloud_props;
@@ -7762,18 +7764,18 @@ CloudHost.prototype.getActUrl = function(appProps, act){
 }
 
 module.exports = CloudHost;
-},{"./constants":22}],30:[function(_dereq_,module,exports){
-var findFHPath = _dereq_("./findFHPath");
-var loadScript = _dereq_("./loadScript");
-var Lawnchair = _dereq_('../../libs/generated/lawnchair');
-var lawnchairext = _dereq_('./lawnchair-ext');
-var consts = _dereq_("./constants");
-var fhparams = _dereq_("./fhparams");
-var ajax = _dereq_("./ajax");
-var handleError = _dereq_("./handleError");
-var console = _dereq_("console");
-var JSON = _dereq_("JSON");
-var hashFunc = _dereq_("./security/hash");
+},{"./constants":23}],31:[function(require,module,exports){
+var findFHPath = require("./findFHPath");
+var loadScript = require("./loadScript");
+var Lawnchair = require('../../libs/generated/lawnchair');
+var lawnchairext = require('./lawnchair-ext');
+var consts = require("./constants");
+var fhparams = require("./fhparams");
+var ajax = require("./ajax");
+var handleError = require("./handleError");
+var console = require("console");
+var JSON = require("JSON");
+var hashFunc = require("./security/hash");
 
 var init = function(conf_path, callback){
   console.log("start to load app_props");
@@ -7867,8 +7869,8 @@ module.exports = {
   "init": init,
   "loadCloudProps": loadCloudProps
 }
-},{"../../libs/generated/lawnchair":2,"./ajax":16,"./constants":22,"./fhparams":26,"./findFHPath":27,"./handleError":28,"./lawnchair-ext":31,"./loadScript":32,"./security/hash":39,"JSON":3,"console":8}],31:[function(_dereq_,module,exports){
-var Lawnchair = _dereq_('../../libs/generated/lawnchair');
+},{"../../libs/generated/lawnchair":2,"./ajax":17,"./constants":23,"./fhparams":27,"./findFHPath":28,"./handleError":29,"./lawnchair-ext":32,"./loadScript":33,"./security/hash":40,"JSON":3,"console":8}],32:[function(require,module,exports){
+var Lawnchair = require('../../libs/generated/lawnchair');
 
 var fileStorageAdapter = function (app_props, hashFunc) {
   // private methods
@@ -8055,7 +8057,7 @@ var addAdapter = function(app_props, hashFunc){
 module.exports = {
   addAdapter: addAdapter
 }
-},{"../../libs/generated/lawnchair":2}],32:[function(_dereq_,module,exports){
+},{"../../libs/generated/lawnchair":2}],33:[function(require,module,exports){
 module.exports = function (url, callback) {
   var script;
   var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
@@ -8078,7 +8080,7 @@ module.exports = function (url, callback) {
   head.insertBefore(script, head.firstChild);
 };
 
-},{}],33:[function(_dereq_,module,exports){
+},{}],34:[function(require,module,exports){
 module.exports = [
   {
     "destination" :"ipad",
@@ -8106,7 +8108,7 @@ module.exports = [
   }
 ];
 
-},{}],34:[function(_dereq_,module,exports){
+},{}],35:[function(require,module,exports){
 module.exports = function(url) {
   var qmap;
   var i = url.split("?");
@@ -8123,7 +8125,7 @@ module.exports = function(url) {
   return qmap;
 };
 
-},{}],35:[function(_dereq_,module,exports){
+},{}],36:[function(require,module,exports){
 module.exports = function(url) {
   var loc = window.location;
   // http://blog.stevenlevithan.com/archives/parseuri-split-url
@@ -8140,8 +8142,8 @@ module.exports = function(url) {
           locParts[4] === urlParts[4]); // port matches      }
 };
 
-},{}],36:[function(_dereq_,module,exports){
-var constants = _dereq_("./constants");
+},{}],37:[function(require,module,exports){
+var constants = require("./constants");
 
 module.exports = function() {
   var type = "FH_JS_SDK";
@@ -8153,8 +8155,8 @@ module.exports = function() {
   return type + "/" + constants.sdk_version;
 };
 
-},{"./constants":22}],37:[function(_dereq_,module,exports){
-var rsa = _dereq_("../../../libs/rsa");
+},{"./constants":23}],38:[function(require,module,exports){
+var rsa = require("../../../libs/rsa");
 var SecureRandom = rsa.SecureRandom;
 var byte2Hex = rsa.byte2Hex;
 
@@ -8195,8 +8197,8 @@ var aes_keygen = function(p, s, f){
 }
 
 module.exports = aes_keygen;
-},{"../../../libs/rsa":4}],38:[function(_dereq_,module,exports){
-var CryptoJS = _dereq_("../../../libs/generated/crypto");
+},{"../../../libs/rsa":4}],39:[function(require,module,exports){
+var CryptoJS = require("../../../libs/generated/crypto");
 
 var encrypt = function(p, s, f){
   var fields = ['key', 'plaintext', 'iv'];
@@ -8236,8 +8238,8 @@ module.exports = {
   encrypt: encrypt,
   decrypt: decrypt
 }
-},{"../../../libs/generated/crypto":1}],39:[function(_dereq_,module,exports){
-var CryptoJS = _dereq_("../../../libs/generated/crypto");
+},{"../../../libs/generated/crypto":1}],40:[function(require,module,exports){
+var CryptoJS = require("../../../libs/generated/crypto");
 
 
 var hash = function(p, s, f){
@@ -8261,8 +8263,8 @@ var hash = function(p, s, f){
 }
 
 module.exports = hash;
-},{"../../../libs/generated/crypto":1}],40:[function(_dereq_,module,exports){
-var rsa = _dereq_("../../../libs/rsa");
+},{"../../../libs/generated/crypto":1}],41:[function(require,module,exports){
+var rsa = require("../../../libs/rsa");
 var RSAKey = rsa.RSAKey;
 
 var encrypt = function(p, s, f){
@@ -8286,11 +8288,11 @@ var encrypt = function(p, s, f){
 module.exports = {
   encrypt: encrypt
 }
-},{"../../../libs/rsa":4}],41:[function(_dereq_,module,exports){
-var JSON = _dereq_("JSON");
-var actFunc = _dereq_("./api_act");
-var CryptoJS = _dereq_("../../libs/generated/crypto");
-var Lawnchair = _dereq_('../../libs/generated/lawnchair');
+},{"../../../libs/rsa":4}],42:[function(require,module,exports){
+var JSON = require("JSON");
+var actFunc = require("./api_act");
+var CryptoJS = require("../../libs/generated/crypto");
+var Lawnchair = require('../../libs/generated/lawnchair');
 
 var self = {
   // CONFIG
@@ -9303,7 +9305,7 @@ module.exports = {
 
 
 
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":17,"JSON":3}],42:[function(_dereq_,module,exports){
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":18,"JSON":3}],43:[function(require,module,exports){
 module.exports = {
   createUUID : function () {
     //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
@@ -9320,11 +9322,11 @@ module.exports = {
   }
 };
 
-},{}],43:[function(_dereq_,module,exports){
-var initializer = _dereq_("./initializer");
-var events = _dereq_("./events");
-var CloudHost = _dereq_("./hosts");
-var constants = _dereq_("./constants");
+},{}],44:[function(require,module,exports){
+var initializer = require("./initializer");
+var events = require("./events");
+var CloudHost = require("./hosts");
+var constants = require("./constants");
 
 var init_attempt = 0;
 //the app configurations
@@ -9418,6 +9420,4 @@ module.exports = {
   getCloudHostUrl: getCloudHostUrl,
   reset: reset
 }
-},{"./constants":22,"./events":25,"./hosts":29,"./initializer":30}]},{},[14])
-(14)
-});
+},{"./constants":23,"./events":26,"./hosts":30,"./initializer":31}]},{},["il4jYc"])

@@ -28,41 +28,85 @@ module.exports = function(grunt) {
           "libs/lawnchair/lawnchairLocalStorageAdapter.js",
           "libs/lawnchair/lawnchairWebkitSqlAdapter.js"
         ],
-        dest: "tmp/lawnchair.js"
+        dest: "libs/generated/lawnchair.js"
       },
       crypto: {
         src:[
-          "libs/cryptojs-core.js",
-          "libs/cryptojs-enc-base64.js",
-          "libs/cryptojs-cipher-core.js",
-          "libs/cryptojs-aes.js",
-          "libs/cryptojs-md5.js",
-          "libs/cryptojs-sha1.js",
-          "libs/cryptojs-x64-core.js",
-          "libs/cryptojs-sha256.js",
-          "libs/cryptojs-sha512.js",
-          "libs/cryptojs-sha3.js"
+          "libs/cryptojs/cryptojs-core.js",
+          "libs/cryptojs/cryptojs-enc-base64.js",
+          "libs/cryptojs/cryptojs-cipher-core.js",
+          "libs/cryptojs/cryptojs-aes.js",
+          "libs/cryptojs/cryptojs-md5.js",
+          "libs/cryptojs/cryptojs-sha1.js",
+          "libs/cryptojs/cryptojs-x64-core.js",
+          "libs/cryptojs/cryptojs-sha256.js",
+          "libs/cryptojs/cryptojs-sha512.js",
+          "libs/cryptojs/cryptojs-sha3.js"
         ],
-        dest: "tmp/crypto.js"
+        dest: "libs/generated/crypto.js"
       }
     },
-    qunit: {
-      unit: {
+    'mocha_phantomjs': {
+      all: {
         options: {
-          urls: ["http://localhost:8008/test/unit.html"]
-        }
-      },
-      accept: {
-        options: {
-          urls: ["http://localhost:8008/test/accept-require.html"]
+          urls: [
+            "http://127.0.0.1:8100/test/browser/index.html",
+            "http://127.0.0.1:8100/test/browser/index-require.html"
+          ]
         }
       }
     },
     connect: {
       server: {
         options: {
-          port: 8008,
+          port: 8100,
           base: '.'
+        }
+      }
+    },
+    browserify: {
+      // This browserify build be used by users of the module. It contains a
+      // UMD (universal module definition) and can be used via an AMD module
+      // loader like RequireJS or by simply placing a script tag in the page,
+      // which registers feedhenry as a global var (the module itself registers as $fh as well).
+      dist:{
+        //shim is defined inside package.json
+        src:['src/feedhenry.js'],
+        dest: 'dist/feedhenry-latest.js',
+        options: {
+          standalone: 'feedhenry'
+        }
+      },
+      // This browserify build can be required by other browserify modules that
+      // have been created with an --external parameter.
+      require: {
+        src:['src/feedhenry.js'],
+        dest: 'test/browser/feedhenry-latest-require.js',
+        options: {
+          alias:['./src/feedhenry.js']
+        }
+      },
+      // These are the browserified tests. We need to browserify the tests to be
+      // able to run the mocha tests while writing the tests as clean, simple
+      // CommonJS mocha tests (that is, without cross-platform boilerplate
+      // code). This build will also include the testing libs chai, sinon and
+      // sinon-chai but must not include the module under test.
+      test: {
+        src: [ './test/browser/suite.js' ],
+        dest: './test/browser/browserified_tests.js',
+        options: {
+          external: [ './src/feedhenry.js' ],
+          // Embed source map for tests
+          debug: true
+        }
+      }
+    },
+    watch: {
+      browserify: {
+        files: ['src/modules/**/*.js', 'test/tests/*.js'],
+        tasks: ['browserify'],
+        options: {
+          spawn: false
         }
       }
     },
@@ -81,29 +125,6 @@ module.exports = function(grunt) {
         dest: 'dist/fh-starter-project-latest.zip',
         src: ['src/index.html', 'dist/feedhenry-latest.js']
       }
-    },
-    browserify: {
-      build:{
-        src:['src/feedhenry.js'],
-        dest: 'test/feedhenry-latest.js',
-        options: {
-          standalone: '$fh',
-          shim: {
-            Lawnchair: {
-              path: 'tmp/lawnchair.js',
-              exports: 'Lawnchair'
-            },
-            JSON: {
-              path: "libs/json2.js",
-              exports: "JSON"
-            },
-            Crypto: {
-              path: "tmp/crypto.js",
-              exports: "Crypto"
-            }
-          }
-        }
-      }
     }
   });
 
@@ -114,88 +135,10 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-connect');
   grunt.loadNpmTasks('grunt-browserify');
+  grunt.loadNpmTasks('grunt-mocha-phantomjs');
+  grunt.loadNpmTasks('grunt-contrib-watch');
 
-  grunt.registerTask('unit', ['connect', 'qunit:unit']);
+  grunt.registerTask('test', ['jshint', 'browserify', 'connect:server', 'mocha_phantomjs']);
 
-  var spawns = [];
-
-  grunt.registerTask('start-servers', function () {
-    var done = this.async();
-    var spawn = require('child_process').spawn;
-
-    var spawnTestCloudServer = function (port, script, cb) {
-      grunt.log.writeln('Spawning server on port ' + port + ' in cwd ' + __dirname + ' using file ' + __dirname + '/' + script);
-      var env = {};
-      env.FH_PORT = port;
-      var server = spawn('/usr/bin/env', ['node', __dirname + '/' + script], {
-        cwd: __dirname,
-        env: env
-      }).on('exit', function (code) {
-        grunt.log.writeln('Exiting server on port ' + port + ' with exit code ' + code);
-      });
-      server.stdout.on('data', function (data) {
-        grunt.log.writeln('Spawned Server port ' + port + ' stdout:' + data);
-        if(data.toString("utf8").indexOf("Server started") !== -1){
-          cb(null, null);
-        }
-      });
-      server.stderr.on('data', function (data) {
-        grunt.log.writeln('Spawned Server port ' + port + ' stderr:' + data);
-        if(data.toString("utf8").indexOf("Error:") !== -1){
-          cb(data.toString("utf8"), null);
-        }
-      });
-      grunt.log.writeln('Spawned server on port ' + port);
-      spawns.push(server);
-    };
-
-    var servers = [{port: 8100, file:"test/server.js"}, {port: 8101, file:"test/appcloud.js"}, {port: 8102, file:"test/appcloud.js"}, {port: 8103, file:"test/appcloud.js"}];
-    async.map(servers, function(conf, cb){
-      spawnTestCloudServer(conf.port, conf.file, cb);
-    }, function(err){
-      if(err) {
-        grunt.log.writeln("Failed to start server. Error: " + err);
-        return done(false);
-      }
-      return done();
-    });
-    
-  });
-  
-  var stopServers = function(){
-    spawns.forEach(function (server) {
-      grunt.log.writeln("Killing process " + server.pid);
-      server.kill();
-    });
-  }
-
-  grunt.registerTask('stop-servers', function () {
-    stopServers();
-  });
-
-  grunt.registerTask('copy-lib', function(){
-    var done = this.async();
-    var src = path.join(__dirname, "dist", "feedhenry-latest.js");
-    var target = path.join(__dirname, "test", "feedhenry-latest.js");
-    var r = fs.createReadStream(src, "utf8");
-    var w = fs.createWriteStream(target, "utf8");
-    r.pipe(w);
-    w.on("close", function(){
-      done();
-    });
-  });
-
-  grunt.event.on("qunit.fail.timeout", function(){
-    grunt.log.writeln("qunit failed with timeout. Kill servers...");
-    stopServers();
-  });
-
-  grunt.event.on("qunit.error.onError", function(message, stack){
-    grunt.log.writeln("qunit failed with error. Message = " +message+" :: Stack = "+stack+". Kill servers...");
-    stopServers();
-  });
-
-  grunt.registerTask('accept', ['connect', 'start-servers', 'qunit:accept', 'stop-servers']);
-
-  grunt.registerTask('default', 'jshint concat copy-lib connect qunit:unit start-servers qunit:accept stop-servers uglify:dist zip');
+  grunt.registerTask('default', 'jshint concat test uglify:dist zip');
 };

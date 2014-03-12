@@ -1,4 +1,6 @@
 var rsa = require("../../../libs/rsa");
+var SecureRandom = rsa.SecureRandom;
+var byte2Hex = rsa.byte2Hex;
 
 var generateRandomKey = function(keysize){
   var r = new SecureRandom();
@@ -11,7 +13,7 @@ var generateRandomKey = function(keysize){
   return result;
 };
 
-var aes_keygen = function(p, s, f, legacy){
+var aes_keygen = function(p, s, f){
   if (!p.params.keysize) {
     f('no_params_keysize', {}, p);
     return;
@@ -29,18 +31,11 @@ var aes_keygen = function(p, s, f, legacy){
   if(typeof SecureRandom === "undefined"){
     return f("security library is not loaded.");
   }
-  if(legacy){
-    return s({
-      'algorithm':'AES',
-      'secretkey': generateRandomKey(keysize)
-    }); 
-  } else {
-    return s({
-      'algorithm': 'AES',
-      'secretkey': generateRandomKey(keysize),
-      'iv': generateRandomKey(keysize)
-    });
-  }
+  return s({
+    'algorithm': 'AES',
+    'secretkey': generateRandomKey(keysize),
+    'iv': generateRandomKey(keysize)
+  });
 }
 
 module.exports = aes_keygen;

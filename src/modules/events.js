@@ -1,22 +1,6 @@
-var createEvent = function(type, data) {
-  var event = document.createEvent('Events');
-  event.initEvent(type, false, false);
-  if (data) {
-      for (var i in data) {
-          if (data.hasOwnProperty(i)) {
-              event[i] = data[i];
-          }
-      }
-  }
-  return event;
-};
+var EventEmitter = require('events').EventEmitter;
 
-var fireEvent = function(type, data){
-  var event = createEvent(type, data);
-  document.dispatchEvent(event);
-};
+var emitter = new EventEmitter();
+emitter.setMaxListeners(0);
 
-module.exports = {
-  "createEvent": createEvent,
-  "fireEvent": fireEvent
-}
+module.exports = emitter;

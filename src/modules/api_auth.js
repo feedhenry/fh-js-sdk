@@ -21,7 +21,7 @@ module.exports = function(opts, success, fail){
     return fail('auth_no_clientToken', {});
   }
 
-  cloud.wait(function(err, data){
+  cloud.ready(function(err, data){
     if(err){
       return fail(err.message, err);
     } else {

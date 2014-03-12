@@ -1,4 +1,5 @@
-var CryptoJS = require("Crypto");
+var CryptoJS = require("../../../libs/generated/crypto");
+
 
 var hash = function(p, s, f){
   if (!p.params.text) {

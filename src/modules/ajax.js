@@ -73,11 +73,13 @@ function ajax(options) {
   }
 
   var datatype = null;
-  if (sameOrigin || ((!sameOrigin) && cors_supported) ) {
+  var nojsonp = (true === options.nojsonp);
+  if (sameOrigin || ((!sameOrigin) && cors_supported) || nojsonp) {
     datatype = 'json';
   } else {
     datatype = "jsonp";
   }
+  console.log("request will use " + datatype);
   var req;
   var url = o.url;
   var method = o.type || 'GET';
@@ -160,7 +162,7 @@ function ajax(options) {
       req.setRequestHeader('X-Request-With', 'XMLHttpRequest');
       var handler = function () {
         if (req.readyState === 4) {
-          if (req.status === 0 && !sameOrigin && !req.isAborted) {
+          if (req.status === 0 && !sameOrigin && !req.isAborted && !nojsonp) {
             console.log("try get " + url + " use jsonp");
             // If the XHR/cors was aborted because of a timeout, don't re-try using jsonp. This will cause the request
             // to be re-fired and can cause replay issues - e.g. creates getting applied multiple times.
@@ -189,7 +191,7 @@ function ajax(options) {
     },
 
     'jsonp': function () {
-      var callbackId = 'fhcb' + __cb_counts++;
+      var callbackId = 'fhcb' + cb_counts++;
       window[callbackId] = function (response) {
         if (timeoutTimer) {
           clearTimeout(timeoutTimer);

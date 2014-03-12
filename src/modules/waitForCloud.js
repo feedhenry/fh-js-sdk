@@ -9,12 +9,7 @@ var app_props;
 //the cloud configurations
 var cloud_host;
 
-//flag for indicating if it has initialised
-var is_initializing = false;
-//flag for indicating if init has failed
-var init_failed = false;
-//hold listeners
-var cloud_ready_listeners = [];
+var is_cloud_ready = false;
 
 
 var tryInitialise = function(conf_path, retry, cb){
@@ -36,42 +31,25 @@ var tryInitialise = function(conf_path, retry, cb){
   });
 }
 
-var waitForCloudReady = function(cb, retry){
-  //if we have cloud_host, then cloud is ready
-  if(cloud_host){
-    return cb(null, cloud_host);
+var ready = function(cb, retry){
+  if(is_cloud_ready){
+    return cb(null, {host: getCloudHostUrl()});
   } else {
-    if(is_initializing){
-      cloud_ready_listeners.push(cb);
-    } else {
-      is_initializing = true;
-      init_attempt = 0;
-      tryInitialise(constants.config_js, retry, function(err, data){
-        is_initializing = false;
-        if(typeof(cb) === "function"){
-          cb(err, data);
-        }
-        cloudReady(null === err);
-      });
-    }
-  }
-}
-
-var cloudReady = function(success){
-  if(success){
-    events.fireEvent("cloudready", {host: getCloudHostUrl()});
-  }
-  try{
-    while(cloud_ready_listeners[0]){
-      var cb = cloud_ready_listeners.shift();
-      if(success){
-        return cb(null, null);
+    events.once('cloudready', function(host){
+      return cb(null, host);
+    });
+    events.once('error', function(error){
+      return cb(error);
+    });
+    init_attempt = 0;
+    tryInitialise(constants.config_js, retry, function(err, data){
+      if(err){
+        return events.emit("error", err);
       } else {
-        return cb("cloud is not ready", null);
+        is_cloud_ready = true;
+        return events.emit("cloudready", {host: getCloudHostUrl()});
       }
-    }
-  } finally {
-
+    });
   }
 }
 
@@ -91,13 +69,29 @@ var getCloudHostUrl = function(){
   }
 }
 
-waitForCloudReady(function(){
-  console.log("fh cloud is ready");
+var isReady = function(){
+  return is_cloud_ready;
+}
+
+//for test
+var reset = function(){
+  is_cloud_ready = false;
+  cloud_host = undefined;
+}
+
+ready(function(error, host){
+  if(error){
+    console.error("Failed to initialise fh.");
+  } else {
+    console.log("fh cloud is ready");
+  }
 }, 2);
 
 module.exports = {
-  wait: waitForCloudReady,
+  ready: ready,
+  isReady: isReady,
   getAppProps: getAppProps,
   getCloudHost: getCloudHost,
-  getCloudHostUrl: getCloudHostUrl
+  getCloudHostUrl: getCloudHostUrl,
+  reset: reset
 }
