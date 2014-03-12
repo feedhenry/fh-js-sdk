@@ -37,6 +37,7 @@ var xhr = function () {
 var cor = function () {
   var cor = null;
   if(window.XMLHttpRequest){
+    console.log("use XMLHttpRequest for cors");
     var rq = new XMLHttpRequest();
     if('withCredentials' in rq){
       cor = rq;
@@ -44,11 +45,16 @@ var cor = function () {
   }
   if(null == cor){
     if(typeof XDomainRequest !== "undefined"){
+      console.log("use XDomainRequestWrapper for cors");
       cor = new XDomainRequestWrapper(new XDomainRequest());
     }
   }
   return cor;
 };
+
+console.log("cors supported = " + cors_supported);
+console.log("typeof XMLHttpRequest = " + typeof (window.XMLHttpRequest) );
+console.log("typeof XMLHttpRequest = " + typeof (window.XMLHttpRequest) );
 
 var isSmartMobile = /Android|webOS|iPhone|iPad|iPad|Blackberry|Windows Phone/i.test(navigator.userAgent);
 var isLocalFile = window.location.protocol.indexOf("file") > -1;
