@@ -93,8 +93,8 @@ describe("Form model", function() {
             fromRemote: true
         }, function(err, form) {
             var fieldModel = form.getFieldModelById(testData.fieldId);
-            assert(fieldModel);
-            assert(fieldModel.get("_id") == testData.fieldId);
+            assert(fieldModel, "fieldModel is null/undefined");
+            assert(fieldModel.get("_id") == testData.fieldId, "fieldModel has wrong fieldId: " + fieldModel.get("_id"));
             done();
         });
     });
