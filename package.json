@@ -30,7 +30,7 @@
     ],
     "files": "test/tests/*.js",
     "browsers": [
-      "ie/8..10"
+      "ie/8..10",
       "firefox/3.5", "firefox/latest",
       "chrome/4.0","chrome/latest",
       "safari/5..latest",
