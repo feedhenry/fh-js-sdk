@@ -119,13 +119,13 @@ describe("Submission model", function() {
             var meta = appForm.models.submissions.findByFormId(testData.formId)[0];
             var localId = meta._ludid;
             appForm.models.submission.fromLocal(localId, function(err, submission) {
-                assert(!err);
-                var ts1 = submission.addComment("hello world");
+                assert(!err, "unexpected error: " + err);
+                var ts1 = submission.addComment("hello world2");
                 submission.removeComment(ts1);
                 var comments = submission.getComments();
 
                 var str = JSON.stringify(comments);
-                assert(str.indexOf(ts1.toString()) == -1);
+                assert(str.indexOf(ts1.toString()) == -1, "comment still in submission: " + str);
                 done();
             });
         });

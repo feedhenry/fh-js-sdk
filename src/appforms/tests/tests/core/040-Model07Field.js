@@ -9,8 +9,8 @@ describe("Field Model", function() {
         }, function(err, f) {
             form = f;
             fieldModel = form.getFieldModelById(testData.fieldId);
-            assert(fieldModel);
-            assert(fieldModel.get("_id") == testData.fieldId);
+            assert(fieldModel,"field model null");
+            assert(fieldModel.get("_id") == testData.fieldId, "wrong fieldid");
             done();
         });
     });

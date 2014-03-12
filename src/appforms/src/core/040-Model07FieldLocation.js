@@ -23,7 +23,7 @@ appForm.models.Field = function (module) {
         cb(null, obj);
       }
       break;
-    case 'northEast':
+    case 'eastnorth':
       if (!inputValue.zone || !inputValue.eastings || !inputValue.northings) {
         cb('the input values for northeast field is {zone: text, eastings: text, northings:text}');
       } else {
@@ -34,6 +34,9 @@ appForm.models.Field = function (module) {
           };
         cb(null, obj);
       }
+      break;
+    default:
+      cb('Invalid subtype type of location field, allowed types: latLong and eastnorth, was: ' + def.locationUnit);
       break;
     }
   };
