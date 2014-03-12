@@ -26,7 +26,8 @@
   "testling": {
     "harness": "mocha-bdd",
     "scripts": [
-      "test/browser/libs/sinon/sinon.js"
+      "test/browser/libs/sinon/sinon.js",
+      "test/browser/libs/sinon/sinon-ie.js"
     ],
     "files": "test/tests/*.js",
     "browsers": [
