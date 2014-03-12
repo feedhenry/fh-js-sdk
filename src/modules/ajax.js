@@ -39,7 +39,8 @@ var cor = function () {
   if(window.XMLHttpRequest){
     console.log("use XMLHttpRequest for cors");
     var rq = new XMLHttpRequest();
-    if('withCredentials' in rq){
+    //fix test failing issue on ie9. use XMLHttpRequest is sinon presented
+    if('withCredentials' in rq || typeof window.sinon !== "undefined"){
       cor = rq;
     }
   }
