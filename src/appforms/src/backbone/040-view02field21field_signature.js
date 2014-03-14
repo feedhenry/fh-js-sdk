@@ -10,7 +10,7 @@ FieldSignatureView = FieldView.extend({
     this.on('visible', this.clearError);
   },
   onElementShow: function(index) {
-    var html = $(this.renderButton(index, "<i class='fa fa-pencil'></i>&nbspCapture Signature", this.extension_type));
+    var html = $(this.renderButton(index, "<i class='fa fa-pencil'></i>&nbsp;Capture Signature", this.extension_type));
     this.getWrapper(index).append(html);
     var self = this;
     html.on("click", function() {

@@ -202,7 +202,7 @@
                     {
                         "fieldOptions": {
                             "definition": {
-                                "locationUnit": "latlong"
+                                "locationUnit": "eastnorth"
                             }
                         },
                         "required": true,
@@ -373,6 +373,19 @@
                 "fields": [
                     {
                         "required": false,
+                        "type": "location",
+                        "name": "LOCN",
+                        "_id": "52efeb62538082e229000333",
+                        "repeating": false,
+                        "fieldOptions": {
+                            "definition": {
+                                "locationUnit": "eastnorth"
+                            },
+                            "validation": {}
+                        }
+                    },
+                    {
+                        "required": false,
                         "type": "text",
                         "name": "Text",
                         "_id": "52efeb62538082e229000003",
@@ -450,25 +463,29 @@
             "52efeb30538082e229000001": 0
         },
         "fieldRef": {
-            "52efeb62538082e229000003": {
+            "52efeb62538082e229000333": {
                 "page": 0,
                 "field": 0
             },
-            "52efeb62538082e229000004": {
+            "52efeb62538082e229000003": {
                 "page": 0,
                 "field": 1
             },
-            "52efeb9c538082e229000005": {
+            "52efeb62538082e229000004": {
                 "page": 0,
                 "field": 2
             },
-            "52efeb9c538082e229000006": {
+            "52efeb9c538082e229000005": {
                 "page": 0,
                 "field": 3
             },
-            "52efeb9c538082e229000007": {
+            "52efeb9c538082e229000006": {
                 "page": 0,
                 "field": 4
+            },
+            "52efeb9c538082e229000007": {
+                "page": 0,
+                "field": 5
             }
         },
         "lastUpdatedTimestamp": 1391455132640
