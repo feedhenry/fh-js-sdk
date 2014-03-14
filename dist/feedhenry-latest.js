@@ -7722,7 +7722,7 @@ module.exports = {
 module.exports = {
   "fh_timeout": 20000,
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "1.1.4",
+  "sdk_version": "2.0.0-alpha",
   "config_js":"fhconfig.json"
 }
 },{}],25:[function(_dereq_,module,exports){
