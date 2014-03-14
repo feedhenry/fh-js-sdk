@@ -75,9 +75,11 @@ var ajax = module.exports = function (options) {
       clearTimeout(abortTimeout)
       var result, error = false
       if(settings.tryJSONP){
-        //check if the request has fail. In some cases, we may want to try jsonp as well
+        //check if the request has fail. In some cases, we may want to try jsonp as well. Again, FH only...
         if(xhr.status === 0 && settings.crossDomain && !xhr.isTimeout &&  protocol != 'file:'){
+          settings.type = "GET";
           settings.dataType = "jsonp";
+          settings.data = "_jsonpdata=" + settings.data;
           return ajax(settings);
         }
       }
@@ -208,6 +210,8 @@ ajax.JSONP = function (options) {
     delete window[callbackName]
     ajaxSuccess(data, xhr, options)
   }
+  console.log("trying jsonp.data");
+  console.log(options);
 
   serializeData(options)
   script.src = options.url.replace(/=\?/, '=' + callbackName)
