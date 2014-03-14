@@ -1,6 +1,8 @@
 var chai = require('chai');
 var expect = chai.expect;
 var sinonChai = require('sinon-chai');
+var ajax = require('../../src/modules/ajax');
+
 chai.use(sinonChai);
 
 var fhconfig = {
@@ -23,16 +25,16 @@ var apphost = {
 }
 
 var buildFakeRes = function(data){
-  return [200, {"Content-Type": "application/json"}, JSON.stringify(data)];
+  return [200, {"Content-Type": "text/script"}, JSON.stringify(data)]; //we deliberately set the wrong content type here to make sure the response does get converted to JSON
 }
 
 var initFakeServer = function(server){
-   server.respondWith('GET', /fhconfig.js/, buildFakeRes(fhconfig));
+   server.respondWith('GET', /fhconfig.json/, buildFakeRes(fhconfig));
 
    server.respondWith('POST', /init/, buildFakeRes(apphost));
 }
 
-describe("test all cloud related", function(done){
+describe("test all cloud related", function(){
 
   var server;
 
@@ -43,11 +45,13 @@ describe("test all cloud related", function(done){
     it("should emit cloudready events", function(){
 
       var callback = sinon.spy();
+      var cb2 = sinon.spy();
 
       initFakeServer(server);
       var $fh = require("../../src/feedhenry");
 
       $fh.on('cloudready', callback);
+      $fh.on('cloudready', cb2);
 
       server.respond();
       server.respond();
@@ -56,9 +60,12 @@ describe("test all cloud related", function(done){
       expect(callback).to.have.been.calledOnce;
       expect(callback).to.have.been.calledWith({host: "http://localhost:8101"});
 
+      expect(cb2).to.have.been.called;
+      expect(cb2).to.have.been.calledOnce;
+
       var hostUrl = $fh.getCloudURL();
       expect(hostUrl).to.equal("http://localhost:8101");
-
+      
     });
   });
 
@@ -129,7 +136,7 @@ describe("test all cloud related", function(done){
       expect(fail).to.have.been.calledOnce;
 
       fail = sinon.spy();
-      $fh.auth({policyId: 'testpolicy', clientToken: 'testtoken'}, success, fail);
+      $fh.auth({policyId: 'testpolicy', clientToken: 'testtoken', transport: ajax}, success, fail);
 
       server.respond();
       server.respond();

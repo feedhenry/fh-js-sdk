@@ -2,6 +2,7 @@ var device = require("./device");
 var sdkversion = require("./sdkversion");
 
 var defaultParams = null;
+var authSessionToken = null;
 //TODO: review these options, we probably only needs all of them for init calls, but we shouldn't need all of them for act calls
 var buildParams = function(app_props){
   if(defaultParams){
@@ -14,7 +15,9 @@ var buildParams = function(app_props){
   fhparams.appkey = app_props.appkey;
   fhparams.projectid = app_props.projectid;
   fhparams.analyticsTag =  app_props.analyticsTag;
-  fhparams.init = app_props.init;
+  if(app_props.init){
+    fhparams.init = typeof(app_props.init) === "string" ? JSON.parse(app_props.init) : app_props.init;
+  }
   fhparams.destination = device.getDestination();
   fhparams.connectiontag = app_props.connectiontag;
   if(window.device || navigator.device){
@@ -32,6 +35,9 @@ var buildParams = function(app_props){
     fhparams.project_app_version = fh_project_app_version;
   }
   fhparams.sdk_version = sdkversion();
+  if(authSessionToken){
+    fhparams.sessionToken = authSessionToken;
+  }
   defaultParams = fhparams;
   return fhparams;
 }
@@ -42,7 +48,12 @@ var addDefaultParams = function(app_props, params){
   return params;
 }
 
+var setAuthSessionToken = function(sessionToken){
+  authSessionToken = sessionToken;
+}
+
 module.exports = {
   "buildParams": buildParams,
-  "addDefaultParams": addDefaultParams
+  "addDefaultParams": addDefaultParams,
+  "setAuthSessionToken":setAuthSessionToken
 }

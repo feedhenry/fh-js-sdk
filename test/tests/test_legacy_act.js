@@ -29,7 +29,7 @@ var buildFakeRes = function(data){
 }
 
 var initFakeServer = function(server){
-   server.respondWith('GET', /fhconfig.js/, buildFakeRes(fhconfig));
+   server.respondWith('GET', /fhconfig.json/, buildFakeRes(fhconfig));
 
    server.respondWith('POST', /init/, buildFakeRes(legacyAppHost));
 }

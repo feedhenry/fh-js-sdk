@@ -2,10 +2,12 @@ var path = require('path');
 var fs = require("fs");
 var exists = fs.existsSync || path.existsSync;
 var async = require("async");
+var through = require('through');
 
 module.exports = function(grunt) {
+  var pkg = grunt.file.readJSON('package.json');
   grunt.initConfig({
-    pkg: grunt.file.readJSON('package.json'),
+    pkg: pkg,
     meta: {},
     jshint: {
       all: ['src/*.js'],
@@ -75,7 +77,21 @@ module.exports = function(grunt) {
         src:['src/feedhenry.js'],
         dest: 'dist/feedhenry-latest.js',
         options: {
-          standalone: 'feedhenry'
+          standalone: 'feedhenry',
+          transform: [function(file){
+            var data = '';
+
+            function write (buf) { data += buf }
+            function end () {
+              var t = data;
+              if(file.indexOf("constants.js") >= 0){
+                t = data.replace("BUILD_VERSION", pkg.version);
+              }
+              this.queue(t);
+              this.queue(null);
+            }
+            return through(write, end);
+          }]
         }
       },
       // This browserify build can be required by other browserify modules that

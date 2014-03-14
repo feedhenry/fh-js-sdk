@@ -6845,6 +6845,37 @@ module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
 },{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+var toString = Object.prototype.toString
+
+module.exports = function(val){
+  switch (toString.call(val)) {
+    case '[object Function]': return 'function'
+    case '[object Date]': return 'date'
+    case '[object RegExp]': return 'regexp'
+    case '[object Arguments]': return 'arguments'
+    case '[object Array]': return 'array'
+    case '[object String]': return 'string'
+  }
+
+  if (typeof val == 'object' && val && typeof val.length == 'number') {
+    try {
+      if (typeof val.callee == 'function') return 'arguments';
+    } catch (ex) {
+      if (ex instanceof TypeError) {
+        return 'arguments';
+      }
+    }
+  }
+
+  if (val === null) return 'null'
+  if (val === undefined) return 'undefined'
+  if (val && val.nodeType === 1) return 'element'
+  if (val === Object(val)) return 'object'
+
+  return typeof val
+}
+
+},{}],15:[function(_dereq_,module,exports){
 var constants = _dereq_("./modules/constants");
 var console = _dereq_("console");
 var ajax = _dereq_("./modules/ajax");
@@ -6950,7 +6981,7 @@ module.exports = fh;
 
 
 
-},{"./modules/ajax":16,"./modules/api_act":17,"./modules/api_auth":18,"./modules/api_hash":19,"./modules/api_sec":20,"./modules/constants":22,"./modules/events":25,"./modules/sync-cli":41,"./modules/waitForCloud":43,"console":8}],15:[function(_dereq_,module,exports){
+},{"./modules/ajax":17,"./modules/api_act":18,"./modules/api_auth":19,"./modules/api_hash":20,"./modules/api_sec":21,"./modules/constants":23,"./modules/events":26,"./modules/sync-cli":41,"./modules/waitForCloud":43,"console":8}],16:[function(_dereq_,module,exports){
 var XDomainRequestWrapper = function(xdr){
   this.xdr = xdr;
   this.isWrapper = true;
@@ -7015,241 +7046,361 @@ XDomainRequestWrapper.prototype.getResponseHeader = function(n){
 
 module.exports = XDomainRequestWrapper;
 
-},{}],16:[function(_dereq_,module,exports){
-var XDomainRequestWrapper = _dereq_("./XDomainRequestWrapper");
-var loadScript = _dereq_("./loadScript");
-var so = _dereq_("./sameOrigin");
-var console = _dereq_("console");
-var JSON = _dereq_("JSON");
+},{}],17:[function(_dereq_,module,exports){
+//a shameless copy from https://github.com/ForbesLindesay/ajax/blob/master/index.js. 
+//it has the same methods and config options as jQuery/zeptojs but very light weight. see http://api.jquery.com/jQuery.ajax/
+//a few small changes are made for supporting IE 8 and other features:
+//1. use getXhr function to replace the default XMLHttpRequest implementation for supporting IE8
+//2. Integrate with events emitter. So to subscribe ajax events, you can do $fh.on("ajaxStart", handler). See http://api.jquery.com/Ajax_Events/ for full list of events
+//3. allow passing xhr factory method through options: e.g. $fh.ajax({xhr: function(){/*own implementation of xhr*/}}); 
+//4. Use fh_timeout value as the default timeout
+//5. an extra option called "tryJSONP" to allow try the same call with JSONP if normal CORS failed - should only be used internally
 
-//first, check if cors if supported by the browser
-/* The following code is used to detect if the browser is supporting CORS.
-  Most of the browsers implement CORS support using XMLHttpRequest2 object.
-  The "withCredentials" property is unique in XMLHttpRequest2 object so it is the easiest way to tell if the browser support CORS. Again, IE uses XDomainRequest.
-  A very good article covering this can be found here: http://www.html5rocks.com/en/tutorials/cors/.*/
-var cors_supported = false;
-if(window.XMLHttpRequest){
-  var rq = new XMLHttpRequest();
-  if('withCredentials' in rq){
-    cors_supported = true;
-  }
-  if(!cors_supported){
-    if(typeof XDomainRequest !== "undefined"){
-      cors_supported = true;
+var eventsHandler = _dereq_("./events");
+var XDomainRequestWrapper = _dereq_("./XDomainRequestWrapper");
+var consts = _dereq_("./constants");
+
+var type
+try {
+  type = _dereq_('type-of')
+} catch (ex) {
+  //hide from browserify
+  var r = _dereq_
+  type = r('type')
+}
+
+var jsonpID = 0,
+  document = window.document,
+  key,
+  name,
+  rscript = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
+  scriptTypeRE = /^(?:text|application)\/javascript/i,
+  xmlTypeRE = /^(?:text|application)\/xml/i,
+  jsonType = 'application/json',
+  htmlType = 'text/html',
+  blankRE = /^\s*$/
+
+var ajax = module.exports = function (options) {
+  var settings = extend({}, options || {})
+  for (key in ajax.settings)
+    if (settings[key] === undefined) settings[key] = ajax.settings[key]
+
+  ajaxStart(settings)
+
+  if (!settings.crossDomain) settings.crossDomain = /^([\w-]+:)?\/\/([^\/]+)/.test(settings.url) &&
+    RegExp.$2 != window.location.host
+
+  var dataType = settings.dataType,
+    hasPlaceholder = /=\?/.test(settings.url)
+    if (dataType == 'jsonp' || hasPlaceholder) {
+      if (!hasPlaceholder) settings.url = appendQuery(settings.url, 'callback=?')
+      return ajax.JSONP(settings)
     }
+
+  if (!settings.url) settings.url = window.location.toString()
+  serializeData(settings)
+
+  var mime = settings.accepts[dataType],
+    baseHeaders = {},
+    protocol = /^([\w-]+:)\/\//.test(settings.url) ? RegExp.$1 : window.location.protocol,
+    xhr = settings.xhr(settings.crossDomain),
+    abortTimeout
+
+  if (!settings.crossDomain) baseHeaders['X-Requested-With'] = 'XMLHttpRequest'
+  if (mime) {
+    baseHeaders['Accept'] = mime
+    if (mime.indexOf(',') > -1) mime = mime.split(',', 2)[0]
+    xhr.overrideMimeType && xhr.overrideMimeType(mime)
+  }
+  if (settings.contentType || (settings.data && settings.type.toUpperCase() != 'GET'))
+    baseHeaders['Content-Type'] = (settings.contentType || 'application/x-www-form-urlencoded')
+  settings.headers = extend(baseHeaders, settings.headers || {})
+
+  xhr.onreadystatechange = function () {
+    if (xhr.readyState == 4) {
+      clearTimeout(abortTimeout)
+      var result, error = false
+      if(settings.tryJSONP){
+        //check if the request has fail. In some cases, we may want to try jsonp as well
+        if(xhr.status === 0 && settings.crossDomain && !xhr.isTimeout &&  protocol != 'file:'){
+          return ajax.JSONP(settings);
+        }
+      }
+      if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304 || (xhr.status == 0 && protocol == 'file:')) {
+        dataType = dataType || mimeToDataType(xhr.getResponseHeader('content-type'))
+        result = xhr.responseText
+
+        try {
+          if (dataType == 'script')(1, eval)(result)
+          else if (dataType == 'xml') result = xhr.responseXML
+          else if (dataType == 'json') result = blankRE.test(result) ? null : JSON.parse(result)
+        } catch (e) {
+          error = e
+        }
+
+        if (error) ajaxError(error, 'parsererror', xhr, settings)
+        else ajaxSuccess(result, xhr, settings)
+      } else {
+        ajaxError(null, 'error', xhr, settings)
+      }
+    }
+  }
+
+  var async = 'async' in settings ? settings.async : true
+  xhr.open(settings.type, settings.url, async)
+
+  for (name in settings.headers) xhr.setRequestHeader(name, settings.headers[name])
+
+  if (ajaxBeforeSend(xhr, settings) === false) {
+    xhr.abort()
+    return false
+  }
+
+  if (settings.timeout > 0) abortTimeout = setTimeout(function () {
+    xhr.onreadystatechange = empty
+    xhr.abort()
+    xhr.isTimeout = true
+    ajaxError(null, 'timeout', xhr, settings)
+  }, settings.timeout)
+
+  // avoid sending empty string (#319)
+  xhr.send(settings.data ? settings.data : null)
+  return xhr
+}
+
+
+// trigger a custom event and return true
+function triggerAndReturn(context, eventName, data) {
+  eventsHandler.emit(eventName, data);
+  return true;
+}
+
+// trigger an Ajax "global" event
+function triggerGlobal(settings, context, eventName, data) {
+  if (settings.global) return triggerAndReturn(context || document, eventName, data)
+}
+
+// Number of active Ajax requests
+ajax.active = 0
+
+function ajaxStart(settings) {
+  if (settings.global && ajax.active++ === 0) triggerGlobal(settings, null, 'ajaxStart')
+}
+
+function ajaxStop(settings) {
+  if (settings.global && !(--ajax.active)) triggerGlobal(settings, null, 'ajaxStop')
+}
+
+// triggers an extra global event "ajaxBeforeSend" that's like "ajaxSend" but cancelable
+function ajaxBeforeSend(xhr, settings) {
+  var context = settings.context
+  if (settings.beforeSend.call(context, xhr, settings) === false)
+    return false
+
+  triggerGlobal(settings, context, 'ajaxSend', [xhr, settings])
+}
+
+function ajaxSuccess(data, xhr, settings) {
+  var context = settings.context,
+    status = 'success'
+  settings.success.call(context, data, status, xhr)
+  triggerGlobal(settings, context, 'ajaxSuccess', [xhr, settings, data])
+  ajaxComplete(status, xhr, settings)
+}
+// type: "timeout", "error", "abort", "parsererror"
+function ajaxError(error, type, xhr, settings) {
+  var context = settings.context
+  settings.error.call(context, xhr, type, error)
+  triggerGlobal(settings, context, 'ajaxError', [xhr, settings, error])
+  ajaxComplete(type, xhr, settings)
+}
+// status: "success", "notmodified", "error", "timeout", "abort", "parsererror"
+function ajaxComplete(status, xhr, settings) {
+  var context = settings.context
+  settings.complete.call(context, xhr, status)
+  triggerGlobal(settings, context, 'ajaxComplete', [xhr, settings])
+  ajaxStop(settings)
+}
+
+// Empty function, used as default callback
+function empty() {}
+
+ajax.JSONP = function (options) {
+  if (!('type' in options)) return ajax(options)
+
+  var callbackName = 'jsonp' + (++jsonpID),
+    script = document.createElement('script'),
+    abort = function () {
+      //todo: remove script
+      //$(script).remove()
+      if (callbackName in window) window[callbackName] = empty
+      ajaxComplete('abort', xhr, options)
+    },
+    xhr = {
+      abort: abort
+    }, abortTimeout,
+    head = document.getElementsByTagName("head")[0] || document.documentElement
+
+  if (options.error) script.onerror = function () {
+    xhr.abort()
+    options.error()
+  }
+
+  window[callbackName] = function (data) {
+    clearTimeout(abortTimeout)
+    //todo: remove script
+    //$(script).remove()
+    delete window[callbackName]
+    ajaxSuccess(data, xhr, options)
+  }
+
+  serializeData(options)
+  script.src = options.url.replace(/=\?/, '=' + callbackName)
+
+  // Use insertBefore instead of appendChild to circumvent an IE6 bug.
+  // This arises when a base node is used (see jQuery bugs #2709 and #4378).
+  head.insertBefore(script, head.firstChild);
+
+  if (options.timeout > 0) abortTimeout = setTimeout(function () {
+    xhr.abort()
+    ajaxComplete('timeout', xhr, options)
+  }, options.timeout)
+
+  return xhr
+}
+
+function isIE(){
+  var ie = false;
+  if(navigator.userAgent && navigator.userAgent.indexOf("MSIE") >=0 ){
+    ie = true;
+  }
+  return ie;
+}
+
+function getXhr(crossDomain){
+  var xhr = null;
+  //always use XMLHttpRequest if available
+  if(window.XMLHttpRequest){
+    xhr = new XMLHttpRequest();
+  }
+  //for IE8
+  if(isIE() && (crossDomain === true) && typeof window.XDomainRequest !== "undefined"){
+    xhr = new XDomainRequestWrapper(new XDomainRequest());
+  }
+  return xhr;
+}
+
+ajax.settings = {
+  // Default type of request
+  type: 'GET',
+  // Callback that is executed before request
+  beforeSend: empty,
+  // Callback that is executed if the request succeeds
+  success: empty,
+  // Callback that is executed the the server drops error
+  error: empty,
+  // Callback that is executed on request complete (both: error and success)
+  complete: empty,
+  // The context for the callbacks
+  context: null,
+  // Whether to trigger "global" Ajax events
+  global: true,
+  // Transport
+  xhr: getXhr,
+  // MIME types mapping
+  accepts: {
+    script: 'text/javascript, application/javascript',
+    json: jsonType,
+    xml: 'application/xml, text/xml',
+    html: htmlType,
+    text: 'text/plain'
+  },
+  // Whether the request is to another domain
+  crossDomain: false,
+  // Default timeout
+  timeout: consts.fh_timeout
+}
+
+function mimeToDataType(mime) {
+  return mime && (mime == htmlType ? 'html' :
+    mime == jsonType ? 'json' :
+    scriptTypeRE.test(mime) ? 'script' :
+    xmlTypeRE.test(mime) && 'xml') || 'text'
+}
+
+function appendQuery(url, query) {
+  return (url + '&' + query).replace(/[&?]{1,2}/, '?')
+}
+
+// serialize payload and append it to the URL for GET requests
+function serializeData(options) {
+  if (type(options.data) === 'object') options.data = param(options.data)
+  if (options.data && (!options.type || options.type.toUpperCase() == 'GET'))
+    options.url = appendQuery(options.url, options.data)
+}
+
+ajax.get = function (url, success) {
+  return ajax({
+    url: url,
+    success: success
+  })
+}
+
+ajax.post = function (url, data, success, dataType) {
+  if (type(data) === 'function') dataType = dataType || success, success = data, data = null
+  return ajax({
+    type: 'POST',
+    url: url,
+    data: data,
+    success: success,
+    dataType: dataType
+  })
+}
+
+ajax.getJSON = function (url, success) {
+  return ajax({
+    url: url,
+    success: success,
+    dataType: 'json'
+  })
+}
+
+var escape = encodeURIComponent;
+
+function serialize(params, obj, traditional, scope) {
+  var array = type(obj) === 'array';
+  for (var key in obj) {
+    var value = obj[key];
+
+    if (scope) key = traditional ? scope : scope + '[' + (array ? '' : key) + ']'
+    // handle data in serializeArray() format
+    if (!scope && array) params.add(value.name, value.value)
+    // recurse into nested objects
+    else if (traditional ? (type(value) === 'array') : (type(value) === 'object'))
+      serialize(params, value, traditional, key)
+    else params.add(key, value)
   }
 }
 
-//create a normal ajax request object
-var xhr = function () {
-  var xhr = null;
-  if(window.XMLHttpRequest){
-    xhr = new XMLHttpRequest();
-  } else if(window.ActiveXObject){
-    xhr = new window.ActiveXObject("Microsoft.XMLHTTP");
+function param(obj, traditional) {
+  var params = []
+  params.add = function (k, v) {
+    this.push(escape(k) + '=' + escape(v))
   }
-  return xhr;
-};
+  serialize(params, obj, traditional)
+  return params.join('&').replace('%20', '+')
+}
 
-//create a CORS reqeust
-var cor = function () {
-  var cor = null;
-  if(window.XMLHttpRequest){
-    var rq = new XMLHttpRequest();
-    if('withCredentials' in rq){
-      cor = rq;
-    }
-  }
-  if(null == cor){
-    if(typeof XDomainRequest !== "undefined"){
-      cor = new XDomainRequestWrapper(new XDomainRequest());
-    }
-  }
-  return cor;
-};
-
-var isSmartMobile = /Android|webOS|iPhone|iPad|iPad|Blackberry|Windows Phone/i.test(navigator.userAgent);
-var isLocalFile = window.location.protocol.indexOf("file") > -1;
-
-var cb_counts = 0;
-
-function ajax(options) {
-  var o = options ? options : {};
-  var sameOrigin = so(options.url);
-  if(!sameOrigin){
-      if(typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined"){
-          //found phonegap, it should be a hyrbid mobile app, consider as same origin
-          sameOrigin = true;
-      }
-  }
-  if(!sameOrigin){
-      if(isSmartMobile && isLocalFile){
-          //we can't find phonegap, but we are loading the page use file protocol and the device is a smart phone,
-          //it should be a mobile hyrid app
-          sameOrigin = true;
-      }
-  }
-
-  var datatype = null;
-  var nojsonp = (true === options.nojsonp);
-  if (sameOrigin || ((!sameOrigin) && cors_supported) || nojsonp) {
-    datatype = 'json';
-  } else {
-    datatype = "jsonp";
-  }
-  console.log("request will use " + datatype);
-  var req;
-  var url = o.url;
-  var method = o.type || 'GET';
-  var data = o.data || null;
-  var timeoutTimer;
-  var rurl = /\?/;
-  if(!o.dataType){
-    o.dataType = "json";
-  }
-
-  //prevent cache
-  //url += (rurl.test(url) ? "&" : "?") + "fhts=" + (new Date()).getTime();
-
-  var done = function (status, statusText, responseText) {
-    var issuccess = false;
-    var error;
-    var res;
-    if (status >= 200 && status <= 300 || status === 304) {
-      if (status === 304) {
-        statusText = "notmodified";
-        issuccess = true;
-      } else {
-        if (o.dataType && o.dataType.indexOf('json') !== -1) {
-          try {
-            if (typeof responseText === "string") {
-              res = JSON.parse(responseText);
-            } else {
-              res = responseText;
-            }
-            issuccess = true;
-          } catch (e) {
-            issuccess = false;
-            statusText = "parseerror";
-            error = e;
-          }
-        } else {
-          res = responseText;
-          issuccess = true;
-        }
-      }
-    } else {
-      error = statusText;
-      if (!statusText || status) {
-        statusText = "error";
-        if (status < 0) {
-          status = 0;
-        }
-      }
-    }
-    if (issuccess) {
-      req = undefined;
-      if (o.success && typeof o.success === 'function') {
-        o.success(res);
-      }
-    } else {
-      if (o.error && typeof o.error === 'function') {
-        o.error(req, statusText, error);
-      }
-    }
-  };
-
-  var types = {
-    'json': function () {
-      console.log("url = " + url + " sameOrigin = " + sameOrigin);
-      if(sameOrigin){
-        req = xhr();
-      } else {
-        req = cor();
-      }
-      // if IE8 XrequestWrapper then change
-      // method to get and add json encoded params
-      if(req.isWrapper){
-        req.open("GET", url + "?params=" + encodeURIComponent(data), true);
-      } else {
-        req.open(method, url, true);
-      }
-      if (o.contentType) {
-        req.setRequestHeader('Content-Type', o.contentType);
-      }
-      req.setRequestHeader('X-Request-With', 'XMLHttpRequest');
-      var handler = function () {
-        if (req.readyState === 4) {
-          if (req.status === 0 && !sameOrigin && !req.isAborted && !nojsonp) {
-            console.log("try get " + url + " use jsonp");
-            // If the XHR/cors was aborted because of a timeout, don't re-try using jsonp. This will cause the request
-            // to be re-fired and can cause replay issues - e.g. creates getting applied multiple times.
-            return types['jsonp']();
-          }
-          else {
-            if (timeoutTimer) {
-              clearTimeout(timeoutTimer);
-            }
-          }
-          var statusText;
-          try {
-            statusText = req.statusText;
-          } catch (e) {
-            statusText = "";
-          }
-          if( ! req.isAborted ) {
-            done(req.status, req.statusText, req.responseText);
-          }
-        }
-      };
-
-      req.onreadystatechange = handler;
-
-      req.send(data);
-    },
-
-    'jsonp': function () {
-      var callbackId = 'fhcb' + cb_counts++;
-      window[callbackId] = function (response) {
-        if (timeoutTimer) {
-          clearTimeout(timeoutTimer);
-        }
-        done(200, "", response);
-        window[callbackId] = undefined;
-        try {
-          delete window[callbackId];
-        } catch(e) {
-        }
-      };
-      url += (rurl.test(url) ? "&" : "?") + "_callback=" + callbackId;
-      if(o.data){
-        var d = o.data;
-        if(typeof d === "string"){
-          url += "&_jsonpdata=" + encodeURIComponent(o.data);
-        } else {
-          url += "&_jsonpdata=" + encodeURIComponent(JSON.stringify(o.data));
-        }
-      }
-      loadScript(url);
-    }
-  };
-
-  if (o.timeout > 0) {
-    timeoutTimer = setTimeout(function () {
-      if (req) {
-        req.isAborted = true;
-        req.abort();
-      }
-      done(0, 'timeout');
-    }, o.timeout);
-  }
-
-  types[datatype]();
-};
-
-module.exports = ajax;
-
-},{"./XDomainRequestWrapper":15,"./loadScript":32,"./sameOrigin":35,"JSON":3,"console":8}],17:[function(_dereq_,module,exports){
+function extend(target) {
+  var slice = Array.prototype.slice;
+  slice.call(arguments, 1).forEach(function (source) {
+    for (key in source)
+      if (source[key] !== undefined)
+        target[key] = source[key]
+  })
+  return target
+}
+},{"./XDomainRequestWrapper":16,"./constants":23,"./events":26,"type-of":14}],18:[function(_dereq_,module,exports){
 var console =_dereq_("console");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -7265,17 +7416,15 @@ function doActCall(opts, success, fail){
   params = fhparams.addDefaultParams(app_props, params);
   return ajax({
     "url": url,
+    "tryJSONP": true,
     "type": "POST",
+    "dataType": "json",
     "data": JSON.stringify(params),
     "contentType": "application/json",
     "timeout": opts.timeout,
-    "success": function(res){
-      if(success){
-        return success(res);
-      }
-    },
+    "success": success,
     "error": function(req, statusText, error){
-      handleError(fail, req, statusText);
+      return handleError(fail, req, statusText);
     }
   })
 }
@@ -7301,7 +7450,7 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":16,"./fhparams":26,"./handleError":28,"./waitForCloud":43,"JSON":3,"console":8}],18:[function(_dereq_,module,exports){
+},{"./ajax":17,"./fhparams":27,"./handleError":29,"./waitForCloud":43,"JSON":3,"console":8}],19:[function(_dereq_,module,exports){
 var console =_dereq_("console");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -7351,7 +7500,9 @@ module.exports = function(opts, success, fail){
       ajax({
         "url": path,
         "type": "POST",
+        "tryJSONP": true,
         "data": JSON.stringify(req),
+        "dataType": "json",
         "contentType": "application/json",
         "timeout" : opts.timeout || app_props.timeout || constants.fh_timeout,
         success: function(res) {
@@ -7364,7 +7515,7 @@ module.exports = function(opts, success, fail){
     }
   });
 }
-},{"./ajax":16,"./checkAuth":21,"./constants":22,"./device":24,"./fhparams":26,"./handleError":28,"./waitForCloud":43,"JSON":3,"console":8}],19:[function(_dereq_,module,exports){
+},{"./ajax":17,"./checkAuth":22,"./constants":23,"./device":25,"./fhparams":27,"./handleError":29,"./waitForCloud":43,"JSON":3,"console":8}],20:[function(_dereq_,module,exports){
 var hashImpl = _dereq_("./security/hash");
 
 module.exports = function(p, s, f){
@@ -7376,7 +7527,7 @@ module.exports = function(p, s, f){
   params.params = p;
   hashImpl(params, s, f);
 };
-},{"./security/hash":39}],20:[function(_dereq_,module,exports){
+},{"./security/hash":39}],21:[function(_dereq_,module,exports){
 var keygen = _dereq_("./security/aes-keygen");
 var aes = _dereq_("./security/aes-node");
 var rsa = _dereq_("./security/rsa-node");
@@ -7420,10 +7571,11 @@ module.exports = function(p, s, f){
     }
   }
 }
-},{"./security/aes-keygen":37,"./security/aes-node":38,"./security/hash":39,"./security/rsa-node":40}],21:[function(_dereq_,module,exports){
+},{"./security/aes-keygen":37,"./security/aes-node":38,"./security/hash":39,"./security/rsa-node":40}],22:[function(_dereq_,module,exports){
 var console = _dereq_("console");
 var queryMap = _dereq_("./queryMap");
 var JSON = _dereq_("JSON");
+var fhparams = _dereq_("./fhparams");
 
 var checkAuth = function(url) {
   if (/\_fhAuthCallback/.test(url)) {
@@ -7433,6 +7585,7 @@ var checkAuth = function(url) {
       if (fhCallback) {
         if (qmap['result'] && qmap['result'] === 'success') {
           var sucRes = {'sessionToken': qmap['fh_auth_session'], 'authResponse' : JSON.parse(decodeURIComponent(decodeURIComponent(qmap['authResponse'])))};
+          fhparams.setAuthSessionToken(qmap['fh_auth_session']);
           window[fhCallback](null, sucRes);
         } else {
           window[fhCallback]({'message':qmap['message']});
@@ -7444,45 +7597,64 @@ var checkAuth = function(url) {
 
 var handleAuthResponse = function(endurl, res, success, fail){
   if(res.status && res.status === "ok"){
+
+    var onComplete = function(res){
+      if(res.sessionToken){
+        fhparams.setAuthSessionToken(res.sessionToken);
+      }
+      success(res);
+    };
     //for OAuth, a url will be returned which means the user should be directed to that url to authenticate.
     //we try to use the ChildBrower plugin if it can be found. Otherwise send the url to the success function to allow developer to handle it.
     if(res.url){
+      var inappBrowserWindow = null;
+      var locationChange = function(new_url){
+        if(new_url.indexOf(endurl) > -1){
+          if(inappBrowserWindow){
+            inappBrowserWindow.close();
+          }
+          var qmap = queryMap(new_url);
+          if(qmap) {
+            if(qmap['result'] && qmap['result'] === 'success'){
+              var sucRes = {'sessionToken': qmap['fh_auth_session'], 'authResponse' : JSON.parse(decodeURIComponent(decodeURIComponent(qmap['authResponse'])))};
+              onComplete(sucRes);
+            } else {
+              if(fail){
+                fail("auth_failed", {'message':qmap['message']});
+              }
+            }
+          } else {
+            if(fail){
+                fail("auth_failed", {'message':qmap['message']});
+            }
+          }
+        }
+      };
       if(window.PhoneGap || window.cordova){
         if(window.plugins && window.plugins.childBrowser){
           //found childbrowser plugin,add the event listener and load it
           //we need to know when the OAuth process is finished by checking for the presence of endurl. If the endurl is found, it means the authentication finished and we should find if it's successful.
           if(typeof window.plugins.childBrowser.showWebPage === "function"){
-            window.plugins.childBrowser.onLocationChange = function(new_url){
-              if(new_url.indexOf(endurl) > -1){
-                window.plugins.childBrowser.close();
-                var qmap = _getQueryMap(new_url);
-                if(qmap) {
-                  if(qmap['result'] && qmap['result'] === 'success'){
-                    var sucRes = {'sessionToken': qmap['fh_auth_session'], 'authResponse' : JSON.parse(decodeURIComponent(decodeURIComponent(qmap['authResponse'])))};
-                    success(sucRes);
-                  } else {
-                    if(fail){
-                      fail("auth_failed", {'message':qmap['message']});
-                    }
-                  }
-                } else {
-                  if(fail){
-                      fail("auth_failed", {'message':qmap['message']});
-                  }
-                }
-              }
-            };
+            window.plugins.childBrowser.onLocationChange = locationChange;
             window.plugins.childBrowser.showWebPage(res.url);
+            inappBrowserWindow = window.plugins.childBrowser;
           }
         } else {
-          console.log("ChildBrowser plugin is not intalled.");
-          success(res);
+          try {
+            inappBrowserWindow = window.open(res.url, "_blank", 'location=yes');
+            inappBrowserWindow.addEventListener("loadstart", function(ev){
+              locationChange(ev.url);
+            });
+          } catch(e){
+            console.log("InAppBrowser plugin is not intalled.");
+            onComplete(res);
+          }
         }
       } else {
        document.location.href = res.url;
       }
     } else {
-      success(res);
+      onComplete(res);
     }
   } else {
     if(fail){
@@ -7507,14 +7679,14 @@ module.exports = {
   "handleAuthResponse": handleAuthResponse
 };
 
-},{"./queryMap":34,"JSON":3,"console":8}],22:[function(_dereq_,module,exports){
+},{"./fhparams":27,"./queryMap":35,"JSON":3,"console":8}],23:[function(_dereq_,module,exports){
 module.exports = {
   "fh_timeout": 20000,
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "BUILD_VERSION",
-  "config_js":"fhconfig.js"
+  "sdk_version": "1.1.4",
+  "config_js":"fhconfig.json"
 }
-},{}],23:[function(_dereq_,module,exports){
+},{}],24:[function(_dereq_,module,exports){
 var console = _dereq_("console");
 module.exports = {
   readCookieValue  : function (cookie_name) {
@@ -7540,7 +7712,7 @@ module.exports = {
   }
 };
 
-},{"console":8}],24:[function(_dereq_,module,exports){
+},{"console":8}],25:[function(_dereq_,module,exports){
 var cookies = _dereq_("./cookies");
 var uuidModule = _dereq_("./uuid");
 var console = _dereq_("console");
@@ -7606,18 +7778,19 @@ module.exports = {
   }
 }
 
-},{"./cookies":23,"./platformsMap":33,"./uuid":42,"console":8}],25:[function(_dereq_,module,exports){
+},{"./cookies":24,"./platformsMap":34,"./uuid":42,"console":8}],26:[function(_dereq_,module,exports){
 var EventEmitter = _dereq_('events').EventEmitter;
 
 var emitter = new EventEmitter();
 emitter.setMaxListeners(0);
 
 module.exports = emitter;
-},{"events":9}],26:[function(_dereq_,module,exports){
+},{"events":9}],27:[function(_dereq_,module,exports){
 var device = _dereq_("./device");
 var sdkversion = _dereq_("./sdkversion");
 
 var defaultParams = null;
+var authSessionToken = null;
 //TODO: review these options, we probably only needs all of them for init calls, but we shouldn't need all of them for act calls
 var buildParams = function(app_props){
   if(defaultParams){
@@ -7630,7 +7803,9 @@ var buildParams = function(app_props){
   fhparams.appkey = app_props.appkey;
   fhparams.projectid = app_props.projectid;
   fhparams.analyticsTag =  app_props.analyticsTag;
-  fhparams.init = app_props.init;
+  if(app_props.init){
+    fhparams.init = typeof(app_props.init) === "string" ? JSON.parse(app_props.init) : app_props.init;
+  }
   fhparams.destination = device.getDestination();
   fhparams.connectiontag = app_props.connectiontag;
   if(window.device || navigator.device){
@@ -7648,6 +7823,9 @@ var buildParams = function(app_props){
     fhparams.project_app_version = fh_project_app_version;
   }
   fhparams.sdk_version = sdkversion();
+  if(authSessionToken){
+    fhparams.sessionToken = authSessionToken;
+  }
   defaultParams = fhparams;
   return fhparams;
 }
@@ -7658,12 +7836,17 @@ var addDefaultParams = function(app_props, params){
   return params;
 }
 
-module.exports = {
-  "buildParams": buildParams,
-  "addDefaultParams": addDefaultParams
+var setAuthSessionToken = function(sessionToken){
+  authSessionToken = sessionToken;
 }
 
-},{"./device":24,"./sdkversion":36}],27:[function(_dereq_,module,exports){
+module.exports = {
+  "buildParams": buildParams,
+  "addDefaultParams": addDefaultParams,
+  "setAuthSessionToken":setAuthSessionToken
+}
+
+},{"./device":25,"./sdkversion":36}],28:[function(_dereq_,module,exports){
 module.exports = function(){
   var path = null;
   var scripts = document.getElementsByTagName('script');
@@ -7684,7 +7867,7 @@ module.exports = function(){
   return path;
 };
 
-},{}],28:[function(_dereq_,module,exports){
+},{}],29:[function(_dereq_,module,exports){
 var JSON = _dereq_("JSON");
 
 module.exports = function(fail, req, resStatus){
@@ -7709,7 +7892,7 @@ module.exports = function(fail, req, resStatus){
   }
 };
 
-},{"JSON":3}],29:[function(_dereq_,module,exports){
+},{"JSON":3}],30:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
 
 function CloudHost(cloud_props){
@@ -7762,7 +7945,7 @@ CloudHost.prototype.getActUrl = function(appProps, act){
 }
 
 module.exports = CloudHost;
-},{"./constants":22}],30:[function(_dereq_,module,exports){
+},{"./constants":23}],31:[function(_dereq_,module,exports){
 var findFHPath = _dereq_("./findFHPath");
 var loadScript = _dereq_("./loadScript");
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
@@ -7776,13 +7959,12 @@ var JSON = _dereq_("JSON");
 var hashFunc = _dereq_("./security/hash");
 
 var init = function(conf_path, callback){
-  console.log("start to load app_props");
-  ajax({url: consts.config_js, contentType:"script", success: function(data){
+  ajax({url: consts.config_js, dataType:"json", success: function(data){
     console.log("fhconfig = " + JSON.stringify(data));
     loadCloudProps(data, callback);
   }, error: function(req, statusText, error){
-    console.error("failed to load fhconfig");
-    callback(error);
+    console.error("Can not load " + conf_path + ". Please make usre it exists.");
+    callback(statusText);
   }});
 }
 
@@ -7815,12 +7997,14 @@ var loadCloudProps = function(app_props, callback){
   
   storage.get('fh_init', function(storage_res) {
     var savedHost = null;
-    if (storage_res && storage_res.value !== null) {
+    if (storage_res && storage_res.value !== null && storage_res !== "") {
+      storage_res = typeof(storage_res) === "string" ? JSON.parse(storage_res) : storage_res;
+      storage_res.value = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value): storage_res.value;
       if(storage_res.value.init){
         app_props.init = storage_res.value.init;
       } else {
         //keep it backward compatible.
-        app_props.init = storage_res.value;
+        app_props.init = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value) : storage_res.value;
       }
       if(storage_res.value.hosts){
         savedHost = storage_res.value;
@@ -7828,10 +8012,13 @@ var loadCloudProps = function(app_props, callback){
     }
     console.log("saved host = " + JSON.stringify(savedHost));
     var data = fhparams.buildParams(app_props, consts.sdk_version);
+
     ajax(
       {
         "url": path,
         "type": "POST",
+        "tryJSONP": true,
+        "dataType": "json",
         "contentType": "application/json",
         "data": JSON.stringify(data),
         "timeout": app_props.timeout || consts.fh_timeout,
@@ -7840,10 +8027,10 @@ var loadCloudProps = function(app_props, callback){
             key: "fh_init",
             value: initRes
           }, function() {
-            if (callback) {
-              callback(null, {app:app_props, cloud: initRes});
-            }
           });
+          if(callback) {
+            callback(null, {app:app_props, cloud: initRes});
+          }
         },
         "error": function(req, statusText, error) {
           //use the cached host if we have a copy
@@ -7867,7 +8054,7 @@ module.exports = {
   "init": init,
   "loadCloudProps": loadCloudProps
 }
-},{"../../libs/generated/lawnchair":2,"./ajax":16,"./constants":22,"./fhparams":26,"./findFHPath":27,"./handleError":28,"./lawnchair-ext":31,"./loadScript":32,"./security/hash":39,"JSON":3,"console":8}],31:[function(_dereq_,module,exports){
+},{"../../libs/generated/lawnchair":2,"./ajax":17,"./constants":23,"./fhparams":27,"./findFHPath":28,"./handleError":29,"./lawnchair-ext":32,"./loadScript":33,"./security/hash":39,"JSON":3,"console":8}],32:[function(_dereq_,module,exports){
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
 
 var fileStorageAdapter = function (app_props, hashFunc) {
@@ -8055,7 +8242,7 @@ var addAdapter = function(app_props, hashFunc){
 module.exports = {
   addAdapter: addAdapter
 }
-},{"../../libs/generated/lawnchair":2}],32:[function(_dereq_,module,exports){
+},{"../../libs/generated/lawnchair":2}],33:[function(_dereq_,module,exports){
 module.exports = function (url, callback) {
   var script;
   var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
@@ -8078,7 +8265,7 @@ module.exports = function (url, callback) {
   head.insertBefore(script, head.firstChild);
 };
 
-},{}],33:[function(_dereq_,module,exports){
+},{}],34:[function(_dereq_,module,exports){
 module.exports = [
   {
     "destination" :"ipad",
@@ -8106,7 +8293,7 @@ module.exports = [
   }
 ];
 
-},{}],34:[function(_dereq_,module,exports){
+},{}],35:[function(_dereq_,module,exports){
 module.exports = function(url) {
   var qmap;
   var i = url.split("?");
@@ -8123,23 +8310,6 @@ module.exports = function(url) {
   return qmap;
 };
 
-},{}],35:[function(_dereq_,module,exports){
-module.exports = function(url) {
-  var loc = window.location;
-  // http://blog.stevenlevithan.com/archives/parseuri-split-url
-  var uriParts = new RegExp("^(?:([^:/?#.]+):)?(?://)?(([^:/?#]*)(?::(\\d*))?)((/(?:[^?#](?![^?#/]*\\.[^?#/.]+(?:[\\?#]|$)))*/?)?([^?#/]*))?(?:\\?([^#]*))?(?:#(.*))?");
-
-  var locParts = uriParts.exec(loc);
-  var urlParts = uriParts.exec(url);
-
-  return ((urlParts[1] == null || urlParts[1] === '') && // no protocol }
-          (urlParts[3] == null || urlParts[3] === '') && // no domain   } - > relative url
-          (urlParts[4] == null || urlParts[4] === ''))|| // no port       }
-          (locParts[1] === urlParts[1] && // protocol matches }
-          locParts[3] === urlParts[3] && // domain matches   }-> absolute url
-          locParts[4] === urlParts[4]); // port matches      }
-};
-
 },{}],36:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
 
@@ -8153,7 +8323,7 @@ module.exports = function() {
   return type + "/" + constants.sdk_version;
 };
 
-},{"./constants":22}],37:[function(_dereq_,module,exports){
+},{"./constants":23}],37:[function(_dereq_,module,exports){
 var rsa = _dereq_("../../../libs/rsa");
 var SecureRandom = rsa.SecureRandom;
 var byte2Hex = rsa.byte2Hex;
@@ -9303,7 +9473,7 @@ module.exports = {
 
 
 
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":17,"JSON":3}],42:[function(_dereq_,module,exports){
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":18,"JSON":3}],42:[function(_dereq_,module,exports){
 module.exports = {
   createUUID : function () {
     //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
@@ -9332,17 +9502,17 @@ var app_props;
 //the cloud configurations
 var cloud_host;
 
+var is_initialising = false;
 var is_cloud_ready = false;
 
 
 var tryInitialise = function(conf_path, retry, cb){
   init_attempt++;
   initializer.init(conf_path, function(error, initRes){
+
     if(error){
       if(retry && init_attempt <= retry){
-        setTimeout(function(){
-          tryInitialise(conf_path, retry, cb);
-        }, 200);
+        tryInitialise(conf_path, retry, cb);
       } else {
         return cb(error);
       }
@@ -9364,15 +9534,19 @@ var ready = function(cb, retry){
     events.once('error', function(error){
       return cb(error);
     });
-    init_attempt = 0;
-    tryInitialise(constants.config_js, retry, function(err, data){
-      if(err){
-        return events.emit("error", err);
-      } else {
-        is_cloud_ready = true;
-        return events.emit("cloudready", {host: getCloudHostUrl()});
-      }
-    });
+    if(!is_initialising){
+      is_initialising = true;
+      init_attempt = 0;
+      tryInitialise(constants.config_js, retry, function(err, data){
+        is_initialising = false;
+        if(err){
+          return events.emit("error", err);
+        } else {
+          is_cloud_ready = true;
+          return events.emit("cloudready", {host: getCloudHostUrl()});
+        }
+      });
+    }
   }
 }
 
@@ -9408,7 +9582,7 @@ ready(function(error, host){
   } else {
     console.log("fh cloud is ready");
   }
-}, 2);
+});
 
 module.exports = {
   ready: ready,
@@ -9418,6 +9592,6 @@ module.exports = {
   getCloudHostUrl: getCloudHostUrl,
   reset: reset
 }
-},{"./constants":22,"./events":25,"./hosts":29,"./initializer":30}]},{},[14])
-(14)
+},{"./constants":23,"./events":26,"./hosts":30,"./initializer":31}]},{},[15])
+(15)
 });

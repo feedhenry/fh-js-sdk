@@ -1,6 +1,7 @@
 var console = require("console");
 var queryMap = require("./queryMap");
 var JSON = require("JSON");
+var fhparams = require("./fhparams");
 
 var checkAuth = function(url) {
   if (/\_fhAuthCallback/.test(url)) {
@@ -10,6 +11,7 @@ var checkAuth = function(url) {
       if (fhCallback) {
         if (qmap['result'] && qmap['result'] === 'success') {
           var sucRes = {'sessionToken': qmap['fh_auth_session'], 'authResponse' : JSON.parse(decodeURIComponent(decodeURIComponent(qmap['authResponse'])))};
+          fhparams.setAuthSessionToken(qmap['fh_auth_session']);
           window[fhCallback](null, sucRes);
         } else {
           window[fhCallback]({'message':qmap['message']});
@@ -21,45 +23,64 @@ var checkAuth = function(url) {
 
 var handleAuthResponse = function(endurl, res, success, fail){
   if(res.status && res.status === "ok"){
+
+    var onComplete = function(res){
+      if(res.sessionToken){
+        fhparams.setAuthSessionToken(res.sessionToken);
+      }
+      success(res);
+    };
     //for OAuth, a url will be returned which means the user should be directed to that url to authenticate.
     //we try to use the ChildBrower plugin if it can be found. Otherwise send the url to the success function to allow developer to handle it.
     if(res.url){
+      var inappBrowserWindow = null;
+      var locationChange = function(new_url){
+        if(new_url.indexOf(endurl) > -1){
+          if(inappBrowserWindow){
+            inappBrowserWindow.close();
+          }
+          var qmap = queryMap(new_url);
+          if(qmap) {
+            if(qmap['result'] && qmap['result'] === 'success'){
+              var sucRes = {'sessionToken': qmap['fh_auth_session'], 'authResponse' : JSON.parse(decodeURIComponent(decodeURIComponent(qmap['authResponse'])))};
+              onComplete(sucRes);
+            } else {
+              if(fail){
+                fail("auth_failed", {'message':qmap['message']});
+              }
+            }
+          } else {
+            if(fail){
+                fail("auth_failed", {'message':qmap['message']});
+            }
+          }
+        }
+      };
       if(window.PhoneGap || window.cordova){
         if(window.plugins && window.plugins.childBrowser){
           //found childbrowser plugin,add the event listener and load it
           //we need to know when the OAuth process is finished by checking for the presence of endurl. If the endurl is found, it means the authentication finished and we should find if it's successful.
           if(typeof window.plugins.childBrowser.showWebPage === "function"){
-            window.plugins.childBrowser.onLocationChange = function(new_url){
-              if(new_url.indexOf(endurl) > -1){
-                window.plugins.childBrowser.close();
-                var qmap = _getQueryMap(new_url);
-                if(qmap) {
-                  if(qmap['result'] && qmap['result'] === 'success'){
-                    var sucRes = {'sessionToken': qmap['fh_auth_session'], 'authResponse' : JSON.parse(decodeURIComponent(decodeURIComponent(qmap['authResponse'])))};
-                    success(sucRes);
-                  } else {
-                    if(fail){
-                      fail("auth_failed", {'message':qmap['message']});
-                    }
-                  }
-                } else {
-                  if(fail){
-                      fail("auth_failed", {'message':qmap['message']});
-                  }
-                }
-              }
-            };
+            window.plugins.childBrowser.onLocationChange = locationChange;
             window.plugins.childBrowser.showWebPage(res.url);
+            inappBrowserWindow = window.plugins.childBrowser;
           }
         } else {
-          console.log("ChildBrowser plugin is not intalled.");
-          success(res);
+          try {
+            inappBrowserWindow = window.open(res.url, "_blank", 'location=yes');
+            inappBrowserWindow.addEventListener("loadstart", function(ev){
+              locationChange(ev.url);
+            });
+          } catch(e){
+            console.log("InAppBrowser plugin is not intalled.");
+            onComplete(res);
+          }
         }
       } else {
        document.location.href = res.url;
       }
     } else {
-      success(res);
+      onComplete(res);
     }
   } else {
     if(fail){

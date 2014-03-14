@@ -13,17 +13,15 @@ function doActCall(opts, success, fail){
   params = fhparams.addDefaultParams(app_props, params);
   return ajax({
     "url": url,
+    "tryJSONP": true,
     "type": "POST",
+    "dataType": "json",
     "data": JSON.stringify(params),
     "contentType": "application/json",
     "timeout": opts.timeout,
-    "success": function(res){
-      if(success){
-        return success(res);
-      }
-    },
+    "success": success,
     "error": function(req, statusText, error){
-      handleError(fail, req, statusText);
+      return handleError(fail, req, statusText);
     }
   })
 }

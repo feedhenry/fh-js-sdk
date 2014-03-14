@@ -11,13 +11,12 @@ var JSON = require("JSON");
 var hashFunc = require("./security/hash");
 
 var init = function(conf_path, callback){
-  console.log("start to load app_props");
-  ajax({url: consts.config_js, contentType:"script", success: function(data){
+  ajax({url: consts.config_js, dataType:"json", success: function(data){
     console.log("fhconfig = " + JSON.stringify(data));
     loadCloudProps(data, callback);
   }, error: function(req, statusText, error){
-    console.error("failed to load fhconfig");
-    callback(error);
+    console.error("Can not load " + conf_path + ". Please make usre it exists.");
+    callback(statusText);
   }});
 }
 
@@ -50,12 +49,14 @@ var loadCloudProps = function(app_props, callback){
   
   storage.get('fh_init', function(storage_res) {
     var savedHost = null;
-    if (storage_res && storage_res.value !== null) {
+    if (storage_res && storage_res.value !== null && storage_res !== "") {
+      storage_res = typeof(storage_res) === "string" ? JSON.parse(storage_res) : storage_res;
+      storage_res.value = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value): storage_res.value;
       if(storage_res.value.init){
         app_props.init = storage_res.value.init;
       } else {
         //keep it backward compatible.
-        app_props.init = storage_res.value;
+        app_props.init = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value) : storage_res.value;
       }
       if(storage_res.value.hosts){
         savedHost = storage_res.value;
@@ -63,10 +64,13 @@ var loadCloudProps = function(app_props, callback){
     }
     console.log("saved host = " + JSON.stringify(savedHost));
     var data = fhparams.buildParams(app_props, consts.sdk_version);
+
     ajax(
       {
         "url": path,
         "type": "POST",
+        "tryJSONP": true,
+        "dataType": "json",
         "contentType": "application/json",
         "data": JSON.stringify(data),
         "timeout": app_props.timeout || consts.fh_timeout,
@@ -75,10 +79,10 @@ var loadCloudProps = function(app_props, callback){
             key: "fh_init",
             value: initRes
           }, function() {
-            if (callback) {
-              callback(null, {app:app_props, cloud: initRes});
-            }
           });
+          if(callback) {
+            callback(null, {app:app_props, cloud: initRes});
+          }
         },
         "error": function(req, statusText, error) {
           //use the cached host if we have a copy

@@ -9,17 +9,17 @@ var app_props;
 //the cloud configurations
 var cloud_host;
 
+var is_initialising = false;
 var is_cloud_ready = false;
 
 
 var tryInitialise = function(conf_path, retry, cb){
   init_attempt++;
   initializer.init(conf_path, function(error, initRes){
+
     if(error){
       if(retry && init_attempt <= retry){
-        setTimeout(function(){
-          tryInitialise(conf_path, retry, cb);
-        }, 200);
+        tryInitialise(conf_path, retry, cb);
       } else {
         return cb(error);
       }
@@ -41,15 +41,19 @@ var ready = function(cb, retry){
     events.once('error', function(error){
       return cb(error);
     });
-    init_attempt = 0;
-    tryInitialise(constants.config_js, retry, function(err, data){
-      if(err){
-        return events.emit("error", err);
-      } else {
-        is_cloud_ready = true;
-        return events.emit("cloudready", {host: getCloudHostUrl()});
-      }
-    });
+    if(!is_initialising){
+      is_initialising = true;
+      init_attempt = 0;
+      tryInitialise(constants.config_js, retry, function(err, data){
+        is_initialising = false;
+        if(err){
+          return events.emit("error", err);
+        } else {
+          is_cloud_ready = true;
+          return events.emit("cloudready", {host: getCloudHostUrl()});
+        }
+      });
+    }
   }
 }
 
@@ -85,7 +89,7 @@ ready(function(error, host){
   } else {
     console.log("fh cloud is ready");
   }
-}, 2);
+});
 
 module.exports = {
   ready: ready,

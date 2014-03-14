@@ -28,7 +28,7 @@ define(['require', 'chai', 'sinonChai'], function(require, chai, sinonChai){
   }
 
   var initFakeServer = function(server){
-     server.respondWith('GET', /fhconfig.js/, buildFakeRes(fhconfig));
+     server.respondWith('GET', /fhconfig.json/, buildFakeRes(fhconfig));
 
      server.respondWith('POST', /init/, buildFakeRes(apphost));
   }
@@ -130,7 +130,7 @@ define(['require', 'chai', 'sinonChai'], function(require, chai, sinonChai){
         expect(fail).to.have.been.calledOnce;
 
         fail = sinon.spy();
-        $fh.auth({policyId: 'testpolicy', clientToken: 'testtoken'}, success, fail);
+        $fh.auth({policyId: 'testpolicy', clientToken: 'testtoken', transport: $fh.ajax}, success, fail);
 
         server.respond();
         server.respond();

@@ -47,7 +47,9 @@ module.exports = function(opts, success, fail){
       ajax({
         "url": path,
         "type": "POST",
+        "tryJSONP": true,
         "data": JSON.stringify(req),
+        "dataType": "json",
         "contentType": "application/json",
         "timeout" : opts.timeout || app_props.timeout || constants.fh_timeout,
         success: function(res) {
