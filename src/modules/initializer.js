@@ -62,7 +62,6 @@ var loadCloudProps = function(app_props, callback){
         savedHost = storage_res.value;
       }
     }
-    console.log("saved host = " + JSON.stringify(savedHost));
     var data = fhparams.buildParams(app_props, consts.sdk_version);
 
     ajax(

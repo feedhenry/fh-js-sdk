@@ -52,8 +52,8 @@ module.exports = function(grunt) {
       all: {
         options: {
           urls: [
-            "http://127.0.0.1:8100/test/browser/index.html",
-            "http://127.0.0.1:8100/test/browser/index-require.html"
+            "http://127.0.0.1:8200/test/browser/index.html",
+            "http://127.0.0.1:8200/test/browser/index-require.html"
           ]
         }
       }
@@ -62,7 +62,7 @@ module.exports = function(grunt) {
       server: {
         options: {
           hostname: "*",
-          port: 8100,
+          port: 8200,
           base: '.'
         }
       }
@@ -140,7 +140,7 @@ module.exports = function(grunt) {
           return 'feedhenry-js-sdk/' + filename;
         },
         dest: 'dist/fh-starter-project-latest.zip',
-        src: ['src/index.html', 'dist/feedhenry-latest.js']
+        src: ['src/index.html', 'src/fhconfig.json', 'dist/feedhenry-latest.min.js']
       }
     }
   });
@@ -155,6 +155,71 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-mocha-phantomjs');
   grunt.loadNpmTasks('grunt-contrib-watch');
 
+  var spawns = []; 
+  grunt.registerTask('start-local-servers', function () {
+    var done = this.async();
+    var spawn = require('child_process').spawn;
+
+    var spawnTestCloudServer = function (port, script, cb) {
+      grunt.log.writeln('Spawning server on port ' + port + ' in cwd ' + __dirname + ' using file ' + __dirname + '/' + script);
+      var env = {};
+      env.FH_PORT = port;
+      var server = spawn('/usr/bin/env', ['node', __dirname + '/' + script], {
+        cwd: __dirname,
+        env: env
+      }).on('exit', function (code) {
+        grunt.log.writeln('Exiting server on port ' + port + ' with exit code ' + code);
+      });
+      server.stdout.on('data', function (data) {
+        grunt.log.writeln('Spawned Server port ' + port + ' stdout:' + data);
+        if(data.toString("utf8").indexOf("started") !== -1){
+          cb(null, null);
+        }
+      });
+      server.stderr.on('data', function (data) {
+        grunt.log.writeln('Spawned Server port ' + port + ' stderr:' + data);
+        if(data.toString("utf8").indexOf("Error:") !== -1){
+          cb(data.toString("utf8"), null);
+        }
+      });
+      grunt.log.writeln('Spawned server on port ' + port);
+      spawns.push(server);
+    };
+
+    var servers = [{port: 8100, file:"bin/appinit.js"}, {port: 8101, file:"bin/appcloud.js"}];
+    async.map(servers, function(conf, cb){
+      spawnTestCloudServer(conf.port, conf.file, cb);
+    }, function(err){
+      if(err) {
+        grunt.log.writeln("Failed to start server. Error: " + err);
+        return done(false);
+      }
+      return done();
+    });
+    
+  });
+
+  var stopLocalServers = function(){
+    spawns.forEach(function (server) {
+      grunt.log.writeln("Killing process " + server.pid);
+      server.kill();
+    });
+  }
+
+  process.on('exit', function() {
+    console.log('killing spawned servers if there are any');
+    stopLocalServers();
+  });
+
+  grunt.registerTask('stop-local-servers', function(){
+    stopLocalServers();
+  });
+
+  //use this task for local development. Load example/index.html file in the browser after server started. 
+  //can run grunt watch as well in another terminal to auto generate the combined js file
+  grunt.registerTask('local', ['start-local-servers', 'connect:server:keepalive']);
+
+  //run tests in phatomjs
   grunt.registerTask('test', ['jshint', 'browserify', 'connect:server', 'mocha_phantomjs']);
 
   grunt.registerTask('default', 'jshint concat test uglify:dist zip');

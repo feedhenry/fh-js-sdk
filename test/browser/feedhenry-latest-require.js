@@ -7057,6 +7057,7 @@ module.exports = XDomainRequestWrapper;
 //3. allow passing xhr factory method through options: e.g. $fh.ajax({xhr: function(){/*own implementation of xhr*/}}); 
 //4. Use fh_timeout value as the default timeout
 //5. an extra option called "tryJSONP" to allow try the same call with JSONP if normal CORS failed - should only be used internally
+//6. for jsonp, allow to specify the callback query param name using the "jsonp" option
 
 var eventsHandler = require("./events");
 var XDomainRequestWrapper = require("./XDomainRequestWrapper");
@@ -7095,7 +7096,9 @@ var ajax = module.exports = function (options) {
   var dataType = settings.dataType,
     hasPlaceholder = /=\?/.test(settings.url)
     if (dataType == 'jsonp' || hasPlaceholder) {
-      if (!hasPlaceholder) settings.url = appendQuery(settings.url, 'callback=?')
+      if (!hasPlaceholder) {
+        settings.url = appendQuery(settings.url, (settings.jsonp? settings.jsonp: '_callback') + '=?');
+      }
       return ajax.JSONP(settings)
     }
 
@@ -7125,7 +7128,8 @@ var ajax = module.exports = function (options) {
       if(settings.tryJSONP){
         //check if the request has fail. In some cases, we may want to try jsonp as well
         if(xhr.status === 0 && settings.crossDomain && !xhr.isTimeout &&  protocol != 'file:'){
-          return ajax.JSONP(settings);
+          settings.dataType = "jsonp";
+          return ajax(settings);
         }
       }
       if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304 || (xhr.status == 0 && protocol == 'file:')) {
@@ -8012,7 +8016,6 @@ var loadCloudProps = function(app_props, callback){
         savedHost = storage_res.value;
       }
     }
-    console.log("saved host = " + JSON.stringify(savedHost));
     var data = fhparams.buildParams(app_props, consts.sdk_version);
 
     ajax(
