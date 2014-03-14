@@ -6886,6 +6886,7 @@ var api_auth = _dereq_("./modules/api_auth");
 var api_sec = _dereq_("./modules/api_sec");
 var api_hash = _dereq_("./modules/api_hash");
 var api_sync = _dereq_("./modules/sync-cli");
+var fhparams = _dereq_("./modules/fhparams");
 
 var defaultFail = function(msg, error){
   console.log(msg + ":" + JSON.stringify(error));
@@ -6960,6 +6961,10 @@ fh.getCloudURL = function(){
   return cloud.getCloudHostUrl();
 };
 
+fh.getFHParams = function(){
+  return fhparams.buildFHParams();
+};
+
 //events
 fh.addListener = addListener;
 fh.on = addListener;
@@ -6981,7 +6986,7 @@ module.exports = fh;
 
 
 
-},{"./modules/ajax":17,"./modules/api_act":18,"./modules/api_auth":19,"./modules/api_hash":20,"./modules/api_sec":21,"./modules/constants":23,"./modules/events":26,"./modules/sync-cli":41,"./modules/waitForCloud":43,"console":8}],16:[function(_dereq_,module,exports){
+},{"./modules/ajax":17,"./modules/api_act":18,"./modules/api_auth":19,"./modules/api_hash":20,"./modules/api_sec":21,"./modules/constants":24,"./modules/events":27,"./modules/fhparams":28,"./modules/sync-cli":42,"./modules/waitForCloud":44,"console":8}],16:[function(_dereq_,module,exports){
 var XDomainRequestWrapper = function(xdr){
   this.xdr = xdr;
   this.isWrapper = true;
@@ -7404,7 +7409,7 @@ function extend(target) {
   })
   return target
 }
-},{"./XDomainRequestWrapper":16,"./constants":23,"./events":26,"type-of":14}],18:[function(_dereq_,module,exports){
+},{"./XDomainRequestWrapper":16,"./constants":24,"./events":27,"type-of":14}],18:[function(_dereq_,module,exports){
 var console =_dereq_("console");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -7414,10 +7419,9 @@ var handleError = _dereq_("./handleError");
 
 function doActCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
-  var app_props = cloud.getAppProps();
-  var url = cloud_host.getActUrl(app_props, opts.act);
+  var url = cloud_host.getActUrl(opts.act);
   var params = opts.req || {};
-  params = fhparams.addDefaultParams(app_props, params);
+  params = fhparams.addFHParams(params);
   return ajax({
     "url": url,
     "tryJSONP": true,
@@ -7454,7 +7458,7 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":17,"./fhparams":27,"./handleError":29,"./waitForCloud":43,"JSON":3,"console":8}],19:[function(_dereq_,module,exports){
+},{"./ajax":17,"./fhparams":28,"./handleError":30,"./waitForCloud":44,"JSON":3,"console":8}],19:[function(_dereq_,module,exports){
 var console =_dereq_("console");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -7464,6 +7468,7 @@ var handleError = _dereq_("./handleError");
 var device = _dereq_("./device");
 var constants = _dereq_("./constants");
 var checkAuth = _dereq_("./checkAuth");
+var appProps = _dereq_("./appProps");
 
 module.exports = function(opts, success, fail){
   if(!fail){
@@ -7497,9 +7502,9 @@ module.exports = function(opts, success, fail){
       }
       var endurl = opts.endRedirectUrl || "status=complete";
       req.device = device.getDeviceId();
-      var app_props = cloud.getAppProps();
+      var app_props = appProps.getAppProps();
       var path = app_props.host + constants.boxprefix + "admin/authpolicy/auth";
-      req = fhparams.addDefaultParams(app_props, req);
+      req = fhparams.addFHParams(req);
 
       ajax({
         "url": path,
@@ -7519,7 +7524,7 @@ module.exports = function(opts, success, fail){
     }
   });
 }
-},{"./ajax":17,"./checkAuth":22,"./constants":23,"./device":25,"./fhparams":27,"./handleError":29,"./waitForCloud":43,"JSON":3,"console":8}],20:[function(_dereq_,module,exports){
+},{"./ajax":17,"./appProps":22,"./checkAuth":23,"./constants":24,"./device":26,"./fhparams":28,"./handleError":30,"./waitForCloud":44,"JSON":3,"console":8}],20:[function(_dereq_,module,exports){
 var hashImpl = _dereq_("./security/hash");
 
 module.exports = function(p, s, f){
@@ -7531,7 +7536,7 @@ module.exports = function(p, s, f){
   params.params = p;
   hashImpl(params, s, f);
 };
-},{"./security/hash":39}],21:[function(_dereq_,module,exports){
+},{"./security/hash":40}],21:[function(_dereq_,module,exports){
 var keygen = _dereq_("./security/aes-keygen");
 var aes = _dereq_("./security/aes-node");
 var rsa = _dereq_("./security/rsa-node");
@@ -7575,7 +7580,33 @@ module.exports = function(p, s, f){
     }
   }
 }
-},{"./security/aes-keygen":37,"./security/aes-node":38,"./security/hash":39,"./security/rsa-node":40}],22:[function(_dereq_,module,exports){
+},{"./security/aes-keygen":38,"./security/aes-node":39,"./security/hash":40,"./security/rsa-node":41}],22:[function(_dereq_,module,exports){
+var consts = _dereq_("./constants");
+var ajax = _dereq_("./ajax");
+var console = _dereq_("console");
+
+var app_props = null;
+
+var load = function(cb){
+  ajax({url: consts.config_js, dataType:"json", success: function(data){
+    console.log("fhconfig = " + JSON.stringify(data));
+    app_props = data;
+    cb(null, app_props);
+  }, error: function(req, statusText, error){
+    console.error("Can not load " + consts.config_js + ". Please make usre it exists.");
+    cb(statusText);
+  }});
+}
+
+var getAppProps = function(){
+  return app_props;
+}
+
+module.exports = {
+  load: load,
+  getAppProps: getAppProps
+}
+},{"./ajax":17,"./constants":24,"console":8}],23:[function(_dereq_,module,exports){
 var console = _dereq_("console");
 var queryMap = _dereq_("./queryMap");
 var JSON = _dereq_("JSON");
@@ -7683,14 +7714,14 @@ module.exports = {
   "handleAuthResponse": handleAuthResponse
 };
 
-},{"./fhparams":27,"./queryMap":35,"JSON":3,"console":8}],23:[function(_dereq_,module,exports){
+},{"./fhparams":28,"./queryMap":36,"JSON":3,"console":8}],24:[function(_dereq_,module,exports){
 module.exports = {
   "fh_timeout": 20000,
   "boxprefix": "/box/srv/1.1/",
   "sdk_version": "1.1.4",
   "config_js":"fhconfig.json"
 }
-},{}],24:[function(_dereq_,module,exports){
+},{}],25:[function(_dereq_,module,exports){
 var console = _dereq_("console");
 module.exports = {
   readCookieValue  : function (cookie_name) {
@@ -7716,7 +7747,7 @@ module.exports = {
   }
 };
 
-},{"console":8}],25:[function(_dereq_,module,exports){
+},{"console":8}],26:[function(_dereq_,module,exports){
 var cookies = _dereq_("./cookies");
 var uuidModule = _dereq_("./uuid");
 var console = _dereq_("console");
@@ -7782,36 +7813,30 @@ module.exports = {
   }
 }
 
-},{"./cookies":24,"./platformsMap":34,"./uuid":42,"console":8}],26:[function(_dereq_,module,exports){
+},{"./cookies":25,"./platformsMap":35,"./uuid":43,"console":8}],27:[function(_dereq_,module,exports){
 var EventEmitter = _dereq_('events').EventEmitter;
 
 var emitter = new EventEmitter();
 emitter.setMaxListeners(0);
 
 module.exports = emitter;
-},{"events":9}],27:[function(_dereq_,module,exports){
+},{"events":9}],28:[function(_dereq_,module,exports){
 var device = _dereq_("./device");
 var sdkversion = _dereq_("./sdkversion");
+var appProps = _dereq_("./appProps");
 
 var defaultParams = null;
 var authSessionToken = null;
 //TODO: review these options, we probably only needs all of them for init calls, but we shouldn't need all of them for act calls
-var buildParams = function(app_props){
+var buildFHParams = function(){
   if(defaultParams){
     return defaultParams;
   }
   var fhparams = {};
   fhparams.cuid = device.getDeviceId();
   fhparams.cuidMap = device.getCuidMap();
-  fhparams.appid = app_props.appid;
-  fhparams.appkey = app_props.appkey;
-  fhparams.projectid = app_props.projectid;
-  fhparams.analyticsTag =  app_props.analyticsTag;
-  if(app_props.init){
-    fhparams.init = typeof(app_props.init) === "string" ? JSON.parse(app_props.init) : app_props.init;
-  }
   fhparams.destination = device.getDestination();
-  fhparams.connectiontag = app_props.connectiontag;
+  
   if(window.device || navigator.device){
     fhparams.device = window.device || navigator.device;
   }
@@ -7830,13 +7855,26 @@ var buildParams = function(app_props){
   if(authSessionToken){
     fhparams.sessionToken = authSessionToken;
   }
+
+  var app_props = appProps.getAppProps();
+  if(app_props){
+    fhparams.appid = app_props.appid;
+    fhparams.appkey = app_props.appkey;
+    fhparams.projectid = app_props.projectid;
+    fhparams.analyticsTag =  app_props.analyticsTag;
+    fhparams.connectiontag = app_props.connectiontag;
+    if(app_props.init){
+      fhparams.init = typeof(app_props.init) === "string" ? JSON.parse(app_props.init) : app_props.init;
+    }
+  }
+  
   defaultParams = fhparams;
   return fhparams;
 }
 
-var addDefaultParams = function(app_props, params){
+var addFHParams = function(params){
   var params = params || {};
-  params.__fh = buildParams(app_props);
+  params.__fh = buildFHParams();
   return params;
 }
 
@@ -7845,12 +7883,12 @@ var setAuthSessionToken = function(sessionToken){
 }
 
 module.exports = {
-  "buildParams": buildParams,
-  "addDefaultParams": addDefaultParams,
+  "buildFHParams": buildFHParams,
+  "addFHParams": addFHParams,
   "setAuthSessionToken":setAuthSessionToken
 }
 
-},{"./device":25,"./sdkversion":36}],28:[function(_dereq_,module,exports){
+},{"./appProps":22,"./device":26,"./sdkversion":37}],29:[function(_dereq_,module,exports){
 module.exports = function(){
   var path = null;
   var scripts = document.getElementsByTagName('script');
@@ -7871,7 +7909,7 @@ module.exports = function(){
   return path;
 };
 
-},{}],29:[function(_dereq_,module,exports){
+},{}],30:[function(_dereq_,module,exports){
 var JSON = _dereq_("JSON");
 
 module.exports = function(fail, req, resStatus){
@@ -7896,8 +7934,9 @@ module.exports = function(fail, req, resStatus){
   }
 };
 
-},{"JSON":3}],30:[function(_dereq_,module,exports){
+},{"JSON":3}],31:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
+var appProps = _dereq_("./appProps");
 
 function CloudHost(cloud_props){
   this.cloud_props = cloud_props;
@@ -7937,19 +7976,20 @@ CloudHost.prototype.getHost = function(appType){
   }
 }
 
-CloudHost.prototype.getActUrl = function(appProps, act){
+CloudHost.prototype.getActUrl = function(act){
+  var app_props = appProps.getAppProps() || {};
   if(typeof this.cloud_host === "undefined"){
-    this.getHost(appProps.mode);
+    this.getHost(app_props.mode);
   }
   if(this.isLegacy){
-    return this.cloud_host + constants.boxprefix + "act/" + this.cloud_props.domain + "/" + appProps.appid + "/" + act + "/" + appProps.appid;
+    return this.cloud_host + constants.boxprefix + "act/" + this.cloud_props.domain + "/" + app_props.appid + "/" + act + "/" + app_props.appid;
   } else {
     return this.cloud_host + "/cloud/" + act;
   }
 }
 
 module.exports = CloudHost;
-},{"./constants":23}],31:[function(_dereq_,module,exports){
+},{"./appProps":22,"./constants":24}],32:[function(_dereq_,module,exports){
 var findFHPath = _dereq_("./findFHPath");
 var loadScript = _dereq_("./loadScript");
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
@@ -7961,15 +8001,13 @@ var handleError = _dereq_("./handleError");
 var console = _dereq_("console");
 var JSON = _dereq_("JSON");
 var hashFunc = _dereq_("./security/hash");
+var appProps = _dereq_("./appProps");
 
-var init = function(conf_path, callback){
-  ajax({url: consts.config_js, dataType:"json", success: function(data){
-    console.log("fhconfig = " + JSON.stringify(data));
-    loadCloudProps(data, callback);
-  }, error: function(req, statusText, error){
-    console.error("Can not load " + conf_path + ". Please make usre it exists.");
-    callback(statusText);
-  }});
+var init = function(cb){
+  appProps.load(function(err, data){
+    if(err) return cb(err);
+    return loadCloudProps(data, cb);
+  });
 }
 
 var loadCloudProps = function(app_props, callback){
@@ -8014,7 +8052,7 @@ var loadCloudProps = function(app_props, callback){
         savedHost = storage_res.value;
       }
     }
-    var data = fhparams.buildParams(app_props, consts.sdk_version);
+    var data = fhparams.buildFHParams();
 
     ajax(
       {
@@ -8032,14 +8070,14 @@ var loadCloudProps = function(app_props, callback){
           }, function() {
           });
           if(callback) {
-            callback(null, {app:app_props, cloud: initRes});
+            callback(null, {cloud: initRes});
           }
         },
         "error": function(req, statusText, error) {
           //use the cached host if we have a copy
           if(savedHost){
             if(callback){
-              callback(null, {app: app_props, cloud: savedHost});
+              callback(null, {cloud: savedHost});
             }
           } else {
             handleError(function(msg, err){
@@ -8057,7 +8095,7 @@ module.exports = {
   "init": init,
   "loadCloudProps": loadCloudProps
 }
-},{"../../libs/generated/lawnchair":2,"./ajax":17,"./constants":23,"./fhparams":27,"./findFHPath":28,"./handleError":29,"./lawnchair-ext":32,"./loadScript":33,"./security/hash":39,"JSON":3,"console":8}],32:[function(_dereq_,module,exports){
+},{"../../libs/generated/lawnchair":2,"./ajax":17,"./appProps":22,"./constants":24,"./fhparams":28,"./findFHPath":29,"./handleError":30,"./lawnchair-ext":33,"./loadScript":34,"./security/hash":40,"JSON":3,"console":8}],33:[function(_dereq_,module,exports){
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
 
 var fileStorageAdapter = function (app_props, hashFunc) {
@@ -8245,7 +8283,7 @@ var addAdapter = function(app_props, hashFunc){
 module.exports = {
   addAdapter: addAdapter
 }
-},{"../../libs/generated/lawnchair":2}],33:[function(_dereq_,module,exports){
+},{"../../libs/generated/lawnchair":2}],34:[function(_dereq_,module,exports){
 module.exports = function (url, callback) {
   var script;
   var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
@@ -8268,7 +8306,7 @@ module.exports = function (url, callback) {
   head.insertBefore(script, head.firstChild);
 };
 
-},{}],34:[function(_dereq_,module,exports){
+},{}],35:[function(_dereq_,module,exports){
 module.exports = [
   {
     "destination" :"ipad",
@@ -8296,7 +8334,7 @@ module.exports = [
   }
 ];
 
-},{}],35:[function(_dereq_,module,exports){
+},{}],36:[function(_dereq_,module,exports){
 module.exports = function(url) {
   var qmap;
   var i = url.split("?");
@@ -8313,7 +8351,7 @@ module.exports = function(url) {
   return qmap;
 };
 
-},{}],36:[function(_dereq_,module,exports){
+},{}],37:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
 
 module.exports = function() {
@@ -8326,7 +8364,7 @@ module.exports = function() {
   return type + "/" + constants.sdk_version;
 };
 
-},{"./constants":23}],37:[function(_dereq_,module,exports){
+},{"./constants":24}],38:[function(_dereq_,module,exports){
 var rsa = _dereq_("../../../libs/rsa");
 var SecureRandom = rsa.SecureRandom;
 var byte2Hex = rsa.byte2Hex;
@@ -8368,7 +8406,7 @@ var aes_keygen = function(p, s, f){
 }
 
 module.exports = aes_keygen;
-},{"../../../libs/rsa":4}],38:[function(_dereq_,module,exports){
+},{"../../../libs/rsa":4}],39:[function(_dereq_,module,exports){
 var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 var encrypt = function(p, s, f){
@@ -8409,7 +8447,7 @@ module.exports = {
   encrypt: encrypt,
   decrypt: decrypt
 }
-},{"../../../libs/generated/crypto":1}],39:[function(_dereq_,module,exports){
+},{"../../../libs/generated/crypto":1}],40:[function(_dereq_,module,exports){
 var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 
@@ -8434,7 +8472,7 @@ var hash = function(p, s, f){
 }
 
 module.exports = hash;
-},{"../../../libs/generated/crypto":1}],40:[function(_dereq_,module,exports){
+},{"../../../libs/generated/crypto":1}],41:[function(_dereq_,module,exports){
 var rsa = _dereq_("../../../libs/rsa");
 var RSAKey = rsa.RSAKey;
 
@@ -8459,7 +8497,7 @@ var encrypt = function(p, s, f){
 module.exports = {
   encrypt: encrypt
 }
-},{"../../../libs/rsa":4}],41:[function(_dereq_,module,exports){
+},{"../../../libs/rsa":4}],42:[function(_dereq_,module,exports){
 var JSON = _dereq_("JSON");
 var actFunc = _dereq_("./api_act");
 var CryptoJS = _dereq_("../../libs/generated/crypto");
@@ -9476,7 +9514,7 @@ module.exports = {
 
 
 
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":18,"JSON":3}],42:[function(_dereq_,module,exports){
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":18,"JSON":3}],43:[function(_dereq_,module,exports){
 module.exports = {
   createUUID : function () {
     //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
@@ -9493,15 +9531,13 @@ module.exports = {
   }
 };
 
-},{}],43:[function(_dereq_,module,exports){
+},{}],44:[function(_dereq_,module,exports){
 var initializer = _dereq_("./initializer");
 var events = _dereq_("./events");
 var CloudHost = _dereq_("./hosts");
 var constants = _dereq_("./constants");
 
 var init_attempt = 0;
-//the app configurations
-var app_props;
 //the cloud configurations
 var cloud_host;
 
@@ -9509,18 +9545,17 @@ var is_initialising = false;
 var is_cloud_ready = false;
 
 
-var tryInitialise = function(conf_path, retry, cb){
+var tryInitialise = function(retry, cb){
   init_attempt++;
-  initializer.init(conf_path, function(error, initRes){
+  initializer.init(function(error, initRes){
 
     if(error){
       if(retry && init_attempt <= retry){
-        tryInitialise(conf_path, retry, cb);
+        tryInitialise(retry, cb);
       } else {
         return cb(error);
       }
     } else {
-      app_props = initRes.app;
       cloud_host = new CloudHost(initRes.cloud);
       return cb(null, cloud_host);
     }
@@ -9540,7 +9575,7 @@ var ready = function(cb, retry){
     if(!is_initialising){
       is_initialising = true;
       init_attempt = 0;
-      tryInitialise(constants.config_js, retry, function(err, data){
+      tryInitialise(retry, function(err, data){
         is_initialising = false;
         if(err){
           return events.emit("error", err);
@@ -9553,17 +9588,14 @@ var ready = function(cb, retry){
   }
 }
 
-var getAppProps = function(){
-  return app_props;
-}
-
 var getCloudHost = function(){
   return cloud_host;
 }
 
 var getCloudHostUrl = function(){
   if(typeof cloud_host !== "undefined"){
-    return cloud_host.getHost(app_props.mode);
+    var appProps = _dereq_("./appProps").getAppProps();
+    return cloud_host.getHost(appProps.mode);
   } else {
     return undefined;
   }
@@ -9591,11 +9623,10 @@ ready(function(error, host){
 module.exports = {
   ready: ready,
   isReady: isReady,
-  getAppProps: getAppProps,
   getCloudHost: getCloudHost,
   getCloudHostUrl: getCloudHostUrl,
   reset: reset
 }
-},{"./constants":23,"./events":26,"./hosts":30,"./initializer":31}]},{},[15])
+},{"./appProps":22,"./constants":24,"./events":27,"./hosts":31,"./initializer":32}]},{},[15])
 (15)
 });

@@ -120,7 +120,7 @@ module.exports = function(grunt) {
     },
     watch: {
       browserify: {
-        files: ['src/modules/**/*.js', 'test/tests/*.js'],
+        files: ['src/**/*.js', 'test/tests/*.js'],
         tasks: ['browserify'],
         options: {
           spawn: false

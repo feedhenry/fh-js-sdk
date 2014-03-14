@@ -9,15 +9,13 @@ var handleError = require("./handleError");
 var console = require("console");
 var JSON = require("JSON");
 var hashFunc = require("./security/hash");
+var appProps = require("./appProps");
 
-var init = function(conf_path, callback){
-  ajax({url: consts.config_js, dataType:"json", success: function(data){
-    console.log("fhconfig = " + JSON.stringify(data));
-    loadCloudProps(data, callback);
-  }, error: function(req, statusText, error){
-    console.error("Can not load " + conf_path + ". Please make usre it exists.");
-    callback(statusText);
-  }});
+var init = function(cb){
+  appProps.load(function(err, data){
+    if(err) return cb(err);
+    return loadCloudProps(data, cb);
+  });
 }
 
 var loadCloudProps = function(app_props, callback){
@@ -62,7 +60,7 @@ var loadCloudProps = function(app_props, callback){
         savedHost = storage_res.value;
       }
     }
-    var data = fhparams.buildParams(app_props, consts.sdk_version);
+    var data = fhparams.buildFHParams();
 
     ajax(
       {
@@ -80,14 +78,14 @@ var loadCloudProps = function(app_props, callback){
           }, function() {
           });
           if(callback) {
-            callback(null, {app:app_props, cloud: initRes});
+            callback(null, {cloud: initRes});
           }
         },
         "error": function(req, statusText, error) {
           //use the cached host if we have a copy
           if(savedHost){
             if(callback){
-              callback(null, {app: app_props, cloud: savedHost});
+              callback(null, {cloud: savedHost});
             }
           } else {
             handleError(function(msg, err){

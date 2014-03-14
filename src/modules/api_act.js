@@ -7,10 +7,9 @@ var handleError = require("./handleError");
 
 function doActCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
-  var app_props = cloud.getAppProps();
-  var url = cloud_host.getActUrl(app_props, opts.act);
+  var url = cloud_host.getActUrl(opts.act);
   var params = opts.req || {};
-  params = fhparams.addDefaultParams(app_props, params);
+  params = fhparams.addFHParams(params);
   return ajax({
     "url": url,
     "tryJSONP": true,

@@ -7,6 +7,7 @@ var handleError = require("./handleError");
 var device = require("./device");
 var constants = require("./constants");
 var checkAuth = require("./checkAuth");
+var appProps = require("./appProps");
 
 module.exports = function(opts, success, fail){
   if(!fail){
@@ -40,9 +41,9 @@ module.exports = function(opts, success, fail){
       }
       var endurl = opts.endRedirectUrl || "status=complete";
       req.device = device.getDeviceId();
-      var app_props = cloud.getAppProps();
+      var app_props = appProps.getAppProps();
       var path = app_props.host + constants.boxprefix + "admin/authpolicy/auth";
-      req = fhparams.addDefaultParams(app_props, req);
+      req = fhparams.addFHParams(req);
 
       ajax({
         "url": path,

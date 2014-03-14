@@ -6875,8 +6875,6 @@ module.exports = function(val){
   return typeof val
 }
 
-},{}],"/Users/weili/work/fh-sdks/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
-module.exports=require('il4jYc');
 },{}],"il4jYc":[function(require,module,exports){
 var constants = require("./modules/constants");
 var console = require("console");
@@ -6888,6 +6886,7 @@ var api_auth = require("./modules/api_auth");
 var api_sec = require("./modules/api_sec");
 var api_hash = require("./modules/api_hash");
 var api_sync = require("./modules/sync-cli");
+var fhparams = require("./modules/fhparams");
 
 var defaultFail = function(msg, error){
   console.log(msg + ":" + JSON.stringify(error));
@@ -6962,6 +6961,10 @@ fh.getCloudURL = function(){
   return cloud.getCloudHostUrl();
 };
 
+fh.getFHParams = function(){
+  return fhparams.buildFHParams();
+};
+
 //events
 fh.addListener = addListener;
 fh.on = addListener;
@@ -6983,7 +6986,9 @@ module.exports = fh;
 
 
 
-},{"./modules/ajax":18,"./modules/api_act":19,"./modules/api_auth":20,"./modules/api_hash":21,"./modules/api_sec":22,"./modules/constants":24,"./modules/events":27,"./modules/sync-cli":42,"./modules/waitForCloud":44,"console":8}],17:[function(require,module,exports){
+},{"./modules/ajax":18,"./modules/api_act":19,"./modules/api_auth":20,"./modules/api_hash":21,"./modules/api_sec":22,"./modules/constants":25,"./modules/events":28,"./modules/fhparams":29,"./modules/sync-cli":43,"./modules/waitForCloud":45,"console":8}],"/Users/weili/work/fh-sdks/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
+module.exports=require('il4jYc');
+},{}],17:[function(require,module,exports){
 var XDomainRequestWrapper = function(xdr){
   this.xdr = xdr;
   this.isWrapper = true;
@@ -7406,7 +7411,7 @@ function extend(target) {
   })
   return target
 }
-},{"./XDomainRequestWrapper":17,"./constants":24,"./events":27,"type-of":14}],19:[function(require,module,exports){
+},{"./XDomainRequestWrapper":17,"./constants":25,"./events":28,"type-of":14}],19:[function(require,module,exports){
 var console =require("console");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
@@ -7416,10 +7421,9 @@ var handleError = require("./handleError");
 
 function doActCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
-  var app_props = cloud.getAppProps();
-  var url = cloud_host.getActUrl(app_props, opts.act);
+  var url = cloud_host.getActUrl(opts.act);
   var params = opts.req || {};
-  params = fhparams.addDefaultParams(app_props, params);
+  params = fhparams.addFHParams(params);
   return ajax({
     "url": url,
     "tryJSONP": true,
@@ -7456,7 +7460,7 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":18,"./fhparams":28,"./handleError":30,"./waitForCloud":44,"JSON":3,"console":8}],20:[function(require,module,exports){
+},{"./ajax":18,"./fhparams":29,"./handleError":31,"./waitForCloud":45,"JSON":3,"console":8}],20:[function(require,module,exports){
 var console =require("console");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
@@ -7466,6 +7470,7 @@ var handleError = require("./handleError");
 var device = require("./device");
 var constants = require("./constants");
 var checkAuth = require("./checkAuth");
+var appProps = require("./appProps");
 
 module.exports = function(opts, success, fail){
   if(!fail){
@@ -7499,9 +7504,9 @@ module.exports = function(opts, success, fail){
       }
       var endurl = opts.endRedirectUrl || "status=complete";
       req.device = device.getDeviceId();
-      var app_props = cloud.getAppProps();
+      var app_props = appProps.getAppProps();
       var path = app_props.host + constants.boxprefix + "admin/authpolicy/auth";
-      req = fhparams.addDefaultParams(app_props, req);
+      req = fhparams.addFHParams(req);
 
       ajax({
         "url": path,
@@ -7521,7 +7526,7 @@ module.exports = function(opts, success, fail){
     }
   });
 }
-},{"./ajax":18,"./checkAuth":23,"./constants":24,"./device":26,"./fhparams":28,"./handleError":30,"./waitForCloud":44,"JSON":3,"console":8}],21:[function(require,module,exports){
+},{"./ajax":18,"./appProps":23,"./checkAuth":24,"./constants":25,"./device":27,"./fhparams":29,"./handleError":31,"./waitForCloud":45,"JSON":3,"console":8}],21:[function(require,module,exports){
 var hashImpl = require("./security/hash");
 
 module.exports = function(p, s, f){
@@ -7533,7 +7538,7 @@ module.exports = function(p, s, f){
   params.params = p;
   hashImpl(params, s, f);
 };
-},{"./security/hash":40}],22:[function(require,module,exports){
+},{"./security/hash":41}],22:[function(require,module,exports){
 var keygen = require("./security/aes-keygen");
 var aes = require("./security/aes-node");
 var rsa = require("./security/rsa-node");
@@ -7577,7 +7582,33 @@ module.exports = function(p, s, f){
     }
   }
 }
-},{"./security/aes-keygen":38,"./security/aes-node":39,"./security/hash":40,"./security/rsa-node":41}],23:[function(require,module,exports){
+},{"./security/aes-keygen":39,"./security/aes-node":40,"./security/hash":41,"./security/rsa-node":42}],23:[function(require,module,exports){
+var consts = require("./constants");
+var ajax = require("./ajax");
+var console = require("console");
+
+var app_props = null;
+
+var load = function(cb){
+  ajax({url: consts.config_js, dataType:"json", success: function(data){
+    console.log("fhconfig = " + JSON.stringify(data));
+    app_props = data;
+    cb(null, app_props);
+  }, error: function(req, statusText, error){
+    console.error("Can not load " + consts.config_js + ". Please make usre it exists.");
+    cb(statusText);
+  }});
+}
+
+var getAppProps = function(){
+  return app_props;
+}
+
+module.exports = {
+  load: load,
+  getAppProps: getAppProps
+}
+},{"./ajax":18,"./constants":25,"console":8}],24:[function(require,module,exports){
 var console = require("console");
 var queryMap = require("./queryMap");
 var JSON = require("JSON");
@@ -7685,14 +7716,14 @@ module.exports = {
   "handleAuthResponse": handleAuthResponse
 };
 
-},{"./fhparams":28,"./queryMap":36,"JSON":3,"console":8}],24:[function(require,module,exports){
+},{"./fhparams":29,"./queryMap":37,"JSON":3,"console":8}],25:[function(require,module,exports){
 module.exports = {
   "fh_timeout": 20000,
   "boxprefix": "/box/srv/1.1/",
   "sdk_version": "BUILD_VERSION",
   "config_js":"fhconfig.json"
 }
-},{}],25:[function(require,module,exports){
+},{}],26:[function(require,module,exports){
 var console = require("console");
 module.exports = {
   readCookieValue  : function (cookie_name) {
@@ -7718,7 +7749,7 @@ module.exports = {
   }
 };
 
-},{"console":8}],26:[function(require,module,exports){
+},{"console":8}],27:[function(require,module,exports){
 var cookies = require("./cookies");
 var uuidModule = require("./uuid");
 var console = require("console");
@@ -7784,36 +7815,30 @@ module.exports = {
   }
 }
 
-},{"./cookies":25,"./platformsMap":35,"./uuid":43,"console":8}],27:[function(require,module,exports){
+},{"./cookies":26,"./platformsMap":36,"./uuid":44,"console":8}],28:[function(require,module,exports){
 var EventEmitter = require('events').EventEmitter;
 
 var emitter = new EventEmitter();
 emitter.setMaxListeners(0);
 
 module.exports = emitter;
-},{"events":9}],28:[function(require,module,exports){
+},{"events":9}],29:[function(require,module,exports){
 var device = require("./device");
 var sdkversion = require("./sdkversion");
+var appProps = require("./appProps");
 
 var defaultParams = null;
 var authSessionToken = null;
 //TODO: review these options, we probably only needs all of them for init calls, but we shouldn't need all of them for act calls
-var buildParams = function(app_props){
+var buildFHParams = function(){
   if(defaultParams){
     return defaultParams;
   }
   var fhparams = {};
   fhparams.cuid = device.getDeviceId();
   fhparams.cuidMap = device.getCuidMap();
-  fhparams.appid = app_props.appid;
-  fhparams.appkey = app_props.appkey;
-  fhparams.projectid = app_props.projectid;
-  fhparams.analyticsTag =  app_props.analyticsTag;
-  if(app_props.init){
-    fhparams.init = typeof(app_props.init) === "string" ? JSON.parse(app_props.init) : app_props.init;
-  }
   fhparams.destination = device.getDestination();
-  fhparams.connectiontag = app_props.connectiontag;
+  
   if(window.device || navigator.device){
     fhparams.device = window.device || navigator.device;
   }
@@ -7832,13 +7857,26 @@ var buildParams = function(app_props){
   if(authSessionToken){
     fhparams.sessionToken = authSessionToken;
   }
+
+  var app_props = appProps.getAppProps();
+  if(app_props){
+    fhparams.appid = app_props.appid;
+    fhparams.appkey = app_props.appkey;
+    fhparams.projectid = app_props.projectid;
+    fhparams.analyticsTag =  app_props.analyticsTag;
+    fhparams.connectiontag = app_props.connectiontag;
+    if(app_props.init){
+      fhparams.init = typeof(app_props.init) === "string" ? JSON.parse(app_props.init) : app_props.init;
+    }
+  }
+  
   defaultParams = fhparams;
   return fhparams;
 }
 
-var addDefaultParams = function(app_props, params){
+var addFHParams = function(params){
   var params = params || {};
-  params.__fh = buildParams(app_props);
+  params.__fh = buildFHParams();
   return params;
 }
 
@@ -7847,12 +7885,12 @@ var setAuthSessionToken = function(sessionToken){
 }
 
 module.exports = {
-  "buildParams": buildParams,
-  "addDefaultParams": addDefaultParams,
+  "buildFHParams": buildFHParams,
+  "addFHParams": addFHParams,
   "setAuthSessionToken":setAuthSessionToken
 }
 
-},{"./device":26,"./sdkversion":37}],29:[function(require,module,exports){
+},{"./appProps":23,"./device":27,"./sdkversion":38}],30:[function(require,module,exports){
 module.exports = function(){
   var path = null;
   var scripts = document.getElementsByTagName('script');
@@ -7873,7 +7911,7 @@ module.exports = function(){
   return path;
 };
 
-},{}],30:[function(require,module,exports){
+},{}],31:[function(require,module,exports){
 var JSON = require("JSON");
 
 module.exports = function(fail, req, resStatus){
@@ -7898,8 +7936,9 @@ module.exports = function(fail, req, resStatus){
   }
 };
 
-},{"JSON":3}],31:[function(require,module,exports){
+},{"JSON":3}],32:[function(require,module,exports){
 var constants = require("./constants");
+var appProps = require("./appProps");
 
 function CloudHost(cloud_props){
   this.cloud_props = cloud_props;
@@ -7939,19 +7978,20 @@ CloudHost.prototype.getHost = function(appType){
   }
 }
 
-CloudHost.prototype.getActUrl = function(appProps, act){
+CloudHost.prototype.getActUrl = function(act){
+  var app_props = appProps.getAppProps() || {};
   if(typeof this.cloud_host === "undefined"){
-    this.getHost(appProps.mode);
+    this.getHost(app_props.mode);
   }
   if(this.isLegacy){
-    return this.cloud_host + constants.boxprefix + "act/" + this.cloud_props.domain + "/" + appProps.appid + "/" + act + "/" + appProps.appid;
+    return this.cloud_host + constants.boxprefix + "act/" + this.cloud_props.domain + "/" + app_props.appid + "/" + act + "/" + app_props.appid;
   } else {
     return this.cloud_host + "/cloud/" + act;
   }
 }
 
 module.exports = CloudHost;
-},{"./constants":24}],32:[function(require,module,exports){
+},{"./appProps":23,"./constants":25}],33:[function(require,module,exports){
 var findFHPath = require("./findFHPath");
 var loadScript = require("./loadScript");
 var Lawnchair = require('../../libs/generated/lawnchair');
@@ -7963,15 +8003,13 @@ var handleError = require("./handleError");
 var console = require("console");
 var JSON = require("JSON");
 var hashFunc = require("./security/hash");
+var appProps = require("./appProps");
 
-var init = function(conf_path, callback){
-  ajax({url: consts.config_js, dataType:"json", success: function(data){
-    console.log("fhconfig = " + JSON.stringify(data));
-    loadCloudProps(data, callback);
-  }, error: function(req, statusText, error){
-    console.error("Can not load " + conf_path + ". Please make usre it exists.");
-    callback(statusText);
-  }});
+var init = function(cb){
+  appProps.load(function(err, data){
+    if(err) return cb(err);
+    return loadCloudProps(data, cb);
+  });
 }
 
 var loadCloudProps = function(app_props, callback){
@@ -8016,7 +8054,7 @@ var loadCloudProps = function(app_props, callback){
         savedHost = storage_res.value;
       }
     }
-    var data = fhparams.buildParams(app_props, consts.sdk_version);
+    var data = fhparams.buildFHParams();
 
     ajax(
       {
@@ -8034,14 +8072,14 @@ var loadCloudProps = function(app_props, callback){
           }, function() {
           });
           if(callback) {
-            callback(null, {app:app_props, cloud: initRes});
+            callback(null, {cloud: initRes});
           }
         },
         "error": function(req, statusText, error) {
           //use the cached host if we have a copy
           if(savedHost){
             if(callback){
-              callback(null, {app: app_props, cloud: savedHost});
+              callback(null, {cloud: savedHost});
             }
           } else {
             handleError(function(msg, err){
@@ -8059,7 +8097,7 @@ module.exports = {
   "init": init,
   "loadCloudProps": loadCloudProps
 }
-},{"../../libs/generated/lawnchair":2,"./ajax":18,"./constants":24,"./fhparams":28,"./findFHPath":29,"./handleError":30,"./lawnchair-ext":33,"./loadScript":34,"./security/hash":40,"JSON":3,"console":8}],33:[function(require,module,exports){
+},{"../../libs/generated/lawnchair":2,"./ajax":18,"./appProps":23,"./constants":25,"./fhparams":29,"./findFHPath":30,"./handleError":31,"./lawnchair-ext":34,"./loadScript":35,"./security/hash":41,"JSON":3,"console":8}],34:[function(require,module,exports){
 var Lawnchair = require('../../libs/generated/lawnchair');
 
 var fileStorageAdapter = function (app_props, hashFunc) {
@@ -8247,7 +8285,7 @@ var addAdapter = function(app_props, hashFunc){
 module.exports = {
   addAdapter: addAdapter
 }
-},{"../../libs/generated/lawnchair":2}],34:[function(require,module,exports){
+},{"../../libs/generated/lawnchair":2}],35:[function(require,module,exports){
 module.exports = function (url, callback) {
   var script;
   var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
@@ -8270,7 +8308,7 @@ module.exports = function (url, callback) {
   head.insertBefore(script, head.firstChild);
 };
 
-},{}],35:[function(require,module,exports){
+},{}],36:[function(require,module,exports){
 module.exports = [
   {
     "destination" :"ipad",
@@ -8298,7 +8336,7 @@ module.exports = [
   }
 ];
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 module.exports = function(url) {
   var qmap;
   var i = url.split("?");
@@ -8315,7 +8353,7 @@ module.exports = function(url) {
   return qmap;
 };
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 var constants = require("./constants");
 
 module.exports = function() {
@@ -8328,7 +8366,7 @@ module.exports = function() {
   return type + "/" + constants.sdk_version;
 };
 
-},{"./constants":24}],38:[function(require,module,exports){
+},{"./constants":25}],39:[function(require,module,exports){
 var rsa = require("../../../libs/rsa");
 var SecureRandom = rsa.SecureRandom;
 var byte2Hex = rsa.byte2Hex;
@@ -8370,7 +8408,7 @@ var aes_keygen = function(p, s, f){
 }
 
 module.exports = aes_keygen;
-},{"../../../libs/rsa":4}],39:[function(require,module,exports){
+},{"../../../libs/rsa":4}],40:[function(require,module,exports){
 var CryptoJS = require("../../../libs/generated/crypto");
 
 var encrypt = function(p, s, f){
@@ -8411,7 +8449,7 @@ module.exports = {
   encrypt: encrypt,
   decrypt: decrypt
 }
-},{"../../../libs/generated/crypto":1}],40:[function(require,module,exports){
+},{"../../../libs/generated/crypto":1}],41:[function(require,module,exports){
 var CryptoJS = require("../../../libs/generated/crypto");
 
 
@@ -8436,7 +8474,7 @@ var hash = function(p, s, f){
 }
 
 module.exports = hash;
-},{"../../../libs/generated/crypto":1}],41:[function(require,module,exports){
+},{"../../../libs/generated/crypto":1}],42:[function(require,module,exports){
 var rsa = require("../../../libs/rsa");
 var RSAKey = rsa.RSAKey;
 
@@ -8461,7 +8499,7 @@ var encrypt = function(p, s, f){
 module.exports = {
   encrypt: encrypt
 }
-},{"../../../libs/rsa":4}],42:[function(require,module,exports){
+},{"../../../libs/rsa":4}],43:[function(require,module,exports){
 var JSON = require("JSON");
 var actFunc = require("./api_act");
 var CryptoJS = require("../../libs/generated/crypto");
@@ -9478,7 +9516,7 @@ module.exports = {
 
 
 
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":19,"JSON":3}],43:[function(require,module,exports){
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":19,"JSON":3}],44:[function(require,module,exports){
 module.exports = {
   createUUID : function () {
     //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
@@ -9495,15 +9533,13 @@ module.exports = {
   }
 };
 
-},{}],44:[function(require,module,exports){
+},{}],45:[function(require,module,exports){
 var initializer = require("./initializer");
 var events = require("./events");
 var CloudHost = require("./hosts");
 var constants = require("./constants");
 
 var init_attempt = 0;
-//the app configurations
-var app_props;
 //the cloud configurations
 var cloud_host;
 
@@ -9511,18 +9547,17 @@ var is_initialising = false;
 var is_cloud_ready = false;
 
 
-var tryInitialise = function(conf_path, retry, cb){
+var tryInitialise = function(retry, cb){
   init_attempt++;
-  initializer.init(conf_path, function(error, initRes){
+  initializer.init(function(error, initRes){
 
     if(error){
       if(retry && init_attempt <= retry){
-        tryInitialise(conf_path, retry, cb);
+        tryInitialise(retry, cb);
       } else {
         return cb(error);
       }
     } else {
-      app_props = initRes.app;
       cloud_host = new CloudHost(initRes.cloud);
       return cb(null, cloud_host);
     }
@@ -9542,7 +9577,7 @@ var ready = function(cb, retry){
     if(!is_initialising){
       is_initialising = true;
       init_attempt = 0;
-      tryInitialise(constants.config_js, retry, function(err, data){
+      tryInitialise(retry, function(err, data){
         is_initialising = false;
         if(err){
           return events.emit("error", err);
@@ -9555,17 +9590,14 @@ var ready = function(cb, retry){
   }
 }
 
-var getAppProps = function(){
-  return app_props;
-}
-
 var getCloudHost = function(){
   return cloud_host;
 }
 
 var getCloudHostUrl = function(){
   if(typeof cloud_host !== "undefined"){
-    return cloud_host.getHost(app_props.mode);
+    var appProps = require("./appProps").getAppProps();
+    return cloud_host.getHost(appProps.mode);
   } else {
     return undefined;
   }
@@ -9593,9 +9625,8 @@ ready(function(error, host){
 module.exports = {
   ready: ready,
   isReady: isReady,
-  getAppProps: getAppProps,
   getCloudHost: getCloudHost,
   getCloudHostUrl: getCloudHostUrl,
   reset: reset
 }
-},{"./constants":24,"./events":27,"./hosts":31,"./initializer":32}]},{},["il4jYc"])
+},{"./appProps":23,"./constants":25,"./events":28,"./hosts":32,"./initializer":33}]},{},["il4jYc"])

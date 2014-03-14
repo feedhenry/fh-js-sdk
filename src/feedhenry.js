@@ -8,6 +8,7 @@ var api_auth = require("./modules/api_auth");
 var api_sec = require("./modules/api_sec");
 var api_hash = require("./modules/api_hash");
 var api_sync = require("./modules/sync-cli");
+var fhparams = require("./modules/fhparams");
 
 var defaultFail = function(msg, error){
   console.log(msg + ":" + JSON.stringify(error));
@@ -80,6 +81,10 @@ fh.ajax = ajax;
 
 fh.getCloudURL = function(){
   return cloud.getCloudHostUrl();
+};
+
+fh.getFHParams = function(){
+  return fhparams.buildFHParams();
 };
 
 //events

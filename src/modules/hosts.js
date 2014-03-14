@@ -1,4 +1,5 @@
 var constants = require("./constants");
+var appProps = require("./appProps");
 
 function CloudHost(cloud_props){
   this.cloud_props = cloud_props;
@@ -38,12 +39,13 @@ CloudHost.prototype.getHost = function(appType){
   }
 }
 
-CloudHost.prototype.getActUrl = function(appProps, act){
+CloudHost.prototype.getActUrl = function(act){
+  var app_props = appProps.getAppProps() || {};
   if(typeof this.cloud_host === "undefined"){
-    this.getHost(appProps.mode);
+    this.getHost(app_props.mode);
   }
   if(this.isLegacy){
-    return this.cloud_host + constants.boxprefix + "act/" + this.cloud_props.domain + "/" + appProps.appid + "/" + act + "/" + appProps.appid;
+    return this.cloud_host + constants.boxprefix + "act/" + this.cloud_props.domain + "/" + app_props.appid + "/" + act + "/" + app_props.appid;
   } else {
     return this.cloud_host + "/cloud/" + act;
   }

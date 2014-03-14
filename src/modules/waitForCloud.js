@@ -4,8 +4,6 @@ var CloudHost = require("./hosts");
 var constants = require("./constants");
 
 var init_attempt = 0;
-//the app configurations
-var app_props;
 //the cloud configurations
 var cloud_host;
 
@@ -13,18 +11,17 @@ var is_initialising = false;
 var is_cloud_ready = false;
 
 
-var tryInitialise = function(conf_path, retry, cb){
+var tryInitialise = function(retry, cb){
   init_attempt++;
-  initializer.init(conf_path, function(error, initRes){
+  initializer.init(function(error, initRes){
 
     if(error){
       if(retry && init_attempt <= retry){
-        tryInitialise(conf_path, retry, cb);
+        tryInitialise(retry, cb);
       } else {
         return cb(error);
       }
     } else {
-      app_props = initRes.app;
       cloud_host = new CloudHost(initRes.cloud);
       return cb(null, cloud_host);
     }
@@ -44,7 +41,7 @@ var ready = function(cb, retry){
     if(!is_initialising){
       is_initialising = true;
       init_attempt = 0;
-      tryInitialise(constants.config_js, retry, function(err, data){
+      tryInitialise(retry, function(err, data){
         is_initialising = false;
         if(err){
           return events.emit("error", err);
@@ -57,17 +54,14 @@ var ready = function(cb, retry){
   }
 }
 
-var getAppProps = function(){
-  return app_props;
-}
-
 var getCloudHost = function(){
   return cloud_host;
 }
 
 var getCloudHostUrl = function(){
   if(typeof cloud_host !== "undefined"){
-    return cloud_host.getHost(app_props.mode);
+    var appProps = require("./appProps").getAppProps();
+    return cloud_host.getHost(appProps.mode);
   } else {
     return undefined;
   }
@@ -95,7 +89,6 @@ ready(function(error, host){
 module.exports = {
   ready: ready,
   isReady: isReady,
-  getAppProps: getAppProps,
   getCloudHost: getCloudHost,
   getCloudHostUrl: getCloudHostUrl,
   reset: reset
