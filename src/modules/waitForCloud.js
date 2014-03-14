@@ -80,6 +80,7 @@ var isReady = function(){
 //for test
 var reset = function(){
   is_cloud_ready = false;
+  is_initialising = false;
   cloud_host = undefined;
 }
 

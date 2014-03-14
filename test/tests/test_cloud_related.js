@@ -49,6 +49,7 @@ describe("test all cloud related", function(){
 
       initFakeServer(server);
       var $fh = require("../../src/feedhenry");
+      $fh.reset();
 
       $fh.on('cloudready', callback);
       $fh.on('cloudready', cb2);
@@ -81,6 +82,7 @@ describe("test all cloud related", function(){
       server.respondWith('POST', /cloud\/echo/, buildFakeRes(data));
 
       var $fh = require("../../src/feedhenry");
+      $fh.reset();
 
       $fh.act({}, success, fail);
 
@@ -110,6 +112,7 @@ describe("test all cloud related", function(){
       server.respondWith('POST', /cloud\/echo/, buildFakeRes(data));
 
       var $fh = require("../../src/feedhenry");
+      $fh.reset();
 
       $fh.cloud('echo', {}, callback);
 
@@ -129,6 +132,7 @@ describe("test all cloud related", function(){
       server.respondWith('POST', /authpolicy/, buildFakeRes({status: "ok"}));
 
       var $fh = require("../../src/feedhenry");
+      $fh.reset();
 
       var success = sinon.spy();
       var fail = sinon.spy();
