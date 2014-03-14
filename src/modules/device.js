@@ -43,7 +43,10 @@ module.exports = {
 
     var userAgent = navigator.userAgent;
 
-    if (typeof window.fh_destination_code !== 'undefined') {
+    var dest_override = document.location.search.split("fh_destination_code=");
+    if (dest_override.length > 1) {
+     destination = dest_override[1];
+    } else if (typeof window.fh_destination_code !== 'undefined') {
       destination = window.fh_destination_code;
     } else {
       platformsToTest.forEach(function(testDestination){

@@ -11,7 +11,7 @@ var is_initialising = false;
 var is_cloud_ready = false;
 
 
-var tryInitialise = function(retry, cb){
+var tryInitialise = function(retry, cb, props){
   init_attempt++;
   initializer.init(function(error, initRes){
 
@@ -25,10 +25,16 @@ var tryInitialise = function(retry, cb){
       cloud_host = new CloudHost(initRes.cloud);
       return cb(null, cloud_host);
     }
-  });
+  }, props);
 }
 
-var ready = function(cb, retry){
+var ready = function(cb, retry, app_props){
+  var props = app_props;
+  var tries = retry;
+  if(typeof retry === "object"){
+    props = retry;
+    tries = 0;
+  }
   if(is_cloud_ready){
     return cb(null, {host: getCloudHostUrl()});
   } else {
@@ -41,7 +47,7 @@ var ready = function(cb, retry){
     if(!is_initialising){
       is_initialising = true;
       init_attempt = 0;
-      tryInitialise(retry, function(err, data){
+      tryInitialise(tries, function(err, data){
         is_initialising = false;
         if(err){
           return events.emit("error", err);
@@ -49,7 +55,7 @@ var ready = function(cb, retry){
           is_cloud_ready = true;
           return events.emit("cloudready", {host: getCloudHostUrl()});
         }
-      });
+      }, props);
     }
   }
 }

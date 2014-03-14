@@ -10,9 +10,13 @@ var load = function(cb){
     app_props = data;
     cb(null, app_props);
   }, error: function(req, statusText, error){
-    console.error("Can not load " + consts.config_js + ". Please make usre it exists.");
+    console.log(consts.config_js  + " Not Found");
     cb(statusText);
   }});
+}
+
+var setAppProps = function(props){
+  app_props = props;
 }
 
 var getAppProps = function(){
@@ -21,5 +25,6 @@ var getAppProps = function(){
 
 module.exports = {
   load: load,
-  getAppProps: getAppProps
+  getAppProps: getAppProps,
+  setAppProps: setAppProps
 }

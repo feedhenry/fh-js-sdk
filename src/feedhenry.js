@@ -38,6 +38,7 @@ var once = function(type, listener){
   }
 };
 
+//we have to continue support for init for now as for FH v2 apps, there won't be a config file created
 var init = function(opts, success, fail){
   console.warn("$fh.init has been deprecated.");
   cloud.ready(function(err, host){
@@ -50,7 +51,7 @@ var init = function(opts, success, fail){
         success(host.host);
       }
     }
-  });
+  }, opts);
 };
 
 var cloudFunc = function(act_name, params, cb){

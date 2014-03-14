@@ -34,11 +34,32 @@ var initFakeServer = function(server){
    server.respondWith('POST', /init/, buildFakeRes(legacyAppHost));
 }
 
-describe("test legacy app props", function(){
+describe("test legacy app props/app init", function(){
   var server;
 
   beforeEach(function () { server = sinon.fakeServer.create(); });
   afterEach(function () { server.restore(); });
+
+  describe("test legacy app init", function(){
+    it("$fh.init should initialise the app", function(){
+      var callback = sinon.spy();
+
+      server.respondWith('POST', /init/, buildFakeRes(legacyAppHost));
+      var $fh = require("../../src/feedhenry");
+
+      $fh.reset();
+
+      $fh.init(fhconfig, callback);
+      server.respond();
+
+      expect(callback).to.have.been.called;
+      expect(callback).to.have.been.calledOnce;
+      expect(callback).to.have.been.calledWith("http://localhost:8103");
+
+      var hostUrl = $fh.getCloudURL();
+      expect(hostUrl).to.equal("http://localhost:8103");
+    });
+  });
 
   describe("test auto initialisation", function(){
     it("should emit cloudready events", function(){

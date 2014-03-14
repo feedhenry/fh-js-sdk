@@ -6916,6 +6916,7 @@ var once = function(type, listener){
   }
 };
 
+//we have to continue support for init for now as for FH v2 apps, there won't be a config file created
 var init = function(opts, success, fail){
   console.warn("$fh.init has been deprecated.");
   cloud.ready(function(err, host){
@@ -6928,7 +6929,7 @@ var init = function(opts, success, fail){
         success(host.host);
       }
     }
-  });
+  }, opts);
 };
 
 var cloudFunc = function(act_name, params, cb){
@@ -7597,9 +7598,13 @@ var load = function(cb){
     app_props = data;
     cb(null, app_props);
   }, error: function(req, statusText, error){
-    console.error("Can not load " + consts.config_js + ". Please make usre it exists.");
+    console.log(consts.config_js  + " Not Found");
     cb(statusText);
   }});
+}
+
+var setAppProps = function(props){
+  app_props = props;
 }
 
 var getAppProps = function(){
@@ -7608,7 +7613,8 @@ var getAppProps = function(){
 
 module.exports = {
   load: load,
-  getAppProps: getAppProps
+  getAppProps: getAppProps,
+  setAppProps: setAppProps
 }
 },{"./ajax":17,"./constants":24,"console":8}],23:[function(_dereq_,module,exports){
 var console = _dereq_("console");
@@ -7797,7 +7803,10 @@ module.exports = {
 
     var userAgent = navigator.userAgent;
 
-    if (typeof window.fh_destination_code !== 'undefined') {
+    var dest_override = document.location.search.split("fh_destination_code=");
+    if (dest_override.length > 1) {
+     destination = dest_override[1];
+    } else if (typeof window.fh_destination_code !== 'undefined') {
       destination = window.fh_destination_code;
     } else {
       platformsToTest.forEach(function(testDestination){
@@ -8007,11 +8016,16 @@ var JSON = _dereq_("JSON");
 var hashFunc = _dereq_("./security/hash");
 var appProps = _dereq_("./appProps");
 
-var init = function(cb){
-  appProps.load(function(err, data){
-    if(err) return cb(err);
-    return loadCloudProps(data, cb);
-  });
+var init = function(cb, app_props){
+  if(arguments.length === 2 && typeof app_props === "object" && app_props.mode){
+    appProps.setAppProps(app_props);
+    return loadCloudProps(app_props, cb);
+  } else {
+    appProps.load(function(err, data){
+      if(err) return cb(err);
+      return loadCloudProps(data, cb);
+    });
+  }
 }
 
 var loadCloudProps = function(app_props, callback){
@@ -9549,7 +9563,7 @@ var is_initialising = false;
 var is_cloud_ready = false;
 
 
-var tryInitialise = function(retry, cb){
+var tryInitialise = function(retry, cb, props){
   init_attempt++;
   initializer.init(function(error, initRes){
 
@@ -9563,10 +9577,16 @@ var tryInitialise = function(retry, cb){
       cloud_host = new CloudHost(initRes.cloud);
       return cb(null, cloud_host);
     }
-  });
+  }, props);
 }
 
-var ready = function(cb, retry){
+var ready = function(cb, retry, app_props){
+  var props = app_props;
+  var tries = retry;
+  if(typeof retry === "object"){
+    props = retry;
+    tries = 0;
+  }
   if(is_cloud_ready){
     return cb(null, {host: getCloudHostUrl()});
   } else {
@@ -9579,7 +9599,7 @@ var ready = function(cb, retry){
     if(!is_initialising){
       is_initialising = true;
       init_attempt = 0;
-      tryInitialise(retry, function(err, data){
+      tryInitialise(tries, function(err, data){
         is_initialising = false;
         if(err){
           return events.emit("error", err);
@@ -9587,7 +9607,7 @@ var ready = function(cb, retry){
           is_cloud_ready = true;
           return events.emit("cloudready", {host: getCloudHostUrl()});
         }
-      });
+      }, props);
     }
   }
 }
