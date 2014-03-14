@@ -5,9 +5,9 @@ FieldCameraView = FieldView.extend({
     '<div class="cam"></div>' +
     '</div>',
   onElementShow: function(index) {
-    var captureBtn = $(this.renderButton(index, "<i class='fa fa-camera'></i>&nbspCapture Photo From Camera", "fhcam"));
-    var libBtn = $(this.renderButton(index, "<i class='fa fa-folder'></i>&nbspChoose Photo from Library", "fhcam_lib"));
-    var rmBtn = $(this.renderButton(index, "<i class='fa fa-times-circle'></i>&nbspRemove Photo", "remove"));
+    var captureBtn = $(this.renderButton(index, "<i class='fa fa-camera'></i>&nbsp;Capture Photo From Camera", "fhcam"));
+    var libBtn = $(this.renderButton(index, "<i class='fa fa-folder'></i>&nbsp;Choose Photo from Library", "fhcam_lib"));
+    var rmBtn = $(this.renderButton(index, "<i class='fa fa-times-circle'></i>&nbsp;Remove Photo", "remove"));
 
     this.getWrapper(index).append(captureBtn);
     this.getWrapper(index).append(libBtn);

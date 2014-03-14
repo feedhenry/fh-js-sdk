@@ -35,7 +35,9 @@ appForm.utils = function (module) {
     var height = params.targetHeight ? params.targetHeight : $fh.forms.config.get("targetHeight", 480);
     var quality= params.quality ? params.quality : $fh.forms.config.get("quality", 50);
 
-    params.sourceType = params.sourceType ? params.sourceType : Camera.PictureSourceType.CAMERA;
+    if ("undefined" === typeof params.sourceType) {
+      params.sourceType = Camera.PictureSourceType.CAMERA;
+    }
 
     if (isPhoneGap) {
       navigator.camera.getPicture(_phoneGapSuccess(cb), cb, {
