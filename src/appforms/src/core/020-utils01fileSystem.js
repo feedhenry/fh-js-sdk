@@ -51,13 +51,11 @@ appForm.utils = function (module) {
         size = saveObj.size;
       } else {
         //JSON object
-        var stringify = JSON.stringify(content);
-        size = stringify.length;
-        saveObj = new Blob(stringify, { type: 'text/plain' });
+        saveObj = JSON.stringify(content);
       }
-    } else if (typeof content == 'string') {
-      size = content.length;
-      saveObj = new Blob([content], { type: 'text/plain' });
+    }
+    else if (typeof content == 'string') {
+      saveObj = content;
     }
     _getFileEntry(fileName, size, { create: true }, function (err, fileEntry) {
       if (err) {
