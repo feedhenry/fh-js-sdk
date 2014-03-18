@@ -6875,6 +6875,8 @@ module.exports = function(val){
   return typeof val
 }
 
+},{}],"/Users/weili/work/fh-sdks/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
+module.exports=require('il4jYc');
 },{}],"il4jYc":[function(require,module,exports){
 var constants = require("./modules/constants");
 var console = require("console");
@@ -6886,7 +6888,9 @@ var api_auth = require("./modules/api_auth");
 var api_sec = require("./modules/api_sec");
 var api_hash = require("./modules/api_hash");
 var api_sync = require("./modules/sync-cli");
+var api_mbaas = require("./modules/api_mbaas");
 var fhparams = require("./modules/fhparams");
+var appProps = require("./modules/appProps");
 
 var defaultFail = function(msg, error){
   console.log(msg + ":" + JSON.stringify(error));
@@ -6918,7 +6922,7 @@ var once = function(type, listener){
 
 //we have to continue support for init for now as for FH v2 apps, there won't be a config file created
 var init = function(opts, success, fail){
-  console.warn("$fh.init has been deprecated.");
+  console.warn("$fh.init will be deprecated soon");
   cloud.ready(function(err, host){
     if(err){
       if(typeof fail === "function"){
@@ -6956,7 +6960,8 @@ fh.cloud = cloudFunc;
 fh.sec = api_sec;
 fh.hash = api_hash;
 fh.sync = api_sync;
-fh.ajax = ajax;
+fh.ajax = fh.__ajax = ajax;
+fh.mbaas = api_mbaas;
 
 fh.getCloudURL = function(){
   return cloud.getCloudHostUrl();
@@ -6975,6 +6980,12 @@ for(var i=0;i<methods.length;i++){
   fh[methods[i]] = events[methods[i]];
 }
 
+//keep backward compatibility
+fh.on("cloudready", function(host){
+  fh.cloud_props = {hosts: {url: host.host}};
+  fh.app_props = appProps.getAppProps();
+});
+
 //for test
 fh.reset = cloud.reset;
 //we should really stop polluting global name space. Ideally we should ask browserify to use "$fh" when umd-fy the module. However, "$" is not allowed as the standard module name.
@@ -6987,9 +6998,7 @@ module.exports = fh;
 
 
 
-},{"./modules/ajax":18,"./modules/api_act":19,"./modules/api_auth":20,"./modules/api_hash":21,"./modules/api_sec":22,"./modules/constants":25,"./modules/events":28,"./modules/fhparams":29,"./modules/sync-cli":43,"./modules/waitForCloud":45,"console":8}],"/Users/weili/work/fh-sdks/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
-module.exports=require('il4jYc');
-},{}],17:[function(require,module,exports){
+},{"./modules/ajax":18,"./modules/api_act":19,"./modules/api_auth":20,"./modules/api_hash":21,"./modules/api_mbaas":22,"./modules/api_sec":23,"./modules/appProps":24,"./modules/constants":26,"./modules/events":29,"./modules/fhparams":30,"./modules/sync-cli":44,"./modules/waitForCloud":46,"console":8}],17:[function(require,module,exports){
 var XDomainRequestWrapper = function(xdr){
   this.xdr = xdr;
   this.isWrapper = true;
@@ -7416,7 +7425,7 @@ function extend(target) {
   })
   return target
 }
-},{"./XDomainRequestWrapper":17,"./constants":25,"./events":28,"type-of":14}],19:[function(require,module,exports){
+},{"./XDomainRequestWrapper":17,"./constants":26,"./events":29,"type-of":14}],19:[function(require,module,exports){
 var console =require("console");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
@@ -7465,7 +7474,7 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":18,"./fhparams":29,"./handleError":31,"./waitForCloud":45,"JSON":3,"console":8}],20:[function(require,module,exports){
+},{"./ajax":18,"./fhparams":30,"./handleError":32,"./waitForCloud":46,"JSON":3,"console":8}],20:[function(require,module,exports){
 var console =require("console");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
@@ -7531,7 +7540,7 @@ module.exports = function(opts, success, fail){
     }
   });
 }
-},{"./ajax":18,"./appProps":23,"./checkAuth":24,"./constants":25,"./device":27,"./fhparams":29,"./handleError":31,"./waitForCloud":45,"JSON":3,"console":8}],21:[function(require,module,exports){
+},{"./ajax":18,"./appProps":24,"./checkAuth":25,"./constants":26,"./device":28,"./fhparams":30,"./handleError":32,"./waitForCloud":46,"JSON":3,"console":8}],21:[function(require,module,exports){
 var hashImpl = require("./security/hash");
 
 module.exports = function(p, s, f){
@@ -7543,7 +7552,50 @@ module.exports = function(p, s, f){
   params.params = p;
   hashImpl(params, s, f);
 };
-},{"./security/hash":41}],22:[function(require,module,exports){
+},{"./security/hash":42}],22:[function(require,module,exports){
+var console =require("console");
+var cloud = require("./waitForCloud");
+var fhparams = require("./fhparams");
+var ajax = require("./ajax");
+var JSON = require("JSON");
+var handleError = require("./handleError");
+var consts = require("./constants");
+
+
+module.exports = function(opts, success, fail){
+  console.log("mbaas is called.");
+  if(!fail){
+    fail = function(msg, error){
+      console.log(msg + ":" + JSON.stringify(error));
+    };
+  }
+
+  var mbaas = opts.service;
+  var params = opts.params;
+
+  cloud.ready(function(err, cloudHost){
+    console.log("Calling mbaas now");
+    if(err){
+      return fail(err.message, err);
+    } else {
+      var cloud_host = cloud.getCloudHost();
+      var url = cloud_host.getMBAASUrl(mbaas);
+      params = fhparams.addFHParams(params);
+      return ajax({
+        "url": url,
+        "tryJSONP": true,
+        "type": "POST",
+        "dataType": "json",
+        "data": JSON.stringify(params),
+        "contentType": "application/json",
+        "timeout": opts.timeout || consts.fh_timeout,
+        "success": success,
+        "error": fail
+      });
+    }
+  });
+}
+},{"./ajax":18,"./constants":26,"./fhparams":30,"./handleError":32,"./waitForCloud":46,"JSON":3,"console":8}],23:[function(require,module,exports){
 var keygen = require("./security/aes-keygen");
 var aes = require("./security/aes-node");
 var rsa = require("./security/rsa-node");
@@ -7587,7 +7639,7 @@ module.exports = function(p, s, f){
     }
   }
 }
-},{"./security/aes-keygen":39,"./security/aes-node":40,"./security/hash":41,"./security/rsa-node":42}],23:[function(require,module,exports){
+},{"./security/aes-keygen":40,"./security/aes-node":41,"./security/hash":42,"./security/rsa-node":43}],24:[function(require,module,exports){
 var consts = require("./constants");
 var ajax = require("./ajax");
 var console = require("console");
@@ -7618,7 +7670,7 @@ module.exports = {
   getAppProps: getAppProps,
   setAppProps: setAppProps
 }
-},{"./ajax":18,"./constants":25,"console":8}],24:[function(require,module,exports){
+},{"./ajax":18,"./constants":26,"console":8}],25:[function(require,module,exports){
 var console = require("console");
 var queryMap = require("./queryMap");
 var JSON = require("JSON");
@@ -7726,14 +7778,14 @@ module.exports = {
   "handleAuthResponse": handleAuthResponse
 };
 
-},{"./fhparams":29,"./queryMap":37,"JSON":3,"console":8}],25:[function(require,module,exports){
+},{"./fhparams":30,"./queryMap":38,"JSON":3,"console":8}],26:[function(require,module,exports){
 module.exports = {
   "fh_timeout": 20000,
   "boxprefix": "/box/srv/1.1/",
   "sdk_version": "BUILD_VERSION",
   "config_js":"fhconfig.json"
 }
-},{}],26:[function(require,module,exports){
+},{}],27:[function(require,module,exports){
 var console = require("console");
 module.exports = {
   readCookieValue  : function (cookie_name) {
@@ -7759,7 +7811,7 @@ module.exports = {
   }
 };
 
-},{"console":8}],27:[function(require,module,exports){
+},{"console":8}],28:[function(require,module,exports){
 var cookies = require("./cookies");
 var uuidModule = require("./uuid");
 var console = require("console");
@@ -7828,14 +7880,14 @@ module.exports = {
   }
 }
 
-},{"./cookies":26,"./platformsMap":36,"./uuid":44,"console":8}],28:[function(require,module,exports){
+},{"./cookies":27,"./platformsMap":37,"./uuid":45,"console":8}],29:[function(require,module,exports){
 var EventEmitter = require('events').EventEmitter;
 
 var emitter = new EventEmitter();
 emitter.setMaxListeners(0);
 
 module.exports = emitter;
-},{"events":9}],29:[function(require,module,exports){
+},{"events":9}],30:[function(require,module,exports){
 var device = require("./device");
 var sdkversion = require("./sdkversion");
 var appProps = require("./appProps");
@@ -7903,7 +7955,7 @@ module.exports = {
   "setAuthSessionToken":setAuthSessionToken
 }
 
-},{"./appProps":23,"./device":27,"./sdkversion":38}],30:[function(require,module,exports){
+},{"./appProps":24,"./device":28,"./sdkversion":39}],31:[function(require,module,exports){
 module.exports = function(){
   var path = null;
   var scripts = document.getElementsByTagName('script');
@@ -7924,7 +7976,7 @@ module.exports = function(){
   return path;
 };
 
-},{}],31:[function(require,module,exports){
+},{}],32:[function(require,module,exports){
 var JSON = require("JSON");
 
 module.exports = function(fail, req, resStatus){
@@ -7949,7 +8001,7 @@ module.exports = function(fail, req, resStatus){
   }
 };
 
-},{"JSON":3}],32:[function(require,module,exports){
+},{"JSON":3}],33:[function(require,module,exports){
 var constants = require("./constants");
 var appProps = require("./appProps");
 
@@ -8003,8 +8055,16 @@ CloudHost.prototype.getActUrl = function(act){
   }
 }
 
+CloudHost.prototype.getMBAASUrl = function(service){
+  var app_props = appProps.getAppProps() || {};
+  if(typeof this.cloud_host === "undefined"){
+    this.getHost(app_props.mode);
+  }
+  return this.cloud_host + "/mbaas/" + service;
+}
+
 module.exports = CloudHost;
-},{"./appProps":23,"./constants":25}],33:[function(require,module,exports){
+},{"./appProps":24,"./constants":26}],34:[function(require,module,exports){
 var findFHPath = require("./findFHPath");
 var loadScript = require("./loadScript");
 var Lawnchair = require('../../libs/generated/lawnchair');
@@ -8115,7 +8175,7 @@ module.exports = {
   "init": init,
   "loadCloudProps": loadCloudProps
 }
-},{"../../libs/generated/lawnchair":2,"./ajax":18,"./appProps":23,"./constants":25,"./fhparams":29,"./findFHPath":30,"./handleError":31,"./lawnchair-ext":34,"./loadScript":35,"./security/hash":41,"JSON":3,"console":8}],34:[function(require,module,exports){
+},{"../../libs/generated/lawnchair":2,"./ajax":18,"./appProps":24,"./constants":26,"./fhparams":30,"./findFHPath":31,"./handleError":32,"./lawnchair-ext":35,"./loadScript":36,"./security/hash":42,"JSON":3,"console":8}],35:[function(require,module,exports){
 var Lawnchair = require('../../libs/generated/lawnchair');
 
 var fileStorageAdapter = function (app_props, hashFunc) {
@@ -8303,7 +8363,7 @@ var addAdapter = function(app_props, hashFunc){
 module.exports = {
   addAdapter: addAdapter
 }
-},{"../../libs/generated/lawnchair":2}],35:[function(require,module,exports){
+},{"../../libs/generated/lawnchair":2}],36:[function(require,module,exports){
 module.exports = function (url, callback) {
   var script;
   var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
@@ -8326,7 +8386,7 @@ module.exports = function (url, callback) {
   head.insertBefore(script, head.firstChild);
 };
 
-},{}],36:[function(require,module,exports){
+},{}],37:[function(require,module,exports){
 module.exports = [
   {
     "destination" :"ipad",
@@ -8354,7 +8414,7 @@ module.exports = [
   }
 ];
 
-},{}],37:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 module.exports = function(url) {
   var qmap;
   var i = url.split("?");
@@ -8371,7 +8431,7 @@ module.exports = function(url) {
   return qmap;
 };
 
-},{}],38:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
 var constants = require("./constants");
 
 module.exports = function() {
@@ -8384,7 +8444,7 @@ module.exports = function() {
   return type + "/" + constants.sdk_version;
 };
 
-},{"./constants":25}],39:[function(require,module,exports){
+},{"./constants":26}],40:[function(require,module,exports){
 var rsa = require("../../../libs/rsa");
 var SecureRandom = rsa.SecureRandom;
 var byte2Hex = rsa.byte2Hex;
@@ -8426,7 +8486,7 @@ var aes_keygen = function(p, s, f){
 }
 
 module.exports = aes_keygen;
-},{"../../../libs/rsa":4}],40:[function(require,module,exports){
+},{"../../../libs/rsa":4}],41:[function(require,module,exports){
 var CryptoJS = require("../../../libs/generated/crypto");
 
 var encrypt = function(p, s, f){
@@ -8467,7 +8527,7 @@ module.exports = {
   encrypt: encrypt,
   decrypt: decrypt
 }
-},{"../../../libs/generated/crypto":1}],41:[function(require,module,exports){
+},{"../../../libs/generated/crypto":1}],42:[function(require,module,exports){
 var CryptoJS = require("../../../libs/generated/crypto");
 
 
@@ -8492,7 +8552,7 @@ var hash = function(p, s, f){
 }
 
 module.exports = hash;
-},{"../../../libs/generated/crypto":1}],42:[function(require,module,exports){
+},{"../../../libs/generated/crypto":1}],43:[function(require,module,exports){
 var rsa = require("../../../libs/rsa");
 var RSAKey = rsa.RSAKey;
 
@@ -8517,7 +8577,7 @@ var encrypt = function(p, s, f){
 module.exports = {
   encrypt: encrypt
 }
-},{"../../../libs/rsa":4}],43:[function(require,module,exports){
+},{"../../../libs/rsa":4}],44:[function(require,module,exports){
 var JSON = require("JSON");
 var actFunc = require("./api_act");
 var CryptoJS = require("../../libs/generated/crypto");
@@ -9534,7 +9594,7 @@ module.exports = {
 
 
 
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":19,"JSON":3}],44:[function(require,module,exports){
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":19,"JSON":3}],45:[function(require,module,exports){
 module.exports = {
   createUUID : function () {
     //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
@@ -9551,7 +9611,7 @@ module.exports = {
   }
 };
 
-},{}],45:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 var initializer = require("./initializer");
 var events = require("./events");
 var CloudHost = require("./hosts");
@@ -9653,4 +9713,4 @@ module.exports = {
   getCloudHostUrl: getCloudHostUrl,
   reset: reset
 }
-},{"./appProps":23,"./constants":25,"./events":28,"./hosts":32,"./initializer":33}]},{},["il4jYc"])
+},{"./appProps":24,"./constants":26,"./events":29,"./hosts":33,"./initializer":34}]},{},["il4jYc"])

@@ -66,7 +66,14 @@ describe("test all cloud related", function(){
 
       var hostUrl = $fh.getCloudURL();
       expect(hostUrl).to.equal("http://localhost:8101");
+
       
+      expect($fh).to.have.property("cloud_props");
+      expect($fh.cloud_props).to.have.property("hosts");
+      expect($fh.cloud_props.hosts).to.have.property("url");
+      expect($fh.cloud_props.hosts.url).to.equal("http://localhost:8101");
+
+      expect($fh).to.have.property("app_props");
     });
   });
 
@@ -148,6 +155,30 @@ describe("test all cloud related", function(){
 
       expect(success).to.have.been.calledOnce;
       expect(fail).to.have.not.been.called;
+    });
+  });
+
+  describe("test mbaas call", function(){
+    it("mbaas call should call", function(){
+      initFakeServer(server);
+      server.respondWith('POST', /mbaas\/forms/, buildFakeRes({"status": "ok"}));
+
+      var $fh = require("../../src/feedhenry");
+      $fh.reset();
+
+      var success = sinon.spy();
+      var fail = sinon.spy();
+
+      $fh.mbaas({service: "forms"}, success, fail);
+
+      server.respond();
+      server.respond();
+      server.respond();
+
+      expect(success).to.have.been.calledOnce;
+      expect(fail).to.have.not.been.called;
+      expect(success).to.have.been.calledWith({"status": "ok"});
+
     });
   });
 });

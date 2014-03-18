@@ -6886,7 +6886,9 @@ var api_auth = _dereq_("./modules/api_auth");
 var api_sec = _dereq_("./modules/api_sec");
 var api_hash = _dereq_("./modules/api_hash");
 var api_sync = _dereq_("./modules/sync-cli");
+var api_mbaas = _dereq_("./modules/api_mbaas");
 var fhparams = _dereq_("./modules/fhparams");
+var appProps = _dereq_("./modules/appProps");
 
 var defaultFail = function(msg, error){
   console.log(msg + ":" + JSON.stringify(error));
@@ -6918,7 +6920,7 @@ var once = function(type, listener){
 
 //we have to continue support for init for now as for FH v2 apps, there won't be a config file created
 var init = function(opts, success, fail){
-  console.warn("$fh.init has been deprecated.");
+  console.warn("$fh.init will be deprecated soon");
   cloud.ready(function(err, host){
     if(err){
       if(typeof fail === "function"){
@@ -6956,7 +6958,8 @@ fh.cloud = cloudFunc;
 fh.sec = api_sec;
 fh.hash = api_hash;
 fh.sync = api_sync;
-fh.ajax = ajax;
+fh.ajax = fh.__ajax = ajax;
+fh.mbaas = api_mbaas;
 
 fh.getCloudURL = function(){
   return cloud.getCloudHostUrl();
@@ -6975,6 +6978,12 @@ for(var i=0;i<methods.length;i++){
   fh[methods[i]] = events[methods[i]];
 }
 
+//keep backward compatibility
+fh.on("cloudready", function(host){
+  fh.cloud_props = {hosts: {url: host.host}};
+  fh.app_props = appProps.getAppProps();
+});
+
 //for test
 fh.reset = cloud.reset;
 //we should really stop polluting global name space. Ideally we should ask browserify to use "$fh" when umd-fy the module. However, "$" is not allowed as the standard module name.
@@ -6987,7 +6996,7 @@ module.exports = fh;
 
 
 
-},{"./modules/ajax":17,"./modules/api_act":18,"./modules/api_auth":19,"./modules/api_hash":20,"./modules/api_sec":21,"./modules/constants":24,"./modules/events":27,"./modules/fhparams":28,"./modules/sync-cli":42,"./modules/waitForCloud":44,"console":8}],16:[function(_dereq_,module,exports){
+},{"./modules/ajax":17,"./modules/api_act":18,"./modules/api_auth":19,"./modules/api_hash":20,"./modules/api_mbaas":21,"./modules/api_sec":22,"./modules/appProps":23,"./modules/constants":25,"./modules/events":28,"./modules/fhparams":29,"./modules/sync-cli":43,"./modules/waitForCloud":45,"console":8}],16:[function(_dereq_,module,exports){
 var XDomainRequestWrapper = function(xdr){
   this.xdr = xdr;
   this.isWrapper = true;
@@ -7414,7 +7423,7 @@ function extend(target) {
   })
   return target
 }
-},{"./XDomainRequestWrapper":16,"./constants":24,"./events":27,"type-of":14}],18:[function(_dereq_,module,exports){
+},{"./XDomainRequestWrapper":16,"./constants":25,"./events":28,"type-of":14}],18:[function(_dereq_,module,exports){
 var console =_dereq_("console");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -7463,7 +7472,7 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":17,"./fhparams":28,"./handleError":30,"./waitForCloud":44,"JSON":3,"console":8}],19:[function(_dereq_,module,exports){
+},{"./ajax":17,"./fhparams":29,"./handleError":31,"./waitForCloud":45,"JSON":3,"console":8}],19:[function(_dereq_,module,exports){
 var console =_dereq_("console");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -7529,7 +7538,7 @@ module.exports = function(opts, success, fail){
     }
   });
 }
-},{"./ajax":17,"./appProps":22,"./checkAuth":23,"./constants":24,"./device":26,"./fhparams":28,"./handleError":30,"./waitForCloud":44,"JSON":3,"console":8}],20:[function(_dereq_,module,exports){
+},{"./ajax":17,"./appProps":23,"./checkAuth":24,"./constants":25,"./device":27,"./fhparams":29,"./handleError":31,"./waitForCloud":45,"JSON":3,"console":8}],20:[function(_dereq_,module,exports){
 var hashImpl = _dereq_("./security/hash");
 
 module.exports = function(p, s, f){
@@ -7541,7 +7550,50 @@ module.exports = function(p, s, f){
   params.params = p;
   hashImpl(params, s, f);
 };
-},{"./security/hash":40}],21:[function(_dereq_,module,exports){
+},{"./security/hash":41}],21:[function(_dereq_,module,exports){
+var console =_dereq_("console");
+var cloud = _dereq_("./waitForCloud");
+var fhparams = _dereq_("./fhparams");
+var ajax = _dereq_("./ajax");
+var JSON = _dereq_("JSON");
+var handleError = _dereq_("./handleError");
+var consts = _dereq_("./constants");
+
+
+module.exports = function(opts, success, fail){
+  console.log("mbaas is called.");
+  if(!fail){
+    fail = function(msg, error){
+      console.log(msg + ":" + JSON.stringify(error));
+    };
+  }
+
+  var mbaas = opts.service;
+  var params = opts.params;
+
+  cloud.ready(function(err, cloudHost){
+    console.log("Calling mbaas now");
+    if(err){
+      return fail(err.message, err);
+    } else {
+      var cloud_host = cloud.getCloudHost();
+      var url = cloud_host.getMBAASUrl(mbaas);
+      params = fhparams.addFHParams(params);
+      return ajax({
+        "url": url,
+        "tryJSONP": true,
+        "type": "POST",
+        "dataType": "json",
+        "data": JSON.stringify(params),
+        "contentType": "application/json",
+        "timeout": opts.timeout || consts.fh_timeout,
+        "success": success,
+        "error": fail
+      });
+    }
+  });
+}
+},{"./ajax":17,"./constants":25,"./fhparams":29,"./handleError":31,"./waitForCloud":45,"JSON":3,"console":8}],22:[function(_dereq_,module,exports){
 var keygen = _dereq_("./security/aes-keygen");
 var aes = _dereq_("./security/aes-node");
 var rsa = _dereq_("./security/rsa-node");
@@ -7585,7 +7637,7 @@ module.exports = function(p, s, f){
     }
   }
 }
-},{"./security/aes-keygen":38,"./security/aes-node":39,"./security/hash":40,"./security/rsa-node":41}],22:[function(_dereq_,module,exports){
+},{"./security/aes-keygen":39,"./security/aes-node":40,"./security/hash":41,"./security/rsa-node":42}],23:[function(_dereq_,module,exports){
 var consts = _dereq_("./constants");
 var ajax = _dereq_("./ajax");
 var console = _dereq_("console");
@@ -7616,7 +7668,7 @@ module.exports = {
   getAppProps: getAppProps,
   setAppProps: setAppProps
 }
-},{"./ajax":17,"./constants":24,"console":8}],23:[function(_dereq_,module,exports){
+},{"./ajax":17,"./constants":25,"console":8}],24:[function(_dereq_,module,exports){
 var console = _dereq_("console");
 var queryMap = _dereq_("./queryMap");
 var JSON = _dereq_("JSON");
@@ -7724,14 +7776,14 @@ module.exports = {
   "handleAuthResponse": handleAuthResponse
 };
 
-},{"./fhparams":28,"./queryMap":36,"JSON":3,"console":8}],24:[function(_dereq_,module,exports){
+},{"./fhparams":29,"./queryMap":37,"JSON":3,"console":8}],25:[function(_dereq_,module,exports){
 module.exports = {
   "fh_timeout": 20000,
   "boxprefix": "/box/srv/1.1/",
   "sdk_version": "2.0.0-alpha",
   "config_js":"fhconfig.json"
 }
-},{}],25:[function(_dereq_,module,exports){
+},{}],26:[function(_dereq_,module,exports){
 var console = _dereq_("console");
 module.exports = {
   readCookieValue  : function (cookie_name) {
@@ -7757,7 +7809,7 @@ module.exports = {
   }
 };
 
-},{"console":8}],26:[function(_dereq_,module,exports){
+},{"console":8}],27:[function(_dereq_,module,exports){
 var cookies = _dereq_("./cookies");
 var uuidModule = _dereq_("./uuid");
 var console = _dereq_("console");
@@ -7826,14 +7878,14 @@ module.exports = {
   }
 }
 
-},{"./cookies":25,"./platformsMap":35,"./uuid":43,"console":8}],27:[function(_dereq_,module,exports){
+},{"./cookies":26,"./platformsMap":36,"./uuid":44,"console":8}],28:[function(_dereq_,module,exports){
 var EventEmitter = _dereq_('events').EventEmitter;
 
 var emitter = new EventEmitter();
 emitter.setMaxListeners(0);
 
 module.exports = emitter;
-},{"events":9}],28:[function(_dereq_,module,exports){
+},{"events":9}],29:[function(_dereq_,module,exports){
 var device = _dereq_("./device");
 var sdkversion = _dereq_("./sdkversion");
 var appProps = _dereq_("./appProps");
@@ -7901,7 +7953,7 @@ module.exports = {
   "setAuthSessionToken":setAuthSessionToken
 }
 
-},{"./appProps":22,"./device":26,"./sdkversion":37}],29:[function(_dereq_,module,exports){
+},{"./appProps":23,"./device":27,"./sdkversion":38}],30:[function(_dereq_,module,exports){
 module.exports = function(){
   var path = null;
   var scripts = document.getElementsByTagName('script');
@@ -7922,7 +7974,7 @@ module.exports = function(){
   return path;
 };
 
-},{}],30:[function(_dereq_,module,exports){
+},{}],31:[function(_dereq_,module,exports){
 var JSON = _dereq_("JSON");
 
 module.exports = function(fail, req, resStatus){
@@ -7947,7 +7999,7 @@ module.exports = function(fail, req, resStatus){
   }
 };
 
-},{"JSON":3}],31:[function(_dereq_,module,exports){
+},{"JSON":3}],32:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
 var appProps = _dereq_("./appProps");
 
@@ -8001,8 +8053,16 @@ CloudHost.prototype.getActUrl = function(act){
   }
 }
 
+CloudHost.prototype.getMBAASUrl = function(service){
+  var app_props = appProps.getAppProps() || {};
+  if(typeof this.cloud_host === "undefined"){
+    this.getHost(app_props.mode);
+  }
+  return this.cloud_host + "/mbaas/" + service;
+}
+
 module.exports = CloudHost;
-},{"./appProps":22,"./constants":24}],32:[function(_dereq_,module,exports){
+},{"./appProps":23,"./constants":25}],33:[function(_dereq_,module,exports){
 var findFHPath = _dereq_("./findFHPath");
 var loadScript = _dereq_("./loadScript");
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
@@ -8113,7 +8173,7 @@ module.exports = {
   "init": init,
   "loadCloudProps": loadCloudProps
 }
-},{"../../libs/generated/lawnchair":2,"./ajax":17,"./appProps":22,"./constants":24,"./fhparams":28,"./findFHPath":29,"./handleError":30,"./lawnchair-ext":33,"./loadScript":34,"./security/hash":40,"JSON":3,"console":8}],33:[function(_dereq_,module,exports){
+},{"../../libs/generated/lawnchair":2,"./ajax":17,"./appProps":23,"./constants":25,"./fhparams":29,"./findFHPath":30,"./handleError":31,"./lawnchair-ext":34,"./loadScript":35,"./security/hash":41,"JSON":3,"console":8}],34:[function(_dereq_,module,exports){
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
 
 var fileStorageAdapter = function (app_props, hashFunc) {
@@ -8301,7 +8361,7 @@ var addAdapter = function(app_props, hashFunc){
 module.exports = {
   addAdapter: addAdapter
 }
-},{"../../libs/generated/lawnchair":2}],34:[function(_dereq_,module,exports){
+},{"../../libs/generated/lawnchair":2}],35:[function(_dereq_,module,exports){
 module.exports = function (url, callback) {
   var script;
   var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
@@ -8324,7 +8384,7 @@ module.exports = function (url, callback) {
   head.insertBefore(script, head.firstChild);
 };
 
-},{}],35:[function(_dereq_,module,exports){
+},{}],36:[function(_dereq_,module,exports){
 module.exports = [
   {
     "destination" :"ipad",
@@ -8352,7 +8412,7 @@ module.exports = [
   }
 ];
 
-},{}],36:[function(_dereq_,module,exports){
+},{}],37:[function(_dereq_,module,exports){
 module.exports = function(url) {
   var qmap;
   var i = url.split("?");
@@ -8369,7 +8429,7 @@ module.exports = function(url) {
   return qmap;
 };
 
-},{}],37:[function(_dereq_,module,exports){
+},{}],38:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
 
 module.exports = function() {
@@ -8382,7 +8442,7 @@ module.exports = function() {
   return type + "/" + constants.sdk_version;
 };
 
-},{"./constants":24}],38:[function(_dereq_,module,exports){
+},{"./constants":25}],39:[function(_dereq_,module,exports){
 var rsa = _dereq_("../../../libs/rsa");
 var SecureRandom = rsa.SecureRandom;
 var byte2Hex = rsa.byte2Hex;
@@ -8424,7 +8484,7 @@ var aes_keygen = function(p, s, f){
 }
 
 module.exports = aes_keygen;
-},{"../../../libs/rsa":4}],39:[function(_dereq_,module,exports){
+},{"../../../libs/rsa":4}],40:[function(_dereq_,module,exports){
 var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 var encrypt = function(p, s, f){
@@ -8465,7 +8525,7 @@ module.exports = {
   encrypt: encrypt,
   decrypt: decrypt
 }
-},{"../../../libs/generated/crypto":1}],40:[function(_dereq_,module,exports){
+},{"../../../libs/generated/crypto":1}],41:[function(_dereq_,module,exports){
 var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 
@@ -8490,7 +8550,7 @@ var hash = function(p, s, f){
 }
 
 module.exports = hash;
-},{"../../../libs/generated/crypto":1}],41:[function(_dereq_,module,exports){
+},{"../../../libs/generated/crypto":1}],42:[function(_dereq_,module,exports){
 var rsa = _dereq_("../../../libs/rsa");
 var RSAKey = rsa.RSAKey;
 
@@ -8515,7 +8575,7 @@ var encrypt = function(p, s, f){
 module.exports = {
   encrypt: encrypt
 }
-},{"../../../libs/rsa":4}],42:[function(_dereq_,module,exports){
+},{"../../../libs/rsa":4}],43:[function(_dereq_,module,exports){
 var JSON = _dereq_("JSON");
 var actFunc = _dereq_("./api_act");
 var CryptoJS = _dereq_("../../libs/generated/crypto");
@@ -9532,7 +9592,7 @@ module.exports = {
 
 
 
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":18,"JSON":3}],43:[function(_dereq_,module,exports){
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":18,"JSON":3}],44:[function(_dereq_,module,exports){
 module.exports = {
   createUUID : function () {
     //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
@@ -9549,7 +9609,7 @@ module.exports = {
   }
 };
 
-},{}],44:[function(_dereq_,module,exports){
+},{}],45:[function(_dereq_,module,exports){
 var initializer = _dereq_("./initializer");
 var events = _dereq_("./events");
 var CloudHost = _dereq_("./hosts");
@@ -9651,6 +9711,6 @@ module.exports = {
   getCloudHostUrl: getCloudHostUrl,
   reset: reset
 }
-},{"./appProps":22,"./constants":24,"./events":27,"./hosts":31,"./initializer":32}]},{},[15])
+},{"./appProps":23,"./constants":25,"./events":28,"./hosts":32,"./initializer":33}]},{},[15])
 (15)
 });

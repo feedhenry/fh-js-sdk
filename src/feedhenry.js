@@ -8,7 +8,9 @@ var api_auth = require("./modules/api_auth");
 var api_sec = require("./modules/api_sec");
 var api_hash = require("./modules/api_hash");
 var api_sync = require("./modules/sync-cli");
+var api_mbaas = require("./modules/api_mbaas");
 var fhparams = require("./modules/fhparams");
+var appProps = require("./modules/appProps");
 
 var defaultFail = function(msg, error){
   console.log(msg + ":" + JSON.stringify(error));
@@ -40,7 +42,7 @@ var once = function(type, listener){
 
 //we have to continue support for init for now as for FH v2 apps, there won't be a config file created
 var init = function(opts, success, fail){
-  console.warn("$fh.init has been deprecated.");
+  console.warn("$fh.init will be deprecated soon");
   cloud.ready(function(err, host){
     if(err){
       if(typeof fail === "function"){
@@ -78,7 +80,8 @@ fh.cloud = cloudFunc;
 fh.sec = api_sec;
 fh.hash = api_hash;
 fh.sync = api_sync;
-fh.ajax = ajax;
+fh.ajax = fh.__ajax = ajax;
+fh.mbaas = api_mbaas;
 
 fh.getCloudURL = function(){
   return cloud.getCloudHostUrl();
@@ -96,6 +99,12 @@ var methods = ["removeListener", "removeAllListeners", "setMaxListeners", "liste
 for(var i=0;i<methods.length;i++){
   fh[methods[i]] = events[methods[i]];
 }
+
+//keep backward compatibility
+fh.on("cloudready", function(host){
+  fh.cloud_props = {hosts: {url: host.host}};
+  fh.app_props = appProps.getAppProps();
+});
 
 //for test
 fh.reset = cloud.reset;
