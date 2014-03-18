@@ -73,7 +73,7 @@ appForm.models = function (module) {
   };
   /**
      * Process an input value. convert to submission format. run field.validate before this
-     * @param  {[type]} params {"value", "isStore":optional} 
+     * @param  {[type]} params {"value", "isStore":optional}
      * @param {cb} cb(err,res)
      * @return {[type]}           submission json used for fieldValues for the field
      */
