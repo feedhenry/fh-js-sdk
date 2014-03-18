@@ -31,6 +31,31 @@ appForm.utils = function (module) {
     };
     fileReader.readAsDataURL(file);
   }
+
+  function createBlobOrString(contentstr) {
+    var retVal;
+    var targetContentType = 'text/plain';
+    try {
+      retVal = new Blob( [contentstr], { type: targetContentType });
+    }
+    catch (e){
+      // TypeError old chrome and FF
+      var blobBuilder = window.BlobBuilder ||
+                        window.WebKitBlobBuilder ||
+                        window.MozBlobBuilder ||
+                        window.MSBlobBuilder;
+      if (e.name == 'TypeError' && blobBuilder) {
+        var bb = new blobBuilder();
+        bb.append([contentstr.buffer]);
+        retVal = bb.getBlob(targetContentType);
+      } else {
+        // We can't make a Blob, so just return the stringified content
+        retVal = contentstr;
+      }
+    }
+    return retVal;
+  }
+
   /**
      * Save a content to file system into a file
      * @param  {[type]} fileName file name to be stored.
@@ -51,11 +76,13 @@ appForm.utils = function (module) {
         size = saveObj.size;
       } else {
         //JSON object
-        saveObj = JSON.stringify(content);
+        var contentstr = JSON.stringify(content);
+        saveObj = createBlobOrString(contentstr);
+        size = saveObj.size || saveObj.length;
       }
-    }
-    else if (typeof content == 'string') {
-      saveObj = content;
+    } else if (typeof content == 'string') {
+      saveObj = createBlobOrString(content);
+      size = saveObj.size || saveObj.length;
     }
     _getFileEntry(fileName, size, { create: true }, function (err, fileEntry) {
       if (err) {

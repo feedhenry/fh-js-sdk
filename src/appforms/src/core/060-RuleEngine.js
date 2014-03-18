@@ -1,14 +1,15 @@
 appForm.RulesEngine=rulesEngine;
 
-/*! fh-forms - v0.2.44 -  */
+/*! fh-forms - v0.2.45 -  */
 /*! async - v0.2.9 -  */
 /*! 2014-03-18 */
 /* This is the prefix file */
 function rulesEngine (formDef) {
   var define = {};
   var module = {exports:{}}; // create a module.exports - async will load into it
-
+/* jshint ignore:start */
 /* End of prefix file */
+
 /*global setImmediate: false, setTimeout: false, console: false */
 (function () {
 
@@ -966,13 +967,14 @@ function rulesEngine (formDef) {
 }());
 
 /* This is the infix file */
-
+/* jshint ignore:end */
   var asyncLoader = module.exports;  // async has updated this, now save in our var, to that it can be returned from our dummy require
   function require() {
     return asyncLoader;
   }
 
 /* End of infix file */
+
 (function () {
 
 var async=require('async');
@@ -1626,8 +1628,8 @@ var formsRulesEngine = function(formDef) {
 
   function validatorNumericString (fieldValue, fieldDefinition, previousFieldValues, cb) {
     var testVal = (fieldValue - 0);  // coerce to number (or NaN)
-
-    if(!(testVal == fieldValue)) { // testVal co-erced to numeric above, so numeric comparison and NaN != NaN
+    var numeric = (testVal == fieldValue); // testVal co-erced to numeric above, so numeric comparison and NaN != NaN
+    if(!numeric) {
       return cb(new Error("Expected numeric but got: " + fieldValue));
     }
 
@@ -2290,6 +2292,6 @@ if (typeof module !== 'undefined' && module.exports) {
 
 /* This is the suffix file */
   return module.exports(formDef);
-};
+}
 
 /* End of suffix file */
