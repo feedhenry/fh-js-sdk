@@ -86,7 +86,11 @@ var reset = function(){
 
 ready(function(error, host){
   if(error){
-    console.error("Failed to initialise fh.");
+    if(error.message !== "app_config_missing"){
+      console.error("Failed to initialise fh.");
+    } else {
+      console.log("No fh config file");
+    }
   } else {
     console.log("fh cloud is ready");
   }

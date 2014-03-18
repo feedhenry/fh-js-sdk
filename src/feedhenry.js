@@ -45,8 +45,14 @@ var init = function(opts, success, fail){
   console.warn("$fh.init will be deprecated soon");
   cloud.ready(function(err, host){
     if(err){
-      if(typeof fail === "function"){
-        return fail(err);
+      if(err.message === "app_config_missing"){
+        //cloud.ready will be invoked when js sdk is loaded, it may cause init call to be added to the "cloudready" event listeners stack when it's called. If that is the case and getting an error
+        //about app config is missing, we just try again
+        init(opts, success, fail);
+      } else {
+        if(typeof fail === "function"){
+          return fail(err);
+        }
       }
     } else {
       if(typeof success === "function"){

@@ -6925,8 +6925,14 @@ var init = function(opts, success, fail){
   console.warn("$fh.init will be deprecated soon");
   cloud.ready(function(err, host){
     if(err){
-      if(typeof fail === "function"){
-        return fail(err);
+      if(err.message === "app_config_missing"){
+        //cloud.ready will be invoked when js sdk is loaded, it may cause init call to be added to the "cloudready" event listeners stack when it's called. If that is the case and getting an error
+        //about app config is missing, we just try again
+        init(opts, success, fail);
+      } else {
+        if(typeof fail === "function"){
+          return fail(err);
+        }
       }
     } else {
       if(typeof success === "function"){
@@ -7649,11 +7655,16 @@ var app_props = null;
 var load = function(cb){
   ajax({url: consts.config_js, dataType:"json", success: function(data){
     console.log("fhconfig = " + JSON.stringify(data));
-    app_props = data;
-    cb(null, app_props);
+    //when load the config file on device, because file:// protocol is used, it will never call fail call back. The success callback will be called but the data value will be null.
+    if(null == data){
+      return cb(new Error("app_config_missing"));
+    } else {
+      app_props = data;
+      cb(null, app_props);
+    }
   }, error: function(req, statusText, error){
     console.log(consts.config_js  + " Not Found");
-    cb(statusText);
+    cb(new Error("app_config_missing"));
   }});
 }
 
@@ -9700,7 +9711,11 @@ var reset = function(){
 
 ready(function(error, host){
   if(error){
-    console.error("Failed to initialise fh.");
+    if(error.message !== "app_config_missing"){
+      console.error("Failed to initialise fh.");
+    } else {
+      console.log("No fh config file");
+    }
   } else {
     console.log("fh cloud is ready");
   }
