@@ -75,7 +75,7 @@ module.exports = function(grunt) {
       dist:{
         //shim is defined inside package.json
         src:['src/feedhenry.js'],
-        dest: 'dist/feedhenry-latest.js',
+        dest: 'dist/feedhenry.js',
         options: {
           standalone: 'feedhenry',
           transform: [function(file){
@@ -129,7 +129,9 @@ module.exports = function(grunt) {
     },
     uglify: {
       dist: {
-        'dist/feedhenry-latest.min.js': ['dist/feedhenry-latest.js']
+        "files": {
+          'dist/feedhenry.min.js': ['dist/feedhenry.js']
+        }
       }
     },
     zip: {
@@ -140,7 +142,7 @@ module.exports = function(grunt) {
           return 'feedhenry-js-sdk/' + filename;
         },
         dest: 'dist/fh-starter-project-latest.zip',
-        src: ['src/index.html', 'src/fhconfig.json', 'dist/feedhenry-latest.min.js']
+        src: ['src/index.html', 'src/fhconfig.json', 'dist/feedhenry.min.js']
       }
     }
   });

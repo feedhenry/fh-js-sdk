@@ -5,7 +5,7 @@ require.config({
     'chai'          : 'libs/chai/chai',
     'sinonChai'    : 'libs/sinon-chai/sinon-chai',
     'sinon'         : 'libs/sinon/sinon',
-    'feedhenry'     : '../../dist/feedhenry-latest'
+    'feedhenry'     : '../../dist/feedhenry'
   },
   urlArgs: 'bust=' + (new Date()).getTime()
 });
