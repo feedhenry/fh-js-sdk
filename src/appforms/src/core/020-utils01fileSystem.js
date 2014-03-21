@@ -32,13 +32,9 @@ appForm.utils = function (module) {
     fileReader.readAsDataURL(file);
   }
 
-  function _isPhoneGap() {
-    return (typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined")
-  }
-
   function _createBlobOrString(contentstr) {
     var retVal;
-    if (_isPhoneGap()) {  // phonegap filewriter works with strings, later versions also ork with binary arrays, and if passed a blob will just convert to binary array anyway
+    if (appForm.utils.isPhoneGap()) {  // phonegap filewriter works with strings, later versions also ork with binary arrays, and if passed a blob will just convert to binary array anyway
       retVal = contentstr;
     } else {
       var targetContentType = 'text/plain';
