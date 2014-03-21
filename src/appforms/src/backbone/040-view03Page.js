@@ -99,7 +99,13 @@ var PageView=BaseView.extend({
 
   show: function () {
     var self = this;
-    this.$el.removeClass('fh_appform_hidden');
+    self.$el.removeClass('fh_appform_hidden');
+
+    for(var fieldViewId in self.fieldViews){
+      if(self.fieldViews[fieldViewId].mapResize){
+        self.fieldViews[fieldViewId].mapResize();
+      }
+    }
   },
 
   hide: function () {

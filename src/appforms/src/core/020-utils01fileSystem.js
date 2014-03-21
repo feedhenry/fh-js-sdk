@@ -88,6 +88,7 @@ appForm.utils = function (module) {
       saveObj = _createBlobOrString(content);
       size = saveObj.size || saveObj.length;
     }
+
     _getFileEntry(fileName, size, { create: true }, function (err, fileEntry) {
       if (err) {
         console.error(err);
