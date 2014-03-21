@@ -6,10 +6,10 @@ var FormView = BaseView.extend({
   "fieldValue": [],
   templates: {
     formLogo: '<div class="fh_appform_logo_container"><div class="fh_appform_logo"></div></div>',
-    formTitle: '<div class="fh_appform_title"><%= title %></div>',
-    formDescription: '<div class="fh_appform_description"><%= description %></div>',
-    formContainer: '<div id="fh_appform_container" class="fh_appform_form fh_appform_container"></div>',
-    buttons: '<div id="fh_appform_navigation_buttons" class="fh_appform_action_bar"><button class="fh_appform_button_saveDraft fh_appform_hidden fh_appform_button_main fh_appform_button_action">Save Draft</button><button class="fh_appform_button_previous fh_appform_hidden fh_appform_button_navigation">Previous</button><button class="fh_appform_button_next fh_appform_hidden fh_appform_button_navigation">Next</button><button class="fh_appform_button_submit fh_appform_hidden fh_appform_button_action">Submit</button></div>'
+    formTitle: '<div class="fh_appform_form_title"><%= title %></div>',
+    formDescription: '<div class="fh_appform_form_description"><%= description %></div>',
+    formContainer: '<div id="fh_appform_container" class="fh_appform_form_area fh_appform_container"></div>',
+    buttons: '<div id="fh_appform_navigation_buttons" class="fh_appform_action_bar"><button class="fh_appform_button_saveDraft fh_appform_hidden fh_appform_button_main fh_appform_button_action">Save Draft</button><button class="fh_appform_button_previous fh_appform_hidden fh_appform_button_default">Previous</button><button class="fh_appform_button_next fh_appform_hidden fh_appform_button_default">Next</button><button class="fh_appform_button_submit fh_appform_hidden fh_appform_button_action">Submit</button></div>'
   },
   events: {
     "click button.fh_appform_button_next": "nextPage",
@@ -272,7 +272,7 @@ var FormView = BaseView.extend({
 
   },
   render: function() {
-    this.el.find("#fh_appform_container.fh_appform_form").append(this.templates.buttons);
+    this.el.find("#fh_appform_container.fh_appform_form_area").append(this.templates.buttons);
     this.rebindButtons();
     this.pageViews[0].show();
     this.pageNum = 0;
