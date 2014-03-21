@@ -89,12 +89,6 @@ appForm.utils = function (module) {
       size = saveObj.size || saveObj.length;
     }
 
-    //TODO: REMOVE THIS HACK - NIALL
-    if(typeof(saveObj === "string")){
-      if(!(typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined")){
-        saveObj = new Blob([saveObj], { type: 'text/plain' });
-      }
-    }
     _getFileEntry(fileName, size, { create: true }, function (err, fileEntry) {
       if (err) {
         console.error(err);
