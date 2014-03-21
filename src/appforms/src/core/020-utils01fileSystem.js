@@ -32,25 +32,33 @@ appForm.utils = function (module) {
     fileReader.readAsDataURL(file);
   }
 
-  function createBlobOrString(contentstr) {
+  function _isPhoneGap() {
+    return (typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined")
+  }
+
+  function _createBlobOrString(contentstr) {
     var retVal;
-    var targetContentType = 'text/plain';
-    try {
-      retVal = new Blob( [contentstr], { type: targetContentType });
-    }
-    catch (e){
-      // TypeError old chrome and FF
-      var blobBuilder = window.BlobBuilder ||
-                        window.WebKitBlobBuilder ||
-                        window.MozBlobBuilder ||
-                        window.MSBlobBuilder;
-      if (e.name == 'TypeError' && blobBuilder) {
-        var bb = new blobBuilder();
-        bb.append([contentstr.buffer]);
-        retVal = bb.getBlob(targetContentType);
-      } else {
-        // We can't make a Blob, so just return the stringified content
-        retVal = contentstr;
+    if (_isPhoneGap()) {  // phonegap filewriter works with strings, later versions also ork with binary arrays, and if passed a blob will just convert to binary array anyway
+      retVal = contentstr;
+    } else {
+      var targetContentType = 'text/plain';
+      try {
+        retVal = new Blob( [contentstr], { type: targetContentType });  // Blob doesn't exist on all androids
+      }
+      catch (e){
+        // TypeError old chrome and FF
+        var blobBuilder = window.BlobBuilder ||
+                          window.WebKitBlobBuilder ||
+                          window.MozBlobBuilder ||
+                          window.MSBlobBuilder;
+        if (e.name == 'TypeError' && blobBuilder) {
+          var bb = new blobBuilder();
+          bb.append([contentstr.buffer]);
+          retVal = bb.getBlob(targetContentType);
+        } else {
+          // We can't make a Blob, so just return the stringified content
+          retVal = contentstr;
+        }
       }
     }
     return retVal;
@@ -77,11 +85,11 @@ appForm.utils = function (module) {
       } else {
         //JSON object
         var contentstr = JSON.stringify(content);
-        saveObj = createBlobOrString(contentstr);
+        saveObj = _createBlobOrString(contentstr);
         size = saveObj.size || saveObj.length;
       }
     } else if (typeof content == 'string') {
-      saveObj = createBlobOrString(content);
+      saveObj = _createBlobOrString(content);
       size = saveObj.size || saveObj.length;
     }
     _getFileEntry(fileName, size, { create: true }, function (err, fileEntry) {
