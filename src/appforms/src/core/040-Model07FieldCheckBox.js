@@ -12,11 +12,10 @@ appForm.models.Field = function (module) {
   };
   module.prototype.process_checkboxes = function (params, cb) {
     var inputValue = params.value;
-    if (!(inputValue instanceof Array)) {
-      cb('the input value for processing checkbox field should be like [val1,val2]');
+    if (!inputValue || !inputValue.selections || !(inputValue.selections instanceof Array)){
+      cb('the input value for processing checkbox field should be like {selections: [val1,val2]}');
     } else {
-      var obj = { 'selections': inputValue };
-      cb(null, obj);
+      cb(null, inputValue);
     }
   };
   module.prototype.convert_checkboxes = function (value, cb) {
