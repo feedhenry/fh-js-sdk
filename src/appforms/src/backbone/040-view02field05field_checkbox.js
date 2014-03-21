@@ -19,7 +19,7 @@ FieldCheckboxView = FieldView.extend({
         "index": index,
         "choice": subfield.label,
         "value": subfield.label,
-        "checked": (subfield.selected) ? "checked='checked'" : ""
+        "checked": (subfield.checked) ? "checked='checked'" : ""
       });
     });
 
@@ -28,21 +28,23 @@ FieldCheckboxView = FieldView.extend({
     return checkboxesHtml;
   },
   valueFromElement: function(index) {
-    var value=[];
+    var value = {
+      selections: []
+    };
     var wrapperObj=this.getWrapper(index);
     var checked=wrapperObj.find("input:checked");
     checked.each(function(){
-      value.push($(this).val());
+      value.selections.push($(this).val());
     });
     return value;
   },
   valuePopulateToElement: function(index,value) {
     var wrapperObj=this.getWrapper(index);
-    if (!value || !value instanceof Array){
+    if (!value || !value.selections || !(value.selections instanceof Array)){
       return;
     }
-    for (var i=0;i<value.length;i++){
-      var v=value[i];
+    for (var i=0; i < value.selections.length; i++){
+      var v=value.selections[i];
       wrapperObj.find("input[value='"+v+"']").attr("checked","checked");
     }
   }
