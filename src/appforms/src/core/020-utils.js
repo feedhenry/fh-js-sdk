@@ -4,6 +4,19 @@ appForm.utils = function(module) {
   module.md5 = md5;
   module.getTime = getTime;
   module.send=send;
+  module.isPhoneGap = isPhoneGap;
+
+  function isPhoneGap() {
+    //http://stackoverflow.com/questions/10347539/detect-between-a-mobile-browser-or-a-phonegap-application
+    //may break.
+    var app = document.URL.indexOf('http://') === -1 && document.URL.indexOf('https://') === -1;
+    if (app) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   function extend(child, parent) {
 
     if (parent.constructor && parent.constructor == Function) {
