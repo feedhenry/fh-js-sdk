@@ -84,7 +84,6 @@ appForm.stores = function(module) {
   }
   //use $fh data
   function _fhLSData(options, success, failure) {
-    // console.log(options);
     //allow for no $fh api in studio
     if(! $fh || ! $fh.data) return success();
 
@@ -97,7 +96,7 @@ appForm.stores = function(module) {
       }
       //unify the interfaces
       if (options.act.toLowerCase() == 'remove') {
-        success(null, null);
+        return success(null, null);
       }
       success(null, res.val ? res.val : null);
     }, failure);
@@ -105,7 +104,6 @@ appForm.stores = function(module) {
   //use file system
   function _fhFileData(options, success, failure) {
     function fail(msg) {
-      // console.log('fail: msg= ' + msg);
       if (typeof failure !== 'undefined') {
         return failure(msg, {});
       } else {}
@@ -185,6 +183,7 @@ appForm.stores = function(module) {
         });
       });
     }
+
     if (typeof options.act === 'undefined') {
       return load(options.key);
     } else if (options.act === 'save') {
