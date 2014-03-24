@@ -12,7 +12,7 @@ appForm.models.Field = function (module) {
     var def = this.getFieldDefinition();
     var obj={};
     switch (def.locationUnit) {
-    case 'latLong':
+    case 'latlong':
       if (!inputValue.lat || !inputValue["long"]) {
         cb('the input values for latlong field is {lat: number, long: number}');
       } else {
@@ -36,7 +36,7 @@ appForm.models.Field = function (module) {
       }
       break;
     default:
-      cb('Invalid subtype type of location field, allowed types: latLong and eastnorth, was: ' + def.locationUnit);
+      cb('Invalid subtype type of location field, allowed types: latlong and eastnorth, was: ' + def.locationUnit);
       break;
     }
   };
