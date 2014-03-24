@@ -124,9 +124,10 @@ describe("Fallback use $fh data / how to forcely use $fh data", function() {
         var model = new Model();
         model.set("hello", "world");
         appForm.stores.localStorage.create(model, function(err, res) {
-            
-            appForm.stores.localStorage.delete(model, function(err, res) {
+          assert.ok(!err);
+          assert.ok(res);
 
+            appForm.stores.localStorage.delete(model, function(err, res) {
                 assert(!err);
                 assert(res==null);
 
