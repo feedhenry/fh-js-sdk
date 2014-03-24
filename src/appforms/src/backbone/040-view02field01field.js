@@ -59,12 +59,15 @@ var FieldView = Backbone.View.extend({
   },
   renderInput: function(index) {
     var fieldId = this.model.getFieldId();
-    var type = this.type || "text";
+    var type = this.getHTMLInputType();
     return _.template(this.input, {
       "fieldId": fieldId,
       "index": index,
       "inputType": type
     });
+  },
+  getHTMLInputType: function() {
+    return this.type || "text";
   },
   "getFieldRequired" : function(index){
     var required = "";
