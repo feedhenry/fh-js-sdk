@@ -62,6 +62,10 @@ module.exports = function(grunt) {
       forms_sdk :{
         "src": ["dist/feedhenry.js", "libs/generated/appForms/appForms-core.js"],
         "dest": "dist/feedhenry-forms.js"
+      },
+      forms_appFormsTest: {
+        "src": ["dist/feedhenry.js"],
+        "dest": "src/appforms/tests/feedhenry.js"
       }
     },
     'mocha_phantomjs': {
@@ -243,5 +247,5 @@ module.exports = function(grunt) {
 
   grunt.registerTask('concat-core-sdk', ['concat:lawnchair', 'concat:crypto', 'concat:forms_core', 'concat:forms_backbone', 'concat:forms_backboneRequireJS']);
 
-  grunt.registerTask('default', 'jshint concat-core-sdk test concat:forms_sdk uglify:dist zip');
+  grunt.registerTask('default', 'jshint concat-core-sdk test concat:forms_sdk concat:forms_appFormsTest uglify:dist zip');
 };
