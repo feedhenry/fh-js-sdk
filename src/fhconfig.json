@@ -1,0 +1,7 @@
+{
+  "host": "<replace with the correct host>",
+  "appid" : "<replace with the correct appid>",
+  "appkey" : "<replace with the correct app key>",
+  "projectid" : "<replace with the correct project id>",
+  "connectiontag" : "<replace with the correct connection tag>"
+}

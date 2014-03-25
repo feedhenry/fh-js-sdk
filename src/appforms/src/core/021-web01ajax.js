@@ -10,6 +10,7 @@ appForm.web.ajax = function (module) {
     _ajax({
       'url': url,
       'type': 'GET',
+      'dataType': 'json',
       'success': function (data, text) {
         $fh.forms.log.d("Ajax get", url, "Success");
         cb(null, data);

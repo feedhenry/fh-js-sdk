@@ -1,15 +1,17 @@
-<script src="feedhenry-latest.js" type="text/javascript"></script>
-<script type="text/javascript">
-    var config = {
-        host: "replace with your app host",
-        appid: "replace with your app ID",
-        apikey: "replace with your app key",
-        mode: "should be dev or prod"
-    };
+<html>
+<head>
+  <script src="feedhenry-latest.js" type="text/javascript"></script>
+</head>
+<body>
 
-    $fh.init(config, function(res) {
-        // SDK initialised, callback action here
-    }, function(err) {
-        // SDK initialise failed, callback action here
-    });
+<!-- just call $fh.cloud or $fh.act -->
+<script type="text/javascript">
+  $fh.act({act:'echo', req:{data:"hello"}}, function(res){
+    //handle success
+  }, function(msg, err){
+    //handle error
+  });
 </script>
+
+</body>
+</html>
