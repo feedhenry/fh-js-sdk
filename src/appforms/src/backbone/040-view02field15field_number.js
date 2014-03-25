@@ -1,3 +1,6 @@
 FieldNumberView = FieldView.extend({
-    type:"number"
+    type:"number",
+    getHTMLInputType: function() {
+      return "text";
+    }
 });
