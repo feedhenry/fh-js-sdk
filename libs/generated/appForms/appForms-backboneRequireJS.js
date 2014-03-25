@@ -1708,12 +1708,15 @@ var FieldView = Backbone.View.extend({
   },
   renderInput: function(index) {
     var fieldId = this.model.getFieldId();
-    var type = this.type || "text";
+    var type = this.getHTMLInputType();
     return _.template(this.input, {
       "fieldId": fieldId,
       "index": index,
       "inputType": type
     });
+  },
+  getHTMLInputType: function() {
+    return this.type || "text";
   },
   "getFieldRequired" : function(index){
     var required = "";
@@ -2038,6 +2041,7 @@ var FieldView = Backbone.View.extend({
   }
 
 });
+
 FieldCameraView = FieldView.extend({
   input: "<img class='imageThumb' width='100%' data-field='<%= fieldId %>' data-index='<%= index %>'  type='<%= inputType %>'>",
   html5Cam: '<div class="html5Cam">' +
@@ -2739,7 +2743,10 @@ FieldMapView = FieldView.extend({
   }
 });
 FieldNumberView = FieldView.extend({
-    type:"number"
+    type:"number",
+    getHTMLInputType: function() {
+      return "text";
+    }
 });
 
 // We only capture this as text

@@ -53,7 +53,7 @@ module.exports = function(grunt) {
       },
       forms_backbone: {
         "src": ["src/appforms/src/backbone/*.js", "!src/appforms/src/backbone/000-closureStartRequireJS.js", "!src/appforms/src/backbone/999-closureEndRequireJS.js"],
-        "dest": "libs/generated/appForms/appForms-backbone.js"
+        "dest": "dist/appForms-backbone.js"
       },
       forms_backboneRequireJS: {
         "src": ["src/appforms/src/backbone/*.js", "!src/appforms/src/backbone/000-closureStart.js", "!src/appforms/src/backbone/999-closureEnd.js"],

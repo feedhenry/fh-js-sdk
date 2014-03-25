@@ -52,7 +52,7 @@ var loadCloudProps = function(app_props, callback){
   
   storage.get('fh_init', function(storage_res) {
     var savedHost = null;
-    if (storage_res && storage_res.value !== null && storage_res !== "") {
+    if (storage_res && storage_res.value !== null && typeof(storage_res.value) !== "undefined" && storage_res !== "") {
       storage_res = typeof(storage_res) === "string" ? JSON.parse(storage_res) : storage_res;
       storage_res.value = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value): storage_res.value;
       if(storage_res.value.init){
