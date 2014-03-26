@@ -1,0 +1,51 @@
+<html>
+  <head>
+    <meta charset="utf-8"/>
+    <title>App Form III</title>
+    <script>
+      var fh_destination_code = 'studio';
+      var fh_app_version = '13';
+      var fh_config = {"appid":"8P-SzpQTu1EqHLYrZQAdUzPQ","appkey":"fd77959356ac9d8966d9b615fe86dfcaaf6661c7","host":"http://127.0.0.1:3011","mode":"dev"};
+    </script>
+      <link href="./vendor/72-style.css" rel="stylesheet">
+      <link href="./vendor/style.css" rel="stylesheet">
+      <script src="./vendor/72-scripts.js" type="text/javascript"></script>
+      <script src="./vendor/frameworks.js" type="text/javascript"></script>
+
+      <script>
+      $fh.ready({}, function(){
+        $fh.init(fh_config);
+      });
+    </script>
+
+  </head>
+  <body>
+    <div id="backbone">
+        <div id="formList"></div>
+        <div id="page" class="hidden"></div>
+        <div id="jsonPage" class="hidden"></div>
+    </div>
+    <script data-main="specRunner.js" src="./appModules.js"></script>
+    <script data-main="specRunner.js" src="./vendor/underscore.js"></script>
+    <script data-main="specRunner.js" src="./vendor/require.js"></script>
+
+    <script data-main="specRunner.js" src="./vendor/jpeg_encoder/jpeg_encoder_basic.js"></script>
+    <script data-main="specRunner.js" src="./vendor/jquery.js"></script>
+    <script data-main="specRunner.js" src="./vendor/jquery.validate.js"></script>
+    <script data-main="specRunner.js" src="./vendor/jquery.validate.patch.js"></script>
+    <script data-main="specRunner.js" src="./vendor/jquery.wufoo_rules.js"></script>
+    <script data-main="specRunner.js" src="./vendor/utils.js"></script>
+    <script data-main="specRunner.js" src="./vendor/fh.logger.js"></script>
+    <script data-main="specRunner.js" src="./vendor/backbone.js"></script>
+    <script data-main="specRunner.js" src="./vendor/backbone.fhdata.fhact.js"></script>
+    <script data-main="specRunner.js" src="./vendor/fh.retry.js"></script>
+    <script data-main="specRunner.js" src="./vendor/async.js"></script>
+    <script data-main="specRunner.js" src="./vendor/moment.js"></script>
+    <script data-main="specRunner.js" src="./vendor/signaturepad/bitmapurl.js"></script>
+    <script data-main="specRunner.js" src="./vendor/signaturepad/jquery.signaturepad.js"></script>
+    <script data-main="specRunner.js" src="./vendor/ratchet.js"></script>
+    <script data-main="specRunner.js" src="./vendor/advice.js"></script>
+    <script data-main="specRunner.js" src="./vendor/mobiscroll.custom.min.js"></script>
+    <script src="./router.js" type="text/javascript"></script>
+  </body>
+</html>
