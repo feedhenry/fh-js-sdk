@@ -12412,15 +12412,7 @@ appForm.models = function(module) {
       mode = app_props.mode ? app_props.mode : 'dev';
     }
     if (cloud_props && cloud_props.hosts) {
-      if (mode.indexOf('dev') > -1) {
-        //dev mode
-        if(cloud_props.hosts.debugCloudUrl){
-          cloudUrl = cloud_props.hosts.debugCloudUrl;
-        }
-      } else {
-        //live mode
-        cloudUrl = cloud_props.hosts.releaseCloudUrl;
-      }
+      cloudUrl = cloud_props.hosts.url;
     }
     this.set('cloudHost', cloudUrl);
     this.set('mbaasBaseUrl', '/mbaas');
