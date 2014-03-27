@@ -717,14 +717,20 @@
   __bind_ready();
 
   // destination functions
-  var _mapScriptLoaded = (typeof google != "undefined") && (typeof google.maps != "undefined") && (typeof google.maps.Map != "undefined");
+  var _mapScriptLoaded =  (typeof google != "undefined") && (typeof google.maps != "undefined") && (typeof google.maps.Map != "undefined");
+  var mapFuncs = [];
+  var loadingScript = false;
   var _loadMapScript = function () {
+    if(loadingScript) return;
+    loadingScript = true;
     var script = document.createElement("script");
     script.type = "text/javascript";
     var protocol = document.location.protocol;
     protocol = (protocol === "http:" || protocol === "https:") ? protocol : "https:";
     script.src = protocol + "//maps.google.com/maps/api/js?sensor=true&callback=$fh._mapLoaded";
+
     document.body.appendChild(script);
+
   };
 
   var audio_obj = null;
@@ -906,27 +912,13 @@
         f('map_nocontainer', {}, p);
         return;
       }
-
-      if (!_mapScriptLoaded) {
-        $fh._mapLoaded = function () {
-          _mapScriptLoaded = true;
-          var mapOptions = {};
-          mapOptions.zoom = p.zoom ? p.zoom : 8;
-          mapOptions.center = new google.maps.LatLng(p.lat, p.lon);
-          mapOptions.mapTypeId = google.maps.MapTypeId.ROADMAP;
-          var map = new google.maps.Map(target, mapOptions);
-          s({
-            map: map
-          });
-        };
-        _loadMapScript();
-        //after 20 secs, if the map script is still not loaded, run the fail function
-        setTimeout(function () {
-          if (!_mapScriptLoaded) {
-            f('map_timeout', {}, p);
-          }
-        }, 20000);
-      } else {
+      $fh._mapLoaded = function () {
+        var fMap;
+        while(fMap = mapFuncs.pop()){
+          fMap();
+        }
+      };
+      mapFuncs.push(function (){
         var mapOptions = {};
         mapOptions.zoom = p.zoom ? p.zoom : 8;
         mapOptions.center = new google.maps.LatLng(p.lat, p.lon);
@@ -935,6 +927,19 @@
         s({
           map: map
         });
+      });
+      _mapScriptLoaded =  (typeof google != "undefined") && (typeof google.maps != "undefined") && (typeof google.maps.Map != "undefined");
+      if (!_mapScriptLoaded) {
+        _loadMapScript();
+        //after 20 secs, if the map script is still not loaded, run the fail function
+        setTimeout(function () {
+          _mapScriptLoaded =  (typeof google != "undefined") && (typeof google.maps != "undefined") && (typeof google.maps.Map != "undefined");
+          if (!_mapScriptLoaded) {
+            f('map_timeout', {}, p);
+          }
+        }, 20000);
+      }else{
+        $fh._mapLoaded();
       }
     }
 
