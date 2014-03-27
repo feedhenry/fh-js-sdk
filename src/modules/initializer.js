@@ -45,7 +45,7 @@ var loadCloudProps = function(app_props, callback) {
     };
 
     return callback(null, {
-      cloud: initRes
+      cloud: res
     });
   }
 
