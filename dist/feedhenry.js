@@ -7647,39 +7647,61 @@ module.exports = function(p, s, f){
 var consts = _dereq_("./constants");
 var ajax = _dereq_("./ajax");
 var console = _dereq_("console");
+var qs = _dereq_("./queryMap");
 
 var app_props = null;
 
-var load = function(cb){
-  ajax({url: consts.config_js, dataType:"json", success: function(data){
-    console.log("fhconfig = " + JSON.stringify(data));
-    //when load the config file on device, because file:// protocol is used, it will never call fail call back. The success callback will be called but the data value will be null.
-    if(null == data){
-      return cb(new Error("app_config_missing"));
-    } else {
-      app_props = data;
-      cb(null, app_props);
+var load = function(cb) {
+  var doc_url = document.location.href;
+  var url_params = qs(doc_url);
+  var local = (typeof url_params.fhconfig !== 'undefined');
+  var config_url = url_params.fhconfig || consts.config_js;
+
+  ajax({
+    url: config_url,
+    dataType: "json",
+    success: function(data) {
+      console.log("fhconfig = " + JSON.stringify(data));
+      //when load the config file on device, because file:// protocol is used, it will never call fail call back. The success callback will be called but the data value will be null.
+      if (null === data) {
+        return cb(new Error("app_config_missing"));
+      } else {
+        app_props = data;
+
+        // For local environments, no init needed
+        if (local) {
+          // Set defaults for keys other than host
+          app_props.local = true;
+          app_props.appid = "000000000000000000000000";
+          app_props.appkey = "0000000000000000000000000000000000000000";
+          app_props.projectid = "000000000000000000000000";
+          app_props.connectiontag = "0.0.1";
+        }
+
+        cb(null, app_props);
+      }
+    },
+    error: function(req, statusText, error) {
+      console.log(consts.config_js + " Not Found");
+      cb(new Error("app_config_missing"));
     }
-  }, error: function(req, statusText, error){
-    console.log(consts.config_js  + " Not Found");
-    cb(new Error("app_config_missing"));
-  }});
-}
+  });
+};
 
-var setAppProps = function(props){
+var setAppProps = function(props) {
   app_props = props;
-}
+};
 
-var getAppProps = function(){
+var getAppProps = function() {
   return app_props;
-}
+};
 
 module.exports = {
   load: load,
   getAppProps: getAppProps,
   setAppProps: setAppProps
-}
-},{"./ajax":17,"./constants":25,"console":8}],24:[function(_dereq_,module,exports){
+};
+},{"./ajax":17,"./constants":25,"./queryMap":37,"console":8}],24:[function(_dereq_,module,exports){
 var console = _dereq_("console");
 var queryMap = _dereq_("./queryMap");
 var JSON = _dereq_("JSON");
@@ -7792,8 +7814,8 @@ module.exports = {
   "fh_timeout": 20000,
   "boxprefix": "/box/srv/1.1/",
   "sdk_version": "2.0.0-alpha",
-  "config_js":"fhconfig.json"
-}
+  "config_js": "fhconfig.json"
+};
 },{}],26:[function(_dereq_,module,exports){
 var console = _dereq_("console");
 module.exports = {
@@ -8087,19 +8109,45 @@ var JSON = _dereq_("JSON");
 var hashFunc = _dereq_("./security/hash");
 var appProps = _dereq_("./appProps");
 
-var init = function(cb, app_props){
-  if(arguments.length === 2 && typeof app_props === "object" && app_props.mode){
+var init = function(cb, app_props) {
+  if (arguments.length === 2 && typeof app_props === "object" && app_props.mode) {
     appProps.setAppProps(app_props);
     return loadCloudProps(app_props, cb);
   } else {
-    appProps.load(function(err, data){
-      if(err) return cb(err);
+    appProps.load(function(err, data) {
+      if (err) return cb(err);
       return loadCloudProps(data, cb);
     });
   }
 }
 
-var loadCloudProps = function(app_props, callback){
+var loadCloudProps = function(app_props, callback) {
+
+  // If local - shortcircuit the init - just return the host
+  if (app_props.local) {
+    var res = {
+      "domain": "local",
+      "firstTime": false,
+      "hosts": {
+        "debugCloudType": "node",
+        "debugCloudUrl": app_props.host,
+        "releaseCloudType": "node",
+        "releaseCloudUrl": app_props.host,
+        "type": "cloud_nodejs",
+        "url": app_props.host
+      },
+      "init": {
+        "trackId": "000000000000000000000000"
+      },
+      "status": "ok"
+    };
+
+    return callback(null, {
+      cloud: res
+    });
+  }
+
+
   //now we have app props, add the fileStorageAdapter
   lawnchairext.addAdapter(app_props, hashFunc);
   //dom adapter doens't work on windows phone, so don't specify the adapter if the dom one failed
@@ -8117,7 +8165,7 @@ var loadCloudProps = function(app_props, callback){
   var storage = null;
   try {
     storage = new Lawnchair(lcConf, function() {});
-  } catch(e){
+  } catch (e) {
     //when dom adapter failed, Lawnchair throws an error
     //shoudn't go in here anymore
     lcConf.adapter = undefined;
@@ -8125,53 +8173,58 @@ var loadCloudProps = function(app_props, callback){
   }
 
   var path = app_props.host + consts.boxprefix + "app/init";
-  
+
   storage.get('fh_init', function(storage_res) {
     var savedHost = null;
     if (storage_res && storage_res.value !== null && typeof(storage_res.value) !== "undefined" && storage_res !== "") {
       storage_res = typeof(storage_res) === "string" ? JSON.parse(storage_res) : storage_res;
-      storage_res.value = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value): storage_res.value;
-      if(storage_res.value.init){
+      storage_res.value = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value) : storage_res.value;
+      if (storage_res.value.init) {
         app_props.init = storage_res.value.init;
       } else {
         //keep it backward compatible.
         app_props.init = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value) : storage_res.value;
       }
-      if(storage_res.value.hosts){
+      if (storage_res.value.hosts) {
         savedHost = storage_res.value;
       }
     }
     var data = fhparams.buildFHParams();
 
-    ajax(
-      {
-        "url": path,
-        "type": "POST",
-        "tryJSONP": true,
-        "dataType": "json",
-        "contentType": "application/json",
-        "data": JSON.stringify(data),
-        "timeout": app_props.timeout || consts.fh_timeout,
-        "success": function(initRes) {
-          storage.save({
-            key: "fh_init",
-            value: initRes
-          }, function() {
+    ajax({
+      "url": path,
+      "type": "POST",
+      "tryJSONP": true,
+      "dataType": "json",
+      "contentType": "application/json",
+      "data": JSON.stringify(data),
+      "timeout": app_props.timeout || consts.fh_timeout,
+      "success": function(initRes) {
+        storage.save({
+          key: "fh_init",
+          value: initRes
+        }, function() {});
+        if (callback) {
+          callback(null, {
+            cloud: initRes
           });
-          if(callback) {
-            callback(null, {cloud: initRes});
+        }
+      },
+      "error": function(req, statusText, error) {
+        //use the cached host if we have a copy
+        if (savedHost) {
+          if (callback) {
+            callback(null, {
+              cloud: savedHost
+            });
           }
-        },
-        "error": function(req, statusText, error) {
-          //use the cached host if we have a copy
-          if(savedHost){
-            if(callback){
-              callback(null, {cloud: savedHost});
-            }
-          } else {
-            handleError(function(msg, err){
-              if(callback){
-                callback({error: err, message: msg});
+        } else {
+          handleError(function(msg, err) {
+            if (callback) {
+              callback({
+                error: err,
+                message: msg
+              });
             }
           }, req, statusText);
         }
@@ -8425,7 +8478,7 @@ module.exports = [
 
 },{}],37:[function(_dereq_,module,exports){
 module.exports = function(url) {
-  var qmap;
+  var qmap = {};
   var i = url.split("?");
   if (i.length === 2) {
     var queryString = i[1];
@@ -8439,7 +8492,6 @@ module.exports = function(url) {
   }
   return qmap;
 };
-
 },{}],38:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
 
