@@ -26,15 +26,13 @@ appForm.api = function (module) {
         var userConfigValues = formConfig.get("userConfigValues", {});
         var defaultConfigValues = formConfig.get("defaultConfigValues", {});
 
-        if(self.editAllowed()){
-          if(userConfigValues[key]){
-            return userConfigValues[key];
-          } else {
-            return defaultConfigValues[key];
-          }
+
+        if(userConfigValues[key]){
+          return userConfigValues[key];
         } else {
           return defaultConfigValues[key];
         }
+
       }
     },
     "set" : function(key, val){
@@ -43,9 +41,12 @@ appForm.api = function (module) {
         return;
       }
 
-      var userConfig = formConfig.get("userConfigValues", {});
-      userConfig[key] = val;
-      formConfig.set("userConfigValues", userConfig);
+      if(self.editAllowed() || key === "max_sent_saved"){
+        var userConfig = formConfig.get("userConfigValues", {});
+        userConfig[key] = val;
+        formConfig.set("userConfigValues", userConfig);
+      }
+
     },
     "getConfig" : function(){
       var self = this;
