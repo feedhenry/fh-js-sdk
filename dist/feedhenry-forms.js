@@ -6368,8 +6368,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/Users/kelly/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/kelly/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -6844,7 +6844,7 @@ process.chdir = function (dir) {
 module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+},{"./support/isBuffer":12,"/Users/kelly/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
 var toString = Object.prototype.toString
 
 module.exports = function(val){
@@ -10448,14 +10448,20 @@ module.exports = {
   __bind_ready();
 
   // destination functions
-  var _mapScriptLoaded = (typeof google != "undefined") && (typeof google.maps != "undefined") && (typeof google.maps.Map != "undefined");
+  var _mapScriptLoaded =  (typeof google != "undefined") && (typeof google.maps != "undefined") && (typeof google.maps.Map != "undefined");
+  var mapFuncs = [];
+  var loadingScript = false;
   var _loadMapScript = function () {
+    if(loadingScript) return;
+    loadingScript = true;
     var script = document.createElement("script");
     script.type = "text/javascript";
     var protocol = document.location.protocol;
     protocol = (protocol === "http:" || protocol === "https:") ? protocol : "https:";
     script.src = protocol + "//maps.google.com/maps/api/js?sensor=true&callback=$fh._mapLoaded";
+
     document.body.appendChild(script);
+
   };
 
   var audio_obj = null;
@@ -10637,27 +10643,13 @@ module.exports = {
         f('map_nocontainer', {}, p);
         return;
       }
-
-      if (!_mapScriptLoaded) {
-        $fh._mapLoaded = function () {
-          _mapScriptLoaded = true;
-          var mapOptions = {};
-          mapOptions.zoom = p.zoom ? p.zoom : 8;
-          mapOptions.center = new google.maps.LatLng(p.lat, p.lon);
-          mapOptions.mapTypeId = google.maps.MapTypeId.ROADMAP;
-          var map = new google.maps.Map(target, mapOptions);
-          s({
-            map: map
-          });
-        };
-        _loadMapScript();
-        //after 20 secs, if the map script is still not loaded, run the fail function
-        setTimeout(function () {
-          if (!_mapScriptLoaded) {
-            f('map_timeout', {}, p);
-          }
-        }, 20000);
-      } else {
+      $fh._mapLoaded = function () {
+        var fMap;
+        while(fMap = mapFuncs.pop()){
+          fMap();
+        }
+      };
+      mapFuncs.push(function (){
         var mapOptions = {};
         mapOptions.zoom = p.zoom ? p.zoom : 8;
         mapOptions.center = new google.maps.LatLng(p.lat, p.lon);
@@ -10666,6 +10658,19 @@ module.exports = {
         s({
           map: map
         });
+      });
+      _mapScriptLoaded =  (typeof google != "undefined") && (typeof google.maps != "undefined") && (typeof google.maps.Map != "undefined");
+      if (!_mapScriptLoaded) {
+        _loadMapScript();
+        //after 20 secs, if the map script is still not loaded, run the fail function
+        setTimeout(function () {
+          _mapScriptLoaded =  (typeof google != "undefined") && (typeof google.maps != "undefined") && (typeof google.maps.Map != "undefined");
+          if (!_mapScriptLoaded) {
+            f('map_timeout', {}, p);
+          }
+        }, 20000);
+      }else{
+        $fh._mapLoaded();
       }
     }
 
