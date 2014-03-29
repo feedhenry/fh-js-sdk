@@ -4,6 +4,7 @@ var CryptoJS = require("../../libs/generated/crypto");
 var Lawnchair = require('../../libs/generated/lawnchair');
 
 var self = {
+
   // CONFIG
   defaults: {
     "sync_frequency": 10,
@@ -34,8 +35,14 @@ var self = {
     // Should log statements be written to console.log
     "crashed_count_wait" : 10,
     // How many syncs should we check for updates on crashed in flight updates before we give up searching
-    "resend_crashed_updates" : true
+    "resend_crashed_updates" : true,
     // If we have reached the crashed_count_wait limit, should we re-try sending the crashed in flight pending record
+    "sync_active" : true,
+    // Is the background sync with the cloud currently active
+    "storage_strategy" : "html5-filesystem",
+    // Storage strategy to use for Lawnchair - supported strategies are 'html5-filesystem' and 'dom'
+    "file_system_quota" : 50 * 1024 * 1204
+    // Amount of space to request from the HTML5 filesystem API when running in browser
   },
 
   notifications: {
@@ -68,13 +75,18 @@ var self = {
 
   notify_callback: undefined,
 
+  hasSyncMBaaS : true,
+
   // PUBLIC FUNCTION IMPLEMENTATIONS
   init: function(options) {
     self.consoleLog('sync - init called');
+
     self.config = JSON.parse(JSON.stringify(self.defaults));
     for (var i in options) {
       self.config[i] = options[i];
     }
+
+    self.checkHasSyncMBaaS();
     self.datasetMonitor();
   },
 
@@ -82,36 +94,41 @@ var self = {
     self.notify_callback = callback;
   },
 
-  manage: function(dataset_id, options, query_params) {
+  manage: function(dataset_id, options, query_params, meta_data, cb) {
+    self.consoleLog('manage - START');
+
     var doManage = function(dataset) {
       self.consoleLog('doManage dataset :: initialised = ' + dataset.initialised + " :: " + dataset_id + ' :: ' + JSON.stringify(options));
 
-      // Make sure config is initialised
-      if( ! self.config ) {
-        self.config = JSON.parse(JSON.stringify(self.defaults));
-      }
+      var datasetConfig = self.setOptions(options);
 
-      var datasetConfig = JSON.parse(JSON.stringify(self.config));
-      for (var k in options) {
-        datasetConfig[k] = options[k];
-      }
-
-      dataset.query_params = query_params || {};
+      dataset.query_params = query_params || dataset.query_params || {};
+      dataset.meta_data = meta_data || dataset.meta_data || {};
       dataset.config = datasetConfig;
       dataset.syncRunning = false;
       dataset.syncPending = true;
       dataset.initialised = true;
       dataset.meta = {};
-      self.saveDataSet(dataset_id);
+
+      self.saveDataSet(dataset_id, function() {
+
+        if( cb ) {
+          cb();
+        }
+      });
     };
 
     // Check if the dataset is already loaded
     self.getDataSet(dataset_id, function(dataset) {
+      self.consoleLog('manage - dataset already loaded');
       doManage(dataset);
     }, function(err) {
+      self.consoleLog('manage - dataset not loaded... trying to load');
 
       // Not already loaded, try to load from local storage
       self.loadDataSet(dataset_id, function(dataset) {
+          self.consoleLog('manage - dataset loaded from local storage');
+
           // Loading from local storage worked
 
           // Fire the local update event to indicate that dataset was loaded from local storage
@@ -122,7 +139,7 @@ var self = {
         },
         function(err) {
           // No dataset in memory or local storage - create a new one and put it in memory
-          self.consoleLog('Creating new dataset for id ' + dataset_id);
+          self.consoleLog('manage - Creating new dataset for id ' + dataset_id);
           var dataset = {};
           dataset.pending = {};
           self.datasets[dataset_id] = dataset;
@@ -131,15 +148,30 @@ var self = {
     });
   },
 
+  setOptions: function(options) {
+    // Make sure config is initialised
+    if( ! self.config ) {
+      self.config = JSON.parse(JSON.stringify(self.defaults));
+    }
+
+    var datasetConfig = JSON.parse(JSON.stringify(self.config));
+    var optionsIn = JSON.parse(JSON.stringify(options));
+    for (var k in optionsIn) {
+      datasetConfig[k] = optionsIn[k];
+    }
+
+    return datasetConfig;
+  },
+
   list: function(dataset_id, success, failure) {
     self.getDataSet(dataset_id, function(dataset) {
-      if (dataset) {
+      if (dataset && dataset.data) {
         // Return a copy of the dataset so updates will not automatically make it back into the dataset
         var res = JSON.parse(JSON.stringify(dataset.data));
         success(res);
       }
     }, function(code, msg) {
-      failure(code, msg);
+      if(failure) failure(code, msg);
     });
   },
 
@@ -158,7 +190,7 @@ var self = {
         success(res);
       }
     }, function(code, msg) {
-      failure(code, msg);
+      if(failure) failure(code, msg);
     });
   },
 
@@ -190,22 +222,28 @@ var self = {
   },
 
   listCollisions : function(dataset_id, success, failure){
-    actFunc({
-      "act": dataset_id,
-      "req": {
-        "fn": "listCollisions"
-      }
-    }, success, failure);
+    self.getDataSet(dataset_id, function(dataset) {
+      self.doCloudCall({
+        "dataset_id": dataset_id,
+        "req": {
+          "fn": "listCollisions",
+          "meta_data" : dataset.meta_data
+        }
+      }, success, failure);
+    }, failure);
   },
 
   removeCollision: function(dataset_id, colissionHash, success, failure) {
-    actFunc({
-      "act": dataset_id,
-      "req": {
-        "fn": "removeCollision",
-        "hash": colissionHash
-      }
-    }, success, failure);
+    self.getDataSet(dataset_id, function(dataset) {
+      self.doCloudCall({
+        "dataset_id" : dataset_id,
+        "req": {
+          "fn": "removeCollision",
+          "hash": colissionHash,
+          meta_data: dataset.meta_data
+        }
+      }, success, failure);
+    });
   },
 
 
@@ -256,7 +294,134 @@ var self = {
     if (dataset) {
       success(dataset);
     } else {
-      failure('unknown_dataset' + dataset_id, dataset_id);
+      failure('unknown_dataset ' + dataset_id, dataset_id);
+    }
+  },
+
+  getQueryParams: function(dataset_id, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      success(dataset.query_params);
+    } else {
+      failure('unknown_dataset ' + dataset_id, dataset_id);
+    }
+  },
+
+  setQueryParams: function(dataset_id, queryParams, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      dataset.query_params = queryParams;
+      self.saveDataSet(dataset_id);
+      if( success ) {
+        success(dataset.query_params);
+      }
+    } else {
+      if ( failure ) {
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
+    }
+  },
+
+  getMetaData: function(dataset_id, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      success(dataset.meta_data);
+    } else {
+      failure('unknown_dataset ' + dataset_id, dataset_id);
+    }
+  },
+
+  setMetaData: function(dataset_id, metaData, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      dataset.meta_data = metaData;
+      self.saveDataSet(dataset_id);
+      if( success ) {
+        success(dataset.meta_data);
+      }
+    } else {
+      if( failure ) {
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
+    }
+  },
+
+  getConfig: function(dataset_id, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      success(dataset.config);
+    } else {
+      failure('unknown_dataset ' + dataset_id, dataset_id);
+    }
+  },
+
+  setConfig: function(dataset_id, config, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      var fullConfig = self.setOptions(config);
+      dataset.config = fullConfig;
+      self.saveDataSet(dataset_id);
+      if( success ) {
+        success(dataset.config);
+      }
+    } else {
+      if( failure ) {
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
+    }
+  },
+
+  stopSync: function(dataset_id, success, failure) {
+    self.setConfig(dataset_id, {"sync_active" : false}, function() {
+      if( success ) {
+        success();
+      }
+    }, failure);
+  },
+
+  startSync: function(dataset_id, success, failure) {
+    self.setConfig(dataset_id, {"sync_active" : true}, function() {
+      if( success ) {
+        success();
+      }
+    }, failure);
+  },
+
+  doSync: function(dataset_id, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      dataset.syncPending = true;
+      self.saveDataSet(dataset_id);
+      if( success ) {
+        success();
+      }
+    } else {
+      if( failure ) {
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
+    }
+  },
+
+  forceSync: function(dataset_id, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      dataset.syncForced = true;
+      self.saveDataSet(dataset_id);
+      if( success ) {
+        success();
+      }
+    } else {
+      if( failure ) {
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
     }
   },
 
@@ -319,14 +484,14 @@ var self = {
 
         success(obj);
       }, function(code, msg) {
-        failure(code, msg);
+        if(failure) failure(code, msg);
       });
     }
 
     var pendingObj = {};
     pendingObj.inFlight = false;
     pendingObj.action = action;
-    pendingObj.post = data;
+    pendingObj.post = JSON.parse(JSON.stringify(data));
     pendingObj.postHash = self.generateHash(pendingObj.post);
     pendingObj.timestamp = new Date().getTime();
     if( "create" === action ) {
@@ -354,12 +519,14 @@ var self = {
 
       self.isOnline(function(online) {
         if (!online) {
-          self.syncComplete(dataset_id, "offline");
+          self.syncComplete(dataset_id, "offline", self.notifications.SYNC_FAILED);
         } else {
           var syncLoopParams = {};
           syncLoopParams.fn = 'sync';
           syncLoopParams.dataset_id = dataset_id;
           syncLoopParams.query_params = dataSet.query_params;
+          syncLoopParams.config = dataSet.config;
+          syncLoopParams.meta_data = dataSet.meta_data;
           //var datasetHash = self.generateLocalDatasetHash(dataSet);
           syncLoopParams.dataset_hash = dataSet.hash;
           syncLoopParams.acknowledgements = dataSet.acknowledgements || [];
@@ -381,8 +548,8 @@ var self = {
             self.consoleLog('Starting sync loop - global hash = ' + dataSet.hash + ' :: params = ' + JSON.stringify(syncLoopParams, null, 2));
           }
           try {
-            actFunc({
-              'act': dataset_id,
+            self.doCloudCall({
+              'dataset_id': dataset_id,
               'req': syncLoopParams
             }, function(res) {
               var rec;
@@ -428,27 +595,26 @@ var self = {
                 dataSet.acknowledgements = acknowledgements;
               }
 
-              else if (res.hash && res.hash !== dataSet.hash) {
+              if (!res.records && res.hash && res.hash !== dataSet.hash) {
                 self.consoleLog("Local dataset stale - syncing records :: local hash= " + dataSet.hash + " - remoteHash=" + res.hash);
                 // Different hash value returned - Sync individual records
                 self.syncRecords(dataset_id);
               } else {
                 self.consoleLog("Local dataset up to date");
+                self.syncComplete(dataset_id,  "online", self.notifications.SYNC_COMPLETE);
               }
-              self.syncComplete(dataset_id,  "online");
             }, function(msg, err) {
               // The AJAX call failed to complete succesfully, so the state of the current pending updates is unknown
               // Mark them as "crashed". The next time a syncLoop completets successfully, we will review the crashed
               // records to see if we can determine their current state.
               self.markInFlightAsCrashed(dataSet);
               self.consoleLog("syncLoop failed : msg=" + msg + " :: err = " + err);
-              self.doNotify(dataset_id, null, self.notifications.SYNC_FAILED, msg);
-              self.syncComplete(dataset_id,  msg);
+              self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);
             });
           }
           catch (e) {
             self.consoleLog('Error performing sync - ' + e);
-            self.syncComplete(dataset_id, e);
+            self.syncComplete(dataset_id, e, self.notifications.SYNC_FAILED);
           }
         }
       });
@@ -477,8 +643,8 @@ var self = {
 
       self.consoleLog("syncRecParams :: " + JSON.stringify(syncRecParams));
 
-      actFunc({
-        'act': dataset_id,
+      self.doCloudCall({
+        'dataset_id': dataset_id,
         'req': syncRecParams
       }, function(res) {
         var i;
@@ -507,21 +673,21 @@ var self = {
         if(res.hash) {
           dataSet.hash = res.hash;
         }
-        self.syncComplete(dataset_id, "online");
+        self.syncComplete(dataset_id, "online", self.notifications.SYNC_COMPLETE);
       }, function(msg, err) {
         self.consoleLog("syncRecords failed : msg=" + msg + " :: err=" + err);
-        self.syncComplete(dataset_id, msg);
+        self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);
       });
     });
   },
 
-  syncComplete: function(dataset_id, status) {
+  syncComplete: function(dataset_id, status, notification) {
 
     self.getDataSet(dataset_id, function(dataset) {
       dataset.syncRunning = false;
       dataset.syncLoopEnd = new Date().getTime();
       self.saveDataSet(dataset_id);
-      self.doNotify(dataset_id, dataset.hash, self.notifications.SYNC_COMPLETE, status);
+      self.doNotify(dataset_id, dataset.hash, notification, status);
     });
   },
 
@@ -530,7 +696,7 @@ var self = {
       if( self.datasets.hasOwnProperty(dataset_id) ) {
         var dataset = self.datasets[dataset_id];
 
-        if( !dataset.syncRunning ) {
+        if( !dataset.syncRunning && dataset.config.sync_active) {
           // Check to see if it is time for the sync loop to run again
           var lastSyncStart = dataset.syncLoopStart;
           var lastSyncCmp = dataset.syncLoopEnd;
@@ -545,16 +711,66 @@ var self = {
               // Time between sync loops has passed - do another sync
               dataset.syncPending = true;
             }
+          } else if( dataset.syncForced ) {
+            dataset.syncPending = true;
           }
 
           if( dataset.syncPending ) {
+            // Reset syncForced in case it was what caused the sync cycle to run.
+            dataset.syncForced = false;
+
             // If the dataset requres syncing, run the sync loop. This may be because the sync interval has passed
             // or because the sync_frequency has been changed or because a change was made to the dataset and the
             // immediate_sync flag set to true
-           self.syncLoop(dataset_id);
+            self.syncLoop(dataset_id);
           }
         }
       }
+    }
+  },
+
+  checkHasSyncMBaaS : function() {
+    self.hasSyncMBaaS = false;
+    return;
+    console.log('starting check has mbaas');
+
+    $fh.mbaas({
+      'url' : '/mbaas/sync/test',
+      'method' : 'post',
+      'data' : {}
+    }, function(res) {
+      // If the sync rout is not there, the mBaaS will respond with a 200 and the following message:
+      // "Only POST to supported mBaaS APIs are supported. See http://docs.feedhenry.com for more"
+      console.log('checkHasSyncMBaaS - success - ', res);
+      self.hasSyncMBaaS = true;
+    }, function(err) {
+      // If the sync rout *is* there, and the "fn" parameter is not passed, the sync service will respond
+      // with an error syating "no_fn"
+      console.log('checkHasSyncMBaaS - failure - ', err);
+      self.hasSyncMBaaS = false;
+    });
+  },
+
+  doCloudCall: function(params, success, failure) {
+    if( self.hasSyncMBaaS ) {
+      $fh.mbaas({
+        'url' : '/mbaas/sync/' + params.dataset_id,
+        'method' : 'post',
+        'data' : params.req
+      }, function(res) {
+        success(res);
+      }, function(err, msg) {
+        failure(err, msg)
+      })
+    } else {
+      $fh.act({
+        'act' : params.dataset_id,
+        'req' : params.req
+      }, function(res) {
+        success(res);
+      }, function(err, msg) {
+        failure(err, msg)
+      });
     }
   },
 
@@ -576,15 +792,11 @@ var self = {
     };
     self.getDataSet(dataset_id, function(dataset) {
       // save dataset to local storage
-      // the order of adapter wasn't specified previously, in this case, Lawnchair will check adapters using LIFO.
-      // If we don't specify the order of adapters here, the order of when an adapter is added to Lawnchair in grunt file or during app runing could break backward compatibility.
-      Lawnchair({fail:onFail, adapter: ["webkit-sqlite", "dom", "localFileStorage", "window-name"]}, function (){
-           this.save({key:"dataset_" + dataset_id,val:JSON.stringify(dataset)}, function(){
-             //save success
-             if( cb ) {
-               cb();
-             }
-           });
+      Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota}, function (){
+        this.save({key:"dataset_" + dataset_id, val:dataset}, function(){
+          //save success
+          if(cb) return cb();
+        });
       });
     });
   },
@@ -598,8 +810,7 @@ var self = {
       self.consoleLog(errMsg);
     };
 
-    Lawnchair({fail:onFail, adapter: ["webkit-sqlite", "dom", "localFileStorage", "window-name"]},function (){
-       this.get( "dataset_" + dataset_id, function (data){
+        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       this.get( "dataset_" + dataset_id, function (data){
          if (data && data.val !== null) {
             var dataset = JSON.parse(data.val);
             // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
@@ -607,10 +818,10 @@ var self = {
             dataset.initialised = false;
             self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
             self.consoleLog('load from local storage success for dataset_id :' + dataset_id);
-            return success(dataset);
+            if(success) return success(dataset);
           } else {
-              // no data yet, probably first time. failure calback should handle this
-              return failure();
+            // no data yet, probably first time. failure calback should handle this
+            if(failure) return failure();
           }
        });
     });
@@ -658,6 +869,9 @@ var self = {
             previousPending.post = pendingRec.post;
             previousPending.postHash = pendingRec.postHash;
             delete pending[pendingRec.hash];
+            // Update the pending record to have the hash of the previous record as this is what is now being
+            // maintained in the pending array & is what we want in the meta record
+            pendingRec.hash = previousPendingUid;
           }
         }
       }
@@ -994,6 +1208,8 @@ var self = {
 
 (function() {
   self.config = self.defaults;
+  //Initialse the sync service with default config
+  self.init({});
 })();
 
 module.exports = {
@@ -1009,7 +1225,15 @@ module.exports = {
   removeCollision: self.removeCollision,
   getPending : self.getPending,
   clearPending : self.clearPending,
-  getDataset : self.getDataSet
+  getDataset : self.getDataSet,
+  getQueryParams: self.getQueryParams,
+  setQueryParams: self.setQueryParams,
+  getMetaData: self.getMetaData,
+  setMetaData: self.setMetaData,
+  getConfig: self.getConfig,
+  setConfig: self.setConfig,
+  startSync: self.startSync,
+  stopSync: self.stopSync,
+  doSync: self.doSync,
+  forceSync: self.forceSync
 };
-
-
