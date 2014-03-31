@@ -1,6 +1,5 @@
 Lawnchair.adapter('html5-filesystem', (function(global){
 
-  var requestFileSystem = global.requestFileSystem || global.webkitRequestFileSystem || global.moz_requestFileSystem;
   var FileError = global.FileError;
 
   var fail = function( e ) {
@@ -96,7 +95,8 @@ Lawnchair.adapter('html5-filesystem', (function(global){
   return {
     // boolean; true if the adapter is valid for the current environment
     valid: function() {
-      return !!requestFileSystem;
+      var fs = global.requestFileSystem || global.webkitRequestFileSystem || global.moz_requestFileSystem;
+      return !!fs;
     },
 
     // constructor call and callback. 'name' is the most common option
