@@ -1,5 +1,5 @@
 module.exports = function(url) {
-  var qmap;
+  var qmap = {};
   var i = url.split("?");
   if (i.length === 2) {
     var queryString = i[1];

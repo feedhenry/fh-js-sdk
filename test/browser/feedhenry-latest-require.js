@@ -6368,8 +6368,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,require("/Users/kelly/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/kelly/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(require,module,exports){
+}).call(this,require("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(require,module,exports){
 (function (global){
 /*global window, global*/
 var util = require("util")
@@ -6844,7 +6844,7 @@ process.chdir = function (dir) {
 module.exports=require(6)
 },{}],13:[function(require,module,exports){
 module.exports=require(7)
-},{"./support/isBuffer":12,"/Users/kelly/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(require,module,exports){
+},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(require,module,exports){
 var toString = Object.prototype.toString
 
 module.exports = function(val){
@@ -6875,7 +6875,7 @@ module.exports = function(val){
   return typeof val
 }
 
-},{}],"/Users/kelly/work/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
+},{}],"/Users/weili/work/fh-sdks/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
 module.exports=require('il4jYc');
 },{}],"il4jYc":[function(require,module,exports){
 var constants = require("./modules/constants");
@@ -7138,7 +7138,7 @@ var ajax = module.exports = function (options) {
     if (mime.indexOf(',') > -1) mime = mime.split(',', 2)[0]
     xhr.overrideMimeType && xhr.overrideMimeType(mime)
   }
-  if (settings.contentType || (settings.data && settings.type.toUpperCase() != 'GET'))
+  if (settings.contentType || (settings.data && !settings.formdata && settings.type.toUpperCase() != 'GET'))
     baseHeaders['Content-Type'] = (settings.contentType || 'application/x-www-form-urlencoded')
   settings.headers = extend(baseHeaders, settings.headers || {})
 
@@ -7365,7 +7365,14 @@ function appendQuery(url, query) {
 
 // serialize payload and append it to the URL for GET requests
 function serializeData(options) {
-  if (type(options.data) === 'object') options.data = param(options.data)
+  if (type(options.data) === 'object') {
+    if(typeof options.data.append === "function"){
+      //we are dealing with FormData, do not serialize
+      options.formdata = true;
+    } else {
+      options.data = param(options.data)
+    }
+  }
   if (options.data && (!options.type || options.type.toUpperCase() == 'GET'))
     options.url = appendQuery(options.url, options.data)
 }
@@ -7649,39 +7656,61 @@ module.exports = function(p, s, f){
 var consts = require("./constants");
 var ajax = require("./ajax");
 var console = require("console");
+var qs = require("./queryMap");
 
 var app_props = null;
 
-var load = function(cb){
-  ajax({url: consts.config_js, dataType:"json", success: function(data){
-    console.log("fhconfig = " + JSON.stringify(data));
-    //when load the config file on device, because file:// protocol is used, it will never call fail call back. The success callback will be called but the data value will be null.
-    if(null == data){
-      return cb(new Error("app_config_missing"));
-    } else {
-      app_props = data;
-      cb(null, app_props);
+var load = function(cb) {
+  var doc_url = document.location.href;
+  var url_params = qs(doc_url);
+  var local = (typeof url_params.fhconfig !== 'undefined');
+  var config_url = url_params.fhconfig || consts.config_js;
+
+  ajax({
+    url: config_url,
+    dataType: "json",
+    success: function(data) {
+      console.log("fhconfig = " + JSON.stringify(data));
+      //when load the config file on device, because file:// protocol is used, it will never call fail call back. The success callback will be called but the data value will be null.
+      if (null === data) {
+        return cb(new Error("app_config_missing"));
+      } else {
+        app_props = data;
+
+        // For local environments, no init needed
+        if (local) {
+          // Set defaults for keys other than host
+          app_props.local = true;
+          app_props.appid = "000000000000000000000000";
+          app_props.appkey = "0000000000000000000000000000000000000000";
+          app_props.projectid = "000000000000000000000000";
+          app_props.connectiontag = "0.0.1";
+        }
+
+        cb(null, app_props);
+      }
+    },
+    error: function(req, statusText, error) {
+      console.log(consts.config_js + " Not Found");
+      cb(new Error("app_config_missing"));
     }
-  }, error: function(req, statusText, error){
-    console.log(consts.config_js  + " Not Found");
-    cb(new Error("app_config_missing"));
-  }});
-}
+  });
+};
 
-var setAppProps = function(props){
+var setAppProps = function(props) {
   app_props = props;
-}
+};
 
-var getAppProps = function(){
+var getAppProps = function() {
   return app_props;
-}
+};
 
 module.exports = {
   load: load,
   getAppProps: getAppProps,
   setAppProps: setAppProps
-}
-},{"./ajax":18,"./constants":26,"console":8}],25:[function(require,module,exports){
+};
+},{"./ajax":18,"./constants":26,"./queryMap":38,"console":8}],25:[function(require,module,exports){
 var console = require("console");
 var queryMap = require("./queryMap");
 var JSON = require("JSON");
@@ -7794,8 +7823,8 @@ module.exports = {
   "fh_timeout": 20000,
   "boxprefix": "/box/srv/1.1/",
   "sdk_version": "BUILD_VERSION",
-  "config_js":"fhconfig.json"
-}
+  "config_js": "fhconfig.json"
+};
 },{}],27:[function(require,module,exports){
 var console = require("console");
 module.exports = {
@@ -8089,19 +8118,45 @@ var JSON = require("JSON");
 var hashFunc = require("./security/hash");
 var appProps = require("./appProps");
 
-var init = function(cb, app_props){
-  if(arguments.length === 2 && typeof app_props === "object" && app_props.mode){
+var init = function(cb, app_props) {
+  if (arguments.length === 2 && typeof app_props === "object" && app_props.mode) {
     appProps.setAppProps(app_props);
     return loadCloudProps(app_props, cb);
   } else {
-    appProps.load(function(err, data){
-      if(err) return cb(err);
+    appProps.load(function(err, data) {
+      if (err) return cb(err);
       return loadCloudProps(data, cb);
     });
   }
 }
 
-var loadCloudProps = function(app_props, callback){
+var loadCloudProps = function(app_props, callback) {
+
+  // If local - shortcircuit the init - just return the host
+  if (app_props.local) {
+    var res = {
+      "domain": "local",
+      "firstTime": false,
+      "hosts": {
+        "debugCloudType": "node",
+        "debugCloudUrl": app_props.host,
+        "releaseCloudType": "node",
+        "releaseCloudUrl": app_props.host,
+        "type": "cloud_nodejs",
+        "url": app_props.host
+      },
+      "init": {
+        "trackId": "000000000000000000000000"
+      },
+      "status": "ok"
+    };
+
+    return callback(null, {
+      cloud: res
+    });
+  }
+
+
   //now we have app props, add the fileStorageAdapter
   lawnchairext.addAdapter(app_props, hashFunc);
   //dom adapter doens't work on windows phone, so don't specify the adapter if the dom one failed
@@ -8119,7 +8174,7 @@ var loadCloudProps = function(app_props, callback){
   var storage = null;
   try {
     storage = new Lawnchair(lcConf, function() {});
-  } catch(e){
+  } catch (e) {
     //when dom adapter failed, Lawnchair throws an error
     //shoudn't go in here anymore
     lcConf.adapter = undefined;
@@ -8127,53 +8182,58 @@ var loadCloudProps = function(app_props, callback){
   }
 
   var path = app_props.host + consts.boxprefix + "app/init";
-  
+
   storage.get('fh_init', function(storage_res) {
     var savedHost = null;
     if (storage_res && storage_res.value !== null && typeof(storage_res.value) !== "undefined" && storage_res !== "") {
       storage_res = typeof(storage_res) === "string" ? JSON.parse(storage_res) : storage_res;
-      storage_res.value = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value): storage_res.value;
-      if(storage_res.value.init){
+      storage_res.value = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value) : storage_res.value;
+      if (storage_res.value.init) {
         app_props.init = storage_res.value.init;
       } else {
         //keep it backward compatible.
         app_props.init = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value) : storage_res.value;
       }
-      if(storage_res.value.hosts){
+      if (storage_res.value.hosts) {
         savedHost = storage_res.value;
       }
     }
     var data = fhparams.buildFHParams();
 
-    ajax(
-      {
-        "url": path,
-        "type": "POST",
-        "tryJSONP": true,
-        "dataType": "json",
-        "contentType": "application/json",
-        "data": JSON.stringify(data),
-        "timeout": app_props.timeout || consts.fh_timeout,
-        "success": function(initRes) {
-          storage.save({
-            key: "fh_init",
-            value: initRes
-          }, function() {
+    ajax({
+      "url": path,
+      "type": "POST",
+      "tryJSONP": true,
+      "dataType": "json",
+      "contentType": "application/json",
+      "data": JSON.stringify(data),
+      "timeout": app_props.timeout || consts.fh_timeout,
+      "success": function(initRes) {
+        storage.save({
+          key: "fh_init",
+          value: initRes
+        }, function() {});
+        if (callback) {
+          callback(null, {
+            cloud: initRes
           });
-          if(callback) {
-            callback(null, {cloud: initRes});
+        }
+      },
+      "error": function(req, statusText, error) {
+        //use the cached host if we have a copy
+        if (savedHost) {
+          if (callback) {
+            callback(null, {
+              cloud: savedHost
+            });
           }
-        },
-        "error": function(req, statusText, error) {
-          //use the cached host if we have a copy
-          if(savedHost){
-            if(callback){
-              callback(null, {cloud: savedHost});
-            }
-          } else {
-            handleError(function(msg, err){
-              if(callback){
-                callback({error: err, message: msg});
+        } else {
+          handleError(function(msg, err) {
+            if (callback) {
+              callback({
+                error: err,
+                message: msg
+              });
             }
           }, req, statusText);
         }
@@ -8427,7 +8487,7 @@ module.exports = [
 
 },{}],38:[function(require,module,exports){
 module.exports = function(url) {
-  var qmap;
+  var qmap = {};
   var i = url.split("?");
   if (i.length === 2) {
     var queryString = i[1];
@@ -8441,7 +8501,6 @@ module.exports = function(url) {
   }
   return qmap;
 };
-
 },{}],39:[function(require,module,exports){
 var constants = require("./constants");
 
