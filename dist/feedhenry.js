@@ -6889,6 +6889,7 @@ var api_sync = _dereq_("./modules/sync-cli");
 var api_mbaas = _dereq_("./modules/api_mbaas");
 var fhparams = _dereq_("./modules/fhparams");
 var appProps = _dereq_("./modules/appProps");
+var device = _dereq_("./modules/device");
 
 var defaultFail = function(msg, error){
   console.log(msg + ":" + JSON.stringify(error));
@@ -6966,6 +6967,7 @@ fh.hash = api_hash;
 fh.sync = api_sync;
 fh.ajax = fh.__ajax = ajax;
 fh.mbaas = api_mbaas;
+fh._getDeviceId = device.getDeviceId;
 
 fh.getCloudURL = function(){
   return cloud.getCloudHostUrl();
@@ -7002,7 +7004,7 @@ module.exports = fh;
 
 
 
-},{"./modules/ajax":17,"./modules/api_act":18,"./modules/api_auth":19,"./modules/api_hash":20,"./modules/api_mbaas":21,"./modules/api_sec":22,"./modules/appProps":23,"./modules/constants":25,"./modules/events":28,"./modules/fhparams":29,"./modules/sync-cli":43,"./modules/waitForCloud":45,"console":8}],16:[function(_dereq_,module,exports){
+},{"./modules/ajax":17,"./modules/api_act":18,"./modules/api_auth":19,"./modules/api_hash":20,"./modules/api_mbaas":21,"./modules/api_sec":22,"./modules/appProps":23,"./modules/constants":25,"./modules/device":27,"./modules/events":28,"./modules/fhparams":29,"./modules/sync-cli":43,"./modules/waitForCloud":45,"console":8}],16:[function(_dereq_,module,exports){
 var XDomainRequestWrapper = function(xdr){
   this.xdr = xdr;
   this.isWrapper = true;
@@ -7136,7 +7138,7 @@ var ajax = module.exports = function (options) {
     if (mime.indexOf(',') > -1) mime = mime.split(',', 2)[0]
     xhr.overrideMimeType && xhr.overrideMimeType(mime)
   }
-  if (settings.contentType || (settings.data && settings.type.toUpperCase() != 'GET'))
+  if (settings.contentType || (settings.data && !settings.formdata && settings.type.toUpperCase() != 'GET'))
     baseHeaders['Content-Type'] = (settings.contentType || 'application/x-www-form-urlencoded')
   settings.headers = extend(baseHeaders, settings.headers || {})
 
@@ -7363,7 +7365,14 @@ function appendQuery(url, query) {
 
 // serialize payload and append it to the URL for GET requests
 function serializeData(options) {
-  if (type(options.data) === 'object') options.data = param(options.data)
+  if (type(options.data) === 'object') {
+    if(typeof options.data.append === "function"){
+      //we are dealing with FormData, do not serialize
+      options.formdata = true;
+    } else {
+      options.data = param(options.data)
+    }
+  }
   if (options.data && (!options.type || options.type.toUpperCase() == 'GET'))
     options.url = appendQuery(options.url, options.data)
 }
@@ -7813,7 +7822,7 @@ module.exports = {
 module.exports = {
   "fh_timeout": 20000,
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.0.0-alpha",
+  "sdk_version": "2.0.1-alpha",
   "config_js": "fhconfig.json"
 };
 },{}],26:[function(_dereq_,module,exports){
