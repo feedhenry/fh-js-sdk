@@ -108,7 +108,12 @@ Lawnchair.adapter('html5-filesystem', (function(global){
 
       function requestFileSystem(amount) {
 //        console.log('in requestFileSystem');
-        window.requestFileSystem(LocalFileSystem.PERSISTENT, amount, function(fs) {
+        var fs = global.requestFileSystem || global.webkitRequestFileSystem || global.moz_requestFileSystem;
+        var mode = window.PERSISTENT;
+        if(typeof LocalFileSystem !== "undefined" && typeof LocalFileSystem.PERSISTENT !== "undefined"){
+          mode = LocalFileSystem.PERSISTENT;
+        }      
+        fs(mode, amount, function(fs) {
 //          console.log('got FS ', fs);
           fs.root.getDirectory( name, {create:true}, function( directory ) {
 //            console.log('got DIR ', directory);
