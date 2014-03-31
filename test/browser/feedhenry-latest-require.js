@@ -6891,6 +6891,7 @@ var api_sync = require("./modules/sync-cli");
 var api_mbaas = require("./modules/api_mbaas");
 var fhparams = require("./modules/fhparams");
 var appProps = require("./modules/appProps");
+var device = require("./modules/device");
 
 var defaultFail = function(msg, error){
   console.log(msg + ":" + JSON.stringify(error));
@@ -6968,6 +6969,7 @@ fh.hash = api_hash;
 fh.sync = api_sync;
 fh.ajax = fh.__ajax = ajax;
 fh.mbaas = api_mbaas;
+fh._getDeviceId = device.getDeviceId;
 
 fh.getCloudURL = function(){
   return cloud.getCloudHostUrl();
@@ -7004,7 +7006,7 @@ module.exports = fh;
 
 
 
-},{"./modules/ajax":18,"./modules/api_act":19,"./modules/api_auth":20,"./modules/api_hash":21,"./modules/api_mbaas":22,"./modules/api_sec":23,"./modules/appProps":24,"./modules/constants":26,"./modules/events":29,"./modules/fhparams":30,"./modules/sync-cli":44,"./modules/waitForCloud":46,"console":8}],17:[function(require,module,exports){
+},{"./modules/ajax":18,"./modules/api_act":19,"./modules/api_auth":20,"./modules/api_hash":21,"./modules/api_mbaas":22,"./modules/api_sec":23,"./modules/appProps":24,"./modules/constants":26,"./modules/device":28,"./modules/events":29,"./modules/fhparams":30,"./modules/sync-cli":44,"./modules/waitForCloud":46,"console":8}],17:[function(require,module,exports){
 var XDomainRequestWrapper = function(xdr){
   this.xdr = xdr;
   this.isWrapper = true;
