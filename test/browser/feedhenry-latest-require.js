@@ -6875,6 +6875,8 @@ module.exports = function(val){
   return typeof val
 }
 
+},{}],"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
+module.exports=require('il4jYc');
 },{}],"il4jYc":[function(require,module,exports){
 var constants = require("./modules/constants");
 var console = require("console");
@@ -7004,9 +7006,7 @@ module.exports = fh;
 
 
 
-},{"./modules/ajax":18,"./modules/api_act":19,"./modules/api_auth":20,"./modules/api_hash":21,"./modules/api_mbaas":22,"./modules/api_sec":23,"./modules/appProps":24,"./modules/constants":26,"./modules/device":28,"./modules/events":29,"./modules/fhparams":30,"./modules/sync-cli":44,"./modules/waitForCloud":46,"console":8}],"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
-module.exports=require('il4jYc');
-},{}],17:[function(require,module,exports){
+},{"./modules/ajax":18,"./modules/api_act":19,"./modules/api_auth":20,"./modules/api_hash":21,"./modules/api_mbaas":22,"./modules/api_sec":23,"./modules/appProps":24,"./modules/constants":26,"./modules/device":28,"./modules/events":29,"./modules/fhparams":30,"./modules/sync-cli":44,"./modules/waitForCloud":46,"console":8}],17:[function(require,module,exports){
 var XDomainRequestWrapper = function(xdr){
   this.xdr = xdr;
   this.isWrapper = true;
