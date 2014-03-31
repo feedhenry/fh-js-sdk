@@ -6368,8 +6368,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,require("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(require,module,exports){
+}).call(this,require("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(require,module,exports){
 (function (global){
 /*global window, global*/
 var util = require("util")
@@ -6844,7 +6844,7 @@ process.chdir = function (dir) {
 module.exports=require(6)
 },{}],13:[function(require,module,exports){
 module.exports=require(7)
-},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(require,module,exports){
+},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(require,module,exports){
 var toString = Object.prototype.toString
 
 module.exports = function(val){
@@ -6875,7 +6875,7 @@ module.exports = function(val){
   return typeof val
 }
 
-},{}],"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
+},{}],"/Users/weili/work/fh-sdks/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
 module.exports=require('il4jYc');
 },{}],"il4jYc":[function(require,module,exports){
 var constants = require("./modules/constants");
@@ -7140,7 +7140,7 @@ var ajax = module.exports = function (options) {
     if (mime.indexOf(',') > -1) mime = mime.split(',', 2)[0]
     xhr.overrideMimeType && xhr.overrideMimeType(mime)
   }
-  if (settings.contentType || (settings.data && settings.type.toUpperCase() != 'GET'))
+  if (settings.contentType || (settings.data && !settings.formdata && settings.type.toUpperCase() != 'GET'))
     baseHeaders['Content-Type'] = (settings.contentType || 'application/x-www-form-urlencoded')
   settings.headers = extend(baseHeaders, settings.headers || {})
 
@@ -7367,7 +7367,14 @@ function appendQuery(url, query) {
 
 // serialize payload and append it to the URL for GET requests
 function serializeData(options) {
-  if (type(options.data) === 'object') options.data = param(options.data)
+  if (type(options.data) === 'object') {
+    if(typeof options.data.append === "function"){
+      //we are dealing with FormData, do not serialize
+      options.formdata = true;
+    } else {
+      options.data = param(options.data)
+    }
+  }
   if (options.data && (!options.type || options.type.toUpperCase() == 'GET'))
     options.url = appendQuery(options.url, options.data)
 }
