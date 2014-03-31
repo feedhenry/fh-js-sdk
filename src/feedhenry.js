@@ -11,6 +11,7 @@ var api_sync = require("./modules/sync-cli");
 var api_mbaas = require("./modules/api_mbaas");
 var fhparams = require("./modules/fhparams");
 var appProps = require("./modules/appProps");
+var device = require("./modules/device");
 
 var defaultFail = function(msg, error){
   console.log(msg + ":" + JSON.stringify(error));
@@ -88,6 +89,7 @@ fh.hash = api_hash;
 fh.sync = api_sync;
 fh.ajax = fh.__ajax = ajax;
 fh.mbaas = api_mbaas;
+fh._getDeviceId = device.getDeviceId;
 
 fh.getCloudURL = function(){
   return cloud.getCloudHostUrl();
