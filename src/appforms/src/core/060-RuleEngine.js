@@ -1,6 +1,6 @@
-/*! fh-forms - v0.3.00 -  */
+/*! fh-forms - v0.2.53 -  */
 /*! async - v0.2.9 -  */
-/*! 2014-03-31 */
+/*! 2014-03-27 */
 /* This is the prefix file */
 if(appForm){
   appForm.RulesEngine=rulesEngine;
@@ -1358,7 +1358,7 @@ function rulesEngine (formDef) {
 
           var validation = (fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) ? fieldDefinition.fieldOptions.validation : undefined;
 
-          if( validation && false === validation.validateImmediately){
+          if(! validation || ! validation.validateImmediately){
             var ret = {validation: {}};
             ret.validation[fieldId] = {"valid":true};
             return cb(undefined, ret );

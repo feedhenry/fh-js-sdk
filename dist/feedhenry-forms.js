@@ -15433,12 +15433,14 @@ if (typeof $fh == 'undefined') {
 if ($fh.forms === undefined) {
   $fh.forms = appForm.api;
 }
-appForm.RulesEngine=rulesEngine;
-
-/*! fh-forms - v0.2.55 -  */
+/*! fh-forms - v0.2.53 -  */
 /*! async - v0.2.9 -  */
-/*! 2014-03-31 */
+/*! 2014-03-27 */
 /* This is the prefix file */
+if(appForm){
+  appForm.RulesEngine=rulesEngine;
+}
+
 function rulesEngine (formDef) {
   var define = {};
   var module = {exports:{}}; // create a module.exports - async will load into it
@@ -16787,6 +16789,14 @@ function rulesEngine (formDef) {
             required = (valueIndex < fieldDefinition.fieldOptions.definition.minRepeat);
           } else {
             required = fieldDefinition.required;
+          }
+
+          var validation = (fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) ? fieldDefinition.fieldOptions.validation : undefined;
+
+          if(! validation || ! validation.validateImmediately){
+            var ret = {validation: {}};
+            ret.validation[fieldId] = {"valid":true};
+            return cb(undefined, ret );
           }
 
           if(fieldEmpty(inputValue)) {
