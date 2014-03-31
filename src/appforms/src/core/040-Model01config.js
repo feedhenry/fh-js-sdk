@@ -72,12 +72,13 @@ appForm.models = function(module) {
     self.set('appId', appid);
     self.set('env', mode);
 
-
-    if ($fh && 'function' === typeof $fh.env) {
-      $fh.env(function(env) {
-        self.set('deviceId', env.uuid);
-      });
+    if($fh && $fh._getDeviceId){
+      self.set('deviceId', $fh._getDeviceId());
+    } else {
+      self.set('deviceId', "notset");
     }
+
+
     self._initMBaaS();
     //Setting default retry attempts if not set in the config
     if (!config) {

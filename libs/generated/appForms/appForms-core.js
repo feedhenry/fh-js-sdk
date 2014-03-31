@@ -1,4 +1,5 @@
-;(function(root){
+;
+(function (root) {
 
   //!!!lib start!!!
   /*
@@ -163,12 +164,12 @@
 
 // Eventually, this method will be based on the date.toISOString method.
 
-        return this.getUTCFullYear()   + '-' +
+        return this.getUTCFullYear() + '-' +
           f(this.getUTCMonth() + 1) + '-' +
-          f(this.getUTCDate())      + 'T' +
-          f(this.getUTCHours())     + ':' +
-          f(this.getUTCMinutes())   + ':' +
-          f(this.getUTCSeconds())   + 'Z';
+          f(this.getUTCDate()) + 'T' +
+          f(this.getUTCHours()) + ':' +
+          f(this.getUTCMinutes()) + ':' +
+          f(this.getUTCSeconds()) + 'Z';
       };
 
 
@@ -181,7 +182,7 @@
           '\n': '\\n',
           '\f': '\\f',
           '\r': '\\r',
-          '"' : '\\"',
+          '"': '\\"',
           '\\': '\\\\'
         },
         rep;
@@ -274,8 +275,7 @@
 
 // If the object has a dontEnum length property, we'll treat it as an array.
 
-            if (typeof value.length === 'number' &&
-              !(value.propertyIsEnumerable('length'))) {
+            if (typeof value.length === 'number' && !(value.propertyIsEnumerable('length'))) {
 
 // The object is an array. Stringify every element. Use null as a placeholder
 // for non-JSON values.
@@ -578,8 +578,10 @@
   var $fh = root.$fh || {};
 
   var defaultargs = {
-    success: function () {},
-    failure: function () {},
+    success: function () {
+    },
+    failure: function () {
+    },
     params: {}
   };
 
@@ -621,7 +623,7 @@
       var paramsarg = outargs[0];
       paramsarg._defaults = [];
       for (var n in defaultparams) {
-        if(defaultparams.hasOwnProperty(n)){
+        if (defaultparams.hasOwnProperty(n)) {
           if (typeof paramsarg[n] === "undefined") {  //we don't want to use !paramsarg[n] here because the parameter could exists in the argument and it could be false
             paramsarg[n] = defaultparams[n];
             paramsarg._defaults.push(n);
@@ -646,7 +648,7 @@
   var __ready_bound = false;
   var boxprefix = "/box/srv/1.1/";
 
-  _getHostPrefix = function(){
+  _getHostPrefix = function () {
     return $fh.app_props.host + boxprefix;
   }
 
@@ -717,11 +719,11 @@
   __bind_ready();
 
   // destination functions
-  var _mapScriptLoaded =  (typeof google != "undefined") && (typeof google.maps != "undefined") && (typeof google.maps.Map != "undefined");
+  var _mapScriptLoaded = (typeof google != "undefined") && (typeof google.maps != "undefined") && (typeof google.maps.Map != "undefined");
   var mapFuncs = [];
   var loadingScript = false;
   var _loadMapScript = function () {
-    if(loadingScript) return;
+    if (loadingScript) return;
     loadingScript = true;
     var script = document.createElement("script");
     script.type = "text/javascript";
@@ -767,18 +769,15 @@
     file: function (p, s, f) {
       f('file_nosupport');
     },
-    push: function(p,s,f){
+    push: function (p, s, f) {
       f('push_nosupport');
-    }
-    ,
+    },
     env: function (p, s, f) {
       s({
         height: window.innerHeight,
         width: window.innerWidth
       });
-    }
-
-    ,
+    },
     data: function (p, s, f) {
       if (!$fh._persist) {
         $fh._persist = new Persist.Store('FH' + $fh.app_props.appid, {
@@ -830,27 +829,23 @@
       };
 
       acts[p.act] ? acts[p.act]() : f('data_badact', p);
-    }
-
-    ,
+    },
     log: function (p, s, f) {
       typeof console === "undefined" ? f('log_nosupport') : console.log(p.message);
-    }
-
-    ,
+    },
     ori: function (p, s, f) {
-      if(typeof p.act == "undefined" || p.act == "listen"){
+      if (typeof p.act == "undefined" || p.act == "listen") {
         if (eventSupported('onorientationchange')) {
           window.addEventListener('orientationchange', s, false);
         } else {
           f('ori_nosupport', {}, p);
         }
-      } else if(p.act == "set"){
-        if(!p.value){
+      } else if (p.act == "set") {
+        if (!p.value) {
           f('ori_no_value', {}, p);
           return;
         }
-        if(p.value == "portrait"){
+        if (p.value == "portrait") {
           document.getElementsByTagName("body")[0].style['-moz-transform'] = "";
           document.getElementsByTagName("body")[0].style['-webkit-transform'] = "";
           s({orientation: 'portrait'});
@@ -862,9 +857,7 @@
       } else {
         f('ori_badact', {}, p);
       }
-    }
-
-    ,
+    },
     map: function (p, s, f) {
       if (!p.target) {
         f('map_notarget', {}, p);
@@ -879,19 +872,19 @@
         return;
       }
       var target = p.target;
-      if(typeof target === "string"){
+      if (typeof target === "string") {
         var target_dom = null;
-        if(typeof jQuery != "undefined"){
-          try{
+        if (typeof jQuery != "undefined") {
+          try {
             var jq_obj = jQuery(target);
-            if(jq_obj.length > 0){
+            if (jq_obj.length > 0) {
               target_dom = jq_obj[0];
             }
-          }catch(e){
+          } catch (e) {
             target_dom = null;
           }
         }
-        if(null == target_dom){
+        if (null == target_dom) {
           target_dom = document.getElementById(target);
         }
         target = target_dom;
@@ -914,11 +907,11 @@
       }
       $fh._mapLoaded = function () {
         var fMap;
-        while(fMap = mapFuncs.pop()){
+        while (fMap = mapFuncs.pop()) {
           fMap();
         }
       };
-      mapFuncs.push(function (){
+      mapFuncs.push(function () {
         var mapOptions = {};
         mapOptions.zoom = p.zoom ? p.zoom : 8;
         mapOptions.center = new google.maps.LatLng(p.lat, p.lon);
@@ -928,22 +921,20 @@
           map: map
         });
       });
-      _mapScriptLoaded =  (typeof google != "undefined") && (typeof google.maps != "undefined") && (typeof google.maps.Map != "undefined");
+      _mapScriptLoaded = (typeof google != "undefined") && (typeof google.maps != "undefined") && (typeof google.maps.Map != "undefined");
       if (!_mapScriptLoaded) {
         _loadMapScript();
         //after 20 secs, if the map script is still not loaded, run the fail function
         setTimeout(function () {
-          _mapScriptLoaded =  (typeof google != "undefined") && (typeof google.maps != "undefined") && (typeof google.maps.Map != "undefined");
+          _mapScriptLoaded = (typeof google != "undefined") && (typeof google.maps != "undefined") && (typeof google.maps.Map != "undefined");
           if (!_mapScriptLoaded) {
             f('map_timeout', {}, p);
           }
         }, 20000);
-      }else{
+      } else {
         $fh._mapLoaded();
       }
-    }
-
-    ,
+    },
     audio: function (p, s, f) {
       if (!audio_obj == null && p.act == "play" && (!p.path || p.path == "")) {
         f('no_audio_path');
@@ -1030,9 +1021,7 @@
       }
 
       acts[p.act] ? acts[p.act]() : f('data_badact', p);
-    }
-
-    ,
+    },
     webview: function (p, s, f) {
       f('webview_nosupport');
     },
@@ -1045,6 +1034,23 @@
         __ready_list.push(s);
       }
     }
+  }
+
+  //Overriding $fh.ready if the app is on-device.
+  if(window.PhoneGap || window.cordova){
+    $fh._readyCallbacks = [];
+    $fh._readyState = false;
+    $fh.__dest__.ready = function (p, s, f) {
+      if ($fh._readyState) {
+        try {
+          s();
+        } catch (e) {
+          console.log("Error during $fh.ready. Skip. Error = " + e.message);
+        }
+      } else {
+        $fh._readyCallbacks.push(s);
+      }
+    };
   }
 
   $fh.send = function () {
@@ -1139,7 +1145,7 @@
     }, $fh.__dest__.file);
   };
 
-  $fh.push = function(){
+  $fh.push = function () {
     handleargs(arguments, {}, $fh.__dest__.push);
   };
 
@@ -1174,7 +1180,7 @@
         var data = {instance: $fh.app_props.appid, domain: $fh.cloud_props.domain}
         $fh.__ajax({
           "url": _getHostPrefix() + "act/wid/geoip/resolve",
-          "type":"POST",
+          "type": "POST",
           "data": JSON.stringify(data),
           "success": function (res) {
             // backwards compat
@@ -1219,7 +1225,7 @@
           "url": _getHostPrefix() + "act/wid/web",
           "type": "POST",
           "data": JSON.stringify(p),
-          "success": function(res){
+          "success": function (res) {
             s(res);
           }
         });
@@ -1271,7 +1277,8 @@
           }, function () {
             f('error_geo', {}, p);
           })
-        };
+        }
+        ;
         if (p.interval > 0) {
           var internalWatcher = navigator.geolocation.watchPosition(function (position) {
             var coords = position.coords;
@@ -1291,12 +1298,14 @@
             frequency: p.interval
           });
           $fh.__dest__._geoWatcher = internalWatcher;
-        };
+        }
+        ;
       } else if (p.act == "unregister") {
         if ($fh.__dest__._geoWatcher) {
           navigator.geolocation.clearWatch($fh.__dest__._geoWatcher);
           $fh.__dest__._geoWatcher = undefined;
-        };
+        }
+        ;
         s();
       } else {
         f('geo_badact', {}, p);
@@ -1306,8 +1315,8 @@
     }
   };
 
-  $fh.__dest__.acc = function(p,s,f) {
-    s({ x:(Math.random()*4)-2, y:(Math.random()*4)-2, z:(Math.random()*4)-2, when:new Date().getTime() });
+  $fh.__dest__.acc = function (p, s, f) {
+    s({ x: (Math.random() * 4) - 2, y: (Math.random() * 4) - 2, z: (Math.random() * 4) - 2, when: new Date().getTime() });
   }
 
   root.$fh = $fh;
@@ -2635,12 +2644,13 @@ appForm.models = function(module) {
     self.set('appId', appid);
     self.set('env', mode);
 
-
-    if ($fh && 'function' === typeof $fh.env) {
-      $fh.env(function(env) {
-        self.set('deviceId', env.uuid);
-      });
+    if($fh && $fh._getDeviceId){
+      self.set('deviceId', $fh._getDeviceId());
+    } else {
+      self.set('deviceId', "notset");
     }
+
+
     self._initMBaaS();
     //Setting default retry attempts if not set in the config
     if (!config) {
