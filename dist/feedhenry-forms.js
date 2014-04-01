@@ -6368,8 +6368,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/Users/kelly/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/kelly/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -6844,7 +6844,7 @@ process.chdir = function (dir) {
 module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+},{"./support/isBuffer":12,"/Users/kelly/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -12681,7 +12681,7 @@ appForm.models = function(module) {
     }
 
 
-    self._initMBaaS();
+
     //Setting default retry attempts if not set in the config
     if (!config) {
       config = {};
@@ -12715,6 +12715,7 @@ appForm.models = function(module) {
     }
 
     self.fromJSON(defaultConfig);
+    self._initMBaaS();
   };
   Config.prototype._initMBaaS = function() {
     var cloud_props = $fh.cloud_props;
@@ -15453,22 +15454,22 @@ appForm.models = (function(module) {
   };
   Log.prototype.e = function() {
     var args = Array.prototype.splice.call(arguments, 0);
-    args.unshift("error");
+    args.unshift(0);
     this.info.apply(this, args);
   };
   Log.prototype.w = function() {
     var args = Array.prototype.splice.call(arguments, 0);
-    args.unshift("warning");
+    args.unshift(1);
     this.info.apply(this, args);
   };
   Log.prototype.l = function() {
     var args = Array.prototype.splice.call(arguments, 0);
-    args.unshift("log");
+    args.unshift(2);
     this.info.apply(this, args);
   };
   Log.prototype.d = function() {
     var args = Array.prototype.splice.call(arguments, 0);
-    args.unshift("debug");
+    args.unshift(3);
     this.info.apply(this, args);
   };
   Log.prototype.getLogs = function() {

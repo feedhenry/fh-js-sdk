@@ -2651,7 +2651,7 @@ appForm.models = function(module) {
     }
 
 
-    self._initMBaaS();
+
     //Setting default retry attempts if not set in the config
     if (!config) {
       config = {};
@@ -2685,6 +2685,7 @@ appForm.models = function(module) {
     }
 
     self.fromJSON(defaultConfig);
+    self._initMBaaS();
   };
   Config.prototype._initMBaaS = function() {
     var cloud_props = $fh.cloud_props;
@@ -5423,22 +5424,22 @@ appForm.models = (function(module) {
   };
   Log.prototype.e = function() {
     var args = Array.prototype.splice.call(arguments, 0);
-    args.unshift("error");
+    args.unshift(0);
     this.info.apply(this, args);
   };
   Log.prototype.w = function() {
     var args = Array.prototype.splice.call(arguments, 0);
-    args.unshift("warning");
+    args.unshift(1);
     this.info.apply(this, args);
   };
   Log.prototype.l = function() {
     var args = Array.prototype.splice.call(arguments, 0);
-    args.unshift("log");
+    args.unshift(2);
     this.info.apply(this, args);
   };
   Log.prototype.d = function() {
     var args = Array.prototype.splice.call(arguments, 0);
-    args.unshift("debug");
+    args.unshift(3);
     this.info.apply(this, args);
   };
   Log.prototype.getLogs = function() {
