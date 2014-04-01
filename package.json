@@ -56,7 +56,8 @@
   "license": "BSD",
   "gitHead": "251a1f88a39f59f2652552ae245893a833faee71",
   "dependencies": {
-    "type-of": "~2.0.1"
+    "type-of": "~2.0.1",
+    "loglevel": "~0.6.0"
   },
   "devDependencies": {
     "grunt": "~0.4.2",

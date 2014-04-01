@@ -1,4 +1,4 @@
-var console =require("console");
+var logger =require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
 var ajax = require("./ajax");
@@ -26,10 +26,10 @@ function doActCall(opts, success, fail){
 }
 
 module.exports = function(opts, success, fail){
-  console.log("act is called");
+  logger.debug("act is called");
   if(!fail){
     fail = function(msg, error){
-      console.log(msg + ":" + JSON.stringify(error));
+      logger.debug(msg + ":" + JSON.stringify(error));
     };
   }
 
@@ -38,7 +38,7 @@ module.exports = function(opts, success, fail){
   }
 
   cloud.ready(function(err, cloudHost){
-    console.log("Calling fhact now");
+    logger.debug("Calling fhact now");
     if(err){
       return fail(err.message, err);
     } else {
