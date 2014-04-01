@@ -30,7 +30,7 @@ var jsonpID = 0,
   xmlTypeRE = /^(?:text|application)\/xml/i,
   jsonType = 'application/json',
   htmlType = 'text/html',
-  blankRE = /^\s*$/
+  blankRE = /^\s*$/;
 
 var ajax = module.exports = function (options) {
   var settings = extend({}, options || {})

@@ -6368,8 +6368,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/Users/kelly/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/kelly/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -6844,7 +6844,7 @@ process.chdir = function (dir) {
 module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+},{"./support/isBuffer":12,"/Users/kelly/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
 var toString = Object.prototype.toString
 
 module.exports = function(val){
@@ -7102,7 +7102,7 @@ var jsonpID = 0,
   xmlTypeRE = /^(?:text|application)\/xml/i,
   jsonType = 'application/json',
   htmlType = 'text/html',
-  blankRE = /^\s*$/
+  blankRE = /^\s*$/;
 
 var ajax = module.exports = function (options) {
   var settings = extend({}, options || {})
@@ -15433,12 +15433,14 @@ if (typeof $fh == 'undefined') {
 if ($fh.forms === undefined) {
   $fh.forms = appForm.api;
 }
-appForm.RulesEngine=rulesEngine;
-
-/*! fh-forms - v0.2.55 -  */
+/*! fh-forms - v0.3.00 -  */
 /*! async - v0.2.9 -  */
 /*! 2014-03-31 */
 /* This is the prefix file */
+if(appForm){
+  appForm.RulesEngine=rulesEngine;
+}
+
 function rulesEngine (formDef) {
   var define = {};
   var module = {exports:{}}; // create a module.exports - async will load into it
@@ -16787,6 +16789,14 @@ function rulesEngine (formDef) {
             required = (valueIndex < fieldDefinition.fieldOptions.definition.minRepeat);
           } else {
             required = fieldDefinition.required;
+          }
+
+          var validation = (fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) ? fieldDefinition.fieldOptions.validation : undefined;
+
+          if( validation && false === validation.validateImmediately){
+            var ret = {validation: {}};
+            ret.validation[fieldId] = {"valid":true};
+            return cb(undefined, ret );
           }
 
           if(fieldEmpty(inputValue)) {
