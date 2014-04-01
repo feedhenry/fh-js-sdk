@@ -7663,9 +7663,21 @@ var app_props = null;
 var load = function(cb) {
   var doc_url = document.location.href;
   var url_params = qs(doc_url);
-  var local = (typeof url_params.fhconfig !== 'undefined');
-  var config_url = url_params.fhconfig || consts.config_js;
+  var local = (typeof url_params.url !== 'undefined');
 
+  // For local environments, no init needed
+  if (local) {
+    app_props = {};
+    app_props.local = true;
+    app_props.host = url_params.url;
+    app_props.appid = "000000000000000000000000";
+    app_props.appkey = "0000000000000000000000000000000000000000";
+    app_props.projectid = "000000000000000000000000";
+    app_props.connectiontag = "0.0.1";
+    return cb(null, app_props);
+  }
+
+  var config_url = url_params.fhconfig || consts.config_js;
   ajax({
     url: config_url,
     dataType: "json",
@@ -7676,16 +7688,6 @@ var load = function(cb) {
         return cb(new Error("app_config_missing"));
       } else {
         app_props = data;
-
-        // For local environments, no init needed
-        if (local) {
-          // Set defaults for keys other than host
-          app_props.local = true;
-          app_props.appid = "000000000000000000000000";
-          app_props.appkey = "0000000000000000000000000000000000000000";
-          app_props.projectid = "000000000000000000000000";
-          app_props.connectiontag = "0.0.1";
-        }
 
         cb(null, app_props);
       }
@@ -15433,9 +15435,9 @@ if (typeof $fh == 'undefined') {
 if ($fh.forms === undefined) {
   $fh.forms = appForm.api;
 }
-/*! fh-forms - v0.3.00 -  */
+/*! fh-forms - v0.2.53 -  */
 /*! async - v0.2.9 -  */
-/*! 2014-03-31 */
+/*! 2014-03-27 */
 /* This is the prefix file */
 if(appForm){
   appForm.RulesEngine=rulesEngine;
@@ -16793,7 +16795,7 @@ function rulesEngine (formDef) {
 
           var validation = (fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) ? fieldDefinition.fieldOptions.validation : undefined;
 
-          if( validation && false === validation.validateImmediately){
+          if(! validation || ! validation.validateImmediately){
             var ret = {validation: {}};
             ret.validation[fieldId] = {"valid":true};
             return cb(undefined, ret );
