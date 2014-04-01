@@ -35,7 +35,9 @@ module.exports = function(opts, success, fail){
         "contentType": "application/json",
         "timeout": opts.timeout || consts.fh_timeout,
         "success": success,
-        "error": fail
+        "error": function(req, statusText, error){
+          return handleError(fail, req, statusText, error);
+        }
       });
     }
   });

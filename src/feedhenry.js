@@ -9,6 +9,7 @@ var api_sec = require("./modules/api_sec");
 var api_hash = require("./modules/api_hash");
 var api_sync = require("./modules/sync-cli");
 var api_mbaas = require("./modules/api_mbaas");
+var api_cloud = require("./modules/api_cloud");
 var fhparams = require("./modules/fhparams");
 var appProps = require("./modules/appProps");
 var device = require("./modules/device");
@@ -18,64 +19,34 @@ var defaultFail = function(msg, error){
 };
 
 var addListener = function(type, listener){
-  if(type === "cloudready"){
-    cloud.ready(function(err, host){
-      if(!err){
-        listener(host);
-      }
-    });
-  } else {
-    events.addListener(type, listener);
-  }
+  events.addListener(type, listener);
+  if(type === constants.INIT_EVENT && cloud.isReady()){
+    //for fhinit event, need to check if cloud is ready.If it is, invoke the call immediately as it will not fire again.
+    listener(null, {host: cloud.getCloudHostUrl()});
+  } 
 };
 
 var once = function(type, listener){
-  if(type === "cloudready"){
-    cloud.ready(function(err, host){
-      if(!err){
-        listener(host);
-      }
-    });
+  if(type === constants.INIT_EVENT && cloud.isReady()){
+    listener(null, {host: cloud.getCloudHostUrl()});
   } else {
     events.once(type, listener);
   }
 };
 
-//we have to continue support for init for now as for FH v2 apps, there won't be a config file created
+//Legacy shim. Init hapens based on fhconfig.json or, for v2, global var called fh_app_props which is injected as part of the index.html wrapper
 var init = function(opts, success, fail){
   logger.warn("$fh.init will be deprecated soon");
   cloud.ready(function(err, host){
     if(err){
-      if(err.message === "app_config_missing"){
-        //cloud.ready will be invoked when js sdk is loaded, it may cause init call to be added to the "cloudready" event listeners stack when it's called. If that is the case and getting an error
-        //about app config is missing, we just try again
-        init(opts, success, fail);
-      } else {
-        if(typeof fail === "function"){
-          return fail(err);
-        }
+      if(typeof fail === "function"){
+        return fail(err);
       }
     } else {
       if(typeof success === "function"){
         success(host.host);
       }
     }
-  }, opts);
-};
-
-var cloudFunc = function(act_name, params, cb){
-  var funcName = act_name;
-  var data = params;
-  var callback = cb;
-  if(typeof params === "function"){
-    data = {};
-    callback = params;
-  }
-  var reqParams = {act: funcName, req: data};
-  api_act(reqParams, function(res){
-    return callback(null, res);
-  }, function(msg, error){
-    return callback(error);
   });
 };
 
@@ -83,7 +54,7 @@ var fh = window.$fh || {};
 fh.init = init;
 fh.act = api_act;
 fh.auth = api_auth;
-fh.cloud = cloudFunc;
+fh.cloud = api_cloud;
 fh.sec = api_sec;
 fh.hash = api_hash;
 fh.sync = api_sync;
@@ -109,9 +80,16 @@ for(var i=0;i<methods.length;i++){
 }
 
 //keep backward compatibility
-fh.on("cloudready", function(host){
-  fh.cloud_props = {hosts: {url: host.host}};
-  fh.app_props = appProps.getAppProps();
+fh.on(constants.INIT_EVENT, function(err, host){
+  if(err){
+    console.log("fhinit listener called with error");
+    fh.cloud_props = {};
+    fh.app_props = {};
+  } else {
+    console.log("fhinit listener called");
+    fh.cloud_props = {hosts: {url: host.host}};
+    fh.app_props = appProps.getAppProps();
+  }
 });
 
 //for test

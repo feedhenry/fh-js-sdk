@@ -57,7 +57,7 @@ module.exports = function(opts, success, fail){
           checkAuth.handleAuthResponse(endurl, res, success, fail);
         },
         error: function(req, statusText, error) {
-          handleError(fail, req, statusText);
+          handleError(fail, req, statusText, error);
         }
       });
     }

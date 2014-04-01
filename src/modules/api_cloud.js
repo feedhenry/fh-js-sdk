@@ -5,18 +5,18 @@ var ajax = require("./ajax");
 var JSON = require("JSON");
 var handleError = require("./handleError");
 
-function doActCall(opts, success, fail){
+function doCloudCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
-  var url = cloud_host.getActUrl(opts.act);
-  var params = opts.req || {};
+  var url = cloud_host.getCloudUrl(opts.path);
+  var params = opts.params || {};
   params = fhparams.addFHParams(params);
   return ajax({
     "url": url,
     "tryJSONP": true,
-    "type": "POST",
-    "dataType": "json",
+    "type": opts.method || "POST",
+    "dataType": opts.dataType || "json",
     "data": JSON.stringify(params),
-    "contentType": "application/json",
+    "contentType": opts.contentType || "application/json",
     "timeout": opts.timeout,
     "success": success,
     "error": function(req, statusText, error){
@@ -26,15 +26,11 @@ function doActCall(opts, success, fail){
 }
 
 module.exports = function(opts, success, fail){
-  logger.debug("act is called");
+  logger.debug("cloud is called");
   if(!fail){
     fail = function(msg, error){
       logger.debug(msg + ":" + JSON.stringify(error));
     };
-  }
-
-  if(!opts.act){
-    return fail('act_no_action', {});
   }
 
   cloud.ready(function(err, cloudHost){
@@ -42,7 +38,7 @@ module.exports = function(opts, success, fail){
     if(err){
       return fail(err.message, err);
     } else {
-      doActCall(opts, success, fail);
+      doCloudCall(opts, success, fail);
     }
   })
 }

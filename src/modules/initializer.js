@@ -11,16 +11,11 @@ var JSON = require("JSON");
 var hashFunc = require("./security/hash");
 var appProps = require("./appProps");
 
-var init = function(cb, app_props) {
-  if (arguments.length === 2 && typeof app_props === "object" && app_props.mode) {
-    appProps.setAppProps(app_props);
-    return loadCloudProps(app_props, cb);
-  } else {
-    appProps.load(function(err, data) {
-      if (err) return cb(err);
-      return loadCloudProps(data, cb);
-    });
-  }
+var init = function(cb) {
+  appProps.load(function(err, data) {
+    if (err) return cb(err);
+    return loadCloudProps(data, cb);
+  });
 }
 
 var loadCloudProps = function(app_props, callback) {
@@ -130,7 +125,7 @@ var loadCloudProps = function(app_props, callback) {
                 message: msg
               });
             }
-          }, req, statusText);
+          }, req, statusText, error);
         }
       }
     });
