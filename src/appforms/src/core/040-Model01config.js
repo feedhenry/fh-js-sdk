@@ -79,7 +79,7 @@ appForm.models = function(module) {
     }
 
 
-    self._initMBaaS();
+
     //Setting default retry attempts if not set in the config
     if (!config) {
       config = {};
@@ -113,6 +113,7 @@ appForm.models = function(module) {
     }
 
     self.fromJSON(defaultConfig);
+    self._initMBaaS();
   };
   Config.prototype._initMBaaS = function() {
     var cloud_props = $fh.cloud_props;
