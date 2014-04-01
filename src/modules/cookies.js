@@ -1,4 +1,3 @@
-var console = require("console");
 module.exports = {
   readCookieValue  : function (cookie_name) {
     var name_str = cookie_name + "=";

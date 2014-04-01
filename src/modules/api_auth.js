@@ -1,4 +1,4 @@
-var console =require("console");
+var logger =require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
 var ajax = require("./ajax");
@@ -12,7 +12,7 @@ var appProps = require("./appProps");
 module.exports = function(opts, success, fail){
   if(!fail){
     fail = function(msg, error){
-      console.log(msg + ":" + JSON.stringify(error));
+      logger.debug(msg + ":" + JSON.stringify(error));
     };
   }
   if (!opts.policyId) {

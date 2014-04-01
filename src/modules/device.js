@@ -1,6 +1,6 @@
 var cookies = require("./cookies");
 var uuidModule = require("./uuid");
-var console = require("console");
+var logger = require("./logger");
 
 module.exports = {
   //try to get the unique device identifier
@@ -61,6 +61,8 @@ module.exports = {
     if(destination == null){ //No user agents were found, set to default web
       destination = "web";
     }
+
+    logger.debug("destination = " + destination);
 
     return destination;
   }

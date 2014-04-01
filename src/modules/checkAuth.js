@@ -1,4 +1,4 @@
-var console = require("console");
+var logger = require("./logger");
 var queryMap = require("./queryMap");
 var JSON = require("JSON");
 var fhparams = require("./fhparams");
@@ -72,7 +72,7 @@ var handleAuthResponse = function(endurl, res, success, fail){
               locationChange(ev.url);
             });
           } catch(e){
-            console.log("InAppBrowser plugin is not intalled.");
+            logger.info("InAppBrowser plugin is not intalled.");
             onComplete(res);
           }
         }
