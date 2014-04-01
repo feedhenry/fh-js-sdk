@@ -210,7 +210,7 @@ var self = {
       }
       cb(res);
     }, function(err, datatset_id) {
-        self.ConsoleLog(err);
+        self.consoleLog(err);
     });
   },
 
@@ -536,7 +536,8 @@ var self = {
           for(var i in pending ) {
             // Mark the pending records we are about to submit as inflight and add them to the array for submission
             // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
-            if( !pending[i].inFlight && !pending[i].crashed ) {
+            // Don't add delayed records
+            if( !pending[i].inFlight && !pending[i].crashed && !pending[i].delayed) {
               pending[i].inFlight = true;
               pending[i].inFlightDate = new Date().getTime();
               pendingArray.push(pending[i]);
@@ -573,11 +574,16 @@ var self = {
               // Check to see if any previously crashed inflight records can now be resolved
               self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);
 
+              //Check to see if any delayed pending records can now be set to ready
+              self.updateDelayedFromNewData(dataset_id, dataSet, res);
+
               // Update the new dataset with details of any inflight updates which we have not received a response on
               self.updateNewDataFromInFlight(dataset_id, dataSet, res);
 
               // Update the new dataset with details of any pending updates
               self.updateNewDataFromPending(dataset_id, dataSet, res);
+
+
 
               if (res.records) {
                 // Full Dataset returned
@@ -812,7 +818,10 @@ var self = {
 
         Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       this.get( "dataset_" + dataset_id, function (data){
          if (data && data.val !== null) {
-            var dataset = JSON.parse(data.val);
+            var dataset = data.val;
+            if(typeof dataset === "string"){
+              dataset = JSON.parse(dataset);
+            }
             // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
             // the user wants sync
             dataset.initialised = false;
@@ -862,16 +871,24 @@ var self = {
           previousPendingUid = dataset.meta[uid].pendingUid;
           dataset.meta[uid].previousPendingUid = previousPendingUid;
           previousPending = pending[previousPendingUid];
-          if( previousPending && !previousPending.inFlight) {
-            self.consoleLog('existing pre-flight pending record = ' + JSON.stringify(previousPending));
-            // We are trying to perform an update on an existing pending record
-            // modify the original record to have the latest value and delete the pending update
-            previousPending.post = pendingRec.post;
-            previousPending.postHash = pendingRec.postHash;
-            delete pending[pendingRec.hash];
-            // Update the pending record to have the hash of the previous record as this is what is now being
-            // maintained in the pending array & is what we want in the meta record
-            pendingRec.hash = previousPendingUid;
+          if(previousPending) {
+            if(!previousPending.inFlight){
+              self.consoleLog('existing pre-flight pending record = ' + JSON.stringify(previousPending));
+              // We are trying to perform an update on an existing pending record
+              // modify the original record to have the latest value and delete the pending update
+              previousPending.post = pendingRec.post;
+              previousPending.postHash = pendingRec.postHash;
+              delete pending[pendingRec.hash];
+              // Update the pending record to have the hash of the previous record as this is what is now being
+              // maintained in the pending array & is what we want in the meta record
+              pendingRec.hash = previousPendingUid;
+            } else {
+              //we are performing changes to a pending record which is inFlight. Until the status of this pending record is resolved,
+              //we should not submit this pending record to the cloud. Mark it as delayed.
+              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));
+              pendingRec.delayed = true;
+              pendingRec.waiting = previousPending.hash;
+            }
           }
         }
       }
@@ -885,22 +902,28 @@ var self = {
           previousPendingUid = dataset.meta[uid].pendingUid;
           dataset.meta[uid].previousPendingUid = previousPendingUid;
           previousPending = pending[previousPendingUid];
-          if( previousPending && !previousPending.inFlight ) {
-            self.consoleLog('existing pending record = ' + JSON.stringify(previousPending));
-            if( previousPending.action === "create" ) {
-              // We are trying to perform a delete on an existing pending create
-              // These cancel each other out so remove them both
-              delete pending[pendingRec.hash];
-              delete pending[previousPendingUid];
-            }
-            if( previousPending.action === "update" ) {
-              // We are trying to perform a delete on an existing pending update
-              // Use the pre value from the pending update for the delete and
-              // get rid of the pending update
-              pendingRec.pre = previousPending.pre;
-              pendingRec.preHash = previousPending.preHash;
-              pendingRec.inFlight = false;
-              delete pending[previousPendingUid];
+          if( previousPending ) {
+            if(!previousPending.inFlight){
+              self.consoleLog('existing pending record = ' + JSON.stringify(previousPending));
+              if( previousPending.action === "create" ) {
+                // We are trying to perform a delete on an existing pending create
+                // These cancel each other out so remove them both
+                delete pending[pendingRec.hash];
+                delete pending[previousPendingUid];
+              }
+              if( previousPending.action === "update" ) {
+                // We are trying to perform a delete on an existing pending update
+                // Use the pre value from the pending update for the delete and
+                // get rid of the pending update
+                pendingRec.pre = previousPending.pre;
+                pendingRec.preHash = previousPending.preHash;
+                pendingRec.inFlight = false;
+                delete pending[previousPendingUid];
+              }
+            } else {
+              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));
+              pendingRec.delayed = true;
+              pendingRec.waiting = previousPending.hash;
             }
           }
         }
@@ -1162,6 +1185,30 @@ var self = {
     }
   },
 
+  updateDelayedFromNewData: function(dataset_id, dataset, newData){
+    var pending = dataset.pending;
+    var pendingHash;
+    var pendingRec;
+    if(pending){
+      for( pendingHash in pending ){
+        if( pending.hasOwnProperty(pendingHash) ){
+          pendingRec = pending[pendingHash];
+          if( pendingRec.delayed && pendingRec.waiting ){
+            self.consoleLog('updateDelayedFromNewData - Found delayed pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash + ' :: waiting=' + pendingRec.waiting);
+            if( newData && newData.updates && newData.updates.hashes ){
+              var waitingRec = newData.updates.hashes[pendingRec.waiting];
+              if(waitingRec){
+                self.consoleLog('updateDelayedFromNewData - Waiting pending record is resolved rec=' + JSON.stringify(waitingRec));
+                pendingRec.delayed = false;
+                pendingRec.waiting = undefined;
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
 
   markInFlightAsCrashed : function(dataset) {
     var pending = dataset.pending;
@@ -1188,7 +1235,7 @@ var self = {
         if( pending.hasOwnProperty(pendingHash) ) {
           pendingRec = pending[pendingHash];
 
-          if( ! pendingRec.inFlight ) {
+          if( ! pendingRec.inFlight && ! pendingRec.delayed ) {
             var crashedRef = crashedRecords[pendingRec.uid];
             if( crashedRef ) {
               pendingRec.crashed = true;
