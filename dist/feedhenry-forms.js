@@ -7159,11 +7159,9 @@ for(var i=0;i<methods.length;i++){
 //keep backward compatibility
 fh.on(constants.INIT_EVENT, function(err, host){
   if(err){
-    console.log("fhinit listener called with error");
     fh.cloud_props = {};
     fh.app_props = {};
   } else {
-    console.log("fhinit listener called");
     fh.cloud_props = {hosts: {url: host.host}};
     fh.app_props = appProps.getAppProps();
   }
