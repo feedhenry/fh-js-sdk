@@ -6368,8 +6368,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/Users/dberesford/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/dberesford/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -6844,7 +6844,7 @@ process.chdir = function (dir) {
 module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+},{"./support/isBuffer":12,"/Users/dberesford/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
 var toString = Object.prototype.toString
 
 module.exports = function(val){
@@ -7663,9 +7663,21 @@ var app_props = null;
 var load = function(cb) {
   var doc_url = document.location.href;
   var url_params = qs(doc_url);
-  var local = (typeof url_params.fhconfig !== 'undefined');
-  var config_url = url_params.fhconfig || consts.config_js;
+  var local = (typeof url_params.url !== 'undefined');
 
+  // For local environments, no init needed
+  if (local) {
+    app_props = {};
+    app_props.local = true;
+    app_props.host = url_params.url;
+    app_props.appid = "000000000000000000000000";
+    app_props.appkey = "0000000000000000000000000000000000000000";
+    app_props.projectid = "000000000000000000000000";
+    app_props.connectiontag = "0.0.1";
+    return cb(null, app_props);
+  }
+
+  var config_url = url_params.fhconfig || consts.config_js;
   ajax({
     url: config_url,
     dataType: "json",
@@ -7676,16 +7688,6 @@ var load = function(cb) {
         return cb(new Error("app_config_missing"));
       } else {
         app_props = data;
-
-        // For local environments, no init needed
-        if (local) {
-          // Set defaults for keys other than host
-          app_props.local = true;
-          app_props.appid = "000000000000000000000000";
-          app_props.appkey = "0000000000000000000000000000000000000000";
-          app_props.projectid = "000000000000000000000000";
-          app_props.connectiontag = "0.0.1";
-        }
 
         cb(null, app_props);
       }
