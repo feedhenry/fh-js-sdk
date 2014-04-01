@@ -1,4 +1,4 @@
-var console =require("console");
+var logger =require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
 var ajax = require("./ajax");
@@ -8,10 +8,10 @@ var consts = require("./constants");
 
 
 module.exports = function(opts, success, fail){
-  console.log("mbaas is called.");
+  logger.debug("mbaas is called.");
   if(!fail){
     fail = function(msg, error){
-      console.log(msg + ":" + JSON.stringify(error));
+      console.debug(msg + ":" + JSON.stringify(error));
     };
   }
 
@@ -19,7 +19,7 @@ module.exports = function(opts, success, fail){
   var params = opts.params;
 
   cloud.ready(function(err, cloudHost){
-    console.log("Calling mbaas now");
+    logger.debug("Calling mbaas now");
     if(err){
       return fail(err.message, err);
     } else {

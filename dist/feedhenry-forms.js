@@ -6368,8 +6368,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/Users/kelly/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/kelly/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -6844,7 +6844,206 @@ process.chdir = function (dir) {
 module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/Users/kelly/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+/*
+ * loglevel - https://github.com/pimterry/loglevel
+ *
+ * Copyright (c) 2013 Tim Perry
+ * Licensed under the MIT license.
+ */
+
+;(function (undefined) {
+    var undefinedType = "undefined";
+
+    (function (name, definition) {
+        if (typeof module !== 'undefined') {
+            module.exports = definition();
+        } else if (typeof define === 'function' && typeof define.amd === 'object') {
+            define(definition);
+        } else {
+            this[name] = definition();
+        }
+    }('log', function () {
+        var self = {};
+        var noop = function() {};
+
+        function realMethod(methodName) {
+            if (typeof console === undefinedType) {
+                return noop;
+            } else if (console[methodName] === undefined) {
+                if (console.log !== undefined) {
+                    return boundToConsole(console, 'log');
+                } else {
+                    return noop;
+                }
+            } else {
+                return boundToConsole(console, methodName);
+            }
+        }
+
+        function boundToConsole(console, methodName) {
+            var method = console[methodName];
+            if (method.bind === undefined) {
+                if (Function.prototype.bind === undefined) {
+                    return functionBindingWrapper(method, console);
+                } else {
+                    try {
+                        return Function.prototype.bind.call(console[methodName], console);
+                    } catch (e) {
+                        // In IE8 + Modernizr, the bind shim will reject the above, so we fall back to wrapping
+                        return functionBindingWrapper(method, console);
+                    }
+                }
+            } else {
+                return console[methodName].bind(console);
+            }
+        }
+
+        function functionBindingWrapper(f, context) {
+            return function() {
+                Function.prototype.apply.apply(f, [context, arguments]);
+            };
+        }
+
+        var logMethods = [
+            "trace",
+            "debug",
+            "info",
+            "warn",
+            "error"
+        ];
+
+        function replaceLoggingMethods(methodFactory) {
+            for (var ii = 0; ii < logMethods.length; ii++) {
+                self[logMethods[ii]] = methodFactory(logMethods[ii]);
+            }
+        }
+
+        function cookiesAvailable() {
+            return (typeof window !== undefinedType &&
+                    window.document !== undefined &&
+                    window.document.cookie !== undefined);
+        }
+
+        function localStorageAvailable() {
+            try {
+                return (typeof window !== undefinedType &&
+                        window.localStorage !== undefined);
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function persistLevelIfPossible(levelNum) {
+            var localStorageFail = false,
+                levelName;
+
+            for (var key in self.levels) {
+                if (self.levels.hasOwnProperty(key) && self.levels[key] === levelNum) {
+                    levelName = key;
+                    break;
+                }
+            }
+
+            if (localStorageAvailable()) {
+                /*
+                 * Setting localStorage can create a DOM 22 Exception if running in Private mode
+                 * in Safari, so even if it is available we need to catch any errors when trying
+                 * to write to it
+                 */
+                try {
+                    window.localStorage['loglevel'] = levelName;
+                } catch (e) {
+                    localStorageFail = true;
+                }
+            } else {
+                localStorageFail = true;
+            }
+
+            if (localStorageFail && cookiesAvailable()) {
+                window.document.cookie = "loglevel=" + levelName + ";";
+            }
+        }
+
+        var cookieRegex = /loglevel=([^;]+)/;
+
+        function loadPersistedLevel() {
+            var storedLevel;
+
+            if (localStorageAvailable()) {
+                storedLevel = window.localStorage['loglevel'];
+            }
+
+            if (storedLevel === undefined && cookiesAvailable()) {
+                var cookieMatch = cookieRegex.exec(window.document.cookie) || [];
+                storedLevel = cookieMatch[1];
+            }
+            
+            if (self.levels[storedLevel] === undefined) {
+                storedLevel = "WARN";
+            }
+
+            self.setLevel(self.levels[storedLevel]);
+        }
+
+        /*
+         *
+         * Public API
+         *
+         */
+
+        self.levels = { "TRACE": 0, "DEBUG": 1, "INFO": 2, "WARN": 3,
+            "ERROR": 4, "SILENT": 5};
+
+        self.setLevel = function (level) {
+            if (typeof level === "number" && level >= 0 && level <= self.levels.SILENT) {
+                persistLevelIfPossible(level);
+
+                if (level === self.levels.SILENT) {
+                    replaceLoggingMethods(function () {
+                        return noop;
+                    });
+                    return;
+                } else if (typeof console === undefinedType) {
+                    replaceLoggingMethods(function (methodName) {
+                        return function () {
+                            if (typeof console !== undefinedType) {
+                                self.setLevel(level);
+                                self[methodName].apply(self, arguments);
+                            }
+                        };
+                    });
+                    return "No console available for logging";
+                } else {
+                    replaceLoggingMethods(function (methodName) {
+                        if (level <= self.levels[methodName.toUpperCase()]) {
+                            return realMethod(methodName);
+                        } else {
+                            return noop;
+                        }
+                    });
+                }
+            } else if (typeof level === "string" && self.levels[level.toUpperCase()] !== undefined) {
+                self.setLevel(self.levels[level.toUpperCase()]);
+            } else {
+                throw "log.setLevel() called with invalid level: " + level;
+            }
+        };
+
+        self.enableAll = function() {
+            self.setLevel(self.levels.TRACE);
+        };
+
+        self.disableAll = function() {
+            self.setLevel(self.levels.SILENT);
+        };
+
+        loadPersistedLevel();
+        return self;
+    }));
+})();
+
+},{}],15:[function(_dereq_,module,exports){
 var toString = Object.prototype.toString
 
 module.exports = function(val){
@@ -6875,9 +7074,9 @@ module.exports = function(val){
   return typeof val
 }
 
-},{}],15:[function(_dereq_,module,exports){
+},{}],16:[function(_dereq_,module,exports){
 var constants = _dereq_("./modules/constants");
-var console = _dereq_("console");
+var logger = _dereq_("./modules/logger");
 var ajax = _dereq_("./modules/ajax");
 var events = _dereq_("./modules/events");
 var cloud = _dereq_("./modules/waitForCloud");
@@ -6892,7 +7091,7 @@ var appProps = _dereq_("./modules/appProps");
 var device = _dereq_("./modules/device");
 
 var defaultFail = function(msg, error){
-  console.log(msg + ":" + JSON.stringify(error));
+  logger.error(msg + ":" + JSON.stringify(error));
 };
 
 var addListener = function(type, listener){
@@ -6921,7 +7120,7 @@ var once = function(type, listener){
 
 //we have to continue support for init for now as for FH v2 apps, there won't be a config file created
 var init = function(opts, success, fail){
-  console.warn("$fh.init will be deprecated soon");
+  logger.warn("$fh.init will be deprecated soon");
   cloud.ready(function(err, host){
     if(err){
       if(err.message === "app_config_missing"){
@@ -7004,7 +7203,7 @@ module.exports = fh;
 
 
 
-},{"./modules/ajax":17,"./modules/api_act":18,"./modules/api_auth":19,"./modules/api_hash":20,"./modules/api_mbaas":21,"./modules/api_sec":22,"./modules/appProps":23,"./modules/constants":25,"./modules/device":27,"./modules/events":28,"./modules/fhparams":29,"./modules/sync-cli":43,"./modules/waitForCloud":45,"console":8}],16:[function(_dereq_,module,exports){
+},{"./modules/ajax":18,"./modules/api_act":19,"./modules/api_auth":20,"./modules/api_hash":21,"./modules/api_mbaas":22,"./modules/api_sec":23,"./modules/appProps":24,"./modules/constants":26,"./modules/device":28,"./modules/events":29,"./modules/fhparams":30,"./modules/logger":37,"./modules/sync-cli":45,"./modules/waitForCloud":47}],17:[function(_dereq_,module,exports){
 var XDomainRequestWrapper = function(xdr){
   this.xdr = xdr;
   this.isWrapper = true;
@@ -7069,7 +7268,7 @@ XDomainRequestWrapper.prototype.getResponseHeader = function(n){
 
 module.exports = XDomainRequestWrapper;
 
-},{}],17:[function(_dereq_,module,exports){
+},{}],18:[function(_dereq_,module,exports){
 //a shameless copy from https://github.com/ForbesLindesay/ajax/blob/master/index.js. 
 //it has the same methods and config options as jQuery/zeptojs but very light weight. see http://api.jquery.com/jQuery.ajax/
 //a few small changes are made for supporting IE 8 and other features:
@@ -7083,6 +7282,7 @@ module.exports = XDomainRequestWrapper;
 var eventsHandler = _dereq_("./events");
 var XDomainRequestWrapper = _dereq_("./XDomainRequestWrapper");
 var consts = _dereq_("./constants");
+var logger = _dereq_("./logger");
 
 var type
 try {
@@ -7149,6 +7349,7 @@ var ajax = module.exports = function (options) {
       if(settings.tryJSONP){
         //check if the request has fail. In some cases, we may want to try jsonp as well. Again, FH only...
         if(xhr.status === 0 && settings.crossDomain && !xhr.isTimeout &&  protocol != 'file:'){
+          logger.debug("retry ajax call with jsonp")
           settings.type = "GET";
           settings.dataType = "jsonp";
           settings.data = "_jsonpdata=" + settings.data;
@@ -7158,6 +7359,7 @@ var ajax = module.exports = function (options) {
       if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304 || (xhr.status == 0 && protocol == 'file:')) {
         dataType = dataType || mimeToDataType(xhr.getResponseHeader('content-type'))
         result = xhr.responseText
+        logger.debug("ajax response :: status = " + xhr.status + " :: body = " + result)
 
         try {
           if (dataType == 'script')(1, eval)(result)
@@ -7167,7 +7369,10 @@ var ajax = module.exports = function (options) {
           error = e
         }
 
-        if (error) ajaxError(error, 'parsererror', xhr, settings)
+        if (error) {
+          logger.debug("ajax error", error);
+          ajaxError(error, 'parsererror', xhr, settings)
+        }
         else ajaxSuccess(result, xhr, settings)
       } else {
         ajaxError(null, 'error', xhr, settings)
@@ -7176,16 +7381,19 @@ var ajax = module.exports = function (options) {
   }
 
   var async = 'async' in settings ? settings.async : true
+  logger.debug("ajax call settings", settings)
   xhr.open(settings.type, settings.url, async)
 
   for (name in settings.headers) xhr.setRequestHeader(name, settings.headers[name])
 
   if (ajaxBeforeSend(xhr, settings) === false) {
+    logger.debug("ajax call is aborted due to ajaxBeforeSend")
     xhr.abort()
     return false
   }
 
   if (settings.timeout > 0) abortTimeout = setTimeout(function () {
+    logger.debug("ajax call timed out")
     xhr.onreadystatechange = empty
     xhr.abort()
     xhr.isTimeout = true
@@ -7282,8 +7490,6 @@ ajax.JSONP = function (options) {
     delete window[callbackName]
     ajaxSuccess(data, xhr, options)
   }
-  console.log("trying jsonp.data");
-  console.log(options);
 
   serializeData(options)
   script.src = options.url.replace(/=\?/, '=' + callbackName)
@@ -7438,8 +7644,8 @@ function extend(target) {
   })
   return target
 }
-},{"./XDomainRequestWrapper":16,"./constants":25,"./events":28,"type-of":14}],18:[function(_dereq_,module,exports){
-var console =_dereq_("console");
+},{"./XDomainRequestWrapper":17,"./constants":26,"./events":29,"./logger":37,"type-of":15}],19:[function(_dereq_,module,exports){
+var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
 var ajax = _dereq_("./ajax");
@@ -7467,10 +7673,10 @@ function doActCall(opts, success, fail){
 }
 
 module.exports = function(opts, success, fail){
-  console.log("act is called");
+  logger.debug("act is called");
   if(!fail){
     fail = function(msg, error){
-      console.log(msg + ":" + JSON.stringify(error));
+      logger.debug(msg + ":" + JSON.stringify(error));
     };
   }
 
@@ -7479,7 +7685,7 @@ module.exports = function(opts, success, fail){
   }
 
   cloud.ready(function(err, cloudHost){
-    console.log("Calling fhact now");
+    logger.debug("Calling fhact now");
     if(err){
       return fail(err.message, err);
     } else {
@@ -7487,8 +7693,8 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":17,"./fhparams":29,"./handleError":31,"./waitForCloud":45,"JSON":3,"console":8}],19:[function(_dereq_,module,exports){
-var console =_dereq_("console");
+},{"./ajax":18,"./fhparams":30,"./handleError":32,"./logger":37,"./waitForCloud":47,"JSON":3}],20:[function(_dereq_,module,exports){
+var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
 var ajax = _dereq_("./ajax");
@@ -7502,7 +7708,7 @@ var appProps = _dereq_("./appProps");
 module.exports = function(opts, success, fail){
   if(!fail){
     fail = function(msg, error){
-      console.log(msg + ":" + JSON.stringify(error));
+      logger.debug(msg + ":" + JSON.stringify(error));
     };
   }
   if (!opts.policyId) {
@@ -7553,7 +7759,7 @@ module.exports = function(opts, success, fail){
     }
   });
 }
-},{"./ajax":17,"./appProps":23,"./checkAuth":24,"./constants":25,"./device":27,"./fhparams":29,"./handleError":31,"./waitForCloud":45,"JSON":3,"console":8}],20:[function(_dereq_,module,exports){
+},{"./ajax":18,"./appProps":24,"./checkAuth":25,"./constants":26,"./device":28,"./fhparams":30,"./handleError":32,"./logger":37,"./waitForCloud":47,"JSON":3}],21:[function(_dereq_,module,exports){
 var hashImpl = _dereq_("./security/hash");
 
 module.exports = function(p, s, f){
@@ -7565,8 +7771,8 @@ module.exports = function(p, s, f){
   params.params = p;
   hashImpl(params, s, f);
 };
-},{"./security/hash":41}],21:[function(_dereq_,module,exports){
-var console =_dereq_("console");
+},{"./security/hash":43}],22:[function(_dereq_,module,exports){
+var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
 var ajax = _dereq_("./ajax");
@@ -7576,10 +7782,10 @@ var consts = _dereq_("./constants");
 
 
 module.exports = function(opts, success, fail){
-  console.log("mbaas is called.");
+  logger.debug("mbaas is called.");
   if(!fail){
     fail = function(msg, error){
-      console.log(msg + ":" + JSON.stringify(error));
+      console.debug(msg + ":" + JSON.stringify(error));
     };
   }
 
@@ -7587,7 +7793,7 @@ module.exports = function(opts, success, fail){
   var params = opts.params;
 
   cloud.ready(function(err, cloudHost){
-    console.log("Calling mbaas now");
+    logger.debug("Calling mbaas now");
     if(err){
       return fail(err.message, err);
     } else {
@@ -7608,7 +7814,7 @@ module.exports = function(opts, success, fail){
     }
   });
 }
-},{"./ajax":17,"./constants":25,"./fhparams":29,"./handleError":31,"./waitForCloud":45,"JSON":3,"console":8}],22:[function(_dereq_,module,exports){
+},{"./ajax":18,"./constants":26,"./fhparams":30,"./handleError":32,"./logger":37,"./waitForCloud":47,"JSON":3}],23:[function(_dereq_,module,exports){
 var keygen = _dereq_("./security/aes-keygen");
 var aes = _dereq_("./security/aes-node");
 var rsa = _dereq_("./security/rsa-node");
@@ -7652,10 +7858,10 @@ module.exports = function(p, s, f){
     }
   }
 }
-},{"./security/aes-keygen":39,"./security/aes-node":40,"./security/hash":41,"./security/rsa-node":42}],23:[function(_dereq_,module,exports){
+},{"./security/aes-keygen":41,"./security/aes-node":42,"./security/hash":43,"./security/rsa-node":44}],24:[function(_dereq_,module,exports){
 var consts = _dereq_("./constants");
 var ajax = _dereq_("./ajax");
-var console = _dereq_("console");
+var logger = _dereq_("./logger");
 var qs = _dereq_("./queryMap");
 
 var app_props = null;
@@ -7682,7 +7888,7 @@ var load = function(cb) {
     url: config_url,
     dataType: "json",
     success: function(data) {
-      console.log("fhconfig = " + JSON.stringify(data));
+      logger.debug("fhconfig = " + JSON.stringify(data));
       //when load the config file on device, because file:// protocol is used, it will never call fail call back. The success callback will be called but the data value will be null.
       if (null === data) {
         return cb(new Error("app_config_missing"));
@@ -7693,7 +7899,7 @@ var load = function(cb) {
       }
     },
     error: function(req, statusText, error) {
-      console.log(consts.config_js + " Not Found");
+      logger.error(consts.config_js + " Not Found");
       cb(new Error("app_config_missing"));
     }
   });
@@ -7712,8 +7918,8 @@ module.exports = {
   getAppProps: getAppProps,
   setAppProps: setAppProps
 };
-},{"./ajax":17,"./constants":25,"./queryMap":37,"console":8}],24:[function(_dereq_,module,exports){
-var console = _dereq_("console");
+},{"./ajax":18,"./constants":26,"./logger":37,"./queryMap":39}],25:[function(_dereq_,module,exports){
+var logger = _dereq_("./logger");
 var queryMap = _dereq_("./queryMap");
 var JSON = _dereq_("JSON");
 var fhparams = _dereq_("./fhparams");
@@ -7787,7 +7993,7 @@ var handleAuthResponse = function(endurl, res, success, fail){
               locationChange(ev.url);
             });
           } catch(e){
-            console.log("InAppBrowser plugin is not intalled.");
+            logger.info("InAppBrowser plugin is not intalled.");
             onComplete(res);
           }
         }
@@ -7820,15 +8026,14 @@ module.exports = {
   "handleAuthResponse": handleAuthResponse
 };
 
-},{"./fhparams":29,"./queryMap":37,"JSON":3,"console":8}],25:[function(_dereq_,module,exports){
+},{"./fhparams":30,"./logger":37,"./queryMap":39,"JSON":3}],26:[function(_dereq_,module,exports){
 module.exports = {
   "fh_timeout": 20000,
   "boxprefix": "/box/srv/1.1/",
   "sdk_version": "2.0.1-alpha",
   "config_js": "fhconfig.json"
 };
-},{}],26:[function(_dereq_,module,exports){
-var console = _dereq_("console");
+},{}],27:[function(_dereq_,module,exports){
 module.exports = {
   readCookieValue  : function (cookie_name) {
     var name_str = cookie_name + "=";
@@ -7853,10 +8058,10 @@ module.exports = {
   }
 };
 
-},{"console":8}],27:[function(_dereq_,module,exports){
+},{}],28:[function(_dereq_,module,exports){
 var cookies = _dereq_("./cookies");
 var uuidModule = _dereq_("./uuid");
-var console = _dereq_("console");
+var logger = _dereq_("./logger");
 
 module.exports = {
   //try to get the unique device identifier
@@ -7918,21 +8123,24 @@ module.exports = {
       destination = "web";
     }
 
+    logger.debug("destination = " + destination);
+
     return destination;
   }
 }
 
-},{"./cookies":26,"./platformsMap":36,"./uuid":44,"console":8}],28:[function(_dereq_,module,exports){
+},{"./cookies":27,"./logger":37,"./platformsMap":38,"./uuid":46}],29:[function(_dereq_,module,exports){
 var EventEmitter = _dereq_('events').EventEmitter;
 
 var emitter = new EventEmitter();
 emitter.setMaxListeners(0);
 
 module.exports = emitter;
-},{"events":9}],29:[function(_dereq_,module,exports){
+},{"events":9}],30:[function(_dereq_,module,exports){
 var device = _dereq_("./device");
 var sdkversion = _dereq_("./sdkversion");
 var appProps = _dereq_("./appProps");
+var logger = _dereq_("./logger");
 
 var defaultParams = null;
 var authSessionToken = null;
@@ -7978,6 +8186,7 @@ var buildFHParams = function(){
   }
   
   defaultParams = fhparams;
+  logger.debug("fhparams = ", defaultParams);
   return fhparams;
 }
 
@@ -7997,7 +8206,7 @@ module.exports = {
   "setAuthSessionToken":setAuthSessionToken
 }
 
-},{"./appProps":23,"./device":27,"./sdkversion":38}],30:[function(_dereq_,module,exports){
+},{"./appProps":24,"./device":28,"./logger":37,"./sdkversion":40}],31:[function(_dereq_,module,exports){
 module.exports = function(){
   var path = null;
   var scripts = document.getElementsByTagName('script');
@@ -8018,7 +8227,7 @@ module.exports = function(){
   return path;
 };
 
-},{}],31:[function(_dereq_,module,exports){
+},{}],32:[function(_dereq_,module,exports){
 var JSON = _dereq_("JSON");
 
 module.exports = function(fail, req, resStatus){
@@ -8043,7 +8252,7 @@ module.exports = function(fail, req, resStatus){
   }
 };
 
-},{"JSON":3}],32:[function(_dereq_,module,exports){
+},{"JSON":3}],33:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
 var appProps = _dereq_("./appProps");
 
@@ -8106,7 +8315,7 @@ CloudHost.prototype.getMBAASUrl = function(service){
 }
 
 module.exports = CloudHost;
-},{"./appProps":23,"./constants":25}],33:[function(_dereq_,module,exports){
+},{"./appProps":24,"./constants":26}],34:[function(_dereq_,module,exports){
 var findFHPath = _dereq_("./findFHPath");
 var loadScript = _dereq_("./loadScript");
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
@@ -8115,7 +8324,7 @@ var consts = _dereq_("./constants");
 var fhparams = _dereq_("./fhparams");
 var ajax = _dereq_("./ajax");
 var handleError = _dereq_("./handleError");
-var console = _dereq_("console");
+var logger = _dereq_("./logger");
 var JSON = _dereq_("JSON");
 var hashFunc = _dereq_("./security/hash");
 var appProps = _dereq_("./appProps");
@@ -8133,7 +8342,9 @@ var init = function(cb, app_props) {
 }
 
 var loadCloudProps = function(app_props, callback) {
-
+  if(app_props.loglevel){
+    logger.setLevel(app_props.loglevel);
+  }
   // If local - shortcircuit the init - just return the host
   if (app_props.local) {
     var res = {
@@ -8248,7 +8459,7 @@ module.exports = {
   "init": init,
   "loadCloudProps": loadCloudProps
 }
-},{"../../libs/generated/lawnchair":2,"./ajax":17,"./appProps":23,"./constants":25,"./fhparams":29,"./findFHPath":30,"./handleError":31,"./lawnchair-ext":34,"./loadScript":35,"./security/hash":41,"JSON":3,"console":8}],34:[function(_dereq_,module,exports){
+},{"../../libs/generated/lawnchair":2,"./ajax":18,"./appProps":24,"./constants":26,"./fhparams":30,"./findFHPath":31,"./handleError":32,"./lawnchair-ext":35,"./loadScript":36,"./logger":37,"./security/hash":43,"JSON":3}],35:[function(_dereq_,module,exports){
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
 
 var fileStorageAdapter = function (app_props, hashFunc) {
@@ -8436,7 +8647,7 @@ var addAdapter = function(app_props, hashFunc){
 module.exports = {
   addAdapter: addAdapter
 }
-},{"../../libs/generated/lawnchair":2}],35:[function(_dereq_,module,exports){
+},{"../../libs/generated/lawnchair":2}],36:[function(_dereq_,module,exports){
 module.exports = function (url, callback) {
   var script;
   var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
@@ -8459,7 +8670,31 @@ module.exports = function (url, callback) {
   head.insertBefore(script, head.firstChild);
 };
 
-},{}],36:[function(_dereq_,module,exports){
+},{}],37:[function(_dereq_,module,exports){
+var console = _dereq_('console');
+var log = _dereq_('loglevel');
+
+log.setLevel('info');
+
+/**
+ * APIs:
+ * see https://github.com/pimterry/loglevel.
+ * In short, you can use:
+ * log.setLevel(loglevel) - default to info
+ * log.enableAll() - enable all log messages
+ * log.disableAll() - disable all log messages
+ *
+ * log.trace(msg)
+ * log.debug(msg)
+ * log.info(msg)
+ * log.warn(msg)
+ * log.error(msg)
+ *
+ * Available levels: { "TRACE": 0, "DEBUG": 1, "INFO": 2, "WARN": 3, "ERROR": 4, "SILENT": 5}
+ * Use either string or integer value
+ */
+module.exports = log;
+},{"console":8,"loglevel":14}],38:[function(_dereq_,module,exports){
 module.exports = [
   {
     "destination" :"ipad",
@@ -8487,7 +8722,7 @@ module.exports = [
   }
 ];
 
-},{}],37:[function(_dereq_,module,exports){
+},{}],39:[function(_dereq_,module,exports){
 module.exports = function(url) {
   var qmap = {};
   var i = url.split("?");
@@ -8503,7 +8738,7 @@ module.exports = function(url) {
   }
   return qmap;
 };
-},{}],38:[function(_dereq_,module,exports){
+},{}],40:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
 
 module.exports = function() {
@@ -8516,7 +8751,7 @@ module.exports = function() {
   return type + "/" + constants.sdk_version;
 };
 
-},{"./constants":25}],39:[function(_dereq_,module,exports){
+},{"./constants":26}],41:[function(_dereq_,module,exports){
 var rsa = _dereq_("../../../libs/rsa");
 var SecureRandom = rsa.SecureRandom;
 var byte2Hex = rsa.byte2Hex;
@@ -8558,7 +8793,7 @@ var aes_keygen = function(p, s, f){
 }
 
 module.exports = aes_keygen;
-},{"../../../libs/rsa":4}],40:[function(_dereq_,module,exports){
+},{"../../../libs/rsa":4}],42:[function(_dereq_,module,exports){
 var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 var encrypt = function(p, s, f){
@@ -8599,7 +8834,7 @@ module.exports = {
   encrypt: encrypt,
   decrypt: decrypt
 }
-},{"../../../libs/generated/crypto":1}],41:[function(_dereq_,module,exports){
+},{"../../../libs/generated/crypto":1}],43:[function(_dereq_,module,exports){
 var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 
@@ -8624,7 +8859,7 @@ var hash = function(p, s, f){
 }
 
 module.exports = hash;
-},{"../../../libs/generated/crypto":1}],42:[function(_dereq_,module,exports){
+},{"../../../libs/generated/crypto":1}],44:[function(_dereq_,module,exports){
 var rsa = _dereq_("../../../libs/rsa");
 var RSAKey = rsa.RSAKey;
 
@@ -8649,7 +8884,7 @@ var encrypt = function(p, s, f){
 module.exports = {
   encrypt: encrypt
 }
-},{"../../../libs/rsa":4}],43:[function(_dereq_,module,exports){
+},{"../../../libs/rsa":4}],45:[function(_dereq_,module,exports){
 var JSON = _dereq_("JSON");
 var actFunc = _dereq_("./api_act");
 var CryptoJS = _dereq_("../../libs/generated/crypto");
@@ -9666,7 +9901,7 @@ module.exports = {
 
 
 
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":18,"JSON":3}],44:[function(_dereq_,module,exports){
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":19,"JSON":3}],46:[function(_dereq_,module,exports){
 module.exports = {
   createUUID : function () {
     //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
@@ -9683,11 +9918,12 @@ module.exports = {
   }
 };
 
-},{}],45:[function(_dereq_,module,exports){
+},{}],47:[function(_dereq_,module,exports){
 var initializer = _dereq_("./initializer");
 var events = _dereq_("./events");
 var CloudHost = _dereq_("./hosts");
 var constants = _dereq_("./constants");
+var logger = _dereq_("./logger");
 
 var init_attempt = 0;
 //the cloud configurations
@@ -9773,12 +10009,12 @@ var reset = function(){
 ready(function(error, host){
   if(error){
     if(error.message !== "app_config_missing"){
-      console.error("Failed to initialise fh.");
+      logger.error("Failed to initialise fh.");
     } else {
-      console.log("No fh config file");
+      logger.info("No fh config file");
     }
   } else {
-    console.log("fh cloud is ready");
+    logger.info("fh cloud is ready");
   }
 });
 
@@ -9789,8 +10025,8 @@ module.exports = {
   getCloudHostUrl: getCloudHostUrl,
   reset: reset
 }
-},{"./appProps":23,"./constants":25,"./events":28,"./hosts":32,"./initializer":33}]},{},[15])
-(15)
+},{"./appProps":24,"./constants":26,"./events":29,"./hosts":33,"./initializer":34,"./logger":37}]},{},[16])
+(16)
 });
 ;
 (function (root) {

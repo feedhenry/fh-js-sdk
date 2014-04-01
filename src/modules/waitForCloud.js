@@ -2,6 +2,7 @@ var initializer = require("./initializer");
 var events = require("./events");
 var CloudHost = require("./hosts");
 var constants = require("./constants");
+var logger = require("./logger");
 
 var init_attempt = 0;
 //the cloud configurations
@@ -87,12 +88,12 @@ var reset = function(){
 ready(function(error, host){
   if(error){
     if(error.message !== "app_config_missing"){
-      console.error("Failed to initialise fh.");
+      logger.error("Failed to initialise fh.");
     } else {
-      console.log("No fh config file");
+      logger.info("No fh config file");
     }
   } else {
-    console.log("fh cloud is ready");
+    logger.info("fh cloud is ready");
   }
 });
 

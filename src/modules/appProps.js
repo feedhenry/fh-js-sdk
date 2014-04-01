@@ -1,6 +1,6 @@
 var consts = require("./constants");
 var ajax = require("./ajax");
-var console = require("console");
+var logger = require("./logger");
 var qs = require("./queryMap");
 
 var app_props = null;
@@ -27,7 +27,7 @@ var load = function(cb) {
     url: config_url,
     dataType: "json",
     success: function(data) {
-      console.log("fhconfig = " + JSON.stringify(data));
+      logger.debug("fhconfig = " + JSON.stringify(data));
       //when load the config file on device, because file:// protocol is used, it will never call fail call back. The success callback will be called but the data value will be null.
       if (null === data) {
         return cb(new Error("app_config_missing"));
@@ -38,7 +38,7 @@ var load = function(cb) {
       }
     },
     error: function(req, statusText, error) {
-      console.log(consts.config_js + " Not Found");
+      logger.error(consts.config_js + " Not Found");
       cb(new Error("app_config_missing"));
     }
   });

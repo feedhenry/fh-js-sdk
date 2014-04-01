@@ -1,5 +1,5 @@
 var constants = require("./modules/constants");
-var console = require("console");
+var logger = require("./modules/logger");
 var ajax = require("./modules/ajax");
 var events = require("./modules/events");
 var cloud = require("./modules/waitForCloud");
@@ -14,7 +14,7 @@ var appProps = require("./modules/appProps");
 var device = require("./modules/device");
 
 var defaultFail = function(msg, error){
-  console.log(msg + ":" + JSON.stringify(error));
+  logger.error(msg + ":" + JSON.stringify(error));
 };
 
 var addListener = function(type, listener){
@@ -43,7 +43,7 @@ var once = function(type, listener){
 
 //we have to continue support for init for now as for FH v2 apps, there won't be a config file created
 var init = function(opts, success, fail){
-  console.warn("$fh.init will be deprecated soon");
+  logger.warn("$fh.init will be deprecated soon");
   cloud.ready(function(err, host){
     if(err){
       if(err.message === "app_config_missing"){

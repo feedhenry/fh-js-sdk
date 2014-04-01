@@ -6,7 +6,7 @@ var consts = require("./constants");
 var fhparams = require("./fhparams");
 var ajax = require("./ajax");
 var handleError = require("./handleError");
-var console = require("console");
+var logger = require("./logger");
 var JSON = require("JSON");
 var hashFunc = require("./security/hash");
 var appProps = require("./appProps");
@@ -24,7 +24,9 @@ var init = function(cb, app_props) {
 }
 
 var loadCloudProps = function(app_props, callback) {
-
+  if(app_props.loglevel){
+    logger.setLevel(app_props.loglevel);
+  }
   // If local - shortcircuit the init - just return the host
   if (app_props.local) {
     var res = {

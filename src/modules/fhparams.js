@@ -1,6 +1,7 @@
 var device = require("./device");
 var sdkversion = require("./sdkversion");
 var appProps = require("./appProps");
+var logger = require("./logger");
 
 var defaultParams = null;
 var authSessionToken = null;
@@ -46,6 +47,7 @@ var buildFHParams = function(){
   }
   
   defaultParams = fhparams;
+  logger.debug("fhparams = ", defaultParams);
   return fhparams;
 }
 
