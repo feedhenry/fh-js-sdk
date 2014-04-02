@@ -7411,15 +7411,21 @@ var defaultFail = function(msg, error){
 
 var addListener = function(type, listener){
   events.addListener(type, listener);
-  if(type === constants.INIT_EVENT && cloud.isReady()){
-    //for fhinit event, need to check if cloud is ready.If it is, invoke the call immediately as it will not fire again.
-    listener(null, {host: cloud.getCloudHostUrl()});
+  if(type === constants.INIT_EVENT){
+    //for fhinit event, need to check the status of cloud and may need to fire the listener immediately.
+    if(cloud.isReady()){
+      listener(null, {host: cloud.getCloudHostUrl()});
+    } else if(cloud.getInitError()){
+      listener(cloud.getInitError());
+    }
   } 
 };
 
 var once = function(type, listener){
   if(type === constants.INIT_EVENT && cloud.isReady()){
     listener(null, {host: cloud.getCloudHostUrl()});
+  } else if(type === constants.INIT_EVENT && cloud.getInitError()){
+    listener(cloud.getInitError());
   } else {
     events.once(type, listener);
   }
@@ -9427,6 +9433,8 @@ var self = {
         // Return a copy of the dataset so updates will not automatically make it back into the dataset
         var res = JSON.parse(JSON.stringify(dataset.data));
         success(res);
+      } else {
+        if(failure) failure('no_data');
       }
     }, function(code, msg) {
       if(failure) failure(code, msg);
@@ -10587,6 +10595,7 @@ var cloud_host;
 
 var is_initialising = false;
 var is_cloud_ready = false;
+var init_error = null;
 
 
 var ready = function(cb){
@@ -10601,8 +10610,10 @@ var ready = function(cb){
       initializer.init(function(err, initRes){
         is_initialising = false;
         if(err){
+          init_error = err;
           return events.emit(constants.INIT_EVENT, err);
         } else {
+          init_error = null;
           is_cloud_ready = true;
           cloud_host = new CloudHost(initRes.cloud);
           return events.emit(constants.INIT_EVENT, null, {host: getCloudHostUrl()});
@@ -10629,11 +10640,16 @@ var isReady = function(){
   return is_cloud_ready;
 }
 
+var getInitError = function(){
+  return init_error;
+}
+
 //for test
 var reset = function(){
   is_cloud_ready = false;
   is_initialising = false;
   cloud_host = undefined;
+  init_error = undefined;
   ready(function(){
     
   });
@@ -10656,6 +10672,7 @@ module.exports = {
   isReady: isReady,
   getCloudHost: getCloudHost,
   getCloudHostUrl: getCloudHostUrl,
+  getInitError: getInitError,
   reset: reset
 }
 },{"./appProps":26,"./constants":28,"./events":31,"./hosts":35,"./initializer":36,"./logger":39}]},{},["il4jYc"])

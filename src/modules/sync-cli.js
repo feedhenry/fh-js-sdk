@@ -173,6 +173,8 @@ var self = {
         // Return a copy of the dataset so updates will not automatically make it back into the dataset
         var res = JSON.parse(JSON.stringify(dataset.data));
         success(res);
+      } else {
+        if(failure) failure('no_data');
       }
     }, function(code, msg) {
       if(failure) failure(code, msg);

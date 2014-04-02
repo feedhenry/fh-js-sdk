@@ -10,6 +10,7 @@ var cloud_host;
 
 var is_initialising = false;
 var is_cloud_ready = false;
+var init_error = null;
 
 
 var ready = function(cb){
@@ -24,8 +25,10 @@ var ready = function(cb){
       initializer.init(function(err, initRes){
         is_initialising = false;
         if(err){
+          init_error = err;
           return events.emit(constants.INIT_EVENT, err);
         } else {
+          init_error = null;
           is_cloud_ready = true;
           cloud_host = new CloudHost(initRes.cloud);
           return events.emit(constants.INIT_EVENT, null, {host: getCloudHostUrl()});
@@ -52,11 +55,16 @@ var isReady = function(){
   return is_cloud_ready;
 }
 
+var getInitError = function(){
+  return init_error;
+}
+
 //for test
 var reset = function(){
   is_cloud_ready = false;
   is_initialising = false;
   cloud_host = undefined;
+  init_error = undefined;
   ready(function(){
     
   });
@@ -79,5 +87,6 @@ module.exports = {
   isReady: isReady,
   getCloudHost: getCloudHost,
   getCloudHostUrl: getCloudHostUrl,
+  getInitError: getInitError,
   reset: reset
 }

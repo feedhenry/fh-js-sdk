@@ -20,15 +20,21 @@ var defaultFail = function(msg, error){
 
 var addListener = function(type, listener){
   events.addListener(type, listener);
-  if(type === constants.INIT_EVENT && cloud.isReady()){
-    //for fhinit event, need to check if cloud is ready.If it is, invoke the call immediately as it will not fire again.
-    listener(null, {host: cloud.getCloudHostUrl()});
+  if(type === constants.INIT_EVENT){
+    //for fhinit event, need to check the status of cloud and may need to fire the listener immediately.
+    if(cloud.isReady()){
+      listener(null, {host: cloud.getCloudHostUrl()});
+    } else if(cloud.getInitError()){
+      listener(cloud.getInitError());
+    }
   } 
 };
 
 var once = function(type, listener){
   if(type === constants.INIT_EVENT && cloud.isReady()){
     listener(null, {host: cloud.getCloudHostUrl()});
+  } else if(type === constants.INIT_EVENT && cloud.getInitError()){
+    listener(cloud.getInitError());
   } else {
     events.once(type, listener);
   }
