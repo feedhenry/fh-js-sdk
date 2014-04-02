@@ -5641,9 +5641,9 @@ if (typeof $fh == 'undefined') {
 if ($fh.forms === undefined) {
   $fh.forms = appForm.api;
 }
-/*! fh-forms - v0.2.53 -  */
+/*! fh-forms - v0.3.01 -  */
 /*! async - v0.2.9 -  */
-/*! 2014-03-27 */
+/*! 2014-04-02 */
 /* This is the prefix file */
 if(appForm){
   appForm.RulesEngine=rulesEngine;
@@ -7001,7 +7001,7 @@ function rulesEngine (formDef) {
 
           var validation = (fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) ? fieldDefinition.fieldOptions.validation : undefined;
 
-          if(! validation || ! validation.validateImmediately){
+          if( validation && false === validation.validateImmediately){
             var ret = {validation: {}};
             ret.validation[fieldId] = {"valid":true};
             return cb(undefined, ret );
@@ -7948,7 +7948,6 @@ function rulesEngine (formDef) {
 }
 
 /* End of suffix file */
-
 
 //end  module;
 
