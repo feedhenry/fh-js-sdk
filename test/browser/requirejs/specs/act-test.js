@@ -41,21 +41,24 @@ define(['require', 'chai', 'sinonChai'], function(require, chai, sinonChai){
     afterEach(function () { server.restore(); });
 
     describe("test auto initialisation", function(){
-      it("should emit cloudready events", function(){
+      it("should emit fhinit events", function(){
 
         var callback = sinon.spy();
 
         initFakeServer(server);
         var $fh = require("feedhenry");
+        //at this point, $fh is already initialised (and failed), it will not emit another fhinit event 
+        //until another call to any $fh cloud APIs, so for testing, call reset which will force it to re-intialise again.
+        $fh.reset();
 
-        $fh.on('cloudready', callback);
+        $fh.on('fhinit', callback);
 
         server.respond();
         server.respond();
 
         expect(callback).to.have.been.called;
         expect(callback).to.have.been.calledOnce;
-        expect(callback).to.have.been.calledWith({host: "http://localhost:8101"});
+        expect(callback).to.have.been.calledWith(null, {host: "http://localhost:8101"});
 
         var hostUrl = $fh.getCloudURL();
         expect(hostUrl).to.equal("http://localhost:8101");
@@ -95,24 +98,29 @@ define(['require', 'chai', 'sinonChai'], function(require, chai, sinonChai){
       });
 
       it("should work with cloud call", function(){
-        var callback = sinon.spy();
+        var success = sinon.spy();
+        var fail = sinon.spy();
 
         initFakeServer(server);
 
         var data = {echo: 'hi'};
 
-        server.respondWith('POST', /cloud\/echo/, buildFakeRes(data));
+        server.respondWith('POST', /test\/echo/, buildFakeRes(data));
 
         var $fh = require("feedhenry");
 
-        $fh.cloud('echo', {}, callback);
+
+        $fh.cloud({
+          path: 'test/echo',
+          method: 'POST'
+        }, success, fail);
 
         server.respond();
         server.respond();
         server.respond();
 
-        expect(callback).to.have.been.calledOnce;
-        expect(callback).to.have.been.calledWith(null, data);
+        expect(success).to.have.been.calledOnce;
+        expect(success).to.have.been.calledWith(data);
 
       });
     });

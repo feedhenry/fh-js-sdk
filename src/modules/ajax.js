@@ -11,6 +11,7 @@
 var eventsHandler = require("./events");
 var XDomainRequestWrapper = require("./XDomainRequestWrapper");
 var consts = require("./constants");
+var logger = require("./logger");
 
 var type
 try {
@@ -30,7 +31,7 @@ var jsonpID = 0,
   xmlTypeRE = /^(?:text|application)\/xml/i,
   jsonType = 'application/json',
   htmlType = 'text/html',
-  blankRE = /^\s*$/
+  blankRE = /^\s*$/;
 
 var ajax = module.exports = function (options) {
   var settings = extend({}, options || {})
@@ -77,6 +78,7 @@ var ajax = module.exports = function (options) {
       if(settings.tryJSONP){
         //check if the request has fail. In some cases, we may want to try jsonp as well. Again, FH only...
         if(xhr.status === 0 && settings.crossDomain && !xhr.isTimeout &&  protocol != 'file:'){
+          logger.debug("retry ajax call with jsonp")
           settings.type = "GET";
           settings.dataType = "jsonp";
           settings.data = "_jsonpdata=" + settings.data;
@@ -86,6 +88,7 @@ var ajax = module.exports = function (options) {
       if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304 || (xhr.status == 0 && protocol == 'file:')) {
         dataType = dataType || mimeToDataType(xhr.getResponseHeader('content-type'))
         result = xhr.responseText
+        logger.debug("ajax response :: status = " + xhr.status + " :: body = " + result)
 
         try {
           if (dataType == 'script')(1, eval)(result)
@@ -95,7 +98,10 @@ var ajax = module.exports = function (options) {
           error = e
         }
 
-        if (error) ajaxError(error, 'parsererror', xhr, settings)
+        if (error) {
+          logger.debug("ajax error", error);
+          ajaxError(error, 'parsererror', xhr, settings)
+        }
         else ajaxSuccess(result, xhr, settings)
       } else {
         ajaxError(null, 'error', xhr, settings)
@@ -104,16 +110,19 @@ var ajax = module.exports = function (options) {
   }
 
   var async = 'async' in settings ? settings.async : true
+  logger.debug("ajax call settings", settings)
   xhr.open(settings.type, settings.url, async)
 
   for (name in settings.headers) xhr.setRequestHeader(name, settings.headers[name])
 
   if (ajaxBeforeSend(xhr, settings) === false) {
+    logger.debug("ajax call is aborted due to ajaxBeforeSend")
     xhr.abort()
     return false
   }
 
   if (settings.timeout > 0) abortTimeout = setTimeout(function () {
+    logger.debug("ajax call timed out")
     xhr.onreadystatechange = empty
     xhr.abort()
     xhr.isTimeout = true
@@ -210,8 +219,6 @@ ajax.JSONP = function (options) {
     delete window[callbackName]
     ajaxSuccess(data, xhr, options)
   }
-  console.log("trying jsonp.data");
-  console.log(options);
 
   serializeData(options)
   script.src = options.url.replace(/=\?/, '=' + callbackName)

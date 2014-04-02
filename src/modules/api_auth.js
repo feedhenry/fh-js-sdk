@@ -1,4 +1,4 @@
-var console =require("console");
+var logger =require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
 var ajax = require("./ajax");
@@ -12,7 +12,7 @@ var appProps = require("./appProps");
 module.exports = function(opts, success, fail){
   if(!fail){
     fail = function(msg, error){
-      console.log(msg + ":" + JSON.stringify(error));
+      logger.debug(msg + ":" + JSON.stringify(error));
     };
   }
   if (!opts.policyId) {
@@ -57,7 +57,7 @@ module.exports = function(opts, success, fail){
           checkAuth.handleAuthResponse(endurl, res, success, fail);
         },
         error: function(req, statusText, error) {
-          handleError(fail, req, statusText);
+          handleError(fail, req, statusText, error);
         }
       });
     }

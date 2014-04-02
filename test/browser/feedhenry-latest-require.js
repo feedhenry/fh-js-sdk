@@ -6680,8 +6680,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,require("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(require,module,exports){
+}).call(this,require("/Users/weili/work/apps/fh-sync/client/default/js/feedhenry/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/weili/work/apps/fh-sync/client/default/js/feedhenry/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(require,module,exports){
 (function (global){
 /*global window, global*/
 var util = require("util")
@@ -7156,7 +7156,206 @@ process.chdir = function (dir) {
 module.exports=require(6)
 },{}],13:[function(require,module,exports){
 module.exports=require(7)
-},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(require,module,exports){
+},{"./support/isBuffer":12,"/Users/weili/work/apps/fh-sync/client/default/js/feedhenry/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(require,module,exports){
+/*
+ * loglevel - https://github.com/pimterry/loglevel
+ *
+ * Copyright (c) 2013 Tim Perry
+ * Licensed under the MIT license.
+ */
+
+;(function (undefined) {
+    var undefinedType = "undefined";
+
+    (function (name, definition) {
+        if (typeof module !== 'undefined') {
+            module.exports = definition();
+        } else if (typeof define === 'function' && typeof define.amd === 'object') {
+            define(definition);
+        } else {
+            this[name] = definition();
+        }
+    }('log', function () {
+        var self = {};
+        var noop = function() {};
+
+        function realMethod(methodName) {
+            if (typeof console === undefinedType) {
+                return noop;
+            } else if (console[methodName] === undefined) {
+                if (console.log !== undefined) {
+                    return boundToConsole(console, 'log');
+                } else {
+                    return noop;
+                }
+            } else {
+                return boundToConsole(console, methodName);
+            }
+        }
+
+        function boundToConsole(console, methodName) {
+            var method = console[methodName];
+            if (method.bind === undefined) {
+                if (Function.prototype.bind === undefined) {
+                    return functionBindingWrapper(method, console);
+                } else {
+                    try {
+                        return Function.prototype.bind.call(console[methodName], console);
+                    } catch (e) {
+                        // In IE8 + Modernizr, the bind shim will reject the above, so we fall back to wrapping
+                        return functionBindingWrapper(method, console);
+                    }
+                }
+            } else {
+                return console[methodName].bind(console);
+            }
+        }
+
+        function functionBindingWrapper(f, context) {
+            return function() {
+                Function.prototype.apply.apply(f, [context, arguments]);
+            };
+        }
+
+        var logMethods = [
+            "trace",
+            "debug",
+            "info",
+            "warn",
+            "error"
+        ];
+
+        function replaceLoggingMethods(methodFactory) {
+            for (var ii = 0; ii < logMethods.length; ii++) {
+                self[logMethods[ii]] = methodFactory(logMethods[ii]);
+            }
+        }
+
+        function cookiesAvailable() {
+            return (typeof window !== undefinedType &&
+                    window.document !== undefined &&
+                    window.document.cookie !== undefined);
+        }
+
+        function localStorageAvailable() {
+            try {
+                return (typeof window !== undefinedType &&
+                        window.localStorage !== undefined);
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function persistLevelIfPossible(levelNum) {
+            var localStorageFail = false,
+                levelName;
+
+            for (var key in self.levels) {
+                if (self.levels.hasOwnProperty(key) && self.levels[key] === levelNum) {
+                    levelName = key;
+                    break;
+                }
+            }
+
+            if (localStorageAvailable()) {
+                /*
+                 * Setting localStorage can create a DOM 22 Exception if running in Private mode
+                 * in Safari, so even if it is available we need to catch any errors when trying
+                 * to write to it
+                 */
+                try {
+                    window.localStorage['loglevel'] = levelName;
+                } catch (e) {
+                    localStorageFail = true;
+                }
+            } else {
+                localStorageFail = true;
+            }
+
+            if (localStorageFail && cookiesAvailable()) {
+                window.document.cookie = "loglevel=" + levelName + ";";
+            }
+        }
+
+        var cookieRegex = /loglevel=([^;]+)/;
+
+        function loadPersistedLevel() {
+            var storedLevel;
+
+            if (localStorageAvailable()) {
+                storedLevel = window.localStorage['loglevel'];
+            }
+
+            if (storedLevel === undefined && cookiesAvailable()) {
+                var cookieMatch = cookieRegex.exec(window.document.cookie) || [];
+                storedLevel = cookieMatch[1];
+            }
+            
+            if (self.levels[storedLevel] === undefined) {
+                storedLevel = "WARN";
+            }
+
+            self.setLevel(self.levels[storedLevel]);
+        }
+
+        /*
+         *
+         * Public API
+         *
+         */
+
+        self.levels = { "TRACE": 0, "DEBUG": 1, "INFO": 2, "WARN": 3,
+            "ERROR": 4, "SILENT": 5};
+
+        self.setLevel = function (level) {
+            if (typeof level === "number" && level >= 0 && level <= self.levels.SILENT) {
+                persistLevelIfPossible(level);
+
+                if (level === self.levels.SILENT) {
+                    replaceLoggingMethods(function () {
+                        return noop;
+                    });
+                    return;
+                } else if (typeof console === undefinedType) {
+                    replaceLoggingMethods(function (methodName) {
+                        return function () {
+                            if (typeof console !== undefinedType) {
+                                self.setLevel(level);
+                                self[methodName].apply(self, arguments);
+                            }
+                        };
+                    });
+                    return "No console available for logging";
+                } else {
+                    replaceLoggingMethods(function (methodName) {
+                        if (level <= self.levels[methodName.toUpperCase()]) {
+                            return realMethod(methodName);
+                        } else {
+                            return noop;
+                        }
+                    });
+                }
+            } else if (typeof level === "string" && self.levels[level.toUpperCase()] !== undefined) {
+                self.setLevel(self.levels[level.toUpperCase()]);
+            } else {
+                throw "log.setLevel() called with invalid level: " + level;
+            }
+        };
+
+        self.enableAll = function() {
+            self.setLevel(self.levels.TRACE);
+        };
+
+        self.disableAll = function() {
+            self.setLevel(self.levels.SILENT);
+        };
+
+        loadPersistedLevel();
+        return self;
+    }));
+})();
+
+},{}],15:[function(require,module,exports){
 var toString = Object.prototype.toString
 
 module.exports = function(val){
@@ -7187,11 +7386,11 @@ module.exports = function(val){
   return typeof val
 }
 
-},{}],"/Users/weili/work/fh-sdks/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
+},{}],"/Users/weili/work/apps/fh-sync/client/default/js/feedhenry/src/feedhenry.js":[function(require,module,exports){
 module.exports=require('il4jYc');
 },{}],"il4jYc":[function(require,module,exports){
 var constants = require("./modules/constants");
-var console = require("console");
+var logger = require("./modules/logger");
 var ajax = require("./modules/ajax");
 var events = require("./modules/events");
 var cloud = require("./modules/waitForCloud");
@@ -7201,73 +7400,44 @@ var api_sec = require("./modules/api_sec");
 var api_hash = require("./modules/api_hash");
 var api_sync = require("./modules/sync-cli");
 var api_mbaas = require("./modules/api_mbaas");
+var api_cloud = require("./modules/api_cloud");
 var fhparams = require("./modules/fhparams");
 var appProps = require("./modules/appProps");
 var device = require("./modules/device");
 
 var defaultFail = function(msg, error){
-  console.log(msg + ":" + JSON.stringify(error));
+  logger.error(msg + ":" + JSON.stringify(error));
 };
 
 var addListener = function(type, listener){
-  if(type === "cloudready"){
-    cloud.ready(function(err, host){
-      if(!err){
-        listener(host);
-      }
-    });
-  } else {
-    events.addListener(type, listener);
-  }
+  events.addListener(type, listener);
+  if(type === constants.INIT_EVENT && cloud.isReady()){
+    //for fhinit event, need to check if cloud is ready.If it is, invoke the call immediately as it will not fire again.
+    listener(null, {host: cloud.getCloudHostUrl()});
+  } 
 };
 
 var once = function(type, listener){
-  if(type === "cloudready"){
-    cloud.ready(function(err, host){
-      if(!err){
-        listener(host);
-      }
-    });
+  if(type === constants.INIT_EVENT && cloud.isReady()){
+    listener(null, {host: cloud.getCloudHostUrl()});
   } else {
     events.once(type, listener);
   }
 };
 
-//we have to continue support for init for now as for FH v2 apps, there won't be a config file created
+//Legacy shim. Init hapens based on fhconfig.json or, for v2, global var called fh_app_props which is injected as part of the index.html wrapper
 var init = function(opts, success, fail){
-  console.warn("$fh.init will be deprecated soon");
+  logger.warn("$fh.init will be deprecated soon");
   cloud.ready(function(err, host){
     if(err){
-      if(err.message === "app_config_missing"){
-        //cloud.ready will be invoked when js sdk is loaded, it may cause init call to be added to the "cloudready" event listeners stack when it's called. If that is the case and getting an error
-        //about app config is missing, we just try again
-        init(opts, success, fail);
-      } else {
-        if(typeof fail === "function"){
-          return fail(err);
-        }
+      if(typeof fail === "function"){
+        return fail(err);
       }
     } else {
       if(typeof success === "function"){
         success(host.host);
       }
     }
-  }, opts);
-};
-
-var cloudFunc = function(act_name, params, cb){
-  var funcName = act_name;
-  var data = params;
-  var callback = cb;
-  if(typeof params === "function"){
-    data = {};
-    callback = params;
-  }
-  var reqParams = {act: funcName, req: data};
-  api_act(reqParams, function(res){
-    return callback(null, res);
-  }, function(msg, error){
-    return callback(error);
   });
 };
 
@@ -7275,7 +7445,7 @@ var fh = window.$fh || {};
 fh.init = init;
 fh.act = api_act;
 fh.auth = api_auth;
-fh.cloud = cloudFunc;
+fh.cloud = api_cloud;
 fh.sec = api_sec;
 fh.hash = api_hash;
 fh.sync = api_sync;
@@ -7301,9 +7471,14 @@ for(var i=0;i<methods.length;i++){
 }
 
 //keep backward compatibility
-fh.on("cloudready", function(host){
-  fh.cloud_props = {hosts: {url: host.host}};
-  fh.app_props = appProps.getAppProps();
+fh.on(constants.INIT_EVENT, function(err, host){
+  if(err){
+    fh.cloud_props = {};
+    fh.app_props = {};
+  } else {
+    fh.cloud_props = {hosts: {url: host.host}};
+    fh.app_props = appProps.getAppProps();
+  }
 });
 
 //for test
@@ -7318,7 +7493,7 @@ module.exports = fh;
 
 
 
-},{"./modules/ajax":18,"./modules/api_act":19,"./modules/api_auth":20,"./modules/api_hash":21,"./modules/api_mbaas":22,"./modules/api_sec":23,"./modules/appProps":24,"./modules/constants":26,"./modules/device":28,"./modules/events":29,"./modules/fhparams":30,"./modules/sync-cli":44,"./modules/waitForCloud":46,"console":8}],17:[function(require,module,exports){
+},{"./modules/ajax":19,"./modules/api_act":20,"./modules/api_auth":21,"./modules/api_cloud":22,"./modules/api_hash":23,"./modules/api_mbaas":24,"./modules/api_sec":25,"./modules/appProps":26,"./modules/constants":28,"./modules/device":30,"./modules/events":31,"./modules/fhparams":32,"./modules/logger":39,"./modules/sync-cli":47,"./modules/waitForCloud":49}],18:[function(require,module,exports){
 var XDomainRequestWrapper = function(xdr){
   this.xdr = xdr;
   this.isWrapper = true;
@@ -7383,7 +7558,7 @@ XDomainRequestWrapper.prototype.getResponseHeader = function(n){
 
 module.exports = XDomainRequestWrapper;
 
-},{}],18:[function(require,module,exports){
+},{}],19:[function(require,module,exports){
 //a shameless copy from https://github.com/ForbesLindesay/ajax/blob/master/index.js. 
 //it has the same methods and config options as jQuery/zeptojs but very light weight. see http://api.jquery.com/jQuery.ajax/
 //a few small changes are made for supporting IE 8 and other features:
@@ -7397,6 +7572,7 @@ module.exports = XDomainRequestWrapper;
 var eventsHandler = require("./events");
 var XDomainRequestWrapper = require("./XDomainRequestWrapper");
 var consts = require("./constants");
+var logger = require("./logger");
 
 var type
 try {
@@ -7416,7 +7592,7 @@ var jsonpID = 0,
   xmlTypeRE = /^(?:text|application)\/xml/i,
   jsonType = 'application/json',
   htmlType = 'text/html',
-  blankRE = /^\s*$/
+  blankRE = /^\s*$/;
 
 var ajax = module.exports = function (options) {
   var settings = extend({}, options || {})
@@ -7463,6 +7639,7 @@ var ajax = module.exports = function (options) {
       if(settings.tryJSONP){
         //check if the request has fail. In some cases, we may want to try jsonp as well. Again, FH only...
         if(xhr.status === 0 && settings.crossDomain && !xhr.isTimeout &&  protocol != 'file:'){
+          logger.debug("retry ajax call with jsonp")
           settings.type = "GET";
           settings.dataType = "jsonp";
           settings.data = "_jsonpdata=" + settings.data;
@@ -7472,6 +7649,7 @@ var ajax = module.exports = function (options) {
       if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304 || (xhr.status == 0 && protocol == 'file:')) {
         dataType = dataType || mimeToDataType(xhr.getResponseHeader('content-type'))
         result = xhr.responseText
+        logger.debug("ajax response :: status = " + xhr.status + " :: body = " + result)
 
         try {
           if (dataType == 'script')(1, eval)(result)
@@ -7481,7 +7659,10 @@ var ajax = module.exports = function (options) {
           error = e
         }
 
-        if (error) ajaxError(error, 'parsererror', xhr, settings)
+        if (error) {
+          logger.debug("ajax error", error);
+          ajaxError(error, 'parsererror', xhr, settings)
+        }
         else ajaxSuccess(result, xhr, settings)
       } else {
         ajaxError(null, 'error', xhr, settings)
@@ -7490,16 +7671,19 @@ var ajax = module.exports = function (options) {
   }
 
   var async = 'async' in settings ? settings.async : true
+  logger.debug("ajax call settings", settings)
   xhr.open(settings.type, settings.url, async)
 
   for (name in settings.headers) xhr.setRequestHeader(name, settings.headers[name])
 
   if (ajaxBeforeSend(xhr, settings) === false) {
+    logger.debug("ajax call is aborted due to ajaxBeforeSend")
     xhr.abort()
     return false
   }
 
   if (settings.timeout > 0) abortTimeout = setTimeout(function () {
+    logger.debug("ajax call timed out")
     xhr.onreadystatechange = empty
     xhr.abort()
     xhr.isTimeout = true
@@ -7596,8 +7780,6 @@ ajax.JSONP = function (options) {
     delete window[callbackName]
     ajaxSuccess(data, xhr, options)
   }
-  console.log("trying jsonp.data");
-  console.log(options);
 
   serializeData(options)
   script.src = options.url.replace(/=\?/, '=' + callbackName)
@@ -7752,8 +7934,8 @@ function extend(target) {
   })
   return target
 }
-},{"./XDomainRequestWrapper":17,"./constants":26,"./events":29,"type-of":14}],19:[function(require,module,exports){
-var console =require("console");
+},{"./XDomainRequestWrapper":18,"./constants":28,"./events":31,"./logger":39,"type-of":15}],20:[function(require,module,exports){
+var logger =require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
 var ajax = require("./ajax");
@@ -7775,16 +7957,16 @@ function doActCall(opts, success, fail){
     "timeout": opts.timeout,
     "success": success,
     "error": function(req, statusText, error){
-      return handleError(fail, req, statusText);
+      return handleError(fail, req, statusText, error);
     }
   })
 }
 
 module.exports = function(opts, success, fail){
-  console.log("act is called");
+  logger.debug("act is called");
   if(!fail){
     fail = function(msg, error){
-      console.log(msg + ":" + JSON.stringify(error));
+      logger.debug(msg + ":" + JSON.stringify(error));
     };
   }
 
@@ -7793,7 +7975,7 @@ module.exports = function(opts, success, fail){
   }
 
   cloud.ready(function(err, cloudHost){
-    console.log("Calling fhact now");
+    logger.debug("Calling fhact now");
     if(err){
       return fail(err.message, err);
     } else {
@@ -7801,8 +7983,8 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":18,"./fhparams":30,"./handleError":32,"./waitForCloud":46,"JSON":3,"console":8}],20:[function(require,module,exports){
-var console =require("console");
+},{"./ajax":19,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],21:[function(require,module,exports){
+var logger =require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
 var ajax = require("./ajax");
@@ -7816,7 +7998,7 @@ var appProps = require("./appProps");
 module.exports = function(opts, success, fail){
   if(!fail){
     fail = function(msg, error){
-      console.log(msg + ":" + JSON.stringify(error));
+      logger.debug(msg + ":" + JSON.stringify(error));
     };
   }
   if (!opts.policyId) {
@@ -7861,13 +8043,58 @@ module.exports = function(opts, success, fail){
           checkAuth.handleAuthResponse(endurl, res, success, fail);
         },
         error: function(req, statusText, error) {
-          handleError(fail, req, statusText);
+          handleError(fail, req, statusText, error);
         }
       });
     }
   });
 }
-},{"./ajax":18,"./appProps":24,"./checkAuth":25,"./constants":26,"./device":28,"./fhparams":30,"./handleError":32,"./waitForCloud":46,"JSON":3,"console":8}],21:[function(require,module,exports){
+},{"./ajax":19,"./appProps":26,"./checkAuth":27,"./constants":28,"./device":30,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],22:[function(require,module,exports){
+var logger =require("./logger");
+var cloud = require("./waitForCloud");
+var fhparams = require("./fhparams");
+var ajax = require("./ajax");
+var JSON = require("JSON");
+var handleError = require("./handleError");
+
+function doCloudCall(opts, success, fail){
+  var cloud_host = cloud.getCloudHost();
+  var url = cloud_host.getCloudUrl(opts.path);
+  var params = opts.params || {};
+  params = fhparams.addFHParams(params);
+  return ajax({
+    "url": url,
+    "tryJSONP": true,
+    "type": opts.method || "POST",
+    "dataType": opts.dataType || "json",
+    "data": JSON.stringify(params),
+    "contentType": opts.contentType || "application/json",
+    "timeout": opts.timeout,
+    "success": success,
+    "error": function(req, statusText, error){
+      return handleError(fail, req, statusText, error);
+    }
+  })
+}
+
+module.exports = function(opts, success, fail){
+  logger.debug("cloud is called");
+  if(!fail){
+    fail = function(msg, error){
+      logger.debug(msg + ":" + JSON.stringify(error));
+    };
+  }
+
+  cloud.ready(function(err, cloudHost){
+    logger.debug("Calling fhact now");
+    if(err){
+      return fail(err.message, err);
+    } else {
+      doCloudCall(opts, success, fail);
+    }
+  })
+}
+},{"./ajax":19,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],23:[function(require,module,exports){
 var hashImpl = require("./security/hash");
 
 module.exports = function(p, s, f){
@@ -7879,8 +8106,8 @@ module.exports = function(p, s, f){
   params.params = p;
   hashImpl(params, s, f);
 };
-},{"./security/hash":42}],22:[function(require,module,exports){
-var console =require("console");
+},{"./security/hash":45}],24:[function(require,module,exports){
+var logger =require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
 var ajax = require("./ajax");
@@ -7890,10 +8117,10 @@ var consts = require("./constants");
 
 
 module.exports = function(opts, success, fail){
-  console.log("mbaas is called.");
+  logger.debug("mbaas is called.");
   if(!fail){
     fail = function(msg, error){
-      console.log(msg + ":" + JSON.stringify(error));
+      console.debug(msg + ":" + JSON.stringify(error));
     };
   }
 
@@ -7901,7 +8128,7 @@ module.exports = function(opts, success, fail){
   var params = opts.params;
 
   cloud.ready(function(err, cloudHost){
-    console.log("Calling mbaas now");
+    logger.debug("Calling mbaas now");
     if(err){
       return fail(err.message, err);
     } else {
@@ -7917,12 +8144,15 @@ module.exports = function(opts, success, fail){
         "contentType": "application/json",
         "timeout": opts.timeout || consts.fh_timeout,
         "success": success,
-        "error": fail
+        "error": function(req, statusText, error){
+          return handleError(fail, req, statusText, error);
+        }
       });
     }
   });
-}
-},{"./ajax":18,"./constants":26,"./fhparams":30,"./handleError":32,"./waitForCloud":46,"JSON":3,"console":8}],23:[function(require,module,exports){
+} 
+
+},{"./ajax":19,"./constants":28,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],25:[function(require,module,exports){
 var keygen = require("./security/aes-keygen");
 var aes = require("./security/aes-node");
 var rsa = require("./security/rsa-node");
@@ -7966,10 +8196,10 @@ module.exports = function(p, s, f){
     }
   }
 }
-},{"./security/aes-keygen":40,"./security/aes-node":41,"./security/hash":42,"./security/rsa-node":43}],24:[function(require,module,exports){
+},{"./security/aes-keygen":43,"./security/aes-node":44,"./security/hash":45,"./security/rsa-node":46}],26:[function(require,module,exports){
 var consts = require("./constants");
 var ajax = require("./ajax");
-var console = require("console");
+var logger = require("./logger");
 var qs = require("./queryMap");
 
 var app_props = null;
@@ -7977,35 +8207,41 @@ var app_props = null;
 var load = function(cb) {
   var doc_url = document.location.href;
   var url_params = qs(doc_url);
-  var local = (typeof url_params.fhconfig !== 'undefined');
-  var config_url = url_params.fhconfig || consts.config_js;
+  var local = (typeof url_params.url !== 'undefined');
 
+  // For local environments, no init needed
+  if (local) {
+    app_props = {};
+    app_props.local = true;
+    app_props.host = url_params.url;
+    app_props.appid = "000000000000000000000000";
+    app_props.appkey = "0000000000000000000000000000000000000000";
+    app_props.projectid = "000000000000000000000000";
+    app_props.connectiontag = "0.0.1";
+    return cb(null, app_props);
+  }
+
+  var config_url = url_params.fhconfig || consts.config_js;
   ajax({
     url: config_url,
     dataType: "json",
     success: function(data) {
-      console.log("fhconfig = " + JSON.stringify(data));
+      logger.debug("fhconfig = " + JSON.stringify(data));
       //when load the config file on device, because file:// protocol is used, it will never call fail call back. The success callback will be called but the data value will be null.
       if (null === data) {
         return cb(new Error("app_config_missing"));
       } else {
         app_props = data;
 
-        // For local environments, no init needed
-        if (local) {
-          // Set defaults for keys other than host
-          app_props.local = true;
-          app_props.appid = "000000000000000000000000";
-          app_props.appkey = "0000000000000000000000000000000000000000";
-          app_props.projectid = "000000000000000000000000";
-          app_props.connectiontag = "0.0.1";
-        }
-
         cb(null, app_props);
       }
     },
     error: function(req, statusText, error) {
-      console.log(consts.config_js + " Not Found");
+      //fh v2 only
+      if(window.fh_app_props){
+        return cb(null, window.fh_app_props);
+      }
+      logger.error(consts.config_js + " Not Found");
       cb(new Error("app_config_missing"));
     }
   });
@@ -8024,8 +8260,8 @@ module.exports = {
   getAppProps: getAppProps,
   setAppProps: setAppProps
 };
-},{"./ajax":18,"./constants":26,"./queryMap":38,"console":8}],25:[function(require,module,exports){
-var console = require("console");
+},{"./ajax":19,"./constants":28,"./logger":39,"./queryMap":41}],27:[function(require,module,exports){
+var logger = require("./logger");
 var queryMap = require("./queryMap");
 var JSON = require("JSON");
 var fhparams = require("./fhparams");
@@ -8099,7 +8335,7 @@ var handleAuthResponse = function(endurl, res, success, fail){
               locationChange(ev.url);
             });
           } catch(e){
-            console.log("InAppBrowser plugin is not intalled.");
+            logger.info("InAppBrowser plugin is not intalled.");
             onComplete(res);
           }
         }
@@ -8132,15 +8368,15 @@ module.exports = {
   "handleAuthResponse": handleAuthResponse
 };
 
-},{"./fhparams":30,"./queryMap":38,"JSON":3,"console":8}],26:[function(require,module,exports){
+},{"./fhparams":32,"./logger":39,"./queryMap":41,"JSON":3}],28:[function(require,module,exports){
 module.exports = {
   "fh_timeout": 20000,
   "boxprefix": "/box/srv/1.1/",
   "sdk_version": "BUILD_VERSION",
-  "config_js": "fhconfig.json"
+  "config_js": "fhconfig.json",
+  "INIT_EVENT": "fhinit"
 };
-},{}],27:[function(require,module,exports){
-var console = require("console");
+},{}],29:[function(require,module,exports){
 module.exports = {
   readCookieValue  : function (cookie_name) {
     var name_str = cookie_name + "=";
@@ -8165,10 +8401,10 @@ module.exports = {
   }
 };
 
-},{"console":8}],28:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 var cookies = require("./cookies");
 var uuidModule = require("./uuid");
-var console = require("console");
+var logger = require("./logger");
 
 module.exports = {
   //try to get the unique device identifier
@@ -8230,21 +8466,24 @@ module.exports = {
       destination = "web";
     }
 
+    logger.debug("destination = " + destination);
+
     return destination;
   }
 }
 
-},{"./cookies":27,"./platformsMap":37,"./uuid":45,"console":8}],29:[function(require,module,exports){
+},{"./cookies":29,"./logger":39,"./platformsMap":40,"./uuid":48}],31:[function(require,module,exports){
 var EventEmitter = require('events').EventEmitter;
 
 var emitter = new EventEmitter();
 emitter.setMaxListeners(0);
 
 module.exports = emitter;
-},{"events":9}],30:[function(require,module,exports){
+},{"events":9}],32:[function(require,module,exports){
 var device = require("./device");
 var sdkversion = require("./sdkversion");
 var appProps = require("./appProps");
+var logger = require("./logger");
 
 var defaultParams = null;
 var authSessionToken = null;
@@ -8290,6 +8529,7 @@ var buildFHParams = function(){
   }
   
   defaultParams = fhparams;
+  logger.debug("fhparams = ", defaultParams);
   return fhparams;
 }
 
@@ -8309,7 +8549,7 @@ module.exports = {
   "setAuthSessionToken":setAuthSessionToken
 }
 
-},{"./appProps":24,"./device":28,"./sdkversion":39}],31:[function(require,module,exports){
+},{"./appProps":26,"./device":30,"./logger":39,"./sdkversion":42}],33:[function(require,module,exports){
 module.exports = function(){
   var path = null;
   var scripts = document.getElementsByTagName('script');
@@ -8330,13 +8570,15 @@ module.exports = function(){
   return path;
 };
 
-},{}],32:[function(require,module,exports){
+},{}],34:[function(require,module,exports){
 var JSON = require("JSON");
 
-module.exports = function(fail, req, resStatus){
+module.exports = function(fail, req, resStatus, error){
   var errraw;
+  var statusCode = 0;
   if(req){
     try{
+      statusCode = req.status;
       var res = JSON.parse(req.responseText);
       errraw = res.error || res.msg;
       if (errraw instanceof Array) {
@@ -8347,15 +8589,15 @@ module.exports = function(fail, req, resStatus){
     }
   }
   if(fail){
-    fail('error_ajaxfail', {
-      status: req.status,
+    fail(errraw, {
+      status: statusCode,
       message: resStatus,
-      error: errraw
+      error: error
     });
   }
 };
 
-},{"JSON":3}],33:[function(require,module,exports){
+},{"JSON":3}],35:[function(require,module,exports){
 var constants = require("./constants");
 var appProps = require("./appProps");
 
@@ -8417,8 +8659,18 @@ CloudHost.prototype.getMBAASUrl = function(service){
   return this.cloud_host + "/mbaas/" + service;
 }
 
+CloudHost.prototype.getCloudUrl = function(path){
+  var app_props = appProps.getAppProps() || {};
+  if(typeof this.cloud_host === "undefined"){
+    this.getHost(app_props.mode);
+  }
+  return this.cloud_host + "/" + path;
+}
+
+
+
 module.exports = CloudHost;
-},{"./appProps":24,"./constants":26}],34:[function(require,module,exports){
+},{"./appProps":26,"./constants":28}],36:[function(require,module,exports){
 var findFHPath = require("./findFHPath");
 var loadScript = require("./loadScript");
 var Lawnchair = require('../../libs/generated/lawnchair');
@@ -8427,25 +8679,22 @@ var consts = require("./constants");
 var fhparams = require("./fhparams");
 var ajax = require("./ajax");
 var handleError = require("./handleError");
-var console = require("console");
+var logger = require("./logger");
 var JSON = require("JSON");
 var hashFunc = require("./security/hash");
 var appProps = require("./appProps");
 
-var init = function(cb, app_props) {
-  if (arguments.length === 2 && typeof app_props === "object" && app_props.mode) {
-    appProps.setAppProps(app_props);
-    return loadCloudProps(app_props, cb);
-  } else {
-    appProps.load(function(err, data) {
-      if (err) return cb(err);
-      return loadCloudProps(data, cb);
-    });
-  }
+var init = function(cb) {
+  appProps.load(function(err, data) {
+    if (err) return cb(err);
+    return loadCloudProps(data, cb);
+  });
 }
 
 var loadCloudProps = function(app_props, callback) {
-
+  if(app_props.loglevel){
+    logger.setLevel(app_props.loglevel);
+  }
   // If local - shortcircuit the init - just return the host
   if (app_props.local) {
     var res = {
@@ -8549,7 +8798,7 @@ var loadCloudProps = function(app_props, callback) {
                 message: msg
               });
             }
-          }, req, statusText);
+          }, req, statusText, error);
         }
       }
     });
@@ -8560,7 +8809,7 @@ module.exports = {
   "init": init,
   "loadCloudProps": loadCloudProps
 }
-},{"../../libs/generated/lawnchair":2,"./ajax":18,"./appProps":24,"./constants":26,"./fhparams":30,"./findFHPath":31,"./handleError":32,"./lawnchair-ext":35,"./loadScript":36,"./security/hash":42,"JSON":3,"console":8}],35:[function(require,module,exports){
+},{"../../libs/generated/lawnchair":2,"./ajax":19,"./appProps":26,"./constants":28,"./fhparams":32,"./findFHPath":33,"./handleError":34,"./lawnchair-ext":37,"./loadScript":38,"./logger":39,"./security/hash":45,"JSON":3}],37:[function(require,module,exports){
 var Lawnchair = require('../../libs/generated/lawnchair');
 
 var fileStorageAdapter = function (app_props, hashFunc) {
@@ -8748,7 +8997,7 @@ var addAdapter = function(app_props, hashFunc){
 module.exports = {
   addAdapter: addAdapter
 }
-},{"../../libs/generated/lawnchair":2}],36:[function(require,module,exports){
+},{"../../libs/generated/lawnchair":2}],38:[function(require,module,exports){
 module.exports = function (url, callback) {
   var script;
   var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
@@ -8771,7 +9020,31 @@ module.exports = function (url, callback) {
   head.insertBefore(script, head.firstChild);
 };
 
-},{}],37:[function(require,module,exports){
+},{}],39:[function(require,module,exports){
+var console = require('console');
+var log = require('loglevel');
+
+log.setLevel('info');
+
+/**
+ * APIs:
+ * see https://github.com/pimterry/loglevel.
+ * In short, you can use:
+ * log.setLevel(loglevel) - default to info
+ * log.enableAll() - enable all log messages
+ * log.disableAll() - disable all log messages
+ *
+ * log.trace(msg)
+ * log.debug(msg)
+ * log.info(msg)
+ * log.warn(msg)
+ * log.error(msg)
+ *
+ * Available levels: { "TRACE": 0, "DEBUG": 1, "INFO": 2, "WARN": 3, "ERROR": 4, "SILENT": 5}
+ * Use either string or integer value
+ */
+module.exports = log;
+},{"console":8,"loglevel":14}],40:[function(require,module,exports){
 module.exports = [
   {
     "destination" :"ipad",
@@ -8799,7 +9072,7 @@ module.exports = [
   }
 ];
 
-},{}],38:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 module.exports = function(url) {
   var qmap = {};
   var i = url.split("?");
@@ -8815,7 +9088,7 @@ module.exports = function(url) {
   }
   return qmap;
 };
-},{}],39:[function(require,module,exports){
+},{}],42:[function(require,module,exports){
 var constants = require("./constants");
 
 module.exports = function() {
@@ -8828,7 +9101,7 @@ module.exports = function() {
   return type + "/" + constants.sdk_version;
 };
 
-},{"./constants":26}],40:[function(require,module,exports){
+},{"./constants":28}],43:[function(require,module,exports){
 var rsa = require("../../../libs/rsa");
 var SecureRandom = rsa.SecureRandom;
 var byte2Hex = rsa.byte2Hex;
@@ -8870,7 +9143,7 @@ var aes_keygen = function(p, s, f){
 }
 
 module.exports = aes_keygen;
-},{"../../../libs/rsa":4}],41:[function(require,module,exports){
+},{"../../../libs/rsa":4}],44:[function(require,module,exports){
 var CryptoJS = require("../../../libs/generated/crypto");
 
 var encrypt = function(p, s, f){
@@ -8911,7 +9184,7 @@ module.exports = {
   encrypt: encrypt,
   decrypt: decrypt
 }
-},{"../../../libs/generated/crypto":1}],42:[function(require,module,exports){
+},{"../../../libs/generated/crypto":1}],45:[function(require,module,exports){
 var CryptoJS = require("../../../libs/generated/crypto");
 
 
@@ -8936,7 +9209,7 @@ var hash = function(p, s, f){
 }
 
 module.exports = hash;
-},{"../../../libs/generated/crypto":1}],43:[function(require,module,exports){
+},{"../../../libs/generated/crypto":1}],46:[function(require,module,exports){
 var rsa = require("../../../libs/rsa");
 var RSAKey = rsa.RSAKey;
 
@@ -8961,7 +9234,7 @@ var encrypt = function(p, s, f){
 module.exports = {
   encrypt: encrypt
 }
-},{"../../../libs/rsa":4}],44:[function(require,module,exports){
+},{"../../../libs/rsa":4}],47:[function(require,module,exports){
 var JSON = require("JSON");
 var actFunc = require("./api_act");
 var CryptoJS = require("../../libs/generated/crypto");
@@ -9174,7 +9447,7 @@ var self = {
       }
       cb(res);
     }, function(err, datatset_id) {
-        self.ConsoleLog(err);
+        self.consoleLog(err);
     });
   },
 
@@ -9500,7 +9773,8 @@ var self = {
           for(var i in pending ) {
             // Mark the pending records we are about to submit as inflight and add them to the array for submission
             // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
-            if( !pending[i].inFlight && !pending[i].crashed ) {
+            // Don't add delayed records
+            if( !pending[i].inFlight && !pending[i].crashed && !pending[i].delayed) {
               pending[i].inFlight = true;
               pending[i].inFlightDate = new Date().getTime();
               pendingArray.push(pending[i]);
@@ -9537,11 +9811,16 @@ var self = {
               // Check to see if any previously crashed inflight records can now be resolved
               self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);
 
+              //Check to see if any delayed pending records can now be set to ready
+              self.updateDelayedFromNewData(dataset_id, dataSet, res);
+
               // Update the new dataset with details of any inflight updates which we have not received a response on
               self.updateNewDataFromInFlight(dataset_id, dataSet, res);
 
               // Update the new dataset with details of any pending updates
               self.updateNewDataFromPending(dataset_id, dataSet, res);
+
+
 
               if (res.records) {
                 // Full Dataset returned
@@ -9776,7 +10055,10 @@ var self = {
 
         Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       this.get( "dataset_" + dataset_id, function (data){
          if (data && data.val !== null) {
-            var dataset = JSON.parse(data.val);
+            var dataset = data.val;
+            if(typeof dataset === "string"){
+              dataset = JSON.parse(dataset);
+            }
             // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
             // the user wants sync
             dataset.initialised = false;
@@ -9826,16 +10108,24 @@ var self = {
           previousPendingUid = dataset.meta[uid].pendingUid;
           dataset.meta[uid].previousPendingUid = previousPendingUid;
           previousPending = pending[previousPendingUid];
-          if( previousPending && !previousPending.inFlight) {
-            self.consoleLog('existing pre-flight pending record = ' + JSON.stringify(previousPending));
-            // We are trying to perform an update on an existing pending record
-            // modify the original record to have the latest value and delete the pending update
-            previousPending.post = pendingRec.post;
-            previousPending.postHash = pendingRec.postHash;
-            delete pending[pendingRec.hash];
-            // Update the pending record to have the hash of the previous record as this is what is now being
-            // maintained in the pending array & is what we want in the meta record
-            pendingRec.hash = previousPendingUid;
+          if(previousPending) {
+            if(!previousPending.inFlight){
+              self.consoleLog('existing pre-flight pending record = ' + JSON.stringify(previousPending));
+              // We are trying to perform an update on an existing pending record
+              // modify the original record to have the latest value and delete the pending update
+              previousPending.post = pendingRec.post;
+              previousPending.postHash = pendingRec.postHash;
+              delete pending[pendingRec.hash];
+              // Update the pending record to have the hash of the previous record as this is what is now being
+              // maintained in the pending array & is what we want in the meta record
+              pendingRec.hash = previousPendingUid;
+            } else {
+              //we are performing changes to a pending record which is inFlight. Until the status of this pending record is resolved,
+              //we should not submit this pending record to the cloud. Mark it as delayed.
+              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));
+              pendingRec.delayed = true;
+              pendingRec.waiting = previousPending.hash;
+            }
           }
         }
       }
@@ -9849,22 +10139,28 @@ var self = {
           previousPendingUid = dataset.meta[uid].pendingUid;
           dataset.meta[uid].previousPendingUid = previousPendingUid;
           previousPending = pending[previousPendingUid];
-          if( previousPending && !previousPending.inFlight ) {
-            self.consoleLog('existing pending record = ' + JSON.stringify(previousPending));
-            if( previousPending.action === "create" ) {
-              // We are trying to perform a delete on an existing pending create
-              // These cancel each other out so remove them both
-              delete pending[pendingRec.hash];
-              delete pending[previousPendingUid];
-            }
-            if( previousPending.action === "update" ) {
-              // We are trying to perform a delete on an existing pending update
-              // Use the pre value from the pending update for the delete and
-              // get rid of the pending update
-              pendingRec.pre = previousPending.pre;
-              pendingRec.preHash = previousPending.preHash;
-              pendingRec.inFlight = false;
-              delete pending[previousPendingUid];
+          if( previousPending ) {
+            if(!previousPending.inFlight){
+              self.consoleLog('existing pending record = ' + JSON.stringify(previousPending));
+              if( previousPending.action === "create" ) {
+                // We are trying to perform a delete on an existing pending create
+                // These cancel each other out so remove them both
+                delete pending[pendingRec.hash];
+                delete pending[previousPendingUid];
+              }
+              if( previousPending.action === "update" ) {
+                // We are trying to perform a delete on an existing pending update
+                // Use the pre value from the pending update for the delete and
+                // get rid of the pending update
+                pendingRec.pre = previousPending.pre;
+                pendingRec.preHash = previousPending.preHash;
+                pendingRec.inFlight = false;
+                delete pending[previousPendingUid];
+              }
+            } else {
+              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));
+              pendingRec.delayed = true;
+              pendingRec.waiting = previousPending.hash;
             }
           }
         }
@@ -10126,6 +10422,30 @@ var self = {
     }
   },
 
+  updateDelayedFromNewData: function(dataset_id, dataset, newData){
+    var pending = dataset.pending;
+    var pendingHash;
+    var pendingRec;
+    if(pending){
+      for( pendingHash in pending ){
+        if( pending.hasOwnProperty(pendingHash) ){
+          pendingRec = pending[pendingHash];
+          if( pendingRec.delayed && pendingRec.waiting ){
+            self.consoleLog('updateDelayedFromNewData - Found delayed pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash + ' :: waiting=' + pendingRec.waiting);
+            if( newData && newData.updates && newData.updates.hashes ){
+              var waitingRec = newData.updates.hashes[pendingRec.waiting];
+              if(waitingRec){
+                self.consoleLog('updateDelayedFromNewData - Waiting pending record is resolved rec=' + JSON.stringify(waitingRec));
+                pendingRec.delayed = false;
+                pendingRec.waiting = undefined;
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
 
   markInFlightAsCrashed : function(dataset) {
     var pending = dataset.pending;
@@ -10152,7 +10472,7 @@ var self = {
         if( pending.hasOwnProperty(pendingHash) ) {
           pendingRec = pending[pendingHash];
 
-          if( ! pendingRec.inFlight ) {
+          if( ! pendingRec.inFlight && ! pendingRec.delayed ) {
             var crashedRef = crashedRecords[pendingRec.uid];
             if( crashedRef ) {
               pendingRec.crashed = true;
@@ -10201,7 +10521,7 @@ module.exports = {
   doSync: self.doSync,
   forceSync: self.forceSync
 };
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":19,"JSON":3}],45:[function(require,module,exports){
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":20,"JSON":3}],48:[function(require,module,exports){
 module.exports = {
   createUUID : function () {
     //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
@@ -10218,13 +10538,14 @@ module.exports = {
   }
 };
 
-},{}],46:[function(require,module,exports){
+},{}],49:[function(require,module,exports){
 var initializer = require("./initializer");
 var events = require("./events");
 var CloudHost = require("./hosts");
 var constants = require("./constants");
+var logger = require("./logger");
 
-var init_attempt = 0;
+
 //the cloud configurations
 var cloud_host;
 
@@ -10232,51 +10553,25 @@ var is_initialising = false;
 var is_cloud_ready = false;
 
 
-var tryInitialise = function(retry, cb, props){
-  init_attempt++;
-  initializer.init(function(error, initRes){
-
-    if(error){
-      if(retry && init_attempt <= retry){
-        tryInitialise(retry, cb);
-      } else {
-        return cb(error);
-      }
-    } else {
-      cloud_host = new CloudHost(initRes.cloud);
-      return cb(null, cloud_host);
-    }
-  }, props);
-}
-
-var ready = function(cb, retry, app_props){
-  var props = app_props;
-  var tries = retry;
-  if(typeof retry === "object"){
-    props = retry;
-    tries = 0;
-  }
+var ready = function(cb){
   if(is_cloud_ready){
     return cb(null, {host: getCloudHostUrl()});
   } else {
-    events.once('cloudready', function(host){
-      return cb(null, host);
-    });
-    events.once('error', function(error){
-      return cb(error);
+    events.once(constants.INIT_EVENT, function(err, host){
+      return cb(err, host);
     });
     if(!is_initialising){
       is_initialising = true;
-      init_attempt = 0;
-      tryInitialise(tries, function(err, data){
+      initializer.init(function(err, initRes){
         is_initialising = false;
         if(err){
-          return events.emit("error", err);
+          return events.emit(constants.INIT_EVENT, err);
         } else {
           is_cloud_ready = true;
-          return events.emit("cloudready", {host: getCloudHostUrl()});
+          cloud_host = new CloudHost(initRes.cloud);
+          return events.emit(constants.INIT_EVENT, null, {host: getCloudHostUrl()});
         }
-      }, props);
+      });
     }
   }
 }
@@ -10303,17 +10598,20 @@ var reset = function(){
   is_cloud_ready = false;
   is_initialising = false;
   cloud_host = undefined;
+  ready(function(){
+    
+  });
 }
 
 ready(function(error, host){
   if(error){
     if(error.message !== "app_config_missing"){
-      console.error("Failed to initialise fh.");
+      logger.error("Failed to initialise fh.");
     } else {
-      console.log("No fh config file");
+      logger.info("No fh config file");
     }
   } else {
-    console.log("fh cloud is ready");
+    logger.info("fh cloud is ready");
   }
 });
 
@@ -10324,4 +10622,4 @@ module.exports = {
   getCloudHostUrl: getCloudHostUrl,
   reset: reset
 }
-},{"./appProps":24,"./constants":26,"./events":29,"./hosts":33,"./initializer":34}]},{},["il4jYc"])
+},{"./appProps":26,"./constants":28,"./events":31,"./hosts":35,"./initializer":36,"./logger":39}]},{},["il4jYc"])

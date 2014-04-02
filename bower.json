@@ -6,7 +6,7 @@
     "npm@feedhenry.com"
   ],
   "description": "FeedHenry JS SDK",
-  "main": "dist/feedhenry-latest.js",
+  "main": "dist/feedhenry.js",
   "keywords": [
     "feedhenry",
     "mobile",

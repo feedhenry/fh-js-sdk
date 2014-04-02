@@ -6680,8 +6680,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/Users/weili/work/apps/fh-sync/client/default/js/feedhenry/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/weili/work/apps/fh-sync/client/default/js/feedhenry/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -7156,7 +7156,206 @@ process.chdir = function (dir) {
 module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+},{"./support/isBuffer":12,"/Users/weili/work/apps/fh-sync/client/default/js/feedhenry/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+/*
+ * loglevel - https://github.com/pimterry/loglevel
+ *
+ * Copyright (c) 2013 Tim Perry
+ * Licensed under the MIT license.
+ */
+
+;(function (undefined) {
+    var undefinedType = "undefined";
+
+    (function (name, definition) {
+        if (typeof module !== 'undefined') {
+            module.exports = definition();
+        } else if (typeof define === 'function' && typeof define.amd === 'object') {
+            define(definition);
+        } else {
+            this[name] = definition();
+        }
+    }('log', function () {
+        var self = {};
+        var noop = function() {};
+
+        function realMethod(methodName) {
+            if (typeof console === undefinedType) {
+                return noop;
+            } else if (console[methodName] === undefined) {
+                if (console.log !== undefined) {
+                    return boundToConsole(console, 'log');
+                } else {
+                    return noop;
+                }
+            } else {
+                return boundToConsole(console, methodName);
+            }
+        }
+
+        function boundToConsole(console, methodName) {
+            var method = console[methodName];
+            if (method.bind === undefined) {
+                if (Function.prototype.bind === undefined) {
+                    return functionBindingWrapper(method, console);
+                } else {
+                    try {
+                        return Function.prototype.bind.call(console[methodName], console);
+                    } catch (e) {
+                        // In IE8 + Modernizr, the bind shim will reject the above, so we fall back to wrapping
+                        return functionBindingWrapper(method, console);
+                    }
+                }
+            } else {
+                return console[methodName].bind(console);
+            }
+        }
+
+        function functionBindingWrapper(f, context) {
+            return function() {
+                Function.prototype.apply.apply(f, [context, arguments]);
+            };
+        }
+
+        var logMethods = [
+            "trace",
+            "debug",
+            "info",
+            "warn",
+            "error"
+        ];
+
+        function replaceLoggingMethods(methodFactory) {
+            for (var ii = 0; ii < logMethods.length; ii++) {
+                self[logMethods[ii]] = methodFactory(logMethods[ii]);
+            }
+        }
+
+        function cookiesAvailable() {
+            return (typeof window !== undefinedType &&
+                    window.document !== undefined &&
+                    window.document.cookie !== undefined);
+        }
+
+        function localStorageAvailable() {
+            try {
+                return (typeof window !== undefinedType &&
+                        window.localStorage !== undefined);
+            } catch (e) {
+                return false;
+            }
+        }
+
+        function persistLevelIfPossible(levelNum) {
+            var localStorageFail = false,
+                levelName;
+
+            for (var key in self.levels) {
+                if (self.levels.hasOwnProperty(key) && self.levels[key] === levelNum) {
+                    levelName = key;
+                    break;
+                }
+            }
+
+            if (localStorageAvailable()) {
+                /*
+                 * Setting localStorage can create a DOM 22 Exception if running in Private mode
+                 * in Safari, so even if it is available we need to catch any errors when trying
+                 * to write to it
+                 */
+                try {
+                    window.localStorage['loglevel'] = levelName;
+                } catch (e) {
+                    localStorageFail = true;
+                }
+            } else {
+                localStorageFail = true;
+            }
+
+            if (localStorageFail && cookiesAvailable()) {
+                window.document.cookie = "loglevel=" + levelName + ";";
+            }
+        }
+
+        var cookieRegex = /loglevel=([^;]+)/;
+
+        function loadPersistedLevel() {
+            var storedLevel;
+
+            if (localStorageAvailable()) {
+                storedLevel = window.localStorage['loglevel'];
+            }
+
+            if (storedLevel === undefined && cookiesAvailable()) {
+                var cookieMatch = cookieRegex.exec(window.document.cookie) || [];
+                storedLevel = cookieMatch[1];
+            }
+            
+            if (self.levels[storedLevel] === undefined) {
+                storedLevel = "WARN";
+            }
+
+            self.setLevel(self.levels[storedLevel]);
+        }
+
+        /*
+         *
+         * Public API
+         *
+         */
+
+        self.levels = { "TRACE": 0, "DEBUG": 1, "INFO": 2, "WARN": 3,
+            "ERROR": 4, "SILENT": 5};
+
+        self.setLevel = function (level) {
+            if (typeof level === "number" && level >= 0 && level <= self.levels.SILENT) {
+                persistLevelIfPossible(level);
+
+                if (level === self.levels.SILENT) {
+                    replaceLoggingMethods(function () {
+                        return noop;
+                    });
+                    return;
+                } else if (typeof console === undefinedType) {
+                    replaceLoggingMethods(function (methodName) {
+                        return function () {
+                            if (typeof console !== undefinedType) {
+                                self.setLevel(level);
+                                self[methodName].apply(self, arguments);
+                            }
+                        };
+                    });
+                    return "No console available for logging";
+                } else {
+                    replaceLoggingMethods(function (methodName) {
+                        if (level <= self.levels[methodName.toUpperCase()]) {
+                            return realMethod(methodName);
+                        } else {
+                            return noop;
+                        }
+                    });
+                }
+            } else if (typeof level === "string" && self.levels[level.toUpperCase()] !== undefined) {
+                self.setLevel(self.levels[level.toUpperCase()]);
+            } else {
+                throw "log.setLevel() called with invalid level: " + level;
+            }
+        };
+
+        self.enableAll = function() {
+            self.setLevel(self.levels.TRACE);
+        };
+
+        self.disableAll = function() {
+            self.setLevel(self.levels.SILENT);
+        };
+
+        loadPersistedLevel();
+        return self;
+    }));
+})();
+
+},{}],15:[function(_dereq_,module,exports){
 var toString = Object.prototype.toString
 
 module.exports = function(val){
@@ -7187,9 +7386,9 @@ module.exports = function(val){
   return typeof val
 }
 
-},{}],15:[function(_dereq_,module,exports){
+},{}],16:[function(_dereq_,module,exports){
 var constants = _dereq_("./modules/constants");
-var console = _dereq_("console");
+var logger = _dereq_("./modules/logger");
 var ajax = _dereq_("./modules/ajax");
 var events = _dereq_("./modules/events");
 var cloud = _dereq_("./modules/waitForCloud");
@@ -7199,73 +7398,44 @@ var api_sec = _dereq_("./modules/api_sec");
 var api_hash = _dereq_("./modules/api_hash");
 var api_sync = _dereq_("./modules/sync-cli");
 var api_mbaas = _dereq_("./modules/api_mbaas");
+var api_cloud = _dereq_("./modules/api_cloud");
 var fhparams = _dereq_("./modules/fhparams");
 var appProps = _dereq_("./modules/appProps");
 var device = _dereq_("./modules/device");
 
 var defaultFail = function(msg, error){
-  console.log(msg + ":" + JSON.stringify(error));
+  logger.error(msg + ":" + JSON.stringify(error));
 };
 
 var addListener = function(type, listener){
-  if(type === "cloudready"){
-    cloud.ready(function(err, host){
-      if(!err){
-        listener(host);
-      }
-    });
-  } else {
-    events.addListener(type, listener);
-  }
+  events.addListener(type, listener);
+  if(type === constants.INIT_EVENT && cloud.isReady()){
+    //for fhinit event, need to check if cloud is ready.If it is, invoke the call immediately as it will not fire again.
+    listener(null, {host: cloud.getCloudHostUrl()});
+  } 
 };
 
 var once = function(type, listener){
-  if(type === "cloudready"){
-    cloud.ready(function(err, host){
-      if(!err){
-        listener(host);
-      }
-    });
+  if(type === constants.INIT_EVENT && cloud.isReady()){
+    listener(null, {host: cloud.getCloudHostUrl()});
   } else {
     events.once(type, listener);
   }
 };
 
-//we have to continue support for init for now as for FH v2 apps, there won't be a config file created
+//Legacy shim. Init hapens based on fhconfig.json or, for v2, global var called fh_app_props which is injected as part of the index.html wrapper
 var init = function(opts, success, fail){
-  console.warn("$fh.init will be deprecated soon");
+  logger.warn("$fh.init will be deprecated soon");
   cloud.ready(function(err, host){
     if(err){
-      if(err.message === "app_config_missing"){
-        //cloud.ready will be invoked when js sdk is loaded, it may cause init call to be added to the "cloudready" event listeners stack when it's called. If that is the case and getting an error
-        //about app config is missing, we just try again
-        init(opts, success, fail);
-      } else {
-        if(typeof fail === "function"){
-          return fail(err);
-        }
+      if(typeof fail === "function"){
+        return fail(err);
       }
     } else {
       if(typeof success === "function"){
         success(host.host);
       }
     }
-  }, opts);
-};
-
-var cloudFunc = function(act_name, params, cb){
-  var funcName = act_name;
-  var data = params;
-  var callback = cb;
-  if(typeof params === "function"){
-    data = {};
-    callback = params;
-  }
-  var reqParams = {act: funcName, req: data};
-  api_act(reqParams, function(res){
-    return callback(null, res);
-  }, function(msg, error){
-    return callback(error);
   });
 };
 
@@ -7273,7 +7443,7 @@ var fh = window.$fh || {};
 fh.init = init;
 fh.act = api_act;
 fh.auth = api_auth;
-fh.cloud = cloudFunc;
+fh.cloud = api_cloud;
 fh.sec = api_sec;
 fh.hash = api_hash;
 fh.sync = api_sync;
@@ -7299,9 +7469,14 @@ for(var i=0;i<methods.length;i++){
 }
 
 //keep backward compatibility
-fh.on("cloudready", function(host){
-  fh.cloud_props = {hosts: {url: host.host}};
-  fh.app_props = appProps.getAppProps();
+fh.on(constants.INIT_EVENT, function(err, host){
+  if(err){
+    fh.cloud_props = {};
+    fh.app_props = {};
+  } else {
+    fh.cloud_props = {hosts: {url: host.host}};
+    fh.app_props = appProps.getAppProps();
+  }
 });
 
 //for test
@@ -7316,7 +7491,7 @@ module.exports = fh;
 
 
 
-},{"./modules/ajax":17,"./modules/api_act":18,"./modules/api_auth":19,"./modules/api_hash":20,"./modules/api_mbaas":21,"./modules/api_sec":22,"./modules/appProps":23,"./modules/constants":25,"./modules/device":27,"./modules/events":28,"./modules/fhparams":29,"./modules/sync-cli":43,"./modules/waitForCloud":45,"console":8}],16:[function(_dereq_,module,exports){
+},{"./modules/ajax":18,"./modules/api_act":19,"./modules/api_auth":20,"./modules/api_cloud":21,"./modules/api_hash":22,"./modules/api_mbaas":23,"./modules/api_sec":24,"./modules/appProps":25,"./modules/constants":27,"./modules/device":29,"./modules/events":30,"./modules/fhparams":31,"./modules/logger":38,"./modules/sync-cli":46,"./modules/waitForCloud":48}],17:[function(_dereq_,module,exports){
 var XDomainRequestWrapper = function(xdr){
   this.xdr = xdr;
   this.isWrapper = true;
@@ -7381,7 +7556,7 @@ XDomainRequestWrapper.prototype.getResponseHeader = function(n){
 
 module.exports = XDomainRequestWrapper;
 
-},{}],17:[function(_dereq_,module,exports){
+},{}],18:[function(_dereq_,module,exports){
 //a shameless copy from https://github.com/ForbesLindesay/ajax/blob/master/index.js. 
 //it has the same methods and config options as jQuery/zeptojs but very light weight. see http://api.jquery.com/jQuery.ajax/
 //a few small changes are made for supporting IE 8 and other features:
@@ -7395,6 +7570,7 @@ module.exports = XDomainRequestWrapper;
 var eventsHandler = _dereq_("./events");
 var XDomainRequestWrapper = _dereq_("./XDomainRequestWrapper");
 var consts = _dereq_("./constants");
+var logger = _dereq_("./logger");
 
 var type
 try {
@@ -7414,7 +7590,7 @@ var jsonpID = 0,
   xmlTypeRE = /^(?:text|application)\/xml/i,
   jsonType = 'application/json',
   htmlType = 'text/html',
-  blankRE = /^\s*$/
+  blankRE = /^\s*$/;
 
 var ajax = module.exports = function (options) {
   var settings = extend({}, options || {})
@@ -7461,6 +7637,7 @@ var ajax = module.exports = function (options) {
       if(settings.tryJSONP){
         //check if the request has fail. In some cases, we may want to try jsonp as well. Again, FH only...
         if(xhr.status === 0 && settings.crossDomain && !xhr.isTimeout &&  protocol != 'file:'){
+          logger.debug("retry ajax call with jsonp")
           settings.type = "GET";
           settings.dataType = "jsonp";
           settings.data = "_jsonpdata=" + settings.data;
@@ -7470,6 +7647,7 @@ var ajax = module.exports = function (options) {
       if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304 || (xhr.status == 0 && protocol == 'file:')) {
         dataType = dataType || mimeToDataType(xhr.getResponseHeader('content-type'))
         result = xhr.responseText
+        logger.debug("ajax response :: status = " + xhr.status + " :: body = " + result)
 
         try {
           if (dataType == 'script')(1, eval)(result)
@@ -7479,7 +7657,10 @@ var ajax = module.exports = function (options) {
           error = e
         }
 
-        if (error) ajaxError(error, 'parsererror', xhr, settings)
+        if (error) {
+          logger.debug("ajax error", error);
+          ajaxError(error, 'parsererror', xhr, settings)
+        }
         else ajaxSuccess(result, xhr, settings)
       } else {
         ajaxError(null, 'error', xhr, settings)
@@ -7488,16 +7669,19 @@ var ajax = module.exports = function (options) {
   }
 
   var async = 'async' in settings ? settings.async : true
+  logger.debug("ajax call settings", settings)
   xhr.open(settings.type, settings.url, async)
 
   for (name in settings.headers) xhr.setRequestHeader(name, settings.headers[name])
 
   if (ajaxBeforeSend(xhr, settings) === false) {
+    logger.debug("ajax call is aborted due to ajaxBeforeSend")
     xhr.abort()
     return false
   }
 
   if (settings.timeout > 0) abortTimeout = setTimeout(function () {
+    logger.debug("ajax call timed out")
     xhr.onreadystatechange = empty
     xhr.abort()
     xhr.isTimeout = true
@@ -7594,8 +7778,6 @@ ajax.JSONP = function (options) {
     delete window[callbackName]
     ajaxSuccess(data, xhr, options)
   }
-  console.log("trying jsonp.data");
-  console.log(options);
 
   serializeData(options)
   script.src = options.url.replace(/=\?/, '=' + callbackName)
@@ -7750,8 +7932,8 @@ function extend(target) {
   })
   return target
 }
-},{"./XDomainRequestWrapper":16,"./constants":25,"./events":28,"type-of":14}],18:[function(_dereq_,module,exports){
-var console =_dereq_("console");
+},{"./XDomainRequestWrapper":17,"./constants":27,"./events":30,"./logger":38,"type-of":15}],19:[function(_dereq_,module,exports){
+var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
 var ajax = _dereq_("./ajax");
@@ -7773,16 +7955,16 @@ function doActCall(opts, success, fail){
     "timeout": opts.timeout,
     "success": success,
     "error": function(req, statusText, error){
-      return handleError(fail, req, statusText);
+      return handleError(fail, req, statusText, error);
     }
   })
 }
 
 module.exports = function(opts, success, fail){
-  console.log("act is called");
+  logger.debug("act is called");
   if(!fail){
     fail = function(msg, error){
-      console.log(msg + ":" + JSON.stringify(error));
+      logger.debug(msg + ":" + JSON.stringify(error));
     };
   }
 
@@ -7791,7 +7973,7 @@ module.exports = function(opts, success, fail){
   }
 
   cloud.ready(function(err, cloudHost){
-    console.log("Calling fhact now");
+    logger.debug("Calling fhact now");
     if(err){
       return fail(err.message, err);
     } else {
@@ -7799,8 +7981,8 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":17,"./fhparams":29,"./handleError":31,"./waitForCloud":45,"JSON":3,"console":8}],19:[function(_dereq_,module,exports){
-var console =_dereq_("console");
+},{"./ajax":18,"./fhparams":31,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],20:[function(_dereq_,module,exports){
+var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
 var ajax = _dereq_("./ajax");
@@ -7814,7 +7996,7 @@ var appProps = _dereq_("./appProps");
 module.exports = function(opts, success, fail){
   if(!fail){
     fail = function(msg, error){
-      console.log(msg + ":" + JSON.stringify(error));
+      logger.debug(msg + ":" + JSON.stringify(error));
     };
   }
   if (!opts.policyId) {
@@ -7859,13 +8041,58 @@ module.exports = function(opts, success, fail){
           checkAuth.handleAuthResponse(endurl, res, success, fail);
         },
         error: function(req, statusText, error) {
-          handleError(fail, req, statusText);
+          handleError(fail, req, statusText, error);
         }
       });
     }
   });
 }
-},{"./ajax":17,"./appProps":23,"./checkAuth":24,"./constants":25,"./device":27,"./fhparams":29,"./handleError":31,"./waitForCloud":45,"JSON":3,"console":8}],20:[function(_dereq_,module,exports){
+},{"./ajax":18,"./appProps":25,"./checkAuth":26,"./constants":27,"./device":29,"./fhparams":31,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],21:[function(_dereq_,module,exports){
+var logger =_dereq_("./logger");
+var cloud = _dereq_("./waitForCloud");
+var fhparams = _dereq_("./fhparams");
+var ajax = _dereq_("./ajax");
+var JSON = _dereq_("JSON");
+var handleError = _dereq_("./handleError");
+
+function doCloudCall(opts, success, fail){
+  var cloud_host = cloud.getCloudHost();
+  var url = cloud_host.getCloudUrl(opts.path);
+  var params = opts.params || {};
+  params = fhparams.addFHParams(params);
+  return ajax({
+    "url": url,
+    "tryJSONP": true,
+    "type": opts.method || "POST",
+    "dataType": opts.dataType || "json",
+    "data": JSON.stringify(params),
+    "contentType": opts.contentType || "application/json",
+    "timeout": opts.timeout,
+    "success": success,
+    "error": function(req, statusText, error){
+      return handleError(fail, req, statusText, error);
+    }
+  })
+}
+
+module.exports = function(opts, success, fail){
+  logger.debug("cloud is called");
+  if(!fail){
+    fail = function(msg, error){
+      logger.debug(msg + ":" + JSON.stringify(error));
+    };
+  }
+
+  cloud.ready(function(err, cloudHost){
+    logger.debug("Calling fhact now");
+    if(err){
+      return fail(err.message, err);
+    } else {
+      doCloudCall(opts, success, fail);
+    }
+  })
+}
+},{"./ajax":18,"./fhparams":31,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],22:[function(_dereq_,module,exports){
 var hashImpl = _dereq_("./security/hash");
 
 module.exports = function(p, s, f){
@@ -7877,8 +8104,8 @@ module.exports = function(p, s, f){
   params.params = p;
   hashImpl(params, s, f);
 };
-},{"./security/hash":41}],21:[function(_dereq_,module,exports){
-var console =_dereq_("console");
+},{"./security/hash":44}],23:[function(_dereq_,module,exports){
+var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
 var ajax = _dereq_("./ajax");
@@ -7888,10 +8115,10 @@ var consts = _dereq_("./constants");
 
 
 module.exports = function(opts, success, fail){
-  console.log("mbaas is called.");
+  logger.debug("mbaas is called.");
   if(!fail){
     fail = function(msg, error){
-      console.log(msg + ":" + JSON.stringify(error));
+      console.debug(msg + ":" + JSON.stringify(error));
     };
   }
 
@@ -7899,7 +8126,7 @@ module.exports = function(opts, success, fail){
   var params = opts.params;
 
   cloud.ready(function(err, cloudHost){
-    console.log("Calling mbaas now");
+    logger.debug("Calling mbaas now");
     if(err){
       return fail(err.message, err);
     } else {
@@ -7915,12 +8142,15 @@ module.exports = function(opts, success, fail){
         "contentType": "application/json",
         "timeout": opts.timeout || consts.fh_timeout,
         "success": success,
-        "error": fail
+        "error": function(req, statusText, error){
+          return handleError(fail, req, statusText, error);
+        }
       });
     }
   });
-}
-},{"./ajax":17,"./constants":25,"./fhparams":29,"./handleError":31,"./waitForCloud":45,"JSON":3,"console":8}],22:[function(_dereq_,module,exports){
+} 
+
+},{"./ajax":18,"./constants":27,"./fhparams":31,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],24:[function(_dereq_,module,exports){
 var keygen = _dereq_("./security/aes-keygen");
 var aes = _dereq_("./security/aes-node");
 var rsa = _dereq_("./security/rsa-node");
@@ -7964,10 +8194,10 @@ module.exports = function(p, s, f){
     }
   }
 }
-},{"./security/aes-keygen":39,"./security/aes-node":40,"./security/hash":41,"./security/rsa-node":42}],23:[function(_dereq_,module,exports){
+},{"./security/aes-keygen":42,"./security/aes-node":43,"./security/hash":44,"./security/rsa-node":45}],25:[function(_dereq_,module,exports){
 var consts = _dereq_("./constants");
 var ajax = _dereq_("./ajax");
-var console = _dereq_("console");
+var logger = _dereq_("./logger");
 var qs = _dereq_("./queryMap");
 
 var app_props = null;
@@ -7975,35 +8205,41 @@ var app_props = null;
 var load = function(cb) {
   var doc_url = document.location.href;
   var url_params = qs(doc_url);
-  var local = (typeof url_params.fhconfig !== 'undefined');
-  var config_url = url_params.fhconfig || consts.config_js;
+  var local = (typeof url_params.url !== 'undefined');
 
+  // For local environments, no init needed
+  if (local) {
+    app_props = {};
+    app_props.local = true;
+    app_props.host = url_params.url;
+    app_props.appid = "000000000000000000000000";
+    app_props.appkey = "0000000000000000000000000000000000000000";
+    app_props.projectid = "000000000000000000000000";
+    app_props.connectiontag = "0.0.1";
+    return cb(null, app_props);
+  }
+
+  var config_url = url_params.fhconfig || consts.config_js;
   ajax({
     url: config_url,
     dataType: "json",
     success: function(data) {
-      console.log("fhconfig = " + JSON.stringify(data));
+      logger.debug("fhconfig = " + JSON.stringify(data));
       //when load the config file on device, because file:// protocol is used, it will never call fail call back. The success callback will be called but the data value will be null.
       if (null === data) {
         return cb(new Error("app_config_missing"));
       } else {
         app_props = data;
 
-        // For local environments, no init needed
-        if (local) {
-          // Set defaults for keys other than host
-          app_props.local = true;
-          app_props.appid = "000000000000000000000000";
-          app_props.appkey = "0000000000000000000000000000000000000000";
-          app_props.projectid = "000000000000000000000000";
-          app_props.connectiontag = "0.0.1";
-        }
-
         cb(null, app_props);
       }
     },
     error: function(req, statusText, error) {
-      console.log(consts.config_js + " Not Found");
+      //fh v2 only
+      if(window.fh_app_props){
+        return cb(null, window.fh_app_props);
+      }
+      logger.error(consts.config_js + " Not Found");
       cb(new Error("app_config_missing"));
     }
   });
@@ -8022,8 +8258,8 @@ module.exports = {
   getAppProps: getAppProps,
   setAppProps: setAppProps
 };
-},{"./ajax":17,"./constants":25,"./queryMap":37,"console":8}],24:[function(_dereq_,module,exports){
-var console = _dereq_("console");
+},{"./ajax":18,"./constants":27,"./logger":38,"./queryMap":40}],26:[function(_dereq_,module,exports){
+var logger = _dereq_("./logger");
 var queryMap = _dereq_("./queryMap");
 var JSON = _dereq_("JSON");
 var fhparams = _dereq_("./fhparams");
@@ -8097,7 +8333,7 @@ var handleAuthResponse = function(endurl, res, success, fail){
               locationChange(ev.url);
             });
           } catch(e){
-            console.log("InAppBrowser plugin is not intalled.");
+            logger.info("InAppBrowser plugin is not intalled.");
             onComplete(res);
           }
         }
@@ -8130,15 +8366,15 @@ module.exports = {
   "handleAuthResponse": handleAuthResponse
 };
 
-},{"./fhparams":29,"./queryMap":37,"JSON":3,"console":8}],25:[function(_dereq_,module,exports){
+},{"./fhparams":31,"./logger":38,"./queryMap":40,"JSON":3}],27:[function(_dereq_,module,exports){
 module.exports = {
   "fh_timeout": 20000,
   "boxprefix": "/box/srv/1.1/",
   "sdk_version": "2.0.1-alpha",
-  "config_js": "fhconfig.json"
+  "config_js": "fhconfig.json",
+  "INIT_EVENT": "fhinit"
 };
-},{}],26:[function(_dereq_,module,exports){
-var console = _dereq_("console");
+},{}],28:[function(_dereq_,module,exports){
 module.exports = {
   readCookieValue  : function (cookie_name) {
     var name_str = cookie_name + "=";
@@ -8163,10 +8399,10 @@ module.exports = {
   }
 };
 
-},{"console":8}],27:[function(_dereq_,module,exports){
+},{}],29:[function(_dereq_,module,exports){
 var cookies = _dereq_("./cookies");
 var uuidModule = _dereq_("./uuid");
-var console = _dereq_("console");
+var logger = _dereq_("./logger");
 
 module.exports = {
   //try to get the unique device identifier
@@ -8228,21 +8464,24 @@ module.exports = {
       destination = "web";
     }
 
+    logger.debug("destination = " + destination);
+
     return destination;
   }
 }
 
-},{"./cookies":26,"./platformsMap":36,"./uuid":44,"console":8}],28:[function(_dereq_,module,exports){
+},{"./cookies":28,"./logger":38,"./platformsMap":39,"./uuid":47}],30:[function(_dereq_,module,exports){
 var EventEmitter = _dereq_('events').EventEmitter;
 
 var emitter = new EventEmitter();
 emitter.setMaxListeners(0);
 
 module.exports = emitter;
-},{"events":9}],29:[function(_dereq_,module,exports){
+},{"events":9}],31:[function(_dereq_,module,exports){
 var device = _dereq_("./device");
 var sdkversion = _dereq_("./sdkversion");
 var appProps = _dereq_("./appProps");
+var logger = _dereq_("./logger");
 
 var defaultParams = null;
 var authSessionToken = null;
@@ -8288,6 +8527,7 @@ var buildFHParams = function(){
   }
   
   defaultParams = fhparams;
+  logger.debug("fhparams = ", defaultParams);
   return fhparams;
 }
 
@@ -8307,7 +8547,7 @@ module.exports = {
   "setAuthSessionToken":setAuthSessionToken
 }
 
-},{"./appProps":23,"./device":27,"./sdkversion":38}],30:[function(_dereq_,module,exports){
+},{"./appProps":25,"./device":29,"./logger":38,"./sdkversion":41}],32:[function(_dereq_,module,exports){
 module.exports = function(){
   var path = null;
   var scripts = document.getElementsByTagName('script');
@@ -8328,13 +8568,15 @@ module.exports = function(){
   return path;
 };
 
-},{}],31:[function(_dereq_,module,exports){
+},{}],33:[function(_dereq_,module,exports){
 var JSON = _dereq_("JSON");
 
-module.exports = function(fail, req, resStatus){
+module.exports = function(fail, req, resStatus, error){
   var errraw;
+  var statusCode = 0;
   if(req){
     try{
+      statusCode = req.status;
       var res = JSON.parse(req.responseText);
       errraw = res.error || res.msg;
       if (errraw instanceof Array) {
@@ -8345,15 +8587,15 @@ module.exports = function(fail, req, resStatus){
     }
   }
   if(fail){
-    fail('error_ajaxfail', {
-      status: req.status,
+    fail(errraw, {
+      status: statusCode,
       message: resStatus,
-      error: errraw
+      error: error
     });
   }
 };
 
-},{"JSON":3}],32:[function(_dereq_,module,exports){
+},{"JSON":3}],34:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
 var appProps = _dereq_("./appProps");
 
@@ -8415,8 +8657,18 @@ CloudHost.prototype.getMBAASUrl = function(service){
   return this.cloud_host + "/mbaas/" + service;
 }
 
+CloudHost.prototype.getCloudUrl = function(path){
+  var app_props = appProps.getAppProps() || {};
+  if(typeof this.cloud_host === "undefined"){
+    this.getHost(app_props.mode);
+  }
+  return this.cloud_host + "/" + path;
+}
+
+
+
 module.exports = CloudHost;
-},{"./appProps":23,"./constants":25}],33:[function(_dereq_,module,exports){
+},{"./appProps":25,"./constants":27}],35:[function(_dereq_,module,exports){
 var findFHPath = _dereq_("./findFHPath");
 var loadScript = _dereq_("./loadScript");
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
@@ -8425,25 +8677,22 @@ var consts = _dereq_("./constants");
 var fhparams = _dereq_("./fhparams");
 var ajax = _dereq_("./ajax");
 var handleError = _dereq_("./handleError");
-var console = _dereq_("console");
+var logger = _dereq_("./logger");
 var JSON = _dereq_("JSON");
 var hashFunc = _dereq_("./security/hash");
 var appProps = _dereq_("./appProps");
 
-var init = function(cb, app_props) {
-  if (arguments.length === 2 && typeof app_props === "object" && app_props.mode) {
-    appProps.setAppProps(app_props);
-    return loadCloudProps(app_props, cb);
-  } else {
-    appProps.load(function(err, data) {
-      if (err) return cb(err);
-      return loadCloudProps(data, cb);
-    });
-  }
+var init = function(cb) {
+  appProps.load(function(err, data) {
+    if (err) return cb(err);
+    return loadCloudProps(data, cb);
+  });
 }
 
 var loadCloudProps = function(app_props, callback) {
-
+  if(app_props.loglevel){
+    logger.setLevel(app_props.loglevel);
+  }
   // If local - shortcircuit the init - just return the host
   if (app_props.local) {
     var res = {
@@ -8547,7 +8796,7 @@ var loadCloudProps = function(app_props, callback) {
                 message: msg
               });
             }
-          }, req, statusText);
+          }, req, statusText, error);
         }
       }
     });
@@ -8558,7 +8807,7 @@ module.exports = {
   "init": init,
   "loadCloudProps": loadCloudProps
 }
-},{"../../libs/generated/lawnchair":2,"./ajax":17,"./appProps":23,"./constants":25,"./fhparams":29,"./findFHPath":30,"./handleError":31,"./lawnchair-ext":34,"./loadScript":35,"./security/hash":41,"JSON":3,"console":8}],34:[function(_dereq_,module,exports){
+},{"../../libs/generated/lawnchair":2,"./ajax":18,"./appProps":25,"./constants":27,"./fhparams":31,"./findFHPath":32,"./handleError":33,"./lawnchair-ext":36,"./loadScript":37,"./logger":38,"./security/hash":44,"JSON":3}],36:[function(_dereq_,module,exports){
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
 
 var fileStorageAdapter = function (app_props, hashFunc) {
@@ -8746,7 +8995,7 @@ var addAdapter = function(app_props, hashFunc){
 module.exports = {
   addAdapter: addAdapter
 }
-},{"../../libs/generated/lawnchair":2}],35:[function(_dereq_,module,exports){
+},{"../../libs/generated/lawnchair":2}],37:[function(_dereq_,module,exports){
 module.exports = function (url, callback) {
   var script;
   var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
@@ -8769,7 +9018,31 @@ module.exports = function (url, callback) {
   head.insertBefore(script, head.firstChild);
 };
 
-},{}],36:[function(_dereq_,module,exports){
+},{}],38:[function(_dereq_,module,exports){
+var console = _dereq_('console');
+var log = _dereq_('loglevel');
+
+log.setLevel('info');
+
+/**
+ * APIs:
+ * see https://github.com/pimterry/loglevel.
+ * In short, you can use:
+ * log.setLevel(loglevel) - default to info
+ * log.enableAll() - enable all log messages
+ * log.disableAll() - disable all log messages
+ *
+ * log.trace(msg)
+ * log.debug(msg)
+ * log.info(msg)
+ * log.warn(msg)
+ * log.error(msg)
+ *
+ * Available levels: { "TRACE": 0, "DEBUG": 1, "INFO": 2, "WARN": 3, "ERROR": 4, "SILENT": 5}
+ * Use either string or integer value
+ */
+module.exports = log;
+},{"console":8,"loglevel":14}],39:[function(_dereq_,module,exports){
 module.exports = [
   {
     "destination" :"ipad",
@@ -8797,7 +9070,7 @@ module.exports = [
   }
 ];
 
-},{}],37:[function(_dereq_,module,exports){
+},{}],40:[function(_dereq_,module,exports){
 module.exports = function(url) {
   var qmap = {};
   var i = url.split("?");
@@ -8813,7 +9086,7 @@ module.exports = function(url) {
   }
   return qmap;
 };
-},{}],38:[function(_dereq_,module,exports){
+},{}],41:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
 
 module.exports = function() {
@@ -8826,7 +9099,7 @@ module.exports = function() {
   return type + "/" + constants.sdk_version;
 };
 
-},{"./constants":25}],39:[function(_dereq_,module,exports){
+},{"./constants":27}],42:[function(_dereq_,module,exports){
 var rsa = _dereq_("../../../libs/rsa");
 var SecureRandom = rsa.SecureRandom;
 var byte2Hex = rsa.byte2Hex;
@@ -8868,7 +9141,7 @@ var aes_keygen = function(p, s, f){
 }
 
 module.exports = aes_keygen;
-},{"../../../libs/rsa":4}],40:[function(_dereq_,module,exports){
+},{"../../../libs/rsa":4}],43:[function(_dereq_,module,exports){
 var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 var encrypt = function(p, s, f){
@@ -8909,7 +9182,7 @@ module.exports = {
   encrypt: encrypt,
   decrypt: decrypt
 }
-},{"../../../libs/generated/crypto":1}],41:[function(_dereq_,module,exports){
+},{"../../../libs/generated/crypto":1}],44:[function(_dereq_,module,exports){
 var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 
@@ -8934,7 +9207,7 @@ var hash = function(p, s, f){
 }
 
 module.exports = hash;
-},{"../../../libs/generated/crypto":1}],42:[function(_dereq_,module,exports){
+},{"../../../libs/generated/crypto":1}],45:[function(_dereq_,module,exports){
 var rsa = _dereq_("../../../libs/rsa");
 var RSAKey = rsa.RSAKey;
 
@@ -8959,7 +9232,7 @@ var encrypt = function(p, s, f){
 module.exports = {
   encrypt: encrypt
 }
-},{"../../../libs/rsa":4}],43:[function(_dereq_,module,exports){
+},{"../../../libs/rsa":4}],46:[function(_dereq_,module,exports){
 var JSON = _dereq_("JSON");
 var actFunc = _dereq_("./api_act");
 var CryptoJS = _dereq_("../../libs/generated/crypto");
@@ -9172,7 +9445,7 @@ var self = {
       }
       cb(res);
     }, function(err, datatset_id) {
-        self.ConsoleLog(err);
+        self.consoleLog(err);
     });
   },
 
@@ -9498,7 +9771,8 @@ var self = {
           for(var i in pending ) {
             // Mark the pending records we are about to submit as inflight and add them to the array for submission
             // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
-            if( !pending[i].inFlight && !pending[i].crashed ) {
+            // Don't add delayed records
+            if( !pending[i].inFlight && !pending[i].crashed && !pending[i].delayed) {
               pending[i].inFlight = true;
               pending[i].inFlightDate = new Date().getTime();
               pendingArray.push(pending[i]);
@@ -9535,11 +9809,16 @@ var self = {
               // Check to see if any previously crashed inflight records can now be resolved
               self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);
 
+              //Check to see if any delayed pending records can now be set to ready
+              self.updateDelayedFromNewData(dataset_id, dataSet, res);
+
               // Update the new dataset with details of any inflight updates which we have not received a response on
               self.updateNewDataFromInFlight(dataset_id, dataSet, res);
 
               // Update the new dataset with details of any pending updates
               self.updateNewDataFromPending(dataset_id, dataSet, res);
+
+
 
               if (res.records) {
                 // Full Dataset returned
@@ -9774,7 +10053,10 @@ var self = {
 
         Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       this.get( "dataset_" + dataset_id, function (data){
          if (data && data.val !== null) {
-            var dataset = JSON.parse(data.val);
+            var dataset = data.val;
+            if(typeof dataset === "string"){
+              dataset = JSON.parse(dataset);
+            }
             // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
             // the user wants sync
             dataset.initialised = false;
@@ -9824,16 +10106,24 @@ var self = {
           previousPendingUid = dataset.meta[uid].pendingUid;
           dataset.meta[uid].previousPendingUid = previousPendingUid;
           previousPending = pending[previousPendingUid];
-          if( previousPending && !previousPending.inFlight) {
-            self.consoleLog('existing pre-flight pending record = ' + JSON.stringify(previousPending));
-            // We are trying to perform an update on an existing pending record
-            // modify the original record to have the latest value and delete the pending update
-            previousPending.post = pendingRec.post;
-            previousPending.postHash = pendingRec.postHash;
-            delete pending[pendingRec.hash];
-            // Update the pending record to have the hash of the previous record as this is what is now being
-            // maintained in the pending array & is what we want in the meta record
-            pendingRec.hash = previousPendingUid;
+          if(previousPending) {
+            if(!previousPending.inFlight){
+              self.consoleLog('existing pre-flight pending record = ' + JSON.stringify(previousPending));
+              // We are trying to perform an update on an existing pending record
+              // modify the original record to have the latest value and delete the pending update
+              previousPending.post = pendingRec.post;
+              previousPending.postHash = pendingRec.postHash;
+              delete pending[pendingRec.hash];
+              // Update the pending record to have the hash of the previous record as this is what is now being
+              // maintained in the pending array & is what we want in the meta record
+              pendingRec.hash = previousPendingUid;
+            } else {
+              //we are performing changes to a pending record which is inFlight. Until the status of this pending record is resolved,
+              //we should not submit this pending record to the cloud. Mark it as delayed.
+              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));
+              pendingRec.delayed = true;
+              pendingRec.waiting = previousPending.hash;
+            }
           }
         }
       }
@@ -9847,22 +10137,28 @@ var self = {
           previousPendingUid = dataset.meta[uid].pendingUid;
           dataset.meta[uid].previousPendingUid = previousPendingUid;
           previousPending = pending[previousPendingUid];
-          if( previousPending && !previousPending.inFlight ) {
-            self.consoleLog('existing pending record = ' + JSON.stringify(previousPending));
-            if( previousPending.action === "create" ) {
-              // We are trying to perform a delete on an existing pending create
-              // These cancel each other out so remove them both
-              delete pending[pendingRec.hash];
-              delete pending[previousPendingUid];
-            }
-            if( previousPending.action === "update" ) {
-              // We are trying to perform a delete on an existing pending update
-              // Use the pre value from the pending update for the delete and
-              // get rid of the pending update
-              pendingRec.pre = previousPending.pre;
-              pendingRec.preHash = previousPending.preHash;
-              pendingRec.inFlight = false;
-              delete pending[previousPendingUid];
+          if( previousPending ) {
+            if(!previousPending.inFlight){
+              self.consoleLog('existing pending record = ' + JSON.stringify(previousPending));
+              if( previousPending.action === "create" ) {
+                // We are trying to perform a delete on an existing pending create
+                // These cancel each other out so remove them both
+                delete pending[pendingRec.hash];
+                delete pending[previousPendingUid];
+              }
+              if( previousPending.action === "update" ) {
+                // We are trying to perform a delete on an existing pending update
+                // Use the pre value from the pending update for the delete and
+                // get rid of the pending update
+                pendingRec.pre = previousPending.pre;
+                pendingRec.preHash = previousPending.preHash;
+                pendingRec.inFlight = false;
+                delete pending[previousPendingUid];
+              }
+            } else {
+              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));
+              pendingRec.delayed = true;
+              pendingRec.waiting = previousPending.hash;
             }
           }
         }
@@ -10124,6 +10420,30 @@ var self = {
     }
   },
 
+  updateDelayedFromNewData: function(dataset_id, dataset, newData){
+    var pending = dataset.pending;
+    var pendingHash;
+    var pendingRec;
+    if(pending){
+      for( pendingHash in pending ){
+        if( pending.hasOwnProperty(pendingHash) ){
+          pendingRec = pending[pendingHash];
+          if( pendingRec.delayed && pendingRec.waiting ){
+            self.consoleLog('updateDelayedFromNewData - Found delayed pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash + ' :: waiting=' + pendingRec.waiting);
+            if( newData && newData.updates && newData.updates.hashes ){
+              var waitingRec = newData.updates.hashes[pendingRec.waiting];
+              if(waitingRec){
+                self.consoleLog('updateDelayedFromNewData - Waiting pending record is resolved rec=' + JSON.stringify(waitingRec));
+                pendingRec.delayed = false;
+                pendingRec.waiting = undefined;
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
 
   markInFlightAsCrashed : function(dataset) {
     var pending = dataset.pending;
@@ -10150,7 +10470,7 @@ var self = {
         if( pending.hasOwnProperty(pendingHash) ) {
           pendingRec = pending[pendingHash];
 
-          if( ! pendingRec.inFlight ) {
+          if( ! pendingRec.inFlight && ! pendingRec.delayed ) {
             var crashedRef = crashedRecords[pendingRec.uid];
             if( crashedRef ) {
               pendingRec.crashed = true;
@@ -10199,7 +10519,7 @@ module.exports = {
   doSync: self.doSync,
   forceSync: self.forceSync
 };
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":18,"JSON":3}],44:[function(_dereq_,module,exports){
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":19,"JSON":3}],47:[function(_dereq_,module,exports){
 module.exports = {
   createUUID : function () {
     //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
@@ -10216,13 +10536,14 @@ module.exports = {
   }
 };
 
-},{}],45:[function(_dereq_,module,exports){
+},{}],48:[function(_dereq_,module,exports){
 var initializer = _dereq_("./initializer");
 var events = _dereq_("./events");
 var CloudHost = _dereq_("./hosts");
 var constants = _dereq_("./constants");
+var logger = _dereq_("./logger");
 
-var init_attempt = 0;
+
 //the cloud configurations
 var cloud_host;
 
@@ -10230,51 +10551,25 @@ var is_initialising = false;
 var is_cloud_ready = false;
 
 
-var tryInitialise = function(retry, cb, props){
-  init_attempt++;
-  initializer.init(function(error, initRes){
-
-    if(error){
-      if(retry && init_attempt <= retry){
-        tryInitialise(retry, cb);
-      } else {
-        return cb(error);
-      }
-    } else {
-      cloud_host = new CloudHost(initRes.cloud);
-      return cb(null, cloud_host);
-    }
-  }, props);
-}
-
-var ready = function(cb, retry, app_props){
-  var props = app_props;
-  var tries = retry;
-  if(typeof retry === "object"){
-    props = retry;
-    tries = 0;
-  }
+var ready = function(cb){
   if(is_cloud_ready){
     return cb(null, {host: getCloudHostUrl()});
   } else {
-    events.once('cloudready', function(host){
-      return cb(null, host);
-    });
-    events.once('error', function(error){
-      return cb(error);
+    events.once(constants.INIT_EVENT, function(err, host){
+      return cb(err, host);
     });
     if(!is_initialising){
       is_initialising = true;
-      init_attempt = 0;
-      tryInitialise(tries, function(err, data){
+      initializer.init(function(err, initRes){
         is_initialising = false;
         if(err){
-          return events.emit("error", err);
+          return events.emit(constants.INIT_EVENT, err);
         } else {
           is_cloud_ready = true;
-          return events.emit("cloudready", {host: getCloudHostUrl()});
+          cloud_host = new CloudHost(initRes.cloud);
+          return events.emit(constants.INIT_EVENT, null, {host: getCloudHostUrl()});
         }
-      }, props);
+      });
     }
   }
 }
@@ -10301,17 +10596,20 @@ var reset = function(){
   is_cloud_ready = false;
   is_initialising = false;
   cloud_host = undefined;
+  ready(function(){
+    
+  });
 }
 
 ready(function(error, host){
   if(error){
     if(error.message !== "app_config_missing"){
-      console.error("Failed to initialise fh.");
+      logger.error("Failed to initialise fh.");
     } else {
-      console.log("No fh config file");
+      logger.info("No fh config file");
     }
   } else {
-    console.log("fh cloud is ready");
+    logger.info("fh cloud is ready");
   }
 });
 
@@ -10322,8 +10620,8 @@ module.exports = {
   getCloudHostUrl: getCloudHostUrl,
   reset: reset
 }
-},{"./appProps":23,"./constants":25,"./events":28,"./hosts":32,"./initializer":33}]},{},[15])
-(15)
+},{"./appProps":25,"./constants":27,"./events":30,"./hosts":34,"./initializer":35,"./logger":38}]},{},[16])
+(16)
 });
 ;
 (function (root) {
@@ -15968,12 +16266,14 @@ if (typeof $fh == 'undefined') {
 if ($fh.forms === undefined) {
   $fh.forms = appForm.api;
 }
-appForm.RulesEngine=rulesEngine;
-
-/*! fh-forms - v0.2.55 -  */
+/*! fh-forms - v0.2.53 -  */
 /*! async - v0.2.9 -  */
-/*! 2014-03-31 */
+/*! 2014-03-27 */
 /* This is the prefix file */
+if(appForm){
+  appForm.RulesEngine=rulesEngine;
+}
+
 function rulesEngine (formDef) {
   var define = {};
   var module = {exports:{}}; // create a module.exports - async will load into it
@@ -17322,6 +17622,14 @@ function rulesEngine (formDef) {
             required = (valueIndex < fieldDefinition.fieldOptions.definition.minRepeat);
           } else {
             required = fieldDefinition.required;
+          }
+
+          var validation = (fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) ? fieldDefinition.fieldOptions.validation : undefined;
+
+          if(! validation || ! validation.validateImmediately){
+            var ret = {validation: {}};
+            ret.validation[fieldId] = {"valid":true};
+            return cb(undefined, ret );
           }
 
           if(fieldEmpty(inputValue)) {

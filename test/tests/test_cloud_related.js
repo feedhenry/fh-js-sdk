@@ -42,24 +42,26 @@ describe("test all cloud related", function(){
   afterEach(function () { server.restore(); });
 
   describe("test auto initialisation", function(){
-    it("should emit cloudready events", function(){
+    it("should emit fhinit events", function(){
 
       var callback = sinon.spy();
       var cb2 = sinon.spy();
 
       initFakeServer(server);
       var $fh = require("../../src/feedhenry");
+      //at this point, $fh is already initialised (and failed), it will not emit another fhinit event 
+      //until another call to any $fh cloud APIs, so for testing, call reset which will force it to re-intialise again.
       $fh.reset();
 
-      $fh.on('cloudready', callback);
-      $fh.on('cloudready', cb2);
+      $fh.on('fhinit', callback);
+      $fh.on('fhinit', cb2);
 
       server.respond();
       server.respond();
 
       expect(callback).to.have.been.called;
       expect(callback).to.have.been.calledOnce;
-      expect(callback).to.have.been.calledWith({host: "http://localhost:8101"});
+      expect(callback).to.have.been.calledWith(null, {host: "http://localhost:8101"});
 
       expect(cb2).to.have.been.called;
       expect(cb2).to.have.been.calledOnce;
@@ -110,26 +112,30 @@ describe("test all cloud related", function(){
     });
 
     it("should work with cloud call", function(){
-      var callback = sinon.spy();
+      var success = sinon.spy();
+      var fail = sinon.spy();
 
       initFakeServer(server);
 
       var data = {echo: 'hi'};
 
-      server.respondWith('POST', /cloud\/echo/, buildFakeRes(data));
+      server.respondWith('POST', /test\/echo/, buildFakeRes(data));
 
       var $fh = require("../../src/feedhenry");
       $fh.reset();
 
-      $fh.cloud('echo', {}, callback);
+      $fh.cloud({
+        path: 'test/echo',
+        method: 'POST'
+      }, success, fail);
 
       server.respond();
       server.respond();
       server.respond();
 
-      expect(callback).to.have.been.calledOnce;
-      expect(callback).to.have.been.calledWith(null, data);
-
+      expect(success).to.have.been.calledOnce;
+      expect(success).to.have.been.calledWith(data);
+      expect(fail).to.have.not.been.called;
     });
   });
 

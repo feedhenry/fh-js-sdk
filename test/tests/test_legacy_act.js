@@ -44,12 +44,13 @@ describe("test legacy app props/app init", function(){
     it("$fh.init should initialise the app", function(){
       var callback = sinon.spy();
 
-      server.respondWith('POST', /init/, buildFakeRes(legacyAppHost));
+      initFakeServer(server);
       var $fh = require("../../src/feedhenry");
 
       $fh.reset();
 
-      $fh.init(fhconfig, callback);
+      $fh.init({}, callback);
+      server.respond();
       server.respond();
 
       expect(callback).to.have.been.called;
@@ -62,7 +63,7 @@ describe("test legacy app props/app init", function(){
   });
 
   describe("test auto initialisation", function(){
-    it("should emit cloudready events", function(){
+    it("should emit fhinit events", function(){
 
       var callback = sinon.spy();
 
@@ -71,14 +72,14 @@ describe("test legacy app props/app init", function(){
       
       $fh.reset();
 
-      $fh.on('cloudready', callback);
+      $fh.on('fhinit', callback);
 
       server.respond();
       server.respond();
 
       expect(callback).to.have.been.called;
       expect(callback).to.have.been.calledOnce;
-      expect(callback).to.have.been.calledWith({host: "http://localhost:8103"});
+      expect(callback).to.have.been.calledWith(null, {host: "http://localhost:8103"});
 
       var hostUrl = $fh.getCloudURL();
       expect(hostUrl).to.equal("http://localhost:8103");

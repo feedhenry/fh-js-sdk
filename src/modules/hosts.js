@@ -59,4 +59,14 @@ CloudHost.prototype.getMBAASUrl = function(service){
   return this.cloud_host + "/mbaas/" + service;
 }
 
+CloudHost.prototype.getCloudUrl = function(path){
+  var app_props = appProps.getAppProps() || {};
+  if(typeof this.cloud_host === "undefined"){
+    this.getHost(app_props.mode);
+  }
+  return this.cloud_host + "/" + path;
+}
+
+
+
 module.exports = CloudHost;

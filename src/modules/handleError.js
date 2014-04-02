@@ -1,9 +1,11 @@
 var JSON = require("JSON");
 
-module.exports = function(fail, req, resStatus){
+module.exports = function(fail, req, resStatus, error){
   var errraw;
+  var statusCode = 0;
   if(req){
     try{
+      statusCode = req.status;
       var res = JSON.parse(req.responseText);
       errraw = res.error || res.msg;
       if (errraw instanceof Array) {
@@ -14,10 +16,10 @@ module.exports = function(fail, req, resStatus){
     }
   }
   if(fail){
-    fail('error_ajaxfail', {
-      status: req.status,
+    fail(errraw, {
+      status: statusCode,
       message: resStatus,
-      error: errraw
+      error: error
     });
   }
 };
