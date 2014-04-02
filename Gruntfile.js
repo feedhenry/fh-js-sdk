@@ -28,7 +28,8 @@ module.exports = function(grunt) {
           "libs/lawnchair/lawnchair.js",
           "libs/lawnchair/lawnchairWindowNameStorageAdapter.js",
           "libs/lawnchair/lawnchairLocalStorageAdapter.js",
-          "libs/lawnchair/lawnchairWebkitSqlAdapter.js"
+          "libs/lawnchair/lawnchairWebkitSqlAdapter.js",
+          "libs/lawnchair/lawnchairHtml5FileSystem.js"
         ],
         dest: "libs/generated/lawnchair.js"
       },

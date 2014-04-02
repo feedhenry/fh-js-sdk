@@ -19,6 +19,7 @@ var load = function(cb) {
     app_props.appkey = "0000000000000000000000000000000000000000";
     app_props.projectid = "000000000000000000000000";
     app_props.connectiontag = "0.0.1";
+    app_props.loglevel = url_params.loglevel;
     return cb(null, app_props);
   }
 
@@ -38,6 +39,10 @@ var load = function(cb) {
       }
     },
     error: function(req, statusText, error) {
+      //fh v2 only
+      if(window.fh_app_props){
+        return cb(null, window.fh_app_props);
+      }
       logger.error(consts.config_js + " Not Found");
       cb(new Error("app_config_missing"));
     }

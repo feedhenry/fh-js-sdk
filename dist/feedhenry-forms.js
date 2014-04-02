@@ -4117,6 +4117,318 @@ Lawnchair.adapter('webkit-sqlite', (function() {
     }
   }
 })());
+Lawnchair.adapter('html5-filesystem', (function(global){
+
+  var FileError = global.FileError;
+
+  var fail = function( e ) {
+    var msg;
+    var show = true;
+    switch (e.code) {
+      case FileError.QUOTA_EXCEEDED_ERR:
+        msg = 'QUOTA_EXCEEDED_ERR';
+        break;
+      case FileError.NOT_FOUND_ERR:
+        msg = 'NOT_FOUND_ERR';
+        show = false;
+        break;
+      case FileError.SECURITY_ERR:
+        msg = 'SECURITY_ERR';
+        break;
+      case FileError.INVALID_MODIFICATION_ERR:
+        msg = 'INVALID_MODIFICATION_ERR';
+        break;
+      case FileError.INVALID_STATE_ERR:
+        msg = 'INVALID_STATE_ERR';
+        break;
+      default:
+        msg = 'Unknown Error';
+        break;
+    };
+    if ( console && show ) console.error( e, msg );
+  };
+
+  var ls = function( reader, callback, entries ) {
+    var result = entries || [];
+    reader.readEntries(function( results ) {
+      if ( !results.length ) {
+        if ( callback ) callback( result.map(function(entry) { return entry.name; }) );
+      } else {
+        ls( reader, callback, result.concat( Array.prototype.slice.call( results ) ) );
+      }
+    }, fail );
+  };
+
+  var filesystems = {};
+
+  var root = function( store, callback ) {
+    var directory = filesystems[store.name];
+    if ( directory ) {
+      callback( directory );
+    } else {
+      setTimeout(function() {
+        root( store, callback );
+      }, 10 );
+    }
+  };
+
+  var isPhoneGap = function() {
+    //http://stackoverflow.com/questions/10347539/detect-between-a-mobile-browser-or-a-phonegap-application
+    //may break.
+    var app = document.URL.indexOf('http://') === -1 && document.URL.indexOf('https://') === -1;
+    if (app) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  var createBlobOrString = function(contentstr) {
+    var retVal;
+    if (isPhoneGap()) {  // phonegap filewriter works with strings, later versions also work with binary arrays, and if passed a blob will just convert to binary array anyway
+      retVal = contentstr;
+    } else {
+      var targetContentType = 'application/json';
+      try {
+        retVal = new Blob( [contentstr], { type: targetContentType });  // Blob doesn't exist on all androids
+      }
+      catch (e){
+        // TypeError old chrome and FF
+        var blobBuilder = window.BlobBuilder ||
+          window.WebKitBlobBuilder ||
+          window.MozBlobBuilder ||
+          window.MSBlobBuilder;
+        if (e.name == 'TypeError' && blobBuilder) {
+          var bb = new blobBuilder();
+          bb.append([contentstr.buffer]);
+          retVal = bb.getBlob(targetContentType);
+        } else {
+          // We can't make a Blob, so just return the stringified content
+          retVal = contentstr;
+        }
+      }
+    }
+    return retVal;
+  }
+
+  return {
+    // boolean; true if the adapter is valid for the current environment
+    valid: function() {
+      var fs = global.requestFileSystem || global.webkitRequestFileSystem || global.moz_requestFileSystem;
+      return !!fs;
+    },
+
+    // constructor call and callback. 'name' is the most common option
+    init: function( options, callback ) {
+      var me = this;
+      var error = function(e) { fail(e); if ( callback ) me.fn( me.name, callback ).call( me, me ); };
+      var size = options.size || 100*1024*1024;
+      var name = this.name;
+
+      function requestFileSystem(amount) {
+//        console.log('in requestFileSystem');
+        var fs = global.requestFileSystem || global.webkitRequestFileSystem || global.moz_requestFileSystem;
+        var mode = window.PERSISTENT;
+        if(typeof LocalFileSystem !== "undefined" && typeof LocalFileSystem.PERSISTENT !== "undefined"){
+          mode = LocalFileSystem.PERSISTENT;
+        }      
+        fs(mode, amount, function(fs) {
+//          console.log('got FS ', fs);
+          fs.root.getDirectory( name, {create:true}, function( directory ) {
+//            console.log('got DIR ', directory);
+            filesystems[name] = directory;
+            if ( callback ) me.fn( me.name, callback ).call( me, me );
+          }, function( e ) {
+//            console.log('error getting dir :: ', e);
+            error(e);
+          });
+        }, function( e ) {
+//          console.log('error getting FS :: ', e);
+          error(e);
+        });
+      };
+
+      // When in the browser we need to use the html5 file system rather than
+      // the one cordova supplies, but it needs to request a quota first.
+      if (typeof navigator.webkitPersistentStorage !== 'undefined') {
+        navigator.webkitPersistentStorage.requestQuota(size, requestFileSystem, function() {
+          logger.warn('User declined file storage');
+          error('User declined file storage');
+        });
+      } else {
+        // Amount is 0 because we pretty much have free reign over the
+        // amount of storage we use on an android device.
+        requestFileSystem(0);
+      }
+    },
+
+    // returns all the keys in the store
+    keys: function( callback ) {
+      var me = this;
+      root( this, function( store ) {
+        ls( store.createReader(), function( entries ) {
+          if ( callback ) me.fn( 'keys', callback ).call( me, entries );
+        });
+      });
+      return this;
+    },
+
+    // save an object
+    save: function( obj, callback ) {
+      var me = this;
+      var key = obj.key || this.uuid();
+      obj.key = key;
+      var error = function(e) { fail(e); if ( callback ) me.lambda( callback ).call( me ); };
+      root( this, function( store ) {
+        store.getFile( key, {create:true}, function( file ) {
+          file.createWriter(function( writer ) {
+            writer.onerror = error;
+            writer.onwriteend = function() {
+              // Clear the onWriteEnd handler so the truncate does not call it and cause an infinite loop
+              this.onwriteend = null;
+              // Truncate the file at the end of the written contents. This ensures that if we are updating 
+              // a file which was previously longer, we will not be left with old contents beyond the end of 
+              // the current buffer.
+              this.truncate(this.position);
+              if ( callback ) me.lambda( callback ).call( me, obj );
+            };
+            var contentStr = JSON.stringify(obj);
+
+            var writerContent = createBlobOrString(contentStr);
+            writer.write(writerContent);
+          }, error );
+        }, error );
+      });
+      return this;
+    },
+
+    // batch save array of objs
+    batch: function( objs, callback ) {
+      var me = this;
+      var saved = [];
+      for ( var i = 0, il = objs.length; i < il; i++ ) {
+        me.save( objs[i], function( obj ) {
+          saved.push( obj );
+          if ( saved.length === il && callback ) {
+            me.lambda( callback ).call( me, saved );
+          }
+        });
+      }
+      return this;
+    },
+
+    // retrieve obj (or array of objs) and apply callback to each
+    get: function( key /* or array */, callback ) {
+      var me = this;
+      if ( this.isArray( key ) ) {
+        var values = [];
+        for ( var i = 0, il = key.length; i < il; i++ ) {
+          me.get( key[i], function( result ) {
+            if ( result ) values.push( result );
+            if ( values.length === il && callback ) {
+              me.lambda( callback ).call( me, values );
+            }
+          });
+        }
+      } else {
+        var error = function(e) {
+          fail( e );
+          if ( callback ) {
+            me.lambda( callback ).call( me );
+          }
+        };
+        root( this, function( store ) {
+          store.getFile( key, {create:false}, function( entry ) {
+            entry.file(function( file ) {
+              var reader = new FileReader();
+
+              reader.onerror = error;
+
+              reader.onload = function(e) {
+                var res = {};
+                try {
+                  res = JSON.parse( e.target.result);
+                  res.key = key;
+                } catch (e) {
+                  res = {key:key};
+                }
+                if ( callback ) me.lambda( callback ).call( me, res );
+              };
+
+              reader.readAsText( file );
+            }, error );
+          }, error );
+        });
+      }
+      return this;
+    },
+
+    // check if an obj exists in the collection
+    exists: function( key, callback ) {
+      var me = this;
+      root( this, function( store ) {
+        store.getFile( key, {create:false}, function() {
+          if ( callback ) me.lambda( callback ).call( me, true );
+        }, function() {
+          if ( callback ) me.lambda( callback ).call( me, false );
+        });
+      });
+      return this;
+    },
+
+    // returns all the objs to the callback as an array
+    all: function( callback ) {
+      var me = this;
+      if ( callback ) {
+        this.keys(function( keys ) {
+          if ( !keys.length ) {
+            me.fn( me.name, callback ).call( me, [] );
+          } else {
+            me.get( keys, function( values ) {
+              me.fn( me.name, callback ).call( me, values );
+            });
+          }
+        });
+      }
+      return this;
+    },
+
+    // remove a doc or collection of em
+    remove: function( key /* or object */, callback ) {
+      var me = this;
+      var error = function(e) { fail( e ); if ( callback ) me.lambda( callback ).call( me ); };
+      root( this, function( store ) {
+        store.getFile( (typeof key === 'string' ? key : key.key ), {create:false}, function( file ) {
+          file.remove(function() {
+            if ( callback ) me.lambda( callback ).call( me );
+          }, error );
+        }, error );
+      });
+      return this;
+    },
+
+    // destroy everything
+    nuke: function( callback ) {
+      var me = this;
+      var count = 0;
+      this.keys(function( keys ) {
+        if ( !keys.length ) {
+          if ( callback ) me.lambda( callback ).call( me );
+        } else {
+          for ( var i = 0, il = keys.length; i < il; i++ ) {
+            me.remove( keys[i], function() {
+              count++;
+              if ( count === il && callback ) {
+                me.lambda( callback ).call( me );
+              }
+            });
+          }
+        }
+      });
+      return this;
+    }
+  };
+}(this)));
 ; browserify_shim__define__module__export__(typeof Lawnchair != "undefined" ? Lawnchair : window.Lawnchair);
 
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
@@ -6368,8 +6680,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/Users/weili/work/apps/fh-sync/client/default/js/feedhenry/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/weili/work/apps/fh-sync/client/default/js/feedhenry/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -6844,7 +7156,7 @@ process.chdir = function (dir) {
 module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+},{"./support/isBuffer":12,"/Users/weili/work/apps/fh-sync/client/default/js/feedhenry/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -7086,6 +7398,7 @@ var api_sec = _dereq_("./modules/api_sec");
 var api_hash = _dereq_("./modules/api_hash");
 var api_sync = _dereq_("./modules/sync-cli");
 var api_mbaas = _dereq_("./modules/api_mbaas");
+var api_cloud = _dereq_("./modules/api_cloud");
 var fhparams = _dereq_("./modules/fhparams");
 var appProps = _dereq_("./modules/appProps");
 var device = _dereq_("./modules/device");
@@ -7095,64 +7408,40 @@ var defaultFail = function(msg, error){
 };
 
 var addListener = function(type, listener){
-  if(type === "cloudready"){
-    cloud.ready(function(err, host){
-      if(!err){
-        listener(host);
-      }
-    });
-  } else {
-    events.addListener(type, listener);
-  }
+  events.addListener(type, listener);
+  if(type === constants.INIT_EVENT){
+    //for fhinit event, need to check the status of cloud and may need to fire the listener immediately.
+    if(cloud.isReady()){
+      listener(null, {host: cloud.getCloudHostUrl()});
+    } else if(cloud.getInitError()){
+      listener(cloud.getInitError());
+    }
+  } 
 };
 
 var once = function(type, listener){
-  if(type === "cloudready"){
-    cloud.ready(function(err, host){
-      if(!err){
-        listener(host);
-      }
-    });
+  if(type === constants.INIT_EVENT && cloud.isReady()){
+    listener(null, {host: cloud.getCloudHostUrl()});
+  } else if(type === constants.INIT_EVENT && cloud.getInitError()){
+    listener(cloud.getInitError());
   } else {
     events.once(type, listener);
   }
 };
 
-//we have to continue support for init for now as for FH v2 apps, there won't be a config file created
+//Legacy shim. Init hapens based on fhconfig.json or, for v2, global var called fh_app_props which is injected as part of the index.html wrapper
 var init = function(opts, success, fail){
   logger.warn("$fh.init will be deprecated soon");
   cloud.ready(function(err, host){
     if(err){
-      if(err.message === "app_config_missing"){
-        //cloud.ready will be invoked when js sdk is loaded, it may cause init call to be added to the "cloudready" event listeners stack when it's called. If that is the case and getting an error
-        //about app config is missing, we just try again
-        init(opts, success, fail);
-      } else {
-        if(typeof fail === "function"){
-          return fail(err);
-        }
+      if(typeof fail === "function"){
+        return fail(err);
       }
     } else {
       if(typeof success === "function"){
         success(host.host);
       }
     }
-  }, opts);
-};
-
-var cloudFunc = function(act_name, params, cb){
-  var funcName = act_name;
-  var data = params;
-  var callback = cb;
-  if(typeof params === "function"){
-    data = {};
-    callback = params;
-  }
-  var reqParams = {act: funcName, req: data};
-  api_act(reqParams, function(res){
-    return callback(null, res);
-  }, function(msg, error){
-    return callback(error);
   });
 };
 
@@ -7160,7 +7449,7 @@ var fh = window.$fh || {};
 fh.init = init;
 fh.act = api_act;
 fh.auth = api_auth;
-fh.cloud = cloudFunc;
+fh.cloud = api_cloud;
 fh.sec = api_sec;
 fh.hash = api_hash;
 fh.sync = api_sync;
@@ -7186,9 +7475,14 @@ for(var i=0;i<methods.length;i++){
 }
 
 //keep backward compatibility
-fh.on("cloudready", function(host){
-  fh.cloud_props = {hosts: {url: host.host}};
-  fh.app_props = appProps.getAppProps();
+fh.on(constants.INIT_EVENT, function(err, host){
+  if(err){
+    fh.cloud_props = {};
+    fh.app_props = {};
+  } else {
+    fh.cloud_props = {hosts: {url: host.host}};
+    fh.app_props = appProps.getAppProps();
+  }
 });
 
 //for test
@@ -7203,7 +7497,7 @@ module.exports = fh;
 
 
 
-},{"./modules/ajax":18,"./modules/api_act":19,"./modules/api_auth":20,"./modules/api_hash":21,"./modules/api_mbaas":22,"./modules/api_sec":23,"./modules/appProps":24,"./modules/constants":26,"./modules/device":28,"./modules/events":29,"./modules/fhparams":30,"./modules/logger":37,"./modules/sync-cli":45,"./modules/waitForCloud":47}],17:[function(_dereq_,module,exports){
+},{"./modules/ajax":18,"./modules/api_act":19,"./modules/api_auth":20,"./modules/api_cloud":21,"./modules/api_hash":22,"./modules/api_mbaas":23,"./modules/api_sec":24,"./modules/appProps":25,"./modules/constants":27,"./modules/device":29,"./modules/events":30,"./modules/fhparams":31,"./modules/logger":38,"./modules/sync-cli":46,"./modules/waitForCloud":48}],17:[function(_dereq_,module,exports){
 var XDomainRequestWrapper = function(xdr){
   this.xdr = xdr;
   this.isWrapper = true;
@@ -7644,7 +7938,7 @@ function extend(target) {
   })
   return target
 }
-},{"./XDomainRequestWrapper":17,"./constants":26,"./events":29,"./logger":37,"type-of":15}],19:[function(_dereq_,module,exports){
+},{"./XDomainRequestWrapper":17,"./constants":27,"./events":30,"./logger":38,"type-of":15}],19:[function(_dereq_,module,exports){
 var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -7667,7 +7961,7 @@ function doActCall(opts, success, fail){
     "timeout": opts.timeout,
     "success": success,
     "error": function(req, statusText, error){
-      return handleError(fail, req, statusText);
+      return handleError(fail, req, statusText, error);
     }
   })
 }
@@ -7693,7 +7987,7 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":18,"./fhparams":30,"./handleError":32,"./logger":37,"./waitForCloud":47,"JSON":3}],20:[function(_dereq_,module,exports){
+},{"./ajax":18,"./fhparams":31,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],20:[function(_dereq_,module,exports){
 var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -7753,13 +8047,57 @@ module.exports = function(opts, success, fail){
           checkAuth.handleAuthResponse(endurl, res, success, fail);
         },
         error: function(req, statusText, error) {
-          handleError(fail, req, statusText);
+          handleError(fail, req, statusText, error);
         }
       });
     }
   });
 }
-},{"./ajax":18,"./appProps":24,"./checkAuth":25,"./constants":26,"./device":28,"./fhparams":30,"./handleError":32,"./logger":37,"./waitForCloud":47,"JSON":3}],21:[function(_dereq_,module,exports){
+},{"./ajax":18,"./appProps":25,"./checkAuth":26,"./constants":27,"./device":29,"./fhparams":31,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],21:[function(_dereq_,module,exports){
+var logger =_dereq_("./logger");
+var cloud = _dereq_("./waitForCloud");
+var fhparams = _dereq_("./fhparams");
+var ajax = _dereq_("./ajax");
+var JSON = _dereq_("JSON");
+var handleError = _dereq_("./handleError");
+
+function doCloudCall(opts, success, fail){
+  var cloud_host = cloud.getCloudHost();
+  var url = cloud_host.getCloudUrl(opts.path);
+  var params = opts.data || {};
+  params = fhparams.addFHParams(params);
+  return ajax({
+    "url": url,
+    "type": opts.method || "POST",
+    "dataType": opts.dataType || "json",
+    "data": JSON.stringify(params),
+    "contentType": opts.contentType || "application/json",
+    "timeout": opts.timeout,
+    "success": success,
+    "error": function(req, statusText, error){
+      return handleError(fail, req, statusText, error);
+    }
+  })
+}
+
+module.exports = function(opts, success, fail){
+  logger.debug("cloud is called");
+  if(!fail){
+    fail = function(msg, error){
+      logger.debug(msg + ":" + JSON.stringify(error));
+    };
+  }
+
+  cloud.ready(function(err, cloudHost){
+    logger.debug("Calling fhact now");
+    if(err){
+      return fail(err.message, err);
+    } else {
+      doCloudCall(opts, success, fail);
+    }
+  })
+}
+},{"./ajax":18,"./fhparams":31,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],22:[function(_dereq_,module,exports){
 var hashImpl = _dereq_("./security/hash");
 
 module.exports = function(p, s, f){
@@ -7771,7 +8109,7 @@ module.exports = function(p, s, f){
   params.params = p;
   hashImpl(params, s, f);
 };
-},{"./security/hash":43}],22:[function(_dereq_,module,exports){
+},{"./security/hash":44}],23:[function(_dereq_,module,exports){
 var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -7809,12 +8147,15 @@ module.exports = function(opts, success, fail){
         "contentType": "application/json",
         "timeout": opts.timeout || consts.fh_timeout,
         "success": success,
-        "error": fail
+        "error": function(req, statusText, error){
+          return handleError(fail, req, statusText, error);
+        }
       });
     }
   });
-}
-},{"./ajax":18,"./constants":26,"./fhparams":30,"./handleError":32,"./logger":37,"./waitForCloud":47,"JSON":3}],23:[function(_dereq_,module,exports){
+} 
+
+},{"./ajax":18,"./constants":27,"./fhparams":31,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],24:[function(_dereq_,module,exports){
 var keygen = _dereq_("./security/aes-keygen");
 var aes = _dereq_("./security/aes-node");
 var rsa = _dereq_("./security/rsa-node");
@@ -7858,7 +8199,7 @@ module.exports = function(p, s, f){
     }
   }
 }
-},{"./security/aes-keygen":41,"./security/aes-node":42,"./security/hash":43,"./security/rsa-node":44}],24:[function(_dereq_,module,exports){
+},{"./security/aes-keygen":42,"./security/aes-node":43,"./security/hash":44,"./security/rsa-node":45}],25:[function(_dereq_,module,exports){
 var consts = _dereq_("./constants");
 var ajax = _dereq_("./ajax");
 var logger = _dereq_("./logger");
@@ -7880,6 +8221,7 @@ var load = function(cb) {
     app_props.appkey = "0000000000000000000000000000000000000000";
     app_props.projectid = "000000000000000000000000";
     app_props.connectiontag = "0.0.1";
+    app_props.loglevel = url_params.loglevel;
     return cb(null, app_props);
   }
 
@@ -7899,6 +8241,10 @@ var load = function(cb) {
       }
     },
     error: function(req, statusText, error) {
+      //fh v2 only
+      if(window.fh_app_props){
+        return cb(null, window.fh_app_props);
+      }
       logger.error(consts.config_js + " Not Found");
       cb(new Error("app_config_missing"));
     }
@@ -7918,7 +8264,7 @@ module.exports = {
   getAppProps: getAppProps,
   setAppProps: setAppProps
 };
-},{"./ajax":18,"./constants":26,"./logger":37,"./queryMap":39}],25:[function(_dereq_,module,exports){
+},{"./ajax":18,"./constants":27,"./logger":38,"./queryMap":40}],26:[function(_dereq_,module,exports){
 var logger = _dereq_("./logger");
 var queryMap = _dereq_("./queryMap");
 var JSON = _dereq_("JSON");
@@ -8026,14 +8372,15 @@ module.exports = {
   "handleAuthResponse": handleAuthResponse
 };
 
-},{"./fhparams":30,"./logger":37,"./queryMap":39,"JSON":3}],26:[function(_dereq_,module,exports){
+},{"./fhparams":31,"./logger":38,"./queryMap":40,"JSON":3}],27:[function(_dereq_,module,exports){
 module.exports = {
   "fh_timeout": 20000,
   "boxprefix": "/box/srv/1.1/",
   "sdk_version": "2.0.1-alpha",
-  "config_js": "fhconfig.json"
+  "config_js": "fhconfig.json",
+  "INIT_EVENT": "fhinit"
 };
-},{}],27:[function(_dereq_,module,exports){
+},{}],28:[function(_dereq_,module,exports){
 module.exports = {
   readCookieValue  : function (cookie_name) {
     var name_str = cookie_name + "=";
@@ -8058,7 +8405,7 @@ module.exports = {
   }
 };
 
-},{}],28:[function(_dereq_,module,exports){
+},{}],29:[function(_dereq_,module,exports){
 var cookies = _dereq_("./cookies");
 var uuidModule = _dereq_("./uuid");
 var logger = _dereq_("./logger");
@@ -8129,14 +8476,14 @@ module.exports = {
   }
 }
 
-},{"./cookies":27,"./logger":37,"./platformsMap":38,"./uuid":46}],29:[function(_dereq_,module,exports){
+},{"./cookies":28,"./logger":38,"./platformsMap":39,"./uuid":47}],30:[function(_dereq_,module,exports){
 var EventEmitter = _dereq_('events').EventEmitter;
 
 var emitter = new EventEmitter();
 emitter.setMaxListeners(0);
 
 module.exports = emitter;
-},{"events":9}],30:[function(_dereq_,module,exports){
+},{"events":9}],31:[function(_dereq_,module,exports){
 var device = _dereq_("./device");
 var sdkversion = _dereq_("./sdkversion");
 var appProps = _dereq_("./appProps");
@@ -8206,7 +8553,7 @@ module.exports = {
   "setAuthSessionToken":setAuthSessionToken
 }
 
-},{"./appProps":24,"./device":28,"./logger":37,"./sdkversion":40}],31:[function(_dereq_,module,exports){
+},{"./appProps":25,"./device":29,"./logger":38,"./sdkversion":41}],32:[function(_dereq_,module,exports){
 module.exports = function(){
   var path = null;
   var scripts = document.getElementsByTagName('script');
@@ -8227,13 +8574,15 @@ module.exports = function(){
   return path;
 };
 
-},{}],32:[function(_dereq_,module,exports){
+},{}],33:[function(_dereq_,module,exports){
 var JSON = _dereq_("JSON");
 
-module.exports = function(fail, req, resStatus){
+module.exports = function(fail, req, resStatus, error){
   var errraw;
+  var statusCode = 0;
   if(req){
     try{
+      statusCode = req.status;
       var res = JSON.parse(req.responseText);
       errraw = res.error || res.msg;
       if (errraw instanceof Array) {
@@ -8244,17 +8593,33 @@ module.exports = function(fail, req, resStatus){
     }
   }
   if(fail){
-    fail('error_ajaxfail', {
-      status: req.status,
+    fail(errraw, {
+      status: statusCode,
       message: resStatus,
-      error: errraw
+      error: error
     });
   }
 };
 
-},{"JSON":3}],33:[function(_dereq_,module,exports){
+},{"JSON":3}],34:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
 var appProps = _dereq_("./appProps");
+
+function removeEndSlash(input){
+  var ret = input;
+  if(ret.charAt(ret.length - 1) === "/"){
+    ret = ret.substring(0, ret.length-1);
+  }
+  return ret;
+}
+
+function removeStartSlash(input){
+  var ret = input;
+  if(ret.length > 1 && ret.charAt(0) === "/"){
+    ret = ret.substring(1, ret.length);
+  }
+  return ret;
+}
 
 function CloudHost(cloud_props){
   this.cloud_props = cloud_props;
@@ -8286,6 +8651,7 @@ CloudHost.prototype.getHost = function(appType){
         url = cloud_host;
       }
     }
+    url = removeEndSlash(url);
     this.cloud_host = url;
     if(app_type === "fh"){
       this.isLegacy = true;
@@ -8314,8 +8680,18 @@ CloudHost.prototype.getMBAASUrl = function(service){
   return this.cloud_host + "/mbaas/" + service;
 }
 
+CloudHost.prototype.getCloudUrl = function(path){
+  var app_props = appProps.getAppProps() || {};
+  if(typeof this.cloud_host === "undefined"){
+    this.getHost(app_props.mode);
+  }
+  return this.cloud_host + "/" + removeStartSlash(path);
+}
+
+
+
 module.exports = CloudHost;
-},{"./appProps":24,"./constants":26}],34:[function(_dereq_,module,exports){
+},{"./appProps":25,"./constants":27}],35:[function(_dereq_,module,exports){
 var findFHPath = _dereq_("./findFHPath");
 var loadScript = _dereq_("./loadScript");
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
@@ -8329,16 +8705,11 @@ var JSON = _dereq_("JSON");
 var hashFunc = _dereq_("./security/hash");
 var appProps = _dereq_("./appProps");
 
-var init = function(cb, app_props) {
-  if (arguments.length === 2 && typeof app_props === "object" && app_props.mode) {
-    appProps.setAppProps(app_props);
-    return loadCloudProps(app_props, cb);
-  } else {
-    appProps.load(function(err, data) {
-      if (err) return cb(err);
-      return loadCloudProps(data, cb);
-    });
-  }
+var init = function(cb) {
+  appProps.load(function(err, data) {
+    if (err) return cb(err);
+    return loadCloudProps(data, cb);
+  });
 }
 
 var loadCloudProps = function(app_props, callback) {
@@ -8448,7 +8819,7 @@ var loadCloudProps = function(app_props, callback) {
                 message: msg
               });
             }
-          }, req, statusText);
+          }, req, statusText, error);
         }
       }
     });
@@ -8459,7 +8830,7 @@ module.exports = {
   "init": init,
   "loadCloudProps": loadCloudProps
 }
-},{"../../libs/generated/lawnchair":2,"./ajax":18,"./appProps":24,"./constants":26,"./fhparams":30,"./findFHPath":31,"./handleError":32,"./lawnchair-ext":35,"./loadScript":36,"./logger":37,"./security/hash":43,"JSON":3}],35:[function(_dereq_,module,exports){
+},{"../../libs/generated/lawnchair":2,"./ajax":18,"./appProps":25,"./constants":27,"./fhparams":31,"./findFHPath":32,"./handleError":33,"./lawnchair-ext":36,"./loadScript":37,"./logger":38,"./security/hash":44,"JSON":3}],36:[function(_dereq_,module,exports){
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
 
 var fileStorageAdapter = function (app_props, hashFunc) {
@@ -8647,7 +9018,7 @@ var addAdapter = function(app_props, hashFunc){
 module.exports = {
   addAdapter: addAdapter
 }
-},{"../../libs/generated/lawnchair":2}],36:[function(_dereq_,module,exports){
+},{"../../libs/generated/lawnchair":2}],37:[function(_dereq_,module,exports){
 module.exports = function (url, callback) {
   var script;
   var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
@@ -8670,7 +9041,7 @@ module.exports = function (url, callback) {
   head.insertBefore(script, head.firstChild);
 };
 
-},{}],37:[function(_dereq_,module,exports){
+},{}],38:[function(_dereq_,module,exports){
 var console = _dereq_('console');
 var log = _dereq_('loglevel');
 
@@ -8694,7 +9065,7 @@ log.setLevel('info');
  * Use either string or integer value
  */
 module.exports = log;
-},{"console":8,"loglevel":14}],38:[function(_dereq_,module,exports){
+},{"console":8,"loglevel":14}],39:[function(_dereq_,module,exports){
 module.exports = [
   {
     "destination" :"ipad",
@@ -8722,7 +9093,7 @@ module.exports = [
   }
 ];
 
-},{}],39:[function(_dereq_,module,exports){
+},{}],40:[function(_dereq_,module,exports){
 module.exports = function(url) {
   var qmap = {};
   var i = url.split("?");
@@ -8738,7 +9109,7 @@ module.exports = function(url) {
   }
   return qmap;
 };
-},{}],40:[function(_dereq_,module,exports){
+},{}],41:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
 
 module.exports = function() {
@@ -8751,7 +9122,7 @@ module.exports = function() {
   return type + "/" + constants.sdk_version;
 };
 
-},{"./constants":26}],41:[function(_dereq_,module,exports){
+},{"./constants":27}],42:[function(_dereq_,module,exports){
 var rsa = _dereq_("../../../libs/rsa");
 var SecureRandom = rsa.SecureRandom;
 var byte2Hex = rsa.byte2Hex;
@@ -8793,7 +9164,7 @@ var aes_keygen = function(p, s, f){
 }
 
 module.exports = aes_keygen;
-},{"../../../libs/rsa":4}],42:[function(_dereq_,module,exports){
+},{"../../../libs/rsa":4}],43:[function(_dereq_,module,exports){
 var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 var encrypt = function(p, s, f){
@@ -8834,7 +9205,7 @@ module.exports = {
   encrypt: encrypt,
   decrypt: decrypt
 }
-},{"../../../libs/generated/crypto":1}],43:[function(_dereq_,module,exports){
+},{"../../../libs/generated/crypto":1}],44:[function(_dereq_,module,exports){
 var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 
@@ -8859,7 +9230,7 @@ var hash = function(p, s, f){
 }
 
 module.exports = hash;
-},{"../../../libs/generated/crypto":1}],44:[function(_dereq_,module,exports){
+},{"../../../libs/generated/crypto":1}],45:[function(_dereq_,module,exports){
 var rsa = _dereq_("../../../libs/rsa");
 var RSAKey = rsa.RSAKey;
 
@@ -8884,13 +9255,15 @@ var encrypt = function(p, s, f){
 module.exports = {
   encrypt: encrypt
 }
-},{"../../../libs/rsa":4}],45:[function(_dereq_,module,exports){
+},{"../../../libs/rsa":4}],46:[function(_dereq_,module,exports){
 var JSON = _dereq_("JSON");
-var actFunc = _dereq_("./api_act");
+var actAPI = _dereq_("./api_act");
+var cloudAPI = _dereq_("./api_cloud");
 var CryptoJS = _dereq_("../../libs/generated/crypto");
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
 
 var self = {
+
   // CONFIG
   defaults: {
     "sync_frequency": 10,
@@ -8914,15 +9287,23 @@ var self = {
     "notify_remote_update_applied": true,
     // Should a notification event be triggered when an update was applied to the remote data store
     "notify_delta_received": true,
-    // Should a notification event be triggered when a delta was received from the remote data store (dataset or record - depending on whether uid is set)
+    // Should a notification event be triggered when a delta was received from the remote data store for the dataset 
+    "notify_record_delta_received": true,
+    // Should a notification event be triggered when a delta was received from the remote data store for a record
     "notify_sync_failed": true,
     // Should a notification event be triggered when the sync loop failed to complete
     "do_console_log": false,
     // Should log statements be written to console.log
     "crashed_count_wait" : 10,
     // How many syncs should we check for updates on crashed in flight updates before we give up searching
-    "resend_crashed_updates" : true
+    "resend_crashed_updates" : true,
     // If we have reached the crashed_count_wait limit, should we re-try sending the crashed in flight pending record
+    "sync_active" : true,
+    // Is the background sync with the cloud currently active
+    "storage_strategy" : "html5-filesystem",
+    // Storage strategy to use for Lawnchair - supported strategies are 'html5-filesystem' and 'dom'
+    "file_system_quota" : 50 * 1024 * 1204
+    // Amount of space to request from the HTML5 filesystem API when running in browser
   },
 
   notifications: {
@@ -8943,7 +9324,9 @@ var self = {
     "LOCAL_UPDATE_APPLIED": "local_update_applied",
     // An update was applied to the local data store
     "DELTA_RECEIVED": "delta_received",
-    // A delta was received from the remote data store (dataset or record - depending on whether uid is set)
+    // A delta was received from the remote data store for the dataset 
+    "RECORD_DELTA_RECEIVED": "record_delta_received",
+    // A delta was received from the remote data store for the record 
     "SYNC_FAILED": "sync_failed"
     // Sync loop failed to complete
   },
@@ -8955,13 +9338,17 @@ var self = {
 
   notify_callback: undefined,
 
+  hasCustomSync : undefined,
+
   // PUBLIC FUNCTION IMPLEMENTATIONS
   init: function(options) {
     self.consoleLog('sync - init called');
+
     self.config = JSON.parse(JSON.stringify(self.defaults));
     for (var i in options) {
       self.config[i] = options[i];
     }
+
     self.datasetMonitor();
   },
 
@@ -8969,36 +9356,41 @@ var self = {
     self.notify_callback = callback;
   },
 
-  manage: function(dataset_id, options, query_params) {
+  manage: function(dataset_id, options, query_params, meta_data, cb) {
+    self.consoleLog('manage - START');
+
     var doManage = function(dataset) {
       self.consoleLog('doManage dataset :: initialised = ' + dataset.initialised + " :: " + dataset_id + ' :: ' + JSON.stringify(options));
 
-      // Make sure config is initialised
-      if( ! self.config ) {
-        self.config = JSON.parse(JSON.stringify(self.defaults));
-      }
+      var datasetConfig = self.setOptions(options);
 
-      var datasetConfig = JSON.parse(JSON.stringify(self.config));
-      for (var k in options) {
-        datasetConfig[k] = options[k];
-      }
-
-      dataset.query_params = query_params || {};
+      dataset.query_params = query_params || dataset.query_params || {};
+      dataset.meta_data = meta_data || dataset.meta_data || {};
       dataset.config = datasetConfig;
       dataset.syncRunning = false;
       dataset.syncPending = true;
       dataset.initialised = true;
       dataset.meta = {};
-      self.saveDataSet(dataset_id);
+
+      self.saveDataSet(dataset_id, function() {
+
+        if( cb ) {
+          cb();
+        }
+      });
     };
 
     // Check if the dataset is already loaded
     self.getDataSet(dataset_id, function(dataset) {
+      self.consoleLog('manage - dataset already loaded');
       doManage(dataset);
     }, function(err) {
+      self.consoleLog('manage - dataset not loaded... trying to load');
 
       // Not already loaded, try to load from local storage
       self.loadDataSet(dataset_id, function(dataset) {
+          self.consoleLog('manage - dataset loaded from local storage');
+
           // Loading from local storage worked
 
           // Fire the local update event to indicate that dataset was loaded from local storage
@@ -9009,7 +9401,7 @@ var self = {
         },
         function(err) {
           // No dataset in memory or local storage - create a new one and put it in memory
-          self.consoleLog('Creating new dataset for id ' + dataset_id);
+          self.consoleLog('manage - Creating new dataset for id ' + dataset_id);
           var dataset = {};
           dataset.pending = {};
           self.datasets[dataset_id] = dataset;
@@ -9018,15 +9410,32 @@ var self = {
     });
   },
 
+  setOptions: function(options) {
+    // Make sure config is initialised
+    if( ! self.config ) {
+      self.config = JSON.parse(JSON.stringify(self.defaults));
+    }
+
+    var datasetConfig = JSON.parse(JSON.stringify(self.config));
+    var optionsIn = JSON.parse(JSON.stringify(options));
+    for (var k in optionsIn) {
+      datasetConfig[k] = optionsIn[k];
+    }
+
+    return datasetConfig;
+  },
+
   list: function(dataset_id, success, failure) {
     self.getDataSet(dataset_id, function(dataset) {
-      if (dataset) {
+      if (dataset && dataset.data) {
         // Return a copy of the dataset so updates will not automatically make it back into the dataset
         var res = JSON.parse(JSON.stringify(dataset.data));
         success(res);
+      } else {
+        if(failure) failure('no_data');
       }
     }, function(code, msg) {
-      failure(code, msg);
+      if(failure) failure(code, msg);
     });
   },
 
@@ -9045,7 +9454,7 @@ var self = {
         success(res);
       }
     }, function(code, msg) {
-      failure(code, msg);
+      if(failure) failure(code, msg);
     });
   },
 
@@ -9065,7 +9474,7 @@ var self = {
       }
       cb(res);
     }, function(err, datatset_id) {
-        self.ConsoleLog(err);
+        self.consoleLog(err);
     });
   },
 
@@ -9077,22 +9486,28 @@ var self = {
   },
 
   listCollisions : function(dataset_id, success, failure){
-    actFunc({
-      "act": dataset_id,
-      "req": {
-        "fn": "listCollisions"
-      }
-    }, success, failure);
+    self.getDataSet(dataset_id, function(dataset) {
+      self.doCloudCall({
+        "dataset_id": dataset_id,
+        "req": {
+          "fn": "listCollisions",
+          "meta_data" : dataset.meta_data
+        }
+      }, success, failure);
+    }, failure);
   },
 
   removeCollision: function(dataset_id, colissionHash, success, failure) {
-    actFunc({
-      "act": dataset_id,
-      "req": {
-        "fn": "removeCollision",
-        "hash": colissionHash
-      }
-    }, success, failure);
+    self.getDataSet(dataset_id, function(dataset) {
+      self.doCloudCall({
+        "dataset_id" : dataset_id,
+        "req": {
+          "fn": "removeCollision",
+          "hash": colissionHash,
+          meta_data: dataset.meta_data
+        }
+      }, success, failure);
+    });
   },
 
 
@@ -9143,7 +9558,134 @@ var self = {
     if (dataset) {
       success(dataset);
     } else {
-      failure('unknown_dataset' + dataset_id, dataset_id);
+      failure('unknown_dataset ' + dataset_id, dataset_id);
+    }
+  },
+
+  getQueryParams: function(dataset_id, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      success(dataset.query_params);
+    } else {
+      failure('unknown_dataset ' + dataset_id, dataset_id);
+    }
+  },
+
+  setQueryParams: function(dataset_id, queryParams, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      dataset.query_params = queryParams;
+      self.saveDataSet(dataset_id);
+      if( success ) {
+        success(dataset.query_params);
+      }
+    } else {
+      if ( failure ) {
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
+    }
+  },
+
+  getMetaData: function(dataset_id, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      success(dataset.meta_data);
+    } else {
+      failure('unknown_dataset ' + dataset_id, dataset_id);
+    }
+  },
+
+  setMetaData: function(dataset_id, metaData, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      dataset.meta_data = metaData;
+      self.saveDataSet(dataset_id);
+      if( success ) {
+        success(dataset.meta_data);
+      }
+    } else {
+      if( failure ) {
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
+    }
+  },
+
+  getConfig: function(dataset_id, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      success(dataset.config);
+    } else {
+      failure('unknown_dataset ' + dataset_id, dataset_id);
+    }
+  },
+
+  setConfig: function(dataset_id, config, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      var fullConfig = self.setOptions(config);
+      dataset.config = fullConfig;
+      self.saveDataSet(dataset_id);
+      if( success ) {
+        success(dataset.config);
+      }
+    } else {
+      if( failure ) {
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
+    }
+  },
+
+  stopSync: function(dataset_id, success, failure) {
+    self.setConfig(dataset_id, {"sync_active" : false}, function() {
+      if( success ) {
+        success();
+      }
+    }, failure);
+  },
+
+  startSync: function(dataset_id, success, failure) {
+    self.setConfig(dataset_id, {"sync_active" : true}, function() {
+      if( success ) {
+        success();
+      }
+    }, failure);
+  },
+
+  doSync: function(dataset_id, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      dataset.syncPending = true;
+      self.saveDataSet(dataset_id);
+      if( success ) {
+        success();
+      }
+    } else {
+      if( failure ) {
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
+    }
+  },
+
+  forceSync: function(dataset_id, success, failure) {
+    var dataset = self.datasets[dataset_id];
+
+    if (dataset) {
+      dataset.syncForced = true;
+      self.saveDataSet(dataset_id);
+      if( success ) {
+        success();
+      }
+    } else {
+      if( failure ) {
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
     }
   },
 
@@ -9206,14 +9748,14 @@ var self = {
 
         success(obj);
       }, function(code, msg) {
-        failure(code, msg);
+        if(failure) failure(code, msg);
       });
     }
 
     var pendingObj = {};
     pendingObj.inFlight = false;
     pendingObj.action = action;
-    pendingObj.post = data;
+    pendingObj.post = JSON.parse(JSON.stringify(data));
     pendingObj.postHash = self.generateHash(pendingObj.post);
     pendingObj.timestamp = new Date().getTime();
     if( "create" === action ) {
@@ -9233,6 +9775,7 @@ var self = {
 
   syncLoop: function(dataset_id) {
     self.getDataSet(dataset_id, function(dataSet) {
+    
       // The sync loop is currently active
       dataSet.syncPending = false;
       dataSet.syncRunning = true;
@@ -9241,102 +9784,112 @@ var self = {
 
       self.isOnline(function(online) {
         if (!online) {
-          self.syncComplete(dataset_id, "offline");
+          self.syncComplete(dataset_id, "offline", self.notifications.SYNC_FAILED);
         } else {
-          var syncLoopParams = {};
-          syncLoopParams.fn = 'sync';
-          syncLoopParams.dataset_id = dataset_id;
-          syncLoopParams.query_params = dataSet.query_params;
-          //var datasetHash = self.generateLocalDatasetHash(dataSet);
-          syncLoopParams.dataset_hash = dataSet.hash;
-          syncLoopParams.acknowledgements = dataSet.acknowledgements || [];
+          self.checkHasCustomSync(dataset_id, function() {
 
-          var pending = dataSet.pending;
-          var pendingArray = [];
-          for(var i in pending ) {
-            // Mark the pending records we are about to submit as inflight and add them to the array for submission
-            // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
-            if( !pending[i].inFlight && !pending[i].crashed ) {
-              pending[i].inFlight = true;
-              pending[i].inFlightDate = new Date().getTime();
-              pendingArray.push(pending[i]);
+            var syncLoopParams = {};
+            syncLoopParams.fn = 'sync';
+            syncLoopParams.dataset_id = dataset_id;
+            syncLoopParams.query_params = dataSet.query_params;
+            syncLoopParams.config = dataSet.config;
+            syncLoopParams.meta_data = dataSet.meta_data;
+            //var datasetHash = self.generateLocalDatasetHash(dataSet);
+            syncLoopParams.dataset_hash = dataSet.hash;
+            syncLoopParams.acknowledgements = dataSet.acknowledgements || [];
+
+            var pending = dataSet.pending;
+            var pendingArray = [];
+            for(var i in pending ) {
+              // Mark the pending records we are about to submit as inflight and add them to the array for submission
+              // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
+              // Don't add delayed records
+              if( !pending[i].inFlight && !pending[i].crashed && !pending[i].delayed) {
+                pending[i].inFlight = true;
+                pending[i].inFlightDate = new Date().getTime();
+                pendingArray.push(pending[i]);
+              }
             }
-          }
-          syncLoopParams.pending = pendingArray;
+            syncLoopParams.pending = pendingArray;
 
-          if( pendingArray.length > 0 ) {
-            self.consoleLog('Starting sync loop - global hash = ' + dataSet.hash + ' :: params = ' + JSON.stringify(syncLoopParams, null, 2));
-          }
-          try {
-            actFunc({
-              'act': dataset_id,
-              'req': syncLoopParams
-            }, function(res) {
-              var rec;
+            if( pendingArray.length > 0 ) {
+              self.consoleLog('Starting sync loop - global hash = ' + dataSet.hash + ' :: params = ' + JSON.stringify(syncLoopParams, null, 2));
+            }
+            try {
+              self.doCloudCall({
+                'dataset_id': dataset_id,
+                'req': syncLoopParams
+              }, function(res) {
+                var rec;
 
-              function processUpdates(updates, notification, acknowledgements) {
-                if( updates ) {
-                  for (var up in updates) {
-                    rec = updates[up];
-                    acknowledgements.push(rec);
-                    if( dataSet.pending[up] && dataSet.pending[up].inFlight && !dataSet.pending[up].crashed ) {
-                      delete dataSet.pending[up];
-                      self.doNotify(dataset_id, rec.uid, notification, rec);
+                function processUpdates(updates, notification, acknowledgements) {
+                  if( updates ) {
+                    for (var up in updates) {
+                      rec = updates[up];
+                      acknowledgements.push(rec);
+                      if( dataSet.pending[up] && dataSet.pending[up].inFlight && !dataSet.pending[up].crashed ) {
+                        delete dataSet.pending[up];
+                        self.doNotify(dataset_id, rec.uid, notification, rec);
+                      }
                     }
                   }
                 }
-              }
 
-              // Check to see if any new pending records need to be updated to reflect the current state of play.
-              self.updatePendingFromNewData(dataset_id, dataSet, res);
+                // Check to see if any new pending records need to be updated to reflect the current state of play.
+                self.updatePendingFromNewData(dataset_id, dataSet, res);
 
-              // Check to see if any previously crashed inflight records can now be resolved
-              self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);
+                // Check to see if any previously crashed inflight records can now be resolved
+                self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);
 
-              // Update the new dataset with details of any inflight updates which we have not received a response on
-              self.updateNewDataFromInFlight(dataset_id, dataSet, res);
+                //Check to see if any delayed pending records can now be set to ready
+                self.updateDelayedFromNewData(dataset_id, dataSet, res);
 
-              // Update the new dataset with details of any pending updates
-              self.updateNewDataFromPending(dataset_id, dataSet, res);
+                // Update the new dataset with details of any inflight updates which we have not received a response on
+                self.updateNewDataFromInFlight(dataset_id, dataSet, res);
 
-              if (res.records) {
-                // Full Dataset returned
-                dataSet.data = res.records;
-                dataSet.hash = res.hash;
+                // Update the new dataset with details of any pending updates
+                self.updateNewDataFromPending(dataset_id, dataSet, res);
 
-                self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'full dataset');
-              }
 
-              if (res.updates) {
-                var acknowledgements = [];
-                processUpdates(res.updates.applied, self.notifications.REMOTE_UPDATE_APPLIED, acknowledgements);
-                processUpdates(res.updates.failed, self.notifications.REMOTE_UPDATE_FAILED, acknowledgements);
-                processUpdates(res.updates.collisions, self.notifications.COLLISION_DETECTED, acknowledgements);
-                dataSet.acknowledgements = acknowledgements;
-              }
 
-              else if (res.hash && res.hash !== dataSet.hash) {
-                self.consoleLog("Local dataset stale - syncing records :: local hash= " + dataSet.hash + " - remoteHash=" + res.hash);
-                // Different hash value returned - Sync individual records
-                self.syncRecords(dataset_id);
-              } else {
-                self.consoleLog("Local dataset up to date");
-              }
-              self.syncComplete(dataset_id,  "online");
-            }, function(msg, err) {
-              // The AJAX call failed to complete succesfully, so the state of the current pending updates is unknown
-              // Mark them as "crashed". The next time a syncLoop completets successfully, we will review the crashed
-              // records to see if we can determine their current state.
-              self.markInFlightAsCrashed(dataSet);
-              self.consoleLog("syncLoop failed : msg=" + msg + " :: err = " + err);
-              self.doNotify(dataset_id, null, self.notifications.SYNC_FAILED, msg);
-              self.syncComplete(dataset_id,  msg);
-            });
-          }
-          catch (e) {
-            self.consoleLog('Error performing sync - ' + e);
-            self.syncComplete(dataset_id, e);
-          }
+                if (res.records) {
+                  // Full Dataset returned
+                  dataSet.data = res.records;
+                  dataSet.hash = res.hash;
+
+                  self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'full dataset');
+                }
+
+                if (res.updates) {
+                  var acknowledgements = [];
+                  processUpdates(res.updates.applied, self.notifications.REMOTE_UPDATE_APPLIED, acknowledgements);
+                  processUpdates(res.updates.failed, self.notifications.REMOTE_UPDATE_FAILED, acknowledgements);
+                  processUpdates(res.updates.collisions, self.notifications.COLLISION_DETECTED, acknowledgements);
+                  dataSet.acknowledgements = acknowledgements;
+                }
+
+                if (!res.records && res.hash && res.hash !== dataSet.hash) {
+                  self.consoleLog("Local dataset stale - syncing records :: local hash= " + dataSet.hash + " - remoteHash=" + res.hash);
+                  // Different hash value returned - Sync individual records
+                  self.syncRecords(dataset_id);
+                } else {
+                  self.consoleLog("Local dataset up to date");
+                  self.syncComplete(dataset_id,  "online", self.notifications.SYNC_COMPLETE);
+                }
+              }, function(msg, err) {
+                // The AJAX call failed to complete succesfully, so the state of the current pending updates is unknown
+                // Mark them as "crashed". The next time a syncLoop completets successfully, we will review the crashed
+                // records to see if we can determine their current state.
+                self.markInFlightAsCrashed(dataSet);
+                self.consoleLog("syncLoop failed : msg=" + msg + " :: err = " + err);
+                self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);
+              });
+            }
+            catch (e) {
+              self.consoleLog('Error performing sync - ' + e);
+              self.syncComplete(dataset_id, e, self.notifications.SYNC_FAILED);
+            }
+          });
         }
       });
     });
@@ -9364,8 +9917,8 @@ var self = {
 
       self.consoleLog("syncRecParams :: " + JSON.stringify(syncRecParams));
 
-      actFunc({
-        'act': dataset_id,
+      self.doCloudCall({
+        'dataset_id': dataset_id,
         'req': syncRecParams
       }, function(res) {
         var i;
@@ -9373,42 +9926,44 @@ var self = {
         if (res.create) {
           for (i in res.create) {
             localDataSet[i] = {"hash" : res.create[i].hash, "data" : res.create[i].data};
-            self.doNotify(dataset_id, i, self.notifications.DELTA_RECEIVED, "create");
+            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "create");
           }
         }
         if (res.update) {
           for (i in res.update) {
             localDataSet[i].hash = res.update[i].hash;
             localDataSet[i].data = res.update[i].data;
-            self.doNotify(dataset_id, i, self.notifications.DELTA_RECEIVED, "update");
+            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
           }
         }
         if (res['delete']) {
           for (i in res['delete']) {
             delete localDataSet[i];
-            self.doNotify(dataset_id, i, self.notifications.DELTA_RECEIVED, "delete");
+            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "delete");
           }
         }
+
+        self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'partial dataset');
 
         dataSet.data = localDataSet;
         if(res.hash) {
           dataSet.hash = res.hash;
         }
-        self.syncComplete(dataset_id, "online");
+        self.syncComplete(dataset_id, "online", self.notifications.SYNC_COMPLETE);
       }, function(msg, err) {
         self.consoleLog("syncRecords failed : msg=" + msg + " :: err=" + err);
-        self.syncComplete(dataset_id, msg);
+        self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);
       });
     });
   },
 
-  syncComplete: function(dataset_id, status) {
+  syncComplete: function(dataset_id, status, notification) {
 
     self.getDataSet(dataset_id, function(dataset) {
       dataset.syncRunning = false;
       dataset.syncLoopEnd = new Date().getTime();
       self.saveDataSet(dataset_id);
-      self.doNotify(dataset_id, dataset.hash, self.notifications.SYNC_COMPLETE, status);
+      self.doNotify(dataset_id, dataset.hash, notification, status);
     });
   },
 
@@ -9417,7 +9972,7 @@ var self = {
       if( self.datasets.hasOwnProperty(dataset_id) ) {
         var dataset = self.datasets[dataset_id];
 
-        if( !dataset.syncRunning ) {
+        if( !dataset.syncRunning && dataset.config.sync_active) {
           // Check to see if it is time for the sync loop to run again
           var lastSyncStart = dataset.syncLoopStart;
           var lastSyncCmp = dataset.syncLoopEnd;
@@ -9432,16 +9987,75 @@ var self = {
               // Time between sync loops has passed - do another sync
               dataset.syncPending = true;
             }
+          } else if( dataset.syncForced ) {
+            dataset.syncPending = true;
           }
 
           if( dataset.syncPending ) {
+            // Reset syncForced in case it was what caused the sync cycle to run.
+            dataset.syncForced = false;
+
             // If the dataset requres syncing, run the sync loop. This may be because the sync interval has passed
             // or because the sync_frequency has been changed or because a change was made to the dataset and the
             // immediate_sync flag set to true
-           self.syncLoop(dataset_id);
+            self.syncLoop(dataset_id);
           }
         }
       }
+    }
+  },
+
+  checkHasCustomSync : function(dataset_id, cb) {
+    if(self.hasCustomSync != null) {
+      return cb();
+    }
+    self.consoleLog('starting check has custom sync');
+
+    actAPI({
+      'act' : dataset_id,
+      'req': {
+        'fn': 'sync'
+      }
+    }, function(res) {
+      //if the custom sync is defined in the cloud, this call should success.
+      //if failed, we think this the custom sync is not defined
+      self.consoleLog('checkHasCustomSync - success - ', res);
+      self.hasCustomSync = true;
+      return cb();
+    }, function(msg,err) {
+      self.consoleLog('checkHasCustomSync - failure - ', err);
+      if(err.status && err.status === 500){
+        //if we receive 500, it could be that there is an error occured due to missing parameters or similar,
+        //but the endpoint is defined.
+        self.consoleLog('checkHasCustomSync - failed with 500, endpoint does exists');
+        self.hasCustomSync = true;
+      } else {
+        self.hasCustomSync = false;
+      }
+      return cb();
+    });
+  },
+
+  doCloudCall: function(params, success, failure) {
+    if( self.hasCustomSync ) {
+      actAPI({
+        'act' : params.dataset_id,
+        'req' : params.req
+      }, function(res) {
+        success(res);
+      }, function(msg, err) {
+        failure(msg, err);
+      });      
+    } else {
+      cloudAPI({
+        'path' : '/mbaas/sync/' + params.dataset_id,
+        'method' : 'post',
+        'data' : params.req
+      }, function(res) {
+        success(res);
+      }, function(msg, err) {
+        failure(msg, err);
+      })
     }
   },
 
@@ -9463,15 +10077,11 @@ var self = {
     };
     self.getDataSet(dataset_id, function(dataset) {
       // save dataset to local storage
-      // the order of adapter wasn't specified previously, in this case, Lawnchair will check adapters using LIFO.
-      // If we don't specify the order of adapters here, the order of when an adapter is added to Lawnchair in grunt file or during app runing could break backward compatibility.
-      Lawnchair({fail:onFail, adapter: ["webkit-sqlite", "dom", "localFileStorage", "window-name"]}, function (){
-           this.save({key:"dataset_" + dataset_id,val:JSON.stringify(dataset)}, function(){
-             //save success
-             if( cb ) {
-               cb();
-             }
-           });
+      Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota}, function (){
+        this.save({key:"dataset_" + dataset_id, val:dataset}, function(){
+          //save success
+          if(cb) return cb();
+        });
       });
     });
   },
@@ -9485,19 +10095,21 @@ var self = {
       self.consoleLog(errMsg);
     };
 
-    Lawnchair({fail:onFail, adapter: ["webkit-sqlite", "dom", "localFileStorage", "window-name"]},function (){
-       this.get( "dataset_" + dataset_id, function (data){
+        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       this.get( "dataset_" + dataset_id, function (data){
          if (data && data.val !== null) {
-            var dataset = JSON.parse(data.val);
+            var dataset = data.val;
+            if(typeof dataset === "string"){
+              dataset = JSON.parse(dataset);
+            }
             // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
             // the user wants sync
             dataset.initialised = false;
             self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
             self.consoleLog('load from local storage success for dataset_id :' + dataset_id);
-            return success(dataset);
+            if(success) return success(dataset);
           } else {
-              // no data yet, probably first time. failure calback should handle this
-              return failure();
+            // no data yet, probably first time. failure calback should handle this
+            if(failure) return failure();
           }
        });
     });
@@ -9538,13 +10150,24 @@ var self = {
           previousPendingUid = dataset.meta[uid].pendingUid;
           dataset.meta[uid].previousPendingUid = previousPendingUid;
           previousPending = pending[previousPendingUid];
-          if( previousPending && !previousPending.inFlight) {
-            self.consoleLog('existing pre-flight pending record = ' + JSON.stringify(previousPending));
-            // We are trying to perform an update on an existing pending record
-            // modify the original record to have the latest value and delete the pending update
-            previousPending.post = pendingRec.post;
-            previousPending.postHash = pendingRec.postHash;
-            delete pending[pendingRec.hash];
+          if(previousPending) {
+            if(!previousPending.inFlight){
+              self.consoleLog('existing pre-flight pending record = ' + JSON.stringify(previousPending));
+              // We are trying to perform an update on an existing pending record
+              // modify the original record to have the latest value and delete the pending update
+              previousPending.post = pendingRec.post;
+              previousPending.postHash = pendingRec.postHash;
+              delete pending[pendingRec.hash];
+              // Update the pending record to have the hash of the previous record as this is what is now being
+              // maintained in the pending array & is what we want in the meta record
+              pendingRec.hash = previousPendingUid;
+            } else {
+              //we are performing changes to a pending record which is inFlight. Until the status of this pending record is resolved,
+              //we should not submit this pending record to the cloud. Mark it as delayed.
+              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));
+              pendingRec.delayed = true;
+              pendingRec.waiting = previousPending.hash;
+            }
           }
         }
       }
@@ -9558,22 +10181,28 @@ var self = {
           previousPendingUid = dataset.meta[uid].pendingUid;
           dataset.meta[uid].previousPendingUid = previousPendingUid;
           previousPending = pending[previousPendingUid];
-          if( previousPending && !previousPending.inFlight ) {
-            self.consoleLog('existing pending record = ' + JSON.stringify(previousPending));
-            if( previousPending.action === "create" ) {
-              // We are trying to perform a delete on an existing pending create
-              // These cancel each other out so remove them both
-              delete pending[pendingRec.hash];
-              delete pending[previousPendingUid];
-            }
-            if( previousPending.action === "update" ) {
-              // We are trying to perform a delete on an existing pending update
-              // Use the pre value from the pending update for the delete and
-              // get rid of the pending update
-              pendingRec.pre = previousPending.pre;
-              pendingRec.preHash = previousPending.preHash;
-              pendingRec.inFlight = false;
-              delete pending[previousPendingUid];
+          if( previousPending ) {
+            if(!previousPending.inFlight){
+              self.consoleLog('existing pending record = ' + JSON.stringify(previousPending));
+              if( previousPending.action === "create" ) {
+                // We are trying to perform a delete on an existing pending create
+                // These cancel each other out so remove them both
+                delete pending[pendingRec.hash];
+                delete pending[previousPendingUid];
+              }
+              if( previousPending.action === "update" ) {
+                // We are trying to perform a delete on an existing pending update
+                // Use the pre value from the pending update for the delete and
+                // get rid of the pending update
+                pendingRec.pre = previousPending.pre;
+                pendingRec.preHash = previousPending.preHash;
+                pendingRec.inFlight = false;
+                delete pending[previousPendingUid];
+              }
+            } else {
+              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));
+              pendingRec.delayed = true;
+              pendingRec.waiting = previousPending.hash;
             }
           }
         }
@@ -9835,6 +10464,30 @@ var self = {
     }
   },
 
+  updateDelayedFromNewData: function(dataset_id, dataset, newData){
+    var pending = dataset.pending;
+    var pendingHash;
+    var pendingRec;
+    if(pending){
+      for( pendingHash in pending ){
+        if( pending.hasOwnProperty(pendingHash) ){
+          pendingRec = pending[pendingHash];
+          if( pendingRec.delayed && pendingRec.waiting ){
+            self.consoleLog('updateDelayedFromNewData - Found delayed pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash + ' :: waiting=' + pendingRec.waiting);
+            if( newData && newData.updates && newData.updates.hashes ){
+              var waitingRec = newData.updates.hashes[pendingRec.waiting];
+              if(waitingRec){
+                self.consoleLog('updateDelayedFromNewData - Waiting pending record is resolved rec=' + JSON.stringify(waitingRec));
+                pendingRec.delayed = false;
+                pendingRec.waiting = undefined;
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+
 
   markInFlightAsCrashed : function(dataset) {
     var pending = dataset.pending;
@@ -9861,7 +10514,7 @@ var self = {
         if( pending.hasOwnProperty(pendingHash) ) {
           pendingRec = pending[pendingHash];
 
-          if( ! pendingRec.inFlight ) {
+          if( ! pendingRec.inFlight && ! pendingRec.delayed ) {
             var crashedRef = crashedRecords[pendingRec.uid];
             if( crashedRef ) {
               pendingRec.crashed = true;
@@ -9881,6 +10534,8 @@ var self = {
 
 (function() {
   self.config = self.defaults;
+  //Initialse the sync service with default config
+  self.init({});
 })();
 
 module.exports = {
@@ -9896,12 +10551,19 @@ module.exports = {
   removeCollision: self.removeCollision,
   getPending : self.getPending,
   clearPending : self.clearPending,
-  getDataset : self.getDataSet
+  getDataset : self.getDataSet,
+  getQueryParams: self.getQueryParams,
+  setQueryParams: self.setQueryParams,
+  getMetaData: self.getMetaData,
+  setMetaData: self.setMetaData,
+  getConfig: self.getConfig,
+  setConfig: self.setConfig,
+  startSync: self.startSync,
+  stopSync: self.stopSync,
+  doSync: self.doSync,
+  forceSync: self.forceSync
 };
-
-
-
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":19,"JSON":3}],46:[function(_dereq_,module,exports){
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":19,"./api_cloud":21,"JSON":3}],47:[function(_dereq_,module,exports){
 module.exports = {
   createUUID : function () {
     //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
@@ -9918,66 +10580,43 @@ module.exports = {
   }
 };
 
-},{}],47:[function(_dereq_,module,exports){
+},{}],48:[function(_dereq_,module,exports){
 var initializer = _dereq_("./initializer");
 var events = _dereq_("./events");
 var CloudHost = _dereq_("./hosts");
 var constants = _dereq_("./constants");
 var logger = _dereq_("./logger");
 
-var init_attempt = 0;
+
 //the cloud configurations
 var cloud_host;
 
 var is_initialising = false;
 var is_cloud_ready = false;
+var init_error = null;
 
 
-var tryInitialise = function(retry, cb, props){
-  init_attempt++;
-  initializer.init(function(error, initRes){
-
-    if(error){
-      if(retry && init_attempt <= retry){
-        tryInitialise(retry, cb);
-      } else {
-        return cb(error);
-      }
-    } else {
-      cloud_host = new CloudHost(initRes.cloud);
-      return cb(null, cloud_host);
-    }
-  }, props);
-}
-
-var ready = function(cb, retry, app_props){
-  var props = app_props;
-  var tries = retry;
-  if(typeof retry === "object"){
-    props = retry;
-    tries = 0;
-  }
+var ready = function(cb){
   if(is_cloud_ready){
     return cb(null, {host: getCloudHostUrl()});
   } else {
-    events.once('cloudready', function(host){
-      return cb(null, host);
-    });
-    events.once('error', function(error){
-      return cb(error);
+    events.once(constants.INIT_EVENT, function(err, host){
+      return cb(err, host);
     });
     if(!is_initialising){
       is_initialising = true;
-      init_attempt = 0;
-      tryInitialise(tries, function(err, data){
+      initializer.init(function(err, initRes){
         is_initialising = false;
         if(err){
-          return events.emit("error", err);
+          init_error = err;
+          return events.emit(constants.INIT_EVENT, err);
         } else {
+          init_error = null;
           is_cloud_ready = true;
-          return events.emit("cloudready", {host: getCloudHostUrl()});
+          cloud_host = new CloudHost(initRes.cloud);
+          return events.emit(constants.INIT_EVENT, null, {host: getCloudHostUrl()});
         }
-      }, props);
+      });
     }
   }
 }
@@ -9999,11 +10638,19 @@ var isReady = function(){
   return is_cloud_ready;
 }
 
+var getInitError = function(){
+  return init_error;
+}
+
 //for test
 var reset = function(){
   is_cloud_ready = false;
   is_initialising = false;
   cloud_host = undefined;
+  init_error = undefined;
+  ready(function(){
+    
+  });
 }
 
 ready(function(error, host){
@@ -10023,9 +10670,10 @@ module.exports = {
   isReady: isReady,
   getCloudHost: getCloudHost,
   getCloudHostUrl: getCloudHostUrl,
+  getInitError: getInitError,
   reset: reset
 }
-},{"./appProps":24,"./constants":26,"./events":29,"./hosts":33,"./initializer":34,"./logger":37}]},{},[16])
+},{"./appProps":25,"./constants":27,"./events":30,"./hosts":34,"./initializer":35,"./logger":38}]},{},[16])
 (16)
 });
 ;
