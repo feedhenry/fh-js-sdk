@@ -8,11 +8,10 @@ var handleError = require("./handleError");
 function doCloudCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
   var url = cloud_host.getCloudUrl(opts.path);
-  var params = opts.params || {};
+  var params = opts.data || {};
   params = fhparams.addFHParams(params);
   return ajax({
     "url": url,
-    "tryJSONP": true,
     "type": opts.method || "POST",
     "dataType": opts.dataType || "json",
     "data": JSON.stringify(params),

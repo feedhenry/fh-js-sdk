@@ -1,5 +1,6 @@
 var JSON = require("JSON");
-var actFunc = require("./api_act");
+var actAPI = require("./api_act");
+var cloudAPI = require("./api_cloud");
 var CryptoJS = require("../../libs/generated/crypto");
 var Lawnchair = require('../../libs/generated/lawnchair');
 
@@ -28,7 +29,9 @@ var self = {
     "notify_remote_update_applied": true,
     // Should a notification event be triggered when an update was applied to the remote data store
     "notify_delta_received": true,
-    // Should a notification event be triggered when a delta was received from the remote data store (dataset or record - depending on whether uid is set)
+    // Should a notification event be triggered when a delta was received from the remote data store for the dataset 
+    "notify_record_delta_received": true,
+    // Should a notification event be triggered when a delta was received from the remote data store for a record
     "notify_sync_failed": true,
     // Should a notification event be triggered when the sync loop failed to complete
     "do_console_log": false,
@@ -63,7 +66,9 @@ var self = {
     "LOCAL_UPDATE_APPLIED": "local_update_applied",
     // An update was applied to the local data store
     "DELTA_RECEIVED": "delta_received",
-    // A delta was received from the remote data store (dataset or record - depending on whether uid is set)
+    // A delta was received from the remote data store for the dataset 
+    "RECORD_DELTA_RECEIVED": "record_delta_received",
+    // A delta was received from the remote data store for the record 
     "SYNC_FAILED": "sync_failed"
     // Sync loop failed to complete
   },
@@ -75,7 +80,7 @@ var self = {
 
   notify_callback: undefined,
 
-  hasSyncMBaaS : true,
+  hasCustomSync : undefined,
 
   // PUBLIC FUNCTION IMPLEMENTATIONS
   init: function(options) {
@@ -86,7 +91,6 @@ var self = {
       self.config[i] = options[i];
     }
 
-    self.checkHasSyncMBaaS();
     self.datasetMonitor();
   },
 
@@ -511,6 +515,7 @@ var self = {
 
   syncLoop: function(dataset_id) {
     self.getDataSet(dataset_id, function(dataSet) {
+    
       // The sync loop is currently active
       dataSet.syncPending = false;
       dataSet.syncRunning = true;
@@ -521,107 +526,110 @@ var self = {
         if (!online) {
           self.syncComplete(dataset_id, "offline", self.notifications.SYNC_FAILED);
         } else {
-          var syncLoopParams = {};
-          syncLoopParams.fn = 'sync';
-          syncLoopParams.dataset_id = dataset_id;
-          syncLoopParams.query_params = dataSet.query_params;
-          syncLoopParams.config = dataSet.config;
-          syncLoopParams.meta_data = dataSet.meta_data;
-          //var datasetHash = self.generateLocalDatasetHash(dataSet);
-          syncLoopParams.dataset_hash = dataSet.hash;
-          syncLoopParams.acknowledgements = dataSet.acknowledgements || [];
+          self.checkHasCustomSync(dataset_id, function() {
 
-          var pending = dataSet.pending;
-          var pendingArray = [];
-          for(var i in pending ) {
-            // Mark the pending records we are about to submit as inflight and add them to the array for submission
-            // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
-            // Don't add delayed records
-            if( !pending[i].inFlight && !pending[i].crashed && !pending[i].delayed) {
-              pending[i].inFlight = true;
-              pending[i].inFlightDate = new Date().getTime();
-              pendingArray.push(pending[i]);
+            var syncLoopParams = {};
+            syncLoopParams.fn = 'sync';
+            syncLoopParams.dataset_id = dataset_id;
+            syncLoopParams.query_params = dataSet.query_params;
+            syncLoopParams.config = dataSet.config;
+            syncLoopParams.meta_data = dataSet.meta_data;
+            //var datasetHash = self.generateLocalDatasetHash(dataSet);
+            syncLoopParams.dataset_hash = dataSet.hash;
+            syncLoopParams.acknowledgements = dataSet.acknowledgements || [];
+
+            var pending = dataSet.pending;
+            var pendingArray = [];
+            for(var i in pending ) {
+              // Mark the pending records we are about to submit as inflight and add them to the array for submission
+              // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
+              // Don't add delayed records
+              if( !pending[i].inFlight && !pending[i].crashed && !pending[i].delayed) {
+                pending[i].inFlight = true;
+                pending[i].inFlightDate = new Date().getTime();
+                pendingArray.push(pending[i]);
+              }
             }
-          }
-          syncLoopParams.pending = pendingArray;
+            syncLoopParams.pending = pendingArray;
 
-          if( pendingArray.length > 0 ) {
-            self.consoleLog('Starting sync loop - global hash = ' + dataSet.hash + ' :: params = ' + JSON.stringify(syncLoopParams, null, 2));
-          }
-          try {
-            self.doCloudCall({
-              'dataset_id': dataset_id,
-              'req': syncLoopParams
-            }, function(res) {
-              var rec;
+            if( pendingArray.length > 0 ) {
+              self.consoleLog('Starting sync loop - global hash = ' + dataSet.hash + ' :: params = ' + JSON.stringify(syncLoopParams, null, 2));
+            }
+            try {
+              self.doCloudCall({
+                'dataset_id': dataset_id,
+                'req': syncLoopParams
+              }, function(res) {
+                var rec;
 
-              function processUpdates(updates, notification, acknowledgements) {
-                if( updates ) {
-                  for (var up in updates) {
-                    rec = updates[up];
-                    acknowledgements.push(rec);
-                    if( dataSet.pending[up] && dataSet.pending[up].inFlight && !dataSet.pending[up].crashed ) {
-                      delete dataSet.pending[up];
-                      self.doNotify(dataset_id, rec.uid, notification, rec);
+                function processUpdates(updates, notification, acknowledgements) {
+                  if( updates ) {
+                    for (var up in updates) {
+                      rec = updates[up];
+                      acknowledgements.push(rec);
+                      if( dataSet.pending[up] && dataSet.pending[up].inFlight && !dataSet.pending[up].crashed ) {
+                        delete dataSet.pending[up];
+                        self.doNotify(dataset_id, rec.uid, notification, rec);
+                      }
                     }
                   }
                 }
-              }
 
-              // Check to see if any new pending records need to be updated to reflect the current state of play.
-              self.updatePendingFromNewData(dataset_id, dataSet, res);
+                // Check to see if any new pending records need to be updated to reflect the current state of play.
+                self.updatePendingFromNewData(dataset_id, dataSet, res);
 
-              // Check to see if any previously crashed inflight records can now be resolved
-              self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);
+                // Check to see if any previously crashed inflight records can now be resolved
+                self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);
 
-              //Check to see if any delayed pending records can now be set to ready
-              self.updateDelayedFromNewData(dataset_id, dataSet, res);
+                //Check to see if any delayed pending records can now be set to ready
+                self.updateDelayedFromNewData(dataset_id, dataSet, res);
 
-              // Update the new dataset with details of any inflight updates which we have not received a response on
-              self.updateNewDataFromInFlight(dataset_id, dataSet, res);
+                // Update the new dataset with details of any inflight updates which we have not received a response on
+                self.updateNewDataFromInFlight(dataset_id, dataSet, res);
 
-              // Update the new dataset with details of any pending updates
-              self.updateNewDataFromPending(dataset_id, dataSet, res);
-
+                // Update the new dataset with details of any pending updates
+                self.updateNewDataFromPending(dataset_id, dataSet, res);
 
 
-              if (res.records) {
-                // Full Dataset returned
-                dataSet.data = res.records;
-                dataSet.hash = res.hash;
 
-                self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'full dataset');
-              }
+                if (res.records) {
+                  // Full Dataset returned
+                  dataSet.data = res.records;
+                  dataSet.hash = res.hash;
 
-              if (res.updates) {
-                var acknowledgements = [];
-                processUpdates(res.updates.applied, self.notifications.REMOTE_UPDATE_APPLIED, acknowledgements);
-                processUpdates(res.updates.failed, self.notifications.REMOTE_UPDATE_FAILED, acknowledgements);
-                processUpdates(res.updates.collisions, self.notifications.COLLISION_DETECTED, acknowledgements);
-                dataSet.acknowledgements = acknowledgements;
-              }
+                  self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'full dataset');
+                }
 
-              if (!res.records && res.hash && res.hash !== dataSet.hash) {
-                self.consoleLog("Local dataset stale - syncing records :: local hash= " + dataSet.hash + " - remoteHash=" + res.hash);
-                // Different hash value returned - Sync individual records
-                self.syncRecords(dataset_id);
-              } else {
-                self.consoleLog("Local dataset up to date");
-                self.syncComplete(dataset_id,  "online", self.notifications.SYNC_COMPLETE);
-              }
-            }, function(msg, err) {
-              // The AJAX call failed to complete succesfully, so the state of the current pending updates is unknown
-              // Mark them as "crashed". The next time a syncLoop completets successfully, we will review the crashed
-              // records to see if we can determine their current state.
-              self.markInFlightAsCrashed(dataSet);
-              self.consoleLog("syncLoop failed : msg=" + msg + " :: err = " + err);
-              self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);
-            });
-          }
-          catch (e) {
-            self.consoleLog('Error performing sync - ' + e);
-            self.syncComplete(dataset_id, e, self.notifications.SYNC_FAILED);
-          }
+                if (res.updates) {
+                  var acknowledgements = [];
+                  processUpdates(res.updates.applied, self.notifications.REMOTE_UPDATE_APPLIED, acknowledgements);
+                  processUpdates(res.updates.failed, self.notifications.REMOTE_UPDATE_FAILED, acknowledgements);
+                  processUpdates(res.updates.collisions, self.notifications.COLLISION_DETECTED, acknowledgements);
+                  dataSet.acknowledgements = acknowledgements;
+                }
+
+                if (!res.records && res.hash && res.hash !== dataSet.hash) {
+                  self.consoleLog("Local dataset stale - syncing records :: local hash= " + dataSet.hash + " - remoteHash=" + res.hash);
+                  // Different hash value returned - Sync individual records
+                  self.syncRecords(dataset_id);
+                } else {
+                  self.consoleLog("Local dataset up to date");
+                  self.syncComplete(dataset_id,  "online", self.notifications.SYNC_COMPLETE);
+                }
+              }, function(msg, err) {
+                // The AJAX call failed to complete succesfully, so the state of the current pending updates is unknown
+                // Mark them as "crashed". The next time a syncLoop completets successfully, we will review the crashed
+                // records to see if we can determine their current state.
+                self.markInFlightAsCrashed(dataSet);
+                self.consoleLog("syncLoop failed : msg=" + msg + " :: err = " + err);
+                self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);
+              });
+            }
+            catch (e) {
+              self.consoleLog('Error performing sync - ' + e);
+              self.syncComplete(dataset_id, e, self.notifications.SYNC_FAILED);
+            }
+          });
         }
       });
     });
@@ -658,22 +666,24 @@ var self = {
         if (res.create) {
           for (i in res.create) {
             localDataSet[i] = {"hash" : res.create[i].hash, "data" : res.create[i].data};
-            self.doNotify(dataset_id, i, self.notifications.DELTA_RECEIVED, "create");
+            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "create");
           }
         }
         if (res.update) {
           for (i in res.update) {
             localDataSet[i].hash = res.update[i].hash;
             localDataSet[i].data = res.update[i].data;
-            self.doNotify(dataset_id, i, self.notifications.DELTA_RECEIVED, "update");
+            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
           }
         }
         if (res['delete']) {
           for (i in res['delete']) {
             delete localDataSet[i];
-            self.doNotify(dataset_id, i, self.notifications.DELTA_RECEIVED, "delete");
+            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "delete");
           }
         }
+
+        self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'partial dataset');
 
         dataSet.data = localDataSet;
         if(res.hash) {
@@ -735,48 +745,57 @@ var self = {
     }
   },
 
-  checkHasSyncMBaaS : function() {
-    self.hasSyncMBaaS = false;
-    return;
-    console.log('starting check has mbaas');
+  checkHasCustomSync : function(dataset_id, cb) {
+    if(self.hasCustomSync != null) {
+      return cb();
+    }
+    self.consoleLog('starting check has custom sync');
 
-    $fh.mbaas({
-      'url' : '/mbaas/sync/test',
-      'method' : 'post',
-      'data' : {}
+    actAPI({
+      'act' : dataset_id,
+      'req': {
+        'fn': 'sync'
+      }
     }, function(res) {
-      // If the sync rout is not there, the mBaaS will respond with a 200 and the following message:
-      // "Only POST to supported mBaaS APIs are supported. See http://docs.feedhenry.com for more"
-      console.log('checkHasSyncMBaaS - success - ', res);
-      self.hasSyncMBaaS = true;
-    }, function(err) {
-      // If the sync rout *is* there, and the "fn" parameter is not passed, the sync service will respond
-      // with an error syating "no_fn"
-      console.log('checkHasSyncMBaaS - failure - ', err);
-      self.hasSyncMBaaS = false;
+      //if the custom sync is defined in the cloud, this call should success.
+      //if failed, we think this the custom sync is not defined
+      self.consoleLog('checkHasCustomSync - success - ', res);
+      self.hasCustomSync = true;
+      return cb();
+    }, function(msg,err) {
+      self.consoleLog('checkHasCustomSync - failure - ', err);
+      if(err.status && err.status === 500){
+        //if we receive 500, it could be that there is an error occured due to missing parameters or similar,
+        //but the endpoint is defined.
+        self.consoleLog('checkHasCustomSync - failed with 500, endpoint does exists');
+        self.hasCustomSync = true;
+      } else {
+        self.hasCustomSync = false;
+      }
+      return cb();
     });
   },
 
   doCloudCall: function(params, success, failure) {
-    if( self.hasSyncMBaaS ) {
-      $fh.mbaas({
-        'url' : '/mbaas/sync/' + params.dataset_id,
-        'method' : 'post',
-        'data' : params.req
-      }, function(res) {
-        success(res);
-      }, function(err, msg) {
-        failure(err, msg)
-      })
-    } else {
-      $fh.act({
+    if( self.hasCustomSync ) {
+      actAPI({
         'act' : params.dataset_id,
         'req' : params.req
       }, function(res) {
         success(res);
-      }, function(err, msg) {
-        failure(err, msg)
-      });
+      }, function(msg, err) {
+        failure(msg, err);
+      });      
+    } else {
+      cloudAPI({
+        'path' : '/mbaas/sync/' + params.dataset_id,
+        'method' : 'post',
+        'data' : params.req
+      }, function(res) {
+        success(res);
+      }, function(msg, err) {
+        failure(msg, err);
+      })
     }
   },
 

@@ -19,6 +19,7 @@ var load = function(cb) {
     app_props.appkey = "0000000000000000000000000000000000000000";
     app_props.projectid = "000000000000000000000000";
     app_props.connectiontag = "0.0.1";
+    app_props.loglevel = url_params.loglevel;
     return cb(null, app_props);
   }
 

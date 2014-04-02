@@ -1,6 +1,22 @@
 var constants = require("./constants");
 var appProps = require("./appProps");
 
+function removeEndSlash(input){
+  var ret = input;
+  if(ret.charAt(ret.length - 1) === "/"){
+    ret = ret.substring(0, ret.length-1);
+  }
+  return ret;
+}
+
+function removeStartSlash(input){
+  var ret = input;
+  if(ret.length > 1 && ret.charAt(0) === "/"){
+    ret = ret.substring(1, ret.length);
+  }
+  return ret;
+}
+
 function CloudHost(cloud_props){
   this.cloud_props = cloud_props;
   this.cloud_host = undefined;
@@ -31,6 +47,7 @@ CloudHost.prototype.getHost = function(appType){
         url = cloud_host;
       }
     }
+    url = removeEndSlash(url);
     this.cloud_host = url;
     if(app_type === "fh"){
       this.isLegacy = true;
@@ -64,7 +81,7 @@ CloudHost.prototype.getCloudUrl = function(path){
   if(typeof this.cloud_host === "undefined"){
     this.getHost(app_props.mode);
   }
-  return this.cloud_host + "/" + path;
+  return this.cloud_host + "/" + removeStartSlash(path);
 }
 
 
