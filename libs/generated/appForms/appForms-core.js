@@ -3625,7 +3625,7 @@ appForm.models = function(module) {
       if (err) {
         cb(err);
       } else {
-        that.emit('submitted');
+        that.emit('submitted', that.get('submissionId'));
         cb(null, null);
       }
     });
@@ -5171,6 +5171,7 @@ appForm.models = function (module) {
    */
   UploadTask.prototype.success = function (cb) {
     var that = this;
+    var submissionId = that.get('submissionId', null);
     that.set('completed', true);
     that.saveLocal(function (err) {
       if (err) {
@@ -5179,6 +5180,7 @@ appForm.models = function (module) {
       }
     });
     that.submissionModel(function (_err, model) {
+      model.set('submissionId', submissionId);
       if (_err) {
         cb(_err);
       } else {

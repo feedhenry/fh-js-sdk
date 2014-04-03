@@ -6680,8 +6680,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -7156,7 +7156,7 @@ process.chdir = function (dir) {
 module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -8243,6 +8243,7 @@ var load = function(cb) {
     error: function(req, statusText, error) {
       //fh v2 only
       if(window.fh_app_props){
+        app_props = window.fh_app_props;
         return cb(null, window.fh_app_props);
       }
       logger.error(consts.config_js + " Not Found");
@@ -14310,7 +14311,7 @@ appForm.models = function(module) {
       if (err) {
         cb(err);
       } else {
-        that.emit('submitted');
+        that.emit('submitted', that.get('submissionId'));
         cb(null, null);
       }
     });
@@ -15856,6 +15857,7 @@ appForm.models = function (module) {
    */
   UploadTask.prototype.success = function (cb) {
     var that = this;
+    var submissionId = that.get('submissionId', null);
     that.set('completed', true);
     that.saveLocal(function (err) {
       if (err) {
@@ -15864,6 +15866,7 @@ appForm.models = function (module) {
       }
     });
     that.submissionModel(function (_err, model) {
+      model.set('submissionId', submissionId);
       if (_err) {
         cb(_err);
       } else {
