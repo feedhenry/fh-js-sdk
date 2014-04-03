@@ -3878,8 +3878,8 @@ StepsView = Backbone.View.extend({
   className: 'fh_appform_steps',
 
   templates: {
-    table: '<div class="fh_appform_progress_wrapper"><table class="fh_appform_progress_steps" cellspacing="0"><tr></tr></table></div>',
-    step: '<td><span class="number_container" style="padding: 0px 10px 2px 9px;"><div class="number"><%= step_num %></div></span><br style="clear:both"/><span class="fh_appform_page_title"><%= step_name %></span></td>'
+    table: '<div class="fh_appform_progress_wrapper"><table class="fh_appform_progress_steps" cellspacing="0"><tr></tr></table><span class="fh_appform_page_title"></span></div>',
+    step: '<td><span class="number_container" style="padding: 0px 10px 2px 9px;"><div class="number"><%= step_num %></div></span><br style="clear:both"/></td>'
   },
 
   initialize: function() {
@@ -3920,9 +3920,14 @@ StepsView = Backbone.View.extend({
     var self = this;
     self.render();
     self.$el.find('td').removeClass('active');
-    self.$el.find('.fh_appform_page_title').hide();
-    self.$el.find('td:eq(' + self.parentView.getDisplayIndex() + ')').addClass('active');
-    self.$el.find('td:eq(' + self.parentView.getDisplayIndex() + ') .fh_appform_page_title').show();
+
+    var displayIndex = self.parentView.getDisplayIndex();
+    var displayedPages = this.parentView.getDisplayedPages();
+    var pageModel = displayedPages[displayIndex];
+
+
+    self.$el.find('td:eq(' + displayIndex + ')').addClass('active');
+    self.$el.find('.fh_appform_page_title').html(pageModel.getName());
   }
 
 });
