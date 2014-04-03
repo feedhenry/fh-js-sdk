@@ -3914,9 +3914,7 @@ StepsView = Backbone.View.extend({
     self.$el.find('td').removeClass('active');
 
     var displayIndex = self.parentView.getDisplayIndex();
-    var displayedPages = this.parentView.getDisplayedPages();
-    var pageModel = displayedPages[displayIndex];
-
+    var pageModel = self.parentView.pageViews[self.parentView.pageNum].model;
 
     self.$el.find('td:eq(' + displayIndex + ')').addClass('active');
     self.$el.find('.fh_appform_page_title').html(pageModel.getName());
