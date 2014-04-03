@@ -6680,8 +6680,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,require("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(require,module,exports){
+}).call(this,require("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(require,module,exports){
 (function (global){
 /*global window, global*/
 var util = require("util")
@@ -7156,7 +7156,7 @@ process.chdir = function (dir) {
 module.exports=require(6)
 },{}],13:[function(require,module,exports){
 module.exports=require(7)
-},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(require,module,exports){
+},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(require,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -7386,8 +7386,6 @@ module.exports = function(val){
   return typeof val
 }
 
-},{}],"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
-module.exports=require('il4jYc');
 },{}],"il4jYc":[function(require,module,exports){
 var constants = require("./modules/constants");
 var logger = require("./modules/logger");
@@ -7499,7 +7497,9 @@ module.exports = fh;
 
 
 
-},{"./modules/ajax":19,"./modules/api_act":20,"./modules/api_auth":21,"./modules/api_cloud":22,"./modules/api_hash":23,"./modules/api_mbaas":24,"./modules/api_sec":25,"./modules/appProps":26,"./modules/constants":28,"./modules/device":30,"./modules/events":31,"./modules/fhparams":32,"./modules/logger":39,"./modules/sync-cli":47,"./modules/waitForCloud":49}],18:[function(require,module,exports){
+},{"./modules/ajax":19,"./modules/api_act":20,"./modules/api_auth":21,"./modules/api_cloud":22,"./modules/api_hash":23,"./modules/api_mbaas":24,"./modules/api_sec":25,"./modules/appProps":26,"./modules/constants":28,"./modules/device":30,"./modules/events":31,"./modules/fhparams":32,"./modules/logger":39,"./modules/sync-cli":47,"./modules/waitForCloud":49}],"/Users/weili/work/fh-sdks/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
+module.exports=require('il4jYc');
+},{}],18:[function(require,module,exports){
 var XDomainRequestWrapper = function(xdr){
   this.xdr = xdr;
   this.isWrapper = true;
@@ -8806,14 +8806,21 @@ var loadCloudProps = function(app_props, callback) {
         }
       },
       "error": function(req, statusText, error) {
+        var errormsg = "unknown";
+        if(req){
+          errormsg = req.status + " - " + req.responseText;
+        }
+        logger.error("App init returned error : " + errormsg);
         //use the cached host if we have a copy
         if (savedHost) {
+          logger.info("Using cached host: " + JSON.stringify(savedHost));
           if (callback) {
             callback(null, {
               cloud: savedHost
             });
           }
         } else {
+          logger.error("No cached host found. Init failed.");
           handleError(function(msg, err) {
             if (callback) {
               callback({

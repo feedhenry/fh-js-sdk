@@ -6680,8 +6680,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -7156,7 +7156,7 @@ process.chdir = function (dir) {
 module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -8804,14 +8804,21 @@ var loadCloudProps = function(app_props, callback) {
         }
       },
       "error": function(req, statusText, error) {
+        var errormsg = "unknown";
+        if(req){
+          errormsg = req.status + " - " + req.responseText;
+        }
+        logger.error("App init returned error : " + errormsg);
         //use the cached host if we have a copy
         if (savedHost) {
+          logger.info("Using cached host: " + JSON.stringify(savedHost));
           if (callback) {
             callback(null, {
               cloud: savedHost
             });
           }
         } else {
+          logger.error("No cached host found. Init failed.");
           handleError(function(msg, err) {
             if (callback) {
               callback({
