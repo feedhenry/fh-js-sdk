@@ -6,3 +6,4 @@ tmp/*
 *~
 .fhclocal/
 src/appforms/dist/
+test/sync/testServer

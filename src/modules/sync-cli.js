@@ -101,6 +101,8 @@ var self = {
   manage: function(dataset_id, options, query_params, meta_data, cb) {
     self.consoleLog('manage - START');
 
+    var options = options || {};
+
     var doManage = function(dataset) {
       self.consoleLog('doManage dataset :: initialised = ' + dataset.initialised + " :: " + dataset_id + ' :: ' + JSON.stringify(options));
 
@@ -145,6 +147,7 @@ var self = {
           // No dataset in memory or local storage - create a new one and put it in memory
           self.consoleLog('manage - Creating new dataset for id ' + dataset_id);
           var dataset = {};
+          dataset.data = {};
           dataset.pending = {};
           self.datasets[dataset_id] = dataset;
           doManage(dataset);
@@ -714,7 +717,7 @@ var self = {
       if( self.datasets.hasOwnProperty(dataset_id) ) {
         var dataset = self.datasets[dataset_id];
 
-        if( !dataset.syncRunning && dataset.config.sync_active) {
+        if( !dataset.syncRunning && (dataset.config.sync_active || dataset.syncForced)) {
           // Check to see if it is time for the sync loop to run again
           var lastSyncStart = dataset.syncLoopStart;
           var lastSyncCmp = dataset.syncLoopEnd;
@@ -729,7 +732,9 @@ var self = {
               // Time between sync loops has passed - do another sync
               dataset.syncPending = true;
             }
-          } else if( dataset.syncForced ) {
+          } 
+
+          if( dataset.syncForced ) {
             dataset.syncPending = true;
           }
 
@@ -1277,7 +1282,7 @@ var self = {
 (function() {
   self.config = self.defaults;
   //Initialse the sync service with default config
-  self.init({});
+  //self.init({});
 })();
 
 module.exports = {
@@ -1303,5 +1308,6 @@ module.exports = {
   startSync: self.startSync,
   stopSync: self.stopSync,
   doSync: self.doSync,
-  forceSync: self.forceSync
+  forceSync: self.forceSync,
+  generateHash: self.generateHash
 };
