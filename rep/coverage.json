@@ -1,9 +1,9 @@
 {
   "instrumentation": "node-jscoverage",
   "sloc": 1585,
-  "hits": 1066,
-  "misses": 519,
-  "coverage": 67.25552050473186,
+  "hits": 1143,
+  "misses": 442,
+  "coverage": 72.11356466876971,
   "files": [
     {
       "filename": "feedhenry.js",
@@ -864,15 +864,15 @@
         },
         "37": {
           "source": "  var settings = extend({}, options || {})",
-          "coverage": 19
+          "coverage": 30
         },
         "38": {
           "source": "  for (key in ajax.settings)",
-          "coverage": 19
+          "coverage": 30
         },
         "39": {
           "source": "    if (settings[key] === undefined) settings[key] = ajax.settings[key]",
-          "coverage": 353
+          "coverage": 562
         },
         "40": {
           "source": "",
@@ -880,7 +880,7 @@
         },
         "41": {
           "source": "  ajaxStart(settings)",
-          "coverage": 19
+          "coverage": 30
         },
         "42": {
           "source": "",
@@ -888,7 +888,7 @@
         },
         "43": {
           "source": "  if (!settings.crossDomain) settings.crossDomain = /^([\\w-]+:)?\\/\\/([^\\/]+)/.test(settings.url) &amp;&amp;",
-          "coverage": 37
+          "coverage": 59
         },
         "44": {
           "source": "    RegExp.$2 != window.location.host",
@@ -900,7 +900,7 @@
         },
         "46": {
           "source": "  var dataType = settings.dataType,",
-          "coverage": 19
+          "coverage": 30
         },
         "47": {
           "source": "    hasPlaceholder = /=\\?/.test(settings.url)",
@@ -908,7 +908,7 @@
         },
         "48": {
           "source": "    if (dataType == 'jsonp' || hasPlaceholder) {",
-          "coverage": 19
+          "coverage": 30
         },
         "49": {
           "source": "      if (!hasPlaceholder) {",
@@ -936,11 +936,11 @@
         },
         "55": {
           "source": "  if (!settings.url) settings.url = window.location.toString()",
-          "coverage": 18
+          "coverage": 29
         },
         "56": {
           "source": "  serializeData(settings)",
-          "coverage": 18
+          "coverage": 29
         },
         "57": {
           "source": "",
@@ -948,7 +948,7 @@
         },
         "58": {
           "source": "  var mime = settings.accepts[dataType],",
-          "coverage": 18
+          "coverage": 29
         },
         "59": {
           "source": "    baseHeaders = {},",
@@ -972,23 +972,23 @@
         },
         "64": {
           "source": "  if (!settings.crossDomain) baseHeaders['X-Requested-With'] = 'XMLHttpRequest'",
-          "coverage": 20
+          "coverage": 31
         },
         "65": {
           "source": "  if (mime) {",
-          "coverage": 18
+          "coverage": 29
         },
         "66": {
           "source": "    baseHeaders['Accept'] = mime",
-          "coverage": 18
+          "coverage": 29
         },
         "67": {
           "source": "    if (mime.indexOf(',') &gt; -1) mime = mime.split(',', 2)[0]",
-          "coverage": 18
+          "coverage": 29
         },
         "68": {
           "source": "    xhr.overrideMimeType &amp;&amp; xhr.overrideMimeType(mime)",
-          "coverage": 18
+          "coverage": 29
         },
         "69": {
           "source": "  }",
@@ -996,15 +996,15 @@
         },
         "70": {
           "source": "  if (settings.contentType || (settings.data &amp;&amp; !settings.formdata &amp;&amp; settings.type.toUpperCase() != 'GET'))",
-          "coverage": 18
+          "coverage": 29
         },
         "71": {
           "source": "    baseHeaders['Content-Type'] = (settings.contentType || 'application/x-www-form-urlencoded')",
-          "coverage": 16
+          "coverage": 27
         },
         "72": {
           "source": "  settings.headers = extend(baseHeaders, settings.headers || {})",
-          "coverage": 18
+          "coverage": 29
         },
         "73": {
           "source": "",
@@ -1012,23 +1012,23 @@
         },
         "74": {
           "source": "  xhr.onreadystatechange = function () {",
-          "coverage": 18
+          "coverage": 29
         },
         "75": {
           "source": "    if (xhr.readyState == 4) {",
-          "coverage": 166
+          "coverage": 609
         },
         "76": {
           "source": "      clearTimeout(abortTimeout)",
-          "coverage": 17
+          "coverage": 29
         },
         "77": {
           "source": "      var result, error = false",
-          "coverage": 17
+          "coverage": 29
         },
         "78": {
           "source": "      if(settings.tryJSONP){",
-          "coverage": 17
+          "coverage": 29
         },
         "79": {
           "source": "        //check if the request has fail. In some cases, we may want to try jsonp as well. Again, FH only...",
@@ -1068,19 +1068,19 @@
         },
         "88": {
           "source": "      if ((xhr.status &gt;= 200 &amp;&amp; xhr.status &lt; 300) || xhr.status == 304 || (xhr.status == 0 &amp;&amp; protocol == 'file:')) {",
-          "coverage": 16
+          "coverage": 28
         },
         "89": {
           "source": "        dataType = dataType || mimeToDataType(xhr.getResponseHeader('content-type'))",
-          "coverage": 10
+          "coverage": 22
         },
         "90": {
           "source": "        result = xhr.responseText",
-          "coverage": 10
+          "coverage": 22
         },
         "91": {
           "source": "        logger.debug(\"ajax response :: status = \" + xhr.status + \" :: body = \" + result)",
-          "coverage": 10
+          "coverage": 22
         },
         "92": {
           "source": "",
@@ -1088,19 +1088,19 @@
         },
         "93": {
           "source": "        try {",
-          "coverage": 10
+          "coverage": 22
         },
         "94": {
           "source": "          if (dataType == 'script')(1, eval)(result)",
-          "coverage": 10
+          "coverage": 22
         },
         "95": {
           "source": "          else if (dataType == 'xml') result = xhr.responseXML",
-          "coverage": 10
+          "coverage": 22
         },
         "96": {
           "source": "          else if (dataType == 'json') result = blankRE.test(result) ? null : JSON.parse(result)",
-          "coverage": 20
+          "coverage": 44
         },
         "97": {
           "source": "        } catch (e) {",
@@ -1120,7 +1120,7 @@
         },
         "101": {
           "source": "        if (error) {",
-          "coverage": 10
+          "coverage": 22
         },
         "102": {
           "source": "          logger.debug(\"ajax error\", error);",
@@ -1136,7 +1136,7 @@
         },
         "105": {
           "source": "        else ajaxSuccess(result, xhr, settings)",
-          "coverage": 10
+          "coverage": 22
         },
         "106": {
           "source": "      } else {",
@@ -1164,15 +1164,15 @@
         },
         "112": {
           "source": "  var async = 'async' in settings ? settings.async : true",
-          "coverage": 18
+          "coverage": 29
         },
         "113": {
           "source": "  logger.debug(\"ajax call settings\", settings)",
-          "coverage": 18
+          "coverage": 29
         },
         "114": {
           "source": "  xhr.open(settings.type, settings.url, async)",
-          "coverage": 18
+          "coverage": 29
         },
         "115": {
           "source": "",
@@ -1180,7 +1180,7 @@
         },
         "116": {
           "source": "  for (name in settings.headers) xhr.setRequestHeader(name, settings.headers[name])",
-          "coverage": 54
+          "coverage": 87
         },
         "117": {
           "source": "",
@@ -1188,7 +1188,7 @@
         },
         "118": {
           "source": "  if (ajaxBeforeSend(xhr, settings) === false) {",
-          "coverage": 18
+          "coverage": 29
         },
         "119": {
           "source": "    logger.debug(\"ajax call is aborted due to ajaxBeforeSend\")",
@@ -1212,7 +1212,7 @@
         },
         "124": {
           "source": "  if (settings.timeout &gt; 0) abortTimeout = setTimeout(function () {",
-          "coverage": 36
+          "coverage": 58
         },
         "125": {
           "source": "    logger.debug(\"ajax call timed out\")",
@@ -1248,11 +1248,11 @@
         },
         "133": {
           "source": "  xhr.send(settings.data ? settings.data : null)",
-          "coverage": 18
+          "coverage": 29
         },
         "134": {
           "source": "  return xhr",
-          "coverage": 18
+          "coverage": 29
         },
         "135": {
           "source": "}",
@@ -1276,11 +1276,11 @@
         },
         "140": {
           "source": "  eventsHandler.emit(eventName, data);",
-          "coverage": 64
+          "coverage": 99
         },
         "141": {
           "source": "  return true;",
-          "coverage": 64
+          "coverage": 99
         },
         "142": {
           "source": "}",
@@ -1300,7 +1300,7 @@
         },
         "146": {
           "source": "  if (settings.global) return triggerAndReturn(context || document, eventName, data)",
-          "coverage": 128
+          "coverage": 198
         },
         "147": {
           "source": "}",
@@ -1328,7 +1328,7 @@
         },
         "153": {
           "source": "  if (settings.global &amp;&amp; ajax.active++ === 0) triggerGlobal(settings, null, 'ajaxStart')",
-          "coverage": 26
+          "coverage": 37
         },
         "154": {
           "source": "}",
@@ -1344,7 +1344,7 @@
         },
         "157": {
           "source": "  if (settings.global &amp;&amp; !(--ajax.active)) triggerGlobal(settings, null, 'ajaxStop')",
-          "coverage": 23
+          "coverage": 35
         },
         "158": {
           "source": "}",
@@ -1364,11 +1364,11 @@
         },
         "162": {
           "source": "  var context = settings.context",
-          "coverage": 18
+          "coverage": 29
         },
         "163": {
           "source": "  if (settings.beforeSend.call(context, xhr, settings) === false)",
-          "coverage": 18
+          "coverage": 29
         },
         "164": {
           "source": "    return false",
@@ -1380,7 +1380,7 @@
         },
         "166": {
           "source": "  triggerGlobal(settings, context, 'ajaxSend', [xhr, settings])",
-          "coverage": 18
+          "coverage": 29
         },
         "167": {
           "source": "}",
@@ -1396,7 +1396,7 @@
         },
         "170": {
           "source": "  var context = settings.context,",
-          "coverage": 10
+          "coverage": 22
         },
         "171": {
           "source": "    status = 'success'",
@@ -1404,15 +1404,15 @@
         },
         "172": {
           "source": "  settings.success.call(context, data, status, xhr)",
-          "coverage": 10
+          "coverage": 22
         },
         "173": {
           "source": "  triggerGlobal(settings, context, 'ajaxSuccess', [xhr, settings, data])",
-          "coverage": 10
+          "coverage": 22
         },
         "174": {
           "source": "  ajaxComplete(status, xhr, settings)",
-          "coverage": 10
+          "coverage": 22
         },
         "175": {
           "source": "}",
@@ -1456,19 +1456,19 @@
         },
         "185": {
           "source": "  var context = settings.context",
-          "coverage": 17
+          "coverage": 29
         },
         "186": {
           "source": "  settings.complete.call(context, xhr, status)",
-          "coverage": 17
+          "coverage": 29
         },
         "187": {
           "source": "  triggerGlobal(settings, context, 'ajaxComplete', [xhr, settings])",
-          "coverage": 17
+          "coverage": 29
         },
         "188": {
           "source": "  ajaxStop(settings)",
-          "coverage": 17
+          "coverage": 29
         },
         "189": {
           "source": "}",
@@ -1672,11 +1672,11 @@
         },
         "239": {
           "source": "  var ie = false;",
-          "coverage": 18
+          "coverage": 29
         },
         "240": {
           "source": "  if(navigator.userAgent &amp;&amp; navigator.userAgent.indexOf(\"MSIE\") &gt;=0 ){",
-          "coverage": 18
+          "coverage": 29
         },
         "241": {
           "source": "    ie = true;",
@@ -1688,7 +1688,7 @@
         },
         "243": {
           "source": "  return ie;",
-          "coverage": 18
+          "coverage": 29
         },
         "244": {
           "source": "}",
@@ -1704,7 +1704,7 @@
         },
         "247": {
           "source": "  var xhr = null;",
-          "coverage": 18
+          "coverage": 29
         },
         "248": {
           "source": "  //always use XMLHttpRequest if available",
@@ -1712,11 +1712,11 @@
         },
         "249": {
           "source": "  if(window.XMLHttpRequest){",
-          "coverage": 18
+          "coverage": 29
         },
         "250": {
           "source": "    xhr = new XMLHttpRequest();",
-          "coverage": 18
+          "coverage": 29
         },
         "251": {
           "source": "  }",
@@ -1728,7 +1728,7 @@
         },
         "253": {
           "source": "  if(isIE() &amp;&amp; (crossDomain === true) &amp;&amp; typeof window.XDomainRequest !== \"undefined\"){",
-          "coverage": 18
+          "coverage": 29
         },
         "254": {
           "source": "    xhr = new XDomainRequestWrapper(new XDomainRequest());",
@@ -1740,7 +1740,7 @@
         },
         "256": {
           "source": "  return xhr;",
-          "coverage": 18
+          "coverage": 29
         },
         "257": {
           "source": "}",
@@ -1928,7 +1928,7 @@
         },
         "303": {
           "source": "  if (type(options.data) === 'object') {",
-          "coverage": 19
+          "coverage": 30
         },
         "304": {
           "source": "    if(typeof options.data.append === \"function\"){",
@@ -1960,7 +1960,7 @@
         },
         "311": {
           "source": "  if (options.data &amp;&amp; (!options.type || options.type.toUpperCase() == 'GET'))",
-          "coverage": 19
+          "coverage": 30
         },
         "312": {
           "source": "    options.url = appendQuery(options.url, options.data)",
@@ -2188,23 +2188,23 @@
         },
         "368": {
           "source": "  var slice = Array.prototype.slice;",
-          "coverage": 37
+          "coverage": 59
         },
         "369": {
           "source": "  slice.call(arguments, 1).forEach(function (source) {",
-          "coverage": 37
+          "coverage": 59
         },
         "370": {
           "source": "    for (key in source)",
-          "coverage": 37
+          "coverage": 59
         },
         "371": {
           "source": "      if (source[key] !== undefined)",
-          "coverage": 161
+          "coverage": 249
         },
         "372": {
           "source": "        target[key] = source[key]",
-          "coverage": 147
+          "coverage": 224
         },
         "373": {
           "source": "  })",
@@ -2212,7 +2212,7 @@
         },
         "374": {
           "source": "  return target",
-          "coverage": 37
+          "coverage": 59
         },
         "375": {
           "source": "}",
@@ -2731,23 +2731,23 @@
         },
         "9": {
           "source": "  var cloud_host = cloud.getCloudHost();",
-          "coverage": 12
+          "coverage": 23
         },
         "10": {
           "source": "  var url = cloud_host.getCloudUrl(opts.path);",
-          "coverage": 12
+          "coverage": 23
         },
         "11": {
           "source": "  var params = opts.data || {};",
-          "coverage": 12
+          "coverage": 23
         },
         "12": {
           "source": "  params = fhparams.addFHParams(params);",
-          "coverage": 12
+          "coverage": 23
         },
         "13": {
           "source": "  return ajax({",
-          "coverage": 12
+          "coverage": 23
         },
         "14": {
           "source": "    \"url\": url,",
@@ -2807,11 +2807,11 @@
         },
         "28": {
           "source": "  logger.debug(\"cloud is called\");",
-          "coverage": 12
+          "coverage": 23
         },
         "29": {
           "source": "  if(!fail){",
-          "coverage": 12
+          "coverage": 23
         },
         "30": {
           "source": "    fail = function(msg, error){",
@@ -2835,15 +2835,15 @@
         },
         "35": {
           "source": "  cloud.ready(function(err, cloudHost){",
-          "coverage": 12
+          "coverage": 23
         },
         "36": {
           "source": "    logger.debug(\"Calling fhact now\");",
-          "coverage": 12
+          "coverage": 23
         },
         "37": {
           "source": "    if(err){",
-          "coverage": 12
+          "coverage": 23
         },
         "38": {
           "source": "      return fail(err.message, err);",
@@ -2855,7 +2855,7 @@
         },
         "40": {
           "source": "      doCloudCall(opts, success, fail);",
-          "coverage": 12
+          "coverage": 23
         },
         "41": {
           "source": "    }",
@@ -3523,7 +3523,7 @@
         },
         "57": {
           "source": "  return app_props;",
-          "coverage": 59
+          "coverage": 81
         },
         "58": {
           "source": "};",
@@ -4489,11 +4489,11 @@
         },
         "10": {
           "source": "  if(defaultParams){",
-          "coverage": 16
+          "coverage": 27
         },
         "11": {
           "source": "    return defaultParams;",
-          "coverage": 14
+          "coverage": 25
         },
         "12": {
           "source": "  }",
@@ -4669,15 +4669,15 @@
         },
         "55": {
           "source": "  var params = params || {};",
-          "coverage": 16
+          "coverage": 27
         },
         "56": {
           "source": "  params.__fh = buildFHParams();",
-          "coverage": 16
+          "coverage": 27
         },
         "57": {
           "source": "  return params;",
-          "coverage": 16
+          "coverage": 27
         },
         "58": {
           "source": "}",
@@ -4891,15 +4891,15 @@
         },
         "13": {
           "source": "  var ret = input;",
-          "coverage": 12
+          "coverage": 23
         },
         "14": {
           "source": "  if(ret.length &gt; 1 &amp;&amp; ret.charAt(0) === \"/\"){",
-          "coverage": 12
+          "coverage": 23
         },
         "15": {
           "source": "    ret = ret.substring(1, ret.length);",
-          "coverage": 11
+          "coverage": 22
         },
         "16": {
           "source": "  }",
@@ -4907,7 +4907,7 @@
         },
         "17": {
           "source": "  return ret;",
-          "coverage": 12
+          "coverage": 23
         },
         "18": {
           "source": "}",
@@ -4947,11 +4947,11 @@
         },
         "27": {
           "source": "  if(this.cloud_host){",
-          "coverage": 33
+          "coverage": 44
         },
         "28": {
           "source": "    return this.cloud_host;",
-          "coverage": 24
+          "coverage": 35
         },
         "29": {
           "source": "  } else {",
@@ -5159,11 +5159,11 @@
         },
         "80": {
           "source": "  var app_props = appProps.getAppProps() || {};",
-          "coverage": 12
+          "coverage": 23
         },
         "81": {
           "source": "  if(typeof this.cloud_host === \"undefined\"){",
-          "coverage": 12
+          "coverage": 23
         },
         "82": {
           "source": "    this.getHost(app_props.mode);",
@@ -5175,7 +5175,7 @@
         },
         "84": {
           "source": "  return this.cloud_host + \"/\" + removeStartSlash(path);",
-          "coverage": 12
+          "coverage": 23
         },
         "85": {
           "source": "}",
@@ -7496,9 +7496,9 @@
     },
     {
       "filename": "modules/sync-cli.js",
-      "coverage": 70.6896551724138,
-      "hits": 410,
-      "misses": 170,
+      "coverage": 83.9655172413793,
+      "hits": 487,
+      "misses": 93,
       "sloc": 580,
       "source": {
         "1": {
@@ -7891,7 +7891,7 @@
         },
         "98": {
           "source": "    self.notify_callback = callback;",
-          "coverage": 26
+          "coverage": 32
         },
         "99": {
           "source": "  },",
@@ -8139,7 +8139,7 @@
         },
         "160": {
           "source": "    if( ! self.config ) {",
-          "coverage": 28
+          "coverage": 34
         },
         "161": {
           "source": "      self.config = JSON.parse(JSON.stringify(self.defaults));",
@@ -8155,19 +8155,19 @@
         },
         "164": {
           "source": "    var datasetConfig = JSON.parse(JSON.stringify(self.config));",
-          "coverage": 28
+          "coverage": 34
         },
         "165": {
           "source": "    var optionsIn = JSON.parse(JSON.stringify(options));",
-          "coverage": 28
+          "coverage": 34
         },
         "166": {
           "source": "    for (var k in optionsIn) {",
-          "coverage": 28
+          "coverage": 34
         },
         "167": {
           "source": "      datasetConfig[k] = optionsIn[k];",
-          "coverage": 29
+          "coverage": 35
         },
         "168": {
           "source": "    }",
@@ -8179,7 +8179,7 @@
         },
         "170": {
           "source": "    return datasetConfig;",
-          "coverage": 28
+          "coverage": 34
         },
         "171": {
           "source": "  },",
@@ -8251,7 +8251,7 @@
         },
         "188": {
           "source": "    self.addPendingObj(dataset_id, null, data, \"create\", success, failure);",
-          "coverage": 2
+          "coverage": 7
         },
         "189": {
           "source": "  },",
@@ -8267,15 +8267,15 @@
         },
         "192": {
           "source": "      self.getDataSet(dataset_id, function(dataset) {",
-          "coverage": 6
+          "coverage": 12
         },
         "193": {
           "source": "      var rec = dataset.data[uid];",
-          "coverage": 6
+          "coverage": 12
         },
         "194": {
           "source": "      if (!rec) {",
-          "coverage": 6
+          "coverage": 12
         },
         "195": {
           "source": "        failure(\"unknown_uid\");",
@@ -8291,11 +8291,11 @@
         },
         "198": {
           "source": "        var res = JSON.parse(JSON.stringify(rec));",
-          "coverage": 5
+          "coverage": 11
         },
         "199": {
           "source": "        success(res);",
-          "coverage": 5
+          "coverage": 11
         },
         "200": {
           "source": "      }",
@@ -8327,7 +8327,7 @@
         },
         "207": {
           "source": "    self.addPendingObj(dataset_id, uid, data, \"update\", success, failure);",
-          "coverage": 3
+          "coverage": 6
         },
         "208": {
           "source": "  },",
@@ -8343,7 +8343,7 @@
         },
         "211": {
           "source": "    self.addPendingObj(dataset_id, uid, null, \"delete\", success, failure);",
-          "coverage": 1
+          "coverage": 4
         },
         "212": {
           "source": "  },",
@@ -8407,15 +8407,15 @@
         },
         "227": {
           "source": "    self.getDataSet(dataset_id, function(dataset) {",
-          "coverage": 0
+          "coverage": 11
         },
         "228": {
           "source": "      dataset.pending = {};",
-          "coverage": 0
+          "coverage": 11
         },
         "229": {
           "source": "      self.saveDataSet(dataset_id, cb);",
-          "coverage": 0
+          "coverage": 11
         },
         "230": {
           "source": "    });",
@@ -8543,7 +8543,7 @@
         },
         "261": {
           "source": "    var online = true;",
-          "coverage": 16
+          "coverage": 35
         },
         "262": {
           "source": "",
@@ -8555,11 +8555,11 @@
         },
         "264": {
           "source": "    if(typeof navigator.onLine !== \"undefined\"){",
-          "coverage": 16
+          "coverage": 35
         },
         "265": {
           "source": "      online = navigator.onLine;",
-          "coverage": 16
+          "coverage": 35
         },
         "266": {
           "source": "    }",
@@ -8575,7 +8575,7 @@
         },
         "269": {
           "source": "    if(online){",
-          "coverage": 16
+          "coverage": 35
         },
         "270": {
           "source": "      //use phonegap to determin if the network is available",
@@ -8583,7 +8583,7 @@
         },
         "271": {
           "source": "      if(typeof navigator.network !== \"undefined\" &amp;&amp; typeof navigator.network.connection !== \"undefined\"){",
-          "coverage": 16
+          "coverage": 35
         },
         "272": {
           "source": "        var networkType = navigator.network.connection.type;",
@@ -8615,7 +8615,7 @@
         },
         "279": {
           "source": "    return callback(online);",
-          "coverage": 16
+          "coverage": 35
         },
         "280": {
           "source": "  },",
@@ -8635,7 +8635,7 @@
         },
         "284": {
           "source": "    if( self.notify_callback ) {",
-          "coverage": 30
+          "coverage": 72
         },
         "285": {
           "source": "      if ( self.config['notify_' + code] ) {",
@@ -8703,7 +8703,7 @@
         },
         "301": {
           "source": "    var dataset = self.datasets[dataset_id];",
-          "coverage": 99
+          "coverage": 199
         },
         "302": {
           "source": "",
@@ -8711,11 +8711,11 @@
         },
         "303": {
           "source": "    if (dataset) {",
-          "coverage": 99
+          "coverage": 199
         },
         "304": {
           "source": "      success(dataset);",
-          "coverage": 96
+          "coverage": 196
         },
         "305": {
           "source": "    } else {",
@@ -8991,7 +8991,7 @@
         },
         "373": {
           "source": "    var dataset = self.datasets[dataset_id];",
-          "coverage": 25
+          "coverage": 31
         },
         "374": {
           "source": "",
@@ -8999,27 +8999,27 @@
         },
         "375": {
           "source": "    if (dataset) {",
-          "coverage": 25
+          "coverage": 31
         },
         "376": {
           "source": "      var fullConfig = self.setOptions(config);",
-          "coverage": 25
+          "coverage": 31
         },
         "377": {
           "source": "      dataset.config = fullConfig;",
-          "coverage": 25
+          "coverage": 31
         },
         "378": {
           "source": "      self.saveDataSet(dataset_id);",
-          "coverage": 25
+          "coverage": 31
         },
         "379": {
           "source": "      if( success ) {",
-          "coverage": 25
+          "coverage": 31
         },
         "380": {
           "source": "        success(dataset.config);",
-          "coverage": 25
+          "coverage": 31
         },
         "381": {
           "source": "      }",
@@ -9059,15 +9059,15 @@
         },
         "390": {
           "source": "    self.setConfig(dataset_id, {\"sync_active\" : false}, function() {",
-          "coverage": 21
+          "coverage": 27
         },
         "391": {
           "source": "      if( success ) {",
-          "coverage": 21
+          "coverage": 27
         },
         "392": {
           "source": "        success();",
-          "coverage": 20
+          "coverage": 26
         },
         "393": {
           "source": "      }",
@@ -9187,7 +9187,7 @@
         },
         "422": {
           "source": "    var dataset = self.datasets[dataset_id];",
-          "coverage": 7
+          "coverage": 15
         },
         "423": {
           "source": "",
@@ -9195,23 +9195,23 @@
         },
         "424": {
           "source": "    if (dataset) {",
-          "coverage": 7
+          "coverage": 15
         },
         "425": {
           "source": "      dataset.syncForced = true;",
-          "coverage": 7
+          "coverage": 15
         },
         "426": {
           "source": "      self.saveDataSet(dataset_id);",
-          "coverage": 7
+          "coverage": 15
         },
         "427": {
           "source": "      if( success ) {",
-          "coverage": 7
+          "coverage": 15
         },
         "428": {
           "source": "        success();",
-          "coverage": 7
+          "coverage": 15
         },
         "429": {
           "source": "      }",
@@ -9251,11 +9251,11 @@
         },
         "438": {
           "source": "    if (typeof object !== \"object\" || object === null) {",
-          "coverage": 92
+          "coverage": 230
         },
         "439": {
           "source": "      return object;",
-          "coverage": 66
+          "coverage": 165
         },
         "440": {
           "source": "    }",
@@ -9267,7 +9267,7 @@
         },
         "442": {
           "source": "    var result = [];",
-          "coverage": 26
+          "coverage": 65
         },
         "443": {
           "source": "",
@@ -9275,11 +9275,11 @@
         },
         "444": {
           "source": "    Object.keys(object).sort().forEach(function(key) {",
-          "coverage": 26
+          "coverage": 65
         },
         "445": {
           "source": "      result.push({",
-          "coverage": 74
+          "coverage": 184
         },
         "446": {
           "source": "        key: key,",
@@ -9303,7 +9303,7 @@
         },
         "451": {
           "source": "    return result;",
-          "coverage": 26
+          "coverage": 65
         },
         "452": {
           "source": "  },",
@@ -9323,7 +9323,7 @@
         },
         "456": {
           "source": "    var str = '';",
-          "coverage": 18
+          "coverage": 46
         },
         "457": {
           "source": "",
@@ -9331,11 +9331,11 @@
         },
         "458": {
           "source": "    try {",
-          "coverage": 18
+          "coverage": 46
         },
         "459": {
           "source": "      str = JSON.stringify(self.sortObject(obj));",
-          "coverage": 18
+          "coverage": 46
         },
         "460": {
           "source": "    } catch (e) {",
@@ -9355,7 +9355,7 @@
         },
         "464": {
           "source": "    return str;",
-          "coverage": 18
+          "coverage": 46
         },
         "465": {
           "source": "  },",
@@ -9371,11 +9371,11 @@
         },
         "468": {
           "source": "    var hash = CryptoJS.SHA1(self.sortedStringify(object));",
-          "coverage": 18
+          "coverage": 46
         },
         "469": {
           "source": "    return hash.toString();",
-          "coverage": 18
+          "coverage": 46
         },
         "470": {
           "source": "  },",
@@ -9391,11 +9391,11 @@
         },
         "473": {
           "source": "    self.isOnline(function (online) {",
-          "coverage": 6
+          "coverage": 17
         },
         "474": {
           "source": "      if (!online) {",
-          "coverage": 6
+          "coverage": 17
         },
         "475": {
           "source": "        self.doNotify(dataset_id, uid, self.notifications.OFFLINE_UPDATE, action);",
@@ -9415,11 +9415,11 @@
         },
         "479": {
           "source": "    function storePendingObject(obj) {",
-          "coverage": 6
+          "coverage": 17
         },
         "480": {
           "source": "      obj.hash = self.generateHash(obj);",
-          "coverage": 6
+          "coverage": 17
         },
         "481": {
           "source": "",
@@ -9427,7 +9427,7 @@
         },
         "482": {
           "source": "      self.getDataSet(dataset_id, function(dataset) {",
-          "coverage": 6
+          "coverage": 17
         },
         "483": {
           "source": "",
@@ -9435,7 +9435,7 @@
         },
         "484": {
           "source": "        dataset.pending[obj.hash] = obj;",
-          "coverage": 6
+          "coverage": 17
         },
         "485": {
           "source": "",
@@ -9443,7 +9443,7 @@
         },
         "486": {
           "source": "        self.updateDatasetFromLocal(dataset, obj);",
-          "coverage": 6
+          "coverage": 17
         },
         "487": {
           "source": "",
@@ -9451,11 +9451,11 @@
         },
         "488": {
           "source": "        if(self.config.auto_sync_local_updates) {",
-          "coverage": 6
+          "coverage": 17
         },
         "489": {
           "source": "          dataset.syncPending = true;",
-          "coverage": 6
+          "coverage": 17
         },
         "490": {
           "source": "        }",
@@ -9463,11 +9463,11 @@
         },
         "491": {
           "source": "        self.saveDataSet(dataset_id);",
-          "coverage": 6
+          "coverage": 17
         },
         "492": {
           "source": "        self.doNotify(dataset_id, uid, self.notifications.LOCAL_UPDATE_APPLIED, action);",
-          "coverage": 6
+          "coverage": 17
         },
         "493": {
           "source": "",
@@ -9475,7 +9475,7 @@
         },
         "494": {
           "source": "        success(obj);",
-          "coverage": 6
+          "coverage": 17
         },
         "495": {
           "source": "      }, function(code, msg) {",
@@ -9499,39 +9499,39 @@
         },
         "500": {
           "source": "    var pendingObj = {};",
-          "coverage": 6
+          "coverage": 17
         },
         "501": {
           "source": "    pendingObj.inFlight = false;",
-          "coverage": 6
+          "coverage": 17
         },
         "502": {
           "source": "    pendingObj.action = action;",
-          "coverage": 6
+          "coverage": 17
         },
         "503": {
           "source": "    pendingObj.post = JSON.parse(JSON.stringify(data));",
-          "coverage": 6
+          "coverage": 17
         },
         "504": {
           "source": "    pendingObj.postHash = self.generateHash(pendingObj.post);",
-          "coverage": 6
+          "coverage": 17
         },
         "505": {
           "source": "    pendingObj.timestamp = new Date().getTime();",
-          "coverage": 6
+          "coverage": 17
         },
         "506": {
           "source": "    if( \"create\" === action ) {",
-          "coverage": 6
+          "coverage": 17
         },
         "507": {
           "source": "      pendingObj.uid = pendingObj.postHash;",
-          "coverage": 2
+          "coverage": 7
         },
         "508": {
           "source": "      storePendingObject(pendingObj);",
-          "coverage": 2
+          "coverage": 7
         },
         "509": {
           "source": "    } else {",
@@ -9539,23 +9539,23 @@
         },
         "510": {
           "source": "      self.read(dataset_id, uid, function(rec) {",
-          "coverage": 4
+          "coverage": 10
         },
         "511": {
           "source": "        pendingObj.uid = uid;",
-          "coverage": 4
+          "coverage": 10
         },
         "512": {
           "source": "        pendingObj.pre = rec.data;",
-          "coverage": 4
+          "coverage": 10
         },
         "513": {
           "source": "        pendingObj.preHash = self.generateHash(rec.data);",
-          "coverage": 4
+          "coverage": 10
         },
         "514": {
           "source": "        storePendingObject(pendingObj);",
-          "coverage": 4
+          "coverage": 10
         },
         "515": {
           "source": "      }, function(code, msg) {",
@@ -9587,7 +9587,7 @@
         },
         "522": {
           "source": "    self.getDataSet(dataset_id, function(dataSet) {",
-          "coverage": 10
+          "coverage": 18
         },
         "523": {
           "source": "    ",
@@ -9599,19 +9599,19 @@
         },
         "525": {
           "source": "      dataSet.syncPending = false;",
-          "coverage": 10
+          "coverage": 18
         },
         "526": {
           "source": "      dataSet.syncRunning = true;",
-          "coverage": 10
+          "coverage": 18
         },
         "527": {
           "source": "      dataSet.syncLoopStart = new Date().getTime();",
-          "coverage": 10
+          "coverage": 18
         },
         "528": {
           "source": "      self.doNotify(dataset_id, null, self.notifications.SYNC_STARTED, null);",
-          "coverage": 10
+          "coverage": 18
         },
         "529": {
           "source": "",
@@ -9619,11 +9619,11 @@
         },
         "530": {
           "source": "      self.isOnline(function(online) {",
-          "coverage": 10
+          "coverage": 18
         },
         "531": {
           "source": "        if (!online) {",
-          "coverage": 10
+          "coverage": 18
         },
         "532": {
           "source": "          self.syncComplete(dataset_id, \"offline\", self.notifications.SYNC_FAILED);",
@@ -9635,7 +9635,7 @@
         },
         "534": {
           "source": "          self.checkHasCustomSync(dataset_id, function() {",
-          "coverage": 10
+          "coverage": 18
         },
         "535": {
           "source": "",
@@ -9643,27 +9643,27 @@
         },
         "536": {
           "source": "            var syncLoopParams = {};",
-          "coverage": 10
+          "coverage": 18
         },
         "537": {
           "source": "            syncLoopParams.fn = 'sync';",
-          "coverage": 10
+          "coverage": 18
         },
         "538": {
           "source": "            syncLoopParams.dataset_id = dataset_id;",
-          "coverage": 10
+          "coverage": 18
         },
         "539": {
           "source": "            syncLoopParams.query_params = dataSet.query_params;",
-          "coverage": 10
+          "coverage": 18
         },
         "540": {
           "source": "            syncLoopParams.config = dataSet.config;",
-          "coverage": 10
+          "coverage": 18
         },
         "541": {
           "source": "            syncLoopParams.meta_data = dataSet.meta_data;",
-          "coverage": 10
+          "coverage": 18
         },
         "542": {
           "source": "            //var datasetHash = self.generateLocalDatasetHash(dataSet);",
@@ -9671,11 +9671,11 @@
         },
         "543": {
           "source": "            syncLoopParams.dataset_hash = dataSet.hash;",
-          "coverage": 10
+          "coverage": 18
         },
         "544": {
           "source": "            syncLoopParams.acknowledgements = dataSet.acknowledgements || [];",
-          "coverage": 10
+          "coverage": 18
         },
         "545": {
           "source": "",
@@ -9683,15 +9683,15 @@
         },
         "546": {
           "source": "            var pending = dataSet.pending;",
-          "coverage": 10
+          "coverage": 18
         },
         "547": {
           "source": "            var pendingArray = [];",
-          "coverage": 10
+          "coverage": 18
         },
         "548": {
           "source": "            for(var i in pending ) {",
-          "coverage": 10
+          "coverage": 18
         },
         "549": {
           "source": "              // Mark the pending records we are about to submit as inflight and add them to the array for submission",
@@ -9707,19 +9707,19 @@
         },
         "552": {
           "source": "              if( !pending[i].inFlight &amp;&amp; !pending[i].crashed &amp;&amp; !pending[i].delayed) {",
-          "coverage": 11
+          "coverage": 17
         },
         "553": {
           "source": "                pending[i].inFlight = true;",
-          "coverage": 4
+          "coverage": 10
         },
         "554": {
           "source": "                pending[i].inFlightDate = new Date().getTime();",
-          "coverage": 4
+          "coverage": 10
         },
         "555": {
           "source": "                pendingArray.push(pending[i]);",
-          "coverage": 4
+          "coverage": 10
         },
         "556": {
           "source": "              }",
@@ -9731,7 +9731,7 @@
         },
         "558": {
           "source": "            syncLoopParams.pending = pendingArray;",
-          "coverage": 10
+          "coverage": 18
         },
         "559": {
           "source": "",
@@ -9739,11 +9739,11 @@
         },
         "560": {
           "source": "            if( pendingArray.length &gt; 0 ) {",
-          "coverage": 10
+          "coverage": 18
         },
         "561": {
           "source": "              self.consoleLog('Starting sync loop - global hash = ' + dataSet.hash + ' :: params = ' + JSON.stringify(syncLoopParams, null, 2));",
-          "coverage": 4
+          "coverage": 10
         },
         "562": {
           "source": "            }",
@@ -9751,11 +9751,11 @@
         },
         "563": {
           "source": "            try {",
-          "coverage": 10
+          "coverage": 18
         },
         "564": {
           "source": "              self.doCloudCall({",
-          "coverage": 10
+          "coverage": 18
         },
         "565": {
           "source": "                'dataset_id': dataset_id,",
@@ -9771,7 +9771,7 @@
         },
         "568": {
           "source": "                var rec;",
-          "coverage": 4
+          "coverage": 13
         },
         "569": {
           "source": "",
@@ -9779,35 +9779,35 @@
         },
         "570": {
           "source": "                function processUpdates(updates, notification, acknowledgements) {",
-          "coverage": 4
+          "coverage": 13
         },
         "571": {
           "source": "                  if( updates ) {",
-          "coverage": 9
+          "coverage": 24
         },
         "572": {
           "source": "                    for (var up in updates) {",
-          "coverage": 1
+          "coverage": 6
         },
         "573": {
           "source": "                      rec = updates[up];",
-          "coverage": 1
+          "coverage": 6
         },
         "574": {
           "source": "                      acknowledgements.push(rec);",
-          "coverage": 1
+          "coverage": 6
         },
         "575": {
           "source": "                      if( dataSet.pending[up] &amp;&amp; dataSet.pending[up].inFlight &amp;&amp; !dataSet.pending[up].crashed ) {",
-          "coverage": 1
+          "coverage": 6
         },
         "576": {
           "source": "                        delete dataSet.pending[up];",
-          "coverage": 1
+          "coverage": 5
         },
         "577": {
           "source": "                        self.doNotify(dataset_id, rec.uid, notification, rec);",
-          "coverage": 1
+          "coverage": 5
         },
         "578": {
           "source": "                      }",
@@ -9835,7 +9835,7 @@
         },
         "584": {
           "source": "                self.updatePendingFromNewData(dataset_id, dataSet, res);",
-          "coverage": 4
+          "coverage": 13
         },
         "585": {
           "source": "",
@@ -9847,7 +9847,7 @@
         },
         "587": {
           "source": "                self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);",
-          "coverage": 4
+          "coverage": 13
         },
         "588": {
           "source": "",
@@ -9859,7 +9859,7 @@
         },
         "590": {
           "source": "                self.updateDelayedFromNewData(dataset_id, dataSet, res);",
-          "coverage": 4
+          "coverage": 13
         },
         "591": {
           "source": "",
@@ -9871,7 +9871,7 @@
         },
         "593": {
           "source": "                self.updateNewDataFromInFlight(dataset_id, dataSet, res);",
-          "coverage": 4
+          "coverage": 13
         },
         "594": {
           "source": "",
@@ -9883,7 +9883,7 @@
         },
         "596": {
           "source": "                self.updateNewDataFromPending(dataset_id, dataSet, res);",
-          "coverage": 4
+          "coverage": 13
         },
         "597": {
           "source": "",
@@ -9899,7 +9899,7 @@
         },
         "600": {
           "source": "                if (res.records) {",
-          "coverage": 4
+          "coverage": 13
         },
         "601": {
           "source": "                  // Full Dataset returned",
@@ -9907,11 +9907,11 @@
         },
         "602": {
           "source": "                  dataSet.data = res.records;",
-          "coverage": 1
+          "coverage": 7
         },
         "603": {
           "source": "                  dataSet.hash = res.hash;",
-          "coverage": 1
+          "coverage": 7
         },
         "604": {
           "source": "",
@@ -9919,7 +9919,7 @@
         },
         "605": {
           "source": "                  self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'full dataset');",
-          "coverage": 1
+          "coverage": 7
         },
         "606": {
           "source": "                }",
@@ -9931,27 +9931,27 @@
         },
         "608": {
           "source": "                if (res.updates) {",
-          "coverage": 4
+          "coverage": 13
         },
         "609": {
           "source": "                  var acknowledgements = [];",
-          "coverage": 3
+          "coverage": 8
         },
         "610": {
           "source": "                  processUpdates(res.updates.applied, self.notifications.REMOTE_UPDATE_APPLIED, acknowledgements);",
-          "coverage": 3
+          "coverage": 8
         },
         "611": {
           "source": "                  processUpdates(res.updates.failed, self.notifications.REMOTE_UPDATE_FAILED, acknowledgements);",
-          "coverage": 3
+          "coverage": 8
         },
         "612": {
           "source": "                  processUpdates(res.updates.collisions, self.notifications.COLLISION_DETECTED, acknowledgements);",
-          "coverage": 3
+          "coverage": 8
         },
         "613": {
           "source": "                  dataSet.acknowledgements = acknowledgements;",
-          "coverage": 3
+          "coverage": 8
         },
         "614": {
           "source": "                }",
@@ -9963,11 +9963,11 @@
         },
         "616": {
           "source": "                if (!res.records &amp;&amp; res.hash &amp;&amp; res.hash !== dataSet.hash) {",
-          "coverage": 4
+          "coverage": 13
         },
         "617": {
           "source": "                  self.consoleLog(\"Local dataset stale - syncing records :: local hash= \" + dataSet.hash + \" - remoteHash=\" + res.hash);",
-          "coverage": 1
+          "coverage": 4
         },
         "618": {
           "source": "                  // Different hash value returned - Sync individual records",
@@ -9975,7 +9975,7 @@
         },
         "619": {
           "source": "                  self.syncRecords(dataset_id);",
-          "coverage": 1
+          "coverage": 4
         },
         "620": {
           "source": "                } else {",
@@ -9983,11 +9983,11 @@
         },
         "621": {
           "source": "                  self.consoleLog(\"Local dataset up to date\");",
-          "coverage": 3
+          "coverage": 9
         },
         "622": {
           "source": "                  self.syncComplete(dataset_id,  \"online\", self.notifications.SYNC_COMPLETE);",
-          "coverage": 3
+          "coverage": 9
         },
         "623": {
           "source": "                }",
@@ -10079,7 +10079,7 @@
         },
         "645": {
           "source": "    self.getDataSet(dataset_id, function(dataSet) {",
-          "coverage": 1
+          "coverage": 4
         },
         "646": {
           "source": "",
@@ -10087,7 +10087,7 @@
         },
         "647": {
           "source": "      var localDataSet = dataSet.data || {};",
-          "coverage": 1
+          "coverage": 4
         },
         "648": {
           "source": "",
@@ -10095,23 +10095,23 @@
         },
         "649": {
           "source": "      var clientRecs = {};",
-          "coverage": 1
+          "coverage": 4
         },
         "650": {
           "source": "      for (var i in localDataSet) {",
-          "coverage": 1
+          "coverage": 4
         },
         "651": {
           "source": "        var uid = i;",
-          "coverage": 1
+          "coverage": 4
         },
         "652": {
           "source": "        var hash = localDataSet[i].hash;",
-          "coverage": 1
+          "coverage": 4
         },
         "653": {
           "source": "        clientRecs[uid] = hash;",
-          "coverage": 1
+          "coverage": 4
         },
         "654": {
           "source": "      }",
@@ -10123,7 +10123,7 @@
         },
         "656": {
           "source": "      var syncRecParams = {};",
-          "coverage": 1
+          "coverage": 4
         },
         "657": {
           "source": "",
@@ -10131,19 +10131,19 @@
         },
         "658": {
           "source": "      syncRecParams.fn = 'syncRecords';",
-          "coverage": 1
+          "coverage": 4
         },
         "659": {
           "source": "      syncRecParams.dataset_id = dataset_id;",
-          "coverage": 1
+          "coverage": 4
         },
         "660": {
           "source": "      syncRecParams.query_params = dataSet.query_params;",
-          "coverage": 1
+          "coverage": 4
         },
         "661": {
           "source": "      syncRecParams.clientRecs = clientRecs;",
-          "coverage": 1
+          "coverage": 4
         },
         "662": {
           "source": "",
@@ -10151,7 +10151,7 @@
         },
         "663": {
           "source": "      self.consoleLog(\"syncRecParams :: \" + JSON.stringify(syncRecParams));",
-          "coverage": 1
+          "coverage": 4
         },
         "664": {
           "source": "",
@@ -10159,7 +10159,7 @@
         },
         "665": {
           "source": "      self.doCloudCall({",
-          "coverage": 1
+          "coverage": 4
         },
         "666": {
           "source": "        'dataset_id': dataset_id,",
@@ -10175,7 +10175,7 @@
         },
         "669": {
           "source": "        var i;",
-          "coverage": 1
+          "coverage": 4
         },
         "670": {
           "source": "",
@@ -10183,19 +10183,19 @@
         },
         "671": {
           "source": "        if (res.create) {",
-          "coverage": 1
+          "coverage": 4
         },
         "672": {
           "source": "          for (i in res.create) {",
-          "coverage": 1
+          "coverage": 4
         },
         "673": {
           "source": "            localDataSet[i] = {\"hash\" : res.create[i].hash, \"data\" : res.create[i].data};",
-          "coverage": 1
+          "coverage": 2
         },
         "674": {
           "source": "            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, \"create\");",
-          "coverage": 1
+          "coverage": 2
         },
         "675": {
           "source": "          }",
@@ -10207,11 +10207,11 @@
         },
         "677": {
           "source": "        if (res.update) {",
-          "coverage": 1
+          "coverage": 4
         },
         "678": {
           "source": "          for (i in res.update) {",
-          "coverage": 1
+          "coverage": 3
         },
         "679": {
           "source": "            localDataSet[i].hash = res.update[i].hash;",
@@ -10235,11 +10235,11 @@
         },
         "684": {
           "source": "        if (res['delete']) {",
-          "coverage": 1
+          "coverage": 4
         },
         "685": {
           "source": "          for (i in res['delete']) {",
-          "coverage": 1
+          "coverage": 3
         },
         "686": {
           "source": "            delete localDataSet[i];",
@@ -10263,7 +10263,7 @@
         },
         "691": {
           "source": "        self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'partial dataset');",
-          "coverage": 1
+          "coverage": 4
         },
         "692": {
           "source": "",
@@ -10271,15 +10271,15 @@
         },
         "693": {
           "source": "        dataSet.data = localDataSet;",
-          "coverage": 1
+          "coverage": 4
         },
         "694": {
           "source": "        if(res.hash) {",
-          "coverage": 1
+          "coverage": 4
         },
         "695": {
           "source": "          dataSet.hash = res.hash;",
-          "coverage": 1
+          "coverage": 4
         },
         "696": {
           "source": "        }",
@@ -10287,7 +10287,7 @@
         },
         "697": {
           "source": "        self.syncComplete(dataset_id, \"online\", self.notifications.SYNC_COMPLETE);",
-          "coverage": 1
+          "coverage": 4
         },
         "698": {
           "source": "      }, function(msg, err) {",
@@ -10327,23 +10327,23 @@
         },
         "707": {
           "source": "    self.getDataSet(dataset_id, function(dataset) {",
-          "coverage": 9
+          "coverage": 18
         },
         "708": {
           "source": "      dataset.syncRunning = false;",
-          "coverage": 9
+          "coverage": 18
         },
         "709": {
           "source": "      dataset.syncLoopEnd = new Date().getTime();",
-          "coverage": 9
+          "coverage": 18
         },
         "710": {
           "source": "      self.saveDataSet(dataset_id);",
-          "coverage": 9
+          "coverage": 18
         },
         "711": {
           "source": "      self.doNotify(dataset_id, dataset.hash, notification, status);",
-          "coverage": 9
+          "coverage": 18
         },
         "712": {
           "source": "    });",
@@ -10363,15 +10363,15 @@
         },
         "716": {
           "source": "    for( var dataset_id in self.datasets ) {",
-          "coverage": 28
+          "coverage": 44
         },
         "717": {
           "source": "      if( self.datasets.hasOwnProperty(dataset_id) ) {",
-          "coverage": 38
+          "coverage": 70
         },
         "718": {
           "source": "        var dataset = self.datasets[dataset_id];",
-          "coverage": 38
+          "coverage": 70
         },
         "719": {
           "source": "",
@@ -10379,7 +10379,7 @@
         },
         "720": {
           "source": "        if( !dataset.syncRunning &amp;&amp; (dataset.config.sync_active || dataset.syncForced)) {",
-          "coverage": 38
+          "coverage": 70
         },
         "721": {
           "source": "          // Check to see if it is time for the sync loop to run again",
@@ -10387,15 +10387,15 @@
         },
         "722": {
           "source": "          var lastSyncStart = dataset.syncLoopStart;",
-          "coverage": 12
+          "coverage": 20
         },
         "723": {
           "source": "          var lastSyncCmp = dataset.syncLoopEnd;",
-          "coverage": 12
+          "coverage": 20
         },
         "724": {
           "source": "          if( lastSyncStart == null ) {",
-          "coverage": 12
+          "coverage": 20
         },
         "725": {
           "source": "            self.consoleLog(dataset_id +' - Performing initial sync');",
@@ -10411,19 +10411,19 @@
         },
         "728": {
           "source": "          } else if (lastSyncCmp != null) {",
-          "coverage": 10
+          "coverage": 18
         },
         "729": {
           "source": "            var timeSinceLastSync = new Date().getTime() - lastSyncCmp;",
-          "coverage": 10
+          "coverage": 18
         },
         "730": {
           "source": "            var syncFrequency = dataset.config.sync_frequency * 1000;",
-          "coverage": 10
+          "coverage": 18
         },
         "731": {
           "source": "            if( timeSinceLastSync &gt; syncFrequency ) {",
-          "coverage": 10
+          "coverage": 18
         },
         "732": {
           "source": "              // Time between sync loops has passed - do another sync",
@@ -10447,11 +10447,11 @@
         },
         "737": {
           "source": "          if( dataset.syncForced ) {",
-          "coverage": 12
+          "coverage": 20
         },
         "738": {
           "source": "            dataset.syncPending = true;",
-          "coverage": 7
+          "coverage": 15
         },
         "739": {
           "source": "          }",
@@ -10463,7 +10463,7 @@
         },
         "741": {
           "source": "          if( dataset.syncPending ) {",
-          "coverage": 12
+          "coverage": 20
         },
         "742": {
           "source": "            // Reset syncForced in case it was what caused the sync cycle to run.",
@@ -10471,7 +10471,7 @@
         },
         "743": {
           "source": "            dataset.syncForced = false;",
-          "coverage": 10
+          "coverage": 18
         },
         "744": {
           "source": "",
@@ -10491,7 +10491,7 @@
         },
         "748": {
           "source": "            self.syncLoop(dataset_id);",
-          "coverage": 10
+          "coverage": 18
         },
         "749": {
           "source": "          }",
@@ -10523,11 +10523,11 @@
         },
         "756": {
           "source": "    if(self.hasCustomSync != null) {",
-          "coverage": 10
+          "coverage": 18
         },
         "757": {
           "source": "      return cb();",
-          "coverage": 9
+          "coverage": 17
         },
         "758": {
           "source": "    }",
@@ -10647,7 +10647,7 @@
         },
         "787": {
           "source": "    if( self.hasCustomSync ) {",
-          "coverage": 11
+          "coverage": 22
         },
         "788": {
           "source": "      actAPI({",
@@ -10687,7 +10687,7 @@
         },
         "797": {
           "source": "      cloudAPI({",
-          "coverage": 11
+          "coverage": 22
         },
         "798": {
           "source": "        'path' : '/mbaas/sync/' + params.dataset_id,",
@@ -10707,7 +10707,7 @@
         },
         "802": {
           "source": "        success(res);",
-          "coverage": 5
+          "coverage": 17
         },
         "803": {
           "source": "      }, function(msg, err) {",
@@ -10739,7 +10739,7 @@
         },
         "810": {
           "source": "    self.checkDatasets();",
-          "coverage": 28
+          "coverage": 44
         },
         "811": {
           "source": "",
@@ -10751,11 +10751,11 @@
         },
         "813": {
           "source": "    setTimeout(function() {",
-          "coverage": 28
+          "coverage": 44
         },
         "814": {
           "source": "      self.datasetMonitor();",
-          "coverage": 26
+          "coverage": 42
         },
         "815": {
           "source": "    }, 500);",
@@ -10775,7 +10775,7 @@
         },
         "819": {
           "source": "    var onFail =  function(msg, err) {",
-          "coverage": 53
+          "coverage": 98
         },
         "820": {
           "source": "      // save failed",
@@ -10799,7 +10799,7 @@
         },
         "825": {
           "source": "    self.getDataSet(dataset_id, function(dataset) {",
-          "coverage": 53
+          "coverage": 98
         },
         "826": {
           "source": "      // save dataset to local storage",
@@ -10807,11 +10807,11 @@
         },
         "827": {
           "source": "      Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota}, function (){",
-          "coverage": 53
+          "coverage": 98
         },
         "828": {
           "source": "        this.save({key:\"dataset_\" + dataset_id, val:dataset}, function(){",
-          "coverage": 53
+          "coverage": 98
         },
         "829": {
           "source": "          //save success",
@@ -10819,7 +10819,7 @@
         },
         "830": {
           "source": "          if(cb) return cb();",
-          "coverage": 56
+          "coverage": 112
         },
         "831": {
           "source": "        });",
@@ -10967,15 +10967,15 @@
         },
         "867": {
           "source": "    var pending = dataset.pending;",
-          "coverage": 6
+          "coverage": 17
         },
         "868": {
           "source": "    var previousPendingUid;",
-          "coverage": 6
+          "coverage": 17
         },
         "869": {
           "source": "    var previousPending;",
-          "coverage": 6
+          "coverage": 17
         },
         "870": {
           "source": "",
@@ -10983,11 +10983,11 @@
         },
         "871": {
           "source": "    var uid = pendingRec.uid;",
-          "coverage": 6
+          "coverage": 17
         },
         "872": {
           "source": "    self.consoleLog('updating local dataset for uid ' + uid + ' - action = ' + pendingRec.action);",
-          "coverage": 6
+          "coverage": 17
         },
         "873": {
           "source": "",
@@ -10995,7 +10995,7 @@
         },
         "874": {
           "source": "    dataset.meta[uid] = dataset.meta[uid] || {};",
-          "coverage": 6
+          "coverage": 17
         },
         "875": {
           "source": "",
@@ -11007,15 +11007,15 @@
         },
         "877": {
           "source": "    if( pendingRec.action === \"create\" ) {",
-          "coverage": 6
+          "coverage": 17
         },
         "878": {
           "source": "      if( dataset.data[uid] ) {",
-          "coverage": 2
+          "coverage": 7
         },
         "879": {
           "source": "        self.consoleLog('dataset already exists for uid in create :: ' + JSON.stringify(dataset.data[uid]));",
-          "coverage": 0
+          "coverage": 1
         },
         "880": {
           "source": "",
@@ -11027,7 +11027,7 @@
         },
         "882": {
           "source": "        if (dataset.meta[uid].fromPending) {",
-          "coverage": 0
+          "coverage": 1
         },
         "883": {
           "source": "          // We are trying to create on top of an existing pending record",
@@ -11039,11 +11039,11 @@
         },
         "885": {
           "source": "          previousPendingUid = dataset.meta[uid].pendingUid;",
-          "coverage": 0
+          "coverage": 1
         },
         "886": {
           "source": "          delete pending[previousPendingUid];",
-          "coverage": 0
+          "coverage": 1
         },
         "887": {
           "source": "        }",
@@ -11055,7 +11055,7 @@
         },
         "889": {
           "source": "      dataset.data[uid] = {};",
-          "coverage": 2
+          "coverage": 7
         },
         "890": {
           "source": "    }",
@@ -11067,19 +11067,19 @@
         },
         "892": {
           "source": "    if( pendingRec.action === \"update\" ) {",
-          "coverage": 6
+          "coverage": 17
         },
         "893": {
           "source": "      if( dataset.data[uid] ) {",
-          "coverage": 3
+          "coverage": 6
         },
         "894": {
           "source": "        if (dataset.meta[uid].fromPending) {",
-          "coverage": 3
+          "coverage": 6
         },
         "895": {
           "source": "          self.consoleLog('updating an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));",
-          "coverage": 2
+          "coverage": 4
         },
         "896": {
           "source": "          // We are trying to update an existing pending record",
@@ -11087,23 +11087,23 @@
         },
         "897": {
           "source": "          previousPendingUid = dataset.meta[uid].pendingUid;",
-          "coverage": 2
+          "coverage": 4
         },
         "898": {
           "source": "          dataset.meta[uid].previousPendingUid = previousPendingUid;",
-          "coverage": 2
+          "coverage": 4
         },
         "899": {
           "source": "          previousPending = pending[previousPendingUid];",
-          "coverage": 2
+          "coverage": 4
         },
         "900": {
           "source": "          if(previousPending) {",
-          "coverage": 2
+          "coverage": 4
         },
         "901": {
           "source": "            if(!previousPending.inFlight){",
-          "coverage": 2
+          "coverage": 3
         },
         "902": {
           "source": "              self.consoleLog('existing pre-flight pending record = ' + JSON.stringify(previousPending));",
@@ -11155,15 +11155,15 @@
         },
         "914": {
           "source": "              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));",
-          "coverage": 1
+          "coverage": 2
         },
         "915": {
           "source": "              pendingRec.delayed = true;",
-          "coverage": 1
+          "coverage": 2
         },
         "916": {
           "source": "              pendingRec.waiting = previousPending.hash;",
-          "coverage": 1
+          "coverage": 2
         },
         "917": {
           "source": "            }",
@@ -11191,19 +11191,19 @@
         },
         "923": {
           "source": "    if( pendingRec.action === \"delete\" ) {",
-          "coverage": 6
+          "coverage": 17
         },
         "924": {
           "source": "      if( dataset.data[uid] ) {",
-          "coverage": 1
+          "coverage": 4
         },
         "925": {
           "source": "        if (dataset.meta[uid].fromPending) {",
-          "coverage": 1
+          "coverage": 4
         },
         "926": {
           "source": "          self.consoleLog('Deleting an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));",
-          "coverage": 1
+          "coverage": 4
         },
         "927": {
           "source": "          // We are trying to delete an existing pending record",
@@ -11211,31 +11211,31 @@
         },
         "928": {
           "source": "          previousPendingUid = dataset.meta[uid].pendingUid;",
-          "coverage": 1
+          "coverage": 4
         },
         "929": {
           "source": "          dataset.meta[uid].previousPendingUid = previousPendingUid;",
-          "coverage": 1
+          "coverage": 4
         },
         "930": {
           "source": "          previousPending = pending[previousPendingUid];",
-          "coverage": 1
+          "coverage": 4
         },
         "931": {
           "source": "          if( previousPending ) {",
-          "coverage": 1
+          "coverage": 4
         },
         "932": {
           "source": "            if(!previousPending.inFlight){",
-          "coverage": 1
+          "coverage": 3
         },
         "933": {
           "source": "              self.consoleLog('existing pending record = ' + JSON.stringify(previousPending));",
-          "coverage": 0
+          "coverage": 2
         },
         "934": {
           "source": "              if( previousPending.action === \"create\" ) {",
-          "coverage": 0
+          "coverage": 2
         },
         "935": {
           "source": "                // We are trying to perform a delete on an existing pending create",
@@ -11247,11 +11247,11 @@
         },
         "937": {
           "source": "                delete pending[pendingRec.hash];",
-          "coverage": 0
+          "coverage": 1
         },
         "938": {
           "source": "                delete pending[previousPendingUid];",
-          "coverage": 0
+          "coverage": 1
         },
         "939": {
           "source": "              }",
@@ -11259,7 +11259,7 @@
         },
         "940": {
           "source": "              if( previousPending.action === \"update\" ) {",
-          "coverage": 0
+          "coverage": 2
         },
         "941": {
           "source": "                // We are trying to perform a delete on an existing pending update",
@@ -11275,19 +11275,19 @@
         },
         "944": {
           "source": "                pendingRec.pre = previousPending.pre;",
-          "coverage": 0
+          "coverage": 1
         },
         "945": {
           "source": "                pendingRec.preHash = previousPending.preHash;",
-          "coverage": 0
+          "coverage": 1
         },
         "946": {
           "source": "                pendingRec.inFlight = false;",
-          "coverage": 0
+          "coverage": 1
         },
         "947": {
           "source": "                delete pending[previousPendingUid];",
-          "coverage": 0
+          "coverage": 1
         },
         "948": {
           "source": "              }",
@@ -11323,7 +11323,7 @@
         },
         "956": {
           "source": "        delete dataset.data[uid];",
-          "coverage": 1
+          "coverage": 4
         },
         "957": {
           "source": "      }",
@@ -11339,23 +11339,23 @@
         },
         "960": {
           "source": "    if( dataset.data[uid] ) {",
-          "coverage": 6
+          "coverage": 17
         },
         "961": {
           "source": "      dataset.data[uid].data = pendingRec.post;",
-          "coverage": 5
+          "coverage": 13
         },
         "962": {
           "source": "      dataset.data[uid].hash = pendingRec.postHash;",
-          "coverage": 5
+          "coverage": 13
         },
         "963": {
           "source": "      dataset.meta[uid].fromPending = true;",
-          "coverage": 5
+          "coverage": 13
         },
         "964": {
           "source": "      dataset.meta[uid].pendingUid = pendingRec.hash;",
-          "coverage": 5
+          "coverage": 13
         },
         "965": {
           "source": "    }",
@@ -11375,11 +11375,11 @@
         },
         "969": {
           "source": "    var pending = dataset.pending;",
-          "coverage": 4
+          "coverage": 13
         },
         "970": {
           "source": "    var newRec;",
-          "coverage": 4
+          "coverage": 13
         },
         "971": {
           "source": "",
@@ -11387,19 +11387,19 @@
         },
         "972": {
           "source": "    if( pending &amp;&amp; newData.records) {",
-          "coverage": 4
+          "coverage": 13
         },
         "973": {
           "source": "      for( var pendingHash in pending ) {",
-          "coverage": 1
+          "coverage": 7
         },
         "974": {
           "source": "        if( pending.hasOwnProperty(pendingHash) ) {",
-          "coverage": 0
+          "coverage": 8
         },
         "975": {
           "source": "          var pendingRec = pending[pendingHash];",
-          "coverage": 0
+          "coverage": 8
         },
         "976": {
           "source": "",
@@ -11407,7 +11407,7 @@
         },
         "977": {
           "source": "          dataset.meta[pendingRec.uid] = dataset.meta[pendingRec.uid] || {};",
-          "coverage": 0
+          "coverage": 8
         },
         "978": {
           "source": "",
@@ -11415,7 +11415,7 @@
         },
         "979": {
           "source": "          if( pendingRec.inFlight === false ) {",
-          "coverage": 0
+          "coverage": 8
         },
         "980": {
           "source": "            // Pending record that has not been submitted",
@@ -11423,11 +11423,11 @@
         },
         "981": {
           "source": "            self.consoleLog('updatePendingFromNewData - Found Non inFlight record -&gt; action=' + pendingRec.action +' :: uid=' + pendingRec.uid  + ' :: hash=' + pendingRec.hash);",
-          "coverage": 0
+          "coverage": 3
         },
         "982": {
           "source": "            if( pendingRec.action === \"update\" || pendingRec.action === \"delete\") {",
-          "coverage": 0
+          "coverage": 3
         },
         "983": {
           "source": "              // Update the pre value of pending record to reflect the latest data returned from sync.",
@@ -11439,23 +11439,23 @@
         },
         "985": {
           "source": "              newRec = newData.records[pendingRec.uid];",
-          "coverage": 0
+          "coverage": 2
         },
         "986": {
           "source": "              if( newRec ) {",
-          "coverage": 0
+          "coverage": 2
         },
         "987": {
           "source": "                self.consoleLog('updatePendingFromNewData - Updating pre values for existing pending record ' + pendingRec.uid);",
-          "coverage": 0
+          "coverage": 1
         },
         "988": {
           "source": "                pendingRec.pre = newRec.data;",
-          "coverage": 0
+          "coverage": 1
         },
         "989": {
           "source": "                pendingRec.preHash = newRec.hash;",
-          "coverage": 0
+          "coverage": 1
         },
         "990": {
           "source": "              }",
@@ -11471,19 +11471,19 @@
         },
         "993": {
           "source": "                var previousPendingUid = dataset.meta[pendingRec.uid].previousPendingUid;",
-          "coverage": 0
+          "coverage": 1
         },
         "994": {
           "source": "                var previousPending = pending[previousPendingUid];",
-          "coverage": 0
+          "coverage": 1
         },
         "995": {
           "source": "                if( previousPending ) {",
-          "coverage": 0
+          "coverage": 1
         },
         "996": {
           "source": "                  if( newData &amp;&amp; newData.updates &amp;&amp;  newData.updates.applied &amp;&amp; newData.updates.applied[previousPending.hash] ) {",
-          "coverage": 0
+          "coverage": 1
         },
         "997": {
           "source": "                    // There is an update in from a previous pending action",
@@ -11491,31 +11491,31 @@
         },
         "998": {
           "source": "                    var newUid = newData.updates.applied[previousPending.hash].uid;",
-          "coverage": 0
+          "coverage": 1
         },
         "999": {
           "source": "                    newRec = newData.records[newUid];",
-          "coverage": 0
+          "coverage": 1
         },
         "1000": {
           "source": "                    if( newRec ) {",
-          "coverage": 0
+          "coverage": 1
         },
         "1001": {
           "source": "                      self.consoleLog('updatePendingFromNewData - Updating pre values for existing pending record which was previously a create ' + pendingRec.uid + ' ==&gt; ' + newUid);",
-          "coverage": 0
+          "coverage": 1
         },
         "1002": {
           "source": "                      pendingRec.pre = newRec.data;",
-          "coverage": 0
+          "coverage": 1
         },
         "1003": {
           "source": "                      pendingRec.preHash = newRec.hash;",
-          "coverage": 0
+          "coverage": 1
         },
         "1004": {
           "source": "                      pendingRec.uid = newUid;",
-          "coverage": 0
+          "coverage": 1
         },
         "1005": {
           "source": "                    }",
@@ -11543,27 +11543,27 @@
         },
         "1011": {
           "source": "            if( pendingRec.action === \"create\" ) {",
-          "coverage": 0
+          "coverage": 3
         },
         "1012": {
           "source": "              if( newData &amp;&amp; newData.updates &amp;&amp;  newData.updates.applied &amp;&amp; newData.updates.applied[pendingHash] ) {",
-          "coverage": 0
+          "coverage": 1
         },
         "1013": {
           "source": "                self.consoleLog('updatePendingFromNewData - Found an update for a pending create ' + JSON.stringify(newData.updates.applied[pendingHash]));",
-          "coverage": 0
+          "coverage": 1
         },
         "1014": {
           "source": "                newRec = newData.records[newData.updates.applied[pendingHash].uid];",
-          "coverage": 0
+          "coverage": 1
         },
         "1015": {
           "source": "                if( newRec ) {",
-          "coverage": 0
+          "coverage": 1
         },
         "1016": {
           "source": "                  self.consoleLog('updatePendingFromNewData - Changing pending create to an update based on new record  ' + JSON.stringify(newRec));",
-          "coverage": 0
+          "coverage": 1
         },
         "1017": {
           "source": "",
@@ -11575,19 +11575,19 @@
         },
         "1019": {
           "source": "                  pendingRec.action = \"update\";",
-          "coverage": 0
+          "coverage": 1
         },
         "1020": {
           "source": "                  pendingRec.pre = newRec.data;",
-          "coverage": 0
+          "coverage": 1
         },
         "1021": {
           "source": "                  pendingRec.preHash = newRec.hash;",
-          "coverage": 0
+          "coverage": 1
         },
         "1022": {
           "source": "                  pendingRec.uid = newData.updates.applied[pendingHash].uid;",
-          "coverage": 0
+          "coverage": 1
         },
         "1023": {
           "source": "                }",
@@ -11631,7 +11631,7 @@
         },
         "1033": {
           "source": "    var pending = dataset.pending;",
-          "coverage": 4
+          "coverage": 13
         },
         "1034": {
           "source": "",
@@ -11639,19 +11639,19 @@
         },
         "1035": {
           "source": "    if( pending &amp;&amp; newData.records) {",
-          "coverage": 4
+          "coverage": 13
         },
         "1036": {
           "source": "      for( var pendingHash in pending ) {",
-          "coverage": 1
+          "coverage": 7
         },
         "1037": {
           "source": "        if( pending.hasOwnProperty(pendingHash) ) {",
-          "coverage": 0
+          "coverage": 8
         },
         "1038": {
           "source": "          var pendingRec = pending[pendingHash];",
-          "coverage": 0
+          "coverage": 8
         },
         "1039": {
           "source": "",
@@ -11659,11 +11659,11 @@
         },
         "1040": {
           "source": "          if( pendingRec.inFlight ) {",
-          "coverage": 0
+          "coverage": 8
         },
         "1041": {
           "source": "            var updateReceivedForPending = (newData &amp;&amp; newData.updates &amp;&amp;  newData.updates.hashes &amp;&amp; newData.updates.hashes[pendingHash]) ? true : false;",
-          "coverage": 0
+          "coverage": 5
         },
         "1042": {
           "source": "",
@@ -11671,7 +11671,7 @@
         },
         "1043": {
           "source": "            self.consoleLog('updateNewDataFromInFlight - Found inflight pending Record - action = ' + pendingRec.action + ' :: hash = ' + pendingHash + ' :: updateReceivedForPending=' + updateReceivedForPending);",
-          "coverage": 0
+          "coverage": 5
         },
         "1044": {
           "source": "",
@@ -11679,11 +11679,11 @@
         },
         "1045": {
           "source": "            if( ! updateReceivedForPending ) {",
-          "coverage": 0
+          "coverage": 5
         },
         "1046": {
           "source": "              var newRec = newData.records[pendingRec.uid];",
-          "coverage": 0
+          "coverage": 3
         },
         "1047": {
           "source": "",
@@ -11691,7 +11691,7 @@
         },
         "1048": {
           "source": "              if( pendingRec.action === \"update\" &amp;&amp; newRec) {",
-          "coverage": 0
+          "coverage": 3
         },
         "1049": {
           "source": "                // Modify the new Record to have the updates from the pending record so the local dataset is consistent",
@@ -11699,11 +11699,11 @@
         },
         "1050": {
           "source": "                newRec.data = pendingRec.post;",
-          "coverage": 0
+          "coverage": 1
         },
         "1051": {
           "source": "                newRec.hash = pendingRec.postHash;",
-          "coverage": 0
+          "coverage": 1
         },
         "1052": {
           "source": "              }",
@@ -11711,7 +11711,7 @@
         },
         "1053": {
           "source": "              else if( pendingRec.action === \"delete\" &amp;&amp; newRec) {",
-          "coverage": 0
+          "coverage": 2
         },
         "1054": {
           "source": "                // Remove the record from the new dataset so the local dataset is consistent",
@@ -11719,7 +11719,7 @@
         },
         "1055": {
           "source": "                delete newData.records[pendingRec.uid];",
-          "coverage": 0
+          "coverage": 1
         },
         "1056": {
           "source": "              }",
@@ -11727,7 +11727,7 @@
         },
         "1057": {
           "source": "              else if( pendingRec.action === \"create\" ) {",
-          "coverage": 0
+          "coverage": 1
         },
         "1058": {
           "source": "                // Add the pending create into the new dataset so it is not lost from the UI",
@@ -11735,11 +11735,11 @@
         },
         "1059": {
           "source": "                self.consoleLog('updateNewDataFromInFlight - re adding pending create to incomming dataset');",
-          "coverage": 0
+          "coverage": 1
         },
         "1060": {
           "source": "                var newPendingCreate = {",
-          "coverage": 0
+          "coverage": 1
         },
         "1061": {
           "source": "                  data: pendingRec.post,",
@@ -11755,7 +11755,7 @@
         },
         "1064": {
           "source": "                newData.records[pendingRec.uid] = newPendingCreate;",
-          "coverage": 0
+          "coverage": 1
         },
         "1065": {
           "source": "              }",
@@ -11795,7 +11795,7 @@
         },
         "1074": {
           "source": "    var pending = dataset.pending;",
-          "coverage": 4
+          "coverage": 13
         },
         "1075": {
           "source": "",
@@ -11803,19 +11803,19 @@
         },
         "1076": {
           "source": "    if( pending &amp;&amp; newData.records) {",
-          "coverage": 4
+          "coverage": 13
         },
         "1077": {
           "source": "      for( var pendingHash in pending ) {",
-          "coverage": 1
+          "coverage": 7
         },
         "1078": {
           "source": "        if( pending.hasOwnProperty(pendingHash) ) {",
-          "coverage": 0
+          "coverage": 8
         },
         "1079": {
           "source": "          var pendingRec = pending[pendingHash];",
-          "coverage": 0
+          "coverage": 8
         },
         "1080": {
           "source": "",
@@ -11823,19 +11823,19 @@
         },
         "1081": {
           "source": "          if( pendingRec.inFlight === false ) {",
-          "coverage": 0
+          "coverage": 8
         },
         "1082": {
           "source": "            self.consoleLog('updateNewDataFromPending - Found Non inFlight record -&gt; action=' + pendingRec.action +' :: uid=' + pendingRec.uid  + ' :: hash=' + pendingRec.hash);",
-          "coverage": 0
+          "coverage": 3
         },
         "1083": {
           "source": "            var newRec = newData.records[pendingRec.uid];",
-          "coverage": 0
+          "coverage": 3
         },
         "1084": {
           "source": "            if( pendingRec.action === \"update\" &amp;&amp; newRec) {",
-          "coverage": 0
+          "coverage": 3
         },
         "1085": {
           "source": "              // Modify the new Record to have the updates from the pending record so the local dataset is consistent",
@@ -11843,11 +11843,11 @@
         },
         "1086": {
           "source": "              newRec.data = pendingRec.post;",
-          "coverage": 0
+          "coverage": 3
         },
         "1087": {
           "source": "              newRec.hash = pendingRec.postHash;",
-          "coverage": 0
+          "coverage": 3
         },
         "1088": {
           "source": "            }",
@@ -11935,7 +11935,7 @@
         },
         "1109": {
           "source": "    var updateNotifications = {",
-          "coverage": 4
+          "coverage": 13
         },
         "1110": {
           "source": "      applied: self.notifications.REMOTE_UPDATE_APPLIED,",
@@ -11959,19 +11959,19 @@
         },
         "1115": {
           "source": "    var pending = dataset.pending;",
-          "coverage": 4
+          "coverage": 13
         },
         "1116": {
           "source": "    var resolvedCrashes = {};",
-          "coverage": 4
+          "coverage": 13
         },
         "1117": {
           "source": "    var pendingHash;",
-          "coverage": 4
+          "coverage": 13
         },
         "1118": {
           "source": "    var pendingRec;",
-          "coverage": 4
+          "coverage": 13
         },
         "1119": {
           "source": "",
@@ -11983,19 +11983,19 @@
         },
         "1121": {
           "source": "    if( pending ) {",
-          "coverage": 4
+          "coverage": 13
         },
         "1122": {
           "source": "      for( pendingHash in pending ) {",
-          "coverage": 4
+          "coverage": 13
         },
         "1123": {
           "source": "        if( pending.hasOwnProperty(pendingHash) ) {",
-          "coverage": 3
+          "coverage": 13
         },
         "1124": {
           "source": "          pendingRec = pending[pendingHash];",
-          "coverage": 3
+          "coverage": 13
         },
         "1125": {
           "source": "",
@@ -12003,7 +12003,7 @@
         },
         "1126": {
           "source": "          if( pendingRec.inFlight &amp;&amp; pendingRec.crashed) {",
-          "coverage": 3
+          "coverage": 13
         },
         "1127": {
           "source": "            self.consoleLog('updateCrashedInFlightFromNewData - Found crashed inFlight pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash );",
@@ -12227,15 +12227,15 @@
         },
         "1182": {
           "source": "      for( pendingHash in pending ) {",
-          "coverage": 4
+          "coverage": 13
         },
         "1183": {
           "source": "        if( pending.hasOwnProperty(pendingHash) ) {",
-          "coverage": 3
+          "coverage": 13
         },
         "1184": {
           "source": "          pendingRec = pending[pendingHash];",
-          "coverage": 3
+          "coverage": 13
         },
         "1185": {
           "source": "",
@@ -12243,7 +12243,7 @@
         },
         "1186": {
           "source": "          if( pendingRec.inFlight &amp;&amp; pendingRec.crashed) {",
-          "coverage": 3
+          "coverage": 13
         },
         "1187": {
           "source": "            if( pendingRec.crashedCount &gt; dataset.config.crashed_count_wait ) {",
@@ -12299,7 +12299,7 @@
         },
         "1200": {
           "source": "          else if (!pendingRec.inFlight &amp;&amp; pendingRec.crashed ) {",
-          "coverage": 2
+          "coverage": 12
         },
         "1201": {
           "source": "            self.consoleLog('updateCrashedInFlightFromNewData - Trying to resolve issues with crashed non in flight record - uid = ' + pendingRec.uid);",
@@ -12359,63 +12359,63 @@
         },
         "1215": {
           "source": "    var pending = dataset.pending;",
-          "coverage": 4
+          "coverage": 13
         },
         "1216": {
           "source": "    var pendingHash;",
-          "coverage": 4
+          "coverage": 13
         },
         "1217": {
           "source": "    var pendingRec;",
-          "coverage": 4
+          "coverage": 13
         },
         "1218": {
           "source": "    if(pending){",
-          "coverage": 4
+          "coverage": 13
         },
         "1219": {
           "source": "      for( pendingHash in pending ){",
-          "coverage": 4
+          "coverage": 13
         },
         "1220": {
           "source": "        if( pending.hasOwnProperty(pendingHash) ){",
-          "coverage": 3
+          "coverage": 13
         },
         "1221": {
           "source": "          pendingRec = pending[pendingHash];",
-          "coverage": 3
+          "coverage": 13
         },
         "1222": {
           "source": "          if( pendingRec.delayed &amp;&amp; pendingRec.waiting ){",
-          "coverage": 3
+          "coverage": 13
         },
         "1223": {
           "source": "            self.consoleLog('updateDelayedFromNewData - Found delayed pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash + ' :: waiting=' + pendingRec.waiting);",
-          "coverage": 1
+          "coverage": 3
         },
         "1224": {
           "source": "            if( newData &amp;&amp; newData.updates &amp;&amp; newData.updates.hashes ){",
-          "coverage": 1
+          "coverage": 3
         },
         "1225": {
           "source": "              var waitingRec = newData.updates.hashes[pendingRec.waiting];",
-          "coverage": 0
+          "coverage": 2
         },
         "1226": {
           "source": "              if(waitingRec){",
-          "coverage": 0
+          "coverage": 2
         },
         "1227": {
           "source": "                self.consoleLog('updateDelayedFromNewData - Waiting pending record is resolved rec=' + JSON.stringify(waitingRec));",
-          "coverage": 0
+          "coverage": 2
         },
         "1228": {
           "source": "                pendingRec.delayed = false;",
-          "coverage": 0
+          "coverage": 2
         },
         "1229": {
           "source": "                pendingRec.waiting = undefined;",
-          "coverage": 0
+          "coverage": 2
         },
         "1230": {
           "source": "              }",
@@ -12603,11 +12603,11 @@
         },
         "1276": {
           "source": "    if( self.config.do_console_log ) {",
-          "coverage": 51
+          "coverage": 109
         },
         "1277": {
           "source": "      console.log(msg);",
-          "coverage": 50
+          "coverage": 108
         },
         "1278": {
           "source": "    }",
@@ -12897,11 +12897,11 @@
         },
         "17": {
           "source": "  if(is_cloud_ready){",
-          "coverage": 26
+          "coverage": 37
         },
         "18": {
           "source": "    return cb(null, {host: getCloudHostUrl()});",
-          "coverage": 17
+          "coverage": 28
         },
         "19": {
           "source": "  } else {",
@@ -12997,7 +12997,7 @@
         },
         "42": {
           "source": "  return cloud_host;",
-          "coverage": 15
+          "coverage": 26
         },
         "43": {
           "source": "}",
@@ -13013,15 +13013,15 @@
         },
         "46": {
           "source": "  if(typeof cloud_host !== \"undefined\"){",
-          "coverage": 33
+          "coverage": 44
         },
         "47": {
           "source": "    var appProps = require(\"./appProps\").getAppProps();",
-          "coverage": 33
+          "coverage": 44
         },
         "48": {
           "source": "    return cloud_host.getHost(appProps.mode);",
-          "coverage": 33
+          "coverage": 44
         },
         "49": {
           "source": "  } else {",
@@ -13204,13 +13204,13 @@
   ],
   "stats": {
     "suites": 12,
-    "tests": 32,
-    "passes": 32,
+    "tests": 38,
+    "passes": 38,
     "pending": 0,
     "failures": 0,
-    "start": "2014-04-08T12:16:43.835Z",
-    "end": "2014-04-08T12:16:50.733Z",
-    "duration": 6898
+    "start": "2014-04-08T23:14:45.009Z",
+    "end": "2014-04-08T23:14:56.034Z",
+    "duration": 11025
   },
   "tests": [
     {
@@ -13226,7 +13226,7 @@
     {
       "title": "AES keygen",
       "fullTitle": "test security APIs AES keygen",
-      "duration": 2
+      "duration": 3
     },
     {
       "title": "AES encrypt/decrypt",
@@ -13236,17 +13236,17 @@
     {
       "title": "RSA encrypt",
       "fullTitle": "test security APIs RSA encrypt",
-      "duration": 22
+      "duration": 19
     },
     {
       "title": "hash",
       "fullTitle": "test security APIs hash",
-      "duration": 3
+      "duration": 5
     },
     {
       "title": "should emit fhinit events",
       "fullTitle": "test all cloud related test auto initialisation should emit fhinit events",
-      "duration": 4
+      "duration": 5
     },
     {
       "title": "act call should success",
@@ -13266,7 +13266,7 @@
     {
       "title": "mbaas call should call",
       "fullTitle": "test all cloud related test mbaas call mbaas call should call",
-      "duration": 2
+      "duration": 3
     },
     {
       "title": "$fh.init should initialise the app",
@@ -13281,7 +13281,7 @@
     {
       "title": "sync.manage",
       "fullTitle": "test sync framework offline sync.manage",
-      "duration": 0
+      "duration": 1
     },
     {
       "title": "sync.setConfig/getConfig",
@@ -13291,17 +13291,17 @@
     {
       "title": "sync.getQueryParams/setQueryParams",
       "fullTitle": "test sync framework offline sync.getQueryParams/setQueryParams",
-      "duration": 1
+      "duration": 0
     },
     {
       "title": "sync.getMetaData/setMetaData",
       "fullTitle": "test sync framework offline sync.getMetaData/setMetaData",
-      "duration": 0
+      "duration": 1
     },
     {
       "title": "sync.notify",
       "fullTitle": "test sync framework offline sync.notify",
-      "duration": 607
+      "duration": 606
     },
     {
       "title": "sync.doCreate",
@@ -13311,12 +13311,12 @@
     {
       "title": "sync.doUpdate",
       "fullTitle": "test sync framework offline sync.doUpdate",
-      "duration": 21
+      "duration": 22
     },
     {
       "title": "sync.doList success",
       "fullTitle": "test sync framework offline sync.doList success",
-      "duration": 1
+      "duration": 2
     },
     {
       "title": "sync.doList fail",
@@ -13331,7 +13331,7 @@
     {
       "title": "sync.doRead fail",
       "fullTitle": "test sync framework offline sync.doRead fail",
-      "duration": 1
+      "duration": 0
     },
     {
       "title": "sync.getPending",
@@ -13341,7 +13341,7 @@
     {
       "title": "sync.stopSync/startSync",
       "fullTitle": "test sync framework offline sync.stopSync/startSync",
-      "duration": 2007
+      "duration": 2006
     },
     {
       "title": "sync.doDelete",
@@ -13356,22 +13356,52 @@
     {
       "title": "sync.forceSync",
       "fullTitle": "test sync framework offline sync.forceSync",
-      "duration": 512
+      "duration": 506
     },
     {
       "title": "load initial dataset from remote",
       "fullTitle": "test sync framework online with fake XMLHttpRequest load initial dataset from remote",
-      "duration": 509
+      "duration": 506
     },
     {
       "title": "try create a new record",
       "fullTitle": "test sync framework online with fake XMLHttpRequest try create a new record",
-      "duration": 1014
+      "duration": 1011
     },
     {
       "title": "try to update an existing record ",
       "fullTitle": "test sync framework online with fake XMLHttpRequest try to update an existing record ",
-      "duration": 1524
+      "duration": 2033
+    },
+    {
+      "title": "test create & delete",
+      "fullTitle": "test sync framework online with fake XMLHttpRequest test create & delete",
+      "duration": 4
+    },
+    {
+      "title": "test remote data change",
+      "fullTitle": "test sync framework online with fake XMLHttpRequest test remote data change",
+      "duration": 510
+    },
+    {
+      "title": "test delete existing data",
+      "fullTitle": "test sync framework online with fake XMLHttpRequest test delete existing data",
+      "duration": 511
+    },
+    {
+      "title": "test update pending data",
+      "fullTitle": "test sync framework online with fake XMLHttpRequest test update pending data",
+      "duration": 518
+    },
+    {
+      "title": "test create pending data",
+      "fullTitle": "test sync framework online with fake XMLHttpRequest test create pending data",
+      "duration": 508
+    },
+    {
+      "title": "test updateNewDataFromInFlight create/update",
+      "fullTitle": "test sync framework online with fake XMLHttpRequest test updateNewDataFromInFlight create/update",
+      "duration": 1530
     }
   ],
   "failures": [],
@@ -13389,7 +13419,7 @@
     {
       "title": "AES keygen",
       "fullTitle": "test security APIs AES keygen",
-      "duration": 2
+      "duration": 3
     },
     {
       "title": "AES encrypt/decrypt",
@@ -13399,17 +13429,17 @@
     {
       "title": "RSA encrypt",
       "fullTitle": "test security APIs RSA encrypt",
-      "duration": 22
+      "duration": 19
     },
     {
       "title": "hash",
       "fullTitle": "test security APIs hash",
-      "duration": 3
+      "duration": 5
     },
     {
       "title": "should emit fhinit events",
       "fullTitle": "test all cloud related test auto initialisation should emit fhinit events",
-      "duration": 4
+      "duration": 5
     },
     {
       "title": "act call should success",
@@ -13429,7 +13459,7 @@
     {
       "title": "mbaas call should call",
       "fullTitle": "test all cloud related test mbaas call mbaas call should call",
-      "duration": 2
+      "duration": 3
     },
     {
       "title": "$fh.init should initialise the app",
@@ -13444,7 +13474,7 @@
     {
       "title": "sync.manage",
       "fullTitle": "test sync framework offline sync.manage",
-      "duration": 0
+      "duration": 1
     },
     {
       "title": "sync.setConfig/getConfig",
@@ -13454,17 +13484,17 @@
     {
       "title": "sync.getQueryParams/setQueryParams",
       "fullTitle": "test sync framework offline sync.getQueryParams/setQueryParams",
-      "duration": 1
+      "duration": 0
     },
     {
       "title": "sync.getMetaData/setMetaData",
       "fullTitle": "test sync framework offline sync.getMetaData/setMetaData",
-      "duration": 0
+      "duration": 1
     },
     {
       "title": "sync.notify",
       "fullTitle": "test sync framework offline sync.notify",
-      "duration": 607
+      "duration": 606
     },
     {
       "title": "sync.doCreate",
@@ -13474,12 +13504,12 @@
     {
       "title": "sync.doUpdate",
       "fullTitle": "test sync framework offline sync.doUpdate",
-      "duration": 21
+      "duration": 22
     },
     {
       "title": "sync.doList success",
       "fullTitle": "test sync framework offline sync.doList success",
-      "duration": 1
+      "duration": 2
     },
     {
       "title": "sync.doList fail",
@@ -13494,7 +13524,7 @@
     {
       "title": "sync.doRead fail",
       "fullTitle": "test sync framework offline sync.doRead fail",
-      "duration": 1
+      "duration": 0
     },
     {
       "title": "sync.getPending",
@@ -13504,7 +13534,7 @@
     {
       "title": "sync.stopSync/startSync",
       "fullTitle": "test sync framework offline sync.stopSync/startSync",
-      "duration": 2007
+      "duration": 2006
     },
     {
       "title": "sync.doDelete",
@@ -13519,22 +13549,52 @@
     {
       "title": "sync.forceSync",
       "fullTitle": "test sync framework offline sync.forceSync",
-      "duration": 512
+      "duration": 506
     },
     {
       "title": "load initial dataset from remote",
       "fullTitle": "test sync framework online with fake XMLHttpRequest load initial dataset from remote",
-      "duration": 509
+      "duration": 506
     },
     {
       "title": "try create a new record",
       "fullTitle": "test sync framework online with fake XMLHttpRequest try create a new record",
-      "duration": 1014
+      "duration": 1011
     },
     {
       "title": "try to update an existing record ",
       "fullTitle": "test sync framework online with fake XMLHttpRequest try to update an existing record ",
-      "duration": 1524
+      "duration": 2033
+    },
+    {
+      "title": "test create & delete",
+      "fullTitle": "test sync framework online with fake XMLHttpRequest test create & delete",
+      "duration": 4
+    },
+    {
+      "title": "test remote data change",
+      "fullTitle": "test sync framework online with fake XMLHttpRequest test remote data change",
+      "duration": 510
+    },
+    {
+      "title": "test delete existing data",
+      "fullTitle": "test sync framework online with fake XMLHttpRequest test delete existing data",
+      "duration": 511
+    },
+    {
+      "title": "test update pending data",
+      "fullTitle": "test sync framework online with fake XMLHttpRequest test update pending data",
+      "duration": 518
+    },
+    {
+      "title": "test create pending data",
+      "fullTitle": "test sync framework online with fake XMLHttpRequest test create pending data",
+      "duration": 508
+    },
+    {
+      "title": "test updateNewDataFromInFlight create/update",
+      "fullTitle": "test sync framework online with fake XMLHttpRequest test updateNewDataFromInFlight create/update",
+      "duration": 1530
     }
   ]
 }
