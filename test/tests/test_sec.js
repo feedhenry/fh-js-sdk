@@ -3,7 +3,14 @@ var expect = chai.expect;
 var sinonChai = require('sinon-chai');
 chai.use(sinonChai);
 
-var $fh = require("../../src/feedhenry");
+var process = require("process");
+if(document && document.location){
+  if(document.location.href.indexOf("coverage=1") > -1){
+    process.env.LIB_COV = 1;
+  }
+}
+
+var $fh = process.env.LIB_COV? require("../../src-cov/feedhenry") : require("../../src/feedhenry");
 
 describe("test security APIs", function(){
   it("AES keygen", function(){

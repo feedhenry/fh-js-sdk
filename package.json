@@ -29,7 +29,11 @@
       "test/browser/libs/sinon/sinon.js",
       "test/browser/libs/sinon/sinon-ie.js"
     ],
-    "files": "test/tests/*.js",
+    "files": ["test/tests/test_ajax.js", 
+              "test/tests/test_cloud_related.js", 
+              "test/tests/test_legacy_act.js", 
+              "test/tests/test_sec.js", 
+              "test/tests/test_sync_offline.js"],
     "browsers": [
       "ie/9..10",
       "firefox/5.0",
@@ -58,7 +62,8 @@
   "dependencies": {
     "type-of": "~2.0.1",
     "loglevel": "~0.6.0",
-    "underscore": "~1.6.0"
+    "underscore": "~1.6.0",
+    "process": "~0.6.0"
   },
   "devDependencies": {
     "grunt": "~0.4.2",
@@ -81,6 +86,8 @@
     "grunt-mocha-phantomjs": "~0.4.3",
     "grunt-contrib-watch": "~0.6.0",
     "through": "~2.3.4",
-    "coverify": "~1.0.6"
+    "coverify": "~1.0.6",
+    "grunt-shell": "~0.6.4",
+    "grunt-env": "~0.4.1"
   }
 }

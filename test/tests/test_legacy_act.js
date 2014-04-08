@@ -2,7 +2,15 @@ var chai = require('chai');
 var expect = chai.expect;
 var sinonChai = require('sinon-chai');
 chai.use(sinonChai);
-var qs = require("../../src/modules/queryMap");
+
+var process = require("process");
+if(document && document.location){
+  if(document.location.href.indexOf("coverage=1") > -1){
+    process.env.LIB_COV = 1;
+  }
+}
+
+var qs = process.env.LIB_COV? require("../../src-cov/modules/queryMap"): require("../../src/modules/queryMap");
 
 var fhconfig = {
   "host": "http://localhost:8100",
@@ -56,7 +64,7 @@ describe("test legacy app props/app init", function(){
       var callback = sinon.spy();
 
       initFakeServer(server);
-      var $fh = require("../../src/feedhenry");
+      var $fh = process.env.LIB_COV? require("../../src-cov/feedhenry") : require("../../src/feedhenry");
 
       $fh.reset();
 
@@ -79,7 +87,7 @@ describe("test legacy app props/app init", function(){
       var callback = sinon.spy();
 
       initFakeServer(server);
-      var $fh = require("../../src/feedhenry");
+      var $fh = process.env.LIB_COV? require("../../src-cov/feedhenry") : require("../../src/feedhenry");
       
       $fh.reset();
 

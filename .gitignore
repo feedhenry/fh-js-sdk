@@ -8,3 +8,4 @@ tmp/*
 src/appforms/dist/
 test/sync/testServer
 src/modules-cov/*
+src-cov/*
