@@ -2,6 +2,7 @@ var chai = require('chai');
 var expect = chai.expect;
 var sinonChai = require('sinon-chai');
 var ajax = require('../../src/modules/ajax');
+var qs = require("../../src/modules/queryMap");
 
 chai.use(sinonChai);
 
@@ -23,6 +24,17 @@ var apphost = {
     "trackId": "testtrackid"
   }
 }
+
+var expectedUrl = "http://localhost:8101";
+if(document && document.location){
+  var doc_url = document.location.href;
+  var url_params = qs(doc_url);
+  var local = (typeof url_params.url !== 'undefined');
+  if(local){
+    expectedUrl = url_params.url;
+  }
+}
+
 
 var buildFakeRes = function(data){
   return [200, {"Content-Type": "text/script"}, JSON.stringify(data)]; //we deliberately set the wrong content type here to make sure the response does get converted to JSON
@@ -58,22 +70,22 @@ describe("test all cloud related", function(){
 
       server.respond();
       server.respond();
-
+      //host url is overridden by the url in the request
       expect(callback).to.have.been.called;
       expect(callback).to.have.been.calledOnce;
-      expect(callback).to.have.been.calledWith(null, {host: "http://localhost:8101"});
+      expect(callback).to.have.been.calledWith(null, {host: expectedUrl});
 
       expect(cb2).to.have.been.called;
       expect(cb2).to.have.been.calledOnce;
 
       var hostUrl = $fh.getCloudURL();
-      expect(hostUrl).to.equal("http://localhost:8101");
+      expect(hostUrl).to.equal(expectedUrl);
 
       
       expect($fh).to.have.property("cloud_props");
       expect($fh.cloud_props).to.have.property("hosts");
       expect($fh.cloud_props.hosts).to.have.property("url");
-      expect($fh.cloud_props.hosts.url).to.equal("http://localhost:8101");
+      expect($fh.cloud_props.hosts.url).to.equal(expectedUrl);
 
       expect($fh).to.have.property("app_props");
     });

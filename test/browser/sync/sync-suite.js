@@ -1,1 +1,0 @@
-require("../../sync/tests/test_sync.js");

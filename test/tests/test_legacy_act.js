@@ -2,6 +2,7 @@ var chai = require('chai');
 var expect = chai.expect;
 var sinonChai = require('sinon-chai');
 chai.use(sinonChai);
+var qs = require("../../src/modules/queryMap");
 
 var fhconfig = {
   "host": "http://localhost:8100",
@@ -21,6 +22,16 @@ var legacyAppHost = {
   },
   init: {
     "trackId": "testtrackid"
+  }
+}
+
+var expectedUrl = "http://localhost:8103";
+if(document && document.location){
+  var doc_url = document.location.href;
+  var url_params = qs(doc_url);
+  var local = (typeof url_params.url !== 'undefined');
+  if(local){
+    expectedUrl = url_params.url;
   }
 }
 
@@ -55,10 +66,10 @@ describe("test legacy app props/app init", function(){
 
       expect(callback).to.have.been.called;
       expect(callback).to.have.been.calledOnce;
-      expect(callback).to.have.been.calledWith("http://localhost:8103");
+      expect(callback).to.have.been.calledWith(expectedUrl);
 
       var hostUrl = $fh.getCloudURL();
-      expect(hostUrl).to.equal("http://localhost:8103");
+      expect(hostUrl).to.equal(expectedUrl);
     });
   });
 
@@ -79,10 +90,10 @@ describe("test legacy app props/app init", function(){
 
       expect(callback).to.have.been.called;
       expect(callback).to.have.been.calledOnce;
-      expect(callback).to.have.been.calledWith(null, {host: "http://localhost:8103"});
+      expect(callback).to.have.been.calledWith(null, {host: expectedUrl});
 
       var hostUrl = $fh.getCloudURL();
-      expect(hostUrl).to.equal("http://localhost:8103");
+      expect(hostUrl).to.equal(expectedUrl);
 
     });
   });

@@ -80,6 +80,7 @@
     "sinon-chai": "~2.5.0",
     "grunt-mocha-phantomjs": "~0.4.3",
     "grunt-contrib-watch": "~0.6.0",
-    "through": "~2.3.4"
+    "through": "~2.3.4",
+    "coverify": "~1.0.6"
   }
 }

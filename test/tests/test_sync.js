@@ -1,4 +1,4 @@
-var syncClient = require("../../../src/modules-cov/sync-cli");
+var syncClient = require("../../src/modules-cov/sync-cli");
 var chai = require('chai');
 var expect = chai.expect;
 var sinonChai = require('sinon-chai');

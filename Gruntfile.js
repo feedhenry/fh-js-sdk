@@ -74,15 +74,17 @@ module.exports = function(grunt) {
       test: {
         options: {
           urls: [
-            "http://127.0.0.1:8200/test/browser/index.html",
+            "http://127.0.0.1:8200/test/browser/index.html?url=http://localhost:9999",
             "http://127.0.0.1:8200/test/browser/index-require.html"
           ]
         }
       },
-      sync: {
+      test_coverage: {
         options:{
+          reporter: "json-cov",
+          file: 'rep/coverage.json',
           urls: [
-            "http://127.0.0.1:8200/test/browser/sync.html"
+            "http://127.0.0.1:8200/test/browser/index.html?url=http://localhost:9999"
           ]
         }
       }
@@ -142,14 +144,6 @@ module.exports = function(grunt) {
         dest: './test/browser/browserified_tests.js',
         options: {
           external: [ './src/feedhenry.js' ],
-          // Embed source map for tests
-          debug: true
-        }
-      },
-      sync_test: {
-        src: [ './test/browser/sync/sync-suite.js' ],
-        dest: './test/browser/sync/browserified_sync_tests.js',
-        options: {
           // Embed source map for tests
           debug: true
         }
@@ -261,8 +255,7 @@ module.exports = function(grunt) {
 
   //run tests in phatomjs
   grunt.registerTask('test', ['jshint', 'browserify', 'connect:server', 'mocha_phantomjs:test']);
-
-  grunt.registerTask('test-sync', ['jshint', 'browserify:sync_test', 'connect:server', 'mocha_phantomjs:sync']);
+  
 
   grunt.registerTask('concat-core-sdk', ['concat:lawnchair', 'concat:crypto', 'concat:forms_core', 'concat:forms_backbone', 'concat:forms_backboneRequireJS']);
 
