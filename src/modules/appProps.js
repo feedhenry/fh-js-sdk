@@ -30,7 +30,12 @@ var load = function(cb) {
     success: function(data) {
       logger.debug("fhconfig = " + JSON.stringify(data));
       //when load the config file on device, because file:// protocol is used, it will never call fail call back. The success callback will be called but the data value will be null.
-      if (null === data) {
+      if (null == data) {
+        //fh v2 only
+        if(window.fh_app_props){
+          app_props = window.fh_app_props;
+          return cb(null, window.fh_app_props);
+        }
         return cb(new Error("app_config_missing"));
       } else {
         app_props = data;
