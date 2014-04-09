@@ -30,19 +30,19 @@ var onSync = function(cb){
   });
 }
 
-syncClient.init({
-  do_console_log: true,
-  sync_frequency: 1,
-  sync_active: false,
-  storage_strategy: ['memory'],
-  crashed_count_wait: 0
-});
-
 describe("test sync framework online with fake XMLHttpRequest", function(){
   this.timeout(10000);
   var header = { "Content-Type": "application/json" };
   var xhr, requests;
   before(function(done){
+    syncClient.init({
+      do_console_log: true,
+      sync_frequency: 1,
+      sync_active: false,
+      storage_strategy: ['memory'],
+      crashed_count_wait: 0,
+      custom_sync: false
+    });
     syncClient.manage(dataSetId, {"sync_active": false}, {}, {}, done);
   });
 
@@ -54,6 +54,8 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
       console.log("Got sync request", req);
       requests.push(req);
     }
+
+    syncClient.setHasCustomSync(false);
 
     syncClient.clearPending(dataSetId, function(){
       done(); 
@@ -112,7 +114,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
         "updates": {}
       }));
 
-      //server turned empty dataset, then the client dataset should be empty as well
+      //server returned empty dataset, then the client dataset should be empty as well
       syncClient.getDataset(dataSetId, function(dataset){
         expect(dataset.data).is.empty;
         expect(dataset.hash).to.equal(mockHash);
@@ -351,7 +353,12 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
                     var reqObj4 = requests[4];
                     var mockRes1 = {
                         "create": {},
-                        "update": {},
+                        "update": {
+                          '533d775a8e8159d9c6000001': {
+                            "data": reqBody3.pending[0].post,
+                            "hash": reqBody3.pending[0].postHash
+                          }
+                        },
                         "delete": {},
                         "hash": "932b0b7e6862d4634dc6f418da717c78c1a1d742"
                     }
@@ -637,29 +644,6 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
     });
   });
 
-  // it("test updateNewDataFromInFlight", function(done){
-  //   var record = {name:"item6"};
-  //   syncClient.doCreate(dataSetId, record, function(res){
-  //     onSync(function(){
-  //       var reqObj = requests[0];
-  //       var reqBody = JSON.parse(reqObj.requestBody);
-  //       var pendingObj = reqBody.pending[0];
-  //       var mockRes = {
-  //         records : {
-
-  //         }
-  //       }
-
-  //       reqObj.respond(200, header, JSON.stringify(mockRes));
-
-  //       syncClient.getDataset(dataSetId, function(dataset){
-  //         expect(dataset.data[pendingObj.uid].data.name).to.equal("item6");
-  //         done();
-  //       });
-  //     });
-  //   });
-  // });
-
   it("test updateNewDataFromInFlight create/update", function(done){
     var record = {name:"item7"};
     syncClient.doCreate(dataSetId, record, function(res){
@@ -720,6 +704,8 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
                       }
                       reqObj2.respond(200, header, JSON.stringify(mockRes1));
 
+                      expect(dataset.data[pendingObj2.uid]).to.be.empty;
+
                       done();
                     });
                   });
@@ -732,5 +718,291 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
       });
     });
   });
+
+  it("test updateNewDataFromPending", function(done){
+    onSync(function(){
+      var reqObj = requests[0];
+      syncClient.doCreate(dataSetId, {name:"item12"}, function(res){
+        var mockRes = {
+          records : {
+
+          }
+        }
+        reqObj.respond(200, header, JSON.stringify(mockRes));
+
+        syncClient.getDataset(dataSetId, function(dataset){
+          expect(dataset.data[res.uid].data.name).to.equal("item12");
+          syncClient.clearPending(dataSetId, function(){
+            onSync(function(){
+              var reqObj1 = requests[1];
+              syncClient.doDelete(dataSetId, res.uid, function(){
+                var mockRes1 = {
+                  records:{
+
+                  }
+                }
+                mockRes1.records[res.uid] = {
+                  data:{
+                    name:"item13"
+                  },
+                  hash: "424e4dff5aa27c2fb7bf0fc74dasdfsefsdfsef"
+                }
+
+                reqObj1.respond(200, header, JSON.stringify(mockRes1));
+
+                expect(dataset.data[res.uid]).to.be.empty;
+
+                done();
+              });
+            });
+          });
+        });
+      });
+    });
+  });
+
+  it("test updateCrashedInFlightFromNewData create", function(done){
+    syncClient.setConfig(dataSetId, {crashed_count_wait: 10}, function(){
+      var createRecord = {name:'item13'};
+      syncClient.doCreate(dataSetId, createRecord, function(){
+        onSync(function(){
+           var reqObj = requests[0];
+           var reqBody = JSON.parse(reqObj.requestBody);
+           reqObj.respond(500, header, null);
+
+           syncClient.getDataset(dataSetId, function(dataset){
+            expect(_.size(dataset.pending)).to.equal(1);
+            var pendingObj = _.values(dataset.pending)[0];
+            
+            expect(pendingObj.crashed).to.be.true;
+
+            onSync(function(){
+              var reqObj1 = requests[1];
+              var reqBody1 = JSON.parse(reqObj1.requestBody);
+
+              //this time return success but without updates of the crashed records
+              var mockRes = {
+                "updates": {
+                    "hashes": {
+                    },
+                    "applied": {
+                    }
+                }
+              }
+
+              reqObj1.respond(200, header, JSON.stringify(mockRes));
+
+              expect(pendingObj.crashedCount).to.equal(1);
+              
+              //do another one
+              onSync(function(){
+                var reqObj2 = requests[2];
+                var reqBody2 = JSON.parse(reqObj2.requestBody);
+
+                //this time return success but without updates of the crashed records
+                var mockRes2 = {
+                  "updates": {
+                      "hashes": {
+                      },
+                      "applied": {
+                      }
+                  }
+                }
+
+                reqObj2.respond(200, header, JSON.stringify(mockRes2));
+
+                expect(pendingObj.crashedCount).to.equal(2);
+
+                onSync(function(){
+                  var reqObj3 = requests[3];
+                  var reqBody3 = JSON.parse(reqObj3.requestBody);
+
+                  //this time return success but without updates
+                  var mockRes3 = {
+                  }
+
+                  reqObj3.respond(200, header, JSON.stringify(mockRes3));
+
+                  expect(pendingObj.crashedCount).to.equal(3);
+
+                  onSync(function(){
+                    var reqObj4 = requests[4];
+                    var reqBody4 = JSON.parse(reqObj4.requestBody);
+
+                    //this time return success but without updates
+                    var mockRes4 = {
+                      "updates": {
+                        "hashes": {}
+                      }
+                    }
+                    mockRes4.updates.hashes[pendingObj.hash] = {
+                      "cuid": "9F3930FE2A434E0BA0AD6F5A40C77CD7",
+                      "type": "failed",
+                      "action": "create",
+                      "hash": pendingObj.hash,
+                      "uid": pendingObj.postHash,
+                      "msg": "''"
+                    }
+
+                    reqObj4.respond(200, header, JSON.stringify(mockRes4));
+
+                    expect(dataset.data[pendingObj.uid]).to.be.empty;
+
+                    done();
+                  });
+                });
+
+              });
+            });
+           });
+        });
+      });
+    });
+
+  });
+
+  it("test updateCrashedInFlightFromNewData update", function(done){
+    syncClient.getDataset(dataSetId, function(dataset){
+      //fake an existing record
+      dataset.data = dataset.data || {};
+      var uid = "533d775a8e8159d9c6000007";
+      var record = {name:"item14"}
+      dataset.data[uid] = {
+        hash: "424e4dff5aa27c2fb7bf0fc74dasej3ojfj",
+        data: record
+      }
+
+      //do update
+      syncClient.doUpdate(dataSetId, uid, {name:"item15"}, function(){
+        expect(dataset.data[uid].data.name).to.equal("item15");
+
+        onSync(function(){
+          var reqObj = requests[0];
+          var reqBody = JSON.parse(reqObj.requestBody);
+
+          reqObj.respond(500, header, null);
+
+          var pendings = dataset.pending;
+          expect(_.size(pendings)).to.equal(1);
+          var pendingObj = _.values(pendings)[0];
+          expect(pendingObj.crashed).to.be.true;
+
+          onSync(function(){
+            var reqObj1 = requests[1];
+            var reqBody1 = JSON.parse(reqObj1.requestBody);
+
+            var mockRes1 = {
+              "updates": {
+                "hashes": {}
+              }
+            }
+            mockRes1.updates.hashes[pendingObj.hash] = {
+              "cuid": "9F3930FE2A434E0BA0AD6F5A40C77CD7",
+              "type": "failed",
+              "action": "update",
+              "hash": pendingObj.hash,
+              "uid": uid,
+              "msg": "''"
+            }
+
+            reqObj1.respond(200, header, JSON.stringify(mockRes1));
+
+            expect(dataset.data[uid].data.name).to.equal("item14");
+
+            done();
+
+          });
+        });
+      });
+    });
+  });
+
+  it("test updateCrashedInFlightFromNewData resend", function(done){
+    syncClient.setConfig(dataSetId, {"resend_crashed_updates": false, "crashed_count_wait": 0}, function(){
+      syncClient.doCreate(dataSetId, {name: "item16"}, function(){
+        onSync(function(){
+          var reqObj = requests[0];
+          var reqBody = JSON.parse(reqObj.requestBody);
+
+          reqObj.respond(500, header, null);
+
+          syncClient.getDataset(dataSetId, function(dataset){
+            var pendings = dataset.pending;
+            expect(_.size(pendings)).to.equal(1);
+            var pendingObj = _.values(pendings)[0];
+            expect(pendingObj.crashed).to.be.true;
+
+            onSync(function(){
+              var reqObj1 = requests[1];
+              var reqBody1 = JSON.parse(reqObj1.requestBody);
+
+              var mockRes1 = {
+                "updates": {
+                  "hashes": {}
+                }
+              }
+
+              reqObj1.respond(200, header, JSON.stringify(mockRes1));
+
+              expect(_.size(pendings)).to.equal(0);
+
+              done();
+
+            });
+          });
+        });
+      });
+    });
+  });
+
+  it("test listCollisions", function(done){
+    var success = sinon.spy();
+    var fail = sinon.spy();
+    syncClient.listCollisions(dataSetId, success, fail);
+    expect(requests.length).to.equal(1);
+    var reqObj = requests[0];
+    reqObj.respond(500, header, null);
+    expect(fail).to.have.been.called;
+    done();
+  });
+
+  it("test removeCollision", function(done){
+    var success = sinon.spy();
+    var fail = sinon.spy();
+    syncClient.removeCollision(dataSetId, null, success, fail);
+    expect(requests.length).to.equal(1);
+    var reqObj = requests[0];
+    reqObj.respond(500, header, null);
+    expect(fail).to.have.been.called;
+    done();
+  });
+
+
+  it("test checkHasCustomSync", function(done){
+    syncClient.setHasCustomSync(null);
+    syncClient.checkHasCustomSync(dataSetId, function(){});
+    expect(requests.length).to.equal(1);
+    var reqObj = requests[0];
+    reqObj.respond(200, header, null);
+    expect(syncClient.getHasCustomSync()).to.be.true;
+
+    syncClient.setHasCustomSync(null);
+    syncClient.checkHasCustomSync(dataSetId, function(){});
+    expect(requests.length).to.equal(2);
+    var reqObj1 = requests[1];
+    reqObj1.respond(500, header, null);
+    expect(syncClient.getHasCustomSync()).to.be.true;
+
+    syncClient.setHasCustomSync(null);
+    syncClient.checkHasCustomSync(dataSetId, function(){});
+    expect(requests.length).to.equal(3);
+    var reqObj2 = requests[2];
+    reqObj2.respond(404, header, null);
+    expect(syncClient.getHasCustomSync()).to.be.false;
+
+    done();
+
+  });
+
 
 });

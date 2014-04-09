@@ -91,6 +91,11 @@ var self = {
       self.config[i] = options[i];
     }
 
+    //for testing
+    if(typeof options.custom_sync !== "undefined"){
+      self.hasCustomSync = options.custom_sync;
+    }
+
     self.datasetMonitor();
   },
 
@@ -185,11 +190,16 @@ var self = {
   },
 
   create: function(dataset_id, data, success, failure) {
+    if(data == null){
+      if(failure){
+        return failure("null_data");
+      }
+    }
     self.addPendingObj(dataset_id, null, data, "create", success, failure);
   },
 
   read: function(dataset_id, uid, success, failure) {
-      self.getDataSet(dataset_id, function(dataset) {
+    self.getDataSet(dataset_id, function(dataset) {
       var rec = dataset.data[uid];
       if (!rec) {
         failure("unknown_uid");
@@ -303,7 +313,9 @@ var self = {
     if (dataset) {
       success(dataset);
     } else {
-      failure('unknown_dataset ' + dataset_id, dataset_id);
+      if(failure){
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
     }
   },
 
@@ -313,7 +325,9 @@ var self = {
     if (dataset) {
       success(dataset.query_params);
     } else {
-      failure('unknown_dataset ' + dataset_id, dataset_id);
+      if(failure){
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
     }
   },
 
@@ -339,7 +353,9 @@ var self = {
     if (dataset) {
       success(dataset.meta_data);
     } else {
-      failure('unknown_dataset ' + dataset_id, dataset_id);
+      if(failure){
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
     }
   },
 
@@ -365,7 +381,9 @@ var self = {
     if (dataset) {
       success(dataset.config);
     } else {
-      failure('unknown_dataset ' + dataset_id, dataset_id);
+      if(failure){
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
     }
   },
 
@@ -513,7 +531,9 @@ var self = {
         pendingObj.preHash = self.generateHash(rec.data);
         storePendingObject(pendingObj);
       }, function(code, msg) {
-        failure(code, msg);
+        if(failure){
+          failure(code, msg);
+        }
       });
     }
   },
@@ -783,6 +803,14 @@ var self = {
     });
   },
 
+  setHasCustomSync : function(custom_sync){
+    self.hasCustomSync = custom_sync;
+  },
+
+  getHasCustomSync: function(){
+    return self.hasCustomSync;
+  },
+
   doCloudCall: function(params, success, failure) {
     if( self.hasCustomSync ) {
       actAPI({
@@ -842,22 +870,23 @@ var self = {
       self.consoleLog(errMsg);
     };
 
-        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       this.get( "dataset_" + dataset_id, function (data){
-         if (data && data.val !== null) {
-            var dataset = data.val;
-            if(typeof dataset === "string"){
-              dataset = JSON.parse(dataset);
+        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       
+          this.get( "dataset_" + dataset_id, function (data){
+            if (data && data.val !== null) {
+              var dataset = data.val;
+              if(typeof dataset === "string"){
+                dataset = JSON.parse(dataset);
+              }
+              // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
+              // the user wants sync
+              dataset.initialised = false;
+              self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
+              self.consoleLog('load from local storage success for dataset_id :' + dataset_id);
+              if(success) return success(dataset);
+            } else {
+              // no data yet, probably first time. failure calback should handle this
+              if(failure) return failure();
             }
-            // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
-            // the user wants sync
-            dataset.initialised = false;
-            self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
-            self.consoleLog('load from local storage success for dataset_id :' + dataset_id);
-            if(success) return success(dataset);
-          } else {
-            // no data yet, probably first time. failure calback should handle this
-            if(failure) return failure();
-          }
        });
     });
   },
@@ -1197,15 +1226,6 @@ var self = {
               }
             }
           }
-          else if (!pendingRec.inFlight && pendingRec.crashed ) {
-            self.consoleLog('updateCrashedInFlightFromNewData - Trying to resolve issues with crashed non in flight record - uid = ' + pendingRec.uid);
-            // Stalled pending record because a previous pending update on the same record crashed
-            var crashedRef = resolvedCrashes[pendingRec.uid];
-            if( crashedRef ) {
-              self.consoleLog('updateCrashedInFlightFromNewData - Found a stalled pending record backed up behind a resolved crash uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash);
-              pendingRec.crashed = false;
-            }
-          }
         }
       }
     }
@@ -1254,21 +1274,6 @@ var self = {
           }
         }
       }
-
-      // Check for any pending updates that would be modifying a crashed record. These can not go out until the
-      // status of the crashed record is determined
-      for( pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          pendingRec = pending[pendingHash];
-
-          if( ! pendingRec.inFlight && ! pendingRec.delayed ) {
-            var crashedRef = crashedRecords[pendingRec.uid];
-            if( crashedRef ) {
-              pendingRec.crashed = true;
-            }
-          }
-        }
-      }
     }
   },
 
@@ -1309,5 +1314,9 @@ module.exports = {
   stopSync: self.stopSync,
   doSync: self.doSync,
   forceSync: self.forceSync,
-  generateHash: self.generateHash
+  generateHash: self.generateHash,
+  loadDataSet: self.loadDataSet,
+  setHasCustomSync: self.setHasCustomSync,
+  checkHasCustomSync: self.checkHasCustomSync,
+  getHasCustomSync: self.getHasCustomSync
 };

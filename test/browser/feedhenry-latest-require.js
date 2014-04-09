@@ -11080,537 +11080,535 @@ if (! _$jscoverage['modules/sync-cli.js']) {
   _$jscoverage['modules/sync-cli.js'][89] = 0;
   _$jscoverage['modules/sync-cli.js'][90] = 0;
   _$jscoverage['modules/sync-cli.js'][91] = 0;
-  _$jscoverage['modules/sync-cli.js'][94] = 0;
-  _$jscoverage['modules/sync-cli.js'][98] = 0;
-  _$jscoverage['modules/sync-cli.js'][102] = 0;
-  _$jscoverage['modules/sync-cli.js'][104] = 0;
-  _$jscoverage['modules/sync-cli.js'][106] = 0;
+  _$jscoverage['modules/sync-cli.js'][95] = 0;
+  _$jscoverage['modules/sync-cli.js'][96] = 0;
+  _$jscoverage['modules/sync-cli.js'][99] = 0;
+  _$jscoverage['modules/sync-cli.js'][103] = 0;
   _$jscoverage['modules/sync-cli.js'][107] = 0;
   _$jscoverage['modules/sync-cli.js'][109] = 0;
   _$jscoverage['modules/sync-cli.js'][111] = 0;
   _$jscoverage['modules/sync-cli.js'][112] = 0;
-  _$jscoverage['modules/sync-cli.js'][113] = 0;
   _$jscoverage['modules/sync-cli.js'][114] = 0;
-  _$jscoverage['modules/sync-cli.js'][115] = 0;
   _$jscoverage['modules/sync-cli.js'][116] = 0;
   _$jscoverage['modules/sync-cli.js'][117] = 0;
+  _$jscoverage['modules/sync-cli.js'][118] = 0;
   _$jscoverage['modules/sync-cli.js'][119] = 0;
+  _$jscoverage['modules/sync-cli.js'][120] = 0;
   _$jscoverage['modules/sync-cli.js'][121] = 0;
   _$jscoverage['modules/sync-cli.js'][122] = 0;
-  _$jscoverage['modules/sync-cli.js'][128] = 0;
-  _$jscoverage['modules/sync-cli.js'][129] = 0;
-  _$jscoverage['modules/sync-cli.js'][130] = 0;
-  _$jscoverage['modules/sync-cli.js'][132] = 0;
+  _$jscoverage['modules/sync-cli.js'][124] = 0;
+  _$jscoverage['modules/sync-cli.js'][126] = 0;
+  _$jscoverage['modules/sync-cli.js'][127] = 0;
+  _$jscoverage['modules/sync-cli.js'][133] = 0;
+  _$jscoverage['modules/sync-cli.js'][134] = 0;
   _$jscoverage['modules/sync-cli.js'][135] = 0;
-  _$jscoverage['modules/sync-cli.js'][136] = 0;
+  _$jscoverage['modules/sync-cli.js'][137] = 0;
+  _$jscoverage['modules/sync-cli.js'][140] = 0;
   _$jscoverage['modules/sync-cli.js'][141] = 0;
-  _$jscoverage['modules/sync-cli.js'][144] = 0;
-  _$jscoverage['modules/sync-cli.js'][148] = 0;
+  _$jscoverage['modules/sync-cli.js'][146] = 0;
   _$jscoverage['modules/sync-cli.js'][149] = 0;
-  _$jscoverage['modules/sync-cli.js'][150] = 0;
-  _$jscoverage['modules/sync-cli.js'][151] = 0;
-  _$jscoverage['modules/sync-cli.js'][152] = 0;
   _$jscoverage['modules/sync-cli.js'][153] = 0;
-  _$jscoverage['modules/sync-cli.js'][160] = 0;
-  _$jscoverage['modules/sync-cli.js'][161] = 0;
-  _$jscoverage['modules/sync-cli.js'][164] = 0;
+  _$jscoverage['modules/sync-cli.js'][154] = 0;
+  _$jscoverage['modules/sync-cli.js'][155] = 0;
+  _$jscoverage['modules/sync-cli.js'][156] = 0;
+  _$jscoverage['modules/sync-cli.js'][157] = 0;
+  _$jscoverage['modules/sync-cli.js'][158] = 0;
   _$jscoverage['modules/sync-cli.js'][165] = 0;
   _$jscoverage['modules/sync-cli.js'][166] = 0;
-  _$jscoverage['modules/sync-cli.js'][167] = 0;
+  _$jscoverage['modules/sync-cli.js'][169] = 0;
   _$jscoverage['modules/sync-cli.js'][170] = 0;
-  _$jscoverage['modules/sync-cli.js'][174] = 0;
+  _$jscoverage['modules/sync-cli.js'][171] = 0;
+  _$jscoverage['modules/sync-cli.js'][172] = 0;
   _$jscoverage['modules/sync-cli.js'][175] = 0;
-  _$jscoverage['modules/sync-cli.js'][177] = 0;
-  _$jscoverage['modules/sync-cli.js'][178] = 0;
+  _$jscoverage['modules/sync-cli.js'][179] = 0;
   _$jscoverage['modules/sync-cli.js'][180] = 0;
+  _$jscoverage['modules/sync-cli.js'][182] = 0;
   _$jscoverage['modules/sync-cli.js'][183] = 0;
+  _$jscoverage['modules/sync-cli.js'][185] = 0;
   _$jscoverage['modules/sync-cli.js'][188] = 0;
-  _$jscoverage['modules/sync-cli.js'][192] = 0;
   _$jscoverage['modules/sync-cli.js'][193] = 0;
   _$jscoverage['modules/sync-cli.js'][194] = 0;
   _$jscoverage['modules/sync-cli.js'][195] = 0;
   _$jscoverage['modules/sync-cli.js'][198] = 0;
-  _$jscoverage['modules/sync-cli.js'][199] = 0;
   _$jscoverage['modules/sync-cli.js'][202] = 0;
-  _$jscoverage['modules/sync-cli.js'][207] = 0;
-  _$jscoverage['modules/sync-cli.js'][211] = 0;
-  _$jscoverage['modules/sync-cli.js'][215] = 0;
-  _$jscoverage['modules/sync-cli.js'][216] = 0;
+  _$jscoverage['modules/sync-cli.js'][203] = 0;
+  _$jscoverage['modules/sync-cli.js'][204] = 0;
+  _$jscoverage['modules/sync-cli.js'][205] = 0;
+  _$jscoverage['modules/sync-cli.js'][208] = 0;
+  _$jscoverage['modules/sync-cli.js'][209] = 0;
+  _$jscoverage['modules/sync-cli.js'][212] = 0;
   _$jscoverage['modules/sync-cli.js'][217] = 0;
-  _$jscoverage['modules/sync-cli.js'][218] = 0;
-  _$jscoverage['modules/sync-cli.js'][220] = 0;
-  _$jscoverage['modules/sync-cli.js'][222] = 0;
+  _$jscoverage['modules/sync-cli.js'][221] = 0;
+  _$jscoverage['modules/sync-cli.js'][225] = 0;
+  _$jscoverage['modules/sync-cli.js'][226] = 0;
   _$jscoverage['modules/sync-cli.js'][227] = 0;
   _$jscoverage['modules/sync-cli.js'][228] = 0;
-  _$jscoverage['modules/sync-cli.js'][229] = 0;
-  _$jscoverage['modules/sync-cli.js'][234] = 0;
-  _$jscoverage['modules/sync-cli.js'][235] = 0;
-  _$jscoverage['modules/sync-cli.js'][246] = 0;
-  _$jscoverage['modules/sync-cli.js'][247] = 0;
-  _$jscoverage['modules/sync-cli.js'][261] = 0;
-  _$jscoverage['modules/sync-cli.js'][264] = 0;
-  _$jscoverage['modules/sync-cli.js'][265] = 0;
-  _$jscoverage['modules/sync-cli.js'][269] = 0;
+  _$jscoverage['modules/sync-cli.js'][230] = 0;
+  _$jscoverage['modules/sync-cli.js'][232] = 0;
+  _$jscoverage['modules/sync-cli.js'][237] = 0;
+  _$jscoverage['modules/sync-cli.js'][238] = 0;
+  _$jscoverage['modules/sync-cli.js'][239] = 0;
+  _$jscoverage['modules/sync-cli.js'][244] = 0;
+  _$jscoverage['modules/sync-cli.js'][245] = 0;
+  _$jscoverage['modules/sync-cli.js'][256] = 0;
+  _$jscoverage['modules/sync-cli.js'][257] = 0;
   _$jscoverage['modules/sync-cli.js'][271] = 0;
-  _$jscoverage['modules/sync-cli.js'][272] = 0;
-  _$jscoverage['modules/sync-cli.js'][273] = 0;
   _$jscoverage['modules/sync-cli.js'][274] = 0;
+  _$jscoverage['modules/sync-cli.js'][275] = 0;
   _$jscoverage['modules/sync-cli.js'][279] = 0;
+  _$jscoverage['modules/sync-cli.js'][281] = 0;
+  _$jscoverage['modules/sync-cli.js'][282] = 0;
+  _$jscoverage['modules/sync-cli.js'][283] = 0;
   _$jscoverage['modules/sync-cli.js'][284] = 0;
-  _$jscoverage['modules/sync-cli.js'][285] = 0;
-  _$jscoverage['modules/sync-cli.js'][286] = 0;
-  _$jscoverage['modules/sync-cli.js'][293] = 0;
+  _$jscoverage['modules/sync-cli.js'][289] = 0;
   _$jscoverage['modules/sync-cli.js'][294] = 0;
-  _$jscoverage['modules/sync-cli.js'][301] = 0;
+  _$jscoverage['modules/sync-cli.js'][295] = 0;
+  _$jscoverage['modules/sync-cli.js'][296] = 0;
   _$jscoverage['modules/sync-cli.js'][303] = 0;
   _$jscoverage['modules/sync-cli.js'][304] = 0;
-  _$jscoverage['modules/sync-cli.js'][306] = 0;
   _$jscoverage['modules/sync-cli.js'][311] = 0;
   _$jscoverage['modules/sync-cli.js'][313] = 0;
   _$jscoverage['modules/sync-cli.js'][314] = 0;
   _$jscoverage['modules/sync-cli.js'][316] = 0;
-  _$jscoverage['modules/sync-cli.js'][321] = 0;
+  _$jscoverage['modules/sync-cli.js'][317] = 0;
   _$jscoverage['modules/sync-cli.js'][323] = 0;
-  _$jscoverage['modules/sync-cli.js'][324] = 0;
   _$jscoverage['modules/sync-cli.js'][325] = 0;
   _$jscoverage['modules/sync-cli.js'][326] = 0;
-  _$jscoverage['modules/sync-cli.js'][327] = 0;
-  _$jscoverage['modules/sync-cli.js'][330] = 0;
-  _$jscoverage['modules/sync-cli.js'][331] = 0;
+  _$jscoverage['modules/sync-cli.js'][328] = 0;
+  _$jscoverage['modules/sync-cli.js'][329] = 0;
+  _$jscoverage['modules/sync-cli.js'][335] = 0;
   _$jscoverage['modules/sync-cli.js'][337] = 0;
+  _$jscoverage['modules/sync-cli.js'][338] = 0;
   _$jscoverage['modules/sync-cli.js'][339] = 0;
   _$jscoverage['modules/sync-cli.js'][340] = 0;
-  _$jscoverage['modules/sync-cli.js'][342] = 0;
-  _$jscoverage['modules/sync-cli.js'][347] = 0;
-  _$jscoverage['modules/sync-cli.js'][349] = 0;
-  _$jscoverage['modules/sync-cli.js'][350] = 0;
+  _$jscoverage['modules/sync-cli.js'][341] = 0;
+  _$jscoverage['modules/sync-cli.js'][344] = 0;
+  _$jscoverage['modules/sync-cli.js'][345] = 0;
   _$jscoverage['modules/sync-cli.js'][351] = 0;
-  _$jscoverage['modules/sync-cli.js'][352] = 0;
   _$jscoverage['modules/sync-cli.js'][353] = 0;
+  _$jscoverage['modules/sync-cli.js'][354] = 0;
   _$jscoverage['modules/sync-cli.js'][356] = 0;
   _$jscoverage['modules/sync-cli.js'][357] = 0;
   _$jscoverage['modules/sync-cli.js'][363] = 0;
   _$jscoverage['modules/sync-cli.js'][365] = 0;
   _$jscoverage['modules/sync-cli.js'][366] = 0;
+  _$jscoverage['modules/sync-cli.js'][367] = 0;
   _$jscoverage['modules/sync-cli.js'][368] = 0;
+  _$jscoverage['modules/sync-cli.js'][369] = 0;
+  _$jscoverage['modules/sync-cli.js'][372] = 0;
   _$jscoverage['modules/sync-cli.js'][373] = 0;
-  _$jscoverage['modules/sync-cli.js'][375] = 0;
-  _$jscoverage['modules/sync-cli.js'][376] = 0;
-  _$jscoverage['modules/sync-cli.js'][377] = 0;
-  _$jscoverage['modules/sync-cli.js'][378] = 0;
   _$jscoverage['modules/sync-cli.js'][379] = 0;
-  _$jscoverage['modules/sync-cli.js'][380] = 0;
-  _$jscoverage['modules/sync-cli.js'][383] = 0;
+  _$jscoverage['modules/sync-cli.js'][381] = 0;
+  _$jscoverage['modules/sync-cli.js'][382] = 0;
   _$jscoverage['modules/sync-cli.js'][384] = 0;
-  _$jscoverage['modules/sync-cli.js'][390] = 0;
+  _$jscoverage['modules/sync-cli.js'][385] = 0;
   _$jscoverage['modules/sync-cli.js'][391] = 0;
-  _$jscoverage['modules/sync-cli.js'][392] = 0;
+  _$jscoverage['modules/sync-cli.js'][393] = 0;
+  _$jscoverage['modules/sync-cli.js'][394] = 0;
+  _$jscoverage['modules/sync-cli.js'][395] = 0;
+  _$jscoverage['modules/sync-cli.js'][396] = 0;
+  _$jscoverage['modules/sync-cli.js'][397] = 0;
   _$jscoverage['modules/sync-cli.js'][398] = 0;
-  _$jscoverage['modules/sync-cli.js'][399] = 0;
-  _$jscoverage['modules/sync-cli.js'][400] = 0;
-  _$jscoverage['modules/sync-cli.js'][406] = 0;
+  _$jscoverage['modules/sync-cli.js'][401] = 0;
+  _$jscoverage['modules/sync-cli.js'][402] = 0;
   _$jscoverage['modules/sync-cli.js'][408] = 0;
   _$jscoverage['modules/sync-cli.js'][409] = 0;
   _$jscoverage['modules/sync-cli.js'][410] = 0;
-  _$jscoverage['modules/sync-cli.js'][411] = 0;
-  _$jscoverage['modules/sync-cli.js'][412] = 0;
-  _$jscoverage['modules/sync-cli.js'][415] = 0;
   _$jscoverage['modules/sync-cli.js'][416] = 0;
-  _$jscoverage['modules/sync-cli.js'][422] = 0;
+  _$jscoverage['modules/sync-cli.js'][417] = 0;
+  _$jscoverage['modules/sync-cli.js'][418] = 0;
   _$jscoverage['modules/sync-cli.js'][424] = 0;
-  _$jscoverage['modules/sync-cli.js'][425] = 0;
   _$jscoverage['modules/sync-cli.js'][426] = 0;
   _$jscoverage['modules/sync-cli.js'][427] = 0;
   _$jscoverage['modules/sync-cli.js'][428] = 0;
-  _$jscoverage['modules/sync-cli.js'][431] = 0;
-  _$jscoverage['modules/sync-cli.js'][432] = 0;
-  _$jscoverage['modules/sync-cli.js'][438] = 0;
-  _$jscoverage['modules/sync-cli.js'][439] = 0;
+  _$jscoverage['modules/sync-cli.js'][429] = 0;
+  _$jscoverage['modules/sync-cli.js'][430] = 0;
+  _$jscoverage['modules/sync-cli.js'][433] = 0;
+  _$jscoverage['modules/sync-cli.js'][434] = 0;
+  _$jscoverage['modules/sync-cli.js'][440] = 0;
   _$jscoverage['modules/sync-cli.js'][442] = 0;
+  _$jscoverage['modules/sync-cli.js'][443] = 0;
   _$jscoverage['modules/sync-cli.js'][444] = 0;
   _$jscoverage['modules/sync-cli.js'][445] = 0;
-  _$jscoverage['modules/sync-cli.js'][451] = 0;
+  _$jscoverage['modules/sync-cli.js'][446] = 0;
+  _$jscoverage['modules/sync-cli.js'][449] = 0;
+  _$jscoverage['modules/sync-cli.js'][450] = 0;
   _$jscoverage['modules/sync-cli.js'][456] = 0;
-  _$jscoverage['modules/sync-cli.js'][458] = 0;
-  _$jscoverage['modules/sync-cli.js'][459] = 0;
-  _$jscoverage['modules/sync-cli.js'][461] = 0;
-  _$jscoverage['modules/sync-cli.js'][464] = 0;
-  _$jscoverage['modules/sync-cli.js'][468] = 0;
+  _$jscoverage['modules/sync-cli.js'][457] = 0;
+  _$jscoverage['modules/sync-cli.js'][460] = 0;
+  _$jscoverage['modules/sync-cli.js'][462] = 0;
+  _$jscoverage['modules/sync-cli.js'][463] = 0;
   _$jscoverage['modules/sync-cli.js'][469] = 0;
-  _$jscoverage['modules/sync-cli.js'][473] = 0;
   _$jscoverage['modules/sync-cli.js'][474] = 0;
-  _$jscoverage['modules/sync-cli.js'][475] = 0;
+  _$jscoverage['modules/sync-cli.js'][476] = 0;
+  _$jscoverage['modules/sync-cli.js'][477] = 0;
   _$jscoverage['modules/sync-cli.js'][479] = 0;
-  _$jscoverage['modules/sync-cli.js'][480] = 0;
   _$jscoverage['modules/sync-cli.js'][482] = 0;
-  _$jscoverage['modules/sync-cli.js'][484] = 0;
   _$jscoverage['modules/sync-cli.js'][486] = 0;
-  _$jscoverage['modules/sync-cli.js'][488] = 0;
-  _$jscoverage['modules/sync-cli.js'][489] = 0;
+  _$jscoverage['modules/sync-cli.js'][487] = 0;
   _$jscoverage['modules/sync-cli.js'][491] = 0;
   _$jscoverage['modules/sync-cli.js'][492] = 0;
-  _$jscoverage['modules/sync-cli.js'][494] = 0;
-  _$jscoverage['modules/sync-cli.js'][496] = 0;
+  _$jscoverage['modules/sync-cli.js'][493] = 0;
+  _$jscoverage['modules/sync-cli.js'][497] = 0;
+  _$jscoverage['modules/sync-cli.js'][498] = 0;
   _$jscoverage['modules/sync-cli.js'][500] = 0;
-  _$jscoverage['modules/sync-cli.js'][501] = 0;
   _$jscoverage['modules/sync-cli.js'][502] = 0;
-  _$jscoverage['modules/sync-cli.js'][503] = 0;
   _$jscoverage['modules/sync-cli.js'][504] = 0;
-  _$jscoverage['modules/sync-cli.js'][505] = 0;
   _$jscoverage['modules/sync-cli.js'][506] = 0;
   _$jscoverage['modules/sync-cli.js'][507] = 0;
-  _$jscoverage['modules/sync-cli.js'][508] = 0;
+  _$jscoverage['modules/sync-cli.js'][509] = 0;
   _$jscoverage['modules/sync-cli.js'][510] = 0;
-  _$jscoverage['modules/sync-cli.js'][511] = 0;
   _$jscoverage['modules/sync-cli.js'][512] = 0;
-  _$jscoverage['modules/sync-cli.js'][513] = 0;
   _$jscoverage['modules/sync-cli.js'][514] = 0;
-  _$jscoverage['modules/sync-cli.js'][516] = 0;
+  _$jscoverage['modules/sync-cli.js'][518] = 0;
+  _$jscoverage['modules/sync-cli.js'][519] = 0;
+  _$jscoverage['modules/sync-cli.js'][520] = 0;
+  _$jscoverage['modules/sync-cli.js'][521] = 0;
   _$jscoverage['modules/sync-cli.js'][522] = 0;
+  _$jscoverage['modules/sync-cli.js'][523] = 0;
+  _$jscoverage['modules/sync-cli.js'][524] = 0;
   _$jscoverage['modules/sync-cli.js'][525] = 0;
   _$jscoverage['modules/sync-cli.js'][526] = 0;
-  _$jscoverage['modules/sync-cli.js'][527] = 0;
   _$jscoverage['modules/sync-cli.js'][528] = 0;
+  _$jscoverage['modules/sync-cli.js'][529] = 0;
   _$jscoverage['modules/sync-cli.js'][530] = 0;
   _$jscoverage['modules/sync-cli.js'][531] = 0;
   _$jscoverage['modules/sync-cli.js'][532] = 0;
   _$jscoverage['modules/sync-cli.js'][534] = 0;
-  _$jscoverage['modules/sync-cli.js'][536] = 0;
-  _$jscoverage['modules/sync-cli.js'][537] = 0;
-  _$jscoverage['modules/sync-cli.js'][538] = 0;
-  _$jscoverage['modules/sync-cli.js'][539] = 0;
-  _$jscoverage['modules/sync-cli.js'][540] = 0;
-  _$jscoverage['modules/sync-cli.js'][541] = 0;
-  _$jscoverage['modules/sync-cli.js'][543] = 0;
-  _$jscoverage['modules/sync-cli.js'][544] = 0;
+  _$jscoverage['modules/sync-cli.js'][535] = 0;
+  _$jscoverage['modules/sync-cli.js'][542] = 0;
+  _$jscoverage['modules/sync-cli.js'][545] = 0;
   _$jscoverage['modules/sync-cli.js'][546] = 0;
   _$jscoverage['modules/sync-cli.js'][547] = 0;
   _$jscoverage['modules/sync-cli.js'][548] = 0;
+  _$jscoverage['modules/sync-cli.js'][550] = 0;
+  _$jscoverage['modules/sync-cli.js'][551] = 0;
   _$jscoverage['modules/sync-cli.js'][552] = 0;
-  _$jscoverage['modules/sync-cli.js'][553] = 0;
   _$jscoverage['modules/sync-cli.js'][554] = 0;
-  _$jscoverage['modules/sync-cli.js'][555] = 0;
+  _$jscoverage['modules/sync-cli.js'][556] = 0;
+  _$jscoverage['modules/sync-cli.js'][557] = 0;
   _$jscoverage['modules/sync-cli.js'][558] = 0;
+  _$jscoverage['modules/sync-cli.js'][559] = 0;
   _$jscoverage['modules/sync-cli.js'][560] = 0;
   _$jscoverage['modules/sync-cli.js'][561] = 0;
   _$jscoverage['modules/sync-cli.js'][563] = 0;
   _$jscoverage['modules/sync-cli.js'][564] = 0;
+  _$jscoverage['modules/sync-cli.js'][566] = 0;
+  _$jscoverage['modules/sync-cli.js'][567] = 0;
   _$jscoverage['modules/sync-cli.js'][568] = 0;
-  _$jscoverage['modules/sync-cli.js'][570] = 0;
-  _$jscoverage['modules/sync-cli.js'][571] = 0;
   _$jscoverage['modules/sync-cli.js'][572] = 0;
   _$jscoverage['modules/sync-cli.js'][573] = 0;
   _$jscoverage['modules/sync-cli.js'][574] = 0;
   _$jscoverage['modules/sync-cli.js'][575] = 0;
-  _$jscoverage['modules/sync-cli.js'][576] = 0;
-  _$jscoverage['modules/sync-cli.js'][577] = 0;
+  _$jscoverage['modules/sync-cli.js'][578] = 0;
+  _$jscoverage['modules/sync-cli.js'][580] = 0;
+  _$jscoverage['modules/sync-cli.js'][581] = 0;
+  _$jscoverage['modules/sync-cli.js'][583] = 0;
   _$jscoverage['modules/sync-cli.js'][584] = 0;
-  _$jscoverage['modules/sync-cli.js'][587] = 0;
+  _$jscoverage['modules/sync-cli.js'][588] = 0;
   _$jscoverage['modules/sync-cli.js'][590] = 0;
+  _$jscoverage['modules/sync-cli.js'][591] = 0;
+  _$jscoverage['modules/sync-cli.js'][592] = 0;
   _$jscoverage['modules/sync-cli.js'][593] = 0;
+  _$jscoverage['modules/sync-cli.js'][594] = 0;
+  _$jscoverage['modules/sync-cli.js'][595] = 0;
   _$jscoverage['modules/sync-cli.js'][596] = 0;
-  _$jscoverage['modules/sync-cli.js'][600] = 0;
-  _$jscoverage['modules/sync-cli.js'][602] = 0;
-  _$jscoverage['modules/sync-cli.js'][603] = 0;
-  _$jscoverage['modules/sync-cli.js'][605] = 0;
-  _$jscoverage['modules/sync-cli.js'][608] = 0;
-  _$jscoverage['modules/sync-cli.js'][609] = 0;
+  _$jscoverage['modules/sync-cli.js'][597] = 0;
+  _$jscoverage['modules/sync-cli.js'][604] = 0;
+  _$jscoverage['modules/sync-cli.js'][607] = 0;
   _$jscoverage['modules/sync-cli.js'][610] = 0;
-  _$jscoverage['modules/sync-cli.js'][611] = 0;
-  _$jscoverage['modules/sync-cli.js'][612] = 0;
   _$jscoverage['modules/sync-cli.js'][613] = 0;
   _$jscoverage['modules/sync-cli.js'][616] = 0;
-  _$jscoverage['modules/sync-cli.js'][617] = 0;
-  _$jscoverage['modules/sync-cli.js'][619] = 0;
-  _$jscoverage['modules/sync-cli.js'][621] = 0;
+  _$jscoverage['modules/sync-cli.js'][620] = 0;
   _$jscoverage['modules/sync-cli.js'][622] = 0;
+  _$jscoverage['modules/sync-cli.js'][623] = 0;
+  _$jscoverage['modules/sync-cli.js'][625] = 0;
   _$jscoverage['modules/sync-cli.js'][628] = 0;
   _$jscoverage['modules/sync-cli.js'][629] = 0;
   _$jscoverage['modules/sync-cli.js'][630] = 0;
-  _$jscoverage['modules/sync-cli.js'][634] = 0;
-  _$jscoverage['modules/sync-cli.js'][635] = 0;
-  _$jscoverage['modules/sync-cli.js'][645] = 0;
-  _$jscoverage['modules/sync-cli.js'][647] = 0;
+  _$jscoverage['modules/sync-cli.js'][631] = 0;
+  _$jscoverage['modules/sync-cli.js'][632] = 0;
+  _$jscoverage['modules/sync-cli.js'][633] = 0;
+  _$jscoverage['modules/sync-cli.js'][636] = 0;
+  _$jscoverage['modules/sync-cli.js'][637] = 0;
+  _$jscoverage['modules/sync-cli.js'][639] = 0;
+  _$jscoverage['modules/sync-cli.js'][641] = 0;
+  _$jscoverage['modules/sync-cli.js'][642] = 0;
+  _$jscoverage['modules/sync-cli.js'][648] = 0;
   _$jscoverage['modules/sync-cli.js'][649] = 0;
   _$jscoverage['modules/sync-cli.js'][650] = 0;
-  _$jscoverage['modules/sync-cli.js'][651] = 0;
-  _$jscoverage['modules/sync-cli.js'][652] = 0;
-  _$jscoverage['modules/sync-cli.js'][653] = 0;
-  _$jscoverage['modules/sync-cli.js'][656] = 0;
-  _$jscoverage['modules/sync-cli.js'][658] = 0;
-  _$jscoverage['modules/sync-cli.js'][659] = 0;
-  _$jscoverage['modules/sync-cli.js'][660] = 0;
-  _$jscoverage['modules/sync-cli.js'][661] = 0;
-  _$jscoverage['modules/sync-cli.js'][663] = 0;
+  _$jscoverage['modules/sync-cli.js'][654] = 0;
+  _$jscoverage['modules/sync-cli.js'][655] = 0;
   _$jscoverage['modules/sync-cli.js'][665] = 0;
+  _$jscoverage['modules/sync-cli.js'][667] = 0;
   _$jscoverage['modules/sync-cli.js'][669] = 0;
+  _$jscoverage['modules/sync-cli.js'][670] = 0;
   _$jscoverage['modules/sync-cli.js'][671] = 0;
   _$jscoverage['modules/sync-cli.js'][672] = 0;
   _$jscoverage['modules/sync-cli.js'][673] = 0;
-  _$jscoverage['modules/sync-cli.js'][674] = 0;
-  _$jscoverage['modules/sync-cli.js'][677] = 0;
+  _$jscoverage['modules/sync-cli.js'][676] = 0;
   _$jscoverage['modules/sync-cli.js'][678] = 0;
   _$jscoverage['modules/sync-cli.js'][679] = 0;
   _$jscoverage['modules/sync-cli.js'][680] = 0;
   _$jscoverage['modules/sync-cli.js'][681] = 0;
-  _$jscoverage['modules/sync-cli.js'][684] = 0;
+  _$jscoverage['modules/sync-cli.js'][683] = 0;
   _$jscoverage['modules/sync-cli.js'][685] = 0;
-  _$jscoverage['modules/sync-cli.js'][686] = 0;
-  _$jscoverage['modules/sync-cli.js'][687] = 0;
+  _$jscoverage['modules/sync-cli.js'][689] = 0;
   _$jscoverage['modules/sync-cli.js'][691] = 0;
+  _$jscoverage['modules/sync-cli.js'][692] = 0;
   _$jscoverage['modules/sync-cli.js'][693] = 0;
   _$jscoverage['modules/sync-cli.js'][694] = 0;
-  _$jscoverage['modules/sync-cli.js'][695] = 0;
   _$jscoverage['modules/sync-cli.js'][697] = 0;
+  _$jscoverage['modules/sync-cli.js'][698] = 0;
   _$jscoverage['modules/sync-cli.js'][699] = 0;
   _$jscoverage['modules/sync-cli.js'][700] = 0;
+  _$jscoverage['modules/sync-cli.js'][701] = 0;
+  _$jscoverage['modules/sync-cli.js'][704] = 0;
+  _$jscoverage['modules/sync-cli.js'][705] = 0;
+  _$jscoverage['modules/sync-cli.js'][706] = 0;
   _$jscoverage['modules/sync-cli.js'][707] = 0;
-  _$jscoverage['modules/sync-cli.js'][708] = 0;
-  _$jscoverage['modules/sync-cli.js'][709] = 0;
-  _$jscoverage['modules/sync-cli.js'][710] = 0;
   _$jscoverage['modules/sync-cli.js'][711] = 0;
-  _$jscoverage['modules/sync-cli.js'][716] = 0;
+  _$jscoverage['modules/sync-cli.js'][713] = 0;
+  _$jscoverage['modules/sync-cli.js'][714] = 0;
+  _$jscoverage['modules/sync-cli.js'][715] = 0;
   _$jscoverage['modules/sync-cli.js'][717] = 0;
-  _$jscoverage['modules/sync-cli.js'][718] = 0;
+  _$jscoverage['modules/sync-cli.js'][719] = 0;
   _$jscoverage['modules/sync-cli.js'][720] = 0;
-  _$jscoverage['modules/sync-cli.js'][722] = 0;
-  _$jscoverage['modules/sync-cli.js'][723] = 0;
-  _$jscoverage['modules/sync-cli.js'][724] = 0;
-  _$jscoverage['modules/sync-cli.js'][725] = 0;
   _$jscoverage['modules/sync-cli.js'][727] = 0;
   _$jscoverage['modules/sync-cli.js'][728] = 0;
   _$jscoverage['modules/sync-cli.js'][729] = 0;
   _$jscoverage['modules/sync-cli.js'][730] = 0;
   _$jscoverage['modules/sync-cli.js'][731] = 0;
-  _$jscoverage['modules/sync-cli.js'][733] = 0;
+  _$jscoverage['modules/sync-cli.js'][736] = 0;
   _$jscoverage['modules/sync-cli.js'][737] = 0;
   _$jscoverage['modules/sync-cli.js'][738] = 0;
-  _$jscoverage['modules/sync-cli.js'][741] = 0;
+  _$jscoverage['modules/sync-cli.js'][740] = 0;
+  _$jscoverage['modules/sync-cli.js'][742] = 0;
   _$jscoverage['modules/sync-cli.js'][743] = 0;
+  _$jscoverage['modules/sync-cli.js'][744] = 0;
+  _$jscoverage['modules/sync-cli.js'][745] = 0;
+  _$jscoverage['modules/sync-cli.js'][747] = 0;
   _$jscoverage['modules/sync-cli.js'][748] = 0;
-  _$jscoverage['modules/sync-cli.js'][756] = 0;
+  _$jscoverage['modules/sync-cli.js'][749] = 0;
+  _$jscoverage['modules/sync-cli.js'][750] = 0;
+  _$jscoverage['modules/sync-cli.js'][751] = 0;
+  _$jscoverage['modules/sync-cli.js'][753] = 0;
   _$jscoverage['modules/sync-cli.js'][757] = 0;
-  _$jscoverage['modules/sync-cli.js'][759] = 0;
+  _$jscoverage['modules/sync-cli.js'][758] = 0;
   _$jscoverage['modules/sync-cli.js'][761] = 0;
-  _$jscoverage['modules/sync-cli.js'][769] = 0;
-  _$jscoverage['modules/sync-cli.js'][770] = 0;
-  _$jscoverage['modules/sync-cli.js'][771] = 0;
-  _$jscoverage['modules/sync-cli.js'][773] = 0;
-  _$jscoverage['modules/sync-cli.js'][774] = 0;
+  _$jscoverage['modules/sync-cli.js'][763] = 0;
+  _$jscoverage['modules/sync-cli.js'][768] = 0;
+  _$jscoverage['modules/sync-cli.js'][776] = 0;
   _$jscoverage['modules/sync-cli.js'][777] = 0;
-  _$jscoverage['modules/sync-cli.js'][778] = 0;
-  _$jscoverage['modules/sync-cli.js'][780] = 0;
-  _$jscoverage['modules/sync-cli.js'][782] = 0;
-  _$jscoverage['modules/sync-cli.js'][787] = 0;
-  _$jscoverage['modules/sync-cli.js'][788] = 0;
-  _$jscoverage['modules/sync-cli.js'][792] = 0;
+  _$jscoverage['modules/sync-cli.js'][779] = 0;
+  _$jscoverage['modules/sync-cli.js'][781] = 0;
+  _$jscoverage['modules/sync-cli.js'][789] = 0;
+  _$jscoverage['modules/sync-cli.js'][790] = 0;
+  _$jscoverage['modules/sync-cli.js'][791] = 0;
+  _$jscoverage['modules/sync-cli.js'][793] = 0;
   _$jscoverage['modules/sync-cli.js'][794] = 0;
   _$jscoverage['modules/sync-cli.js'][797] = 0;
+  _$jscoverage['modules/sync-cli.js'][798] = 0;
+  _$jscoverage['modules/sync-cli.js'][800] = 0;
   _$jscoverage['modules/sync-cli.js'][802] = 0;
-  _$jscoverage['modules/sync-cli.js'][804] = 0;
-  _$jscoverage['modules/sync-cli.js'][810] = 0;
-  _$jscoverage['modules/sync-cli.js'][813] = 0;
-  _$jscoverage['modules/sync-cli.js'][814] = 0;
-  _$jscoverage['modules/sync-cli.js'][819] = 0;
-  _$jscoverage['modules/sync-cli.js'][821] = 0;
+  _$jscoverage['modules/sync-cli.js'][807] = 0;
+  _$jscoverage['modules/sync-cli.js'][811] = 0;
+  _$jscoverage['modules/sync-cli.js'][815] = 0;
+  _$jscoverage['modules/sync-cli.js'][816] = 0;
+  _$jscoverage['modules/sync-cli.js'][820] = 0;
   _$jscoverage['modules/sync-cli.js'][822] = 0;
-  _$jscoverage['modules/sync-cli.js'][823] = 0;
   _$jscoverage['modules/sync-cli.js'][825] = 0;
-  _$jscoverage['modules/sync-cli.js'][827] = 0;
-  _$jscoverage['modules/sync-cli.js'][828] = 0;
   _$jscoverage['modules/sync-cli.js'][830] = 0;
+  _$jscoverage['modules/sync-cli.js'][832] = 0;
   _$jscoverage['modules/sync-cli.js'][838] = 0;
-  _$jscoverage['modules/sync-cli.js'][840] = 0;
   _$jscoverage['modules/sync-cli.js'][841] = 0;
   _$jscoverage['modules/sync-cli.js'][842] = 0;
-  _$jscoverage['modules/sync-cli.js'][845] = 0;
-  _$jscoverage['modules/sync-cli.js'][846] = 0;
   _$jscoverage['modules/sync-cli.js'][847] = 0;
-  _$jscoverage['modules/sync-cli.js'][848] = 0;
   _$jscoverage['modules/sync-cli.js'][849] = 0;
+  _$jscoverage['modules/sync-cli.js'][850] = 0;
+  _$jscoverage['modules/sync-cli.js'][851] = 0;
   _$jscoverage['modules/sync-cli.js'][853] = 0;
-  _$jscoverage['modules/sync-cli.js'][854] = 0;
   _$jscoverage['modules/sync-cli.js'][855] = 0;
   _$jscoverage['modules/sync-cli.js'][856] = 0;
-  _$jscoverage['modules/sync-cli.js'][859] = 0;
-  _$jscoverage['modules/sync-cli.js'][867] = 0;
+  _$jscoverage['modules/sync-cli.js'][858] = 0;
+  _$jscoverage['modules/sync-cli.js'][866] = 0;
   _$jscoverage['modules/sync-cli.js'][868] = 0;
   _$jscoverage['modules/sync-cli.js'][869] = 0;
-  _$jscoverage['modules/sync-cli.js'][871] = 0;
-  _$jscoverage['modules/sync-cli.js'][872] = 0;
+  _$jscoverage['modules/sync-cli.js'][870] = 0;
+  _$jscoverage['modules/sync-cli.js'][873] = 0;
   _$jscoverage['modules/sync-cli.js'][874] = 0;
+  _$jscoverage['modules/sync-cli.js'][875] = 0;
+  _$jscoverage['modules/sync-cli.js'][876] = 0;
   _$jscoverage['modules/sync-cli.js'][877] = 0;
   _$jscoverage['modules/sync-cli.js'][878] = 0;
-  _$jscoverage['modules/sync-cli.js'][879] = 0;
   _$jscoverage['modules/sync-cli.js'][882] = 0;
+  _$jscoverage['modules/sync-cli.js'][883] = 0;
+  _$jscoverage['modules/sync-cli.js'][884] = 0;
   _$jscoverage['modules/sync-cli.js'][885] = 0;
-  _$jscoverage['modules/sync-cli.js'][886] = 0;
-  _$jscoverage['modules/sync-cli.js'][889] = 0;
-  _$jscoverage['modules/sync-cli.js'][892] = 0;
-  _$jscoverage['modules/sync-cli.js'][893] = 0;
-  _$jscoverage['modules/sync-cli.js'][894] = 0;
-  _$jscoverage['modules/sync-cli.js'][895] = 0;
+  _$jscoverage['modules/sync-cli.js'][888] = 0;
+  _$jscoverage['modules/sync-cli.js'][896] = 0;
   _$jscoverage['modules/sync-cli.js'][897] = 0;
   _$jscoverage['modules/sync-cli.js'][898] = 0;
-  _$jscoverage['modules/sync-cli.js'][899] = 0;
   _$jscoverage['modules/sync-cli.js'][900] = 0;
   _$jscoverage['modules/sync-cli.js'][901] = 0;
-  _$jscoverage['modules/sync-cli.js'][902] = 0;
-  _$jscoverage['modules/sync-cli.js'][905] = 0;
+  _$jscoverage['modules/sync-cli.js'][903] = 0;
   _$jscoverage['modules/sync-cli.js'][906] = 0;
   _$jscoverage['modules/sync-cli.js'][907] = 0;
-  _$jscoverage['modules/sync-cli.js'][910] = 0;
+  _$jscoverage['modules/sync-cli.js'][908] = 0;
+  _$jscoverage['modules/sync-cli.js'][911] = 0;
   _$jscoverage['modules/sync-cli.js'][914] = 0;
   _$jscoverage['modules/sync-cli.js'][915] = 0;
-  _$jscoverage['modules/sync-cli.js'][916] = 0;
+  _$jscoverage['modules/sync-cli.js'][918] = 0;
+  _$jscoverage['modules/sync-cli.js'][921] = 0;
+  _$jscoverage['modules/sync-cli.js'][922] = 0;
   _$jscoverage['modules/sync-cli.js'][923] = 0;
   _$jscoverage['modules/sync-cli.js'][924] = 0;
-  _$jscoverage['modules/sync-cli.js'][925] = 0;
   _$jscoverage['modules/sync-cli.js'][926] = 0;
+  _$jscoverage['modules/sync-cli.js'][927] = 0;
   _$jscoverage['modules/sync-cli.js'][928] = 0;
   _$jscoverage['modules/sync-cli.js'][929] = 0;
   _$jscoverage['modules/sync-cli.js'][930] = 0;
   _$jscoverage['modules/sync-cli.js'][931] = 0;
-  _$jscoverage['modules/sync-cli.js'][932] = 0;
-  _$jscoverage['modules/sync-cli.js'][933] = 0;
   _$jscoverage['modules/sync-cli.js'][934] = 0;
-  _$jscoverage['modules/sync-cli.js'][937] = 0;
-  _$jscoverage['modules/sync-cli.js'][938] = 0;
-  _$jscoverage['modules/sync-cli.js'][940] = 0;
+  _$jscoverage['modules/sync-cli.js'][935] = 0;
+  _$jscoverage['modules/sync-cli.js'][936] = 0;
+  _$jscoverage['modules/sync-cli.js'][939] = 0;
+  _$jscoverage['modules/sync-cli.js'][943] = 0;
   _$jscoverage['modules/sync-cli.js'][944] = 0;
   _$jscoverage['modules/sync-cli.js'][945] = 0;
-  _$jscoverage['modules/sync-cli.js'][946] = 0;
-  _$jscoverage['modules/sync-cli.js'][947] = 0;
-  _$jscoverage['modules/sync-cli.js'][950] = 0;
-  _$jscoverage['modules/sync-cli.js'][951] = 0;
   _$jscoverage['modules/sync-cli.js'][952] = 0;
-  _$jscoverage['modules/sync-cli.js'][956] = 0;
+  _$jscoverage['modules/sync-cli.js'][953] = 0;
+  _$jscoverage['modules/sync-cli.js'][954] = 0;
+  _$jscoverage['modules/sync-cli.js'][955] = 0;
+  _$jscoverage['modules/sync-cli.js'][957] = 0;
+  _$jscoverage['modules/sync-cli.js'][958] = 0;
+  _$jscoverage['modules/sync-cli.js'][959] = 0;
   _$jscoverage['modules/sync-cli.js'][960] = 0;
   _$jscoverage['modules/sync-cli.js'][961] = 0;
   _$jscoverage['modules/sync-cli.js'][962] = 0;
   _$jscoverage['modules/sync-cli.js'][963] = 0;
-  _$jscoverage['modules/sync-cli.js'][964] = 0;
+  _$jscoverage['modules/sync-cli.js'][966] = 0;
+  _$jscoverage['modules/sync-cli.js'][967] = 0;
   _$jscoverage['modules/sync-cli.js'][969] = 0;
-  _$jscoverage['modules/sync-cli.js'][970] = 0;
-  _$jscoverage['modules/sync-cli.js'][972] = 0;
   _$jscoverage['modules/sync-cli.js'][973] = 0;
   _$jscoverage['modules/sync-cli.js'][974] = 0;
   _$jscoverage['modules/sync-cli.js'][975] = 0;
-  _$jscoverage['modules/sync-cli.js'][977] = 0;
+  _$jscoverage['modules/sync-cli.js'][976] = 0;
   _$jscoverage['modules/sync-cli.js'][979] = 0;
+  _$jscoverage['modules/sync-cli.js'][980] = 0;
   _$jscoverage['modules/sync-cli.js'][981] = 0;
-  _$jscoverage['modules/sync-cli.js'][982] = 0;
   _$jscoverage['modules/sync-cli.js'][985] = 0;
-  _$jscoverage['modules/sync-cli.js'][986] = 0;
-  _$jscoverage['modules/sync-cli.js'][987] = 0;
-  _$jscoverage['modules/sync-cli.js'][988] = 0;
   _$jscoverage['modules/sync-cli.js'][989] = 0;
+  _$jscoverage['modules/sync-cli.js'][990] = 0;
+  _$jscoverage['modules/sync-cli.js'][991] = 0;
+  _$jscoverage['modules/sync-cli.js'][992] = 0;
   _$jscoverage['modules/sync-cli.js'][993] = 0;
-  _$jscoverage['modules/sync-cli.js'][994] = 0;
-  _$jscoverage['modules/sync-cli.js'][995] = 0;
-  _$jscoverage['modules/sync-cli.js'][996] = 0;
   _$jscoverage['modules/sync-cli.js'][998] = 0;
   _$jscoverage['modules/sync-cli.js'][999] = 0;
-  _$jscoverage['modules/sync-cli.js'][1000] = 0;
   _$jscoverage['modules/sync-cli.js'][1001] = 0;
   _$jscoverage['modules/sync-cli.js'][1002] = 0;
   _$jscoverage['modules/sync-cli.js'][1003] = 0;
   _$jscoverage['modules/sync-cli.js'][1004] = 0;
+  _$jscoverage['modules/sync-cli.js'][1006] = 0;
+  _$jscoverage['modules/sync-cli.js'][1008] = 0;
+  _$jscoverage['modules/sync-cli.js'][1010] = 0;
   _$jscoverage['modules/sync-cli.js'][1011] = 0;
-  _$jscoverage['modules/sync-cli.js'][1012] = 0;
-  _$jscoverage['modules/sync-cli.js'][1013] = 0;
   _$jscoverage['modules/sync-cli.js'][1014] = 0;
   _$jscoverage['modules/sync-cli.js'][1015] = 0;
   _$jscoverage['modules/sync-cli.js'][1016] = 0;
-  _$jscoverage['modules/sync-cli.js'][1019] = 0;
-  _$jscoverage['modules/sync-cli.js'][1020] = 0;
-  _$jscoverage['modules/sync-cli.js'][1021] = 0;
+  _$jscoverage['modules/sync-cli.js'][1017] = 0;
+  _$jscoverage['modules/sync-cli.js'][1018] = 0;
   _$jscoverage['modules/sync-cli.js'][1022] = 0;
+  _$jscoverage['modules/sync-cli.js'][1023] = 0;
+  _$jscoverage['modules/sync-cli.js'][1024] = 0;
+  _$jscoverage['modules/sync-cli.js'][1025] = 0;
+  _$jscoverage['modules/sync-cli.js'][1027] = 0;
+  _$jscoverage['modules/sync-cli.js'][1028] = 0;
+  _$jscoverage['modules/sync-cli.js'][1029] = 0;
+  _$jscoverage['modules/sync-cli.js'][1030] = 0;
+  _$jscoverage['modules/sync-cli.js'][1031] = 0;
+  _$jscoverage['modules/sync-cli.js'][1032] = 0;
   _$jscoverage['modules/sync-cli.js'][1033] = 0;
-  _$jscoverage['modules/sync-cli.js'][1035] = 0;
-  _$jscoverage['modules/sync-cli.js'][1036] = 0;
-  _$jscoverage['modules/sync-cli.js'][1037] = 0;
-  _$jscoverage['modules/sync-cli.js'][1038] = 0;
   _$jscoverage['modules/sync-cli.js'][1040] = 0;
   _$jscoverage['modules/sync-cli.js'][1041] = 0;
+  _$jscoverage['modules/sync-cli.js'][1042] = 0;
   _$jscoverage['modules/sync-cli.js'][1043] = 0;
+  _$jscoverage['modules/sync-cli.js'][1044] = 0;
   _$jscoverage['modules/sync-cli.js'][1045] = 0;
-  _$jscoverage['modules/sync-cli.js'][1046] = 0;
   _$jscoverage['modules/sync-cli.js'][1048] = 0;
+  _$jscoverage['modules/sync-cli.js'][1049] = 0;
   _$jscoverage['modules/sync-cli.js'][1050] = 0;
   _$jscoverage['modules/sync-cli.js'][1051] = 0;
-  _$jscoverage['modules/sync-cli.js'][1053] = 0;
-  _$jscoverage['modules/sync-cli.js'][1055] = 0;
-  _$jscoverage['modules/sync-cli.js'][1057] = 0;
-  _$jscoverage['modules/sync-cli.js'][1059] = 0;
-  _$jscoverage['modules/sync-cli.js'][1060] = 0;
+  _$jscoverage['modules/sync-cli.js'][1062] = 0;
   _$jscoverage['modules/sync-cli.js'][1064] = 0;
+  _$jscoverage['modules/sync-cli.js'][1065] = 0;
+  _$jscoverage['modules/sync-cli.js'][1066] = 0;
+  _$jscoverage['modules/sync-cli.js'][1067] = 0;
+  _$jscoverage['modules/sync-cli.js'][1069] = 0;
+  _$jscoverage['modules/sync-cli.js'][1070] = 0;
+  _$jscoverage['modules/sync-cli.js'][1072] = 0;
   _$jscoverage['modules/sync-cli.js'][1074] = 0;
-  _$jscoverage['modules/sync-cli.js'][1076] = 0;
+  _$jscoverage['modules/sync-cli.js'][1075] = 0;
   _$jscoverage['modules/sync-cli.js'][1077] = 0;
-  _$jscoverage['modules/sync-cli.js'][1078] = 0;
   _$jscoverage['modules/sync-cli.js'][1079] = 0;
-  _$jscoverage['modules/sync-cli.js'][1081] = 0;
+  _$jscoverage['modules/sync-cli.js'][1080] = 0;
   _$jscoverage['modules/sync-cli.js'][1082] = 0;
-  _$jscoverage['modules/sync-cli.js'][1083] = 0;
   _$jscoverage['modules/sync-cli.js'][1084] = 0;
   _$jscoverage['modules/sync-cli.js'][1086] = 0;
-  _$jscoverage['modules/sync-cli.js'][1087] = 0;
+  _$jscoverage['modules/sync-cli.js'][1088] = 0;
   _$jscoverage['modules/sync-cli.js'][1089] = 0;
-  _$jscoverage['modules/sync-cli.js'][1091] = 0;
   _$jscoverage['modules/sync-cli.js'][1093] = 0;
-  _$jscoverage['modules/sync-cli.js'][1095] = 0;
-  _$jscoverage['modules/sync-cli.js'][1096] = 0;
-  _$jscoverage['modules/sync-cli.js'][1100] = 0;
-  _$jscoverage['modules/sync-cli.js'][1109] = 0;
+  _$jscoverage['modules/sync-cli.js'][1103] = 0;
+  _$jscoverage['modules/sync-cli.js'][1105] = 0;
+  _$jscoverage['modules/sync-cli.js'][1106] = 0;
+  _$jscoverage['modules/sync-cli.js'][1107] = 0;
+  _$jscoverage['modules/sync-cli.js'][1108] = 0;
+  _$jscoverage['modules/sync-cli.js'][1110] = 0;
+  _$jscoverage['modules/sync-cli.js'][1111] = 0;
+  _$jscoverage['modules/sync-cli.js'][1112] = 0;
+  _$jscoverage['modules/sync-cli.js'][1113] = 0;
   _$jscoverage['modules/sync-cli.js'][1115] = 0;
   _$jscoverage['modules/sync-cli.js'][1116] = 0;
-  _$jscoverage['modules/sync-cli.js'][1117] = 0;
   _$jscoverage['modules/sync-cli.js'][1118] = 0;
-  _$jscoverage['modules/sync-cli.js'][1121] = 0;
+  _$jscoverage['modules/sync-cli.js'][1120] = 0;
   _$jscoverage['modules/sync-cli.js'][1122] = 0;
-  _$jscoverage['modules/sync-cli.js'][1123] = 0;
   _$jscoverage['modules/sync-cli.js'][1124] = 0;
-  _$jscoverage['modules/sync-cli.js'][1126] = 0;
-  _$jscoverage['modules/sync-cli.js'][1127] = 0;
-  _$jscoverage['modules/sync-cli.js'][1128] = 0;
-  _$jscoverage['modules/sync-cli.js'][1131] = 0;
-  _$jscoverage['modules/sync-cli.js'][1132] = 0;
-  _$jscoverage['modules/sync-cli.js'][1135] = 0;
-  _$jscoverage['modules/sync-cli.js'][1137] = 0;
-  _$jscoverage['modules/sync-cli.js'][1139] = 0;
-  _$jscoverage['modules/sync-cli.js'][1141] = 0;
-  _$jscoverage['modules/sync-cli.js'][1142] = 0;
-  _$jscoverage['modules/sync-cli.js'][1143] = 0;
+  _$jscoverage['modules/sync-cli.js'][1125] = 0;
+  _$jscoverage['modules/sync-cli.js'][1129] = 0;
+  _$jscoverage['modules/sync-cli.js'][1138] = 0;
+  _$jscoverage['modules/sync-cli.js'][1144] = 0;
   _$jscoverage['modules/sync-cli.js'][1145] = 0;
   _$jscoverage['modules/sync-cli.js'][1146] = 0;
   _$jscoverage['modules/sync-cli.js'][1147] = 0;
-  _$jscoverage['modules/sync-cli.js'][1154] = 0;
+  _$jscoverage['modules/sync-cli.js'][1150] = 0;
+  _$jscoverage['modules/sync-cli.js'][1151] = 0;
+  _$jscoverage['modules/sync-cli.js'][1152] = 0;
+  _$jscoverage['modules/sync-cli.js'][1153] = 0;
   _$jscoverage['modules/sync-cli.js'][1155] = 0;
+  _$jscoverage['modules/sync-cli.js'][1156] = 0;
+  _$jscoverage['modules/sync-cli.js'][1157] = 0;
   _$jscoverage['modules/sync-cli.js'][1160] = 0;
   _$jscoverage['modules/sync-cli.js'][1161] = 0;
   _$jscoverage['modules/sync-cli.js'][1164] = 0;
+  _$jscoverage['modules/sync-cli.js'][1166] = 0;
+  _$jscoverage['modules/sync-cli.js'][1168] = 0;
+  _$jscoverage['modules/sync-cli.js'][1170] = 0;
   _$jscoverage['modules/sync-cli.js'][1171] = 0;
   _$jscoverage['modules/sync-cli.js'][1172] = 0;
+  _$jscoverage['modules/sync-cli.js'][1174] = 0;
   _$jscoverage['modules/sync-cli.js'][1175] = 0;
-  _$jscoverage['modules/sync-cli.js'][1182] = 0;
+  _$jscoverage['modules/sync-cli.js'][1176] = 0;
   _$jscoverage['modules/sync-cli.js'][1183] = 0;
   _$jscoverage['modules/sync-cli.js'][1184] = 0;
-  _$jscoverage['modules/sync-cli.js'][1186] = 0;
-  _$jscoverage['modules/sync-cli.js'][1187] = 0;
-  _$jscoverage['modules/sync-cli.js'][1188] = 0;
   _$jscoverage['modules/sync-cli.js'][1189] = 0;
   _$jscoverage['modules/sync-cli.js'][1190] = 0;
-  _$jscoverage['modules/sync-cli.js'][1191] = 0;
-  _$jscoverage['modules/sync-cli.js'][1192] = 0;
-  _$jscoverage['modules/sync-cli.js'][1195] = 0;
-  _$jscoverage['modules/sync-cli.js'][1196] = 0;
+  _$jscoverage['modules/sync-cli.js'][1193] = 0;
   _$jscoverage['modules/sync-cli.js'][1200] = 0;
   _$jscoverage['modules/sync-cli.js'][1201] = 0;
-  _$jscoverage['modules/sync-cli.js'][1203] = 0;
   _$jscoverage['modules/sync-cli.js'][1204] = 0;
-  _$jscoverage['modules/sync-cli.js'][1205] = 0;
-  _$jscoverage['modules/sync-cli.js'][1206] = 0;
+  _$jscoverage['modules/sync-cli.js'][1211] = 0;
+  _$jscoverage['modules/sync-cli.js'][1212] = 0;
+  _$jscoverage['modules/sync-cli.js'][1213] = 0;
   _$jscoverage['modules/sync-cli.js'][1215] = 0;
   _$jscoverage['modules/sync-cli.js'][1216] = 0;
   _$jscoverage['modules/sync-cli.js'][1217] = 0;
@@ -11618,26 +11616,23 @@ if (! _$jscoverage['modules/sync-cli.js']) {
   _$jscoverage['modules/sync-cli.js'][1219] = 0;
   _$jscoverage['modules/sync-cli.js'][1220] = 0;
   _$jscoverage['modules/sync-cli.js'][1221] = 0;
-  _$jscoverage['modules/sync-cli.js'][1222] = 0;
-  _$jscoverage['modules/sync-cli.js'][1223] = 0;
   _$jscoverage['modules/sync-cli.js'][1224] = 0;
   _$jscoverage['modules/sync-cli.js'][1225] = 0;
-  _$jscoverage['modules/sync-cli.js'][1226] = 0;
-  _$jscoverage['modules/sync-cli.js'][1227] = 0;
-  _$jscoverage['modules/sync-cli.js'][1228] = 0;
-  _$jscoverage['modules/sync-cli.js'][1229] = 0;
+  _$jscoverage['modules/sync-cli.js'][1235] = 0;
+  _$jscoverage['modules/sync-cli.js'][1236] = 0;
+  _$jscoverage['modules/sync-cli.js'][1237] = 0;
+  _$jscoverage['modules/sync-cli.js'][1238] = 0;
+  _$jscoverage['modules/sync-cli.js'][1239] = 0;
   _$jscoverage['modules/sync-cli.js'][1240] = 0;
   _$jscoverage['modules/sync-cli.js'][1241] = 0;
   _$jscoverage['modules/sync-cli.js'][1242] = 0;
+  _$jscoverage['modules/sync-cli.js'][1243] = 0;
   _$jscoverage['modules/sync-cli.js'][1244] = 0;
   _$jscoverage['modules/sync-cli.js'][1245] = 0;
   _$jscoverage['modules/sync-cli.js'][1246] = 0;
   _$jscoverage['modules/sync-cli.js'][1247] = 0;
   _$jscoverage['modules/sync-cli.js'][1248] = 0;
-  _$jscoverage['modules/sync-cli.js'][1250] = 0;
-  _$jscoverage['modules/sync-cli.js'][1251] = 0;
-  _$jscoverage['modules/sync-cli.js'][1252] = 0;
-  _$jscoverage['modules/sync-cli.js'][1253] = 0;
+  _$jscoverage['modules/sync-cli.js'][1249] = 0;
   _$jscoverage['modules/sync-cli.js'][1260] = 0;
   _$jscoverage['modules/sync-cli.js'][1261] = 0;
   _$jscoverage['modules/sync-cli.js'][1262] = 0;
@@ -11645,11 +11640,16 @@ if (! _$jscoverage['modules/sync-cli.js']) {
   _$jscoverage['modules/sync-cli.js'][1265] = 0;
   _$jscoverage['modules/sync-cli.js'][1266] = 0;
   _$jscoverage['modules/sync-cli.js'][1267] = 0;
-  _$jscoverage['modules/sync-cli.js'][1276] = 0;
-  _$jscoverage['modules/sync-cli.js'][1277] = 0;
+  _$jscoverage['modules/sync-cli.js'][1268] = 0;
+  _$jscoverage['modules/sync-cli.js'][1270] = 0;
+  _$jscoverage['modules/sync-cli.js'][1271] = 0;
+  _$jscoverage['modules/sync-cli.js'][1272] = 0;
+  _$jscoverage['modules/sync-cli.js'][1273] = 0;
+  _$jscoverage['modules/sync-cli.js'][1281] = 0;
   _$jscoverage['modules/sync-cli.js'][1282] = 0;
-  _$jscoverage['modules/sync-cli.js'][1283] = 0;
+  _$jscoverage['modules/sync-cli.js'][1287] = 0;
   _$jscoverage['modules/sync-cli.js'][1288] = 0;
+  _$jscoverage['modules/sync-cli.js'][1293] = 0;
 }
 _$jscoverage['modules/sync-cli.js'][1]++;
 var JSON = require("JSON");
@@ -11672,295 +11672,295 @@ var self = {defaults: {"sync_frequency": 10, "auto_sync_local_updates": true, "n
     _$jscoverage['modules/sync-cli.js'][91]++;
     self.config[i] = options[i];
 }
-  _$jscoverage['modules/sync-cli.js'][94]++;
+  _$jscoverage['modules/sync-cli.js'][95]++;
+  if (typeof options.custom_sync !== "undefined") {
+    _$jscoverage['modules/sync-cli.js'][96]++;
+    self.hasCustomSync = options.custom_sync;
+  }
+  _$jscoverage['modules/sync-cli.js'][99]++;
   self.datasetMonitor();
 }), notify: (function (callback) {
-  _$jscoverage['modules/sync-cli.js'][98]++;
+  _$jscoverage['modules/sync-cli.js'][103]++;
   self.notify_callback = callback;
 }), manage: (function (dataset_id, options, query_params, meta_data, cb) {
-  _$jscoverage['modules/sync-cli.js'][102]++;
-  self.consoleLog("manage - START");
-  _$jscoverage['modules/sync-cli.js'][104]++;
-  var options = options || {};
-  _$jscoverage['modules/sync-cli.js'][106]++;
-  var doManage = (function (dataset) {
   _$jscoverage['modules/sync-cli.js'][107]++;
-  self.consoleLog("doManage dataset :: initialised = " + dataset.initialised + " :: " + dataset_id + " :: " + JSON.stringify(options));
+  self.consoleLog("manage - START");
   _$jscoverage['modules/sync-cli.js'][109]++;
-  var datasetConfig = self.setOptions(options);
+  var options = options || {};
   _$jscoverage['modules/sync-cli.js'][111]++;
-  dataset.query_params = query_params || dataset.query_params || {};
+  var doManage = (function (dataset) {
   _$jscoverage['modules/sync-cli.js'][112]++;
-  dataset.meta_data = meta_data || dataset.meta_data || {};
-  _$jscoverage['modules/sync-cli.js'][113]++;
-  dataset.config = datasetConfig;
+  self.consoleLog("doManage dataset :: initialised = " + dataset.initialised + " :: " + dataset_id + " :: " + JSON.stringify(options));
   _$jscoverage['modules/sync-cli.js'][114]++;
-  dataset.syncRunning = false;
-  _$jscoverage['modules/sync-cli.js'][115]++;
-  dataset.syncPending = true;
+  var datasetConfig = self.setOptions(options);
   _$jscoverage['modules/sync-cli.js'][116]++;
-  dataset.initialised = true;
+  dataset.query_params = query_params || dataset.query_params || {};
   _$jscoverage['modules/sync-cli.js'][117]++;
-  dataset.meta = {};
+  dataset.meta_data = meta_data || dataset.meta_data || {};
+  _$jscoverage['modules/sync-cli.js'][118]++;
+  dataset.config = datasetConfig;
   _$jscoverage['modules/sync-cli.js'][119]++;
-  self.saveDataSet(dataset_id, (function () {
+  dataset.syncRunning = false;
+  _$jscoverage['modules/sync-cli.js'][120]++;
+  dataset.syncPending = true;
   _$jscoverage['modules/sync-cli.js'][121]++;
+  dataset.initialised = true;
+  _$jscoverage['modules/sync-cli.js'][122]++;
+  dataset.meta = {};
+  _$jscoverage['modules/sync-cli.js'][124]++;
+  self.saveDataSet(dataset_id, (function () {
+  _$jscoverage['modules/sync-cli.js'][126]++;
   if (cb) {
-    _$jscoverage['modules/sync-cli.js'][122]++;
+    _$jscoverage['modules/sync-cli.js'][127]++;
     cb();
   }
 }));
 });
-  _$jscoverage['modules/sync-cli.js'][128]++;
+  _$jscoverage['modules/sync-cli.js'][133]++;
   self.getDataSet(dataset_id, (function (dataset) {
-  _$jscoverage['modules/sync-cli.js'][129]++;
+  _$jscoverage['modules/sync-cli.js'][134]++;
   self.consoleLog("manage - dataset already loaded");
-  _$jscoverage['modules/sync-cli.js'][130]++;
-  doManage(dataset);
-}), (function (err) {
-  _$jscoverage['modules/sync-cli.js'][132]++;
-  self.consoleLog("manage - dataset not loaded... trying to load");
   _$jscoverage['modules/sync-cli.js'][135]++;
-  self.loadDataSet(dataset_id, (function (dataset) {
-  _$jscoverage['modules/sync-cli.js'][136]++;
-  self.consoleLog("manage - dataset loaded from local storage");
-  _$jscoverage['modules/sync-cli.js'][141]++;
-  self.doNotify(dataset_id, null, self.notifications.LOCAL_UPDATE_APPLIED, "load");
-  _$jscoverage['modules/sync-cli.js'][144]++;
   doManage(dataset);
 }), (function (err) {
-  _$jscoverage['modules/sync-cli.js'][148]++;
-  self.consoleLog("manage - Creating new dataset for id " + dataset_id);
+  _$jscoverage['modules/sync-cli.js'][137]++;
+  self.consoleLog("manage - dataset not loaded... trying to load");
+  _$jscoverage['modules/sync-cli.js'][140]++;
+  self.loadDataSet(dataset_id, (function (dataset) {
+  _$jscoverage['modules/sync-cli.js'][141]++;
+  self.consoleLog("manage - dataset loaded from local storage");
+  _$jscoverage['modules/sync-cli.js'][146]++;
+  self.doNotify(dataset_id, null, self.notifications.LOCAL_UPDATE_APPLIED, "load");
   _$jscoverage['modules/sync-cli.js'][149]++;
-  var dataset = {};
-  _$jscoverage['modules/sync-cli.js'][150]++;
-  dataset.data = {};
-  _$jscoverage['modules/sync-cli.js'][151]++;
-  dataset.pending = {};
-  _$jscoverage['modules/sync-cli.js'][152]++;
-  self.datasets[dataset_id] = dataset;
+  doManage(dataset);
+}), (function (err) {
   _$jscoverage['modules/sync-cli.js'][153]++;
+  self.consoleLog("manage - Creating new dataset for id " + dataset_id);
+  _$jscoverage['modules/sync-cli.js'][154]++;
+  var dataset = {};
+  _$jscoverage['modules/sync-cli.js'][155]++;
+  dataset.data = {};
+  _$jscoverage['modules/sync-cli.js'][156]++;
+  dataset.pending = {};
+  _$jscoverage['modules/sync-cli.js'][157]++;
+  self.datasets[dataset_id] = dataset;
+  _$jscoverage['modules/sync-cli.js'][158]++;
   doManage(dataset);
 }));
 }));
 }), setOptions: (function (options) {
-  _$jscoverage['modules/sync-cli.js'][160]++;
+  _$jscoverage['modules/sync-cli.js'][165]++;
   if (! self.config) {
-    _$jscoverage['modules/sync-cli.js'][161]++;
+    _$jscoverage['modules/sync-cli.js'][166]++;
     self.config = JSON.parse(JSON.stringify(self.defaults));
   }
-  _$jscoverage['modules/sync-cli.js'][164]++;
+  _$jscoverage['modules/sync-cli.js'][169]++;
   var datasetConfig = JSON.parse(JSON.stringify(self.config));
-  _$jscoverage['modules/sync-cli.js'][165]++;
+  _$jscoverage['modules/sync-cli.js'][170]++;
   var optionsIn = JSON.parse(JSON.stringify(options));
-  _$jscoverage['modules/sync-cli.js'][166]++;
+  _$jscoverage['modules/sync-cli.js'][171]++;
   for (var k in optionsIn) {
-    _$jscoverage['modules/sync-cli.js'][167]++;
+    _$jscoverage['modules/sync-cli.js'][172]++;
     datasetConfig[k] = optionsIn[k];
 }
-  _$jscoverage['modules/sync-cli.js'][170]++;
+  _$jscoverage['modules/sync-cli.js'][175]++;
   return datasetConfig;
 }), list: (function (dataset_id, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][174]++;
+  _$jscoverage['modules/sync-cli.js'][179]++;
   self.getDataSet(dataset_id, (function (dataset) {
-  _$jscoverage['modules/sync-cli.js'][175]++;
+  _$jscoverage['modules/sync-cli.js'][180]++;
   if (dataset && dataset.data) {
-    _$jscoverage['modules/sync-cli.js'][177]++;
+    _$jscoverage['modules/sync-cli.js'][182]++;
     var res = JSON.parse(JSON.stringify(dataset.data));
-    _$jscoverage['modules/sync-cli.js'][178]++;
+    _$jscoverage['modules/sync-cli.js'][183]++;
     success(res);
   }
   else {
-    _$jscoverage['modules/sync-cli.js'][180]++;
+    _$jscoverage['modules/sync-cli.js'][185]++;
     if (failure) {
-      _$jscoverage['modules/sync-cli.js'][180]++;
+      _$jscoverage['modules/sync-cli.js'][185]++;
       failure("no_data");
     }
   }
 }), (function (code, msg) {
-  _$jscoverage['modules/sync-cli.js'][183]++;
+  _$jscoverage['modules/sync-cli.js'][188]++;
   if (failure) {
-    _$jscoverage['modules/sync-cli.js'][183]++;
+    _$jscoverage['modules/sync-cli.js'][188]++;
     failure(code, msg);
   }
 }));
 }), create: (function (dataset_id, data, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][188]++;
+  _$jscoverage['modules/sync-cli.js'][193]++;
+  if (data == null) {
+    _$jscoverage['modules/sync-cli.js'][194]++;
+    if (failure) {
+      _$jscoverage['modules/sync-cli.js'][195]++;
+      return failure("null_data");
+    }
+  }
+  _$jscoverage['modules/sync-cli.js'][198]++;
   self.addPendingObj(dataset_id, null, data, "create", success, failure);
 }), read: (function (dataset_id, uid, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][192]++;
+  _$jscoverage['modules/sync-cli.js'][202]++;
   self.getDataSet(dataset_id, (function (dataset) {
-  _$jscoverage['modules/sync-cli.js'][193]++;
+  _$jscoverage['modules/sync-cli.js'][203]++;
   var rec = dataset.data[uid];
-  _$jscoverage['modules/sync-cli.js'][194]++;
+  _$jscoverage['modules/sync-cli.js'][204]++;
   if (! rec) {
-    _$jscoverage['modules/sync-cli.js'][195]++;
+    _$jscoverage['modules/sync-cli.js'][205]++;
     failure("unknown_uid");
   }
   else {
-    _$jscoverage['modules/sync-cli.js'][198]++;
+    _$jscoverage['modules/sync-cli.js'][208]++;
     var res = JSON.parse(JSON.stringify(rec));
-    _$jscoverage['modules/sync-cli.js'][199]++;
+    _$jscoverage['modules/sync-cli.js'][209]++;
     success(res);
   }
 }), (function (code, msg) {
-  _$jscoverage['modules/sync-cli.js'][202]++;
+  _$jscoverage['modules/sync-cli.js'][212]++;
   if (failure) {
-    _$jscoverage['modules/sync-cli.js'][202]++;
+    _$jscoverage['modules/sync-cli.js'][212]++;
     failure(code, msg);
   }
 }));
 }), update: (function (dataset_id, uid, data, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][207]++;
+  _$jscoverage['modules/sync-cli.js'][217]++;
   self.addPendingObj(dataset_id, uid, data, "update", success, failure);
 }), "delete": (function (dataset_id, uid, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][211]++;
+  _$jscoverage['modules/sync-cli.js'][221]++;
   self.addPendingObj(dataset_id, uid, null, "delete", success, failure);
 }), getPending: (function (dataset_id, cb) {
-  _$jscoverage['modules/sync-cli.js'][215]++;
+  _$jscoverage['modules/sync-cli.js'][225]++;
   self.getDataSet(dataset_id, (function (dataset) {
-  _$jscoverage['modules/sync-cli.js'][216]++;
+  _$jscoverage['modules/sync-cli.js'][226]++;
   var res;
-  _$jscoverage['modules/sync-cli.js'][217]++;
+  _$jscoverage['modules/sync-cli.js'][227]++;
   if (dataset) {
-    _$jscoverage['modules/sync-cli.js'][218]++;
+    _$jscoverage['modules/sync-cli.js'][228]++;
     res = dataset.pending;
   }
-  _$jscoverage['modules/sync-cli.js'][220]++;
+  _$jscoverage['modules/sync-cli.js'][230]++;
   cb(res);
 }), (function (err, datatset_id) {
-  _$jscoverage['modules/sync-cli.js'][222]++;
+  _$jscoverage['modules/sync-cli.js'][232]++;
   self.consoleLog(err);
 }));
 }), clearPending: (function (dataset_id, cb) {
-  _$jscoverage['modules/sync-cli.js'][227]++;
+  _$jscoverage['modules/sync-cli.js'][237]++;
   self.getDataSet(dataset_id, (function (dataset) {
-  _$jscoverage['modules/sync-cli.js'][228]++;
+  _$jscoverage['modules/sync-cli.js'][238]++;
   dataset.pending = {};
-  _$jscoverage['modules/sync-cli.js'][229]++;
+  _$jscoverage['modules/sync-cli.js'][239]++;
   self.saveDataSet(dataset_id, cb);
 }));
 }), listCollisions: (function (dataset_id, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][234]++;
+  _$jscoverage['modules/sync-cli.js'][244]++;
   self.getDataSet(dataset_id, (function (dataset) {
-  _$jscoverage['modules/sync-cli.js'][235]++;
+  _$jscoverage['modules/sync-cli.js'][245]++;
   self.doCloudCall({"dataset_id": dataset_id, "req": {"fn": "listCollisions", "meta_data": dataset.meta_data}}, success, failure);
 }), failure);
 }), removeCollision: (function (dataset_id, colissionHash, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][246]++;
+  _$jscoverage['modules/sync-cli.js'][256]++;
   self.getDataSet(dataset_id, (function (dataset) {
-  _$jscoverage['modules/sync-cli.js'][247]++;
+  _$jscoverage['modules/sync-cli.js'][257]++;
   self.doCloudCall({"dataset_id": dataset_id, "req": {"fn": "removeCollision", "hash": colissionHash, meta_data: dataset.meta_data}}, success, failure);
 }));
 }), isOnline: (function (callback) {
-  _$jscoverage['modules/sync-cli.js'][261]++;
+  _$jscoverage['modules/sync-cli.js'][271]++;
   var online = true;
-  _$jscoverage['modules/sync-cli.js'][264]++;
+  _$jscoverage['modules/sync-cli.js'][274]++;
   if (typeof navigator.onLine !== "undefined") {
-    _$jscoverage['modules/sync-cli.js'][265]++;
+    _$jscoverage['modules/sync-cli.js'][275]++;
     online = navigator.onLine;
   }
-  _$jscoverage['modules/sync-cli.js'][269]++;
+  _$jscoverage['modules/sync-cli.js'][279]++;
   if (online) {
-    _$jscoverage['modules/sync-cli.js'][271]++;
+    _$jscoverage['modules/sync-cli.js'][281]++;
     if (typeof navigator.network !== "undefined" && typeof navigator.network.connection !== "undefined") {
-      _$jscoverage['modules/sync-cli.js'][272]++;
+      _$jscoverage['modules/sync-cli.js'][282]++;
       var networkType = navigator.network.connection.type;
-      _$jscoverage['modules/sync-cli.js'][273]++;
+      _$jscoverage['modules/sync-cli.js'][283]++;
       if (networkType === "none" || networkType === null) {
-        _$jscoverage['modules/sync-cli.js'][274]++;
+        _$jscoverage['modules/sync-cli.js'][284]++;
         online = false;
       }
     }
   }
-  _$jscoverage['modules/sync-cli.js'][279]++;
+  _$jscoverage['modules/sync-cli.js'][289]++;
   return callback(online);
 }), doNotify: (function (dataset_id, uid, code, message) {
-  _$jscoverage['modules/sync-cli.js'][284]++;
-  if (self.notify_callback) {
-    _$jscoverage['modules/sync-cli.js'][285]++;
-    if (self.config["notify_" + code]) {
-      _$jscoverage['modules/sync-cli.js'][286]++;
-      var notification = {"dataset_id": dataset_id, "uid": uid, "code": code, "message": message};
-      _$jscoverage['modules/sync-cli.js'][293]++;
-      setTimeout((function () {
   _$jscoverage['modules/sync-cli.js'][294]++;
+  if (self.notify_callback) {
+    _$jscoverage['modules/sync-cli.js'][295]++;
+    if (self.config["notify_" + code]) {
+      _$jscoverage['modules/sync-cli.js'][296]++;
+      var notification = {"dataset_id": dataset_id, "uid": uid, "code": code, "message": message};
+      _$jscoverage['modules/sync-cli.js'][303]++;
+      setTimeout((function () {
+  _$jscoverage['modules/sync-cli.js'][304]++;
   self.notify_callback(notification);
 }), 0);
     }
   }
 }), getDataSet: (function (dataset_id, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][301]++;
-  var dataset = self.datasets[dataset_id];
-  _$jscoverage['modules/sync-cli.js'][303]++;
-  if (dataset) {
-    _$jscoverage['modules/sync-cli.js'][304]++;
-    success(dataset);
-  }
-  else {
-    _$jscoverage['modules/sync-cli.js'][306]++;
-    failure("unknown_dataset " + dataset_id, dataset_id);
-  }
-}), getQueryParams: (function (dataset_id, success, failure) {
   _$jscoverage['modules/sync-cli.js'][311]++;
   var dataset = self.datasets[dataset_id];
   _$jscoverage['modules/sync-cli.js'][313]++;
   if (dataset) {
     _$jscoverage['modules/sync-cli.js'][314]++;
-    success(dataset.query_params);
+    success(dataset);
   }
   else {
     _$jscoverage['modules/sync-cli.js'][316]++;
-    failure("unknown_dataset " + dataset_id, dataset_id);
+    if (failure) {
+      _$jscoverage['modules/sync-cli.js'][317]++;
+      failure("unknown_dataset " + dataset_id, dataset_id);
+    }
+  }
+}), getQueryParams: (function (dataset_id, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][323]++;
+  var dataset = self.datasets[dataset_id];
+  _$jscoverage['modules/sync-cli.js'][325]++;
+  if (dataset) {
+    _$jscoverage['modules/sync-cli.js'][326]++;
+    success(dataset.query_params);
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][328]++;
+    if (failure) {
+      _$jscoverage['modules/sync-cli.js'][329]++;
+      failure("unknown_dataset " + dataset_id, dataset_id);
+    }
   }
 }), setQueryParams: (function (dataset_id, queryParams, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][321]++;
+  _$jscoverage['modules/sync-cli.js'][335]++;
   var dataset = self.datasets[dataset_id];
-  _$jscoverage['modules/sync-cli.js'][323]++;
+  _$jscoverage['modules/sync-cli.js'][337]++;
   if (dataset) {
-    _$jscoverage['modules/sync-cli.js'][324]++;
+    _$jscoverage['modules/sync-cli.js'][338]++;
     dataset.query_params = queryParams;
-    _$jscoverage['modules/sync-cli.js'][325]++;
+    _$jscoverage['modules/sync-cli.js'][339]++;
     self.saveDataSet(dataset_id);
-    _$jscoverage['modules/sync-cli.js'][326]++;
+    _$jscoverage['modules/sync-cli.js'][340]++;
     if (success) {
-      _$jscoverage['modules/sync-cli.js'][327]++;
+      _$jscoverage['modules/sync-cli.js'][341]++;
       success(dataset.query_params);
     }
   }
   else {
-    _$jscoverage['modules/sync-cli.js'][330]++;
+    _$jscoverage['modules/sync-cli.js'][344]++;
     if (failure) {
-      _$jscoverage['modules/sync-cli.js'][331]++;
+      _$jscoverage['modules/sync-cli.js'][345]++;
       failure("unknown_dataset " + dataset_id, dataset_id);
     }
   }
 }), getMetaData: (function (dataset_id, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][337]++;
+  _$jscoverage['modules/sync-cli.js'][351]++;
   var dataset = self.datasets[dataset_id];
-  _$jscoverage['modules/sync-cli.js'][339]++;
+  _$jscoverage['modules/sync-cli.js'][353]++;
   if (dataset) {
-    _$jscoverage['modules/sync-cli.js'][340]++;
+    _$jscoverage['modules/sync-cli.js'][354]++;
     success(dataset.meta_data);
-  }
-  else {
-    _$jscoverage['modules/sync-cli.js'][342]++;
-    failure("unknown_dataset " + dataset_id, dataset_id);
-  }
-}), setMetaData: (function (dataset_id, metaData, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][347]++;
-  var dataset = self.datasets[dataset_id];
-  _$jscoverage['modules/sync-cli.js'][349]++;
-  if (dataset) {
-    _$jscoverage['modules/sync-cli.js'][350]++;
-    dataset.meta_data = metaData;
-    _$jscoverage['modules/sync-cli.js'][351]++;
-    self.saveDataSet(dataset_id);
-    _$jscoverage['modules/sync-cli.js'][352]++;
-    if (success) {
-      _$jscoverage['modules/sync-cli.js'][353]++;
-      success(dataset.meta_data);
-    }
   }
   else {
     _$jscoverage['modules/sync-cli.js'][356]++;
@@ -11969,355 +11969,383 @@ var self = {defaults: {"sync_frequency": 10, "auto_sync_local_updates": true, "n
       failure("unknown_dataset " + dataset_id, dataset_id);
     }
   }
-}), getConfig: (function (dataset_id, success, failure) {
+}), setMetaData: (function (dataset_id, metaData, success, failure) {
   _$jscoverage['modules/sync-cli.js'][363]++;
   var dataset = self.datasets[dataset_id];
   _$jscoverage['modules/sync-cli.js'][365]++;
   if (dataset) {
     _$jscoverage['modules/sync-cli.js'][366]++;
+    dataset.meta_data = metaData;
+    _$jscoverage['modules/sync-cli.js'][367]++;
+    self.saveDataSet(dataset_id);
+    _$jscoverage['modules/sync-cli.js'][368]++;
+    if (success) {
+      _$jscoverage['modules/sync-cli.js'][369]++;
+      success(dataset.meta_data);
+    }
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][372]++;
+    if (failure) {
+      _$jscoverage['modules/sync-cli.js'][373]++;
+      failure("unknown_dataset " + dataset_id, dataset_id);
+    }
+  }
+}), getConfig: (function (dataset_id, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][379]++;
+  var dataset = self.datasets[dataset_id];
+  _$jscoverage['modules/sync-cli.js'][381]++;
+  if (dataset) {
+    _$jscoverage['modules/sync-cli.js'][382]++;
     success(dataset.config);
   }
   else {
-    _$jscoverage['modules/sync-cli.js'][368]++;
-    failure("unknown_dataset " + dataset_id, dataset_id);
+    _$jscoverage['modules/sync-cli.js'][384]++;
+    if (failure) {
+      _$jscoverage['modules/sync-cli.js'][385]++;
+      failure("unknown_dataset " + dataset_id, dataset_id);
+    }
   }
 }), setConfig: (function (dataset_id, config, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][373]++;
+  _$jscoverage['modules/sync-cli.js'][391]++;
   var dataset = self.datasets[dataset_id];
-  _$jscoverage['modules/sync-cli.js'][375]++;
+  _$jscoverage['modules/sync-cli.js'][393]++;
   if (dataset) {
-    _$jscoverage['modules/sync-cli.js'][376]++;
+    _$jscoverage['modules/sync-cli.js'][394]++;
     var fullConfig = self.setOptions(config);
-    _$jscoverage['modules/sync-cli.js'][377]++;
+    _$jscoverage['modules/sync-cli.js'][395]++;
     dataset.config = fullConfig;
-    _$jscoverage['modules/sync-cli.js'][378]++;
+    _$jscoverage['modules/sync-cli.js'][396]++;
     self.saveDataSet(dataset_id);
-    _$jscoverage['modules/sync-cli.js'][379]++;
+    _$jscoverage['modules/sync-cli.js'][397]++;
     if (success) {
-      _$jscoverage['modules/sync-cli.js'][380]++;
+      _$jscoverage['modules/sync-cli.js'][398]++;
       success(dataset.config);
     }
   }
   else {
-    _$jscoverage['modules/sync-cli.js'][383]++;
+    _$jscoverage['modules/sync-cli.js'][401]++;
     if (failure) {
-      _$jscoverage['modules/sync-cli.js'][384]++;
+      _$jscoverage['modules/sync-cli.js'][402]++;
       failure("unknown_dataset " + dataset_id, dataset_id);
     }
   }
 }), stopSync: (function (dataset_id, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][390]++;
+  _$jscoverage['modules/sync-cli.js'][408]++;
   self.setConfig(dataset_id, {"sync_active": false}, (function () {
-  _$jscoverage['modules/sync-cli.js'][391]++;
+  _$jscoverage['modules/sync-cli.js'][409]++;
   if (success) {
-    _$jscoverage['modules/sync-cli.js'][392]++;
+    _$jscoverage['modules/sync-cli.js'][410]++;
     success();
   }
 }), failure);
 }), startSync: (function (dataset_id, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][398]++;
+  _$jscoverage['modules/sync-cli.js'][416]++;
   self.setConfig(dataset_id, {"sync_active": true}, (function () {
-  _$jscoverage['modules/sync-cli.js'][399]++;
+  _$jscoverage['modules/sync-cli.js'][417]++;
   if (success) {
-    _$jscoverage['modules/sync-cli.js'][400]++;
+    _$jscoverage['modules/sync-cli.js'][418]++;
     success();
   }
 }), failure);
 }), doSync: (function (dataset_id, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][406]++;
+  _$jscoverage['modules/sync-cli.js'][424]++;
   var dataset = self.datasets[dataset_id];
-  _$jscoverage['modules/sync-cli.js'][408]++;
+  _$jscoverage['modules/sync-cli.js'][426]++;
   if (dataset) {
-    _$jscoverage['modules/sync-cli.js'][409]++;
+    _$jscoverage['modules/sync-cli.js'][427]++;
     dataset.syncPending = true;
-    _$jscoverage['modules/sync-cli.js'][410]++;
+    _$jscoverage['modules/sync-cli.js'][428]++;
     self.saveDataSet(dataset_id);
-    _$jscoverage['modules/sync-cli.js'][411]++;
+    _$jscoverage['modules/sync-cli.js'][429]++;
     if (success) {
-      _$jscoverage['modules/sync-cli.js'][412]++;
+      _$jscoverage['modules/sync-cli.js'][430]++;
       success();
     }
   }
   else {
-    _$jscoverage['modules/sync-cli.js'][415]++;
+    _$jscoverage['modules/sync-cli.js'][433]++;
     if (failure) {
-      _$jscoverage['modules/sync-cli.js'][416]++;
+      _$jscoverage['modules/sync-cli.js'][434]++;
       failure("unknown_dataset " + dataset_id, dataset_id);
     }
   }
 }), forceSync: (function (dataset_id, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][422]++;
+  _$jscoverage['modules/sync-cli.js'][440]++;
   var dataset = self.datasets[dataset_id];
-  _$jscoverage['modules/sync-cli.js'][424]++;
+  _$jscoverage['modules/sync-cli.js'][442]++;
   if (dataset) {
-    _$jscoverage['modules/sync-cli.js'][425]++;
+    _$jscoverage['modules/sync-cli.js'][443]++;
     dataset.syncForced = true;
-    _$jscoverage['modules/sync-cli.js'][426]++;
+    _$jscoverage['modules/sync-cli.js'][444]++;
     self.saveDataSet(dataset_id);
-    _$jscoverage['modules/sync-cli.js'][427]++;
+    _$jscoverage['modules/sync-cli.js'][445]++;
     if (success) {
-      _$jscoverage['modules/sync-cli.js'][428]++;
+      _$jscoverage['modules/sync-cli.js'][446]++;
       success();
     }
   }
   else {
-    _$jscoverage['modules/sync-cli.js'][431]++;
+    _$jscoverage['modules/sync-cli.js'][449]++;
     if (failure) {
-      _$jscoverage['modules/sync-cli.js'][432]++;
+      _$jscoverage['modules/sync-cli.js'][450]++;
       failure("unknown_dataset " + dataset_id, dataset_id);
     }
   }
 }), sortObject: (function (object) {
-  _$jscoverage['modules/sync-cli.js'][438]++;
+  _$jscoverage['modules/sync-cli.js'][456]++;
   if (typeof object !== "object" || object === null) {
-    _$jscoverage['modules/sync-cli.js'][439]++;
+    _$jscoverage['modules/sync-cli.js'][457]++;
     return object;
   }
-  _$jscoverage['modules/sync-cli.js'][442]++;
+  _$jscoverage['modules/sync-cli.js'][460]++;
   var result = [];
-  _$jscoverage['modules/sync-cli.js'][444]++;
+  _$jscoverage['modules/sync-cli.js'][462]++;
   Object.keys(object).sort().forEach((function (key) {
-  _$jscoverage['modules/sync-cli.js'][445]++;
+  _$jscoverage['modules/sync-cli.js'][463]++;
   result.push({key: key, value: self.sortObject(object[key])});
 }));
-  _$jscoverage['modules/sync-cli.js'][451]++;
+  _$jscoverage['modules/sync-cli.js'][469]++;
   return result;
 }), sortedStringify: (function (obj) {
-  _$jscoverage['modules/sync-cli.js'][456]++;
+  _$jscoverage['modules/sync-cli.js'][474]++;
   var str = "";
-  _$jscoverage['modules/sync-cli.js'][458]++;
+  _$jscoverage['modules/sync-cli.js'][476]++;
   try {
-    _$jscoverage['modules/sync-cli.js'][459]++;
+    _$jscoverage['modules/sync-cli.js'][477]++;
     str = JSON.stringify(self.sortObject(obj));
   }
   catch (e) {
-    _$jscoverage['modules/sync-cli.js'][461]++;
+    _$jscoverage['modules/sync-cli.js'][479]++;
     console.error("Error stringifying sorted object:" + e);
   }
-  _$jscoverage['modules/sync-cli.js'][464]++;
+  _$jscoverage['modules/sync-cli.js'][482]++;
   return str;
 }), generateHash: (function (object) {
-  _$jscoverage['modules/sync-cli.js'][468]++;
+  _$jscoverage['modules/sync-cli.js'][486]++;
   var hash = CryptoJS.SHA1(self.sortedStringify(object));
-  _$jscoverage['modules/sync-cli.js'][469]++;
+  _$jscoverage['modules/sync-cli.js'][487]++;
   return hash.toString();
 }), addPendingObj: (function (dataset_id, uid, data, action, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][473]++;
+  _$jscoverage['modules/sync-cli.js'][491]++;
   self.isOnline((function (online) {
-  _$jscoverage['modules/sync-cli.js'][474]++;
+  _$jscoverage['modules/sync-cli.js'][492]++;
   if (! online) {
-    _$jscoverage['modules/sync-cli.js'][475]++;
+    _$jscoverage['modules/sync-cli.js'][493]++;
     self.doNotify(dataset_id, uid, self.notifications.OFFLINE_UPDATE, action);
   }
 }));
-  _$jscoverage['modules/sync-cli.js'][479]++;
+  _$jscoverage['modules/sync-cli.js'][497]++;
   function storePendingObject(obj) {
-    _$jscoverage['modules/sync-cli.js'][480]++;
+    _$jscoverage['modules/sync-cli.js'][498]++;
     obj.hash = self.generateHash(obj);
-    _$jscoverage['modules/sync-cli.js'][482]++;
+    _$jscoverage['modules/sync-cli.js'][500]++;
     self.getDataSet(dataset_id, (function (dataset) {
-  _$jscoverage['modules/sync-cli.js'][484]++;
+  _$jscoverage['modules/sync-cli.js'][502]++;
   dataset.pending[obj.hash] = obj;
-  _$jscoverage['modules/sync-cli.js'][486]++;
+  _$jscoverage['modules/sync-cli.js'][504]++;
   self.updateDatasetFromLocal(dataset, obj);
-  _$jscoverage['modules/sync-cli.js'][488]++;
+  _$jscoverage['modules/sync-cli.js'][506]++;
   if (self.config.auto_sync_local_updates) {
-    _$jscoverage['modules/sync-cli.js'][489]++;
+    _$jscoverage['modules/sync-cli.js'][507]++;
     dataset.syncPending = true;
   }
-  _$jscoverage['modules/sync-cli.js'][491]++;
+  _$jscoverage['modules/sync-cli.js'][509]++;
   self.saveDataSet(dataset_id);
-  _$jscoverage['modules/sync-cli.js'][492]++;
+  _$jscoverage['modules/sync-cli.js'][510]++;
   self.doNotify(dataset_id, uid, self.notifications.LOCAL_UPDATE_APPLIED, action);
-  _$jscoverage['modules/sync-cli.js'][494]++;
+  _$jscoverage['modules/sync-cli.js'][512]++;
   success(obj);
 }), (function (code, msg) {
-  _$jscoverage['modules/sync-cli.js'][496]++;
+  _$jscoverage['modules/sync-cli.js'][514]++;
   if (failure) {
-    _$jscoverage['modules/sync-cli.js'][496]++;
+    _$jscoverage['modules/sync-cli.js'][514]++;
     failure(code, msg);
   }
 }));
 }
-  _$jscoverage['modules/sync-cli.js'][500]++;
+  _$jscoverage['modules/sync-cli.js'][518]++;
   var pendingObj = {};
-  _$jscoverage['modules/sync-cli.js'][501]++;
+  _$jscoverage['modules/sync-cli.js'][519]++;
   pendingObj.inFlight = false;
-  _$jscoverage['modules/sync-cli.js'][502]++;
+  _$jscoverage['modules/sync-cli.js'][520]++;
   pendingObj.action = action;
-  _$jscoverage['modules/sync-cli.js'][503]++;
+  _$jscoverage['modules/sync-cli.js'][521]++;
   pendingObj.post = JSON.parse(JSON.stringify(data));
-  _$jscoverage['modules/sync-cli.js'][504]++;
+  _$jscoverage['modules/sync-cli.js'][522]++;
   pendingObj.postHash = self.generateHash(pendingObj.post);
-  _$jscoverage['modules/sync-cli.js'][505]++;
+  _$jscoverage['modules/sync-cli.js'][523]++;
   pendingObj.timestamp = new Date().getTime();
-  _$jscoverage['modules/sync-cli.js'][506]++;
+  _$jscoverage['modules/sync-cli.js'][524]++;
   if ("create" === action) {
-    _$jscoverage['modules/sync-cli.js'][507]++;
+    _$jscoverage['modules/sync-cli.js'][525]++;
     pendingObj.uid = pendingObj.postHash;
-    _$jscoverage['modules/sync-cli.js'][508]++;
+    _$jscoverage['modules/sync-cli.js'][526]++;
     storePendingObject(pendingObj);
   }
   else {
-    _$jscoverage['modules/sync-cli.js'][510]++;
+    _$jscoverage['modules/sync-cli.js'][528]++;
     self.read(dataset_id, uid, (function (rec) {
-  _$jscoverage['modules/sync-cli.js'][511]++;
+  _$jscoverage['modules/sync-cli.js'][529]++;
   pendingObj.uid = uid;
-  _$jscoverage['modules/sync-cli.js'][512]++;
+  _$jscoverage['modules/sync-cli.js'][530]++;
   pendingObj.pre = rec.data;
-  _$jscoverage['modules/sync-cli.js'][513]++;
+  _$jscoverage['modules/sync-cli.js'][531]++;
   pendingObj.preHash = self.generateHash(rec.data);
-  _$jscoverage['modules/sync-cli.js'][514]++;
+  _$jscoverage['modules/sync-cli.js'][532]++;
   storePendingObject(pendingObj);
 }), (function (code, msg) {
-  _$jscoverage['modules/sync-cli.js'][516]++;
-  failure(code, msg);
+  _$jscoverage['modules/sync-cli.js'][534]++;
+  if (failure) {
+    _$jscoverage['modules/sync-cli.js'][535]++;
+    failure(code, msg);
+  }
 }));
   }
 }), syncLoop: (function (dataset_id) {
-  _$jscoverage['modules/sync-cli.js'][522]++;
+  _$jscoverage['modules/sync-cli.js'][542]++;
   self.getDataSet(dataset_id, (function (dataSet) {
-  _$jscoverage['modules/sync-cli.js'][525]++;
+  _$jscoverage['modules/sync-cli.js'][545]++;
   dataSet.syncPending = false;
-  _$jscoverage['modules/sync-cli.js'][526]++;
+  _$jscoverage['modules/sync-cli.js'][546]++;
   dataSet.syncRunning = true;
-  _$jscoverage['modules/sync-cli.js'][527]++;
+  _$jscoverage['modules/sync-cli.js'][547]++;
   dataSet.syncLoopStart = new Date().getTime();
-  _$jscoverage['modules/sync-cli.js'][528]++;
+  _$jscoverage['modules/sync-cli.js'][548]++;
   self.doNotify(dataset_id, null, self.notifications.SYNC_STARTED, null);
-  _$jscoverage['modules/sync-cli.js'][530]++;
+  _$jscoverage['modules/sync-cli.js'][550]++;
   self.isOnline((function (online) {
-  _$jscoverage['modules/sync-cli.js'][531]++;
+  _$jscoverage['modules/sync-cli.js'][551]++;
   if (! online) {
-    _$jscoverage['modules/sync-cli.js'][532]++;
+    _$jscoverage['modules/sync-cli.js'][552]++;
     self.syncComplete(dataset_id, "offline", self.notifications.SYNC_FAILED);
   }
   else {
-    _$jscoverage['modules/sync-cli.js'][534]++;
+    _$jscoverage['modules/sync-cli.js'][554]++;
     self.checkHasCustomSync(dataset_id, (function () {
-  _$jscoverage['modules/sync-cli.js'][536]++;
+  _$jscoverage['modules/sync-cli.js'][556]++;
   var syncLoopParams = {};
-  _$jscoverage['modules/sync-cli.js'][537]++;
+  _$jscoverage['modules/sync-cli.js'][557]++;
   syncLoopParams.fn = "sync";
-  _$jscoverage['modules/sync-cli.js'][538]++;
+  _$jscoverage['modules/sync-cli.js'][558]++;
   syncLoopParams.dataset_id = dataset_id;
-  _$jscoverage['modules/sync-cli.js'][539]++;
+  _$jscoverage['modules/sync-cli.js'][559]++;
   syncLoopParams.query_params = dataSet.query_params;
-  _$jscoverage['modules/sync-cli.js'][540]++;
+  _$jscoverage['modules/sync-cli.js'][560]++;
   syncLoopParams.config = dataSet.config;
-  _$jscoverage['modules/sync-cli.js'][541]++;
+  _$jscoverage['modules/sync-cli.js'][561]++;
   syncLoopParams.meta_data = dataSet.meta_data;
-  _$jscoverage['modules/sync-cli.js'][543]++;
+  _$jscoverage['modules/sync-cli.js'][563]++;
   syncLoopParams.dataset_hash = dataSet.hash;
-  _$jscoverage['modules/sync-cli.js'][544]++;
+  _$jscoverage['modules/sync-cli.js'][564]++;
   syncLoopParams.acknowledgements = dataSet.acknowledgements || [];
-  _$jscoverage['modules/sync-cli.js'][546]++;
+  _$jscoverage['modules/sync-cli.js'][566]++;
   var pending = dataSet.pending;
-  _$jscoverage['modules/sync-cli.js'][547]++;
+  _$jscoverage['modules/sync-cli.js'][567]++;
   var pendingArray = [];
-  _$jscoverage['modules/sync-cli.js'][548]++;
+  _$jscoverage['modules/sync-cli.js'][568]++;
   for (var i in pending) {
-    _$jscoverage['modules/sync-cli.js'][552]++;
+    _$jscoverage['modules/sync-cli.js'][572]++;
     if (! pending[i].inFlight && ! pending[i].crashed && ! pending[i].delayed) {
-      _$jscoverage['modules/sync-cli.js'][553]++;
+      _$jscoverage['modules/sync-cli.js'][573]++;
       pending[i].inFlight = true;
-      _$jscoverage['modules/sync-cli.js'][554]++;
+      _$jscoverage['modules/sync-cli.js'][574]++;
       pending[i].inFlightDate = new Date().getTime();
-      _$jscoverage['modules/sync-cli.js'][555]++;
+      _$jscoverage['modules/sync-cli.js'][575]++;
       pendingArray.push(pending[i]);
     }
 }
-  _$jscoverage['modules/sync-cli.js'][558]++;
+  _$jscoverage['modules/sync-cli.js'][578]++;
   syncLoopParams.pending = pendingArray;
-  _$jscoverage['modules/sync-cli.js'][560]++;
+  _$jscoverage['modules/sync-cli.js'][580]++;
   if (pendingArray.length > 0) {
-    _$jscoverage['modules/sync-cli.js'][561]++;
+    _$jscoverage['modules/sync-cli.js'][581]++;
     self.consoleLog("Starting sync loop - global hash = " + dataSet.hash + " :: params = " + JSON.stringify(syncLoopParams, null, 2));
   }
-  _$jscoverage['modules/sync-cli.js'][563]++;
+  _$jscoverage['modules/sync-cli.js'][583]++;
   try {
-    _$jscoverage['modules/sync-cli.js'][564]++;
+    _$jscoverage['modules/sync-cli.js'][584]++;
     self.doCloudCall({"dataset_id": dataset_id, "req": syncLoopParams}, (function (res) {
-  _$jscoverage['modules/sync-cli.js'][568]++;
+  _$jscoverage['modules/sync-cli.js'][588]++;
   var rec;
-  _$jscoverage['modules/sync-cli.js'][570]++;
+  _$jscoverage['modules/sync-cli.js'][590]++;
   function processUpdates(updates, notification, acknowledgements) {
-    _$jscoverage['modules/sync-cli.js'][571]++;
+    _$jscoverage['modules/sync-cli.js'][591]++;
     if (updates) {
-      _$jscoverage['modules/sync-cli.js'][572]++;
+      _$jscoverage['modules/sync-cli.js'][592]++;
       for (var up in updates) {
-        _$jscoverage['modules/sync-cli.js'][573]++;
+        _$jscoverage['modules/sync-cli.js'][593]++;
         rec = updates[up];
-        _$jscoverage['modules/sync-cli.js'][574]++;
+        _$jscoverage['modules/sync-cli.js'][594]++;
         acknowledgements.push(rec);
-        _$jscoverage['modules/sync-cli.js'][575]++;
+        _$jscoverage['modules/sync-cli.js'][595]++;
         if (dataSet.pending[up] && dataSet.pending[up].inFlight && ! dataSet.pending[up].crashed) {
-          _$jscoverage['modules/sync-cli.js'][576]++;
+          _$jscoverage['modules/sync-cli.js'][596]++;
           delete dataSet.pending[up];
-          _$jscoverage['modules/sync-cli.js'][577]++;
+          _$jscoverage['modules/sync-cli.js'][597]++;
           self.doNotify(dataset_id, rec.uid, notification, rec);
         }
 }
     }
 }
-  _$jscoverage['modules/sync-cli.js'][584]++;
+  _$jscoverage['modules/sync-cli.js'][604]++;
   self.updatePendingFromNewData(dataset_id, dataSet, res);
-  _$jscoverage['modules/sync-cli.js'][587]++;
+  _$jscoverage['modules/sync-cli.js'][607]++;
   self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);
-  _$jscoverage['modules/sync-cli.js'][590]++;
+  _$jscoverage['modules/sync-cli.js'][610]++;
   self.updateDelayedFromNewData(dataset_id, dataSet, res);
-  _$jscoverage['modules/sync-cli.js'][593]++;
+  _$jscoverage['modules/sync-cli.js'][613]++;
   self.updateNewDataFromInFlight(dataset_id, dataSet, res);
-  _$jscoverage['modules/sync-cli.js'][596]++;
+  _$jscoverage['modules/sync-cli.js'][616]++;
   self.updateNewDataFromPending(dataset_id, dataSet, res);
-  _$jscoverage['modules/sync-cli.js'][600]++;
+  _$jscoverage['modules/sync-cli.js'][620]++;
   if (res.records) {
-    _$jscoverage['modules/sync-cli.js'][602]++;
+    _$jscoverage['modules/sync-cli.js'][622]++;
     dataSet.data = res.records;
-    _$jscoverage['modules/sync-cli.js'][603]++;
+    _$jscoverage['modules/sync-cli.js'][623]++;
     dataSet.hash = res.hash;
-    _$jscoverage['modules/sync-cli.js'][605]++;
+    _$jscoverage['modules/sync-cli.js'][625]++;
     self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, "full dataset");
   }
-  _$jscoverage['modules/sync-cli.js'][608]++;
+  _$jscoverage['modules/sync-cli.js'][628]++;
   if (res.updates) {
-    _$jscoverage['modules/sync-cli.js'][609]++;
+    _$jscoverage['modules/sync-cli.js'][629]++;
     var acknowledgements = [];
-    _$jscoverage['modules/sync-cli.js'][610]++;
+    _$jscoverage['modules/sync-cli.js'][630]++;
     processUpdates(res.updates.applied, self.notifications.REMOTE_UPDATE_APPLIED, acknowledgements);
-    _$jscoverage['modules/sync-cli.js'][611]++;
+    _$jscoverage['modules/sync-cli.js'][631]++;
     processUpdates(res.updates.failed, self.notifications.REMOTE_UPDATE_FAILED, acknowledgements);
-    _$jscoverage['modules/sync-cli.js'][612]++;
+    _$jscoverage['modules/sync-cli.js'][632]++;
     processUpdates(res.updates.collisions, self.notifications.COLLISION_DETECTED, acknowledgements);
-    _$jscoverage['modules/sync-cli.js'][613]++;
+    _$jscoverage['modules/sync-cli.js'][633]++;
     dataSet.acknowledgements = acknowledgements;
   }
-  _$jscoverage['modules/sync-cli.js'][616]++;
+  _$jscoverage['modules/sync-cli.js'][636]++;
   if (! res.records && res.hash && res.hash !== dataSet.hash) {
-    _$jscoverage['modules/sync-cli.js'][617]++;
+    _$jscoverage['modules/sync-cli.js'][637]++;
     self.consoleLog("Local dataset stale - syncing records :: local hash= " + dataSet.hash + " - remoteHash=" + res.hash);
-    _$jscoverage['modules/sync-cli.js'][619]++;
+    _$jscoverage['modules/sync-cli.js'][639]++;
     self.syncRecords(dataset_id);
   }
   else {
-    _$jscoverage['modules/sync-cli.js'][621]++;
+    _$jscoverage['modules/sync-cli.js'][641]++;
     self.consoleLog("Local dataset up to date");
-    _$jscoverage['modules/sync-cli.js'][622]++;
+    _$jscoverage['modules/sync-cli.js'][642]++;
     self.syncComplete(dataset_id, "online", self.notifications.SYNC_COMPLETE);
   }
 }), (function (msg, err) {
-  _$jscoverage['modules/sync-cli.js'][628]++;
+  _$jscoverage['modules/sync-cli.js'][648]++;
   self.markInFlightAsCrashed(dataSet);
-  _$jscoverage['modules/sync-cli.js'][629]++;
+  _$jscoverage['modules/sync-cli.js'][649]++;
   self.consoleLog("syncLoop failed : msg=" + msg + " :: err = " + err);
-  _$jscoverage['modules/sync-cli.js'][630]++;
+  _$jscoverage['modules/sync-cli.js'][650]++;
   self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);
 }));
   }
   catch (e) {
-    _$jscoverage['modules/sync-cli.js'][634]++;
+    _$jscoverage['modules/sync-cli.js'][654]++;
     self.consoleLog("Error performing sync - " + e);
-    _$jscoverage['modules/sync-cli.js'][635]++;
+    _$jscoverage['modules/sync-cli.js'][655]++;
     self.syncComplete(dataset_id, e, self.notifications.SYNC_FAILED);
   }
 }));
@@ -12325,493 +12353,499 @@ var self = {defaults: {"sync_frequency": 10, "auto_sync_local_updates": true, "n
 }));
 }));
 }), syncRecords: (function (dataset_id) {
-  _$jscoverage['modules/sync-cli.js'][645]++;
+  _$jscoverage['modules/sync-cli.js'][665]++;
   self.getDataSet(dataset_id, (function (dataSet) {
-  _$jscoverage['modules/sync-cli.js'][647]++;
+  _$jscoverage['modules/sync-cli.js'][667]++;
   var localDataSet = dataSet.data || {};
-  _$jscoverage['modules/sync-cli.js'][649]++;
+  _$jscoverage['modules/sync-cli.js'][669]++;
   var clientRecs = {};
-  _$jscoverage['modules/sync-cli.js'][650]++;
+  _$jscoverage['modules/sync-cli.js'][670]++;
   for (var i in localDataSet) {
-    _$jscoverage['modules/sync-cli.js'][651]++;
+    _$jscoverage['modules/sync-cli.js'][671]++;
     var uid = i;
-    _$jscoverage['modules/sync-cli.js'][652]++;
+    _$jscoverage['modules/sync-cli.js'][672]++;
     var hash = localDataSet[i].hash;
-    _$jscoverage['modules/sync-cli.js'][653]++;
+    _$jscoverage['modules/sync-cli.js'][673]++;
     clientRecs[uid] = hash;
 }
-  _$jscoverage['modules/sync-cli.js'][656]++;
+  _$jscoverage['modules/sync-cli.js'][676]++;
   var syncRecParams = {};
-  _$jscoverage['modules/sync-cli.js'][658]++;
+  _$jscoverage['modules/sync-cli.js'][678]++;
   syncRecParams.fn = "syncRecords";
-  _$jscoverage['modules/sync-cli.js'][659]++;
+  _$jscoverage['modules/sync-cli.js'][679]++;
   syncRecParams.dataset_id = dataset_id;
-  _$jscoverage['modules/sync-cli.js'][660]++;
+  _$jscoverage['modules/sync-cli.js'][680]++;
   syncRecParams.query_params = dataSet.query_params;
-  _$jscoverage['modules/sync-cli.js'][661]++;
+  _$jscoverage['modules/sync-cli.js'][681]++;
   syncRecParams.clientRecs = clientRecs;
-  _$jscoverage['modules/sync-cli.js'][663]++;
+  _$jscoverage['modules/sync-cli.js'][683]++;
   self.consoleLog("syncRecParams :: " + JSON.stringify(syncRecParams));
-  _$jscoverage['modules/sync-cli.js'][665]++;
+  _$jscoverage['modules/sync-cli.js'][685]++;
   self.doCloudCall({"dataset_id": dataset_id, "req": syncRecParams}, (function (res) {
-  _$jscoverage['modules/sync-cli.js'][669]++;
+  _$jscoverage['modules/sync-cli.js'][689]++;
   var i;
-  _$jscoverage['modules/sync-cli.js'][671]++;
+  _$jscoverage['modules/sync-cli.js'][691]++;
   if (res.create) {
-    _$jscoverage['modules/sync-cli.js'][672]++;
+    _$jscoverage['modules/sync-cli.js'][692]++;
     for (i in res.create) {
-      _$jscoverage['modules/sync-cli.js'][673]++;
+      _$jscoverage['modules/sync-cli.js'][693]++;
       localDataSet[i] = {"hash": res.create[i].hash, "data": res.create[i].data};
-      _$jscoverage['modules/sync-cli.js'][674]++;
+      _$jscoverage['modules/sync-cli.js'][694]++;
       self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "create");
 }
   }
-  _$jscoverage['modules/sync-cli.js'][677]++;
+  _$jscoverage['modules/sync-cli.js'][697]++;
   if (res.update) {
-    _$jscoverage['modules/sync-cli.js'][678]++;
+    _$jscoverage['modules/sync-cli.js'][698]++;
     for (i in res.update) {
-      _$jscoverage['modules/sync-cli.js'][679]++;
+      _$jscoverage['modules/sync-cli.js'][699]++;
       localDataSet[i].hash = res.update[i].hash;
-      _$jscoverage['modules/sync-cli.js'][680]++;
+      _$jscoverage['modules/sync-cli.js'][700]++;
       localDataSet[i].data = res.update[i].data;
-      _$jscoverage['modules/sync-cli.js'][681]++;
+      _$jscoverage['modules/sync-cli.js'][701]++;
       self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
 }
   }
-  _$jscoverage['modules/sync-cli.js'][684]++;
+  _$jscoverage['modules/sync-cli.js'][704]++;
   if (res["delete"]) {
-    _$jscoverage['modules/sync-cli.js'][685]++;
+    _$jscoverage['modules/sync-cli.js'][705]++;
     for (i in res["delete"]) {
-      _$jscoverage['modules/sync-cli.js'][686]++;
+      _$jscoverage['modules/sync-cli.js'][706]++;
       delete localDataSet[i];
-      _$jscoverage['modules/sync-cli.js'][687]++;
+      _$jscoverage['modules/sync-cli.js'][707]++;
       self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "delete");
 }
   }
-  _$jscoverage['modules/sync-cli.js'][691]++;
+  _$jscoverage['modules/sync-cli.js'][711]++;
   self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, "partial dataset");
-  _$jscoverage['modules/sync-cli.js'][693]++;
+  _$jscoverage['modules/sync-cli.js'][713]++;
   dataSet.data = localDataSet;
-  _$jscoverage['modules/sync-cli.js'][694]++;
+  _$jscoverage['modules/sync-cli.js'][714]++;
   if (res.hash) {
-    _$jscoverage['modules/sync-cli.js'][695]++;
+    _$jscoverage['modules/sync-cli.js'][715]++;
     dataSet.hash = res.hash;
   }
-  _$jscoverage['modules/sync-cli.js'][697]++;
+  _$jscoverage['modules/sync-cli.js'][717]++;
   self.syncComplete(dataset_id, "online", self.notifications.SYNC_COMPLETE);
 }), (function (msg, err) {
-  _$jscoverage['modules/sync-cli.js'][699]++;
+  _$jscoverage['modules/sync-cli.js'][719]++;
   self.consoleLog("syncRecords failed : msg=" + msg + " :: err=" + err);
-  _$jscoverage['modules/sync-cli.js'][700]++;
+  _$jscoverage['modules/sync-cli.js'][720]++;
   self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);
 }));
 }));
 }), syncComplete: (function (dataset_id, status, notification) {
-  _$jscoverage['modules/sync-cli.js'][707]++;
+  _$jscoverage['modules/sync-cli.js'][727]++;
   self.getDataSet(dataset_id, (function (dataset) {
-  _$jscoverage['modules/sync-cli.js'][708]++;
+  _$jscoverage['modules/sync-cli.js'][728]++;
   dataset.syncRunning = false;
-  _$jscoverage['modules/sync-cli.js'][709]++;
+  _$jscoverage['modules/sync-cli.js'][729]++;
   dataset.syncLoopEnd = new Date().getTime();
-  _$jscoverage['modules/sync-cli.js'][710]++;
+  _$jscoverage['modules/sync-cli.js'][730]++;
   self.saveDataSet(dataset_id);
-  _$jscoverage['modules/sync-cli.js'][711]++;
+  _$jscoverage['modules/sync-cli.js'][731]++;
   self.doNotify(dataset_id, dataset.hash, notification, status);
 }));
 }), checkDatasets: (function () {
-  _$jscoverage['modules/sync-cli.js'][716]++;
+  _$jscoverage['modules/sync-cli.js'][736]++;
   for (var dataset_id in self.datasets) {
-    _$jscoverage['modules/sync-cli.js'][717]++;
+    _$jscoverage['modules/sync-cli.js'][737]++;
     if (self.datasets.hasOwnProperty(dataset_id)) {
-      _$jscoverage['modules/sync-cli.js'][718]++;
+      _$jscoverage['modules/sync-cli.js'][738]++;
       var dataset = self.datasets[dataset_id];
-      _$jscoverage['modules/sync-cli.js'][720]++;
+      _$jscoverage['modules/sync-cli.js'][740]++;
       if (! dataset.syncRunning && (dataset.config.sync_active || dataset.syncForced)) {
-        _$jscoverage['modules/sync-cli.js'][722]++;
+        _$jscoverage['modules/sync-cli.js'][742]++;
         var lastSyncStart = dataset.syncLoopStart;
-        _$jscoverage['modules/sync-cli.js'][723]++;
+        _$jscoverage['modules/sync-cli.js'][743]++;
         var lastSyncCmp = dataset.syncLoopEnd;
-        _$jscoverage['modules/sync-cli.js'][724]++;
+        _$jscoverage['modules/sync-cli.js'][744]++;
         if (lastSyncStart == null) {
-          _$jscoverage['modules/sync-cli.js'][725]++;
+          _$jscoverage['modules/sync-cli.js'][745]++;
           self.consoleLog(dataset_id + " - Performing initial sync");
-          _$jscoverage['modules/sync-cli.js'][727]++;
+          _$jscoverage['modules/sync-cli.js'][747]++;
           dataset.syncPending = true;
         }
         else {
-          _$jscoverage['modules/sync-cli.js'][728]++;
+          _$jscoverage['modules/sync-cli.js'][748]++;
           if (lastSyncCmp != null) {
-            _$jscoverage['modules/sync-cli.js'][729]++;
+            _$jscoverage['modules/sync-cli.js'][749]++;
             var timeSinceLastSync = new Date().getTime() - lastSyncCmp;
-            _$jscoverage['modules/sync-cli.js'][730]++;
+            _$jscoverage['modules/sync-cli.js'][750]++;
             var syncFrequency = dataset.config.sync_frequency * 1000;
-            _$jscoverage['modules/sync-cli.js'][731]++;
+            _$jscoverage['modules/sync-cli.js'][751]++;
             if (timeSinceLastSync > syncFrequency) {
-              _$jscoverage['modules/sync-cli.js'][733]++;
+              _$jscoverage['modules/sync-cli.js'][753]++;
               dataset.syncPending = true;
             }
           }
         }
-        _$jscoverage['modules/sync-cli.js'][737]++;
+        _$jscoverage['modules/sync-cli.js'][757]++;
         if (dataset.syncForced) {
-          _$jscoverage['modules/sync-cli.js'][738]++;
+          _$jscoverage['modules/sync-cli.js'][758]++;
           dataset.syncPending = true;
         }
-        _$jscoverage['modules/sync-cli.js'][741]++;
+        _$jscoverage['modules/sync-cli.js'][761]++;
         if (dataset.syncPending) {
-          _$jscoverage['modules/sync-cli.js'][743]++;
+          _$jscoverage['modules/sync-cli.js'][763]++;
           dataset.syncForced = false;
-          _$jscoverage['modules/sync-cli.js'][748]++;
+          _$jscoverage['modules/sync-cli.js'][768]++;
           self.syncLoop(dataset_id);
         }
       }
     }
 }
 }), checkHasCustomSync: (function (dataset_id, cb) {
-  _$jscoverage['modules/sync-cli.js'][756]++;
+  _$jscoverage['modules/sync-cli.js'][776]++;
   if (self.hasCustomSync != null) {
-    _$jscoverage['modules/sync-cli.js'][757]++;
+    _$jscoverage['modules/sync-cli.js'][777]++;
     return cb();
   }
-  _$jscoverage['modules/sync-cli.js'][759]++;
+  _$jscoverage['modules/sync-cli.js'][779]++;
   self.consoleLog("starting check has custom sync");
-  _$jscoverage['modules/sync-cli.js'][761]++;
+  _$jscoverage['modules/sync-cli.js'][781]++;
   actAPI({"act": dataset_id, "req": {"fn": "sync"}}, (function (res) {
-  _$jscoverage['modules/sync-cli.js'][769]++;
+  _$jscoverage['modules/sync-cli.js'][789]++;
   self.consoleLog("checkHasCustomSync - success - ", res);
-  _$jscoverage['modules/sync-cli.js'][770]++;
+  _$jscoverage['modules/sync-cli.js'][790]++;
   self.hasCustomSync = true;
-  _$jscoverage['modules/sync-cli.js'][771]++;
+  _$jscoverage['modules/sync-cli.js'][791]++;
   return cb();
 }), (function (msg, err) {
-  _$jscoverage['modules/sync-cli.js'][773]++;
+  _$jscoverage['modules/sync-cli.js'][793]++;
   self.consoleLog("checkHasCustomSync - failure - ", err);
-  _$jscoverage['modules/sync-cli.js'][774]++;
+  _$jscoverage['modules/sync-cli.js'][794]++;
   if (err.status && err.status === 500) {
-    _$jscoverage['modules/sync-cli.js'][777]++;
+    _$jscoverage['modules/sync-cli.js'][797]++;
     self.consoleLog("checkHasCustomSync - failed with 500, endpoint does exists");
-    _$jscoverage['modules/sync-cli.js'][778]++;
+    _$jscoverage['modules/sync-cli.js'][798]++;
     self.hasCustomSync = true;
   }
   else {
-    _$jscoverage['modules/sync-cli.js'][780]++;
+    _$jscoverage['modules/sync-cli.js'][800]++;
     self.hasCustomSync = false;
   }
-  _$jscoverage['modules/sync-cli.js'][782]++;
+  _$jscoverage['modules/sync-cli.js'][802]++;
   return cb();
 }));
+}), setHasCustomSync: (function (custom_sync) {
+  _$jscoverage['modules/sync-cli.js'][807]++;
+  self.hasCustomSync = custom_sync;
+}), getHasCustomSync: (function () {
+  _$jscoverage['modules/sync-cli.js'][811]++;
+  return self.hasCustomSync;
 }), doCloudCall: (function (params, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][787]++;
+  _$jscoverage['modules/sync-cli.js'][815]++;
   if (self.hasCustomSync) {
-    _$jscoverage['modules/sync-cli.js'][788]++;
+    _$jscoverage['modules/sync-cli.js'][816]++;
     actAPI({"act": params.dataset_id, "req": params.req}, (function (res) {
-  _$jscoverage['modules/sync-cli.js'][792]++;
+  _$jscoverage['modules/sync-cli.js'][820]++;
   success(res);
 }), (function (msg, err) {
-  _$jscoverage['modules/sync-cli.js'][794]++;
+  _$jscoverage['modules/sync-cli.js'][822]++;
   failure(msg, err);
 }));
   }
   else {
-    _$jscoverage['modules/sync-cli.js'][797]++;
+    _$jscoverage['modules/sync-cli.js'][825]++;
     cloudAPI({"path": "/mbaas/sync/" + params.dataset_id, "method": "post", "data": params.req}, (function (res) {
-  _$jscoverage['modules/sync-cli.js'][802]++;
+  _$jscoverage['modules/sync-cli.js'][830]++;
   success(res);
 }), (function (msg, err) {
-  _$jscoverage['modules/sync-cli.js'][804]++;
+  _$jscoverage['modules/sync-cli.js'][832]++;
   failure(msg, err);
 }));
   }
 }), datasetMonitor: (function () {
-  _$jscoverage['modules/sync-cli.js'][810]++;
+  _$jscoverage['modules/sync-cli.js'][838]++;
   self.checkDatasets();
-  _$jscoverage['modules/sync-cli.js'][813]++;
+  _$jscoverage['modules/sync-cli.js'][841]++;
   setTimeout((function () {
-  _$jscoverage['modules/sync-cli.js'][814]++;
+  _$jscoverage['modules/sync-cli.js'][842]++;
   self.datasetMonitor();
 }), 500);
 }), saveDataSet: (function (dataset_id, cb) {
-  _$jscoverage['modules/sync-cli.js'][819]++;
+  _$jscoverage['modules/sync-cli.js'][847]++;
   var onFail = (function (msg, err) {
-  _$jscoverage['modules/sync-cli.js'][821]++;
+  _$jscoverage['modules/sync-cli.js'][849]++;
   var errMsg = "save to local storage failed  msg:" + msg + " err:" + err;
-  _$jscoverage['modules/sync-cli.js'][822]++;
+  _$jscoverage['modules/sync-cli.js'][850]++;
   self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);
-  _$jscoverage['modules/sync-cli.js'][823]++;
+  _$jscoverage['modules/sync-cli.js'][851]++;
   self.consoleLog(errMsg);
 });
-  _$jscoverage['modules/sync-cli.js'][825]++;
+  _$jscoverage['modules/sync-cli.js'][853]++;
   self.getDataSet(dataset_id, (function (dataset) {
-  _$jscoverage['modules/sync-cli.js'][827]++;
+  _$jscoverage['modules/sync-cli.js'][855]++;
   Lawnchair({fail: onFail, adapter: self.config.storage_strategy, size: self.config.file_system_quota}, (function () {
-  _$jscoverage['modules/sync-cli.js'][828]++;
+  _$jscoverage['modules/sync-cli.js'][856]++;
   this.save({key: "dataset_" + dataset_id, val: dataset}, (function () {
-  _$jscoverage['modules/sync-cli.js'][830]++;
+  _$jscoverage['modules/sync-cli.js'][858]++;
   if (cb) {
-    _$jscoverage['modules/sync-cli.js'][830]++;
+    _$jscoverage['modules/sync-cli.js'][858]++;
     return cb();
   }
 }));
 }));
 }));
 }), loadDataSet: (function (dataset_id, success, failure) {
-  _$jscoverage['modules/sync-cli.js'][838]++;
+  _$jscoverage['modules/sync-cli.js'][866]++;
   var onFail = (function (msg, err) {
-  _$jscoverage['modules/sync-cli.js'][840]++;
+  _$jscoverage['modules/sync-cli.js'][868]++;
   var errMsg = "load from local storage failed  msg:" + msg;
-  _$jscoverage['modules/sync-cli.js'][841]++;
+  _$jscoverage['modules/sync-cli.js'][869]++;
   self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);
-  _$jscoverage['modules/sync-cli.js'][842]++;
+  _$jscoverage['modules/sync-cli.js'][870]++;
   self.consoleLog(errMsg);
 });
-  _$jscoverage['modules/sync-cli.js'][845]++;
+  _$jscoverage['modules/sync-cli.js'][873]++;
   Lawnchair({fail: onFail, adapter: self.config.storage_strategy, size: self.config.file_system_quota}, (function () {
-  _$jscoverage['modules/sync-cli.js'][845]++;
+  _$jscoverage['modules/sync-cli.js'][874]++;
   this.get("dataset_" + dataset_id, (function (data) {
-  _$jscoverage['modules/sync-cli.js'][846]++;
+  _$jscoverage['modules/sync-cli.js'][875]++;
   if (data && data.val !== null) {
-    _$jscoverage['modules/sync-cli.js'][847]++;
+    _$jscoverage['modules/sync-cli.js'][876]++;
     var dataset = data.val;
-    _$jscoverage['modules/sync-cli.js'][848]++;
+    _$jscoverage['modules/sync-cli.js'][877]++;
     if (typeof dataset === "string") {
-      _$jscoverage['modules/sync-cli.js'][849]++;
+      _$jscoverage['modules/sync-cli.js'][878]++;
       dataset = JSON.parse(dataset);
     }
-    _$jscoverage['modules/sync-cli.js'][853]++;
+    _$jscoverage['modules/sync-cli.js'][882]++;
     dataset.initialised = false;
-    _$jscoverage['modules/sync-cli.js'][854]++;
+    _$jscoverage['modules/sync-cli.js'][883]++;
     self.datasets[dataset_id] = dataset;
-    _$jscoverage['modules/sync-cli.js'][855]++;
+    _$jscoverage['modules/sync-cli.js'][884]++;
     self.consoleLog("load from local storage success for dataset_id :" + dataset_id);
-    _$jscoverage['modules/sync-cli.js'][856]++;
+    _$jscoverage['modules/sync-cli.js'][885]++;
     if (success) {
-      _$jscoverage['modules/sync-cli.js'][856]++;
+      _$jscoverage['modules/sync-cli.js'][885]++;
       return success(dataset);
     }
   }
   else {
-    _$jscoverage['modules/sync-cli.js'][859]++;
+    _$jscoverage['modules/sync-cli.js'][888]++;
     if (failure) {
-      _$jscoverage['modules/sync-cli.js'][859]++;
+      _$jscoverage['modules/sync-cli.js'][888]++;
       return failure();
     }
   }
 }));
 }));
 }), updateDatasetFromLocal: (function (dataset, pendingRec) {
-  _$jscoverage['modules/sync-cli.js'][867]++;
+  _$jscoverage['modules/sync-cli.js'][896]++;
   var pending = dataset.pending;
-  _$jscoverage['modules/sync-cli.js'][868]++;
+  _$jscoverage['modules/sync-cli.js'][897]++;
   var previousPendingUid;
-  _$jscoverage['modules/sync-cli.js'][869]++;
+  _$jscoverage['modules/sync-cli.js'][898]++;
   var previousPending;
-  _$jscoverage['modules/sync-cli.js'][871]++;
+  _$jscoverage['modules/sync-cli.js'][900]++;
   var uid = pendingRec.uid;
-  _$jscoverage['modules/sync-cli.js'][872]++;
+  _$jscoverage['modules/sync-cli.js'][901]++;
   self.consoleLog("updating local dataset for uid " + uid + " - action = " + pendingRec.action);
-  _$jscoverage['modules/sync-cli.js'][874]++;
+  _$jscoverage['modules/sync-cli.js'][903]++;
   dataset.meta[uid] = dataset.meta[uid] || {};
-  _$jscoverage['modules/sync-cli.js'][877]++;
+  _$jscoverage['modules/sync-cli.js'][906]++;
   if (pendingRec.action === "create") {
-    _$jscoverage['modules/sync-cli.js'][878]++;
+    _$jscoverage['modules/sync-cli.js'][907]++;
     if (dataset.data[uid]) {
-      _$jscoverage['modules/sync-cli.js'][879]++;
+      _$jscoverage['modules/sync-cli.js'][908]++;
       self.consoleLog("dataset already exists for uid in create :: " + JSON.stringify(dataset.data[uid]));
-      _$jscoverage['modules/sync-cli.js'][882]++;
+      _$jscoverage['modules/sync-cli.js'][911]++;
       if (dataset.meta[uid].fromPending) {
-        _$jscoverage['modules/sync-cli.js'][885]++;
+        _$jscoverage['modules/sync-cli.js'][914]++;
         previousPendingUid = dataset.meta[uid].pendingUid;
-        _$jscoverage['modules/sync-cli.js'][886]++;
+        _$jscoverage['modules/sync-cli.js'][915]++;
         delete pending[previousPendingUid];
       }
     }
-    _$jscoverage['modules/sync-cli.js'][889]++;
+    _$jscoverage['modules/sync-cli.js'][918]++;
     dataset.data[uid] = {};
   }
-  _$jscoverage['modules/sync-cli.js'][892]++;
+  _$jscoverage['modules/sync-cli.js'][921]++;
   if (pendingRec.action === "update") {
-    _$jscoverage['modules/sync-cli.js'][893]++;
+    _$jscoverage['modules/sync-cli.js'][922]++;
     if (dataset.data[uid]) {
-      _$jscoverage['modules/sync-cli.js'][894]++;
+      _$jscoverage['modules/sync-cli.js'][923]++;
       if (dataset.meta[uid].fromPending) {
-        _$jscoverage['modules/sync-cli.js'][895]++;
+        _$jscoverage['modules/sync-cli.js'][924]++;
         self.consoleLog("updating an existing pending record for dataset :: " + JSON.stringify(dataset.data[uid]));
-        _$jscoverage['modules/sync-cli.js'][897]++;
+        _$jscoverage['modules/sync-cli.js'][926]++;
         previousPendingUid = dataset.meta[uid].pendingUid;
-        _$jscoverage['modules/sync-cli.js'][898]++;
+        _$jscoverage['modules/sync-cli.js'][927]++;
         dataset.meta[uid].previousPendingUid = previousPendingUid;
-        _$jscoverage['modules/sync-cli.js'][899]++;
+        _$jscoverage['modules/sync-cli.js'][928]++;
         previousPending = pending[previousPendingUid];
-        _$jscoverage['modules/sync-cli.js'][900]++;
+        _$jscoverage['modules/sync-cli.js'][929]++;
         if (previousPending) {
-          _$jscoverage['modules/sync-cli.js'][901]++;
+          _$jscoverage['modules/sync-cli.js'][930]++;
           if (! previousPending.inFlight) {
-            _$jscoverage['modules/sync-cli.js'][902]++;
+            _$jscoverage['modules/sync-cli.js'][931]++;
             self.consoleLog("existing pre-flight pending record = " + JSON.stringify(previousPending));
-            _$jscoverage['modules/sync-cli.js'][905]++;
+            _$jscoverage['modules/sync-cli.js'][934]++;
             previousPending.post = pendingRec.post;
-            _$jscoverage['modules/sync-cli.js'][906]++;
+            _$jscoverage['modules/sync-cli.js'][935]++;
             previousPending.postHash = pendingRec.postHash;
-            _$jscoverage['modules/sync-cli.js'][907]++;
+            _$jscoverage['modules/sync-cli.js'][936]++;
             delete pending[pendingRec.hash];
-            _$jscoverage['modules/sync-cli.js'][910]++;
+            _$jscoverage['modules/sync-cli.js'][939]++;
             pendingRec.hash = previousPendingUid;
           }
           else {
-            _$jscoverage['modules/sync-cli.js'][914]++;
+            _$jscoverage['modules/sync-cli.js'][943]++;
             self.consoleLog("existing in-inflight pending record = " + JSON.stringify(previousPending));
-            _$jscoverage['modules/sync-cli.js'][915]++;
+            _$jscoverage['modules/sync-cli.js'][944]++;
             pendingRec.delayed = true;
-            _$jscoverage['modules/sync-cli.js'][916]++;
+            _$jscoverage['modules/sync-cli.js'][945]++;
             pendingRec.waiting = previousPending.hash;
           }
         }
       }
     }
   }
-  _$jscoverage['modules/sync-cli.js'][923]++;
+  _$jscoverage['modules/sync-cli.js'][952]++;
   if (pendingRec.action === "delete") {
-    _$jscoverage['modules/sync-cli.js'][924]++;
+    _$jscoverage['modules/sync-cli.js'][953]++;
     if (dataset.data[uid]) {
-      _$jscoverage['modules/sync-cli.js'][925]++;
+      _$jscoverage['modules/sync-cli.js'][954]++;
       if (dataset.meta[uid].fromPending) {
-        _$jscoverage['modules/sync-cli.js'][926]++;
+        _$jscoverage['modules/sync-cli.js'][955]++;
         self.consoleLog("Deleting an existing pending record for dataset :: " + JSON.stringify(dataset.data[uid]));
-        _$jscoverage['modules/sync-cli.js'][928]++;
+        _$jscoverage['modules/sync-cli.js'][957]++;
         previousPendingUid = dataset.meta[uid].pendingUid;
-        _$jscoverage['modules/sync-cli.js'][929]++;
+        _$jscoverage['modules/sync-cli.js'][958]++;
         dataset.meta[uid].previousPendingUid = previousPendingUid;
-        _$jscoverage['modules/sync-cli.js'][930]++;
+        _$jscoverage['modules/sync-cli.js'][959]++;
         previousPending = pending[previousPendingUid];
-        _$jscoverage['modules/sync-cli.js'][931]++;
+        _$jscoverage['modules/sync-cli.js'][960]++;
         if (previousPending) {
-          _$jscoverage['modules/sync-cli.js'][932]++;
+          _$jscoverage['modules/sync-cli.js'][961]++;
           if (! previousPending.inFlight) {
-            _$jscoverage['modules/sync-cli.js'][933]++;
+            _$jscoverage['modules/sync-cli.js'][962]++;
             self.consoleLog("existing pending record = " + JSON.stringify(previousPending));
-            _$jscoverage['modules/sync-cli.js'][934]++;
+            _$jscoverage['modules/sync-cli.js'][963]++;
             if (previousPending.action === "create") {
-              _$jscoverage['modules/sync-cli.js'][937]++;
+              _$jscoverage['modules/sync-cli.js'][966]++;
               delete pending[pendingRec.hash];
-              _$jscoverage['modules/sync-cli.js'][938]++;
+              _$jscoverage['modules/sync-cli.js'][967]++;
               delete pending[previousPendingUid];
             }
-            _$jscoverage['modules/sync-cli.js'][940]++;
+            _$jscoverage['modules/sync-cli.js'][969]++;
             if (previousPending.action === "update") {
-              _$jscoverage['modules/sync-cli.js'][944]++;
+              _$jscoverage['modules/sync-cli.js'][973]++;
               pendingRec.pre = previousPending.pre;
-              _$jscoverage['modules/sync-cli.js'][945]++;
+              _$jscoverage['modules/sync-cli.js'][974]++;
               pendingRec.preHash = previousPending.preHash;
-              _$jscoverage['modules/sync-cli.js'][946]++;
+              _$jscoverage['modules/sync-cli.js'][975]++;
               pendingRec.inFlight = false;
-              _$jscoverage['modules/sync-cli.js'][947]++;
+              _$jscoverage['modules/sync-cli.js'][976]++;
               delete pending[previousPendingUid];
             }
           }
           else {
-            _$jscoverage['modules/sync-cli.js'][950]++;
+            _$jscoverage['modules/sync-cli.js'][979]++;
             self.consoleLog("existing in-inflight pending record = " + JSON.stringify(previousPending));
-            _$jscoverage['modules/sync-cli.js'][951]++;
+            _$jscoverage['modules/sync-cli.js'][980]++;
             pendingRec.delayed = true;
-            _$jscoverage['modules/sync-cli.js'][952]++;
+            _$jscoverage['modules/sync-cli.js'][981]++;
             pendingRec.waiting = previousPending.hash;
           }
         }
       }
-      _$jscoverage['modules/sync-cli.js'][956]++;
+      _$jscoverage['modules/sync-cli.js'][985]++;
       delete dataset.data[uid];
     }
   }
-  _$jscoverage['modules/sync-cli.js'][960]++;
+  _$jscoverage['modules/sync-cli.js'][989]++;
   if (dataset.data[uid]) {
-    _$jscoverage['modules/sync-cli.js'][961]++;
+    _$jscoverage['modules/sync-cli.js'][990]++;
     dataset.data[uid].data = pendingRec.post;
-    _$jscoverage['modules/sync-cli.js'][962]++;
+    _$jscoverage['modules/sync-cli.js'][991]++;
     dataset.data[uid].hash = pendingRec.postHash;
-    _$jscoverage['modules/sync-cli.js'][963]++;
+    _$jscoverage['modules/sync-cli.js'][992]++;
     dataset.meta[uid].fromPending = true;
-    _$jscoverage['modules/sync-cli.js'][964]++;
+    _$jscoverage['modules/sync-cli.js'][993]++;
     dataset.meta[uid].pendingUid = pendingRec.hash;
   }
 }), updatePendingFromNewData: (function (dataset_id, dataset, newData) {
-  _$jscoverage['modules/sync-cli.js'][969]++;
+  _$jscoverage['modules/sync-cli.js'][998]++;
   var pending = dataset.pending;
-  _$jscoverage['modules/sync-cli.js'][970]++;
+  _$jscoverage['modules/sync-cli.js'][999]++;
   var newRec;
-  _$jscoverage['modules/sync-cli.js'][972]++;
+  _$jscoverage['modules/sync-cli.js'][1001]++;
   if (pending && newData.records) {
-    _$jscoverage['modules/sync-cli.js'][973]++;
+    _$jscoverage['modules/sync-cli.js'][1002]++;
     for (var pendingHash in pending) {
-      _$jscoverage['modules/sync-cli.js'][974]++;
+      _$jscoverage['modules/sync-cli.js'][1003]++;
       if (pending.hasOwnProperty(pendingHash)) {
-        _$jscoverage['modules/sync-cli.js'][975]++;
+        _$jscoverage['modules/sync-cli.js'][1004]++;
         var pendingRec = pending[pendingHash];
-        _$jscoverage['modules/sync-cli.js'][977]++;
+        _$jscoverage['modules/sync-cli.js'][1006]++;
         dataset.meta[pendingRec.uid] = dataset.meta[pendingRec.uid] || {};
-        _$jscoverage['modules/sync-cli.js'][979]++;
+        _$jscoverage['modules/sync-cli.js'][1008]++;
         if (pendingRec.inFlight === false) {
-          _$jscoverage['modules/sync-cli.js'][981]++;
+          _$jscoverage['modules/sync-cli.js'][1010]++;
           self.consoleLog("updatePendingFromNewData - Found Non inFlight record -> action=" + pendingRec.action + " :: uid=" + pendingRec.uid + " :: hash=" + pendingRec.hash);
-          _$jscoverage['modules/sync-cli.js'][982]++;
+          _$jscoverage['modules/sync-cli.js'][1011]++;
           if (pendingRec.action === "update" || pendingRec.action === "delete") {
-            _$jscoverage['modules/sync-cli.js'][985]++;
+            _$jscoverage['modules/sync-cli.js'][1014]++;
             newRec = newData.records[pendingRec.uid];
-            _$jscoverage['modules/sync-cli.js'][986]++;
+            _$jscoverage['modules/sync-cli.js'][1015]++;
             if (newRec) {
-              _$jscoverage['modules/sync-cli.js'][987]++;
+              _$jscoverage['modules/sync-cli.js'][1016]++;
               self.consoleLog("updatePendingFromNewData - Updating pre values for existing pending record " + pendingRec.uid);
-              _$jscoverage['modules/sync-cli.js'][988]++;
+              _$jscoverage['modules/sync-cli.js'][1017]++;
               pendingRec.pre = newRec.data;
-              _$jscoverage['modules/sync-cli.js'][989]++;
+              _$jscoverage['modules/sync-cli.js'][1018]++;
               pendingRec.preHash = newRec.hash;
             }
             else {
-              _$jscoverage['modules/sync-cli.js'][993]++;
+              _$jscoverage['modules/sync-cli.js'][1022]++;
               var previousPendingUid = dataset.meta[pendingRec.uid].previousPendingUid;
-              _$jscoverage['modules/sync-cli.js'][994]++;
+              _$jscoverage['modules/sync-cli.js'][1023]++;
               var previousPending = pending[previousPendingUid];
-              _$jscoverage['modules/sync-cli.js'][995]++;
+              _$jscoverage['modules/sync-cli.js'][1024]++;
               if (previousPending) {
-                _$jscoverage['modules/sync-cli.js'][996]++;
+                _$jscoverage['modules/sync-cli.js'][1025]++;
                 if (newData && newData.updates && newData.updates.applied && newData.updates.applied[previousPending.hash]) {
-                  _$jscoverage['modules/sync-cli.js'][998]++;
+                  _$jscoverage['modules/sync-cli.js'][1027]++;
                   var newUid = newData.updates.applied[previousPending.hash].uid;
-                  _$jscoverage['modules/sync-cli.js'][999]++;
+                  _$jscoverage['modules/sync-cli.js'][1028]++;
                   newRec = newData.records[newUid];
-                  _$jscoverage['modules/sync-cli.js'][1000]++;
+                  _$jscoverage['modules/sync-cli.js'][1029]++;
                   if (newRec) {
-                    _$jscoverage['modules/sync-cli.js'][1001]++;
+                    _$jscoverage['modules/sync-cli.js'][1030]++;
                     self.consoleLog("updatePendingFromNewData - Updating pre values for existing pending record which was previously a create " + pendingRec.uid + " ==> " + newUid);
-                    _$jscoverage['modules/sync-cli.js'][1002]++;
+                    _$jscoverage['modules/sync-cli.js'][1031]++;
                     pendingRec.pre = newRec.data;
-                    _$jscoverage['modules/sync-cli.js'][1003]++;
+                    _$jscoverage['modules/sync-cli.js'][1032]++;
                     pendingRec.preHash = newRec.hash;
-                    _$jscoverage['modules/sync-cli.js'][1004]++;
+                    _$jscoverage['modules/sync-cli.js'][1033]++;
                     pendingRec.uid = newUid;
                   }
                 }
               }
             }
           }
-          _$jscoverage['modules/sync-cli.js'][1011]++;
+          _$jscoverage['modules/sync-cli.js'][1040]++;
           if (pendingRec.action === "create") {
-            _$jscoverage['modules/sync-cli.js'][1012]++;
+            _$jscoverage['modules/sync-cli.js'][1041]++;
             if (newData && newData.updates && newData.updates.applied && newData.updates.applied[pendingHash]) {
-              _$jscoverage['modules/sync-cli.js'][1013]++;
+              _$jscoverage['modules/sync-cli.js'][1042]++;
               self.consoleLog("updatePendingFromNewData - Found an update for a pending create " + JSON.stringify(newData.updates.applied[pendingHash]));
-              _$jscoverage['modules/sync-cli.js'][1014]++;
+              _$jscoverage['modules/sync-cli.js'][1043]++;
               newRec = newData.records[newData.updates.applied[pendingHash].uid];
-              _$jscoverage['modules/sync-cli.js'][1015]++;
+              _$jscoverage['modules/sync-cli.js'][1044]++;
               if (newRec) {
-                _$jscoverage['modules/sync-cli.js'][1016]++;
+                _$jscoverage['modules/sync-cli.js'][1045]++;
                 self.consoleLog("updatePendingFromNewData - Changing pending create to an update based on new record  " + JSON.stringify(newRec));
-                _$jscoverage['modules/sync-cli.js'][1019]++;
+                _$jscoverage['modules/sync-cli.js'][1048]++;
                 pendingRec.action = "update";
-                _$jscoverage['modules/sync-cli.js'][1020]++;
+                _$jscoverage['modules/sync-cli.js'][1049]++;
                 pendingRec.pre = newRec.data;
-                _$jscoverage['modules/sync-cli.js'][1021]++;
+                _$jscoverage['modules/sync-cli.js'][1050]++;
                 pendingRec.preHash = newRec.hash;
-                _$jscoverage['modules/sync-cli.js'][1022]++;
+                _$jscoverage['modules/sync-cli.js'][1051]++;
                 pendingRec.uid = newData.updates.applied[pendingHash].uid;
               }
             }
@@ -12821,47 +12855,47 @@ var self = {defaults: {"sync_frequency": 10, "auto_sync_local_updates": true, "n
 }
   }
 }), updateNewDataFromInFlight: (function (dataset_id, dataset, newData) {
-  _$jscoverage['modules/sync-cli.js'][1033]++;
+  _$jscoverage['modules/sync-cli.js'][1062]++;
   var pending = dataset.pending;
-  _$jscoverage['modules/sync-cli.js'][1035]++;
+  _$jscoverage['modules/sync-cli.js'][1064]++;
   if (pending && newData.records) {
-    _$jscoverage['modules/sync-cli.js'][1036]++;
+    _$jscoverage['modules/sync-cli.js'][1065]++;
     for (var pendingHash in pending) {
-      _$jscoverage['modules/sync-cli.js'][1037]++;
+      _$jscoverage['modules/sync-cli.js'][1066]++;
       if (pending.hasOwnProperty(pendingHash)) {
-        _$jscoverage['modules/sync-cli.js'][1038]++;
+        _$jscoverage['modules/sync-cli.js'][1067]++;
         var pendingRec = pending[pendingHash];
-        _$jscoverage['modules/sync-cli.js'][1040]++;
+        _$jscoverage['modules/sync-cli.js'][1069]++;
         if (pendingRec.inFlight) {
-          _$jscoverage['modules/sync-cli.js'][1041]++;
+          _$jscoverage['modules/sync-cli.js'][1070]++;
           var updateReceivedForPending = (newData && newData.updates && newData.updates.hashes && newData.updates.hashes[pendingHash])? true: false;
-          _$jscoverage['modules/sync-cli.js'][1043]++;
+          _$jscoverage['modules/sync-cli.js'][1072]++;
           self.consoleLog("updateNewDataFromInFlight - Found inflight pending Record - action = " + pendingRec.action + " :: hash = " + pendingHash + " :: updateReceivedForPending=" + updateReceivedForPending);
-          _$jscoverage['modules/sync-cli.js'][1045]++;
+          _$jscoverage['modules/sync-cli.js'][1074]++;
           if (! updateReceivedForPending) {
-            _$jscoverage['modules/sync-cli.js'][1046]++;
+            _$jscoverage['modules/sync-cli.js'][1075]++;
             var newRec = newData.records[pendingRec.uid];
-            _$jscoverage['modules/sync-cli.js'][1048]++;
+            _$jscoverage['modules/sync-cli.js'][1077]++;
             if (pendingRec.action === "update" && newRec) {
-              _$jscoverage['modules/sync-cli.js'][1050]++;
+              _$jscoverage['modules/sync-cli.js'][1079]++;
               newRec.data = pendingRec.post;
-              _$jscoverage['modules/sync-cli.js'][1051]++;
+              _$jscoverage['modules/sync-cli.js'][1080]++;
               newRec.hash = pendingRec.postHash;
             }
             else {
-              _$jscoverage['modules/sync-cli.js'][1053]++;
+              _$jscoverage['modules/sync-cli.js'][1082]++;
               if (pendingRec.action === "delete" && newRec) {
-                _$jscoverage['modules/sync-cli.js'][1055]++;
+                _$jscoverage['modules/sync-cli.js'][1084]++;
                 delete newData.records[pendingRec.uid];
               }
               else {
-                _$jscoverage['modules/sync-cli.js'][1057]++;
+                _$jscoverage['modules/sync-cli.js'][1086]++;
                 if (pendingRec.action === "create") {
-                  _$jscoverage['modules/sync-cli.js'][1059]++;
+                  _$jscoverage['modules/sync-cli.js'][1088]++;
                   self.consoleLog("updateNewDataFromInFlight - re adding pending create to incomming dataset");
-                  _$jscoverage['modules/sync-cli.js'][1060]++;
+                  _$jscoverage['modules/sync-cli.js'][1089]++;
                   var newPendingCreate = {data: pendingRec.post, hash: pendingRec.postHash};
-                  _$jscoverage['modules/sync-cli.js'][1064]++;
+                  _$jscoverage['modules/sync-cli.js'][1093]++;
                   newData.records[pendingRec.uid] = newPendingCreate;
                 }
               }
@@ -12872,43 +12906,43 @@ var self = {defaults: {"sync_frequency": 10, "auto_sync_local_updates": true, "n
 }
   }
 }), updateNewDataFromPending: (function (dataset_id, dataset, newData) {
-  _$jscoverage['modules/sync-cli.js'][1074]++;
+  _$jscoverage['modules/sync-cli.js'][1103]++;
   var pending = dataset.pending;
-  _$jscoverage['modules/sync-cli.js'][1076]++;
+  _$jscoverage['modules/sync-cli.js'][1105]++;
   if (pending && newData.records) {
-    _$jscoverage['modules/sync-cli.js'][1077]++;
+    _$jscoverage['modules/sync-cli.js'][1106]++;
     for (var pendingHash in pending) {
-      _$jscoverage['modules/sync-cli.js'][1078]++;
+      _$jscoverage['modules/sync-cli.js'][1107]++;
       if (pending.hasOwnProperty(pendingHash)) {
-        _$jscoverage['modules/sync-cli.js'][1079]++;
+        _$jscoverage['modules/sync-cli.js'][1108]++;
         var pendingRec = pending[pendingHash];
-        _$jscoverage['modules/sync-cli.js'][1081]++;
+        _$jscoverage['modules/sync-cli.js'][1110]++;
         if (pendingRec.inFlight === false) {
-          _$jscoverage['modules/sync-cli.js'][1082]++;
+          _$jscoverage['modules/sync-cli.js'][1111]++;
           self.consoleLog("updateNewDataFromPending - Found Non inFlight record -> action=" + pendingRec.action + " :: uid=" + pendingRec.uid + " :: hash=" + pendingRec.hash);
-          _$jscoverage['modules/sync-cli.js'][1083]++;
+          _$jscoverage['modules/sync-cli.js'][1112]++;
           var newRec = newData.records[pendingRec.uid];
-          _$jscoverage['modules/sync-cli.js'][1084]++;
+          _$jscoverage['modules/sync-cli.js'][1113]++;
           if (pendingRec.action === "update" && newRec) {
-            _$jscoverage['modules/sync-cli.js'][1086]++;
+            _$jscoverage['modules/sync-cli.js'][1115]++;
             newRec.data = pendingRec.post;
-            _$jscoverage['modules/sync-cli.js'][1087]++;
+            _$jscoverage['modules/sync-cli.js'][1116]++;
             newRec.hash = pendingRec.postHash;
           }
           else {
-            _$jscoverage['modules/sync-cli.js'][1089]++;
+            _$jscoverage['modules/sync-cli.js'][1118]++;
             if (pendingRec.action === "delete" && newRec) {
-              _$jscoverage['modules/sync-cli.js'][1091]++;
+              _$jscoverage['modules/sync-cli.js'][1120]++;
               delete newData.records[pendingRec.uid];
             }
             else {
-              _$jscoverage['modules/sync-cli.js'][1093]++;
+              _$jscoverage['modules/sync-cli.js'][1122]++;
               if (pendingRec.action === "create") {
-                _$jscoverage['modules/sync-cli.js'][1095]++;
+                _$jscoverage['modules/sync-cli.js'][1124]++;
                 self.consoleLog("updateNewDataFromPending - re adding pending create to incomming dataset");
-                _$jscoverage['modules/sync-cli.js'][1096]++;
+                _$jscoverage['modules/sync-cli.js'][1125]++;
                 var newPendingCreate = {data: pendingRec.post, hash: pendingRec.postHash};
-                _$jscoverage['modules/sync-cli.js'][1100]++;
+                _$jscoverage['modules/sync-cli.js'][1129]++;
                 newData.records[pendingRec.uid] = newPendingCreate;
               }
             }
@@ -12918,130 +12952,114 @@ var self = {defaults: {"sync_frequency": 10, "auto_sync_local_updates": true, "n
 }
   }
 }), updateCrashedInFlightFromNewData: (function (dataset_id, dataset, newData) {
-  _$jscoverage['modules/sync-cli.js'][1109]++;
+  _$jscoverage['modules/sync-cli.js'][1138]++;
   var updateNotifications = {applied: self.notifications.REMOTE_UPDATE_APPLIED, failed: self.notifications.REMOTE_UPDATE_FAILED, collisions: self.notifications.COLLISION_DETECTED};
-  _$jscoverage['modules/sync-cli.js'][1115]++;
+  _$jscoverage['modules/sync-cli.js'][1144]++;
   var pending = dataset.pending;
-  _$jscoverage['modules/sync-cli.js'][1116]++;
+  _$jscoverage['modules/sync-cli.js'][1145]++;
   var resolvedCrashes = {};
-  _$jscoverage['modules/sync-cli.js'][1117]++;
+  _$jscoverage['modules/sync-cli.js'][1146]++;
   var pendingHash;
-  _$jscoverage['modules/sync-cli.js'][1118]++;
+  _$jscoverage['modules/sync-cli.js'][1147]++;
   var pendingRec;
-  _$jscoverage['modules/sync-cli.js'][1121]++;
+  _$jscoverage['modules/sync-cli.js'][1150]++;
   if (pending) {
-    _$jscoverage['modules/sync-cli.js'][1122]++;
+    _$jscoverage['modules/sync-cli.js'][1151]++;
     for (pendingHash in pending) {
-      _$jscoverage['modules/sync-cli.js'][1123]++;
+      _$jscoverage['modules/sync-cli.js'][1152]++;
       if (pending.hasOwnProperty(pendingHash)) {
-        _$jscoverage['modules/sync-cli.js'][1124]++;
+        _$jscoverage['modules/sync-cli.js'][1153]++;
         pendingRec = pending[pendingHash];
-        _$jscoverage['modules/sync-cli.js'][1126]++;
+        _$jscoverage['modules/sync-cli.js'][1155]++;
         if (pendingRec.inFlight && pendingRec.crashed) {
-          _$jscoverage['modules/sync-cli.js'][1127]++;
+          _$jscoverage['modules/sync-cli.js'][1156]++;
           self.consoleLog("updateCrashedInFlightFromNewData - Found crashed inFlight pending record uid=" + pendingRec.uid + " :: hash=" + pendingRec.hash);
-          _$jscoverage['modules/sync-cli.js'][1128]++;
+          _$jscoverage['modules/sync-cli.js'][1157]++;
           if (newData && newData.updates && newData.updates.hashes) {
-            _$jscoverage['modules/sync-cli.js'][1131]++;
+            _$jscoverage['modules/sync-cli.js'][1160]++;
             var crashedUpdate = newData.updates.hashes[pendingHash];
-            _$jscoverage['modules/sync-cli.js'][1132]++;
+            _$jscoverage['modules/sync-cli.js'][1161]++;
             if (crashedUpdate) {
-              _$jscoverage['modules/sync-cli.js'][1135]++;
+              _$jscoverage['modules/sync-cli.js'][1164]++;
               resolvedCrashes[crashedUpdate.uid] = crashedUpdate;
-              _$jscoverage['modules/sync-cli.js'][1137]++;
+              _$jscoverage['modules/sync-cli.js'][1166]++;
               self.consoleLog("updateCrashedInFlightFromNewData - Resolving status for crashed inflight pending record " + JSON.stringify(crashedUpdate));
-              _$jscoverage['modules/sync-cli.js'][1139]++;
+              _$jscoverage['modules/sync-cli.js'][1168]++;
               if (crashedUpdate.type === "failed") {
-                _$jscoverage['modules/sync-cli.js'][1141]++;
+                _$jscoverage['modules/sync-cli.js'][1170]++;
                 if (crashedUpdate.action === "create") {
-                  _$jscoverage['modules/sync-cli.js'][1142]++;
+                  _$jscoverage['modules/sync-cli.js'][1171]++;
                   self.consoleLog("updateCrashedInFlightFromNewData - Deleting failed create from dataset");
-                  _$jscoverage['modules/sync-cli.js'][1143]++;
+                  _$jscoverage['modules/sync-cli.js'][1172]++;
                   delete dataset.data[crashedUpdate.uid];
                 }
                 else {
-                  _$jscoverage['modules/sync-cli.js'][1145]++;
+                  _$jscoverage['modules/sync-cli.js'][1174]++;
                   if (crashedUpdate.action === "update" || crashedUpdate.action === "delete") {
-                    _$jscoverage['modules/sync-cli.js'][1146]++;
+                    _$jscoverage['modules/sync-cli.js'][1175]++;
                     self.consoleLog("updateCrashedInFlightFromNewData - Reverting failed " + crashedUpdate.action + " in dataset");
-                    _$jscoverage['modules/sync-cli.js'][1147]++;
+                    _$jscoverage['modules/sync-cli.js'][1176]++;
                     dataset.data[crashedUpdate.uid] = {data: pendingRec.pre, hash: pendingRec.preHash};
                   }
                 }
               }
-              _$jscoverage['modules/sync-cli.js'][1154]++;
+              _$jscoverage['modules/sync-cli.js'][1183]++;
               delete pending[pendingHash];
-              _$jscoverage['modules/sync-cli.js'][1155]++;
+              _$jscoverage['modules/sync-cli.js'][1184]++;
               self.doNotify(dataset_id, crashedUpdate.uid, updateNotifications[crashedUpdate.type], crashedUpdate);
             }
             else {
-              _$jscoverage['modules/sync-cli.js'][1160]++;
+              _$jscoverage['modules/sync-cli.js'][1189]++;
               if (pendingRec.crashedCount) {
-                _$jscoverage['modules/sync-cli.js'][1161]++;
+                _$jscoverage['modules/sync-cli.js'][1190]++;
                 pendingRec.crashedCount++;
               }
               else {
-                _$jscoverage['modules/sync-cli.js'][1164]++;
+                _$jscoverage['modules/sync-cli.js'][1193]++;
                 pendingRec.crashedCount = 1;
               }
             }
           }
           else {
-            _$jscoverage['modules/sync-cli.js'][1171]++;
+            _$jscoverage['modules/sync-cli.js'][1200]++;
             if (pendingRec.crashedCount) {
-              _$jscoverage['modules/sync-cli.js'][1172]++;
+              _$jscoverage['modules/sync-cli.js'][1201]++;
               pendingRec.crashedCount++;
             }
             else {
-              _$jscoverage['modules/sync-cli.js'][1175]++;
+              _$jscoverage['modules/sync-cli.js'][1204]++;
               pendingRec.crashedCount = 1;
             }
           }
         }
       }
 }
-    _$jscoverage['modules/sync-cli.js'][1182]++;
+    _$jscoverage['modules/sync-cli.js'][1211]++;
     for (pendingHash in pending) {
-      _$jscoverage['modules/sync-cli.js'][1183]++;
+      _$jscoverage['modules/sync-cli.js'][1212]++;
       if (pending.hasOwnProperty(pendingHash)) {
-        _$jscoverage['modules/sync-cli.js'][1184]++;
+        _$jscoverage['modules/sync-cli.js'][1213]++;
         pendingRec = pending[pendingHash];
-        _$jscoverage['modules/sync-cli.js'][1186]++;
+        _$jscoverage['modules/sync-cli.js'][1215]++;
         if (pendingRec.inFlight && pendingRec.crashed) {
-          _$jscoverage['modules/sync-cli.js'][1187]++;
+          _$jscoverage['modules/sync-cli.js'][1216]++;
           if (pendingRec.crashedCount > dataset.config.crashed_count_wait) {
-            _$jscoverage['modules/sync-cli.js'][1188]++;
+            _$jscoverage['modules/sync-cli.js'][1217]++;
             self.consoleLog("updateCrashedInFlightFromNewData - Crashed inflight pending record has reached crashed_count_wait limit : " + JSON.stringify(pendingRec));
-            _$jscoverage['modules/sync-cli.js'][1189]++;
+            _$jscoverage['modules/sync-cli.js'][1218]++;
             if (dataset.config.resend_crashed_updates) {
-              _$jscoverage['modules/sync-cli.js'][1190]++;
+              _$jscoverage['modules/sync-cli.js'][1219]++;
               self.consoleLog("updateCrashedInFlightFromNewData - Retryig crashed inflight pending record");
-              _$jscoverage['modules/sync-cli.js'][1191]++;
+              _$jscoverage['modules/sync-cli.js'][1220]++;
               pendingRec.crashed = false;
-              _$jscoverage['modules/sync-cli.js'][1192]++;
+              _$jscoverage['modules/sync-cli.js'][1221]++;
               pendingRec.inFlight = false;
             }
             else {
-              _$jscoverage['modules/sync-cli.js'][1195]++;
+              _$jscoverage['modules/sync-cli.js'][1224]++;
               self.consoleLog("updateCrashedInFlightFromNewData - Deleting crashed inflight pending record");
-              _$jscoverage['modules/sync-cli.js'][1196]++;
+              _$jscoverage['modules/sync-cli.js'][1225]++;
               delete pending[pendingHash];
-            }
-          }
-        }
-        else {
-          _$jscoverage['modules/sync-cli.js'][1200]++;
-          if (! pendingRec.inFlight && pendingRec.crashed) {
-            _$jscoverage['modules/sync-cli.js'][1201]++;
-            self.consoleLog("updateCrashedInFlightFromNewData - Trying to resolve issues with crashed non in flight record - uid = " + pendingRec.uid);
-            _$jscoverage['modules/sync-cli.js'][1203]++;
-            var crashedRef = resolvedCrashes[pendingRec.uid];
-            _$jscoverage['modules/sync-cli.js'][1204]++;
-            if (crashedRef) {
-              _$jscoverage['modules/sync-cli.js'][1205]++;
-              self.consoleLog("updateCrashedInFlightFromNewData - Found a stalled pending record backed up behind a resolved crash uid=" + pendingRec.uid + " :: hash=" + pendingRec.hash);
-              _$jscoverage['modules/sync-cli.js'][1206]++;
-              pendingRec.crashed = false;
             }
           }
         }
@@ -13049,35 +13067,35 @@ var self = {defaults: {"sync_frequency": 10, "auto_sync_local_updates": true, "n
 }
   }
 }), updateDelayedFromNewData: (function (dataset_id, dataset, newData) {
-  _$jscoverage['modules/sync-cli.js'][1215]++;
+  _$jscoverage['modules/sync-cli.js'][1235]++;
   var pending = dataset.pending;
-  _$jscoverage['modules/sync-cli.js'][1216]++;
+  _$jscoverage['modules/sync-cli.js'][1236]++;
   var pendingHash;
-  _$jscoverage['modules/sync-cli.js'][1217]++;
+  _$jscoverage['modules/sync-cli.js'][1237]++;
   var pendingRec;
-  _$jscoverage['modules/sync-cli.js'][1218]++;
+  _$jscoverage['modules/sync-cli.js'][1238]++;
   if (pending) {
-    _$jscoverage['modules/sync-cli.js'][1219]++;
+    _$jscoverage['modules/sync-cli.js'][1239]++;
     for (pendingHash in pending) {
-      _$jscoverage['modules/sync-cli.js'][1220]++;
+      _$jscoverage['modules/sync-cli.js'][1240]++;
       if (pending.hasOwnProperty(pendingHash)) {
-        _$jscoverage['modules/sync-cli.js'][1221]++;
+        _$jscoverage['modules/sync-cli.js'][1241]++;
         pendingRec = pending[pendingHash];
-        _$jscoverage['modules/sync-cli.js'][1222]++;
+        _$jscoverage['modules/sync-cli.js'][1242]++;
         if (pendingRec.delayed && pendingRec.waiting) {
-          _$jscoverage['modules/sync-cli.js'][1223]++;
+          _$jscoverage['modules/sync-cli.js'][1243]++;
           self.consoleLog("updateDelayedFromNewData - Found delayed pending record uid=" + pendingRec.uid + " :: hash=" + pendingRec.hash + " :: waiting=" + pendingRec.waiting);
-          _$jscoverage['modules/sync-cli.js'][1224]++;
+          _$jscoverage['modules/sync-cli.js'][1244]++;
           if (newData && newData.updates && newData.updates.hashes) {
-            _$jscoverage['modules/sync-cli.js'][1225]++;
+            _$jscoverage['modules/sync-cli.js'][1245]++;
             var waitingRec = newData.updates.hashes[pendingRec.waiting];
-            _$jscoverage['modules/sync-cli.js'][1226]++;
+            _$jscoverage['modules/sync-cli.js'][1246]++;
             if (waitingRec) {
-              _$jscoverage['modules/sync-cli.js'][1227]++;
+              _$jscoverage['modules/sync-cli.js'][1247]++;
               self.consoleLog("updateDelayedFromNewData - Waiting pending record is resolved rec=" + JSON.stringify(waitingRec));
-              _$jscoverage['modules/sync-cli.js'][1228]++;
+              _$jscoverage['modules/sync-cli.js'][1248]++;
               pendingRec.delayed = false;
-              _$jscoverage['modules/sync-cli.js'][1229]++;
+              _$jscoverage['modules/sync-cli.js'][1249]++;
               pendingRec.waiting = undefined;
             }
           }
@@ -13086,67 +13104,49 @@ var self = {defaults: {"sync_frequency": 10, "auto_sync_local_updates": true, "n
 }
   }
 }), markInFlightAsCrashed: (function (dataset) {
-  _$jscoverage['modules/sync-cli.js'][1240]++;
+  _$jscoverage['modules/sync-cli.js'][1260]++;
   var pending = dataset.pending;
-  _$jscoverage['modules/sync-cli.js'][1241]++;
+  _$jscoverage['modules/sync-cli.js'][1261]++;
   var pendingHash;
-  _$jscoverage['modules/sync-cli.js'][1242]++;
+  _$jscoverage['modules/sync-cli.js'][1262]++;
   var pendingRec;
-  _$jscoverage['modules/sync-cli.js'][1244]++;
+  _$jscoverage['modules/sync-cli.js'][1264]++;
   if (pending) {
-    _$jscoverage['modules/sync-cli.js'][1245]++;
+    _$jscoverage['modules/sync-cli.js'][1265]++;
     var crashedRecords = {};
-    _$jscoverage['modules/sync-cli.js'][1246]++;
+    _$jscoverage['modules/sync-cli.js'][1266]++;
     for (pendingHash in pending) {
-      _$jscoverage['modules/sync-cli.js'][1247]++;
+      _$jscoverage['modules/sync-cli.js'][1267]++;
       if (pending.hasOwnProperty(pendingHash)) {
-        _$jscoverage['modules/sync-cli.js'][1248]++;
+        _$jscoverage['modules/sync-cli.js'][1268]++;
         pendingRec = pending[pendingHash];
-        _$jscoverage['modules/sync-cli.js'][1250]++;
+        _$jscoverage['modules/sync-cli.js'][1270]++;
         if (pendingRec.inFlight) {
-          _$jscoverage['modules/sync-cli.js'][1251]++;
+          _$jscoverage['modules/sync-cli.js'][1271]++;
           self.consoleLog("Marking in flight pending record as crashed : " + pendingHash);
-          _$jscoverage['modules/sync-cli.js'][1252]++;
+          _$jscoverage['modules/sync-cli.js'][1272]++;
           pendingRec.crashed = true;
-          _$jscoverage['modules/sync-cli.js'][1253]++;
+          _$jscoverage['modules/sync-cli.js'][1273]++;
           crashedRecords[pendingRec.uid] = pendingRec;
-        }
-      }
-}
-    _$jscoverage['modules/sync-cli.js'][1260]++;
-    for (pendingHash in pending) {
-      _$jscoverage['modules/sync-cli.js'][1261]++;
-      if (pending.hasOwnProperty(pendingHash)) {
-        _$jscoverage['modules/sync-cli.js'][1262]++;
-        pendingRec = pending[pendingHash];
-        _$jscoverage['modules/sync-cli.js'][1264]++;
-        if (! pendingRec.inFlight && ! pendingRec.delayed) {
-          _$jscoverage['modules/sync-cli.js'][1265]++;
-          var crashedRef = crashedRecords[pendingRec.uid];
-          _$jscoverage['modules/sync-cli.js'][1266]++;
-          if (crashedRef) {
-            _$jscoverage['modules/sync-cli.js'][1267]++;
-            pendingRec.crashed = true;
-          }
         }
       }
 }
   }
 }), consoleLog: (function (msg) {
-  _$jscoverage['modules/sync-cli.js'][1276]++;
+  _$jscoverage['modules/sync-cli.js'][1281]++;
   if (self.config.do_console_log) {
-    _$jscoverage['modules/sync-cli.js'][1277]++;
+    _$jscoverage['modules/sync-cli.js'][1282]++;
     console.log(msg);
   }
 })};
-_$jscoverage['modules/sync-cli.js'][1282]++;
+_$jscoverage['modules/sync-cli.js'][1287]++;
 (function () {
-  _$jscoverage['modules/sync-cli.js'][1283]++;
+  _$jscoverage['modules/sync-cli.js'][1288]++;
   self.config = self.defaults;
 })();
-_$jscoverage['modules/sync-cli.js'][1288]++;
-module.exports = {init: self.init, manage: self.manage, notify: self.notify, doList: self.list, doCreate: self.create, doRead: self.read, doUpdate: self.update, doDelete: self["delete"], listCollisions: self.listCollisions, removeCollision: self.removeCollision, getPending: self.getPending, clearPending: self.clearPending, getDataset: self.getDataSet, getQueryParams: self.getQueryParams, setQueryParams: self.setQueryParams, getMetaData: self.getMetaData, setMetaData: self.setMetaData, getConfig: self.getConfig, setConfig: self.setConfig, startSync: self.startSync, stopSync: self.stopSync, doSync: self.doSync, forceSync: self.forceSync, generateHash: self.generateHash};
-_$jscoverage['modules/sync-cli.js'].source = ["var JSON = require(\"JSON\");","var actAPI = require(\"./api_act\");","var cloudAPI = require(\"./api_cloud\");","var CryptoJS = require(\"../../libs/generated/crypto\");","var Lawnchair = require('../../libs/generated/lawnchair');","","var self = {","","  // CONFIG","  defaults: {","    \"sync_frequency\": 10,","    // How often to synchronise data with the cloud in seconds.","    \"auto_sync_local_updates\": true,","    // Should local chages be syned to the cloud immediately, or should they wait for the next sync interval","    \"notify_client_storage_failed\": true,","    // Should a notification event be triggered when loading/saving to client storage fails","    \"notify_sync_started\": true,","    // Should a notification event be triggered when a sync cycle with the server has been started","    \"notify_sync_complete\": true,","    // Should a notification event be triggered when a sync cycle with the server has been completed","    \"notify_offline_update\": true,","    // Should a notification event be triggered when an attempt was made to update a record while offline","    \"notify_collision_detected\": true,","    // Should a notification event be triggered when an update failed due to data collision","    \"notify_remote_update_failed\": true,","    // Should a notification event be triggered when an update failed for a reason other than data collision","    \"notify_local_update_applied\": true,","    // Should a notification event be triggered when an update was applied to the local data store","    \"notify_remote_update_applied\": true,","    // Should a notification event be triggered when an update was applied to the remote data store","    \"notify_delta_received\": true,","    // Should a notification event be triggered when a delta was received from the remote data store for the dataset ","    \"notify_record_delta_received\": true,","    // Should a notification event be triggered when a delta was received from the remote data store for a record","    \"notify_sync_failed\": true,","    // Should a notification event be triggered when the sync loop failed to complete","    \"do_console_log\": false,","    // Should log statements be written to console.log","    \"crashed_count_wait\" : 10,","    // How many syncs should we check for updates on crashed in flight updates before we give up searching","    \"resend_crashed_updates\" : true,","    // If we have reached the crashed_count_wait limit, should we re-try sending the crashed in flight pending record","    \"sync_active\" : true,","    // Is the background sync with the cloud currently active","    \"storage_strategy\" : \"html5-filesystem\",","    // Storage strategy to use for Lawnchair - supported strategies are 'html5-filesystem' and 'dom'","    \"file_system_quota\" : 50 * 1024 * 1204","    // Amount of space to request from the HTML5 filesystem API when running in browser","  },","","  notifications: {","    \"CLIENT_STORAGE_FAILED\": \"client_storage_failed\",","    // loading/saving to client storage failed","    \"SYNC_STARTED\": \"sync_started\",","    // A sync cycle with the server has been started","    \"SYNC_COMPLETE\": \"sync_complete\",","    // A sync cycle with the server has been completed","    \"OFFLINE_UPDATE\": \"offline_update\",","    // An attempt was made to update a record while offline","    \"COLLISION_DETECTED\": \"collision_detected\",","    //Update Failed due to data collision","    \"REMOTE_UPDATE_FAILED\": \"remote_update_failed\",","    // Update Failed for a reason other than data collision","    \"REMOTE_UPDATE_APPLIED\": \"remote_update_applied\",","    // An update was applied to the remote data store","    \"LOCAL_UPDATE_APPLIED\": \"local_update_applied\",","    // An update was applied to the local data store","    \"DELTA_RECEIVED\": \"delta_received\",","    // A delta was received from the remote data store for the dataset ","    \"RECORD_DELTA_RECEIVED\": \"record_delta_received\",","    // A delta was received from the remote data store for the record ","    \"SYNC_FAILED\": \"sync_failed\"","    // Sync loop failed to complete","  },","","  datasets: {},","","  // Initialise config to default values;","  config: undefined,","","  notify_callback: undefined,","","  hasCustomSync : undefined,","","  // PUBLIC FUNCTION IMPLEMENTATIONS","  init: function(options) {","    self.consoleLog('sync - init called');","","    self.config = JSON.parse(JSON.stringify(self.defaults));","    for (var i in options) {","      self.config[i] = options[i];","    }","","    self.datasetMonitor();","  },","","  notify: function(callback) {","    self.notify_callback = callback;","  },","","  manage: function(dataset_id, options, query_params, meta_data, cb) {","    self.consoleLog('manage - START');","","    var options = options || {};","","    var doManage = function(dataset) {","      self.consoleLog('doManage dataset :: initialised = ' + dataset.initialised + \" :: \" + dataset_id + ' :: ' + JSON.stringify(options));","","      var datasetConfig = self.setOptions(options);","","      dataset.query_params = query_params || dataset.query_params || {};","      dataset.meta_data = meta_data || dataset.meta_data || {};","      dataset.config = datasetConfig;","      dataset.syncRunning = false;","      dataset.syncPending = true;","      dataset.initialised = true;","      dataset.meta = {};","","      self.saveDataSet(dataset_id, function() {","","        if( cb ) {","          cb();","        }","      });","    };","","    // Check if the dataset is already loaded","    self.getDataSet(dataset_id, function(dataset) {","      self.consoleLog('manage - dataset already loaded');","      doManage(dataset);","    }, function(err) {","      self.consoleLog('manage - dataset not loaded... trying to load');","","      // Not already loaded, try to load from local storage","      self.loadDataSet(dataset_id, function(dataset) {","          self.consoleLog('manage - dataset loaded from local storage');","","          // Loading from local storage worked","","          // Fire the local update event to indicate that dataset was loaded from local storage","          self.doNotify(dataset_id, null, self.notifications.LOCAL_UPDATE_APPLIED, \"load\");","","          // Put the dataet under the management of the sync service","          doManage(dataset);","        },","        function(err) {","          // No dataset in memory or local storage - create a new one and put it in memory","          self.consoleLog('manage - Creating new dataset for id ' + dataset_id);","          var dataset = {};","          dataset.data = {};","          dataset.pending = {};","          self.datasets[dataset_id] = dataset;","          doManage(dataset);","        });","    });","  },","","  setOptions: function(options) {","    // Make sure config is initialised","    if( ! self.config ) {","      self.config = JSON.parse(JSON.stringify(self.defaults));","    }","","    var datasetConfig = JSON.parse(JSON.stringify(self.config));","    var optionsIn = JSON.parse(JSON.stringify(options));","    for (var k in optionsIn) {","      datasetConfig[k] = optionsIn[k];","    }","","    return datasetConfig;","  },","","  list: function(dataset_id, success, failure) {","    self.getDataSet(dataset_id, function(dataset) {","      if (dataset &amp;&amp; dataset.data) {","        // Return a copy of the dataset so updates will not automatically make it back into the dataset","        var res = JSON.parse(JSON.stringify(dataset.data));","        success(res);","      } else {","        if(failure) failure('no_data');","      }","    }, function(code, msg) {","      if(failure) failure(code, msg);","    });","  },","","  create: function(dataset_id, data, success, failure) {","    self.addPendingObj(dataset_id, null, data, \"create\", success, failure);","  },","","  read: function(dataset_id, uid, success, failure) {","      self.getDataSet(dataset_id, function(dataset) {","      var rec = dataset.data[uid];","      if (!rec) {","        failure(\"unknown_uid\");","      } else {","        // Return a copy of the record so updates will not automatically make it back into the dataset","        var res = JSON.parse(JSON.stringify(rec));","        success(res);","      }","    }, function(code, msg) {","      if(failure) failure(code, msg);","    });","  },","","  update: function(dataset_id, uid, data, success, failure) {","    self.addPendingObj(dataset_id, uid, data, \"update\", success, failure);","  },","","  'delete': function(dataset_id, uid, success, failure) {","    self.addPendingObj(dataset_id, uid, null, \"delete\", success, failure);","  },","","  getPending: function(dataset_id, cb) {","    self.getDataSet(dataset_id, function(dataset) {","      var res;","      if( dataset ) {","        res = dataset.pending;","      }","      cb(res);","    }, function(err, datatset_id) {","        self.consoleLog(err);","    });","  },","","  clearPending: function(dataset_id, cb) {","    self.getDataSet(dataset_id, function(dataset) {","      dataset.pending = {};","      self.saveDataSet(dataset_id, cb);","    });","  },","","  listCollisions : function(dataset_id, success, failure){","    self.getDataSet(dataset_id, function(dataset) {","      self.doCloudCall({","        \"dataset_id\": dataset_id,","        \"req\": {","          \"fn\": \"listCollisions\",","          \"meta_data\" : dataset.meta_data","        }","      }, success, failure);","    }, failure);","  },","","  removeCollision: function(dataset_id, colissionHash, success, failure) {","    self.getDataSet(dataset_id, function(dataset) {","      self.doCloudCall({","        \"dataset_id\" : dataset_id,","        \"req\": {","          \"fn\": \"removeCollision\",","          \"hash\": colissionHash,","          meta_data: dataset.meta_data","        }","      }, success, failure);","    });","  },","","","  // PRIVATE FUNCTIONS","  isOnline: function(callback) {","    var online = true;","","    // first, check if navigator.online is available","    if(typeof navigator.onLine !== \"undefined\"){","      online = navigator.onLine;","    }","","    // second, check if Phonegap is available and has online info","    if(online){","      //use phonegap to determin if the network is available","      if(typeof navigator.network !== \"undefined\" &amp;&amp; typeof navigator.network.connection !== \"undefined\"){","        var networkType = navigator.network.connection.type;","        if(networkType === \"none\" || networkType === null) {","          online = false;","        }","      }","    }","","    return callback(online);","  },","","  doNotify: function(dataset_id, uid, code, message) {","","    if( self.notify_callback ) {","      if ( self.config['notify_' + code] ) {","        var notification = {","          \"dataset_id\" : dataset_id,","          \"uid\" : uid,","          \"code\" : code,","          \"message\" : message","        };","        // make sure user doesn't block","        setTimeout(function () {","          self.notify_callback(notification);","        }, 0);","      }","    }","  },","","  getDataSet: function(dataset_id, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      success(dataset);","    } else {","      failure('unknown_dataset ' + dataset_id, dataset_id);","    }","  },","","  getQueryParams: function(dataset_id, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      success(dataset.query_params);","    } else {","      failure('unknown_dataset ' + dataset_id, dataset_id);","    }","  },","","  setQueryParams: function(dataset_id, queryParams, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      dataset.query_params = queryParams;","      self.saveDataSet(dataset_id);","      if( success ) {","        success(dataset.query_params);","      }","    } else {","      if ( failure ) {","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  getMetaData: function(dataset_id, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      success(dataset.meta_data);","    } else {","      failure('unknown_dataset ' + dataset_id, dataset_id);","    }","  },","","  setMetaData: function(dataset_id, metaData, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      dataset.meta_data = metaData;","      self.saveDataSet(dataset_id);","      if( success ) {","        success(dataset.meta_data);","      }","    } else {","      if( failure ) {","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  getConfig: function(dataset_id, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      success(dataset.config);","    } else {","      failure('unknown_dataset ' + dataset_id, dataset_id);","    }","  },","","  setConfig: function(dataset_id, config, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      var fullConfig = self.setOptions(config);","      dataset.config = fullConfig;","      self.saveDataSet(dataset_id);","      if( success ) {","        success(dataset.config);","      }","    } else {","      if( failure ) {","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  stopSync: function(dataset_id, success, failure) {","    self.setConfig(dataset_id, {\"sync_active\" : false}, function() {","      if( success ) {","        success();","      }","    }, failure);","  },","","  startSync: function(dataset_id, success, failure) {","    self.setConfig(dataset_id, {\"sync_active\" : true}, function() {","      if( success ) {","        success();","      }","    }, failure);","  },","","  doSync: function(dataset_id, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      dataset.syncPending = true;","      self.saveDataSet(dataset_id);","      if( success ) {","        success();","      }","    } else {","      if( failure ) {","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  forceSync: function(dataset_id, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      dataset.syncForced = true;","      self.saveDataSet(dataset_id);","      if( success ) {","        success();","      }","    } else {","      if( failure ) {","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  sortObject : function(object) {","    if (typeof object !== \"object\" || object === null) {","      return object;","    }","","    var result = [];","","    Object.keys(object).sort().forEach(function(key) {","      result.push({","        key: key,","        value: self.sortObject(object[key])","      });","    });","","    return result;","  },","","  sortedStringify : function(obj) {","","    var str = '';","","    try {","      str = JSON.stringify(self.sortObject(obj));","    } catch (e) {","      console.error('Error stringifying sorted object:' + e);","    }","","    return str;","  },","","  generateHash: function(object) {","    var hash = CryptoJS.SHA1(self.sortedStringify(object));","    return hash.toString();","  },","","  addPendingObj: function(dataset_id, uid, data, action, success, failure) {","    self.isOnline(function (online) {","      if (!online) {","        self.doNotify(dataset_id, uid, self.notifications.OFFLINE_UPDATE, action);","      }","    });","","    function storePendingObject(obj) {","      obj.hash = self.generateHash(obj);","","      self.getDataSet(dataset_id, function(dataset) {","","        dataset.pending[obj.hash] = obj;","","        self.updateDatasetFromLocal(dataset, obj);","","        if(self.config.auto_sync_local_updates) {","          dataset.syncPending = true;","        }","        self.saveDataSet(dataset_id);","        self.doNotify(dataset_id, uid, self.notifications.LOCAL_UPDATE_APPLIED, action);","","        success(obj);","      }, function(code, msg) {","        if(failure) failure(code, msg);","      });","    }","","    var pendingObj = {};","    pendingObj.inFlight = false;","    pendingObj.action = action;","    pendingObj.post = JSON.parse(JSON.stringify(data));","    pendingObj.postHash = self.generateHash(pendingObj.post);","    pendingObj.timestamp = new Date().getTime();","    if( \"create\" === action ) {","      pendingObj.uid = pendingObj.postHash;","      storePendingObject(pendingObj);","    } else {","      self.read(dataset_id, uid, function(rec) {","        pendingObj.uid = uid;","        pendingObj.pre = rec.data;","        pendingObj.preHash = self.generateHash(rec.data);","        storePendingObject(pendingObj);","      }, function(code, msg) {","        failure(code, msg);","      });","    }","  },","","  syncLoop: function(dataset_id) {","    self.getDataSet(dataset_id, function(dataSet) {","    ","      // The sync loop is currently active","      dataSet.syncPending = false;","      dataSet.syncRunning = true;","      dataSet.syncLoopStart = new Date().getTime();","      self.doNotify(dataset_id, null, self.notifications.SYNC_STARTED, null);","","      self.isOnline(function(online) {","        if (!online) {","          self.syncComplete(dataset_id, \"offline\", self.notifications.SYNC_FAILED);","        } else {","          self.checkHasCustomSync(dataset_id, function() {","","            var syncLoopParams = {};","            syncLoopParams.fn = 'sync';","            syncLoopParams.dataset_id = dataset_id;","            syncLoopParams.query_params = dataSet.query_params;","            syncLoopParams.config = dataSet.config;","            syncLoopParams.meta_data = dataSet.meta_data;","            //var datasetHash = self.generateLocalDatasetHash(dataSet);","            syncLoopParams.dataset_hash = dataSet.hash;","            syncLoopParams.acknowledgements = dataSet.acknowledgements || [];","","            var pending = dataSet.pending;","            var pendingArray = [];","            for(var i in pending ) {","              // Mark the pending records we are about to submit as inflight and add them to the array for submission","              // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown","              // Don't add delayed records","              if( !pending[i].inFlight &amp;&amp; !pending[i].crashed &amp;&amp; !pending[i].delayed) {","                pending[i].inFlight = true;","                pending[i].inFlightDate = new Date().getTime();","                pendingArray.push(pending[i]);","              }","            }","            syncLoopParams.pending = pendingArray;","","            if( pendingArray.length &gt; 0 ) {","              self.consoleLog('Starting sync loop - global hash = ' + dataSet.hash + ' :: params = ' + JSON.stringify(syncLoopParams, null, 2));","            }","            try {","              self.doCloudCall({","                'dataset_id': dataset_id,","                'req': syncLoopParams","              }, function(res) {","                var rec;","","                function processUpdates(updates, notification, acknowledgements) {","                  if( updates ) {","                    for (var up in updates) {","                      rec = updates[up];","                      acknowledgements.push(rec);","                      if( dataSet.pending[up] &amp;&amp; dataSet.pending[up].inFlight &amp;&amp; !dataSet.pending[up].crashed ) {","                        delete dataSet.pending[up];","                        self.doNotify(dataset_id, rec.uid, notification, rec);","                      }","                    }","                  }","                }","","                // Check to see if any new pending records need to be updated to reflect the current state of play.","                self.updatePendingFromNewData(dataset_id, dataSet, res);","","                // Check to see if any previously crashed inflight records can now be resolved","                self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);","","                //Check to see if any delayed pending records can now be set to ready","                self.updateDelayedFromNewData(dataset_id, dataSet, res);","","                // Update the new dataset with details of any inflight updates which we have not received a response on","                self.updateNewDataFromInFlight(dataset_id, dataSet, res);","","                // Update the new dataset with details of any pending updates","                self.updateNewDataFromPending(dataset_id, dataSet, res);","","","","                if (res.records) {","                  // Full Dataset returned","                  dataSet.data = res.records;","                  dataSet.hash = res.hash;","","                  self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'full dataset');","                }","","                if (res.updates) {","                  var acknowledgements = [];","                  processUpdates(res.updates.applied, self.notifications.REMOTE_UPDATE_APPLIED, acknowledgements);","                  processUpdates(res.updates.failed, self.notifications.REMOTE_UPDATE_FAILED, acknowledgements);","                  processUpdates(res.updates.collisions, self.notifications.COLLISION_DETECTED, acknowledgements);","                  dataSet.acknowledgements = acknowledgements;","                }","","                if (!res.records &amp;&amp; res.hash &amp;&amp; res.hash !== dataSet.hash) {","                  self.consoleLog(\"Local dataset stale - syncing records :: local hash= \" + dataSet.hash + \" - remoteHash=\" + res.hash);","                  // Different hash value returned - Sync individual records","                  self.syncRecords(dataset_id);","                } else {","                  self.consoleLog(\"Local dataset up to date\");","                  self.syncComplete(dataset_id,  \"online\", self.notifications.SYNC_COMPLETE);","                }","              }, function(msg, err) {","                // The AJAX call failed to complete succesfully, so the state of the current pending updates is unknown","                // Mark them as \"crashed\". The next time a syncLoop completets successfully, we will review the crashed","                // records to see if we can determine their current state.","                self.markInFlightAsCrashed(dataSet);","                self.consoleLog(\"syncLoop failed : msg=\" + msg + \" :: err = \" + err);","                self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);","              });","            }","            catch (e) {","              self.consoleLog('Error performing sync - ' + e);","              self.syncComplete(dataset_id, e, self.notifications.SYNC_FAILED);","            }","          });","        }","      });","    });","  },","","  syncRecords: function(dataset_id) {","","    self.getDataSet(dataset_id, function(dataSet) {","","      var localDataSet = dataSet.data || {};","","      var clientRecs = {};","      for (var i in localDataSet) {","        var uid = i;","        var hash = localDataSet[i].hash;","        clientRecs[uid] = hash;","      }","","      var syncRecParams = {};","","      syncRecParams.fn = 'syncRecords';","      syncRecParams.dataset_id = dataset_id;","      syncRecParams.query_params = dataSet.query_params;","      syncRecParams.clientRecs = clientRecs;","","      self.consoleLog(\"syncRecParams :: \" + JSON.stringify(syncRecParams));","","      self.doCloudCall({","        'dataset_id': dataset_id,","        'req': syncRecParams","      }, function(res) {","        var i;","","        if (res.create) {","          for (i in res.create) {","            localDataSet[i] = {\"hash\" : res.create[i].hash, \"data\" : res.create[i].data};","            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, \"create\");","          }","        }","        if (res.update) {","          for (i in res.update) {","            localDataSet[i].hash = res.update[i].hash;","            localDataSet[i].data = res.update[i].data;","            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, \"update\");","          }","        }","        if (res['delete']) {","          for (i in res['delete']) {","            delete localDataSet[i];","            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, \"delete\");","          }","        }","","        self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'partial dataset');","","        dataSet.data = localDataSet;","        if(res.hash) {","          dataSet.hash = res.hash;","        }","        self.syncComplete(dataset_id, \"online\", self.notifications.SYNC_COMPLETE);","      }, function(msg, err) {","        self.consoleLog(\"syncRecords failed : msg=\" + msg + \" :: err=\" + err);","        self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);","      });","    });","  },","","  syncComplete: function(dataset_id, status, notification) {","","    self.getDataSet(dataset_id, function(dataset) {","      dataset.syncRunning = false;","      dataset.syncLoopEnd = new Date().getTime();","      self.saveDataSet(dataset_id);","      self.doNotify(dataset_id, dataset.hash, notification, status);","    });","  },","","  checkDatasets: function() {","    for( var dataset_id in self.datasets ) {","      if( self.datasets.hasOwnProperty(dataset_id) ) {","        var dataset = self.datasets[dataset_id];","","        if( !dataset.syncRunning &amp;&amp; (dataset.config.sync_active || dataset.syncForced)) {","          // Check to see if it is time for the sync loop to run again","          var lastSyncStart = dataset.syncLoopStart;","          var lastSyncCmp = dataset.syncLoopEnd;","          if( lastSyncStart == null ) {","            self.consoleLog(dataset_id +' - Performing initial sync');","            // Dataset has never been synced before - do initial sync","            dataset.syncPending = true;","          } else if (lastSyncCmp != null) {","            var timeSinceLastSync = new Date().getTime() - lastSyncCmp;","            var syncFrequency = dataset.config.sync_frequency * 1000;","            if( timeSinceLastSync &gt; syncFrequency ) {","              // Time between sync loops has passed - do another sync","              dataset.syncPending = true;","            }","          } ","","          if( dataset.syncForced ) {","            dataset.syncPending = true;","          }","","          if( dataset.syncPending ) {","            // Reset syncForced in case it was what caused the sync cycle to run.","            dataset.syncForced = false;","","            // If the dataset requres syncing, run the sync loop. This may be because the sync interval has passed","            // or because the sync_frequency has been changed or because a change was made to the dataset and the","            // immediate_sync flag set to true","            self.syncLoop(dataset_id);","          }","        }","      }","    }","  },","","  checkHasCustomSync : function(dataset_id, cb) {","    if(self.hasCustomSync != null) {","      return cb();","    }","    self.consoleLog('starting check has custom sync');","","    actAPI({","      'act' : dataset_id,","      'req': {","        'fn': 'sync'","      }","    }, function(res) {","      //if the custom sync is defined in the cloud, this call should success.","      //if failed, we think this the custom sync is not defined","      self.consoleLog('checkHasCustomSync - success - ', res);","      self.hasCustomSync = true;","      return cb();","    }, function(msg,err) {","      self.consoleLog('checkHasCustomSync - failure - ', err);","      if(err.status &amp;&amp; err.status === 500){","        //if we receive 500, it could be that there is an error occured due to missing parameters or similar,","        //but the endpoint is defined.","        self.consoleLog('checkHasCustomSync - failed with 500, endpoint does exists');","        self.hasCustomSync = true;","      } else {","        self.hasCustomSync = false;","      }","      return cb();","    });","  },","","  doCloudCall: function(params, success, failure) {","    if( self.hasCustomSync ) {","      actAPI({","        'act' : params.dataset_id,","        'req' : params.req","      }, function(res) {","        success(res);","      }, function(msg, err) {","        failure(msg, err);","      });      ","    } else {","      cloudAPI({","        'path' : '/mbaas/sync/' + params.dataset_id,","        'method' : 'post',","        'data' : params.req","      }, function(res) {","        success(res);","      }, function(msg, err) {","        failure(msg, err);","      })","    }","  },","","  datasetMonitor: function() {","    self.checkDatasets();","","    // Re-execute datasetMonitor every 500ms so we keep invoking checkDatasets();","    setTimeout(function() {","      self.datasetMonitor();","    }, 500);","  },","","  saveDataSet: function (dataset_id, cb) {","    var onFail =  function(msg, err) {","      // save failed","      var errMsg = 'save to local storage failed  msg:' + msg + ' err:' + err;","      self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);","      self.consoleLog(errMsg);","    };","    self.getDataSet(dataset_id, function(dataset) {","      // save dataset to local storage","      Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota}, function (){","        this.save({key:\"dataset_\" + dataset_id, val:dataset}, function(){","          //save success","          if(cb) return cb();","        });","      });","    });","  },","","  loadDataSet: function (dataset_id, success, failure) {","    // load dataset from local storage","    var onFail = function(msg, err) {","      // load failed","      var errMsg = 'load from local storage failed  msg:' + msg;","      self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);","      self.consoleLog(errMsg);","    };","","        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       this.get( \"dataset_\" + dataset_id, function (data){","         if (data &amp;&amp; data.val !== null) {","            var dataset = data.val;","            if(typeof dataset === \"string\"){","              dataset = JSON.parse(dataset);","            }","            // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset","            // the user wants sync","            dataset.initialised = false;","            self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?","            self.consoleLog('load from local storage success for dataset_id :' + dataset_id);","            if(success) return success(dataset);","          } else {","            // no data yet, probably first time. failure calback should handle this","            if(failure) return failure();","          }","       });","    });","  },","","","  updateDatasetFromLocal: function(dataset, pendingRec) {","    var pending = dataset.pending;","    var previousPendingUid;","    var previousPending;","","    var uid = pendingRec.uid;","    self.consoleLog('updating local dataset for uid ' + uid + ' - action = ' + pendingRec.action);","","    dataset.meta[uid] = dataset.meta[uid] || {};","","    // Creating a new record","    if( pendingRec.action === \"create\" ) {","      if( dataset.data[uid] ) {","        self.consoleLog('dataset already exists for uid in create :: ' + JSON.stringify(dataset.data[uid]));","","        // We are trying to do a create using a uid which already exists","        if (dataset.meta[uid].fromPending) {","          // We are trying to create on top of an existing pending record","          // Remove the previous pending record and use this one instead","          previousPendingUid = dataset.meta[uid].pendingUid;","          delete pending[previousPendingUid];","        }","      }","      dataset.data[uid] = {};","    }","","    if( pendingRec.action === \"update\" ) {","      if( dataset.data[uid] ) {","        if (dataset.meta[uid].fromPending) {","          self.consoleLog('updating an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));","          // We are trying to update an existing pending record","          previousPendingUid = dataset.meta[uid].pendingUid;","          dataset.meta[uid].previousPendingUid = previousPendingUid;","          previousPending = pending[previousPendingUid];","          if(previousPending) {","            if(!previousPending.inFlight){","              self.consoleLog('existing pre-flight pending record = ' + JSON.stringify(previousPending));","              // We are trying to perform an update on an existing pending record","              // modify the original record to have the latest value and delete the pending update","              previousPending.post = pendingRec.post;","              previousPending.postHash = pendingRec.postHash;","              delete pending[pendingRec.hash];","              // Update the pending record to have the hash of the previous record as this is what is now being","              // maintained in the pending array &amp; is what we want in the meta record","              pendingRec.hash = previousPendingUid;","            } else {","              //we are performing changes to a pending record which is inFlight. Until the status of this pending record is resolved,","              //we should not submit this pending record to the cloud. Mark it as delayed.","              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));","              pendingRec.delayed = true;","              pendingRec.waiting = previousPending.hash;","            }","          }","        }","      }","    }","","    if( pendingRec.action === \"delete\" ) {","      if( dataset.data[uid] ) {","        if (dataset.meta[uid].fromPending) {","          self.consoleLog('Deleting an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));","          // We are trying to delete an existing pending record","          previousPendingUid = dataset.meta[uid].pendingUid;","          dataset.meta[uid].previousPendingUid = previousPendingUid;","          previousPending = pending[previousPendingUid];","          if( previousPending ) {","            if(!previousPending.inFlight){","              self.consoleLog('existing pending record = ' + JSON.stringify(previousPending));","              if( previousPending.action === \"create\" ) {","                // We are trying to perform a delete on an existing pending create","                // These cancel each other out so remove them both","                delete pending[pendingRec.hash];","                delete pending[previousPendingUid];","              }","              if( previousPending.action === \"update\" ) {","                // We are trying to perform a delete on an existing pending update","                // Use the pre value from the pending update for the delete and","                // get rid of the pending update","                pendingRec.pre = previousPending.pre;","                pendingRec.preHash = previousPending.preHash;","                pendingRec.inFlight = false;","                delete pending[previousPendingUid];","              }","            } else {","              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));","              pendingRec.delayed = true;","              pendingRec.waiting = previousPending.hash;","            }","          }","        }","        delete dataset.data[uid];","      }","    }","","    if( dataset.data[uid] ) {","      dataset.data[uid].data = pendingRec.post;","      dataset.data[uid].hash = pendingRec.postHash;","      dataset.meta[uid].fromPending = true;","      dataset.meta[uid].pendingUid = pendingRec.hash;","    }","  },","","  updatePendingFromNewData: function(dataset_id, dataset, newData) {","    var pending = dataset.pending;","    var newRec;","","    if( pending &amp;&amp; newData.records) {","      for( var pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          var pendingRec = pending[pendingHash];","","          dataset.meta[pendingRec.uid] = dataset.meta[pendingRec.uid] || {};","","          if( pendingRec.inFlight === false ) {","            // Pending record that has not been submitted","            self.consoleLog('updatePendingFromNewData - Found Non inFlight record -&gt; action=' + pendingRec.action +' :: uid=' + pendingRec.uid  + ' :: hash=' + pendingRec.hash);","            if( pendingRec.action === \"update\" || pendingRec.action === \"delete\") {","              // Update the pre value of pending record to reflect the latest data returned from sync.","              // This will prevent a collision being reported when the pending record is sent.","              newRec = newData.records[pendingRec.uid];","              if( newRec ) {","                self.consoleLog('updatePendingFromNewData - Updating pre values for existing pending record ' + pendingRec.uid);","                pendingRec.pre = newRec.data;","                pendingRec.preHash = newRec.hash;","              }","              else {","                // The update/delete may be for a newly created record in which case the uid will have changed.","                var previousPendingUid = dataset.meta[pendingRec.uid].previousPendingUid;","                var previousPending = pending[previousPendingUid];","                if( previousPending ) {","                  if( newData &amp;&amp; newData.updates &amp;&amp;  newData.updates.applied &amp;&amp; newData.updates.applied[previousPending.hash] ) {","                    // There is an update in from a previous pending action","                    var newUid = newData.updates.applied[previousPending.hash].uid;","                    newRec = newData.records[newUid];","                    if( newRec ) {","                      self.consoleLog('updatePendingFromNewData - Updating pre values for existing pending record which was previously a create ' + pendingRec.uid + ' ==&gt; ' + newUid);","                      pendingRec.pre = newRec.data;","                      pendingRec.preHash = newRec.hash;","                      pendingRec.uid = newUid;","                    }","                  }","                }","              }","            }","","            if( pendingRec.action === \"create\" ) {","              if( newData &amp;&amp; newData.updates &amp;&amp;  newData.updates.applied &amp;&amp; newData.updates.applied[pendingHash] ) {","                self.consoleLog('updatePendingFromNewData - Found an update for a pending create ' + JSON.stringify(newData.updates.applied[pendingHash]));","                newRec = newData.records[newData.updates.applied[pendingHash].uid];","                if( newRec ) {","                  self.consoleLog('updatePendingFromNewData - Changing pending create to an update based on new record  ' + JSON.stringify(newRec));","","                  // Set up the pending create as an update","                  pendingRec.action = \"update\";","                  pendingRec.pre = newRec.data;","                  pendingRec.preHash = newRec.hash;","                  pendingRec.uid = newData.updates.applied[pendingHash].uid;","                }","              }","            }","          }","        }","      }","    }","  },","","  updateNewDataFromInFlight: function(dataset_id, dataset, newData) {","    var pending = dataset.pending;","","    if( pending &amp;&amp; newData.records) {","      for( var pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          var pendingRec = pending[pendingHash];","","          if( pendingRec.inFlight ) {","            var updateReceivedForPending = (newData &amp;&amp; newData.updates &amp;&amp;  newData.updates.hashes &amp;&amp; newData.updates.hashes[pendingHash]) ? true : false;","","            self.consoleLog('updateNewDataFromInFlight - Found inflight pending Record - action = ' + pendingRec.action + ' :: hash = ' + pendingHash + ' :: updateReceivedForPending=' + updateReceivedForPending);","","            if( ! updateReceivedForPending ) {","              var newRec = newData.records[pendingRec.uid];","","              if( pendingRec.action === \"update\" &amp;&amp; newRec) {","                // Modify the new Record to have the updates from the pending record so the local dataset is consistent","                newRec.data = pendingRec.post;","                newRec.hash = pendingRec.postHash;","              }","              else if( pendingRec.action === \"delete\" &amp;&amp; newRec) {","                // Remove the record from the new dataset so the local dataset is consistent","                delete newData.records[pendingRec.uid];","              }","              else if( pendingRec.action === \"create\" ) {","                // Add the pending create into the new dataset so it is not lost from the UI","                self.consoleLog('updateNewDataFromInFlight - re adding pending create to incomming dataset');","                var newPendingCreate = {","                  data: pendingRec.post,","                  hash: pendingRec.postHash","                };","                newData.records[pendingRec.uid] = newPendingCreate;","              }","            }","          }","        }","      }","    }","  },","","  updateNewDataFromPending: function(dataset_id, dataset, newData) {","    var pending = dataset.pending;","","    if( pending &amp;&amp; newData.records) {","      for( var pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          var pendingRec = pending[pendingHash];","","          if( pendingRec.inFlight === false ) {","            self.consoleLog('updateNewDataFromPending - Found Non inFlight record -&gt; action=' + pendingRec.action +' :: uid=' + pendingRec.uid  + ' :: hash=' + pendingRec.hash);","            var newRec = newData.records[pendingRec.uid];","            if( pendingRec.action === \"update\" &amp;&amp; newRec) {","              // Modify the new Record to have the updates from the pending record so the local dataset is consistent","              newRec.data = pendingRec.post;","              newRec.hash = pendingRec.postHash;","            }","            else if( pendingRec.action === \"delete\" &amp;&amp; newRec) {","              // Remove the record from the new dataset so the local dataset is consistent","              delete newData.records[pendingRec.uid];","            }","            else if( pendingRec.action === \"create\" ) {","              // Add the pending create into the new dataset so it is not lost from the UI","              self.consoleLog('updateNewDataFromPending - re adding pending create to incomming dataset');","              var newPendingCreate = {","                data: pendingRec.post,","                hash: pendingRec.postHash","              };","              newData.records[pendingRec.uid] = newPendingCreate;","            }","          }","        }","      }","    }","  },","","  updateCrashedInFlightFromNewData: function(dataset_id, dataset, newData) {","    var updateNotifications = {","      applied: self.notifications.REMOTE_UPDATE_APPLIED,","      failed: self.notifications.REMOTE_UPDATE_FAILED,","      collisions: self.notifications.COLLISION_DETECTED","    };","","    var pending = dataset.pending;","    var resolvedCrashes = {};","    var pendingHash;","    var pendingRec;","","","    if( pending ) {","      for( pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          pendingRec = pending[pendingHash];","","          if( pendingRec.inFlight &amp;&amp; pendingRec.crashed) {","            self.consoleLog('updateCrashedInFlightFromNewData - Found crashed inFlight pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash );","            if( newData &amp;&amp; newData.updates &amp;&amp; newData.updates.hashes) {","","              // Check if the updates received contain any info about the crashed in flight update","              var crashedUpdate = newData.updates.hashes[pendingHash];","              if( crashedUpdate ) {","                // We have found an update on one of our in flight crashed records","","                resolvedCrashes[crashedUpdate.uid] = crashedUpdate;","","                self.consoleLog('updateCrashedInFlightFromNewData - Resolving status for crashed inflight pending record ' + JSON.stringify(crashedUpdate));","","                if( crashedUpdate.type === 'failed' ) {","                  // Crashed update failed - revert local dataset","                  if( crashedUpdate.action === 'create' ) {","                    self.consoleLog('updateCrashedInFlightFromNewData - Deleting failed create from dataset');","                    delete dataset.data[crashedUpdate.uid];","                  }","                  else if ( crashedUpdate.action === 'update' || crashedUpdate.action === 'delete' ) {","                    self.consoleLog('updateCrashedInFlightFromNewData - Reverting failed ' + crashedUpdate.action + ' in dataset');","                    dataset.data[crashedUpdate.uid] = {","                      data : pendingRec.pre,","                      hash : pendingRec.preHash","                    };","                  }","                }","","                delete pending[pendingHash];","                self.doNotify(dataset_id, crashedUpdate.uid, updateNotifications[crashedUpdate.type], crashedUpdate);","              }","              else {","                // No word on our crashed update - increment a counter to reflect another sync that did not give us","                // any update on our crashed record.","                if( pendingRec.crashedCount ) {","                  pendingRec.crashedCount++;","                }","                else {","                  pendingRec.crashedCount = 1;","                }","              }","            }","            else {","              // No word on our crashed update - increment a counter to reflect another sync that did not give us","              // any update on our crashed record.","              if( pendingRec.crashedCount ) {","                pendingRec.crashedCount++;","              }","              else {","                pendingRec.crashedCount = 1;","              }","            }","          }","        }","      }","","      for( pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          pendingRec = pending[pendingHash];","","          if( pendingRec.inFlight &amp;&amp; pendingRec.crashed) {","            if( pendingRec.crashedCount &gt; dataset.config.crashed_count_wait ) {","              self.consoleLog('updateCrashedInFlightFromNewData - Crashed inflight pending record has reached crashed_count_wait limit : ' + JSON.stringify(pendingRec));","              if( dataset.config.resend_crashed_updates ) {","                self.consoleLog('updateCrashedInFlightFromNewData - Retryig crashed inflight pending record');","                pendingRec.crashed = false;","                pendingRec.inFlight = false;","              }","              else {","                self.consoleLog('updateCrashedInFlightFromNewData - Deleting crashed inflight pending record');","                delete pending[pendingHash];","              }","            }","          }","          else if (!pendingRec.inFlight &amp;&amp; pendingRec.crashed ) {","            self.consoleLog('updateCrashedInFlightFromNewData - Trying to resolve issues with crashed non in flight record - uid = ' + pendingRec.uid);","            // Stalled pending record because a previous pending update on the same record crashed","            var crashedRef = resolvedCrashes[pendingRec.uid];","            if( crashedRef ) {","              self.consoleLog('updateCrashedInFlightFromNewData - Found a stalled pending record backed up behind a resolved crash uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash);","              pendingRec.crashed = false;","            }","          }","        }","      }","    }","  },","","  updateDelayedFromNewData: function(dataset_id, dataset, newData){","    var pending = dataset.pending;","    var pendingHash;","    var pendingRec;","    if(pending){","      for( pendingHash in pending ){","        if( pending.hasOwnProperty(pendingHash) ){","          pendingRec = pending[pendingHash];","          if( pendingRec.delayed &amp;&amp; pendingRec.waiting ){","            self.consoleLog('updateDelayedFromNewData - Found delayed pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash + ' :: waiting=' + pendingRec.waiting);","            if( newData &amp;&amp; newData.updates &amp;&amp; newData.updates.hashes ){","              var waitingRec = newData.updates.hashes[pendingRec.waiting];","              if(waitingRec){","                self.consoleLog('updateDelayedFromNewData - Waiting pending record is resolved rec=' + JSON.stringify(waitingRec));","                pendingRec.delayed = false;","                pendingRec.waiting = undefined;","              }","            }","          }","        }","      }","    }","  },","","","  markInFlightAsCrashed : function(dataset) {","    var pending = dataset.pending;","    var pendingHash;","    var pendingRec;","","    if( pending ) {","      var crashedRecords = {};","      for( pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          pendingRec = pending[pendingHash];","","          if( pendingRec.inFlight ) {","            self.consoleLog('Marking in flight pending record as crashed : ' + pendingHash);","            pendingRec.crashed = true;","            crashedRecords[pendingRec.uid] = pendingRec;","          }","        }","      }","","      // Check for any pending updates that would be modifying a crashed record. These can not go out until the","      // status of the crashed record is determined","      for( pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          pendingRec = pending[pendingHash];","","          if( ! pendingRec.inFlight &amp;&amp; ! pendingRec.delayed ) {","            var crashedRef = crashedRecords[pendingRec.uid];","            if( crashedRef ) {","              pendingRec.crashed = true;","            }","          }","        }","      }","    }","  },","","  consoleLog: function(msg) {","    if( self.config.do_console_log ) {","      console.log(msg);","    }","  }","};","","(function() {","  self.config = self.defaults;","  //Initialse the sync service with default config","  //self.init({});","})();","","module.exports = {","  init: self.init,","  manage: self.manage,","  notify: self.notify,","  doList: self.list,","  doCreate: self.create,","  doRead: self.read,","  doUpdate: self.update,","  doDelete: self['delete'],","  listCollisions: self.listCollisions,","  removeCollision: self.removeCollision,","  getPending : self.getPending,","  clearPending : self.clearPending,","  getDataset : self.getDataSet,","  getQueryParams: self.getQueryParams,","  setQueryParams: self.setQueryParams,","  getMetaData: self.getMetaData,","  setMetaData: self.setMetaData,","  getConfig: self.getConfig,","  setConfig: self.setConfig,","  startSync: self.startSync,","  stopSync: self.stopSync,","  doSync: self.doSync,","  forceSync: self.forceSync,","  generateHash: self.generateHash","};"];
+_$jscoverage['modules/sync-cli.js'][1293]++;
+module.exports = {init: self.init, manage: self.manage, notify: self.notify, doList: self.list, doCreate: self.create, doRead: self.read, doUpdate: self.update, doDelete: self["delete"], listCollisions: self.listCollisions, removeCollision: self.removeCollision, getPending: self.getPending, clearPending: self.clearPending, getDataset: self.getDataSet, getQueryParams: self.getQueryParams, setQueryParams: self.setQueryParams, getMetaData: self.getMetaData, setMetaData: self.setMetaData, getConfig: self.getConfig, setConfig: self.setConfig, startSync: self.startSync, stopSync: self.stopSync, doSync: self.doSync, forceSync: self.forceSync, generateHash: self.generateHash, loadDataSet: self.loadDataSet, setHasCustomSync: self.setHasCustomSync, checkHasCustomSync: self.checkHasCustomSync, getHasCustomSync: self.getHasCustomSync};
+_$jscoverage['modules/sync-cli.js'].source = ["var JSON = require(\"JSON\");","var actAPI = require(\"./api_act\");","var cloudAPI = require(\"./api_cloud\");","var CryptoJS = require(\"../../libs/generated/crypto\");","var Lawnchair = require('../../libs/generated/lawnchair');","","var self = {","","  // CONFIG","  defaults: {","    \"sync_frequency\": 10,","    // How often to synchronise data with the cloud in seconds.","    \"auto_sync_local_updates\": true,","    // Should local chages be syned to the cloud immediately, or should they wait for the next sync interval","    \"notify_client_storage_failed\": true,","    // Should a notification event be triggered when loading/saving to client storage fails","    \"notify_sync_started\": true,","    // Should a notification event be triggered when a sync cycle with the server has been started","    \"notify_sync_complete\": true,","    // Should a notification event be triggered when a sync cycle with the server has been completed","    \"notify_offline_update\": true,","    // Should a notification event be triggered when an attempt was made to update a record while offline","    \"notify_collision_detected\": true,","    // Should a notification event be triggered when an update failed due to data collision","    \"notify_remote_update_failed\": true,","    // Should a notification event be triggered when an update failed for a reason other than data collision","    \"notify_local_update_applied\": true,","    // Should a notification event be triggered when an update was applied to the local data store","    \"notify_remote_update_applied\": true,","    // Should a notification event be triggered when an update was applied to the remote data store","    \"notify_delta_received\": true,","    // Should a notification event be triggered when a delta was received from the remote data store for the dataset ","    \"notify_record_delta_received\": true,","    // Should a notification event be triggered when a delta was received from the remote data store for a record","    \"notify_sync_failed\": true,","    // Should a notification event be triggered when the sync loop failed to complete","    \"do_console_log\": false,","    // Should log statements be written to console.log","    \"crashed_count_wait\" : 10,","    // How many syncs should we check for updates on crashed in flight updates before we give up searching","    \"resend_crashed_updates\" : true,","    // If we have reached the crashed_count_wait limit, should we re-try sending the crashed in flight pending record","    \"sync_active\" : true,","    // Is the background sync with the cloud currently active","    \"storage_strategy\" : \"html5-filesystem\",","    // Storage strategy to use for Lawnchair - supported strategies are 'html5-filesystem' and 'dom'","    \"file_system_quota\" : 50 * 1024 * 1204","    // Amount of space to request from the HTML5 filesystem API when running in browser","  },","","  notifications: {","    \"CLIENT_STORAGE_FAILED\": \"client_storage_failed\",","    // loading/saving to client storage failed","    \"SYNC_STARTED\": \"sync_started\",","    // A sync cycle with the server has been started","    \"SYNC_COMPLETE\": \"sync_complete\",","    // A sync cycle with the server has been completed","    \"OFFLINE_UPDATE\": \"offline_update\",","    // An attempt was made to update a record while offline","    \"COLLISION_DETECTED\": \"collision_detected\",","    //Update Failed due to data collision","    \"REMOTE_UPDATE_FAILED\": \"remote_update_failed\",","    // Update Failed for a reason other than data collision","    \"REMOTE_UPDATE_APPLIED\": \"remote_update_applied\",","    // An update was applied to the remote data store","    \"LOCAL_UPDATE_APPLIED\": \"local_update_applied\",","    // An update was applied to the local data store","    \"DELTA_RECEIVED\": \"delta_received\",","    // A delta was received from the remote data store for the dataset ","    \"RECORD_DELTA_RECEIVED\": \"record_delta_received\",","    // A delta was received from the remote data store for the record ","    \"SYNC_FAILED\": \"sync_failed\"","    // Sync loop failed to complete","  },","","  datasets: {},","","  // Initialise config to default values;","  config: undefined,","","  notify_callback: undefined,","","  hasCustomSync : undefined,","","  // PUBLIC FUNCTION IMPLEMENTATIONS","  init: function(options) {","    self.consoleLog('sync - init called');","","    self.config = JSON.parse(JSON.stringify(self.defaults));","    for (var i in options) {","      self.config[i] = options[i];","    }","","    //for testing","    if(typeof options.custom_sync !== \"undefined\"){","      self.hasCustomSync = options.custom_sync;","    }","","    self.datasetMonitor();","  },","","  notify: function(callback) {","    self.notify_callback = callback;","  },","","  manage: function(dataset_id, options, query_params, meta_data, cb) {","    self.consoleLog('manage - START');","","    var options = options || {};","","    var doManage = function(dataset) {","      self.consoleLog('doManage dataset :: initialised = ' + dataset.initialised + \" :: \" + dataset_id + ' :: ' + JSON.stringify(options));","","      var datasetConfig = self.setOptions(options);","","      dataset.query_params = query_params || dataset.query_params || {};","      dataset.meta_data = meta_data || dataset.meta_data || {};","      dataset.config = datasetConfig;","      dataset.syncRunning = false;","      dataset.syncPending = true;","      dataset.initialised = true;","      dataset.meta = {};","","      self.saveDataSet(dataset_id, function() {","","        if( cb ) {","          cb();","        }","      });","    };","","    // Check if the dataset is already loaded","    self.getDataSet(dataset_id, function(dataset) {","      self.consoleLog('manage - dataset already loaded');","      doManage(dataset);","    }, function(err) {","      self.consoleLog('manage - dataset not loaded... trying to load');","","      // Not already loaded, try to load from local storage","      self.loadDataSet(dataset_id, function(dataset) {","          self.consoleLog('manage - dataset loaded from local storage');","","          // Loading from local storage worked","","          // Fire the local update event to indicate that dataset was loaded from local storage","          self.doNotify(dataset_id, null, self.notifications.LOCAL_UPDATE_APPLIED, \"load\");","","          // Put the dataet under the management of the sync service","          doManage(dataset);","        },","        function(err) {","          // No dataset in memory or local storage - create a new one and put it in memory","          self.consoleLog('manage - Creating new dataset for id ' + dataset_id);","          var dataset = {};","          dataset.data = {};","          dataset.pending = {};","          self.datasets[dataset_id] = dataset;","          doManage(dataset);","        });","    });","  },","","  setOptions: function(options) {","    // Make sure config is initialised","    if( ! self.config ) {","      self.config = JSON.parse(JSON.stringify(self.defaults));","    }","","    var datasetConfig = JSON.parse(JSON.stringify(self.config));","    var optionsIn = JSON.parse(JSON.stringify(options));","    for (var k in optionsIn) {","      datasetConfig[k] = optionsIn[k];","    }","","    return datasetConfig;","  },","","  list: function(dataset_id, success, failure) {","    self.getDataSet(dataset_id, function(dataset) {","      if (dataset &amp;&amp; dataset.data) {","        // Return a copy of the dataset so updates will not automatically make it back into the dataset","        var res = JSON.parse(JSON.stringify(dataset.data));","        success(res);","      } else {","        if(failure) failure('no_data');","      }","    }, function(code, msg) {","      if(failure) failure(code, msg);","    });","  },","","  create: function(dataset_id, data, success, failure) {","    if(data == null){","      if(failure){","        return failure(\"null_data\");","      }","    }","    self.addPendingObj(dataset_id, null, data, \"create\", success, failure);","  },","","  read: function(dataset_id, uid, success, failure) {","    self.getDataSet(dataset_id, function(dataset) {","      var rec = dataset.data[uid];","      if (!rec) {","        failure(\"unknown_uid\");","      } else {","        // Return a copy of the record so updates will not automatically make it back into the dataset","        var res = JSON.parse(JSON.stringify(rec));","        success(res);","      }","    }, function(code, msg) {","      if(failure) failure(code, msg);","    });","  },","","  update: function(dataset_id, uid, data, success, failure) {","    self.addPendingObj(dataset_id, uid, data, \"update\", success, failure);","  },","","  'delete': function(dataset_id, uid, success, failure) {","    self.addPendingObj(dataset_id, uid, null, \"delete\", success, failure);","  },","","  getPending: function(dataset_id, cb) {","    self.getDataSet(dataset_id, function(dataset) {","      var res;","      if( dataset ) {","        res = dataset.pending;","      }","      cb(res);","    }, function(err, datatset_id) {","        self.consoleLog(err);","    });","  },","","  clearPending: function(dataset_id, cb) {","    self.getDataSet(dataset_id, function(dataset) {","      dataset.pending = {};","      self.saveDataSet(dataset_id, cb);","    });","  },","","  listCollisions : function(dataset_id, success, failure){","    self.getDataSet(dataset_id, function(dataset) {","      self.doCloudCall({","        \"dataset_id\": dataset_id,","        \"req\": {","          \"fn\": \"listCollisions\",","          \"meta_data\" : dataset.meta_data","        }","      }, success, failure);","    }, failure);","  },","","  removeCollision: function(dataset_id, colissionHash, success, failure) {","    self.getDataSet(dataset_id, function(dataset) {","      self.doCloudCall({","        \"dataset_id\" : dataset_id,","        \"req\": {","          \"fn\": \"removeCollision\",","          \"hash\": colissionHash,","          meta_data: dataset.meta_data","        }","      }, success, failure);","    });","  },","","","  // PRIVATE FUNCTIONS","  isOnline: function(callback) {","    var online = true;","","    // first, check if navigator.online is available","    if(typeof navigator.onLine !== \"undefined\"){","      online = navigator.onLine;","    }","","    // second, check if Phonegap is available and has online info","    if(online){","      //use phonegap to determin if the network is available","      if(typeof navigator.network !== \"undefined\" &amp;&amp; typeof navigator.network.connection !== \"undefined\"){","        var networkType = navigator.network.connection.type;","        if(networkType === \"none\" || networkType === null) {","          online = false;","        }","      }","    }","","    return callback(online);","  },","","  doNotify: function(dataset_id, uid, code, message) {","","    if( self.notify_callback ) {","      if ( self.config['notify_' + code] ) {","        var notification = {","          \"dataset_id\" : dataset_id,","          \"uid\" : uid,","          \"code\" : code,","          \"message\" : message","        };","        // make sure user doesn't block","        setTimeout(function () {","          self.notify_callback(notification);","        }, 0);","      }","    }","  },","","  getDataSet: function(dataset_id, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      success(dataset);","    } else {","      if(failure){","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  getQueryParams: function(dataset_id, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      success(dataset.query_params);","    } else {","      if(failure){","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  setQueryParams: function(dataset_id, queryParams, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      dataset.query_params = queryParams;","      self.saveDataSet(dataset_id);","      if( success ) {","        success(dataset.query_params);","      }","    } else {","      if ( failure ) {","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  getMetaData: function(dataset_id, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      success(dataset.meta_data);","    } else {","      if(failure){","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  setMetaData: function(dataset_id, metaData, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      dataset.meta_data = metaData;","      self.saveDataSet(dataset_id);","      if( success ) {","        success(dataset.meta_data);","      }","    } else {","      if( failure ) {","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  getConfig: function(dataset_id, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      success(dataset.config);","    } else {","      if(failure){","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  setConfig: function(dataset_id, config, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      var fullConfig = self.setOptions(config);","      dataset.config = fullConfig;","      self.saveDataSet(dataset_id);","      if( success ) {","        success(dataset.config);","      }","    } else {","      if( failure ) {","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  stopSync: function(dataset_id, success, failure) {","    self.setConfig(dataset_id, {\"sync_active\" : false}, function() {","      if( success ) {","        success();","      }","    }, failure);","  },","","  startSync: function(dataset_id, success, failure) {","    self.setConfig(dataset_id, {\"sync_active\" : true}, function() {","      if( success ) {","        success();","      }","    }, failure);","  },","","  doSync: function(dataset_id, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      dataset.syncPending = true;","      self.saveDataSet(dataset_id);","      if( success ) {","        success();","      }","    } else {","      if( failure ) {","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  forceSync: function(dataset_id, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      dataset.syncForced = true;","      self.saveDataSet(dataset_id);","      if( success ) {","        success();","      }","    } else {","      if( failure ) {","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  sortObject : function(object) {","    if (typeof object !== \"object\" || object === null) {","      return object;","    }","","    var result = [];","","    Object.keys(object).sort().forEach(function(key) {","      result.push({","        key: key,","        value: self.sortObject(object[key])","      });","    });","","    return result;","  },","","  sortedStringify : function(obj) {","","    var str = '';","","    try {","      str = JSON.stringify(self.sortObject(obj));","    } catch (e) {","      console.error('Error stringifying sorted object:' + e);","    }","","    return str;","  },","","  generateHash: function(object) {","    var hash = CryptoJS.SHA1(self.sortedStringify(object));","    return hash.toString();","  },","","  addPendingObj: function(dataset_id, uid, data, action, success, failure) {","    self.isOnline(function (online) {","      if (!online) {","        self.doNotify(dataset_id, uid, self.notifications.OFFLINE_UPDATE, action);","      }","    });","","    function storePendingObject(obj) {","      obj.hash = self.generateHash(obj);","","      self.getDataSet(dataset_id, function(dataset) {","","        dataset.pending[obj.hash] = obj;","","        self.updateDatasetFromLocal(dataset, obj);","","        if(self.config.auto_sync_local_updates) {","          dataset.syncPending = true;","        }","        self.saveDataSet(dataset_id);","        self.doNotify(dataset_id, uid, self.notifications.LOCAL_UPDATE_APPLIED, action);","","        success(obj);","      }, function(code, msg) {","        if(failure) failure(code, msg);","      });","    }","","    var pendingObj = {};","    pendingObj.inFlight = false;","    pendingObj.action = action;","    pendingObj.post = JSON.parse(JSON.stringify(data));","    pendingObj.postHash = self.generateHash(pendingObj.post);","    pendingObj.timestamp = new Date().getTime();","    if( \"create\" === action ) {","      pendingObj.uid = pendingObj.postHash;","      storePendingObject(pendingObj);","    } else {","      self.read(dataset_id, uid, function(rec) {","        pendingObj.uid = uid;","        pendingObj.pre = rec.data;","        pendingObj.preHash = self.generateHash(rec.data);","        storePendingObject(pendingObj);","      }, function(code, msg) {","        if(failure){","          failure(code, msg);","        }","      });","    }","  },","","  syncLoop: function(dataset_id) {","    self.getDataSet(dataset_id, function(dataSet) {","    ","      // The sync loop is currently active","      dataSet.syncPending = false;","      dataSet.syncRunning = true;","      dataSet.syncLoopStart = new Date().getTime();","      self.doNotify(dataset_id, null, self.notifications.SYNC_STARTED, null);","","      self.isOnline(function(online) {","        if (!online) {","          self.syncComplete(dataset_id, \"offline\", self.notifications.SYNC_FAILED);","        } else {","          self.checkHasCustomSync(dataset_id, function() {","","            var syncLoopParams = {};","            syncLoopParams.fn = 'sync';","            syncLoopParams.dataset_id = dataset_id;","            syncLoopParams.query_params = dataSet.query_params;","            syncLoopParams.config = dataSet.config;","            syncLoopParams.meta_data = dataSet.meta_data;","            //var datasetHash = self.generateLocalDatasetHash(dataSet);","            syncLoopParams.dataset_hash = dataSet.hash;","            syncLoopParams.acknowledgements = dataSet.acknowledgements || [];","","            var pending = dataSet.pending;","            var pendingArray = [];","            for(var i in pending ) {","              // Mark the pending records we are about to submit as inflight and add them to the array for submission","              // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown","              // Don't add delayed records","              if( !pending[i].inFlight &amp;&amp; !pending[i].crashed &amp;&amp; !pending[i].delayed) {","                pending[i].inFlight = true;","                pending[i].inFlightDate = new Date().getTime();","                pendingArray.push(pending[i]);","              }","            }","            syncLoopParams.pending = pendingArray;","","            if( pendingArray.length &gt; 0 ) {","              self.consoleLog('Starting sync loop - global hash = ' + dataSet.hash + ' :: params = ' + JSON.stringify(syncLoopParams, null, 2));","            }","            try {","              self.doCloudCall({","                'dataset_id': dataset_id,","                'req': syncLoopParams","              }, function(res) {","                var rec;","","                function processUpdates(updates, notification, acknowledgements) {","                  if( updates ) {","                    for (var up in updates) {","                      rec = updates[up];","                      acknowledgements.push(rec);","                      if( dataSet.pending[up] &amp;&amp; dataSet.pending[up].inFlight &amp;&amp; !dataSet.pending[up].crashed ) {","                        delete dataSet.pending[up];","                        self.doNotify(dataset_id, rec.uid, notification, rec);","                      }","                    }","                  }","                }","","                // Check to see if any new pending records need to be updated to reflect the current state of play.","                self.updatePendingFromNewData(dataset_id, dataSet, res);","","                // Check to see if any previously crashed inflight records can now be resolved","                self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);","","                //Check to see if any delayed pending records can now be set to ready","                self.updateDelayedFromNewData(dataset_id, dataSet, res);","","                // Update the new dataset with details of any inflight updates which we have not received a response on","                self.updateNewDataFromInFlight(dataset_id, dataSet, res);","","                // Update the new dataset with details of any pending updates","                self.updateNewDataFromPending(dataset_id, dataSet, res);","","","","                if (res.records) {","                  // Full Dataset returned","                  dataSet.data = res.records;","                  dataSet.hash = res.hash;","","                  self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'full dataset');","                }","","                if (res.updates) {","                  var acknowledgements = [];","                  processUpdates(res.updates.applied, self.notifications.REMOTE_UPDATE_APPLIED, acknowledgements);","                  processUpdates(res.updates.failed, self.notifications.REMOTE_UPDATE_FAILED, acknowledgements);","                  processUpdates(res.updates.collisions, self.notifications.COLLISION_DETECTED, acknowledgements);","                  dataSet.acknowledgements = acknowledgements;","                }","","                if (!res.records &amp;&amp; res.hash &amp;&amp; res.hash !== dataSet.hash) {","                  self.consoleLog(\"Local dataset stale - syncing records :: local hash= \" + dataSet.hash + \" - remoteHash=\" + res.hash);","                  // Different hash value returned - Sync individual records","                  self.syncRecords(dataset_id);","                } else {","                  self.consoleLog(\"Local dataset up to date\");","                  self.syncComplete(dataset_id,  \"online\", self.notifications.SYNC_COMPLETE);","                }","              }, function(msg, err) {","                // The AJAX call failed to complete succesfully, so the state of the current pending updates is unknown","                // Mark them as \"crashed\". The next time a syncLoop completets successfully, we will review the crashed","                // records to see if we can determine their current state.","                self.markInFlightAsCrashed(dataSet);","                self.consoleLog(\"syncLoop failed : msg=\" + msg + \" :: err = \" + err);","                self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);","              });","            }","            catch (e) {","              self.consoleLog('Error performing sync - ' + e);","              self.syncComplete(dataset_id, e, self.notifications.SYNC_FAILED);","            }","          });","        }","      });","    });","  },","","  syncRecords: function(dataset_id) {","","    self.getDataSet(dataset_id, function(dataSet) {","","      var localDataSet = dataSet.data || {};","","      var clientRecs = {};","      for (var i in localDataSet) {","        var uid = i;","        var hash = localDataSet[i].hash;","        clientRecs[uid] = hash;","      }","","      var syncRecParams = {};","","      syncRecParams.fn = 'syncRecords';","      syncRecParams.dataset_id = dataset_id;","      syncRecParams.query_params = dataSet.query_params;","      syncRecParams.clientRecs = clientRecs;","","      self.consoleLog(\"syncRecParams :: \" + JSON.stringify(syncRecParams));","","      self.doCloudCall({","        'dataset_id': dataset_id,","        'req': syncRecParams","      }, function(res) {","        var i;","","        if (res.create) {","          for (i in res.create) {","            localDataSet[i] = {\"hash\" : res.create[i].hash, \"data\" : res.create[i].data};","            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, \"create\");","          }","        }","        if (res.update) {","          for (i in res.update) {","            localDataSet[i].hash = res.update[i].hash;","            localDataSet[i].data = res.update[i].data;","            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, \"update\");","          }","        }","        if (res['delete']) {","          for (i in res['delete']) {","            delete localDataSet[i];","            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, \"delete\");","          }","        }","","        self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'partial dataset');","","        dataSet.data = localDataSet;","        if(res.hash) {","          dataSet.hash = res.hash;","        }","        self.syncComplete(dataset_id, \"online\", self.notifications.SYNC_COMPLETE);","      }, function(msg, err) {","        self.consoleLog(\"syncRecords failed : msg=\" + msg + \" :: err=\" + err);","        self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);","      });","    });","  },","","  syncComplete: function(dataset_id, status, notification) {","","    self.getDataSet(dataset_id, function(dataset) {","      dataset.syncRunning = false;","      dataset.syncLoopEnd = new Date().getTime();","      self.saveDataSet(dataset_id);","      self.doNotify(dataset_id, dataset.hash, notification, status);","    });","  },","","  checkDatasets: function() {","    for( var dataset_id in self.datasets ) {","      if( self.datasets.hasOwnProperty(dataset_id) ) {","        var dataset = self.datasets[dataset_id];","","        if( !dataset.syncRunning &amp;&amp; (dataset.config.sync_active || dataset.syncForced)) {","          // Check to see if it is time for the sync loop to run again","          var lastSyncStart = dataset.syncLoopStart;","          var lastSyncCmp = dataset.syncLoopEnd;","          if( lastSyncStart == null ) {","            self.consoleLog(dataset_id +' - Performing initial sync');","            // Dataset has never been synced before - do initial sync","            dataset.syncPending = true;","          } else if (lastSyncCmp != null) {","            var timeSinceLastSync = new Date().getTime() - lastSyncCmp;","            var syncFrequency = dataset.config.sync_frequency * 1000;","            if( timeSinceLastSync &gt; syncFrequency ) {","              // Time between sync loops has passed - do another sync","              dataset.syncPending = true;","            }","          } ","","          if( dataset.syncForced ) {","            dataset.syncPending = true;","          }","","          if( dataset.syncPending ) {","            // Reset syncForced in case it was what caused the sync cycle to run.","            dataset.syncForced = false;","","            // If the dataset requres syncing, run the sync loop. This may be because the sync interval has passed","            // or because the sync_frequency has been changed or because a change was made to the dataset and the","            // immediate_sync flag set to true","            self.syncLoop(dataset_id);","          }","        }","      }","    }","  },","","  checkHasCustomSync : function(dataset_id, cb) {","    if(self.hasCustomSync != null) {","      return cb();","    }","    self.consoleLog('starting check has custom sync');","","    actAPI({","      'act' : dataset_id,","      'req': {","        'fn': 'sync'","      }","    }, function(res) {","      //if the custom sync is defined in the cloud, this call should success.","      //if failed, we think this the custom sync is not defined","      self.consoleLog('checkHasCustomSync - success - ', res);","      self.hasCustomSync = true;","      return cb();","    }, function(msg,err) {","      self.consoleLog('checkHasCustomSync - failure - ', err);","      if(err.status &amp;&amp; err.status === 500){","        //if we receive 500, it could be that there is an error occured due to missing parameters or similar,","        //but the endpoint is defined.","        self.consoleLog('checkHasCustomSync - failed with 500, endpoint does exists');","        self.hasCustomSync = true;","      } else {","        self.hasCustomSync = false;","      }","      return cb();","    });","  },","","  setHasCustomSync : function(custom_sync){","    self.hasCustomSync = custom_sync;","  },","","  getHasCustomSync: function(){","    return self.hasCustomSync;","  },","","  doCloudCall: function(params, success, failure) {","    if( self.hasCustomSync ) {","      actAPI({","        'act' : params.dataset_id,","        'req' : params.req","      }, function(res) {","        success(res);","      }, function(msg, err) {","        failure(msg, err);","      });      ","    } else {","      cloudAPI({","        'path' : '/mbaas/sync/' + params.dataset_id,","        'method' : 'post',","        'data' : params.req","      }, function(res) {","        success(res);","      }, function(msg, err) {","        failure(msg, err);","      })","    }","  },","","  datasetMonitor: function() {","    self.checkDatasets();","","    // Re-execute datasetMonitor every 500ms so we keep invoking checkDatasets();","    setTimeout(function() {","      self.datasetMonitor();","    }, 500);","  },","","  saveDataSet: function (dataset_id, cb) {","    var onFail =  function(msg, err) {","      // save failed","      var errMsg = 'save to local storage failed  msg:' + msg + ' err:' + err;","      self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);","      self.consoleLog(errMsg);","    };","    self.getDataSet(dataset_id, function(dataset) {","      // save dataset to local storage","      Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota}, function (){","        this.save({key:\"dataset_\" + dataset_id, val:dataset}, function(){","          //save success","          if(cb) return cb();","        });","      });","    });","  },","","  loadDataSet: function (dataset_id, success, failure) {","    // load dataset from local storage","    var onFail = function(msg, err) {","      // load failed","      var errMsg = 'load from local storage failed  msg:' + msg;","      self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);","      self.consoleLog(errMsg);","    };","","        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       ","          this.get( \"dataset_\" + dataset_id, function (data){","            if (data &amp;&amp; data.val !== null) {","              var dataset = data.val;","              if(typeof dataset === \"string\"){","                dataset = JSON.parse(dataset);","              }","              // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset","              // the user wants sync","              dataset.initialised = false;","              self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?","              self.consoleLog('load from local storage success for dataset_id :' + dataset_id);","              if(success) return success(dataset);","            } else {","              // no data yet, probably first time. failure calback should handle this","              if(failure) return failure();","            }","       });","    });","  },","","","  updateDatasetFromLocal: function(dataset, pendingRec) {","    var pending = dataset.pending;","    var previousPendingUid;","    var previousPending;","","    var uid = pendingRec.uid;","    self.consoleLog('updating local dataset for uid ' + uid + ' - action = ' + pendingRec.action);","","    dataset.meta[uid] = dataset.meta[uid] || {};","","    // Creating a new record","    if( pendingRec.action === \"create\" ) {","      if( dataset.data[uid] ) {","        self.consoleLog('dataset already exists for uid in create :: ' + JSON.stringify(dataset.data[uid]));","","        // We are trying to do a create using a uid which already exists","        if (dataset.meta[uid].fromPending) {","          // We are trying to create on top of an existing pending record","          // Remove the previous pending record and use this one instead","          previousPendingUid = dataset.meta[uid].pendingUid;","          delete pending[previousPendingUid];","        }","      }","      dataset.data[uid] = {};","    }","","    if( pendingRec.action === \"update\" ) {","      if( dataset.data[uid] ) {","        if (dataset.meta[uid].fromPending) {","          self.consoleLog('updating an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));","          // We are trying to update an existing pending record","          previousPendingUid = dataset.meta[uid].pendingUid;","          dataset.meta[uid].previousPendingUid = previousPendingUid;","          previousPending = pending[previousPendingUid];","          if(previousPending) {","            if(!previousPending.inFlight){","              self.consoleLog('existing pre-flight pending record = ' + JSON.stringify(previousPending));","              // We are trying to perform an update on an existing pending record","              // modify the original record to have the latest value and delete the pending update","              previousPending.post = pendingRec.post;","              previousPending.postHash = pendingRec.postHash;","              delete pending[pendingRec.hash];","              // Update the pending record to have the hash of the previous record as this is what is now being","              // maintained in the pending array &amp; is what we want in the meta record","              pendingRec.hash = previousPendingUid;","            } else {","              //we are performing changes to a pending record which is inFlight. Until the status of this pending record is resolved,","              //we should not submit this pending record to the cloud. Mark it as delayed.","              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));","              pendingRec.delayed = true;","              pendingRec.waiting = previousPending.hash;","            }","          }","        }","      }","    }","","    if( pendingRec.action === \"delete\" ) {","      if( dataset.data[uid] ) {","        if (dataset.meta[uid].fromPending) {","          self.consoleLog('Deleting an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));","          // We are trying to delete an existing pending record","          previousPendingUid = dataset.meta[uid].pendingUid;","          dataset.meta[uid].previousPendingUid = previousPendingUid;","          previousPending = pending[previousPendingUid];","          if( previousPending ) {","            if(!previousPending.inFlight){","              self.consoleLog('existing pending record = ' + JSON.stringify(previousPending));","              if( previousPending.action === \"create\" ) {","                // We are trying to perform a delete on an existing pending create","                // These cancel each other out so remove them both","                delete pending[pendingRec.hash];","                delete pending[previousPendingUid];","              }","              if( previousPending.action === \"update\" ) {","                // We are trying to perform a delete on an existing pending update","                // Use the pre value from the pending update for the delete and","                // get rid of the pending update","                pendingRec.pre = previousPending.pre;","                pendingRec.preHash = previousPending.preHash;","                pendingRec.inFlight = false;","                delete pending[previousPendingUid];","              }","            } else {","              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));","              pendingRec.delayed = true;","              pendingRec.waiting = previousPending.hash;","            }","          }","        }","        delete dataset.data[uid];","      }","    }","","    if( dataset.data[uid] ) {","      dataset.data[uid].data = pendingRec.post;","      dataset.data[uid].hash = pendingRec.postHash;","      dataset.meta[uid].fromPending = true;","      dataset.meta[uid].pendingUid = pendingRec.hash;","    }","  },","","  updatePendingFromNewData: function(dataset_id, dataset, newData) {","    var pending = dataset.pending;","    var newRec;","","    if( pending &amp;&amp; newData.records) {","      for( var pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          var pendingRec = pending[pendingHash];","","          dataset.meta[pendingRec.uid] = dataset.meta[pendingRec.uid] || {};","","          if( pendingRec.inFlight === false ) {","            // Pending record that has not been submitted","            self.consoleLog('updatePendingFromNewData - Found Non inFlight record -&gt; action=' + pendingRec.action +' :: uid=' + pendingRec.uid  + ' :: hash=' + pendingRec.hash);","            if( pendingRec.action === \"update\" || pendingRec.action === \"delete\") {","              // Update the pre value of pending record to reflect the latest data returned from sync.","              // This will prevent a collision being reported when the pending record is sent.","              newRec = newData.records[pendingRec.uid];","              if( newRec ) {","                self.consoleLog('updatePendingFromNewData - Updating pre values for existing pending record ' + pendingRec.uid);","                pendingRec.pre = newRec.data;","                pendingRec.preHash = newRec.hash;","              }","              else {","                // The update/delete may be for a newly created record in which case the uid will have changed.","                var previousPendingUid = dataset.meta[pendingRec.uid].previousPendingUid;","                var previousPending = pending[previousPendingUid];","                if( previousPending ) {","                  if( newData &amp;&amp; newData.updates &amp;&amp;  newData.updates.applied &amp;&amp; newData.updates.applied[previousPending.hash] ) {","                    // There is an update in from a previous pending action","                    var newUid = newData.updates.applied[previousPending.hash].uid;","                    newRec = newData.records[newUid];","                    if( newRec ) {","                      self.consoleLog('updatePendingFromNewData - Updating pre values for existing pending record which was previously a create ' + pendingRec.uid + ' ==&gt; ' + newUid);","                      pendingRec.pre = newRec.data;","                      pendingRec.preHash = newRec.hash;","                      pendingRec.uid = newUid;","                    }","                  }","                }","              }","            }","","            if( pendingRec.action === \"create\" ) {","              if( newData &amp;&amp; newData.updates &amp;&amp;  newData.updates.applied &amp;&amp; newData.updates.applied[pendingHash] ) {","                self.consoleLog('updatePendingFromNewData - Found an update for a pending create ' + JSON.stringify(newData.updates.applied[pendingHash]));","                newRec = newData.records[newData.updates.applied[pendingHash].uid];","                if( newRec ) {","                  self.consoleLog('updatePendingFromNewData - Changing pending create to an update based on new record  ' + JSON.stringify(newRec));","","                  // Set up the pending create as an update","                  pendingRec.action = \"update\";","                  pendingRec.pre = newRec.data;","                  pendingRec.preHash = newRec.hash;","                  pendingRec.uid = newData.updates.applied[pendingHash].uid;","                }","              }","            }","          }","        }","      }","    }","  },","","  updateNewDataFromInFlight: function(dataset_id, dataset, newData) {","    var pending = dataset.pending;","","    if( pending &amp;&amp; newData.records) {","      for( var pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          var pendingRec = pending[pendingHash];","","          if( pendingRec.inFlight ) {","            var updateReceivedForPending = (newData &amp;&amp; newData.updates &amp;&amp;  newData.updates.hashes &amp;&amp; newData.updates.hashes[pendingHash]) ? true : false;","","            self.consoleLog('updateNewDataFromInFlight - Found inflight pending Record - action = ' + pendingRec.action + ' :: hash = ' + pendingHash + ' :: updateReceivedForPending=' + updateReceivedForPending);","","            if( ! updateReceivedForPending ) {","              var newRec = newData.records[pendingRec.uid];","","              if( pendingRec.action === \"update\" &amp;&amp; newRec) {","                // Modify the new Record to have the updates from the pending record so the local dataset is consistent","                newRec.data = pendingRec.post;","                newRec.hash = pendingRec.postHash;","              }","              else if( pendingRec.action === \"delete\" &amp;&amp; newRec) {","                // Remove the record from the new dataset so the local dataset is consistent","                delete newData.records[pendingRec.uid];","              }","              else if( pendingRec.action === \"create\" ) {","                // Add the pending create into the new dataset so it is not lost from the UI","                self.consoleLog('updateNewDataFromInFlight - re adding pending create to incomming dataset');","                var newPendingCreate = {","                  data: pendingRec.post,","                  hash: pendingRec.postHash","                };","                newData.records[pendingRec.uid] = newPendingCreate;","              }","            }","          }","        }","      }","    }","  },","","  updateNewDataFromPending: function(dataset_id, dataset, newData) {","    var pending = dataset.pending;","","    if( pending &amp;&amp; newData.records) {","      for( var pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          var pendingRec = pending[pendingHash];","","          if( pendingRec.inFlight === false ) {","            self.consoleLog('updateNewDataFromPending - Found Non inFlight record -&gt; action=' + pendingRec.action +' :: uid=' + pendingRec.uid  + ' :: hash=' + pendingRec.hash);","            var newRec = newData.records[pendingRec.uid];","            if( pendingRec.action === \"update\" &amp;&amp; newRec) {","              // Modify the new Record to have the updates from the pending record so the local dataset is consistent","              newRec.data = pendingRec.post;","              newRec.hash = pendingRec.postHash;","            }","            else if( pendingRec.action === \"delete\" &amp;&amp; newRec) {","              // Remove the record from the new dataset so the local dataset is consistent","              delete newData.records[pendingRec.uid];","            }","            else if( pendingRec.action === \"create\" ) {","              // Add the pending create into the new dataset so it is not lost from the UI","              self.consoleLog('updateNewDataFromPending - re adding pending create to incomming dataset');","              var newPendingCreate = {","                data: pendingRec.post,","                hash: pendingRec.postHash","              };","              newData.records[pendingRec.uid] = newPendingCreate;","            }","          }","        }","      }","    }","  },","","  updateCrashedInFlightFromNewData: function(dataset_id, dataset, newData) {","    var updateNotifications = {","      applied: self.notifications.REMOTE_UPDATE_APPLIED,","      failed: self.notifications.REMOTE_UPDATE_FAILED,","      collisions: self.notifications.COLLISION_DETECTED","    };","","    var pending = dataset.pending;","    var resolvedCrashes = {};","    var pendingHash;","    var pendingRec;","","","    if( pending ) {","      for( pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          pendingRec = pending[pendingHash];","","          if( pendingRec.inFlight &amp;&amp; pendingRec.crashed) {","            self.consoleLog('updateCrashedInFlightFromNewData - Found crashed inFlight pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash );","            if( newData &amp;&amp; newData.updates &amp;&amp; newData.updates.hashes) {","","              // Check if the updates received contain any info about the crashed in flight update","              var crashedUpdate = newData.updates.hashes[pendingHash];","              if( crashedUpdate ) {","                // We have found an update on one of our in flight crashed records","","                resolvedCrashes[crashedUpdate.uid] = crashedUpdate;","","                self.consoleLog('updateCrashedInFlightFromNewData - Resolving status for crashed inflight pending record ' + JSON.stringify(crashedUpdate));","","                if( crashedUpdate.type === 'failed' ) {","                  // Crashed update failed - revert local dataset","                  if( crashedUpdate.action === 'create' ) {","                    self.consoleLog('updateCrashedInFlightFromNewData - Deleting failed create from dataset');","                    delete dataset.data[crashedUpdate.uid];","                  }","                  else if ( crashedUpdate.action === 'update' || crashedUpdate.action === 'delete' ) {","                    self.consoleLog('updateCrashedInFlightFromNewData - Reverting failed ' + crashedUpdate.action + ' in dataset');","                    dataset.data[crashedUpdate.uid] = {","                      data : pendingRec.pre,","                      hash : pendingRec.preHash","                    };","                  }","                }","","                delete pending[pendingHash];","                self.doNotify(dataset_id, crashedUpdate.uid, updateNotifications[crashedUpdate.type], crashedUpdate);","              }","              else {","                // No word on our crashed update - increment a counter to reflect another sync that did not give us","                // any update on our crashed record.","                if( pendingRec.crashedCount ) {","                  pendingRec.crashedCount++;","                }","                else {","                  pendingRec.crashedCount = 1;","                }","              }","            }","            else {","              // No word on our crashed update - increment a counter to reflect another sync that did not give us","              // any update on our crashed record.","              if( pendingRec.crashedCount ) {","                pendingRec.crashedCount++;","              }","              else {","                pendingRec.crashedCount = 1;","              }","            }","          }","        }","      }","","      for( pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          pendingRec = pending[pendingHash];","","          if( pendingRec.inFlight &amp;&amp; pendingRec.crashed) {","            if( pendingRec.crashedCount &gt; dataset.config.crashed_count_wait ) {","              self.consoleLog('updateCrashedInFlightFromNewData - Crashed inflight pending record has reached crashed_count_wait limit : ' + JSON.stringify(pendingRec));","              if( dataset.config.resend_crashed_updates ) {","                self.consoleLog('updateCrashedInFlightFromNewData - Retryig crashed inflight pending record');","                pendingRec.crashed = false;","                pendingRec.inFlight = false;","              }","              else {","                self.consoleLog('updateCrashedInFlightFromNewData - Deleting crashed inflight pending record');","                delete pending[pendingHash];","              }","            }","          }","        }","      }","    }","  },","","  updateDelayedFromNewData: function(dataset_id, dataset, newData){","    var pending = dataset.pending;","    var pendingHash;","    var pendingRec;","    if(pending){","      for( pendingHash in pending ){","        if( pending.hasOwnProperty(pendingHash) ){","          pendingRec = pending[pendingHash];","          if( pendingRec.delayed &amp;&amp; pendingRec.waiting ){","            self.consoleLog('updateDelayedFromNewData - Found delayed pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash + ' :: waiting=' + pendingRec.waiting);","            if( newData &amp;&amp; newData.updates &amp;&amp; newData.updates.hashes ){","              var waitingRec = newData.updates.hashes[pendingRec.waiting];","              if(waitingRec){","                self.consoleLog('updateDelayedFromNewData - Waiting pending record is resolved rec=' + JSON.stringify(waitingRec));","                pendingRec.delayed = false;","                pendingRec.waiting = undefined;","              }","            }","          }","        }","      }","    }","  },","","","  markInFlightAsCrashed : function(dataset) {","    var pending = dataset.pending;","    var pendingHash;","    var pendingRec;","","    if( pending ) {","      var crashedRecords = {};","      for( pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          pendingRec = pending[pendingHash];","","          if( pendingRec.inFlight ) {","            self.consoleLog('Marking in flight pending record as crashed : ' + pendingHash);","            pendingRec.crashed = true;","            crashedRecords[pendingRec.uid] = pendingRec;","          }","        }","      }","    }","  },","","  consoleLog: function(msg) {","    if( self.config.do_console_log ) {","      console.log(msg);","    }","  }","};","","(function() {","  self.config = self.defaults;","  //Initialse the sync service with default config","  //self.init({});","})();","","module.exports = {","  init: self.init,","  manage: self.manage,","  notify: self.notify,","  doList: self.list,","  doCreate: self.create,","  doRead: self.read,","  doUpdate: self.update,","  doDelete: self['delete'],","  listCollisions: self.listCollisions,","  removeCollision: self.removeCollision,","  getPending : self.getPending,","  clearPending : self.clearPending,","  getDataset : self.getDataSet,","  getQueryParams: self.getQueryParams,","  setQueryParams: self.setQueryParams,","  getMetaData: self.getMetaData,","  setMetaData: self.setMetaData,","  getConfig: self.getConfig,","  setConfig: self.setConfig,","  startSync: self.startSync,","  stopSync: self.stopSync,","  doSync: self.doSync,","  forceSync: self.forceSync,","  generateHash: self.generateHash,","  loadDataSet: self.loadDataSet,","  setHasCustomSync: self.setHasCustomSync,","  checkHasCustomSync: self.checkHasCustomSync,","  getHasCustomSync: self.getHasCustomSync","};"];
 
 },{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":20,"./api_cloud":22,"JSON":3}],47:[function(require,module,exports){
 /* automatically generated by JSCoverage - do not edit */

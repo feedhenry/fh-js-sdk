@@ -19,6 +19,7 @@ for (var i in navigator) {
 }
 fakeNavigator.onLine = true;
 navigator = fakeNavigator;
+navigator.network = {connection: {type: "WIFI"}};
 
 syncClient.init({
   do_console_log: true,
@@ -48,16 +49,18 @@ describe("test sync framework offline", function(){
     var opts = {"file_system_quota": 1*1024*1024, crashed_count_wait: 5};
     var qp = {"query":"test"};
     var meta_data = {"user": "test"};
-    syncClient.manage(dataSetId, opts, qp, meta_data, function(){
-      syncClient.getDataset(dataSetId, function(dataset){
-        expect(dataset.config.file_system_quota).to.equal(1*1024*1024);
-        expect(dataset.config.crashed_count_wait).to.equal(5);
-        expect(dataset.config.do_console_log).to.equal(true);
-        expect(dataset.query_params).equal(qp);
-        expect(dataset.meta_data).equal(meta_data);
+    syncClient.loadDataSet(dataSetId, function(){
+      syncClient.manage(dataSetId, opts, qp, meta_data, function(){
+        syncClient.getDataset(dataSetId, function(dataset){
+          expect(dataset.config.file_system_quota).to.equal(1*1024*1024);
+          expect(dataset.config.crashed_count_wait).to.equal(5);
+          expect(dataset.config.do_console_log).to.equal(true);
+          expect(dataset.query_params).equal(qp);
+          expect(dataset.meta_data).equal(meta_data);
 
-        expect(dataset.meta).to.be.empty;
-        done();
+          expect(dataset.meta).to.be.empty;
+          done();
+        });
       });
     });
   });
@@ -441,5 +444,55 @@ describe("test sync framework offline", function(){
         done();
       }, 501);
     });
+  });
+
+  it("test failures", function(done){
+    var success = sinon.spy();
+
+    var fail = sinon.spy();
+
+    syncClient.doList("invalid_dataset", success);
+    syncClient.doCreate("invalid_dataset", null, success);
+
+    syncClient.doRead("invalid_dataset", "invaliduid", success);
+
+    syncClient.doUpdate("invalid_dataset", "invaliduid", null, success);
+
+    syncClient.doDelete("invalid_dataset", "invaliduid", success);
+
+    syncClient.getQueryParams("invalid_dataset", success);
+
+    syncClient.setQueryParams("invalid_dataset", success);
+
+    syncClient.getMetaData("invalid_dataset", success);
+
+    syncClient.setMetaData("invalid_dataset", {}, success);
+
+    syncClient.getConfig("invalid_dataset", success);
+
+    syncClient.setConfig("invalid_dataset", {}, success);
+
+    syncClient.doSync("invalid_dataset", success);
+
+    syncClient.forceSync("invalid_dataset", success);
+
+    syncClient.doList("invalid_dataset", success, fail);
+    syncClient.doCreate("invalid_dataset", null, success, fail);
+    syncClient.doRead("invalid_dataset", "invaliduid", success, fail);
+    syncClient.doUpdate("invalid_dataset", "invaliduid", null, success, fail);
+    syncClient.doDelete("invalid_dataset", "invaliduid", success, fail);
+    syncClient.getQueryParams("invalid_dataset", success, fail);
+    syncClient.setQueryParams("invalid_dataset",{}, success, fail);
+    syncClient.getMetaData("invalid_dataset", success, fail);
+    syncClient.setMetaData("invalid_dataset", {}, success, fail);
+    syncClient.getConfig("invalid_dataset", success, fail);
+    syncClient.setConfig("invalid_dataset", {}, success, fail);
+    syncClient.doSync("invalid_dataset", success, fail);
+    syncClient.forceSync("invalid_dataset", success, fail);
+
+    expect(fail.callCount).to.equal(13);
+
+    done();
+
   });
 });
