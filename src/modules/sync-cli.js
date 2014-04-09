@@ -747,7 +747,9 @@ var self = {
           // Check to see if it is time for the sync loop to run again
           var lastSyncStart = dataset.syncLoopStart;
           var lastSyncCmp = dataset.syncLoopEnd;
-          if( lastSyncStart == null ) {
+          if(dataset.syncForced){
+            dataset.syncPending = true;
+          } else if( lastSyncStart == null ) {
             self.consoleLog(dataset_id +' - Performing initial sync');
             // Dataset has never been synced before - do initial sync
             dataset.syncPending = true;
@@ -758,10 +760,6 @@ var self = {
               // Time between sync loops has passed - do another sync
               dataset.syncPending = true;
             }
-          } 
-
-          if( dataset.syncForced ) {
-            dataset.syncPending = true;
           }
 
           if( dataset.syncPending ) {
