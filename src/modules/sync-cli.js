@@ -119,7 +119,9 @@ var self = {
       dataset.syncRunning = false;
       dataset.syncPending = true;
       dataset.initialised = true;
-      dataset.meta = {};
+      if(typeof dataset.meta === "undefined"){
+        dataset.meta = {};
+      }
 
       self.saveDataSet(dataset_id, function() {
 
@@ -154,6 +156,7 @@ var self = {
           var dataset = {};
           dataset.data = {};
           dataset.pending = {};
+          dataset.meta = {};
           self.datasets[dataset_id] = dataset;
           doManage(dataset);
         });
@@ -608,6 +611,9 @@ var self = {
 
                 //Check to see if any delayed pending records can now be set to ready
                 self.updateDelayedFromNewData(dataset_id, dataSet, res);
+
+                //Check meta data as well to make sure it contains the correct info
+                self.updateMetaFromNewData(dataset_id, dataSet, res);
 
                 // Update the new dataset with details of any inflight updates which we have not received a response on
                 self.updateNewDataFromInFlight(dataset_id, dataSet, res);
@@ -1249,6 +1255,54 @@ var self = {
                 pendingRec.waiting = undefined;
               }
             }
+          }
+        }
+      }
+    }
+  },
+
+  updateMetaFromNewData: function(dataset_id, dataset, newData){
+    var meta = dataset.meta;
+    if(meta && newData && newData.updates && newData.updates.hashes){
+      for(var uid in meta){
+        if(meta.hasOwnProperty(uid)){
+          var metadata = meta[uid];
+          var pendingHash = metadata.pendingUid;
+          var previousPendingHash = metadata.previousPendingUid;
+          self.consoleLog("updateMetaFromNewData - Found metadata with uid = " + uid + " :: pendingHash = " + pendingHash + " :: previousPendingHash =" + previousPendingHash);
+          var previousPendingResolved = true;
+          var pendingResolved = true;
+          if(previousPendingHash){
+            //we have previous pending in meta data, see if it's resolved
+            previousPendingResolved = false;
+            if( newData && newData.updates && newData.updates.hashes ){
+              var resolved = newData.updates.hashes[previousPendingHash];
+              if(resolved){
+                self.consoleLog("updateMetaFromNewData - Found previousPendingUid in meta data resolved - resolved = " + JSON.stringify(resolved));
+                //the previous pending is resolved in the cloud
+                metadata.previousPendingUid = undefined;
+                previousPendingResolved = true;
+              }
+            }
+          }
+          if(pendingHash){
+            //we have current pending in meta data, see if it's resolved
+            pendingResolved = false;
+            if( newData && newData.updates && newData.updates.hashes ){
+              var resolved = newData.updates.hashes[pendingHash];
+              if(resolved){
+                self.consoleLog("updateMetaFromNewData - Found pendingUid in meta data resolved - resolved = " + JSON.stringify(resolved));
+                //the current pending is resolved in the cloud
+                metadata.pendingUid = undefined;
+                pendingResolved = true;
+              }
+            }
+          }
+
+          if(previousPendingResolved && pendingResolved){
+            self.consoleLog("updateMetaFromNewData - both previous and current pendings are resolved for meta data with uid " + uid + ". Delete it.");
+            //all pendings are resolved, the entry can be removed from meta data
+            delete meta[uid];
           }
         }
       }
