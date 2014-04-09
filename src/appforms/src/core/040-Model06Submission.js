@@ -220,7 +220,7 @@ appForm.models = function(module) {
       if (err) {
         cb(err);
       } else {
-        that.emit('submitted');
+        that.emit('submitted', that.get('submissionId'));
         cb(null, null);
       }
     });

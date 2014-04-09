@@ -1657,11 +1657,13 @@ var FieldView = Backbone.View.extend({
   removeInputButtonClass: ".fh_appform_removeInputBtn",
   fieldWrapper: '<div class="fh_appform_input_wrapper"></div>',
   input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' />",
-  inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>' style='width:100%;margin-top: 10px;'> <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container' style='display: inline-block;float: right;width: 80%;margin-right:15px'>  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden' style='border-radius: 5px;margin-top: 5px;'></div>  </div><br style='clear:both'/>    </div>",
+  inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>' style='width:100%;margin-top: 10px;'> <div class='fh_appform_field_title fh_appform_field_numbering'>  </div> <div class='fh_appform_field_input_container' style='display: inline-block;float: right;width: 80%;margin-right:15px'>  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden' style='border-radius: 5px;margin-top: 5px;'></div>  </div><br style='clear:both'/>    </div>",
+  inputTemplateRepeating: "<div id='wrapper_<%= fieldId %>_<%= index %>' style='width:100%;margin-top: 10px;'> <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container' style='display: inline-block;float: right;width: 80%;margin-right:15px'>  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden' style='border-radius: 5px;margin-top: 5px;'></div>  </div><br style='clear:both'/>    </div>",
 
 
   fh_appform_fieldActionBar: "<div class='fh_appform_fieldActionBar' style='text-align: right;'><button class='fh_appform_removeInputBtn special_button fh_appform_button_action'>-</button><button class='special_button fh_appform_addInputBtn fh_appform_button_action'>+</button></div>",
-  title: '<label class="fh_appform_field_title"><%= title %> </label>',
+  title: '<label class="fh_appform_field_title <%= required%>"><%= title %> </label>',
+  titleRepeating: '<label class="fh_appform_field_title"><%= title %> </label>',
   instructions: '<p class="fh_appform_field_instructions"><%= helpText %></p>',
   events: {
     "change": "contentChanged",
@@ -1702,8 +1704,15 @@ var FieldView = Backbone.View.extend({
   renderTitle: function() {
     var name = this.model.getName();
     var title = name;
-    return _.template(this.title, {
-      "title": title
+    var template = this.title;
+
+    if(this.model.isRepeating()){
+      template = this.titleRepeating;
+    }
+
+    return _.template(template, {
+      "title": title,
+      "required": this.getFieldRequired(1)
     });
   },
   renderInput: function(index) {
@@ -1736,8 +1745,14 @@ var FieldView = Backbone.View.extend({
   },
   renderEle: function(titleHtml, inputHtml, index) {
     var fieldId = this.model.getFieldId();
+    var template =  this.inputTemplate;
 
-    return _.template(this.inputTemplate, {
+
+    if(this.model.isRepeating()){
+      template = this.inputTemplateRepeating;
+    }
+
+    return _.template(template, {
       "fieldId": fieldId,
       "index": index,
       "inputHtml": inputHtml,
@@ -2610,7 +2625,7 @@ FieldGeoView = FieldView.extend({
 });
 FieldMapView = FieldView.extend({
   extension_type: 'fhmap',
-  input: "<div data-index='<%= index %>' id='<%= id%>' class=' ' style='width:<%= width%>; height:<%= height%>;'></div>",
+  input: "<div data-index='<%= index %>' id='<%= id%>' class='fh_map_canvas' style='width:<%= width%>; height:<%= height%>;'></div>",
   initialize: function() {
     this.mapInited = 0;
     this.maps = [];
@@ -3855,8 +3870,8 @@ StepsView = Backbone.View.extend({
   className: 'fh_appform_steps',
 
   templates: {
-    table: '<div class="fh_appform_progress_wrapper"><table class="fh_appform_progress_steps" cellspacing="0"><tr></tr></table></div>',
-    step: '<td><span class="number_container" style="padding: 0px 10px 2px 9px;"><div class="number"><%= step_num %></div></span><br style="clear:both"/><span class="fh_appform_page_title"><%= step_name %></span></td>'
+    table: '<div class="fh_appform_progress_wrapper"><table class="fh_appform_progress_steps" cellspacing="0"><tr></tr></table><span class="fh_appform_page_title"></span></div>',
+    step: '<td><span class="number_container" style="padding: 0px 10px 2px 9px;"><div class="number"><%= step_num %></div></span><br style="clear:both"/></td>'
   },
 
   initialize: function() {
@@ -3897,9 +3912,12 @@ StepsView = Backbone.View.extend({
     var self = this;
     self.render();
     self.$el.find('td').removeClass('active');
-    self.$el.find('.fh_appform_page_title').hide();
-    self.$el.find('td:eq(' + self.parentView.getDisplayIndex() + ')').addClass('active');
-    self.$el.find('td:eq(' + self.parentView.getDisplayIndex() + ') .fh_appform_page_title').show();
+
+    var displayIndex = self.parentView.getDisplayIndex();
+    var pageModel = self.parentView.pageViews[self.parentView.pageNum].model;
+
+    self.$el.find('td:eq(' + displayIndex + ')').addClass('active');
+    self.$el.find('.fh_appform_page_title').html(pageModel.getName());
   }
 
 });

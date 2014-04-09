@@ -3910,19 +3910,6 @@ Lawnchair.adapter('webkit-sqlite', (function() {
       return new Date()
     } // FIXME need to use better date fn
     // not entirely sure if this is needed...
-  if (!Function.prototype.bind) {
-    Function.prototype.bind = function(obj) {
-      var slice = [].slice,
-        args = slice.call(arguments, 1),
-        self = this,
-        nop = function() {}, bound = function() {
-          return self.apply(this instanceof nop ? this : (obj || {}), args.concat(slice.call(arguments)))
-        }
-      nop.prototype = self.prototype
-      bound.prototype = new nop()
-      return bound
-    }
-  }
 
   // public methods
   return {
@@ -8337,7 +8324,12 @@ var load = function(cb) {
     success: function(data) {
       logger.debug("fhconfig = " + JSON.stringify(data));
       //when load the config file on device, because file:// protocol is used, it will never call fail call back. The success callback will be called but the data value will be null.
-      if (null === data) {
+      if (null == data) {
+        //fh v2 only
+        if(window.fh_app_props){
+          app_props = window.fh_app_props;
+          return cb(null, window.fh_app_props);
+        }
         return cb(new Error("app_config_missing"));
       } else {
         app_props = data;
@@ -8348,6 +8340,7 @@ var load = function(cb) {
     error: function(req, statusText, error) {
       //fh v2 only
       if(window.fh_app_props){
+        app_props = window.fh_app_props;
         return cb(null, window.fh_app_props);
       }
       logger.error(consts.config_js + " Not Found");
@@ -8481,7 +8474,7 @@ module.exports = {
 module.exports = {
   "fh_timeout": 20000,
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.0.1-alpha",
+  "sdk_version": "2.0.2-alpha",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit"
 };
@@ -8909,14 +8902,21 @@ var loadCloudProps = function(app_props, callback) {
         }
       },
       "error": function(req, statusText, error) {
+        var errormsg = "unknown";
+        if(req){
+          errormsg = req.status + " - " + req.responseText;
+        }
+        logger.error("App init returned error : " + errormsg);
         //use the cached host if we have a copy
         if (savedHost) {
+          logger.info("Using cached host: " + JSON.stringify(savedHost));
           if (callback) {
             callback(null, {
               cloud: savedHost
             });
           }
         } else {
+          logger.error("No cached host found. Init failed.");
           handleError(function(msg, err) {
             if (callback) {
               callback({
@@ -14414,7 +14414,7 @@ appForm.models = function(module) {
       if (err) {
         cb(err);
       } else {
-        that.emit('submitted');
+        that.emit('submitted', that.get('submissionId'));
         cb(null, null);
       }
     });
@@ -15960,6 +15960,7 @@ appForm.models = function (module) {
    */
   UploadTask.prototype.success = function (cb) {
     var that = this;
+    var submissionId = that.get('submissionId', null);
     that.set('completed', true);
     that.saveLocal(function (err) {
       if (err) {
@@ -15968,6 +15969,7 @@ appForm.models = function (module) {
       }
     });
     that.submissionModel(function (_err, model) {
+      model.set('submissionId', submissionId);
       if (_err) {
         cb(_err);
       } else {

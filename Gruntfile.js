@@ -297,5 +297,5 @@ module.exports = function(grunt) {
 
   grunt.registerTask('coverage', ['shell:jscov', 'browserify:require_cov', 'browserify:test_cov', 'connect:server', 'mocha_phantomjs:test_coverage', 'shell:htmlcov']);
 
-  grunt.registerTask('default', 'jshint concat-core-sdk test concat:forms_sdk concat:forms_appFormsTest coverage uglify:dist zip');
+  grunt.registerTask('default', 'jshint concat-core-sdk test concat:forms_sdk concat:forms_appFormsTest uglify:dist zip');
 };
