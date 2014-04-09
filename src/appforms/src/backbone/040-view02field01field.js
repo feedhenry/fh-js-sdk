@@ -4,12 +4,14 @@ var FieldView = Backbone.View.extend({
   errMessageContainer: ".fh_appform_field_error_container",
   requiredClassName: "fh_appform_field_required",
   errorClassName: "fh_appform_field_error",
-  addInputButtonClass: ".fh_appform_addInputBtn", //TODO Need to remove hard-coded strings for these names
+  repeatingClassName: "repeating",
+  nonRepeatingClassName: "non_repeating",
+  addInputButtonClass: ".fh_appform_addInputBtn",
   removeInputButtonClass: ".fh_appform_removeInputBtn",
   fieldWrapper: '<div class="fh_appform_input_wrapper"></div>',
-  input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' />",
-  inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>'> <div class='fh_appform_field_title fh_appform_field_numbering' style='display:none;'>  </div> <div class='fh_appform_field_input_container' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden' ></div>  </div><br style='clear:both'/>    </div>",
-  inputTemplateRepeating: "<div id='wrapper_<%= fieldId %>_<%= index %>' > <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden'></div>  </div><br style='clear:both'/></div>",
+  input: "<input class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' />",
+  inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>'> <div class='fh_appform_field_input_container non_repeating' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden' ></div></div><br style='clear:both'/>    </div>",
+  inputTemplateRepeating: "<div id='wrapper_<%= fieldId %>_<%= index %>' > <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container repeating' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden'></div></div><br style='clear:both'/></div>",
 
 
   fh_appform_fieldActionBar: "<div class='fh_appform_field_action_bar' ><button class='fh_appform_removeInputBtn special_button fh_appform_button_action'>-</button><button class='special_button fh_appform_addInputBtn fh_appform_button_action'>+</button></div>",
@@ -69,10 +71,13 @@ var FieldView = Backbone.View.extend({
   renderInput: function(index) {
     var fieldId = this.model.getFieldId();
     var type = this.getHTMLInputType();
+    var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
+
     return _.template(this.input, {
       "fieldId": fieldId,
       "index": index,
-      "inputType": type
+      "inputType": type,
+      "repeatingClassName": repeatingClassName
     });
   },
   getHTMLInputType: function() {
