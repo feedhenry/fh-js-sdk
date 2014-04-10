@@ -1,10 +1,11 @@
 FieldDateTimeView = FieldView.extend({
   extension_type: 'fhdate',
-  inputTime:"<div><input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='time'></div>",
-  inputDate:"<div ><input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='date'></div>",
-  inputDateTime:"<div ><input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='text'></div>",
+  inputTime:"<div><input class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='time'></div>",
+  inputDate:"<div ><input class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='date'></div>",
+  inputDateTime:"<div ><input class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='text'></div>",
   renderInput:function(index){
     var fieldId = this.model.getFieldId();
+    var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
 
     var unit=this.getUnit();
     var template="";
@@ -21,7 +22,8 @@ FieldDateTimeView = FieldView.extend({
     }
     var html=_.template(template,{
       "fieldId":fieldId,
-      "index":index
+      "index":index,
+      "repeatingClassName": repeatingClassName
     });
     html+=this.renderButton(index,buttonLabel,"fhdate");
 

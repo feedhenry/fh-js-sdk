@@ -1,5 +1,5 @@
 FieldCheckboxView = FieldView.extend({
-  checkboxes: '<div class="fh_appform_field_input"><div class="checkboxes"><%= choices %></div></div>',
+  checkboxes: '<div class="fh_appform_field_input <%= repeatingClassName%>"><div class="checkboxes"><%= choices %></div></div>',
   choice: '<input data-fieldId="<%= fieldId %>" <%= checked %> data-index="<%= index %>" name="<%= fieldId %>[]" type="checkbox" class="field checkbox" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
 
 
@@ -11,6 +11,8 @@ FieldCheckboxView = FieldView.extend({
     var html = "";
     var required = this.getFieldRequired(index);
     var self=this;
+    var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
+
 
 
     $.each(subfields, function(i, subfield) {
@@ -23,7 +25,7 @@ FieldCheckboxView = FieldView.extend({
       });
     });
 
-    checkboxesHtml = _.template(this.checkboxes, {"choices": choicesHtml});
+    checkboxesHtml = _.template(this.checkboxes, {"choices": choicesHtml, "repeatingClassName": repeatingClassName});
 
     return checkboxesHtml;
   },

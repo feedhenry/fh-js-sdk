@@ -1,5 +1,5 @@
 FieldGeoView = FieldView.extend({
-  input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>'  type='<%= inputType %>' disabled/>",
+  input: "<input class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>'  type='<%= inputType %>' disabled/>",
   buttonHtml: "<i class='fa fa-map-marker'></i>&nbsp<%= buttonText %>",
   type: "text",
   initialize: function() {
@@ -8,10 +8,12 @@ FieldGeoView = FieldView.extend({
     FieldView.prototype.initialize.apply(this, arguments);
   },
   renderInput: function(index) {
+    var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
     var html = _.template(this.input, {
       "fieldId": this.model.getFieldId(),
       "index": index,
-      "inputType": "text"
+      "inputType": "text",
+      "repeatingClassName": repeatingClassName
     });
 
 
