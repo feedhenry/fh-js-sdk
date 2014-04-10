@@ -1,7 +1,7 @@
 FieldRadioView = FieldView.extend({
   hidden_field: '<input  id="radio<%= id %>" type="fh_appform_hidden" value="" data-type="radio">',
   choice: '<input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" class="field radio" value="<%= value %>" type="radio"><label class="choice" ><%= choice %></label><br/>',
-  radio: '<div class="fh_appform_field_input"><%= radioChoices %></div>',
+  radio: '<div class="fh_appform_field_input <%= repeatingClassName%>"><%= radioChoices %></div>',
 
   renderInput: function(index) {
     var choices = this.model.getRadioOption();
@@ -9,6 +9,7 @@ FieldRadioView = FieldView.extend({
     var radioChoicesHtml = "";
     var fullRadioHtml = "";
     var html = "";
+    var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
 
     var fieldId = this.model.getFieldId();
     $.each(choices, function(i, choice) {
@@ -25,7 +26,7 @@ FieldRadioView = FieldView.extend({
       radioChoicesHtml += self.htmlFromjQuery(jQObj);
     });
 
-    return _.template(this.radio, {"radioChoices": radioChoicesHtml});
+    return _.template(this.radio, {"radioChoices": radioChoicesHtml, "repeatingClassName": repeatingClassName});
   },
   valuePopulateToElement: function (index, value) {
     var wrapperObj = this.getWrapper(index);
