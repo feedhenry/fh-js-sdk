@@ -15,7 +15,4 @@ describe("upload manager", function() {
     it("how to check if there is task in queue", function() {
         appForm.models.uploadManager.hasTask();
     });
-
-
-
 });

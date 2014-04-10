@@ -32,7 +32,6 @@ describe("Submission model", function() {
                     assert(submission1.getStatus() == "draft");
                     done();
                 });
-
             });
         });
     });
@@ -311,14 +310,46 @@ describe("Submission model", function() {
             submission.on("error", function(err ,progress){
               console.log("ERROR: ", err, progress);
             });
-            submission.on("submitted", function(err) {
-                assert(!err);
+            submission.on("submitted", function(submissionId) {
+                assert.ok(submissionId);
+                assert.ok(submission.getLocalId());
+                assert.ok(submission.getRemoteSubmissionId());
                 done();
             });
             submission.submit(function(err) {
                 assert(!err);
             });
         });
+    });
 
+    describe("download a submission using a submission Id", function(){
+      it("how to queue a submission for download", function(done) {
+        var submissionToDownload = null;
+        appForm.models.submission.newInstance(null, {"submissionId": "testSubmissionId"});
+
+        submissionToDownload.on("progress", function(err, progress){
+          assert.ok(!err);
+          assert.ok(progress);
+        });
+
+        submissionToDownload.on("downloaded", function(){
+          done();
+        });
+
+        submissionToDownload.on("error", function(err, progress){
+          assert.ok(!err);
+          assert.ok(progress);
+        });
+
+        submissionToDownload.download(function(err, downloadTask){
+          assert.ok(!err);
+          assert.ok(downloadTask);
+
+          submissionToDownload.getDownloadTask(function(err, downloadTask){
+            assert.ok(!err);
+            assert.ok(downloadTask);
+          });
+        });
+      });
     });
 });

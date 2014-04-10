@@ -32,8 +32,10 @@ appForm.models = function(module) {
     ]
   };
 
-  function newInstance(form) {
-    return new Submission(form);
+  function newInstance(form, params) {
+    params = params ? params : {};
+
+    return new Submission(form, params);
   }
 
   function fromLocal(localId, cb) {
@@ -68,7 +70,7 @@ appForm.models = function(module) {
     }
   }
 
-  function Submission(form) {
+  function Submission(form, params) {
     $fh.forms.log.d("Submission: ");
     Model.call(this, {
       '_type': 'submission'
@@ -77,25 +79,32 @@ appForm.models = function(module) {
       this.set('formName', form.get('name'));
       this.set('formId', form.get('_id'));
       this.set('deviceFormTimestamp', form.getLastUpdate());
-      this.form = form; //TODO may contain whole form definition in props.
+      this.set('status', 'new');
+      this.set('createDate', appForm.utils.getTime());
+      this.set('timezoneOffset', appForm.utils.getTime(true));
+      this.set('appId', appForm.config.get('appId'));
+      this.set('appEnvironment', appForm.config.get('env'));
+      this.set('appCloudName', '');
+      this.set('comments', []);
+      this.set('formFields', []);
+      this.set('saveDate', null);
+      this.set('submitDate', null);
+      this.set('uploadStartDate', null);
+      this.set('submittedDate', null);
+      this.set('userId', null);
+      this.set('filesInSubmission', {});
+      this.set('deviceId', appForm.config.get('deviceId'));
+      this.transactionMode = false;
+    } else {
+      this.set('appId', appForm.config.get('appId'));
+      if(params.submissionId){
+        this.set('status', 'newDownload');
+        this.setRemoteSubmissionId(params.submissionId);
+      } else {
+        this.set('status', 'new');
+      }
     }
-    this.set('status', 'new');
-    this.set('createDate', appForm.utils.getTime());
-    this.set('timezoneOffset', appForm.utils.getTime(true));
-    this.set('appId', appForm.config.get('appId'));
-    this.set('appEnvironment', appForm.config.get('env'));
-    this.set('appCloudName', '');
 
-    this.set('comments', []);
-    this.set('formFields', []);
-    this.set('saveDate', null);
-    this.set('submitDate', null);
-    this.set('uploadStartDate', null);
-    this.set('submittedDate', null);
-    this.set('userId', null);
-    this.set('filesInSubmission', {});
-    this.set('deviceId', appForm.config.get('deviceId'));
-    this.transactionMode = false;
     this.genLocalId();
     var localId = this.getLocalId();
     _submissions[localId] = this;
@@ -274,6 +283,15 @@ appForm.models = function(module) {
 
     } else {
       return cb("Invalid Status to upload a form submission.");
+    }
+  };
+  Submission.prototype.download = function(cb){
+    var targetStatus = "inprogress";
+    var that = this;
+    if(this.isStatusValid(targetStatus)){
+
+    } else {
+      return cb("Invalid Status to download a form submission.");
     }
   };
   Submission.prototype.saveToList = function(cb) {
@@ -555,6 +573,14 @@ appForm.models = function(module) {
         });
       });
     });
+  };
+  Submission.prototype.getRemoteSubmissionId = function() {
+    return this.get("submissionId", null);
+  };
+  Submission.prototype.setRemoteSubmissionId = function(submissionId){
+    if(submissionId){
+      this.set("submissionId", submissionId);
+    }
   };
   return module;
 }(appForm.models || {});

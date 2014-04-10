@@ -121,8 +121,8 @@ describe("$fh.forms API", function() {
         });
         newSubmission.endInputTransaction(true);
 
-        newSubmission.on("submitted", function(err) {
-          assert.ok(!err);
+        newSubmission.on("submitted", function(submissionId) {
+          assert.ok(submissionId);
           done();
         });
 
@@ -139,6 +139,17 @@ describe("$fh.forms API", function() {
           });
         });
       });
+    });
+  });
+  it("$fh.forms.getSubmission", function(done){
+    var submissionId = "submissionFile";
+    var getSubmission = appForm.api.getSubmission;
+
+    getSubmission({fromRemote: true, submissionId: submissionId}, function(err, submission){
+      assert.ok(!err);
+      assert.ok(submission);
+      assert.ok(submission.getSubmissionId())
+
     });
   });
 });
