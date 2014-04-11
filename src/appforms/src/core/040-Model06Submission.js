@@ -16,12 +16,15 @@ appForm.models = function(module) {
       'pending',
       'draft'
     ],
-    'pending': ['inprogress'],
+    'pending': [
+      'inprogress'
+    ],
     'inprogress': [
       'submitted',
       'pending',
       'error',
-      'inprogress'
+      'inprogress',
+      'downloaded'
     ],
     'submitted': [],
     'error': [
@@ -79,7 +82,6 @@ appForm.models = function(module) {
       this.set('formName', form.get('name'));
       this.set('formId', form.get('_id'));
       this.set('deviceFormTimestamp', form.getLastUpdate());
-      this.set('status', 'new');
       this.set('createDate', appForm.utils.getTime());
       this.set('timezoneOffset', appForm.utils.getTime(true));
       this.set('appId', appForm.config.get('appId'));
@@ -98,13 +100,13 @@ appForm.models = function(module) {
     } else {
       this.set('appId', appForm.config.get('appId'));
       if(params.submissionId){
-        this.set('status', 'newDownload');
+        this.set('downloadSubmission', true);
         this.setRemoteSubmissionId(params.submissionId);
       } else {
         this.set('status', 'new');
       }
     }
-
+    this.set('status', 'new');
     this.genLocalId();
     var localId = this.getLocalId();
     _submissions[localId] = this;
@@ -265,16 +267,17 @@ appForm.models = function(module) {
       this.set("status", targetStatus);
       this.set("uploadStartDate", appForm.utils.getTime());
       appForm.models.submissions.updateSubmissionWithoutSaving(this);
-      appForm.models.uploadManager.queueSubmission(this, function(err, ut) {
+      appForm.models.uploadManager.queueSubmission(that, function(err, ut) {
         if (err) {
           cb(err);
         } else {
           ut.set("error", null);
           ut.saveLocal(function(err) {
-            if (err) console.error(err);
+            if (err) $fh.forms.log.e("Error saving upload task: " + err);
           });
           that.emit("inprogress", ut);
           ut.on("progress", function(progress) {
+            $fh.forms.log.d("Emitting upload progress for submission: " + that.getLocalId() + JSON.stringify(progress));
             that.emit("progress", progress);
           });
           cb(null, ut);
@@ -286,10 +289,32 @@ appForm.models = function(module) {
     }
   };
   Submission.prototype.download = function(cb){
-    var targetStatus = "inprogress";
     var that = this;
+    $fh.forms.log.d("Starting download for submission: " + that.getLocalId());
+    var targetStatus = "pending";
     if(this.isStatusValid(targetStatus)){
-
+      this.set("status", targetStatus);
+      targetStatus = "inprogress";
+      if(this.isStatusValid(targetStatus)){
+        //Status is valid, add the submission to the
+        appForm.models.uploadManager.queueSubmission(that, function(err, downloadTask) {
+          if(err){
+            return cb(err);
+          }
+          downloadTask.set("error", null);
+          downloadTask.saveLocal(function(err) {
+            if (err) $fh.forms.log.e("Error saving download task: " + err);
+          });
+          that.emit("inprogress", downloadTask);
+          downloadTask.on("progress", function(progress) {
+            $fh.forms.log.d("Emitting download progress for submission: " + that.getLocalId() + JSON.stringify(progress));
+            that.emit("progress", progress);
+          });
+          return cb(null, downloadTask);
+        });
+      } else {
+        return cb("Invalid Status to dowload a form submission");
+      }
     } else {
       return cb("Invalid Status to download a form submission.");
     }
