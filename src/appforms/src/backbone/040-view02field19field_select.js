@@ -1,5 +1,5 @@
 FieldSelectView = FieldView.extend({
-  select: "<select class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>'><%= options %></select>",
+  select: "<select class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>'><%= options %></select>",
   option: '<option value="<%= value %>" <%= selected %>><%= value %></option>',
 
   renderInput: function(index) {
@@ -9,6 +9,7 @@ FieldSelectView = FieldView.extend({
     var options="";
     var selectHtml = "";
     var html = "";
+    var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
 
     var self=this;
     $.each(choices, function(i, choice) {
@@ -21,7 +22,8 @@ FieldSelectView = FieldView.extend({
     return _.template(this.select, {
       "fieldId":fieldId,
       "index":index,
-      "options":options
+      "options":options,
+      "repeatingClassName": repeatingClassName
     });
   }
 });
