@@ -188,7 +188,7 @@ module.exports = function(grunt) {
       grunt.log.writeln('Spawning server on port ' + port + ' in cwd ' + __dirname + ' using file ' + __dirname + '/' + script);
       var env = {};
       env.FH_PORT = port;
-      var server = spawn('/usr/bin/env', ['node', __dirname + '/' + script], {
+      var server = spawn('node', [__dirname + '/' + script], {
         cwd: __dirname,
         env: env
       }).on('exit', function (code) {
