@@ -1509,559 +1509,572 @@ var App=(function(module){
 
     return module;
 })(App || {});
-var BaseView=Backbone.View.extend({
-    "onLoad":function(){},
-    "onLoadEnd":function(){}
-}); 
+var BaseView = Backbone.View.extend({
+    "onLoad": function() {},
+    "onLoadEnd": function() {}
+});
 var FormListView = BaseView.extend({
-  events: {
-    'click button#formlist_reload': 'reload'
-  },
+    events: {
+        'click button#formlist_reload': 'reload'
+    },
 
-  templates: {
-    list: '<ul class="form_list fh_appform_body"></ul>',
-    header: '<h2>Your Forms</h2><h4>Choose a form from the list below</h4>',
-    error: '<li><button id="formlist_reload" class="button-block <%= enabledClass %> <%= dataClass %> fh_appform_button_default"><%= name %><div class="loading"></div></button></li>'
-  },
+    templates: {
+        list: '<ul class="form_list fh_appform_body"></ul>',
+        header: '<h2>Your Forms</h2><h4>Choose a form from the list below</h4>',
+        error: '<li><button id="formlist_reload" class="button-block <%= enabledClass %> <%= dataClass %> fh_appform_button_default"><%= name %><div class="loading"></div></button></li>'
+    },
 
-  initialize: function() {
-    $fh.forms.log.l("Initialize Form List");
-    _.bindAll(this, 'render', 'appendForm');
-    this.views = [];
+    initialize: function(options) {
+        this.options = options || {};
+        $fh.forms.log.l("Initialize Form List");
+        _.bindAll(this, 'render', 'appendForm');
+        this.views = [];
 
-    App.collections.forms.bind('reset', function (collection, options) {
-       if (options == null || !options.noFetch) {
-         App.collections.forms.each(function (form) {
-           form.fetch();
-         });
-       }
-    });
+        App.collections.forms.bind('reset', function(collection, options) {
+            if (options == null || !options.noFetch) {
+                App.collections.forms.each(function(form) {
+                    form.fetch();
+                });
+            }
+        });
 
-    App.collections.forms.bind('add remove reset error', this.render, this);
-    this.model.on("updated",this.render);
-  },
+        App.collections.forms.bind('add remove reset error', this.render, this);
+        this.model.on("updated", this.render);
+    },
 
-  reload: function() {
-    $fh.forms.log.l("Reload Form List");
-    var that=this;
-    this.onLoad();
-    this.model.refresh(true,function(err,formList){
-      this.onLoadEnd();
-      that.model=formList;
-      that.render();
-    });
-  },
+    reload: function() {
+        $fh.forms.log.l("Reload Form List");
+        var that = this;
+        this.onLoad();
+        this.model.refresh(true, function(err, formList) {
+            this.onLoadEnd();
+            that.model = formList;
+            that.render();
+        });
+    },
 
-  show: function () {
-    $(this.el).show();
-  },
+    show: function() {
+        $(this.el).show();
+    },
 
-  hide: function () {
-    $(this.el).hide();
-  },
+    hide: function() {
+        $(this.el).hide();
+    },
 
-  renderErrorHandler: function(msg) {
-    try {
-      if(msg == null || msg.match("error_ajaxfail")) {
-        msg = "An unexpected error occurred.";
-      }
-    } catch(e) {
-      msg = "An unexpected error occurred.";
+    renderErrorHandler: function(msg) {
+        try {
+            if (msg == null || msg.match("error_ajaxfail")) {
+                msg = "An unexpected error occurred.";
+            }
+        } catch (e) {
+            msg = "An unexpected error occurred.";
+        }
+        var html = _.template(this.templates.error, {
+            name: msg + "<br/>Please Retry Later",
+            enabledClass: 'fh_appform_button_cancel', //TODO May not be this class. Double check
+            dataClass: 'fetched'
+        });
+        $('ul', this.el).append(html);
+
+    },
+
+    render: function() {
+
+        // Empty our existing view
+        // this.options.parentEl.empty();
+
+        // Add list
+        this.options.parentEl.append(this.templates.list);
+        var formList = this.model.getFormsList();
+        if (formList.length > 0) {
+            // Add header
+            this.options.parentEl.find('ul').append(this.templates.header);
+            _(formList).forEach(function(form) {
+                this.appendForm(form);
+            }, this);
+        } else {
+            this.renderErrorHandler(arguments[1]);
+        }
+    },
+
+    appendForm: function(form) {
+        // this.options.parentEl.find('ul').append("<li>"+form.name+"("+form.description+")"+"</li>");
+        // console.log(form);
+        var view = new FormListItemView({
+            model: form
+        });
+        this.views.push(view);
+        $('ul', this.options.parentEl).append(view.render().el);
+    },
+    initFormList: function(fromRemote, cb) {
+        var that = this;
+        $fh.forms.getForms({
+            fromRemote: fromRemote
+        }, function(err, formsModel) {
+            if (err) {
+                cb(err);
+            } else {
+                that.model = formsModel;
+                cb(null, that);
+            }
+        });
     }
-    var html = _.template(this.templates.error, {
-      name: msg + "<br/>Please Retry Later",
-      enabledClass: 'fh_appform_button_cancel',//TODO May not be this class. Double check
-      dataClass: 'fetched'
-    });
-    $('ul', this.el).append(html);
-
-  },
-
-  render: function() {
-    
-    // Empty our existing view
-    // this.options.parentEl.empty();
-
-    // Add list
-    this.options.parentEl.append(this.templates.list);
-    var formList=this.model.getFormsList();
-    if(formList.length>0) {
-      // Add header
-      this.options.parentEl.find('ul').append(this.templates.header);
-      _(formList).forEach(function(form) {this.appendForm(form);}, this);
-    } else {
-      this.renderErrorHandler(arguments[1]);
-    }
-  },
-
-  appendForm: function(form) {
-    // this.options.parentEl.find('ul').append("<li>"+form.name+"("+form.description+")"+"</li>");
-    // console.log(form);
-    var view = new FormListItemView({model: form});
-    this.views.push(view);
-    $('ul', this.options.parentEl).append(view.render().el);
-  },
-  initFormList: function(fromRemote,cb){
-    var that=this;
-    $fh.forms.getForms({fromRemote:fromRemote},function(err,formsModel){
-      if (err){
-        cb(err);
-      }else{
-        that.model=formsModel;
-        cb(null,that);  
-      }
-    });
-  }
 });
 var FormListItemView = BaseView.extend({
     events: {
-      'click button.show.fetched': 'show',
-      'click button.show.fetch_error': 'fetch'
+        'click button.show.fetched': 'show',
+        'click button.show.fetch_error': 'fetch'
     },
-    templates: { form_button: '<li><button class="show button-block <%= enabledClass %> <%= dataClass %>"><%= name %><div class="loading"></div></button></li>' },
-    render: function () {
-      var html;
-      // var errorLoading = this.model.get('fh_error_loading');
-      var enabled = true;
-      html = _.template(this.templates.form_button, {
-        name: this.model.name,
-        enabledClass: enabled ? 'button-main' : '',
-        dataClass: 'fetched'
-      });
-      this.$el.html(html);
-      this.$el.find('button').not('.fh_full_data_loaded');
-      return this;
+    templates: {
+        form_button: '<li><button class="show button-block <%= enabledClass %> <%= dataClass %>"><%= name %><div class="loading"></div></button></li>'
     },
-    unrender: function () {
-      $(this.el).remove();
+    render: function(options) {
+        var html;
+        // var errorLoading = this.model.get('fh_error_loading');
+        var enabled = true;
+        html = _.template(this.templates.form_button, {
+            name: this.model.name,
+            enabledClass: enabled ? 'button-main' : '',
+            dataClass: 'fetched'
+        });
+        this.$el.html(html);
+        this.$el.find('button').not('.fh_full_data_loaded');
+        return this;
     },
-    show: function () {
-      var formId = this.model._id;
-      // this will init and render formView
-      var formView = new FormView({ parentEl: $('#backbone #page') });
-      formView.loadForm({ formId: formId }, function () {
-        formView.render();
-        Backbone.history.navigate('form', true);
-      });
+    unrender: function() {
+        $(this.el).remove();
     },
-    fetch: function () {
-    }
-  });
+    show: function() {
+        var formId = this.model._id;
+        // this will init and render formView
+        var formView = new FormView({
+            parentEl: $('#backbone #page')
+        });
+        formView.loadForm({
+            formId: formId
+        }, function() {
+            formView.render();
+            Backbone.history.navigate('form', true);
+        });
+    },
+    fetch: function() {}
+});
 var FieldView = Backbone.View.extend({
 
-  className: 'fh_appform_field_area',
-  errMessageContainer: ".fh_appform_field_error_container",
-  requiredClassName: "fh_appform_field_required",
-  errorClassName: "fh_appform_field_error",
-  repeatingClassName: "repeating",
-  nonRepeatingClassName: "non_repeating",
-  addInputButtonClass: ".fh_appform_addInputBtn",
-  removeInputButtonClass: ".fh_appform_removeInputBtn",
-  fieldWrapper: '<div class="fh_appform_input_wrapper"></div>',
-  input: "<input class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' />",
-  inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>'> <div class='fh_appform_field_input_container non_repeating' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden' ></div></div><br style='clear:both'/>    </div>",
-  inputTemplateRepeating: "<div id='wrapper_<%= fieldId %>_<%= index %>' > <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container repeating' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden'></div></div><br style='clear:both'/></div>",
+    className: 'fh_appform_field_area',
+    errMessageContainer: ".fh_appform_field_error_container",
+    requiredClassName: "fh_appform_field_required",
+    errorClassName: "fh_appform_field_error",
+    repeatingClassName: "repeating",
+    nonRepeatingClassName: "non_repeating",
+    addInputButtonClass: ".fh_appform_addInputBtn",
+    removeInputButtonClass: ".fh_appform_removeInputBtn",
+    fieldWrapper: '<div class="fh_appform_input_wrapper"></div>',
+    input: "<input class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' />",
+    inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>'> <div class='fh_appform_field_input_container non_repeating' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden' ></div></div><br style='clear:both'/>    </div>",
+    inputTemplateRepeating: "<div id='wrapper_<%= fieldId %>_<%= index %>' > <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container repeating' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden'></div></div><br style='clear:both'/></div>",
 
 
-  fh_appform_fieldActionBar: "<div class='fh_appform_field_button_bar' ><button class='fh_appform_removeInputBtn special_button fh_appform_button_action'>-</button><button class='special_button fh_appform_addInputBtn fh_appform_button_action'>+</button></div>",
-  title: '<label class="fh_appform_field_title <%= required%>"><%= title %> </label>',
-  titleRepeating: '<label class="fh_appform_field_title"><%= title %> </label>',
-  instructions: '<p class="fh_appform_field_instructions"><%= helpText %></p>',
-  events: {
-    "change": "contentChanged",
-    "blur input,select,textarea": "validate",
-    "click .fh_appform_addInputBtn": "onAddInput",
-    "click .fh_appform_removeInputBtn": "onRemoveInput"
-  },
-  onAddInput: function() {
-    this.addElement();
-    this.checkActionBar();
-  },
-  onRemoveInput: function() {
-    this.removeElement();
-    this.checkActionBar();
-  },
-  checkActionBar: function() {
-    var curNum = this.curRepeat;
-    var maxRepeat = this.maxRepeat;
-    var minRepeat = this.initialRepeat;
-    if (curNum < maxRepeat) {
-      this.$fh_appform_fieldActionBar.find(this.addInputButtonClass).show();
-    } else {
-      this.$fh_appform_fieldActionBar.find(this.addInputButtonClass).hide();
-    }
-
-    if (curNum > minRepeat) {
-      this.$fh_appform_fieldActionBar.find(this.removeInputButtonClass).show();
-    } else {
-      this.$fh_appform_fieldActionBar.find(this.removeInputButtonClass).hide();
-    }
-  },
-  removeElement: function() {
-    var curRepeat = this.curRepeat;
-    var lastIndex = curRepeat - 1;
-    this.getWrapper(lastIndex).remove();
-    this.curRepeat--;
-  },
-  renderTitle: function() {
-    var name = this.model.getName();
-    var title = name;
-    var template = this.title;
-
-    if(this.model.isRepeating()){
-      template = this.titleRepeating;
-    }
-
-    return _.template(template, {
-      "title": title,
-      "required": this.getFieldRequired(1)
-    });
-  },
-  renderInput: function(index) {
-    var fieldId = this.model.getFieldId();
-    var type = this.getHTMLInputType();
-    var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
-
-    return _.template(this.input, {
-      "fieldId": fieldId,
-      "index": index,
-      "inputType": type,
-      "repeatingClassName": repeatingClassName
-    });
-  },
-  getHTMLInputType: function() {
-    return this.type || "text";
-  },
-  "getFieldRequired" : function(index){
-    var required = "";
-    if (this.initialRepeat > 1) {
-      if (index < this.initialRepeat) {
-        required = this.requiredClassName;
-      }
-    } else {
-      if (this.model.isRequired()) {
-        required = this.requiredClassName;
-      }
-    }
-    if (this.model.isRequired() && index < this.initialRepeat) {
-      required = this.requiredClassName;
-    }
-    return required;
-  },
-  renderEle: function(titleHtml, inputHtml, index) {
-    var fieldId = this.model.getFieldId();
-    var template =  this.inputTemplate;
-
-
-    if(this.model.isRepeating()){
-      template = this.inputTemplateRepeating;
-    }
-
-    return _.template(template, {
-      "fieldId": fieldId,
-      "index": index,
-      "inputHtml": inputHtml,
-      "required": this.getFieldRequired(index)
-    });
-  },
-  renderHelpText: function() {
-    var helpText = this.model.getHelpText();
-
-    if(typeof helpText == "string" && helpText.length > 0){
-      return _.template(this.instructions, {
-        "helpText": helpText
-      });
-    } else {
-      return "";
-    }
-
-  },
-  addElement: function() {
-    var index = this.curRepeat;
-    var inputHtml = this.renderInput(index);
-    var eleHtml = this.renderEle("", inputHtml, index);
-    this.$fieldWrapper.append(eleHtml);
-    this.curRepeat++;
-    this.onElementShow(index);
-
-  },
-  onElementShow: function(index) {
-    console.log("Show done for field " + index);
-  },
-  render: function() {
-    var self = this;
-    this.initialRepeat = 1;
-    this.maxRepeat = 1;
-    this.curRepeat = 0;
-
-    this.$fieldWrapper.append(this.renderTitle());
-    this.$fieldWrapper.append(this.renderHelpText());
-
-    if (this.model.isRepeating()) {
-      this.initialRepeat = this.model.getMinRepeat();
-      this.maxRepeat = this.model.getMaxRepeat();
-    }
-    for (var i = 0; i < this.initialRepeat; i++) {
-      this.addElement();
-    }
-
-    this.$el.append(this.$fieldWrapper);
-    this.$el.append(this.$fh_appform_fieldActionBar);
-    this.$el.attr("data-field", this.model.getFieldId());
-
-
-    if(this.options.sectionName){
-      //This field belongs to a section
-      this.options.parentEl.find('#fh_appform_' + this.options.sectionName).append(this.$el);
-    } else {
-      this.options.parentEl.append(this.$el);
-    }
-
-    this.show();
-
-    // force the element to be initially hidden
-    if (this.$el.hasClass("hide")) {
-      this.hide(true);
-    }
-    // populate field if Submission obj exists
-    var submission = this.options.formView.getSubmission();
-    if (submission) {
-      this.submission = submission;
-      this.submission.getInputValueByFieldId(this.model.get('_id'), function(err, res) {
-        //console.log(err, res);
-        self.value(res);
-      });
-    }
-    this.checkActionBar();
-    this.onRender();
-  },
-  onRender: function() {
-
-  },
-  // TODO: cache the input element lookup?
-  initialize: function() {
-    _.bindAll(this, 'dumpContent', 'clearError', 'onAddInput', 'onRemoveInput');
-
-    // if (this.model.isRequired()) {
-    //   this.$el.addClass('required');
-    // }
-    this.$fieldWrapper = $(this.fieldWrapper);
-    this.$fh_appform_fieldActionBar = $(this.fh_appform_fieldActionBar);
-    // only call render once. model will never update
-    this.render();
-  },
-
-  dumpContent: function() {
-    console.log("Value changed :: " + JSON.stringify(this.value()));
-  },
-
-  getTopView: function() {
-    var view = this.options.parentView;
-    var parent;
-    do {
-      parent = view.options.parentView;
-      if (parent) {
-        view = parent;
-      }
-    } while (parent);
-    return view;
-  },
-
-  validate: function(e) {
-    if (!$fh.forms.config.get("studioMode")) {
-      var self = this;
-      var target = $(e.currentTarget);
-      var index = target.data().index;
-      var val = this.valueFromElement(index);
-      var fieldId = this.model.getFieldId();
-      this.model.validate(val, function(err, res) { //validation
-        if (err) {
-          console.error(err);
+    fh_appform_fieldActionBar: "<div class='fh_appform_field_button_bar' ><button class='fh_appform_removeInputBtn special_button fh_appform_button_action'>-</button><button class='special_button fh_appform_addInputBtn fh_appform_button_action'>+</button></div>",
+    title: '<label class="fh_appform_field_title <%= required%>"><%= title %> </label>',
+    titleRepeating: '<label class="fh_appform_field_title"><%= title %> </label>',
+    instructions: '<p class="fh_appform_field_instructions"><%= helpText %></p>',
+    events: {
+        "change": "contentChanged",
+        "blur input,select,textarea": "validate",
+        "click .fh_appform_addInputBtn": "onAddInput",
+        "click .fh_appform_removeInputBtn": "onRemoveInput"
+    },
+    onAddInput: function() {
+        this.addElement();
+        this.checkActionBar();
+    },
+    onRemoveInput: function() {
+        this.removeElement();
+        this.checkActionBar();
+    },
+    checkActionBar: function() {
+        var curNum = this.curRepeat;
+        var maxRepeat = this.maxRepeat;
+        var minRepeat = this.initialRepeat;
+        if (curNum < maxRepeat) {
+            this.$fh_appform_fieldActionBar.find(this.addInputButtonClass).show();
         } else {
-          var result = res["validation"][fieldId];
-          if (!result.valid) {
-            var errorMessages = result.errorMessages.join(", ");
-            self.setErrorText(index, errorMessages);
-          } else {
-            self.clearError(index);
-          }
+            this.$fh_appform_fieldActionBar.find(this.addInputButtonClass).hide();
         }
-      });
-      this.trigger("checkrules");
-    }
-  },
-  setErrorText: function(index, text) {
-    var wrapperObj = this.getWrapper(index);
-    wrapperObj.find(this.errMessageContainer).text(text);
-    wrapperObj.find(this.errMessageContainer).show();
-    wrapperObj.find(this.errMessageContainer).addClass(this.errorClassName);
-    wrapperObj.find("input,textarea,select").addClass(this.errorClassName);
-  },
-  contentChanged: function(e) {
-    this.validate(e);
-  },
 
-
-  addRules: function() {
-    // this.addValidationRules();
-    // this.addSpecialRules();
-  },
-
-  isRequired: function() {
-    return this.model.isRequired();
-  },
-
-  addValidationRules: function() {
-    if (this.model.get('IsRequired') === '1') {
-      this.$el.find('#' + this.model.get('ID')).rules('add', {
-        "required": true
-      });
-    }
-  },
-
-  addSpecialRules: function() {
-    var self = this;
-
-    var rules = {
-      'Show': function(rulePasses, params) {
-        var fieldId = 'Field' + params.Setting.FieldName;
-        if (rulePasses) {
-          App.views.form.showField(fieldId);
+        if (curNum > minRepeat) {
+            this.$fh_appform_fieldActionBar.find(this.removeInputButtonClass).show();
         } else {
-          App.views.form.hideField(fieldId);
+            this.$fh_appform_fieldActionBar.find(this.removeInputButtonClass).hide();
         }
-      },
-      'Hide': function(rulePasses, params) {
-        var fieldId = 'Field' + params.Setting.FieldName;
-        if (rulePasses) {
-          App.views.form.hideField(fieldId);
+    },
+    removeElement: function() {
+        var curRepeat = this.curRepeat;
+        var lastIndex = curRepeat - 1;
+        this.getWrapper(lastIndex).remove();
+        this.curRepeat--;
+    },
+    renderTitle: function() {
+        var name = this.model.getName();
+        var title = name;
+        var template = this.title;
+
+        if (this.model.isRepeating()) {
+            template = this.titleRepeating;
+        }
+
+        return _.template(template, {
+            "title": title,
+            "required": this.getFieldRequired(1)
+        });
+    },
+    renderInput: function(index) {
+        var fieldId = this.model.getFieldId();
+        var type = this.getHTMLInputType();
+        var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
+
+        return _.template(this.input, {
+            "fieldId": fieldId,
+            "index": index,
+            "inputType": type,
+            "repeatingClassName": repeatingClassName
+        });
+    },
+    getHTMLInputType: function() {
+        return this.type || "text";
+    },
+    "getFieldRequired": function(index) {
+        var required = "";
+        if (this.initialRepeat > 1) {
+            if (index < this.initialRepeat) {
+                required = this.requiredClassName;
+            }
         } else {
-          App.views.form.showField(fieldId);
+            if (this.model.isRequired()) {
+                required = this.requiredClassName;
+            }
         }
-      }
-    };
+        if (this.model.isRequired() && index < this.initialRepeat) {
+            required = this.requiredClassName;
+        }
+        return required;
+    },
+    renderEle: function(titleHtml, inputHtml, index) {
+        var fieldId = this.model.getFieldId();
+        var template = this.inputTemplate;
 
-    // also apply any special rules
-    _(this.model.get('Rules') || []).each(function(rule) {
-      var ruleConfig = _.clone(rule);
-      ruleConfig.pageView = self.options.parentView;
-      ruleConfig.fn = rules[rule.Type];
-      self.$el.find('#' + self.model.get('ID')).wufoo_rules('add', ruleConfig);
-    });
-  },
 
-  removeRules: function() {
-    this.$el.find('#' + this.model.get('ID')).rules('remove');
-  },
+        if (this.model.isRepeating()) {
+            template = this.inputTemplateRepeating;
+        }
 
-  // force a hide , defaults to false
-  hide: function(force) {
-    if (force || this.$el.is(':visible')) {
-      this.$el.hide();
+        return _.template(template, {
+            "fieldId": fieldId,
+            "index": index,
+            "inputHtml": inputHtml,
+            "required": this.getFieldRequired(index)
+        });
+    },
+    renderHelpText: function() {
+        var helpText = this.model.getHelpText();
+
+        if (typeof helpText == "string" && helpText.length > 0) {
+            return _.template(this.instructions, {
+                "helpText": helpText
+            });
+        } else {
+            return "";
+        }
+
+    },
+    addElement: function() {
+        var index = this.curRepeat;
+        var inputHtml = this.renderInput(index);
+        var eleHtml = this.renderEle("", inputHtml, index);
+        this.$fieldWrapper.append(eleHtml);
+        this.curRepeat++;
+        this.onElementShow(index);
+
+    },
+    onElementShow: function(index) {
+        console.log("Show done for field " + index);
+    },
+    render: function(options) {
+        this.options = options || {};
+        var self = this;
+        this.initialRepeat = 1;
+        this.maxRepeat = 1;
+        this.curRepeat = 0;
+
+        this.$fieldWrapper.append(this.renderTitle());
+        this.$fieldWrapper.append(this.renderHelpText());
+
+        if (this.model.isRepeating()) {
+            this.initialRepeat = this.model.getMinRepeat();
+            this.maxRepeat = this.model.getMaxRepeat();
+        }
+        for (var i = 0; i < this.initialRepeat; i++) {
+            this.addElement();
+        }
+
+        this.$el.append(this.$fieldWrapper);
+        this.$el.append(this.$fh_appform_fieldActionBar);
+        this.$el.attr("data-field", this.model.getFieldId());
+
+
+        if (this.options.sectionName) {
+            //This field belongs to a section
+            this.options.parentEl.find('#fh_appform_' + this.options.sectionName).append(this.$el);
+        } else {
+            this.options.parentEl.append(this.$el);
+        }
+
+        this.show();
+
+        // force the element to be initially hidden
+        if (this.$el.hasClass("hide")) {
+            this.hide(true);
+        }
+        // populate field if Submission obj exists
+        var submission = this.options.formView.getSubmission();
+        if (submission) {
+            this.submission = submission;
+            this.submission.getInputValueByFieldId(this.model.get('_id'), function(err, res) {
+                //console.log(err, res);
+                self.value(res);
+            });
+        }
+        this.checkActionBar();
+        this.onRender();
+    },
+    onRender: function() {
+
+    },
+    // TODO: cache the input element lookup?
+    initialize: function(options) {
+        this.options = options || {};
+        _.bindAll(this, 'dumpContent', 'clearError', 'onAddInput', 'onRemoveInput');
+
+        // if (this.model.isRequired()) {
+        //   this.$el.addClass('required');
+        // }
+        this.$fieldWrapper = $(this.fieldWrapper);
+        this.$fh_appform_fieldActionBar = $(this.fh_appform_fieldActionBar);
+        // only call render once. model will never update
+        this.render();
+    },
+
+    dumpContent: function() {
+        console.log("Value changed :: " + JSON.stringify(this.value()));
+    },
+
+    getTopView: function() {
+        var view = this.options.parentView;
+        var parent;
+        do {
+            parent = view.options.parentView;
+            if (parent) {
+                view = parent;
+            }
+        } while (parent);
+        return view;
+    },
+
+    validate: function(e) {
+        if (!$fh.forms.config.get("studioMode")) {
+            var self = this;
+            var target = $(e.currentTarget);
+            var index = target.data().index;
+            var val = this.valueFromElement(index);
+            var fieldId = this.model.getFieldId();
+            this.model.validate(val, function(err, res) { //validation
+                if (err) {
+                    console.error(err);
+                } else {
+                    var result = res["validation"][fieldId];
+                    if (!result.valid) {
+                        var errorMessages = result.errorMessages.join(", ");
+                        self.setErrorText(index, errorMessages);
+                    } else {
+                        self.clearError(index);
+                    }
+                }
+            });
+            this.trigger("checkrules");
+        }
+    },
+    setErrorText: function(index, text) {
+        var wrapperObj = this.getWrapper(index);
+        wrapperObj.find(this.errMessageContainer).text(text);
+        wrapperObj.find(this.errMessageContainer).show();
+        wrapperObj.find(this.errMessageContainer).addClass(this.errorClassName);
+        wrapperObj.find("input,textarea,select").addClass(this.errorClassName);
+    },
+    contentChanged: function(e) {
+        this.validate(e);
+    },
+
+
+    addRules: function() {
+        // this.addValidationRules();
+        // this.addSpecialRules();
+    },
+
+    isRequired: function() {
+        return this.model.isRequired();
+    },
+
+    addValidationRules: function() {
+        if (this.model.get('IsRequired') === '1') {
+            this.$el.find('#' + this.model.get('ID')).rules('add', {
+                "required": true
+            });
+        }
+    },
+
+    addSpecialRules: function() {
+        var self = this;
+
+        var rules = {
+            'Show': function(rulePasses, params) {
+                var fieldId = 'Field' + params.Setting.FieldName;
+                if (rulePasses) {
+                    App.views.form.showField(fieldId);
+                } else {
+                    App.views.form.hideField(fieldId);
+                }
+            },
+            'Hide': function(rulePasses, params) {
+                var fieldId = 'Field' + params.Setting.FieldName;
+                if (rulePasses) {
+                    App.views.form.hideField(fieldId);
+                } else {
+                    App.views.form.showField(fieldId);
+                }
+            }
+        };
+
+        // also apply any special rules
+        _(this.model.get('Rules') || []).each(function(rule) {
+            var ruleConfig = _.clone(rule);
+            ruleConfig.pageView = self.options.parentView;
+            ruleConfig.fn = rules[rule.Type];
+            self.$el.find('#' + self.model.get('ID')).wufoo_rules('add', ruleConfig);
+        });
+    },
+
+    removeRules: function() {
+        this.$el.find('#' + this.model.get('ID')).rules('remove');
+    },
+
+    // force a hide , defaults to false
+    hide: function(force) {
+        if (force || this.$el.is(':visible')) {
+            this.$el.hide();
+        }
+    },
+    renderButton: function(index, label, extension_type) {
+        var button = $('<button>');
+        button.addClass('special_button fh_appform_button_action');
+        button.addClass(extension_type);
+        button.attr("data-index", index);
+        button.html(' ' + label);
+
+        return this.htmlFromjQuery(button);
+    },
+    //deprecated
+    addButton: function(input, extension_type, label) {
+        var self = this;
+        var button = $('<button>');
+        button.addClass('special_button fh_appform_button_action');
+        button.addClass(extension_type);
+        button.html(' ' + label);
+
+
+        button.click(function(e) {
+            self.action(this);
+            e.preventDefault();
+            return false;
+        });
+
+        input.append(button);
+        return button;
+    },
+
+    show: function() {
+        if (!this.$el.is(':visible')) {
+            this.$el.show();
+            // add rules too
+            //this.addRules();
+            //set the form value from model
+            //this.value(this.model.serialize());
+        }
+    },
+
+    defaultValue: function() {
+        var defaultValue = {};
+        defaultValue[this.model.get('_id')] = this.model.get('DefaultVal');
+        return defaultValue;
+    },
+    htmlFromjQuery: function(jqObj) {
+        return $('<div>').append(jqObj.clone()).html();
+    },
+    // Gets or Set the value for this field
+    // set value should be an array which contains repeated value for this field.
+    value: function(value) {
+        var self = this;
+        if (value && !_.isEmpty(value)) {
+            this.valuePopulate(value);
+        }
+        return this.getValue();
+    },
+    getValue: function() {
+        var value = [];
+        var repeatNum = this.curRepeat;
+        for (var i = 0; i < repeatNum; i++) {
+            value[i] = this.valueFromElement(i);
+        }
+        return value;
+    },
+    valueFromElement: function(index) {
+        var wrapperObj = this.getWrapper(index);
+        return wrapperObj.find("input,select,textarea").val() || "";
+    },
+    valuePopulate: function(value) {
+        var number = value.length;
+        while (number > this.curRepeat) {
+            this.addElement();
+        }
+
+        for (var i = 0; i < value.length; i++) {
+            var v = value[i];
+            this.valuePopulateToElement(i, v);
+        }
+    },
+    valuePopulateToElement: function(index, value) {
+        var wrapperObj = this.getWrapper(index);
+        wrapperObj.find("input,select,textarea").val(value);
+    },
+    getWrapper: function(index) {
+        var fieldId = this.model.getFieldId();
+        return this.$fieldWrapper.find("#wrapper_" + fieldId + "_" + index);
+    },
+    fillArray: function(array, filler) {
+        for (var i = 0; i < array.length; i++) {
+            if (!array[i]) {
+                array[i] = filler;
+            }
+        }
+    },
+
+    clearError: function(index) {
+        var wrapperObj = this.getWrapper(index);
+        wrapperObj.find(this.errMessageContainer).hide();
+        wrapperObj.find("." + this.errorClassName).removeClass(this.errorClassName);
     }
-  },
-  renderButton: function(index, label, extension_type) {
-    var button = $('<button>');
-    button.addClass('special_button fh_appform_button_action');
-    button.addClass(extension_type);
-    button.attr("data-index", index);
-    button.html(' ' + label);
-
-    return this.htmlFromjQuery(button);
-  },
-  //deprecated
-  addButton: function(input, extension_type, label) {
-    var self = this;
-    var button = $('<button>');
-    button.addClass('special_button fh_appform_button_action');
-    button.addClass(extension_type);
-    button.html(' ' + label);
-
-
-    button.click(function(e) {
-      self.action(this);
-      e.preventDefault();
-      return false;
-    });
-
-    input.append(button);
-    return button;
-  },
-
-  show: function() {
-    if (!this.$el.is(':visible')) {
-      this.$el.show();
-      // add rules too
-      //this.addRules();
-      //set the form value from model
-      //this.value(this.model.serialize());
-    }
-  },
-
-  defaultValue: function() {
-    var defaultValue = {};
-    defaultValue[this.model.get('_id')] = this.model.get('DefaultVal');
-    return defaultValue;
-  },
-  htmlFromjQuery: function(jqObj) {
-    return $('<div>').append(jqObj.clone()).html();
-  },
-  // Gets or Set the value for this field
-  // set value should be an array which contains repeated value for this field.
-  value: function(value) {
-    var self = this;
-    if (value && !_.isEmpty(value)) {
-      this.valuePopulate(value);
-    }
-    return this.getValue();
-  },
-  getValue: function() {
-    var value = [];
-    var repeatNum = this.curRepeat;
-    for (var i = 0; i < repeatNum; i++) {
-      value[i] = this.valueFromElement(i);
-    }
-    return value;
-  },
-  valueFromElement: function(index) {
-    var wrapperObj = this.getWrapper(index);
-    return wrapperObj.find("input,select,textarea").val() || "";
-  },
-  valuePopulate: function(value) {
-    var number = value.length;
-    while (number > this.curRepeat) {
-      this.addElement();
-    }
-
-    for (var i = 0; i < value.length; i++) {
-      var v = value[i];
-      this.valuePopulateToElement(i, v);
-    }
-  },
-  valuePopulateToElement: function(index, value) {
-    var wrapperObj = this.getWrapper(index);
-    wrapperObj.find("input,select,textarea").val(value);
-  },
-  getWrapper: function(index) {
-    var fieldId = this.model.getFieldId();
-    return this.$fieldWrapper.find("#wrapper_" + fieldId + "_" + index);
-  },
-  fillArray: function(array, filler) {
-    for (var i = 0; i < array.length; i++) {
-      if (!array[i]) {
-        array[i] = filler;
-      }
-    }
-  },
-
-  clearError: function(index) {
-    var wrapperObj = this.getWrapper(index);
-    wrapperObj.find(this.errMessageContainer).hide();
-    wrapperObj.find("." + this.errorClassName).removeClass(this.errorClassName);
-  }
 
 });
-
 FieldCameraView = FieldView.extend({
   input: "<img class='imageThumb' width='100%' data-field='<%= fieldId %>' data-index='<%= index %>'  type='<%= inputType %>'>",
   html5Cam: '<div class="html5Cam">' +
@@ -2243,146 +2256,147 @@ FieldCameraView = FieldView.extend({
 window.sampleImageNum = -1;
 
 FieldCameraGroupView = FieldCameraView.extend({
-  initialize: function() {
-    FieldCameraView.prototype.initialize.call(this);
-    //Make sure 'this' is bound for setImageData, was incorrect on device!
-    // pass visible event down to all fields
-    var parent = this;
-    this.on('visible', function () {
-      var subviews = this.subviews;
-      _(subviews).forEach(function (fieldView) {
-        // this group is a camera view and contains itself
-        // we've already triggered visible on the group, so skip
-        if(parent !== fieldView){
-          fieldView.trigger('visible');
+    initialize: function(options) {
+        this.options = options || {};
+        FieldCameraView.prototype.initialize.call(this);
+        //Make sure 'this' is bound for setImageData, was incorrect on device!
+        // pass visible event down to all fields
+        var parent = this;
+        this.on('visible', function() {
+            var subviews = this.subviews;
+            _(subviews).forEach(function(fieldView) {
+                // this group is a camera view and contains itself
+                // we've already triggered visible on the group, so skip
+                if (parent !== fieldView) {
+                    fieldView.trigger('visible');
+                }
+            });
+        });
+    },
+
+    render: function(options) {
+        var self = this;
+        // this view subclasses camera view, so render it for first camera item
+        FieldCameraView.prototype.render.call(this);
+        this.options.order = 0;
+
+        this.subviews = [this]; // this is the first field i.e. this extends FieldCameraView
+        this.bind('imageAdded imageRemoved', this.updateFields, this);
+
+        // initialilse subsequent camera views from subfields
+        var options = this.model.get("fieldOptions").definition;
+        for (var i = 1; i < options.maxRepeat; i++) {
+            var subview = new FieldCameraView({
+                parentEl: self.options.parentEl,
+                parentView: self.options.parentView,
+                model: self.model,
+                order: i + 1,
+                formView: self.options.formView,
+                initHidden: self.model.IsRequired === '1' ? false : true // hide camera fields initially if they're not required
+            });
+            // bind event handler for whenever image is added/remove from field
+            subview.bind('imageAdded imageRemoved', self.updateFields, self); // purposely pass in self here as subviews need to be iterated over no matter which field changed
+            self.subviews.push(subview);
         }
-      });
-    });
-  },
 
-  render: function () {
-    var self = this;
-    // this view subclasses camera view, so render it for first camera item
-    FieldCameraView.prototype.render.call(this);
-    this.options.order = 0;
+        //ToDo subviews should probably be added in initialize?
+        // this.value(this.model.serialize());
 
-    this.subviews = [this]; // this is the first field i.e. this extends FieldCameraView
-    this.bind('imageAdded imageRemoved', this.updateFields, this);
+        // if restoring from a draft, may need to show some additional fields
+        this._optimiseVisibleFields();
+    },
 
-    // initialilse subsequent camera views from subfields
-    var options = this.model.get("fieldOptions").definition;
-    for(var i=1;i<options.maxRepeat;i++){
-      var subview = new FieldCameraView({
-        parentEl: self.options.parentEl,
-        parentView: self.options.parentView,
-        model: self.model,
-        order: i + 1,
-        formView: self.options.formView,
-        initHidden: self.model.IsRequired === '1' ? false: true // hide camera fields initially if they're not required
-      });
-      // bind event handler for whenever image is added/remove from field
-      subview.bind('imageAdded imageRemoved', self.updateFields, self); // purposely pass in self here as subviews need to be iterated over no matter which field changed
-      self.subviews.push(subview);
-    }
+    updateFields: function() {
+        this._fillBlanks();
+        this._optimiseVisibleFields();
+    },
 
-    //ToDo subviews should probably be added in initialize?
-    // this.value(this.model.serialize());
+    _fillBlanks: function() {
+        var groups = this._getGroupedFields();
 
-    // if restoring from a draft, may need to show some additional fields
-    this._optimiseVisibleFields();
-  },
+        // move any optional filled fields into empty required field spots
+        // NOTE: could move all filled fields here,
+        //       but not necessary as required fields that are filled is what we want (and are always visible anyways).
+        //       Only thing is, may have a blank required above a filled required. minor UI preference
+        _(groups.optFilled).forEach(function(optField, index) {
+            // get next empty field
+            var nextEmptyField = groups.empty[0];
+            // if field exists & is before the field we're trying to move, move it. Otherwise, do nothing
+            if (nextEmptyField && (nextEmptyField.getOrder() < optField.getOrder())) {
+                // remove entry from empty list as we'll be filling it here
+                groups.empty.shift();
+                // move image data to reqField
+                nextEmptyField.setImageData(optField.getImageData(), true);
+                // empty image data from optField
+                optField.setImageData(null, false);
+                groups.empty.push(optField); // field is now empty, add to end of empty list
+            }
+        });
+    },
 
-  updateFields: function () {
-    this._fillBlanks();
-    this._optimiseVisibleFields();
-  },
+    _optimiseVisibleFields: function() {
+        // get groups again as they may have changed above (optional filled moved to req filled)
+        var groups = this._getGroupedFields();
 
-  _fillBlanks: function () {
-    var groups = this._getGroupedFields();
-
-    // move any optional filled fields into empty required field spots
-    // NOTE: could move all filled fields here,
-    //       but not necessary as required fields that are filled is what we want (and are always visible anyways).
-    //       Only thing is, may have a blank required above a filled required. minor UI preference
-    _(groups.optFilled).forEach(function (optField, index) {
-      // get next empty field
-      var nextEmptyField = groups.empty[0];
-      // if field exists & is before the field we're trying to move, move it. Otherwise, do nothing
-      if (nextEmptyField && (nextEmptyField.getOrder() < optField.getOrder())) {
-        // remove entry from empty list as we'll be filling it here
-        groups.empty.shift();
-        // move image data to reqField
-        nextEmptyField.setImageData(optField.getImageData(), true);
-        // empty image data from optField
-        optField.setImageData(null, false);
-        groups.empty.push(optField); // field is now empty, add to end of empty list
-      }
-    });
-  },
-
-  _optimiseVisibleFields: function () {
-    // get groups again as they may have changed above (optional filled moved to req filled)
-    var groups = this._getGroupedFields();
-
-    // all fields image data in order. See how many optional fields we should show, if any
-    var amountToShow = groups.reqFilled.length >= groups.req.length ? Math.min(groups.opt.length, Math.max(0, groups.optFilled.length + 1)) : 0;
-    _(groups.opt).forEach(function (optField, index) {
-      if (index < amountToShow) {
-        optField.show();
-      } else {
-        optField.hide();
-      }
-    });
-    // this.contentChanged(); //Call contentChanged so all image data is set on the group model
-  },
+        // all fields image data in order. See how many optional fields we should show, if any
+        var amountToShow = groups.reqFilled.length >= groups.req.length ? Math.min(groups.opt.length, Math.max(0, groups.optFilled.length + 1)) : 0;
+        _(groups.opt).forEach(function(optField, index) {
+            if (index < amountToShow) {
+                optField.show();
+            } else {
+                optField.hide();
+            }
+        });
+        // this.contentChanged(); //Call contentChanged so all image data is set on the group model
+    },
 
     // group fields based on required status and whether or not image data is filled
-  _getGroupedFields: function () {
-    var groups = {
-      req: [], // required fields
-      reqEmpty: [], // required empty fields
-      reqFilled: [], // required filled fields
-      opt: [], // optional fields
-      optEmpty: [], // optional empty fields
-      optFilled: [], // optional filled fields
-      empty: [] // empty fields
-    };
+    _getGroupedFields: function() {
+        var groups = {
+            req: [], // required fields
+            reqEmpty: [], // required empty fields
+            reqFilled: [], // required filled fields
+            opt: [], // optional fields
+            optEmpty: [], // optional empty fields
+            optFilled: [], // optional filled fields
+            empty: [] // empty fields
+        };
 
-    _(this.subviews).forEach(function (subview, index) {
-      if (subview.isRequired()) { // required field
-        groups.req.push(subview);
-        if (subview.hasImageData()) { // filled in
-          groups.reqFilled.push(subview);
-        } else { // empty
-          groups.reqEmpty.push(subview);
-          groups.empty.push(subview);
-        }
-      } else { // optional field
-        groups.opt.push(subview);
-        if (subview.hasImageData()) { // filled in
-          groups.optFilled.push(subview);
-        } else { // empty
-          groups.optEmpty.push(subview);
-          groups.empty.push(subview);
-        }
-      }
-    });
-    return groups;
-  },
+        _(this.subviews).forEach(function(subview, index) {
+            if (subview.isRequired()) { // required field
+                groups.req.push(subview);
+                if (subview.hasImageData()) { // filled in
+                    groups.reqFilled.push(subview);
+                } else { // empty
+                    groups.reqEmpty.push(subview);
+                    groups.empty.push(subview);
+                }
+            } else { // optional field
+                groups.opt.push(subview);
+                if (subview.hasImageData()) { // filled in
+                    groups.optFilled.push(subview);
+                } else { // empty
+                    groups.optEmpty.push(subview);
+                    groups.empty.push(subview);
+                }
+            }
+        });
+        return groups;
+    },
 
-  value: function(value) {
-    if (value && !_.isEmpty(value)) {
-      _(this.subviews).forEach(function (subview, index) {
-        //subview might be the group, so we call value on FieldCameraView
-        FieldCameraView.prototype.value.call(subview, value);
-      });
+    value: function(value) {
+        if (value && !_.isEmpty(value)) {
+            _(this.subviews).forEach(function(subview, index) {
+                //subview might be the group, so we call value on FieldCameraView
+                FieldCameraView.prototype.value.call(subview, value);
+            });
+        }
+        value = {};
+        _(this.subviews).forEach(function(subview, index) {
+            $.extend(value, FieldCameraView.prototype.value.call(subview));
+        });
+        return value;
     }
-    value = {};
-    _(this.subviews).forEach(function (subview, index) {
-      $.extend(value, FieldCameraView.prototype.value.call(subview));
-    });
-    return value;
-  }
 });
 FieldCheckboxView = FieldView.extend({
   checkboxes: '<div class="fh_appform_field_input <%= repeatingClassName%>"><div class="checkboxes"><%= choices %></div></div>',
@@ -2442,331 +2456,336 @@ FieldEmailView = FieldView.extend({
    type:"email"
 });
 FieldFileView = FieldView.extend({
-  input: "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action select' data-index='<%= index %>' style='margin-top:0px;'  type='<%= inputType %>'>Select A File</button>" +
-"<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action remove' data-index='<%= index %>' style='margin-top:0px;'  type='<%= inputType %>'><i class='fa fa-times-circle'></i>&nbsp;Remove File Entry</button>" +
-"<input style='display:none;' class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/>",
-  type: "file",
-  initialize: function () {
-    var self = this;
+    input: "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action select' data-index='<%= index %>' style='margin-top:0px;'  type='<%= inputType %>'>Select A File</button>" +
+        "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action remove' data-index='<%= index %>' style='margin-top:0px;'  type='<%= inputType %>'><i class='fa fa-times-circle'></i>&nbsp;Remove File Entry</button>" +
+        "<input style='display:none;' class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/>",
+    type: "file",
+    initialize: function(options) {
+        this.options = options || {};
+        var self = this;
 
-    self.fileObjs = [];
-    FieldView.prototype.initialize.apply(self, arguments);
-  },
-  contentChanged: function (e) {
-    var self = this;
-    var fileEle = e.target;
-    var filejQ = $(fileEle);
-    var index = filejQ.data().index;
-    var file = fileEle.files ? fileEle.files[0] : null;
-    if (file) {
-      var fileObj = {
-        "fileName": file.name,
-        "fileSize": file.size,
-        "fileType": file.type
-      };
-      self.showButton(index, fileObj);
-    } else { //user cancelled file selection
-      self.showButton(index, null);
-    }
-
-  },
-  valueFromElement: function (index) {
-    var wrapperObj = this.getWrapper(index);
-    var fileEle = wrapperObj.find(".fh_appform_field_input")[0];
-    if (fileEle.files && fileEle.files.length > 0) { //new file
-      return fileEle.files[0];
-    } else { //sandboxed file
-      return this.fileObjs[index];
-    }
-  },
-  showButton: function (index, fileObj) {
-    var self = this;
-    var wrapperObj = this.getWrapper(index);
-    var button = wrapperObj.find("button.select");
-    var button_remove = wrapperObj.find("button.remove");
-    var fileEle = wrapperObj.find(".fh_appform_field_input");
-    fileEle.hide();
-    button.show();
-
-    if(fileObj == null){
-      button.text("Select A File");
-      button_remove.hide();
-    } else {
-      button.text(fileObj.fileName + "(" + fileObj.fileSize + ")");
-      button_remove.show();
-    }
-
-    button.off("click");
-    button.on("click", function () {
-      console.log("FILE BUTTON CLICKED");
-      var index = $(this).data().index;
-      fileEle.click();
-    });
-
-    button_remove.off("click");
-    button_remove.on("click", function () {
-      var index = $(this).data().index;
-      if(self.fileObjs && self.fileObjs[index]) {
-        self.fileObjs[index] = null;
-      }
-      self.resetFormElement(fileEle);
-      self.showButton(index, null);  // remove file entry
-    });
-  },
-  resetFormElement: function (e) {
-    e.wrap("<form>").closest("form").get(0).reset();
-    e.unwrap();
-  },
-  valuePopulateToElement: function (index, value) {
-    if (value) {
-      this.fileObjs[index] = value;
-      this.showButton(index, value);
-    }
-  },
-  onElementShow: function (index) {
-    this.showButton(index, null);
-  }
-});
-
-FieldGeoView = FieldView.extend({
-  input: "<input class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>'  type='<%= inputType %>' disabled/>",
-  buttonHtml: "<i class='fa fa-map-marker'></i>&nbsp<%= buttonText %>",
-  type: "text",
-  initialize: function() {
-    this.geoValues=[];
-    this.locationUnit = this.model.getFieldDefinition().locationUnit;
-    FieldView.prototype.initialize.apply(this, arguments);
-  },
-  renderInput: function(index) {
-    var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
-    var html = _.template(this.input, {
-      "fieldId": this.model.getFieldId(),
-      "index": index,
-      "inputType": "text",
-      "repeatingClassName": repeatingClassName
-    });
-
-
-    return html;
-  },
-  onElementShow: function(index){
-    var self = this;
-    var btnLabel = this.locationUnit === "latlong" ? 'Capture Location (Lat/Lon)' : 'Capture Location (East/North)';
-    btnLabel = _.template(this.buttonHtml, {"buttonText": btnLabel});
-    var geoButton = $(this.renderButton(index, btnLabel, "fhgeo"));
-
-    this.getWrapper(index).append(geoButton);
-
-    geoButton.on("click", function(e){
-      self.getLocation(e, index);
-    });
-  },
-  onRender: function() {
-    var that = this;
-  },
-  convertLocation: function(location) {
-    var lat = location.lat;
-    var lon = location.lon;
-    var params = {
-      lat: function() {
-        return lat;
-      },
-      lon: function() {
-        return lon;
-      }
-    };
-    return OsGridRef.latLongToOsGrid(params);
-  },
-  renderElement: function(index) {
-    var location = this.geoValues[index];
-    var locStr = "";
-    var textInput = this.getWrapper(index).find(".fh_appform_field_input");
-    if (location) {
-      if (this.locationUnit === "latlong") {
-        locStr = '(' + location.lat + ', ' + location["long"] + ')';
-      } else if (this.locationUnit === "eastnorth") {
-        locStr = '(' + location.zone+' '+location.eastings + ', ' + location.northings + ')';
-      }
-      textInput.val(locStr);
-    }
-    textInput.blur();
-  },
-  valuePopulateToElement: function (index, value) {
-    this.geoValues[index] = value;
-    this.renderElement(index);
-  },
-  valueFromElement: function (index) {
-    return this.geoValues[index];
-  },
-  getLocation: function(e, index) {
-    var that = this;
-    e.preventDefault();
-    var wrapper = that.getWrapper(index);
-    var textInput = wrapper.find(".fh_appform_field_input");
-
-
-    //$fh.geo does not exist on the theme preview.
-    if($fh.geo){
-      $fh.geo(function(res) {
-        var location;
-        if (that.locationUnit === "latlong") {
-          that.geoValues[index] = {
-            "lat": res.lat,
-            "long": res.lon
-          };
-        }else if (that.locationUnit==="eastnorth"){
-          var en_location = that.convertLocation(res);
-          var locArr=en_location.toString().split(" ");
-          that.geoValues[index]={
-            "zone":locArr[0],
-            "eastings":locArr[1],
-            "northings":locArr[2]
-          };
+        self.fileObjs = [];
+        FieldView.prototype.initialize.apply(self, arguments);
+    },
+    contentChanged: function(e) {
+        var self = this;
+        var fileEle = e.target;
+        var filejQ = $(fileEle);
+        var index = filejQ.data().index;
+        var file = fileEle.files ? fileEle.files[0] : null;
+        if (file) {
+            var fileObj = {
+                "fileName": file.name,
+                "fileSize": file.size,
+                "fileType": file.type
+            };
+            self.showButton(index, fileObj);
+        } else { //user cancelled file selection
+            self.showButton(index, null);
         }
-        that.renderElement(index);
-      }, function(msg, err) {
-        textInput.attr('placeholder', 'Location could not be determined');
-      });
-    }
 
-    return false;
-  }
+    },
+    valueFromElement: function(index) {
+        var wrapperObj = this.getWrapper(index);
+        var fileEle = wrapperObj.find(".fh_appform_field_input")[0];
+        if (fileEle.files && fileEle.files.length > 0) { //new file
+            return fileEle.files[0];
+        } else { //sandboxed file
+            return this.fileObjs[index];
+        }
+    },
+    showButton: function(index, fileObj) {
+        var self = this;
+        var wrapperObj = this.getWrapper(index);
+        var button = wrapperObj.find("button.select");
+        var button_remove = wrapperObj.find("button.remove");
+        var fileEle = wrapperObj.find(".fh_appform_field_input");
+        fileEle.hide();
+        button.show();
+
+        if (fileObj == null) {
+            button.text("Select A File");
+            button_remove.hide();
+        } else {
+            button.text(fileObj.fileName + "(" + fileObj.fileSize + ")");
+            button_remove.show();
+        }
+
+        button.off("click");
+        button.on("click", function() {
+            console.log("FILE BUTTON CLICKED");
+            var index = $(this).data().index;
+            fileEle.click();
+        });
+
+        button_remove.off("click");
+        button_remove.on("click", function() {
+            var index = $(this).data().index;
+            if (self.fileObjs && self.fileObjs[index]) {
+                self.fileObjs[index] = null;
+            }
+            self.resetFormElement(fileEle);
+            self.showButton(index, null); // remove file entry
+        });
+    },
+    resetFormElement: function(e) {
+        e.wrap("<form>").closest("form").get(0).reset();
+        e.unwrap();
+    },
+    valuePopulateToElement: function(index, value) {
+        if (value) {
+            this.fileObjs[index] = value;
+            this.showButton(index, value);
+        }
+    },
+    onElementShow: function(index) {
+        this.showButton(index, null);
+    }
+});
+FieldGeoView = FieldView.extend({
+    input: "<input class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>'  type='<%= inputType %>' disabled/>",
+    buttonHtml: "<i class='fa fa-map-marker'></i>&nbsp<%= buttonText %>",
+    type: "text",
+    initialize: function(options) {
+        this.options = options || {};
+        this.geoValues = [];
+        this.locationUnit = this.model.getFieldDefinition().locationUnit;
+        FieldView.prototype.initialize.apply(this, arguments);
+    },
+    renderInput: function(index) {
+        var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
+        var html = _.template(this.input, {
+            "fieldId": this.model.getFieldId(),
+            "index": index,
+            "inputType": "text",
+            "repeatingClassName": repeatingClassName
+        });
+
+
+        return html;
+    },
+    onElementShow: function(index) {
+        var self = this;
+        var btnLabel = this.locationUnit === "latlong" ? 'Capture Location (Lat/Lon)' : 'Capture Location (East/North)';
+        btnLabel = _.template(this.buttonHtml, {
+            "buttonText": btnLabel
+        });
+        var geoButton = $(this.renderButton(index, btnLabel, "fhgeo"));
+
+        this.getWrapper(index).append(geoButton);
+
+        geoButton.on("click", function(e) {
+            self.getLocation(e, index);
+        });
+    },
+    onRender: function() {
+        var that = this;
+    },
+    convertLocation: function(location) {
+        var lat = location.lat;
+        var lon = location.lon;
+        var params = {
+            lat: function() {
+                return lat;
+            },
+            lon: function() {
+                return lon;
+            }
+        };
+        return OsGridRef.latLongToOsGrid(params);
+    },
+    renderElement: function(index) {
+        var location = this.geoValues[index];
+        var locStr = "";
+        var textInput = this.getWrapper(index).find(".fh_appform_field_input");
+        if (location) {
+            if (this.locationUnit === "latlong") {
+                locStr = '(' + location.lat + ', ' + location["long"] + ')';
+            } else if (this.locationUnit === "eastnorth") {
+                locStr = '(' + location.zone + ' ' + location.eastings + ', ' + location.northings + ')';
+            }
+            textInput.val(locStr);
+        }
+        textInput.blur();
+    },
+    valuePopulateToElement: function(index, value) {
+        this.geoValues[index] = value;
+        this.renderElement(index);
+    },
+    valueFromElement: function(index) {
+        return this.geoValues[index];
+    },
+    getLocation: function(e, index) {
+        var that = this;
+        e.preventDefault();
+        var wrapper = that.getWrapper(index);
+        var textInput = wrapper.find(".fh_appform_field_input");
+
+
+        //$fh.geo does not exist on the theme preview.
+        if ($fh.geo) {
+            $fh.geo(function(res) {
+                var location;
+                if (that.locationUnit === "latlong") {
+                    that.geoValues[index] = {
+                        "lat": res.lat,
+                        "long": res.lon
+                    };
+                } else if (that.locationUnit === "eastnorth") {
+                    var en_location = that.convertLocation(res);
+                    var locArr = en_location.toString().split(" ");
+                    that.geoValues[index] = {
+                        "zone": locArr[0],
+                        "eastings": locArr[1],
+                        "northings": locArr[2]
+                    };
+                }
+                that.renderElement(index);
+            }, function(msg, err) {
+                textInput.attr('placeholder', 'Location could not be determined');
+            });
+        }
+
+        return false;
+    }
 });
 FieldMapView = FieldView.extend({
-  extension_type: 'fhmap',
-  input: "<div data-index='<%= index %>' id='<%= id%>' class='fh_map_canvas' style='width:<%= width%>; height:<%= height%>;'></div>",
-  initialize: function() {
-    this.mapInited = 0;
-    this.maps = [];
-    this.mapData = [];
-    this.markers = [];
-    this.allMapInitFunc = [];
-    this.mapSettings = {
-      mapWidth: '100%',
-      mapHeight: '300px',
-      defaultZoom: 16,
-      location: {
-        lon: -5.80078125,
-        lat: 53.12040528310657
-      }
-    };
-    FieldView.prototype.initialize.apply(this, arguments);
-  },
-  renderInput: function(index) {
-    return _.template(this.input, {
-      width: this.mapSettings.mapWidth,
-      height: this.mapSettings.mapHeight,
-      'index': index,
-      'id':Math.random()
-    });
-  },
-  onMapInit: function(index) {
-    this.mapInited++;
-    if (this.mapInited == this.curRepeat) {
-      // all map initialised
-      this.allMapInit();
-    }
-  },
-  allMapInit: function() {
-    while ((func = this.allMapInitFunc.shift()) != null) {
-      func();
-    }
-  },
-  onAllMapInit: function(func) {
-    if (this.mapInited == this.curRepeat) {
-      func();
-    } else {
-      if (this.allMapInitFunc.indexOf(func) == -1) {
-        this.allMapInitFunc.push(func);
-      }
-    }
-  },
-  onElementShow: function(index) {
-    var wrapperObj = this.getWrapper(index);
-    var self = this;
-
-    var mapCanvas = wrapperObj.find('.fh_map_canvas')[0];
-    // var options = this.parseCssOptions();
-    // // Merge
-    // this.mapSettings = _.defaults(options, this.mapSettings);
-
-    if($fh.geo){
-      $fh.geo({
-        interval: 0
-      }, function(geoRes) {
-        // Override with geo, otherwise use defaults
-        var location = {
-          lat: geoRes.lat,
-          lon: geoRes.lon
+    extension_type: 'fhmap',
+    input: "<div data-index='<%= index %>' id='<%= id%>' class='fh_map_canvas' style='width:<%= width%>; height:<%= height%>;'></div>",
+    initialize: function(options) {
+        this.options = options || {};
+        this.mapInited = 0;
+        this.maps = [];
+        this.mapData = [];
+        this.markers = [];
+        this.allMapInitFunc = [];
+        this.mapSettings = {
+            mapWidth: '100%',
+            mapHeight: '300px',
+            defaultZoom: 16,
+            location: {
+                lon: -5.80078125,
+                lat: 53.12040528310657
+            }
         };
-        $fh.map({
-          target: mapCanvas,
-          lon: location.lon,
-          lat: location.lat,
-          zoom: self.mapSettings.defaultZoom
-        }, function(res) {
-          self.maps[index] = res.map;
-          var marker = new google.maps.Marker({
-            position: self.maps[index].getCenter(),
-            map: self.maps[index],
-            draggable: true,
-            animation: google.maps.Animation.DROP,
-            title: 'Drag this to set position'
-          });
-          self.markers[index] = marker;
-          self.mapData[index] = {
-            'lat': marker.getPosition().lat(),
-            'long': marker.getPosition().lng(),
-            'zoom': self.mapSettings.defaultZoom
-          };
-          self.onMapInit(index);
-        }, function(err) {
-          console.error(err);
-          self.onMapInit(index);
+        FieldView.prototype.initialize.apply(this, arguments);
+    },
+    renderInput: function(index) {
+        return _.template(this.input, {
+            width: this.mapSettings.mapWidth,
+            height: this.mapSettings.mapHeight,
+            'index': index,
+            'id': Math.random()
         });
-      });
-    }
-  },
-  mapResize: function() {
-    var self = this;
-    if (self.maps.length > 0) {
-      for (var i = 0; i < self.maps.length; i++) {
-        var map = this.maps[i];
-        if (map) {
-          google.maps.event.trigger(map, 'resize');
-          map.setCenter(new google.maps.LatLng(self.mapData[i].lat, self.mapData[i]["long"]));
+    },
+    onMapInit: function(index) {
+        this.mapInited++;
+        if (this.mapInited == this.curRepeat) {
+            // all map initialised
+            this.allMapInit();
         }
-      }
-    }
-  },
-  addValidationRules: function() {},
-  valueFromElement: function(index) {
-    var map = this.maps[index];
-    var marker = this.markers[index];
-    if (map && marker) {
-      return {
-        'lat': marker.getPosition().lat(),
-        'long': marker.getPosition().lng(),
-        'zoom': map.getZoom()
-      };
-    } else {
-      return null;
-    }
-  },
-  valuePopulateToElement: function(index, value) {
-    var that = this;
-    function _handler() {
-      var map = that.maps[index];
-      var pt = new google.maps.LatLng(value.lat, value["long"]);
-      map.setCenter(pt);
-      map.setZoom(value.zoom);
-      that.markers[index].setPosition(pt);
-    }
-    if (value){
-      this.onAllMapInit(_handler);
-    }
+    },
+    allMapInit: function() {
+        while ((func = this.allMapInitFunc.shift()) != null) {
+            func();
+        }
+    },
+    onAllMapInit: function(func) {
+        if (this.mapInited == this.curRepeat) {
+            func();
+        } else {
+            if (this.allMapInitFunc.indexOf(func) == -1) {
+                this.allMapInitFunc.push(func);
+            }
+        }
+    },
+    onElementShow: function(index) {
+        var wrapperObj = this.getWrapper(index);
+        var self = this;
 
-  }
+        var mapCanvas = wrapperObj.find('.fh_map_canvas')[0];
+        // var options = this.parseCssOptions();
+        // // Merge
+        // this.mapSettings = _.defaults(options, this.mapSettings);
+
+        if ($fh.geo) {
+            $fh.geo({
+                interval: 0
+            }, function(geoRes) {
+                // Override with geo, otherwise use defaults
+                var location = {
+                    lat: geoRes.lat,
+                    lon: geoRes.lon
+                };
+                $fh.map({
+                    target: mapCanvas,
+                    lon: location.lon,
+                    lat: location.lat,
+                    zoom: self.mapSettings.defaultZoom
+                }, function(res) {
+                    self.maps[index] = res.map;
+                    var marker = new google.maps.Marker({
+                        position: self.maps[index].getCenter(),
+                        map: self.maps[index],
+                        draggable: true,
+                        animation: google.maps.Animation.DROP,
+                        title: 'Drag this to set position'
+                    });
+                    self.markers[index] = marker;
+                    self.mapData[index] = {
+                        'lat': marker.getPosition().lat(),
+                        'long': marker.getPosition().lng(),
+                        'zoom': self.mapSettings.defaultZoom
+                    };
+                    self.onMapInit(index);
+                }, function(err) {
+                    console.error(err);
+                    self.onMapInit(index);
+                });
+            });
+        }
+    },
+    mapResize: function() {
+        var self = this;
+        if (self.maps.length > 0) {
+            for (var i = 0; i < self.maps.length; i++) {
+                var map = this.maps[i];
+                if (map) {
+                    google.maps.event.trigger(map, 'resize');
+                    map.setCenter(new google.maps.LatLng(self.mapData[i].lat, self.mapData[i]["long"]));
+                }
+            }
+        }
+    },
+    addValidationRules: function() {},
+    valueFromElement: function(index) {
+        var map = this.maps[index];
+        var marker = this.markers[index];
+        if (map && marker) {
+            return {
+                'lat': marker.getPosition().lat(),
+                'long': marker.getPosition().lng(),
+                'zoom': map.getZoom()
+            };
+        } else {
+            return null;
+        }
+    },
+    valuePopulateToElement: function(index, value) {
+        var that = this;
+
+        function _handler() {
+            var map = that.maps[index];
+            var pt = new google.maps.LatLng(value.lat, value["long"]);
+            map.setCenter(pt);
+            map.setZoom(value.zoom);
+            that.markers[index].setPosition(pt);
+        }
+        if (value) {
+            this.onAllMapInit(_handler);
+        }
+
+    }
 });
 FieldNumberView = FieldView.extend({
     type:"number",
@@ -2853,282 +2872,282 @@ FieldSelectView = FieldView.extend({
   }
 });
 FieldSignatureView = FieldView.extend({
-  extension_type: 'fhsig',
-  input: "<img class='sigImage' style='width: 100%;' data-field='<%= fieldId %>' data-index='<%= index %>'/>",
-  templates: {
-    signaturePad: ['<div class="sigPad">', '<ul class="sigNav" style="text-align: center;">', '<button class="clearButton fh_appform_button_cancel">Clear</button><button class="cap_sig_done_btn fh_appform_button_action">Done</button>', '<br style="clear:both;" />', '</ul>', '<div class="sig sigWrapper">', '<canvas class="pad" width="<%= canvasWidth %>" height="<%= canvasHeight %>"></canvas>', '</div>', '</div>']
-  },
+    extension_type: 'fhsig',
+    input: "<img class='sigImage' style='width: 100%;' data-field='<%= fieldId %>' data-index='<%= index %>'/>",
+    templates: {
+        signaturePad: ['<div class="sigPad">', '<ul class="sigNav" style="text-align: center;">', '<button class="clearButton fh_appform_button_cancel">Clear</button><button class="cap_sig_done_btn fh_appform_button_action">Done</button>', '<br style="clear:both;" />', '</ul>', '<div class="sig sigWrapper">', '<canvas class="pad" width="<%= canvasWidth %>" height="<%= canvasHeight %>"></canvas>', '</div>', '</div>']
+    },
 
-  initialize: function() {
-    FieldView.prototype.initialize.call(this);
-    this.on('visible', this.clearError);
-  },
-  onElementShow: function(index) {
-    var html = $(this.renderButton(index, "<i class='fa fa-pencil'></i>&nbsp;Capture Signature", this.extension_type));
-    this.getWrapper(index).append(html);
-    var self = this;
-    html.on("click", function() {
-      self.showSignatureCapture(index);
-    });
-  },
-  validate: function(e) {
-    if (!$fh.forms.config.get("studioMode")) {
-      this.trigger("checkrules");
-    }
-  },
-  showSignatureCapture: function(index) {
-    var self = this;
-    var winHeight = $(window).height();
-    var winWidth = $(window).width();
-    var canvasHeight = winHeight - 70;
-    var canvasWidth = winWidth - 2;
-    var lineTop = canvasHeight - 20;
-
-    this.$el.append(_.template(this.templates.signaturePad.join(''), {
-      "canvasHeight": canvasHeight,
-      "canvasWidth": canvasWidth
-    }));
-    var signaturePad = $('.sigPad', this.$el);
-    signaturePad.css({
-      position: 'fixed',
-      'z-index': 9999,
-      'bottom': '0px',
-      'right': '0px',
-      top: '0px',
-      left: '0px',
-      'background-color': '#fff'
-    });
-
-    var navHeight = $('.sigNav', this.$el).outerHeight();
-    $('.sigPad', this.$el).css({
-      width: '100%',
-      height: winHeight + 'px'
-    });
-    $('.sigWrapper', this.$el).css({
-      height: (winHeight - navHeight - 20) + "px"
-    });
-    sigPad = $('.sigPad', this.$el).signaturePad({
-      drawOnly: true,
-      lineTop: lineTop
-    });
-
-    $(this.$el).data('sigpadInited', true);
-    // Bind capture
-    $('.cap_sig_done_btn', this.$el).unbind('click').bind('click', function(e) {
-      // var loadingView = new LoadingView();
-      // loadingView.show("generating signature");
-      e.preventDefault();
-      var sig = sigPad.getSignature(); // get the default image type
-      if (sig && sig.length) {
-        var sigData = sigPad.getSignatureImage();
-        if (self.isEmptyImage(sigData)) { //toDataUrl not supported by current browser. fallback use bmp encoder
-          sigData = self.toBmp();
+    initialize: function(options) {
+        this.options = options || {};
+        FieldView.prototype.initialize.call(this);
+        this.on('visible', this.clearError);
+    },
+    onElementShow: function(index) {
+        var html = $(this.renderButton(index, "<i class='fa fa-pencil'></i>&nbsp;Capture Signature", this.extension_type));
+        this.getWrapper(index).append(html);
+        var self = this;
+        html.on("click", function() {
+            self.showSignatureCapture(index);
+        });
+    },
+    validate: function(e) {
+        if (!$fh.forms.config.get("studioMode")) {
+            this.trigger("checkrules");
         }
-        self.setSignature(index, sigData);
-      }
-      $('.sigPad', self.$el).hide();
-    });
-  },
-  setSignature: function(index, base64Img) {
-    var wrapper = this.getWrapper(index);
-    wrapper.find("img.sigImage").attr("src", base64Img);
-  },
-  valueFromElement: function(index) {
-    var wrapper = this.getWrapper(index);
-    var img = wrapper.find("img.sigImage");
-    return img.attr("src");
-  },
-  valuePopulateToElement: function(index, value) {
-    if (value) {
-      var base64Data = value.data;
-      var base64Img = value.imgHeader + base64Data;
-      var wrapper = this.getWrapper(index);
-      var img = wrapper.find("img.sigImage");
-      img.attr("src", base64Img);
+    },
+    showSignatureCapture: function(index) {
+        var self = this;
+        var winHeight = $(window).height();
+        var winWidth = $(window).width();
+        var canvasHeight = winHeight - 70;
+        var canvasWidth = winWidth - 2;
+        var lineTop = canvasHeight - 20;
+
+        this.$el.append(_.template(this.templates.signaturePad.join(''), {
+            "canvasHeight": canvasHeight,
+            "canvasWidth": canvasWidth
+        }));
+        var signaturePad = $('.sigPad', this.$el);
+        signaturePad.css({
+            position: 'fixed',
+            'z-index': 9999,
+            'bottom': '0px',
+            'right': '0px',
+            top: '0px',
+            left: '0px',
+            'background-color': '#fff'
+        });
+
+        var navHeight = $('.sigNav', this.$el).outerHeight();
+        $('.sigPad', this.$el).css({
+            width: '100%',
+            height: winHeight + 'px'
+        });
+        $('.sigWrapper', this.$el).css({
+            height: (winHeight - navHeight - 20) + "px"
+        });
+        sigPad = $('.sigPad', this.$el).signaturePad({
+            drawOnly: true,
+            lineTop: lineTop
+        });
+
+        $(this.$el).data('sigpadInited', true);
+        // Bind capture
+        $('.cap_sig_done_btn', this.$el).unbind('click').bind('click', function(e) {
+            // var loadingView = new LoadingView();
+            // loadingView.show("generating signature");
+            e.preventDefault();
+            var sig = sigPad.getSignature(); // get the default image type
+            if (sig && sig.length) {
+                var sigData = sigPad.getSignatureImage();
+                if (self.isEmptyImage(sigData)) { //toDataUrl not supported by current browser. fallback use bmp encoder
+                    sigData = self.toBmp();
+                }
+                self.setSignature(index, sigData);
+            }
+            $('.sigPad', self.$el).hide();
+        });
+    },
+    setSignature: function(index, base64Img) {
+        var wrapper = this.getWrapper(index);
+        wrapper.find("img.sigImage").attr("src", base64Img);
+    },
+    valueFromElement: function(index) {
+        var wrapper = this.getWrapper(index);
+        var img = wrapper.find("img.sigImage");
+        return img.attr("src");
+    },
+    valuePopulateToElement: function(index, value) {
+        if (value) {
+            var base64Data = value.data;
+            var base64Img = value.imgHeader + base64Data;
+            var wrapper = this.getWrapper(index);
+            var img = wrapper.find("img.sigImage");
+            img.attr("src", base64Img);
+        }
+
+    },
+    dbgImage: function(msg, image) {
+        console.log(msg + (image ? (image.substring(0, image.indexOf(",")) + "[len=" + image.length + "]") : " empty"));
+    },
+
+    toBmp: function(image) {
+        image = _.extend({}, image || {}, {
+            quality: 100,
+            width: 248,
+            height: 100
+        });
+        var sigData;
+        var cnvs = $('.sigPad', self.$el).find('canvas')[0];
+
+        var oScaledCanvas = this.scaleCanvas(cnvs, image.width, image.height);
+        var oData = this.readCanvasData(oScaledCanvas);
+        var strImgData = this.createBMP(oData);
+
+        sigData = this.makeDataURI(strImgData, "image/bmp");
+        return sigData;
+    },
+
+    // bitMap handling code
+    readCanvasData: function(canvas) {
+        var iWidth = parseInt(canvas.width, 10);
+        var iHeight = parseInt(canvas.height, 10);
+        return canvas.getContext("2d").getImageData(0, 0, iWidth, iHeight);
+    },
+
+    encodeData: function(data) {
+        var strData = "";
+        if (typeof data == "string") {
+            strData = data;
+        } else {
+            var aData = data;
+            for (var i = 0; i < aData.length; i++) {
+                strData += String.fromCharCode(aData[i]);
+            }
+        }
+        return btoa(strData);
+    },
+
+    createBMP: function(oData) {
+        var aHeader = [];
+
+        var iWidth = oData.width;
+        var iHeight = oData.height;
+
+        aHeader.push(0x42); // magic 1
+        aHeader.push(0x4D);
+
+        var iFileSize = iWidth * iHeight * 3 + 54; // total header size = 54
+        // bytes
+        aHeader.push(iFileSize % 256);
+        iFileSize = Math.floor(iFileSize / 256);
+        aHeader.push(iFileSize % 256);
+        iFileSize = Math.floor(iFileSize / 256);
+        aHeader.push(iFileSize % 256);
+        iFileSize = Math.floor(iFileSize / 256);
+        aHeader.push(iFileSize % 256);
+
+        aHeader.push(0); // reserved
+        aHeader.push(0);
+        aHeader.push(0); // reserved
+        aHeader.push(0);
+
+        aHeader.push(54); // dataoffset
+        aHeader.push(0);
+        aHeader.push(0);
+        aHeader.push(0);
+
+        var aInfoHeader = [];
+        aInfoHeader.push(40); // info header size
+        aInfoHeader.push(0);
+        aInfoHeader.push(0);
+        aInfoHeader.push(0);
+
+        var iImageWidth = iWidth;
+        aInfoHeader.push(iImageWidth % 256);
+        iImageWidth = Math.floor(iImageWidth / 256);
+        aInfoHeader.push(iImageWidth % 256);
+        iImageWidth = Math.floor(iImageWidth / 256);
+        aInfoHeader.push(iImageWidth % 256);
+        iImageWidth = Math.floor(iImageWidth / 256);
+        aInfoHeader.push(iImageWidth % 256);
+
+        var iImageHeight = iHeight;
+        aInfoHeader.push(iImageHeight % 256);
+        iImageHeight = Math.floor(iImageHeight / 256);
+        aInfoHeader.push(iImageHeight % 256);
+        iImageHeight = Math.floor(iImageHeight / 256);
+        aInfoHeader.push(iImageHeight % 256);
+        iImageHeight = Math.floor(iImageHeight / 256);
+        aInfoHeader.push(iImageHeight % 256);
+
+        aInfoHeader.push(1); // num of planes
+        aInfoHeader.push(0);
+
+        aInfoHeader.push(24); // num of bits per pixel
+        aInfoHeader.push(0);
+
+        aInfoHeader.push(0); // compression = none
+        aInfoHeader.push(0);
+        aInfoHeader.push(0);
+        aInfoHeader.push(0);
+
+        var iDataSize = iWidth * iHeight * 3;
+        aInfoHeader.push(iDataSize % 256);
+        iDataSize = Math.floor(iDataSize / 256);
+        aInfoHeader.push(iDataSize % 256);
+        iDataSize = Math.floor(iDataSize / 256);
+        aInfoHeader.push(iDataSize % 256);
+        iDataSize = Math.floor(iDataSize / 256);
+        aInfoHeader.push(iDataSize % 256);
+
+        for (var i = 0; i < 16; i++) {
+            aInfoHeader.push(0); // these bytes not used
+        }
+
+        var iPadding = (4 - ((iWidth * 3) % 4)) % 4;
+
+        var aImgData = oData.data;
+
+        var strPixelData = "";
+        var y = iHeight;
+        do {
+            var iOffsetY = iWidth * (y - 1) * 4;
+            var strPixelRow = "";
+            for (var x = 0; x < iWidth; x++) {
+                var iOffsetX = 4 * x;
+
+                strPixelRow += String.fromCharCode(aImgData[iOffsetY + iOffsetX + 2]);
+                strPixelRow += String.fromCharCode(aImgData[iOffsetY + iOffsetX + 1]);
+                strPixelRow += String.fromCharCode(aImgData[iOffsetY + iOffsetX]);
+            }
+            for (var c = 0; c < iPadding; c++) {
+                strPixelRow += String.fromCharCode(0);
+            }
+            strPixelData += strPixelRow;
+        } while (--y);
+
+        var strEncoded = this.encodeData(aHeader.concat(aInfoHeader)) + this.encodeData(strPixelData);
+
+        return strEncoded;
+    },
+    makeDataURI: function(strData, strMime) {
+        return "data:" + strMime + ";base64," + strData;
+    },
+    scaleCanvas: function(canvas, iWidth, iHeight) {
+        if (iWidth && iHeight) {
+            var oSaveCanvas = document.createElement("canvas");
+            oSaveCanvas.width = iWidth;
+            oSaveCanvas.height = iHeight;
+            oSaveCanvas.style.width = iWidth + "px";
+            oSaveCanvas.style.height = iHeight + "px";
+
+            var oSaveCtx = oSaveCanvas.getContext("2d");
+
+            oSaveCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, iWidth, iHeight);
+            return oSaveCanvas;
+        }
+        return canvas;
+    },
+    isEmptyImage: function(image) {
+        return image === null || image === "" || image === "data:,";
+    },
+    splitImage: function(image) {
+        var PREFIX = "data:";
+        var ENCODING = ";base64,";
+        var start = image.indexOf(PREFIX);
+        var content_type = "image/bmp";
+        var ext = "bmp";
+        if (start >= 0) {
+            var end = image.indexOf(ENCODING, start) + 1;
+            content_type = image.substring(start, end - 1);
+            ext = content_type.split("/")[1];
+        }
+        return [content_type, ext];
     }
-
-  },
-  dbgImage: function(msg, image) {
-    console.log(msg + (image ? (image.substring(0, image.indexOf(",")) + "[len=" + image.length + "]") : " empty"));
-  },
-
-  toBmp: function(image) {
-    image = _.extend({}, image || {}, {
-      quality: 100,
-      width: 248,
-      height: 100
-    });
-    var sigData;
-    var cnvs = $('.sigPad', self.$el).find('canvas')[0];
-
-    var oScaledCanvas = this.scaleCanvas(cnvs, image.width, image.height);
-    var oData = this.readCanvasData(oScaledCanvas);
-    var strImgData = this.createBMP(oData);
-
-    sigData = this.makeDataURI(strImgData, "image/bmp");
-    return sigData;
-  },
-
-  // bitMap handling code
-  readCanvasData: function(canvas) {
-    var iWidth = parseInt(canvas.width, 10);
-    var iHeight = parseInt(canvas.height, 10);
-    return canvas.getContext("2d").getImageData(0, 0, iWidth, iHeight);
-  },
-
-  encodeData: function(data) {
-    var strData = "";
-    if (typeof data == "string") {
-      strData = data;
-    } else {
-      var aData = data;
-      for (var i = 0; i < aData.length; i++) {
-        strData += String.fromCharCode(aData[i]);
-      }
-    }
-    return btoa(strData);
-  },
-
-  createBMP: function(oData) {
-    var aHeader = [];
-
-    var iWidth = oData.width;
-    var iHeight = oData.height;
-
-    aHeader.push(0x42); // magic 1
-    aHeader.push(0x4D);
-
-    var iFileSize = iWidth * iHeight * 3 + 54; // total header size = 54
-    // bytes
-    aHeader.push(iFileSize % 256);
-    iFileSize = Math.floor(iFileSize / 256);
-    aHeader.push(iFileSize % 256);
-    iFileSize = Math.floor(iFileSize / 256);
-    aHeader.push(iFileSize % 256);
-    iFileSize = Math.floor(iFileSize / 256);
-    aHeader.push(iFileSize % 256);
-
-    aHeader.push(0); // reserved
-    aHeader.push(0);
-    aHeader.push(0); // reserved
-    aHeader.push(0);
-
-    aHeader.push(54); // dataoffset
-    aHeader.push(0);
-    aHeader.push(0);
-    aHeader.push(0);
-
-    var aInfoHeader = [];
-    aInfoHeader.push(40); // info header size
-    aInfoHeader.push(0);
-    aInfoHeader.push(0);
-    aInfoHeader.push(0);
-
-    var iImageWidth = iWidth;
-    aInfoHeader.push(iImageWidth % 256);
-    iImageWidth = Math.floor(iImageWidth / 256);
-    aInfoHeader.push(iImageWidth % 256);
-    iImageWidth = Math.floor(iImageWidth / 256);
-    aInfoHeader.push(iImageWidth % 256);
-    iImageWidth = Math.floor(iImageWidth / 256);
-    aInfoHeader.push(iImageWidth % 256);
-
-    var iImageHeight = iHeight;
-    aInfoHeader.push(iImageHeight % 256);
-    iImageHeight = Math.floor(iImageHeight / 256);
-    aInfoHeader.push(iImageHeight % 256);
-    iImageHeight = Math.floor(iImageHeight / 256);
-    aInfoHeader.push(iImageHeight % 256);
-    iImageHeight = Math.floor(iImageHeight / 256);
-    aInfoHeader.push(iImageHeight % 256);
-
-    aInfoHeader.push(1); // num of planes
-    aInfoHeader.push(0);
-
-    aInfoHeader.push(24); // num of bits per pixel
-    aInfoHeader.push(0);
-
-    aInfoHeader.push(0); // compression = none
-    aInfoHeader.push(0);
-    aInfoHeader.push(0);
-    aInfoHeader.push(0);
-
-    var iDataSize = iWidth * iHeight * 3;
-    aInfoHeader.push(iDataSize % 256);
-    iDataSize = Math.floor(iDataSize / 256);
-    aInfoHeader.push(iDataSize % 256);
-    iDataSize = Math.floor(iDataSize / 256);
-    aInfoHeader.push(iDataSize % 256);
-    iDataSize = Math.floor(iDataSize / 256);
-    aInfoHeader.push(iDataSize % 256);
-
-    for (var i = 0; i < 16; i++) {
-      aInfoHeader.push(0); // these bytes not used
-    }
-
-    var iPadding = (4 - ((iWidth * 3) % 4)) % 4;
-
-    var aImgData = oData.data;
-
-    var strPixelData = "";
-    var y = iHeight;
-    do {
-      var iOffsetY = iWidth * (y - 1) * 4;
-      var strPixelRow = "";
-      for (var x = 0; x < iWidth; x++) {
-        var iOffsetX = 4 * x;
-
-        strPixelRow += String.fromCharCode(aImgData[iOffsetY + iOffsetX + 2]);
-        strPixelRow += String.fromCharCode(aImgData[iOffsetY + iOffsetX + 1]);
-        strPixelRow += String.fromCharCode(aImgData[iOffsetY + iOffsetX]);
-      }
-      for (var c = 0; c < iPadding; c++) {
-        strPixelRow += String.fromCharCode(0);
-      }
-      strPixelData += strPixelRow;
-    } while (--y);
-
-    var strEncoded = this.encodeData(aHeader.concat(aInfoHeader)) + this.encodeData(strPixelData);
-
-    return strEncoded;
-  },
-  makeDataURI: function(strData, strMime) {
-    return "data:" + strMime + ";base64," + strData;
-  },
-  scaleCanvas: function(canvas, iWidth, iHeight) {
-    if (iWidth && iHeight) {
-      var oSaveCanvas = document.createElement("canvas");
-      oSaveCanvas.width = iWidth;
-      oSaveCanvas.height = iHeight;
-      oSaveCanvas.style.width = iWidth + "px";
-      oSaveCanvas.style.height = iHeight + "px";
-
-      var oSaveCtx = oSaveCanvas.getContext("2d");
-
-      oSaveCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, iWidth, iHeight);
-      return oSaveCanvas;
-    }
-    return canvas;
-  },
-  isEmptyImage: function(image) {
-    return image === null || image === "" || image === "data:,";
-  },
-  splitImage: function(image) {
-    var PREFIX = "data:";
-    var ENCODING = ";base64,";
-    var start = image.indexOf(PREFIX);
-    var content_type = "image/bmp";
-    var ext = "bmp";
-    if (start >= 0) {
-      var end = image.indexOf(ENCODING, start) + 1;
-      content_type = image.substring(start, end - 1);
-      ext = content_type.split("/")[1];
-    }
-    return [content_type, ext];
-  }
 
 });
-
 FieldTextView = FieldView.extend({
 
 });
@@ -3220,886 +3239,909 @@ FieldDateTimeView = FieldView.extend({
 FieldUrlView = FieldView.extend({
   type: "url"
 });
-var PageView=BaseView.extend({
+var PageView = BaseView.extend({
 
-  viewMap: {
-    "text": FieldTextView,
-    "number": FieldNumberView,
-    "textarea": FieldTextareaView,
-    "radio": FieldRadioView,
-    "checkboxes": FieldCheckboxView,
-    "dropdown": FieldSelectView,
-    "file": FieldFileView,
-    "emailAddress": FieldEmailView,
-    "phone": FieldPhoneView,
-    "location": FieldGeoView,
-    "photo": FieldCameraView,
-    "signature": FieldSignatureView,
-    "locationMap": FieldMapView,
-    "dateTime":FieldDateTimeView,
-    "sectionBreak":FieldSectionBreak,
-    "url":FieldUrlView
-  },
-  templates : {
-    pageTitle : '<div class="fh_appform_page_title"><%= pageTitle %></div>',
-    pageDescription: '<div class="fh_appform_page_description"><%= pageDescription%></div>',
-    section: '<div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area"></div>'
-  },
+    viewMap: {
+        "text": FieldTextView,
+        "number": FieldNumberView,
+        "textarea": FieldTextareaView,
+        "radio": FieldRadioView,
+        "checkboxes": FieldCheckboxView,
+        "dropdown": FieldSelectView,
+        "file": FieldFileView,
+        "emailAddress": FieldEmailView,
+        "phone": FieldPhoneView,
+        "location": FieldGeoView,
+        "photo": FieldCameraView,
+        "signature": FieldSignatureView,
+        "locationMap": FieldMapView,
+        "dateTime": FieldDateTimeView,
+        "sectionBreak": FieldSectionBreak,
+        "url": FieldUrlView
+    },
+    templates: {
+        pageTitle: '<div class="fh_appform_page_title"><%= pageTitle %></div>',
+        pageDescription: '<div class="fh_appform_page_description"><%= pageDescription%></div>',
+        section: '<div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area"></div>'
+    },
 
-  initialize: function() {
-    var self = this;
-    _.bindAll(this, 'render',"show","hide");
-    // Page Model will emit events if user input meets page rule to hide / show the page.
-    this.model.on("visible",self.show);
-    this.model.on("hidden",self.hide);
-    this.render();
-  },
+    initialize: function(options) {
+        this.options = options || {};
+        var self = this;
+        _.bindAll(this, 'render', "show", "hide");
+        // Page Model will emit events if user input meets page rule to hide / show the page.
+        this.model.on("visible", self.show);
+        this.model.on("hidden", self.hide);
+        this.render();
+    },
 
-  render: function() {
-    var self = this;
-    this.fieldViews = {};
-    this.sectionViews = {};
-    // all pages hidden initially
-    this.$el.empty().addClass('fh_appform_page fh_appform_hidden');
+    render: function() {
+        var self = this;
+        this.fieldViews = {};
+        this.sectionViews = {};
+        // all pages hidden initially
+        this.$el.empty().addClass('fh_appform_page fh_appform_hidden');
 
-    //Need to add the page title and description
-    this.$el.append(_.template(this.templates.pageDescription, {pageDescription: this.model.getDescription()}));
+        //Need to add the page title and description
+        this.$el.append(_.template(this.templates.pageDescription, {
+            pageDescription: this.model.getDescription()
+        }));
 
-    // add to parent before init fields so validation can work
-    this.options.parentEl.append(this.$el);
+        // add to parent before init fields so validation can work
+        this.options.parentEl.append(this.$el);
 
-    var fieldModelList=this.model.getFieldModelList();
+        var fieldModelList = this.model.getFieldModelList();
 
-    var sections = this.model.getSections();
+        var sections = this.model.getSections();
 
-    if(sections != null){
-      var sectionKey;
-      for(sectionKey in sections){
-        this.$el.append(_.template(this.templates.section, {"sectionId": sectionKey}));
-      }
+        if (sections != null) {
+            var sectionKey;
+            for (sectionKey in sections) {
+                this.$el.append(_.template(this.templates.section, {
+                    "sectionId": sectionKey
+                }));
+            }
 
-      //Add the section fields
-      for(sectionKey in sections){
-        sections[sectionKey].forEach(function(field, index){
-          var fieldType = field.getType();
-          if (self.viewMap[fieldType]) {
+            //Add the section fields
+            for (sectionKey in sections) {
+                sections[sectionKey].forEach(function(field, index) {
+                    var fieldType = field.getType();
+                    if (self.viewMap[fieldType]) {
 
-            console.log("*- "+fieldType);
+                        console.log("*- " + fieldType);
 
-            self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
-              parentEl: self.$el,
-              parentView: self,
-              model: field,
-              formView: self.options.formView,
-              sectionName: sectionKey
-            });
-          } else {
-            console.warn('FIELD NOT SUPPORTED:' + fieldType);
-          }
-        });
-      }
-    } else {
-      fieldModelList.forEach(function (field, index) {
-        if(!field) return;
-        var fieldType = field.getType();
-        if (self.viewMap[fieldType]) {
-
-          console.log("*- "+fieldType);
-
-          self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
-            parentEl: self.$el,
-            parentView: self,
-            model: field,
-            formView: self.options.formView
-          });
+                        self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
+                            parentEl: self.$el,
+                            parentView: self,
+                            model: field,
+                            formView: self.options.formView,
+                            sectionName: sectionKey
+                        });
+                    } else {
+                        console.warn('FIELD NOT SUPPORTED:' + fieldType);
+                    }
+                });
+            }
         } else {
-          console.warn('FIELD NOT SUPPORTED:' + fieldType);
+            fieldModelList.forEach(function(field, index) {
+                if (!field) return;
+                var fieldType = field.getType();
+                if (self.viewMap[fieldType]) {
+
+                    console.log("*- " + fieldType);
+
+                    self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
+                        parentEl: self.$el,
+                        parentView: self,
+                        model: field,
+                        formView: self.options.formView
+                    });
+                } else {
+                    console.warn('FIELD NOT SUPPORTED:' + fieldType);
+                }
+            });
         }
-      });
+    },
+
+    show: function() {
+        var self = this;
+        self.$el.removeClass('fh_appform_hidden');
+
+        for (var fieldViewId in self.fieldViews) {
+            if (self.fieldViews[fieldViewId].mapResize) {
+                self.fieldViews[fieldViewId].mapResize();
+            }
+        }
+    },
+
+    hide: function() {
+        this.$el.addClass('fh_appform_hidden');
+    },
+
+    showField: function(id) {
+        // show field if it's on this page
+        if (this.fieldViews[id]) {
+            this.fieldViews[id].show();
+        }
+    },
+
+    hideField: function(id) {
+        // hide field if it's on this page
+        if (this.fieldViews[id]) {
+            this.fieldViews[id].hide();
+        }
+    },
+
+    isValid: function() {
+        // only validate form inputs on this page that are visible or type=hidden, or have validate_ignore class
+        var validateEls = this.$el.find('.fh_appform_field_input').not('.validate_ignore]:hidden');
+        return validateEls.length ? validateEls.valid() : true;
     }
-  },
 
-  show: function () {
-    var self = this;
-    self.$el.removeClass('fh_appform_hidden');
-
-    for(var fieldViewId in self.fieldViews){
-      if(self.fieldViews[fieldViewId].mapResize){
-        self.fieldViews[fieldViewId].mapResize();
-      }
-    }
-  },
-
-  hide: function () {
-    this.$el.addClass('fh_appform_hidden');
-  },
-
-  showField: function (id) {
-    // show field if it's on this page
-    if (this.fieldViews[id]) {
-      this.fieldViews[id].show();
-    }
-  },
-
-  hideField: function (id) {
-    // hide field if it's on this page
-    if (this.fieldViews[id]) {
-      this.fieldViews[id].hide();
-    }
-  },
-
-  isValid: function () {
-    // only validate form inputs on this page that are visible or type=hidden, or have validate_ignore class
-    var validateEls = this.$el.find('.fh_appform_field_input').not('.validate_ignore]:hidden');
-    return validateEls.length ? validateEls.valid() : true;
-  }
-
-//  checkRules: function () {
-//    var self = this;
-//    var result = {};
-//
-//    var rules = {
-//      SkipToPage: function (rulePasses, params) {
-//        var pageToSkipTo = params.Setting.Page;
-//        if (rulePasses) {
-//          result.skipToPage = pageToSkipTo;
-//        }
-//      }
-//    };
-//
-//    // iterate over page rules, if any, calling relevant rule function
-//    _(this.model.get('Rules') || []).forEach(function (rule, index) {
-//      // get element that rule condition is based on
-//      var jqEl = self.$el.find('#Field' + rule.condition.FieldName + ',' + '#radioField' + rule.condition.FieldName);
-//      rule.fn = rules[rule.Type];
-//      if(jqEl.data("type") === 'radio') {
-//        var rEl = self.$el.find('#Field' + rule.condition.FieldName + '_' + index);
-//        rEl.wufoo_rules('exec', rule);
-//      } else {
-//        jqEl.wufoo_rules('exec', rule);
-//      }
-//    });
-//
-//    return result;
-//  }
+    //  checkRules: function () {
+    //    var self = this;
+    //    var result = {};
+    //
+    //    var rules = {
+    //      SkipToPage: function (rulePasses, params) {
+    //        var pageToSkipTo = params.Setting.Page;
+    //        if (rulePasses) {
+    //          result.skipToPage = pageToSkipTo;
+    //        }
+    //      }
+    //    };
+    //
+    //    // iterate over page rules, if any, calling relevant rule function
+    //    _(this.model.get('Rules') || []).forEach(function (rule, index) {
+    //      // get element that rule condition is based on
+    //      var jqEl = self.$el.find('#Field' + rule.condition.FieldName + ',' + '#radioField' + rule.condition.FieldName);
+    //      rule.fn = rules[rule.Type];
+    //      if(jqEl.data("type") === 'radio') {
+    //        var rEl = self.$el.find('#Field' + rule.condition.FieldName + '_' + index);
+    //        rEl.wufoo_rules('exec', rule);
+    //      } else {
+    //        jqEl.wufoo_rules('exec', rule);
+    //      }
+    //    });
+    //
+    //    return result;
+    //  }
 
 });
 var FormView = BaseView.extend({
-  "pageNum": 0,
-  "pageCount": 0,
-  "pageViews": [],
-  "submission": null,
-  "fieldValue": [],
-  templates: {
-    formLogo: '<div class="fh_appform_logo_container"><div class="fh_appform_logo"></div></div>',
-    formTitle: '<div class="fh_appform_form_title"><%= title %></div>',
-    formDescription: '<div class="fh_appform_form_description"><%= description %></div>',
-    formContainer: '<div id="fh_appform_container" class="fh_appform_form_area fh_appform_container"></div>',
-    buttons: '<div id="fh_appform_navigation_buttons" class="fh_appform_button_bar"><button class="fh_appform_button_saveDraft fh_appform_hidden fh_appform_button_main fh_appform_button_action">Save Draft</button><button class="fh_appform_button_previous fh_appform_hidden fh_appform_button_default">Previous</button><button class="fh_appform_button_next fh_appform_hidden fh_appform_button_default">Next</button><button class="fh_appform_button_submit fh_appform_hidden fh_appform_button_action">Submit</button></div>'
-  },
-  events: {
-    "click button.fh_appform_button_next": "nextPage",
-    "click button.fh_appform_button_previous": "prevPage",
-    "click button.fh_appform_button_saveDraft": "saveToDraft",
-    "click button.fh_appform_button_submit": "submit"
-  },
-  elementNames: {
-    formContainer: "#fh_appform_container"
-  },
+    "pageNum": 0,
+    "pageCount": 0,
+    "pageViews": [],
+    "submission": null,
+    "fieldValue": [],
+    templates: {
+        formLogo: '<div class="fh_appform_logo_container"><div class="fh_appform_logo"></div></div>',
+        formTitle: '<div class="fh_appform_form_title"><%= title %></div>',
+        formDescription: '<div class="fh_appform_form_description"><%= description %></div>',
+        formContainer: '<div id="fh_appform_container" class="fh_appform_form_area fh_appform_container"></div>',
+        buttons: '<div id="fh_appform_navigation_buttons" class="fh_appform_button_bar"><button class="fh_appform_button_saveDraft fh_appform_hidden fh_appform_button_main fh_appform_button_action">Save Draft</button><button class="fh_appform_button_previous fh_appform_hidden fh_appform_button_default">Previous</button><button class="fh_appform_button_next fh_appform_hidden fh_appform_button_default">Next</button><button class="fh_appform_button_submit fh_appform_hidden fh_appform_button_action">Submit</button></div>'
+    },
+    events: {
+        "click button.fh_appform_button_next": "nextPage",
+        "click button.fh_appform_button_previous": "prevPage",
+        "click button.fh_appform_button_saveDraft": "saveToDraft",
+        "click button.fh_appform_button_submit": "submit"
+    },
+    elementNames: {
+        formContainer: "#fh_appform_container"
+    },
 
-  initialize: function() {
-    var self = this;
-    _.bindAll(this, "checkRules", "onValidateError");
-    this.el = this.options.parentEl;
-    this.fieldModels = [];
-    this.pageViewStatus = {};
-    this.el.empty();
-  },
-  loadForm: function(params, cb) {
-    var self = this;
+    initialize: function(options) {
+        this.options = options || {};
+        var self = this;
+        _.bindAll(this, "checkRules", "onValidateError");
+        this.el = this.options.parentEl;
+        this.fieldModels = [];
+        this.pageViewStatus = {};
+        this.el.empty();
+    },
+    loadForm: function(params, cb) {
+        var self = this;
 
-    if (params.formId) {
-      self.onLoad();
-      $fh.forms.getForm(params, function(err, form) {
-        if (err) {
-          throw (err.body);
+        if (params.formId) {
+            self.onLoad();
+            $fh.forms.getForm(params, function(err, form) {
+                if (err) {
+                    throw (err.body);
+                }
+                self.form = form;
+                self.params = params;
+                self.initWithForm(form, params);
+                cb();
+            });
+        } else if (params.form) {
+            self.form = params.form;
+            self.params = params;
+            self.initWithForm(params.form, params);
+            cb();
         }
-        self.form = form;
-        self.params = params;
-        self.initWithForm(form, params);
-        cb();
-      });
-    } else if (params.form) {
-      self.form = params.form;
-      self.params = params;
-      self.initWithForm(params.form, params);
-      cb();
-    }
-  },
-  readOnly: function() {
-    this.readonly = true;
-    for (var i = 0; i<this.fieldViews.length; i++) {
-      var fieldView=this.fieldViews[i];
-      fieldView.$el.find("button,input,textarea,select").attr("disabled", "disabled");
-    }
-    this.el.find("button.fh_appform_button_saveDraft").hide();
-    this.el.find(" button.fh_appform_button_submit").hide();
-  },
-  onValidateError: function(res) {
-    var firstView=null;
-    for (var fieldId in res) {
-      if (res[fieldId]) {
-        var fieldView = this.getFieldViewById(fieldId);
-        if (firstView==null){
-          firstView=fieldView;
+    },
+    readOnly: function() {
+        this.readonly = true;
+        for (var i = 0; i < this.fieldViews.length; i++) {
+            var fieldView = this.fieldViews[i];
+            fieldView.$el.find("button,input,textarea,select").attr("disabled", "disabled");
         }
-        var errorMsgs = res[fieldId].fieldErrorMessage;
-        for (var i = 0; i < errorMsgs.length; i++) {
-          if (errorMsgs[i]) {
-            fieldView.setErrorText(i, errorMsgs[i]);
-          }
-        }
-      }
-    }
-    
-  },
-  initWithForm: function(form, params) {
-    var self = this;
-    var pageView;
-    self.formId = form.getFormId();
-
-    self.el.empty();
-    self.model = form;
-
-    //Page views are always added before anything else happens, need to render the form title first
-    this.el.append(this.templates.formContainer);
-    self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formLogo, {}));
-    self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formTitle, {title: this.model.getName()}));
-    self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formDescription, {description: this.model.getDescription()}));
-
-    if (!params.submission) {
-      params.submission = self.model.newSubmission();
-    }
-    self.submission = params.submission;
-    self.submission.on("validationerror", self.onValidateError);
-
-    // Init Pages --------------
-    var pageModelList = form.getPageModelList();
-    var pageViews = [];
-
-    self.steps = new StepsView({
-      parentEl: self.el.find(this.elementNames.formContainer),
-      parentView: self,
-      model: self.model
-    });
-
-    for (var i = 0; i<pageModelList.length; i++) {
-      var pageModel = pageModelList[i];
-      var pageId = pageModel.getPageId();
-
-      self.pageViewStatus[pageId] = {"targetId" : pageId, "action" : "show"};
-
-      // get fieldModels
-      var list = pageModel.getFieldModelList();
-      self.fieldModels = self.fieldModels.concat(list);
-
-      pageView = new PageView({
-        model: pageModel,
-        parentEl: self.el.find(this.elementNames.formContainer),
-        formView: self
-      });
-      pageViews.push(pageView);
-    }
-    var fieldViews = [];
-    for ( i = 0; i<pageViews.length; i++) {
-      pageView = pageViews[i];
-      var pageFieldViews = pageView.fieldViews;
-      for (var key in pageFieldViews) {
-        var fView = pageFieldViews[key];
-        fieldViews.push(fView);
-        fView.on("checkrules", self.checkRules);
-        if (self.readonly) {
-          fView.$el.find("input,button,textarea,select").attr("disabled", "disabled");
-        }
-      }
-    }
-
-    self.fieldViews = fieldViews;
-    self.pageViews = pageViews;
-    self.pageCount = pageViews.length;
-
-    self.checkRules();
-  },
-  checkRules: function() {
-    var self = this;
-    self.populateFieldViewsToSubmission(false, function() {
-      var submission = self.submission;
-      submission.checkRules(function(err, res) {
-        if (err) {
-          console.error(err);
-        } else {
-          var actions = res.actions;
-          var targetId;
-          for (targetId in actions.pages) {
-            self.pageViewStatus[targetId] = actions.pages[targetId];
-          }
-
-          var fields = actions.fields;
-
-          for (targetId in fields) {
-            self.performRuleAction("field", targetId, fields[targetId]["action"]);
-          }
-        }
-        self.checkPages();
-      });
-    });
-  },
-  performRuleAction: function(type, targetId, action) {
-    var target = null;
-    if (type == "field") {
-      target = this.getFieldViewById(targetId);
-    }
-    if (target == null) {
-      console.error("cannot find target with id:" + targetId);
-      return;
-    }
-    switch (action) {
-      case "show":
-        target.show();
-        break;
-      case "hide":
-        target.hide();
-        break;
-      default:
-        console.error("action not defined:" + action);
-    }
-  },
-  rebindButtons: function() {
-    var self = this;
-    this.el.find("button.fh_appform_button_next").unbind().bind("click", function() {
-      self.nextPage();
-    });
-
-    this.el.find("button.fh_appform_button_previous").unbind().bind("click", function() {
-      self.prevPage();
-    });
-
-    this.el.find("button.fh_appform_button_saveDraft").unbind().bind("click", function() {
-      self.saveToDraft();
-    });
-    this.el.find("button.fh_appform_button_submit").unbind().bind("click", function() {
-      self.submit();
-    });
-  },
-  setSubmission: function(sub) {
-    this.submission = sub;
-  },
-  getSubmission: function() {
-    return this.submission;
-  },
-  getPageViewById: function(pageId) {
-    for (var i = 0; i< this.pageViews.length ; i++) {
-      var pageView = this.pageViews[i];
-      var pId = pageView.model.getPageId();
-      if (pId == pageId) {
-        return pageView;
-      }
-    }
-    return null;
-  },
-  getFieldViewById: function(fieldId) {
-    for (var i = 0; i<this.fieldViews.length; i++) {
-      var fieldView = this.fieldViews[i];
-      var pId = fieldView.model.getFieldId();
-      if (pId == fieldId) {
-        return fieldView;
-      }
-    }
-    return null;
-  },
-  checkPages: function() {
-
-    var displayedPages = this.getNumDisplayedPages();
-    var displayedIndex = this.getDisplayIndex();
-
-    if (displayedIndex === 0 && displayedIndex === displayedPages - 1) {
-      this.el.find(" button.fh_appform_button_previous").hide();
-      this.el.find("button.fh_appform_button_next").hide();
-      this.el.find("button.fh_appform_button_saveDraft").show();
-      this.el.find(" button.fh_appform_button_submit").show();
-      this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_three_button');
-      this.el.find(".fh_appform_button_bar button").addClass('fh_appform_two_button');
-    } else if (displayedIndex === 0) {
-      this.el.find(" button.fh_appform_button_previous").hide();
-      this.el.find("button.fh_appform_button_next").show();
-      this.el.find("button.fh_appform_button_saveDraft").show();
-      this.el.find(" button.fh_appform_button_submit").hide();
-      this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_three_button');
-      this.el.find(".fh_appform_button_bar button").addClass('fh_appform_two_button');
-    } else if (displayedIndex === displayedPages - 1) {
-      this.el.find(" button.fh_appform_button_previous").show();
-      this.el.find(" button.fh_appform_button_next").hide();
-      this.el.find(" button.fh_appform_button_saveDraft").show();
-      this.el.find(" button.fh_appform_button_submit").show();
-      this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_two_button');
-      this.el.find(".fh_appform_button_bar button").addClass('fh_appform_three_button');
-    } else {
-      this.el.find(" button.fh_appform_button_previous").show();
-      this.el.find(" button.fh_appform_button_next").show();
-      this.el.find(" button.fh_appform_button_saveDraft").show();
-      this.el.find(" button.fh_appform_button_submit").hide();
-      this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_two_button');
-      this.el.find(".fh_appform_button_bar button").addClass('fh_appform_three_button');
-    }
-    if (this.readonly) {
-      this.el.find("button.fh_appform_button_saveDraft").hide();
-      this.el.find(" button.fh_appform_button_submit").hide();
-    }
-
-  },
-  render: function() {
-    this.el.find("#fh_appform_container.fh_appform_form_area").append(this.templates.buttons);
-    this.rebindButtons();
-    this.pageViews[0].show();
-    this.pageNum = 0;
-    this.steps.activePageChange(this);
-    this.checkRules();
-  },
-  getNextPageIndex: function(currentPageIndex){
-    var self = this;
-    for(var pageIndex = currentPageIndex + 1; pageIndex < this.pageViews.length; pageIndex += 1){
-      var pageId = this.pageViews[pageIndex].model.getPageId();
-      var pageAction = self.pageViewStatus[pageId].action;
-
-      if(pageAction == "show"){
-        return pageIndex;
-      }
-    }
-  },
-  getPrevPageIndex: function(currentPageIndex){
-    var self = this;
-    for(var pageIndex = currentPageIndex - 1; pageIndex >= 0; pageIndex--){
-      var pageId = self.pageViews[pageIndex].model.getPageId();
-      var pageAction = self.pageViewStatus[pageId].action;
-
-      if(pageAction == "show"){
-        return pageIndex;
-      }
-    }
-  },
-  getDisplayIndex: function(){
-    var self = this;
-    var currentIndex = this.pageNum;
-
-    for(var pageIndex = this.pageNum; pageIndex > 0; pageIndex--){
-      var pageId = this.pageViews[pageIndex].model.getPageId();
-      var pageAction = self.pageViewStatus[pageId].action;
-
-      if(pageAction == "hide"){
-        currentIndex -= 1;
-      }
-    }
-
-    return currentIndex;
-  },
-  getNumDisplayedPages : function(){
-     return this.getDisplayedPages().length;
-  },
-  getDisplayedPages : function(){
-    var self = this;
-    var displayedPages = [];
-    for(var pageIndex = 0; pageIndex < self.pageViews.length; pageIndex++){
-      var pageId = this.pageViews[pageIndex].model.getPageId();
-      var pageAction = self.pageViewStatus[pageId].action;
-
-      if(pageAction == "show"){
-        displayedPages.push(pageId);
-      }
-    }
-
-    return displayedPages;
-  },
-  nextPage: function() {
-    this.hideAllPages();
-    this.pageNum = this.getNextPageIndex(this.pageNum);
-    this.pageViews[this.pageNum].show();
-    this.steps.activePageChange(this);
-    this.checkPages();
-  },
-  prevPage: function() {
-    this.hideAllPages();
-    this.pageNum = this.getPrevPageIndex(this.pageNum);
-    this.pageViews[this.pageNum].show();
-    this.steps.activePageChange(this);
-    this.checkPages();
-  },
-  hideAllPages: function() {
-    this.pageViews.forEach(function(view) {
-      view.hide();
-    });
-  },
-  submit: function() {
-    var self = this;
-    this.populateFieldViewsToSubmission(function() {
-      self.submission.submit(function(err, res) {
-        if (err) {
-          console.error(err);
-        } else {
-          self.submission.upload(function(err, uploadTask) {
-            if(err){
-              console.error(err);
+        this.el.find("button.fh_appform_button_saveDraft").hide();
+        this.el.find(" button.fh_appform_button_submit").hide();
+    },
+    onValidateError: function(res) {
+        var firstView = null;
+        for (var fieldId in res) {
+            if (res[fieldId]) {
+                var fieldView = this.getFieldViewById(fieldId);
+                if (firstView == null) {
+                    firstView = fieldView;
+                }
+                var errorMsgs = res[fieldId].fieldErrorMessage;
+                for (var i = 0; i < errorMsgs.length; i++) {
+                    if (errorMsgs[i]) {
+                        fieldView.setErrorText(i, errorMsgs[i]);
+                    }
+                }
             }
-
-            self.el.empty();
-          });
         }
-      });
-    });
-  },
-  saveToDraft: function() {
-    var self = this;
-    this.populateFieldViewsToSubmission(function() {
-      self.submission.saveDraft(function(err, res) {
-        if(err) console.error(err, res);
+
+    },
+    initWithForm: function(form, params) {
+        var self = this;
+        var pageView;
+        self.formId = form.getFormId();
+
         self.el.empty();
-      });
-    });
-  },
-  populateFieldViewsToSubmission: function(isStore, cb) {
-    if (typeof cb === "undefined"){
-      cb=isStore;
-      isStore=true;
-    }
-    var submission = this.submission;
-    var fieldViews = this.fieldViews;
-    var fieldId;
-    var tmpObj = [];
-    for (var i = 0; i<fieldViews.length ; i++) {
-      var fieldView = fieldViews[i];
-      var val = fieldView.value();
-      fieldId = fieldView.model.getFieldId();
-      var fieldType = fieldView.model.getType();
+        self.model = form;
 
-      if(fieldType !== "sectionBreak"){
-        for (var j = 0; j < val.length; j++) {
-          var v = val[j];
-          tmpObj.push({
-            id: fieldId,
-            value: v,
-            index:j
-          });
-        }
-      }
-    }
-    var count = tmpObj.length;
-    submission.reset();
-    for (i = 0; i<tmpObj.length ; i++) {
-      var item = tmpObj[i];
-      fieldId = item.id;
-      var value = item.value;
-      var index=item.index;
-      submission.addInputValue({
-        fieldId: fieldId,
-        value: value,
-        index: index,
-        isStore:isStore
-      }, function(err, res) {
-        if (err) {
-          console.error(err);
-        }
-        count--;
-        if (count === 0) {
-          cb();
-        }
-      });
-    }
-  },
+        //Page views are always added before anything else happens, need to render the form title first
+        this.el.append(this.templates.formContainer);
+        self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formLogo, {}));
+        self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formTitle, {
+            title: this.model.getName()
+        }));
+        self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formDescription, {
+            description: this.model.getDescription()
+        }));
 
-  setInputValue: function(fieldId, value) {
-    var self = this;
-    for (var i = 0; i<this.fieldValue.length; i++) {
-      var item = this.fieldValue[i];
-      if (item.id == fieldId) {
-        this.fieldValue.splice(i, 1);
-      }
+        if (!params.submission) {
+            params.submission = self.model.newSubmission();
+        }
+        self.submission = params.submission;
+        self.submission.on("validationerror", self.onValidateError);
+
+        // Init Pages --------------
+        var pageModelList = form.getPageModelList();
+        var pageViews = [];
+
+        self.steps = new StepsView({
+            parentEl: self.el.find(this.elementNames.formContainer),
+            parentView: self,
+            model: self.model
+        });
+
+        for (var i = 0; i < pageModelList.length; i++) {
+            var pageModel = pageModelList[i];
+            var pageId = pageModel.getPageId();
+
+            self.pageViewStatus[pageId] = {
+                "targetId": pageId,
+                "action": "show"
+            };
+
+            // get fieldModels
+            var list = pageModel.getFieldModelList();
+            self.fieldModels = self.fieldModels.concat(list);
+
+            pageView = new PageView({
+                model: pageModel,
+                parentEl: self.el.find(this.elementNames.formContainer),
+                formView: self
+            });
+            pageViews.push(pageView);
+        }
+        var fieldViews = [];
+        for (i = 0; i < pageViews.length; i++) {
+            pageView = pageViews[i];
+            var pageFieldViews = pageView.fieldViews;
+            for (var key in pageFieldViews) {
+                var fView = pageFieldViews[key];
+                fieldViews.push(fView);
+                fView.on("checkrules", self.checkRules);
+                if (self.readonly) {
+                    fView.$el.find("input,button,textarea,select").attr("disabled", "disabled");
+                }
+            }
+        }
+
+        self.fieldViews = fieldViews;
+        self.pageViews = pageViews;
+        self.pageCount = pageViews.length;
+
+        self.checkRules();
+    },
+    checkRules: function() {
+        var self = this;
+        self.populateFieldViewsToSubmission(false, function() {
+            var submission = self.submission;
+            submission.checkRules(function(err, res) {
+                if (err) {
+                    console.error(err);
+                } else {
+                    var actions = res.actions;
+                    var targetId;
+                    for (targetId in actions.pages) {
+                        self.pageViewStatus[targetId] = actions.pages[targetId];
+                    }
+
+                    var fields = actions.fields;
+
+                    for (targetId in fields) {
+                        self.performRuleAction("field", targetId, fields[targetId]["action"]);
+                    }
+                }
+                self.checkPages();
+            });
+        });
+    },
+    performRuleAction: function(type, targetId, action) {
+        var target = null;
+        if (type == "field") {
+            target = this.getFieldViewById(targetId);
+        }
+        if (target == null) {
+            console.error("cannot find target with id:" + targetId);
+            return;
+        }
+        switch (action) {
+            case "show":
+                target.show();
+                break;
+            case "hide":
+                target.hide();
+                break;
+            default:
+                console.error("action not defined:" + action);
+        }
+    },
+    rebindButtons: function() {
+        var self = this;
+        this.el.find("button.fh_appform_button_next").unbind().bind("click", function() {
+            self.nextPage();
+        });
+
+        this.el.find("button.fh_appform_button_previous").unbind().bind("click", function() {
+            self.prevPage();
+        });
+
+        this.el.find("button.fh_appform_button_saveDraft").unbind().bind("click", function() {
+            self.saveToDraft();
+        });
+        this.el.find("button.fh_appform_button_submit").unbind().bind("click", function() {
+            self.submit();
+        });
+    },
+    setSubmission: function(sub) {
+        this.submission = sub;
+    },
+    getSubmission: function() {
+        return this.submission;
+    },
+    getPageViewById: function(pageId) {
+        for (var i = 0; i < this.pageViews.length; i++) {
+            var pageView = this.pageViews[i];
+            var pId = pageView.model.getPageId();
+            if (pId == pageId) {
+                return pageView;
+            }
+        }
+        return null;
+    },
+    getFieldViewById: function(fieldId) {
+        for (var i = 0; i < this.fieldViews.length; i++) {
+            var fieldView = this.fieldViews[i];
+            var pId = fieldView.model.getFieldId();
+            if (pId == fieldId) {
+                return fieldView;
+            }
+        }
+        return null;
+    },
+    checkPages: function() {
+
+        var displayedPages = this.getNumDisplayedPages();
+        var displayedIndex = this.getDisplayIndex();
+
+        if (displayedIndex === 0 && displayedIndex === displayedPages - 1) {
+            this.el.find(" button.fh_appform_button_previous").hide();
+            this.el.find("button.fh_appform_button_next").hide();
+            this.el.find("button.fh_appform_button_saveDraft").show();
+            this.el.find(" button.fh_appform_button_submit").show();
+            this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_three_button');
+            this.el.find(".fh_appform_button_bar button").addClass('fh_appform_two_button');
+        } else if (displayedIndex === 0) {
+            this.el.find(" button.fh_appform_button_previous").hide();
+            this.el.find("button.fh_appform_button_next").show();
+            this.el.find("button.fh_appform_button_saveDraft").show();
+            this.el.find(" button.fh_appform_button_submit").hide();
+            this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_three_button');
+            this.el.find(".fh_appform_button_bar button").addClass('fh_appform_two_button');
+        } else if (displayedIndex === displayedPages - 1) {
+            this.el.find(" button.fh_appform_button_previous").show();
+            this.el.find(" button.fh_appform_button_next").hide();
+            this.el.find(" button.fh_appform_button_saveDraft").show();
+            this.el.find(" button.fh_appform_button_submit").show();
+            this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_two_button');
+            this.el.find(".fh_appform_button_bar button").addClass('fh_appform_three_button');
+        } else {
+            this.el.find(" button.fh_appform_button_previous").show();
+            this.el.find(" button.fh_appform_button_next").show();
+            this.el.find(" button.fh_appform_button_saveDraft").show();
+            this.el.find(" button.fh_appform_button_submit").hide();
+            this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_two_button');
+            this.el.find(".fh_appform_button_bar button").addClass('fh_appform_three_button');
+        }
+        if (this.readonly) {
+            this.el.find("button.fh_appform_button_saveDraft").hide();
+            this.el.find(" button.fh_appform_button_submit").hide();
+        }
+
+    },
+    render: function() {
+        this.el.find("#fh_appform_container.fh_appform_form_area").append(this.templates.buttons);
+        this.rebindButtons();
+        this.pageViews[0].show();
+        this.pageNum = 0;
+        this.steps.activePageChange(this);
+        this.checkRules();
+    },
+    getNextPageIndex: function(currentPageIndex) {
+        var self = this;
+        for (var pageIndex = currentPageIndex + 1; pageIndex < this.pageViews.length; pageIndex += 1) {
+            var pageId = this.pageViews[pageIndex].model.getPageId();
+            var pageAction = self.pageViewStatus[pageId].action;
+
+            if (pageAction == "show") {
+                return pageIndex;
+            }
+        }
+    },
+    getPrevPageIndex: function(currentPageIndex) {
+        var self = this;
+        for (var pageIndex = currentPageIndex - 1; pageIndex >= 0; pageIndex--) {
+            var pageId = self.pageViews[pageIndex].model.getPageId();
+            var pageAction = self.pageViewStatus[pageId].action;
+
+            if (pageAction == "show") {
+                return pageIndex;
+            }
+        }
+    },
+    getDisplayIndex: function() {
+        var self = this;
+        var currentIndex = this.pageNum;
+
+        for (var pageIndex = this.pageNum; pageIndex > 0; pageIndex--) {
+            var pageId = this.pageViews[pageIndex].model.getPageId();
+            var pageAction = self.pageViewStatus[pageId].action;
+
+            if (pageAction == "hide") {
+                currentIndex -= 1;
+            }
+        }
+
+        return currentIndex;
+    },
+    getNumDisplayedPages: function() {
+        return this.getDisplayedPages().length;
+    },
+    getDisplayedPages: function() {
+        var self = this;
+        var displayedPages = [];
+        for (var pageIndex = 0; pageIndex < self.pageViews.length; pageIndex++) {
+            var pageId = this.pageViews[pageIndex].model.getPageId();
+            var pageAction = self.pageViewStatus[pageId].action;
+
+            if (pageAction == "show") {
+                displayedPages.push(pageId);
+            }
+        }
+
+        return displayedPages;
+    },
+    nextPage: function() {
+        this.hideAllPages();
+        this.pageNum = this.getNextPageIndex(this.pageNum);
+        this.pageViews[this.pageNum].show();
+        this.steps.activePageChange(this);
+        this.checkPages();
+    },
+    prevPage: function() {
+        this.hideAllPages();
+        this.pageNum = this.getPrevPageIndex(this.pageNum);
+        this.pageViews[this.pageNum].show();
+        this.steps.activePageChange(this);
+        this.checkPages();
+    },
+    hideAllPages: function() {
+        this.pageViews.forEach(function(view) {
+            view.hide();
+        });
+    },
+    submit: function() {
+        var self = this;
+        this.populateFieldViewsToSubmission(function() {
+            self.submission.submit(function(err, res) {
+                if (err) {
+                    console.error(err);
+                } else {
+                    self.submission.upload(function(err, uploadTask) {
+                        if (err) {
+                            console.error(err);
+                        }
+
+                        self.el.empty();
+                    });
+                }
+            });
+        });
+    },
+    saveToDraft: function() {
+        var self = this;
+        this.populateFieldViewsToSubmission(function() {
+            self.submission.saveDraft(function(err, res) {
+                if (err) console.error(err, res);
+                self.el.empty();
+            });
+        });
+    },
+    populateFieldViewsToSubmission: function(isStore, cb) {
+        if (typeof cb === "undefined") {
+            cb = isStore;
+            isStore = true;
+        }
+        var submission = this.submission;
+        var fieldViews = this.fieldViews;
+        var fieldId;
+        var tmpObj = [];
+        for (var i = 0; i < fieldViews.length; i++) {
+            var fieldView = fieldViews[i];
+            var val = fieldView.value();
+            fieldId = fieldView.model.getFieldId();
+            var fieldType = fieldView.model.getType();
+
+            if (fieldType !== "sectionBreak") {
+                for (var j = 0; j < val.length; j++) {
+                    var v = val[j];
+                    tmpObj.push({
+                        id: fieldId,
+                        value: v,
+                        index: j
+                    });
+                }
+            }
+        }
+        var count = tmpObj.length;
+        submission.reset();
+        for (i = 0; i < tmpObj.length; i++) {
+            var item = tmpObj[i];
+            fieldId = item.id;
+            var value = item.value;
+            var index = item.index;
+            submission.addInputValue({
+                fieldId: fieldId,
+                value: value,
+                index: index,
+                isStore: isStore
+            }, function(err, res) {
+                if (err) {
+                    console.error(err);
+                }
+                count--;
+                if (count === 0) {
+                    cb();
+                }
+            });
+        }
+    },
+
+    setInputValue: function(fieldId, value) {
+        var self = this;
+        for (var i = 0; i < this.fieldValue.length; i++) {
+            var item = this.fieldValue[i];
+            if (item.id == fieldId) {
+                this.fieldValue.splice(i, 1);
+            }
+        }
+        for (i = 0; i < value.length; i++) {
+            var v = value[i];
+            this.fieldValue.push({
+                id: fieldId,
+                value: v
+            });
+        }
     }
-    for (i = 0; i<value.length; i++) {
-      var v = value[i];
-      this.fieldValue.push({
-        id: fieldId,
-        value: v
-      });
-    }
-  }
 });
 var FromJsonView = BaseView.extend({
-    events: { 'click button#convert': 'convert' },
-    templates: { body: '<h1>Insert JSON</h1><textarea id="jsonBox" rows="30" cols="50"></textarea><button id="convert">Convert</button><div id="resultArea"></div>' },
+    events: {
+        'click button#convert': 'convert'
+    },
+    templates: {
+        body: '<h1>Insert JSON</h1><textarea id="jsonBox" rows="30" cols="50"></textarea><button id="convert">Convert</button><div id="resultArea"></div>'
+    },
     el: '#jsonPage',
-    initialize: function () {
-      _.bindAll(this, 'render');
+    initialize: function(options) {
+        this.options = options || {};
+        _.bindAll(this, 'render');
     },
-    show: function () {
-      $(this.el).show();
+    show: function() {
+        $(this.el).show();
     },
-    hide: function () {
-      $(this.el).hide();
+    hide: function() {
+        $(this.el).hide();
     },
-    render: function () {
-      $(this.el).html(this.templates.body);
-      this.show();
+    render: function() {
+        $(this.el).html(this.templates.body);
+        this.show();
     },
-    convert: function () {
-      var json = $('#jsonBox').val();
-      var jsonData;
-      try {
-        jsonData = JSON.parse(json);
-      } catch (e) {
-        console.log(e);
-        throw 'Invalid JSON object';
-      }
-      var params = {
-          formId: new Date().getTime(),
-          rawMode: true,
-          rawData: jsonData
+    convert: function() {
+        var json = $('#jsonBox').val();
+        var jsonData;
+        try {
+            jsonData = JSON.parse(json);
+        } catch (e) {
+            console.log(e);
+            throw 'Invalid JSON object';
+        }
+        var params = {
+            formId: new Date().getTime(),
+            rawMode: true,
+            rawData: jsonData
         };
-      var formView = new FormView({ parentEl: $('#backbone #resultArea') });
-      formView.loadForm(params, function (err) {
-        formView.render();
-      });
+        var formView = new FormView({
+            parentEl: $('#backbone #resultArea')
+        });
+        formView.loadForm(params, function(err) {
+            formView.render();
+        });
     }
-  });
-SectionView=BaseView.extend({
+});
+SectionView = BaseView.extend({
 
-  initialize: function() {
-    _.bindAll(this, 'render');
-    this.$el.addClass("fh_appform_section");
-  },
-  render: function(){
-    this.options.parentEl.append(this.$el);
-  }
+    initialize: function(options) {
+        this.options = options || {};
+        _.bindAll(this, 'render');
+        this.$el.addClass("fh_appform_section");
+    },
+    render: function() {
+        this.options.parentEl.append(this.$el);
+    }
 
 });
 StepsView = Backbone.View.extend({
-  className: 'fh_appform_steps',
+    className: 'fh_appform_steps',
 
-  templates: {
-    table: '<div class="fh_appform_progress_wrapper"><table class="fh_appform_progress_steps" cellspacing="0"><tr></tr></table><span class="fh_appform_page_title"></span></div>',
-    step: '<td><span class="number_container" style=""><div class="number"><%= step_num %></div></span><br style="clear:both"/></td>'
-  },
+    templates: {
+        table: '<div class="fh_appform_progress_wrapper"><table class="fh_appform_progress_steps" cellspacing="0"><tr></tr></table><span class="fh_appform_page_title"></span></div>',
+        step: '<td><span class="number_container" style=""><div class="number"><%= step_num %></div></span><br style="clear:both"/></td>'
+    },
 
-  initialize: function() {
-    var self = this;
+    initialize: function(options) {
+        this.options = options || {};
+        var self = this;
 
-    _.bindAll(this, 'render');
-    this.parentView = this.options.parentView;
-    this.options.parentEl.append(this.$el);
-  },
+        _.bindAll(this, 'render');
+        this.parentView = this.options.parentView;
+        this.options.parentEl.append(this.$el);
+    },
 
-  render: function() {
-    var self = this;
-    this.$el.empty();
-    var table = $(self.templates.table);
+    render: function() {
+        var self = this;
+        this.$el.empty();
+        var table = $(self.templates.table);
 
-    var displayedPages = this.parentView.getDisplayedPages();
-    var width = 100;
+        var displayedPages = this.parentView.getDisplayedPages();
+        var width = 100;
 
-    if(displayedPages.length > 0){
-      width = 100 / displayedPages.length;
+        if (displayedPages.length > 0) {
+            width = 100 / displayedPages.length;
+        }
+
+        displayedPages.forEach(function(pageId, index) {
+
+            var pageModel = self.parentView.getPageViewById(pageId).model;
+            var item = $(_.template(self.templates.step, {
+                step_name: pageModel.getName(),
+                step_num: index + 1
+            }));
+            item.css('width', width + '%');
+            $('tr:first', table).append(item);
+        });
+
+        this.$el.append(table);
+    },
+
+    activePageChange: function() {
+        var self = this;
+        self.render();
+        self.$el.find('td').removeClass('active');
+
+        var displayIndex = self.parentView.getDisplayIndex();
+        var pageModel = self.parentView.pageViews[self.parentView.pageNum].model;
+
+        self.$el.find('td:eq(' + displayIndex + ')').addClass('active');
+        self.$el.find('.fh_appform_page_title').html(pageModel.getName());
     }
-
-    displayedPages.forEach(function(pageId, index) {
-
-      var pageModel = self.parentView.getPageViewById(pageId).model;
-      var item = $(_.template(self.templates.step, {
-        step_name: pageModel.getName(),
-        step_num: index + 1
-      }));
-      item.css('width', width + '%');
-      $('tr:first', table).append(item);
-    });
-
-    this.$el.append(table);
-  },
-
-  activePageChange: function() {
-    var self = this;
-    self.render();
-    self.$el.find('td').removeClass('active');
-
-    var displayIndex = self.parentView.getDisplayIndex();
-    var pageModel = self.parentView.pageViews[self.parentView.pageNum].model;
-
-    self.$el.find('td:eq(' + displayIndex + ')').addClass('active');
-    self.$el.find('.fh_appform_page_title').html(pageModel.getName());
-  }
 
 });
 var ConfigView = Backbone.View.extend({
-  "templates": [
-    '<div class="fh_appform_field_area config_camera">' +
-    '<fieldset>' +
-    '<div class="fh_appform_field_title">Camera</div>' +
-    '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Quality</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="quality" value="<%= quality%>"/>' +
-    '</div>' +
-    '<br/>' +
-    '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Target Width</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="targetWidth" value="<%= targetWidth%>"/>' +
-    '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Target Height</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="targetHeight" value="<%= targetHeight%>"/>' +
-    '</div>' +
-    '<br/>' +
-    '</fieldset>' +
-    '</div>',
-    '<div class="fh_appform_field_area config_submission">' +
-    '<fieldset>' +
-    '<div class="fh_appform_field_title">Submission</div>' +
-    '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Max Retries</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="max_retries" value="<%= max_retries%>"/>' +
-    '</div>' +
-    '<br/>' +
-    '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Timeout</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="timeout" value="<%= timeout%>"/>' +
-    '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Min Sent Items to Save</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="sent_save_min" value="<%= sent_save_min%>"/>' +
-    '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Max Sent Items to Save</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="sent_save_max" value="<%= sent_save_max%>"/>' +
-    '</div>' +
-    '<br/>' +
-    '</fieldset>' +
-    '</div>',
-    '<style type="text/css">'+
-  '#_logsViewPanel{'+
-    'position:fixed;'+
-    'left:10px;'+
-    'top:10px;'+
-    'right:10px;'+
-    'bottom:10px;'+
-    'padding:8px;'+
-    'background: white;'+
-    '-webkit-border-radius: 8px;'+
-    'border-radius: 8px;'+
-    'overflow: auto;'+
-  '}'+
-  '#_closeViewBtn{'+
-    'border: 1px solid;'+
-    'padding:3px;'+
-  '}'+
-'</style>'+
-'<div class="fh_appform_field_area config_debugging">'+
-  '<fieldset>'+
-    '<div class="fh_appform_field_title">Debugging</div>'+
-      '<div class="form-group" style="margin:5px 5px 5px 5px;">'+
-        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;margin-top:5px;">Log Enabled</label>'+
-        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" type="checkbox" data-key="logger"  <%= logger?"checked":"" %> value="true"/>'+
-      '</div>'+
-      '<br/>' +
-      '<div class="form-group" style="margin:5px 5px 5px 5px;">'+
-        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;margin-top:5px;">Log Level</label>'+
-        '<select class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="log_level">'+
-          '<%'+
-              'for (var i=0;i<log_levels.length;i++){'+
-                'var val=log_levels[i];'+
-                'var selected=(i==log_level)?"selected":"";'+
-                '%>'+
-                  '<option value="<%= i %>" <%= selected%>><%= val%></option>'+
-                '<%'+
-              '}'+
-            '%>'+
-        '</select>'+
-      '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">'+
-        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Log Line Number</label>'+
-        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="log_line_limit" value="<%= log_line_limit%>"/>'+
-      '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">'+
-        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Log Email Address</label>'+
-        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 98%;float: right;" data-key="log_email" value="<%= log_email%>"/>'+
-      '</div>'+
-      '<div class="log_buttons" style="width:100%;margin: 20px 0px 20px 0px;padding:0px 0px 0px 0px;">'+
-        '<button class="fh_appform_button_default" style="width:30%;margin-right:10px" type="button" id="_viewLogsBtn">View Logs</button>'+
-        '<button class="fh_appform_button_cancel" style="width:30%;margin-right:10px" type="button" id="_clearLogsBtn">Clear Logs</button>'+
-        '<button class="fh_appform_button_action" style="width:30%;" type="button" id="_sendLogsBtn">Send Logs</button>'+
-      '</div>'+
-  '</fieldset>'+
-'</div>'+
-'<div class="hidden" id="_logsViewPanel">'+
-  '<div><span class="fh_appform_button_cancel" id="_closeViewBtn">Close</span></div>'+
-  '<div class="fh_appform_field_area" id="_logViewDiv"></div>'+
-'</div>'
-  ],
-  "_myEvents": {
-    "click #_viewLogsBtn": "viewLogs",
-    "click #_clearLogsBtn": "clearLogs",
-    "click #_sendLogsBtn": "sendLogs",
-    "click #_closeViewBtn": "closeViewLogs"
-  },
-  "viewLogs": function() {
-    var logs = $fh.forms.log.getPolishedLogs();
-    var logStr = logs.join("");
-    this.$el.find("#_logViewDiv").html(logStr);
-    this.$el.find("#_logsViewPanel").show();
-  },
+    "templates": [
+        '<div class="fh_appform_field_area config_camera">' +
+        '<fieldset>' +
+        '<div class="fh_appform_field_title">Camera</div>' +
+        '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
+        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Quality</label>' +
+        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="quality" value="<%= quality%>"/>' +
+        '</div>' +
+        '<br/>' +
+        '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
+        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Target Width</label>' +
+        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="targetWidth" value="<%= targetWidth%>"/>' +
+        '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">' +
+        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Target Height</label>' +
+        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="targetHeight" value="<%= targetHeight%>"/>' +
+        '</div>' +
+        '<br/>' +
+        '</fieldset>' +
+        '</div>',
+        '<div class="fh_appform_field_area config_submission">' +
+        '<fieldset>' +
+        '<div class="fh_appform_field_title">Submission</div>' +
+        '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
+        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Max Retries</label>' +
+        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="max_retries" value="<%= max_retries%>"/>' +
+        '</div>' +
+        '<br/>' +
+        '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
+        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Timeout</label>' +
+        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="timeout" value="<%= timeout%>"/>' +
+        '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">' +
+        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Min Sent Items to Save</label>' +
+        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="sent_save_min" value="<%= sent_save_min%>"/>' +
+        '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">' +
+        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Max Sent Items to Save</label>' +
+        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="sent_save_max" value="<%= sent_save_max%>"/>' +
+        '</div>' +
+        '<br/>' +
+        '</fieldset>' +
+        '</div>',
+        '<style type="text/css">' +
+        '#_logsViewPanel{' +
+        'position:fixed;' +
+        'left:10px;' +
+        'top:10px;' +
+        'right:10px;' +
+        'bottom:10px;' +
+        'padding:8px;' +
+        'background: white;' +
+        '-webkit-border-radius: 8px;' +
+        'border-radius: 8px;' +
+        'overflow: auto;' +
+        '}' +
+        '#_closeViewBtn{' +
+        'border: 1px solid;' +
+        'padding:3px;' +
+        '}' +
+        '</style>' +
+        '<div class="fh_appform_field_area config_debugging">' +
+        '<fieldset>' +
+        '<div class="fh_appform_field_title">Debugging</div>' +
+        '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
+        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;margin-top:5px;">Log Enabled</label>' +
+        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" type="checkbox" data-key="logger"  <%= logger?"checked":"" %> value="true"/>' +
+        '</div>' +
+        '<br/>' +
+        '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
+        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;margin-top:5px;">Log Level</label>' +
+        '<select class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="log_level">' +
+        '<%' +
+        'for (var i=0;i<log_levels.length;i++){' +
+        'var val=log_levels[i];' +
+        'var selected=(i==log_level)?"selected":"";' +
+        '%>' +
+        '<option value="<%= i %>" <%= selected%>><%= val%></option>' +
+        '<%' +
+        '}' +
+        '%>' +
+        '</select>' +
+        '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">' +
+        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Log Line Number</label>' +
+        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="log_line_limit" value="<%= log_line_limit%>"/>' +
+        '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">' +
+        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Log Email Address</label>' +
+        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 98%;float: right;" data-key="log_email" value="<%= log_email%>"/>' +
+        '</div>' +
+        '<div class="log_buttons" style="width:100%;margin: 20px 0px 20px 0px;padding:0px 0px 0px 0px;">' +
+        '<button class="fh_appform_button_default" style="width:30%;margin-right:10px" type="button" id="_viewLogsBtn">View Logs</button>' +
+        '<button class="fh_appform_button_cancel" style="width:30%;margin-right:10px" type="button" id="_clearLogsBtn">Clear Logs</button>' +
+        '<button class="fh_appform_button_action" style="width:30%;" type="button" id="_sendLogsBtn">Send Logs</button>' +
+        '</div>' +
+        '</fieldset>' +
+        '</div>' +
+        '<div class="hidden" id="_logsViewPanel">' +
+        '<div><span class="fh_appform_button_cancel" id="_closeViewBtn">Close</span></div>' +
+        '<div class="fh_appform_field_area" id="_logViewDiv"></div>' +
+        '</div>'
+    ],
+    "_myEvents": {
+        "click #_viewLogsBtn": "viewLogs",
+        "click #_clearLogsBtn": "clearLogs",
+        "click #_sendLogsBtn": "sendLogs",
+        "click #_closeViewBtn": "closeViewLogs"
+    },
+    "viewLogs": function() {
+        var logs = $fh.forms.log.getPolishedLogs();
+        var logStr = logs.join("");
+        this.$el.find("#_logViewDiv").html(logStr);
+        this.$el.find("#_logsViewPanel").show();
+    },
 
-  "clearLogs":function(){
-    var self=this;
-    $fh.forms.log.clearLogs(function(){
-      self.$el.find("#_logViewDiv").html("");
-      alert("Logs cleared.");
-    });
-  },
-  "sendLogs":function(){
-    $fh.forms.log.sendLogs(function(err){
-      if (err){
-        alert(err);
-      }else{
-        alert("Log has been sent to:"+$fh.forms.config.get("log_email"));
-      }
-    });
-  },  
-  "closeViewLogs":function(){
-    this.$el.find("#_logsViewPanel").hide();
-  },
-  "events": {},
-  "initialize": function() {
-    this.events = _.extend({}, this._myEvents, this.events);
-  },
-  "render": function() {
-    this.$el.html("");
-    var props = $fh.forms.config.getConfig();
-    var html = _.template(this.templates.join(""), props);
-    this.$el.append(html);
-    return this;
-  },
-  "save": function(cb) {
-    $fh.forms.log.l("Saving config");
-    var inputs = this.$el.find("input,select,textarea");
+    "clearLogs": function() {
+        var self = this;
+        $fh.forms.log.clearLogs(function() {
+            self.$el.find("#_logViewDiv").html("");
+            alert("Logs cleared.");
+        });
+    },
+    "sendLogs": function() {
+        $fh.forms.log.sendLogs(function(err) {
+            if (err) {
+                alert(err);
+            } else {
+                alert("Log has been sent to:" + $fh.forms.config.get("log_email"));
+            }
+        });
+    },
+    "closeViewLogs": function() {
+        this.$el.find("#_logsViewPanel").hide();
+    },
+    "events": {},
+    "initialize": function(options) {
+        this.options = options || {};
+        this.events = _.extend({}, this._myEvents, this.events);
+    },
+    "render": function() {
+        this.$el.html("");
+        var props = $fh.forms.config.getConfig();
+        var html = _.template(this.templates.join(""), props);
+        this.$el.append(html);
+        return this;
+    },
+    "save": function(cb) {
+        $fh.forms.log.l("Saving config");
+        var inputs = this.$el.find("input,select,textarea");
 
-    if($fh.forms.config.editAllowed()){
-      inputs.each(function() {
-        var key = $(this).data().key;
-        var val = $(this).val();
+        if ($fh.forms.config.editAllowed()) {
+            inputs.each(function() {
+                var key = $(this).data().key;
+                var val = $(this).val();
 
-        if ($(this).attr("type") && $(this).attr("type").toLowerCase() == "checkbox") {
-          if (!$(this).attr("checked")) {
-            val = false;
-          }
+                if ($(this).attr("type") && $(this).attr("type").toLowerCase() == "checkbox") {
+                    if (!$(this).attr("checked")) {
+                        val = false;
+                    }
+                }
+
+                $fh.forms.config.set(key, val);
+            });
+
+            $fh.forms.config.saveConfig(cb);
+        } else {
+            alert("Editing config not permitted.");
         }
-
-        $fh.forms.config.set(key, val);
-      });
-
-      $fh.forms.config.saveConfig(cb);
-    } else {
-      alert("Editing config not permitted.");
     }
-  }
 });
 if (typeof $fh == 'undefined') {
   $fh = {};

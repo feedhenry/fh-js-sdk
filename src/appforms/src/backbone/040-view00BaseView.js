@@ -1,4 +1,4 @@
-var BaseView=Backbone.View.extend({
-    "onLoad":function(){},
-    "onLoadEnd":function(){}
-}); 
+var BaseView = Backbone.View.extend({
+    "onLoad": function() {},
+    "onLoadEnd": function() {}
+});

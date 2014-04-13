@@ -39,7 +39,9 @@ function _postInit(req, res) {
   console.log("In _postInit, ", req.params);
   res.json({
     "status": "ok",
-    "hosts":{}
+    "hosts":{
+      "url": ""
+    }
   });
 }
 
