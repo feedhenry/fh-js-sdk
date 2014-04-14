@@ -12,8 +12,9 @@ appForm.models = function (module) {
     this.sending = false;
     this.timerInterval = 200;
     this.sendingStart = appForm.utils.getTime();
-  }
+  };
   appForm.utils.extend(UploadManager, Model);
+
   /**
      * Queue a submission to uploading tasks queue
      * @param  {[type]} submissionModel [description]
@@ -51,6 +52,7 @@ appForm.models = function (module) {
       self.getTaskById(utId, cb);
     }
   };
+
   /**
      * cancel a submission uploading
      * @param  {[type]}   submissionsModel [description]

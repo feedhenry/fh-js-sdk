@@ -50,9 +50,9 @@ appForm.models = function(module) {
     } else {
       //load from storage
       $fh.forms.log.d("Submission fromLocal not in cache. Loading from local storage.: ", localId);
-      var obj = new Submission();
-      obj.setLocalId(localId);
-      obj.loadLocal(function(err, submission) {
+      var submissionObject = new Submission();
+      submissionObject.setLocalId(localId);
+      submissionObject.loadLocal(function(err, submission) {
         if (err) {
           $fh.forms.log.e("Submission fromLocal. Error loading from local: ", localId, err);
           cb(err);
@@ -551,11 +551,37 @@ appForm.models = function(module) {
   };
   /**
    * Retrieve all file fields related value
+   * If the submission has been downloaded, there is no gurantee that the form is  on-device.
    * @return {[type]} [description]
    */
   Submission.prototype.getFileInputValues = function() {
-    var fileFieldIds = this.form.getFileFieldsId();
-    return this.getInputValueArray(fileFieldIds);
+    var self = this;
+    var fileFieldIds = self.getFileFieldsId();
+
+    return self.getInputValueArray(fileFieldIds);
+  };
+
+  Submission.prototype.getFileFieldsId = function(){
+    var self = this;
+    var formFieldIds = [];
+
+    if(self.get("downloadSubmission") === true){
+      //For Submission downloads, there needs to be a scan through the formFields param
+      var formFields = self.get("formFields", []);
+
+      for(var formFieldIndex = 0; formFieldIndex < formFields.lenght; formFieldIndex++){
+        var formFieldEntry = formFields[formFieldIndex].fieldId || {};
+        if(formFieldEntry.type === 'file' || formFieldEntry.type === 'photo'){
+          if(formFieldEntry._id){
+            formFieldIds.push(formFieldEntry._id);
+          }
+        }
+      }
+    } else {
+      formFieldIds = self.form.getFileFieldsId();
+    }
+
+    return formFieldIds;
   };
 
   Submission.prototype.getInputValueArray = function(fieldIds) {
@@ -600,7 +626,7 @@ appForm.models = function(module) {
     });
   };
   Submission.prototype.getRemoteSubmissionId = function() {
-    return this.get("submissionId", null);
+    return this.get("submissionId", "");
   };
   Submission.prototype.setRemoteSubmissionId = function(submissionId){
     if(submissionId){

@@ -24,7 +24,7 @@ function applyServer(app) {
   app.get("/mbaas/forms/:appid/config/:deviceId", _getConfig);
   app.get("/mbaas/forms/:appId", _getForms);
   app.get("/mbaas/forms/:appId/submission/:submissionId", _getSubmissionData);
-  app.get("/mbaas/forms/:appId/submission/:submissionId/:fileId", _getSubmissionFile);
+  app.get("/mbaas/forms/:appId/submission/:submissionId/file/:fileId", _getSubmissionFile);
 
   app.get("/mbaas/forms/:appId/:formId", _getForm);
   app.post("/mbaas/forms/:appId", _postForms);

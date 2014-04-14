@@ -88,6 +88,9 @@ appForm.stores = function(module) {
       case 'completeSubmission':
         props.submissionId = model.get('submissionId');
         break;
+      case 'downloadSubmission':
+        props.submissionId = model.get('submissionId');
+        break;
       case 'offlineTest':
         return "http://127.0.0.1:8453";
     }

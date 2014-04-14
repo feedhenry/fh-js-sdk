@@ -7,10 +7,15 @@ appForm.api = function (module) {
   module.getTheme = getTheme;
   module.submitForm = submitForm;
   module.getSubmissions = getSubmissions;
+  module.downloadSubmission = downloadSubmission;
   module.init = appForm.init;
   module.log=appForm.models.log;
   var _submissions = null;
   var formConfig = appForm.models.config;
+  var defaultFunction = function(err){
+    err = err ? err : "";
+    $fh.forms.log.w("Default Function Called " + err);
+  };
 
   /**
    * Get and set config values. Can only set a config value if you are an config_admin_user
@@ -90,6 +95,13 @@ appForm.api = function (module) {
      * @return {[type]}          [description]
      */
   function getForms(params, cb) {
+    if(typeof(params) === 'function'){
+      cb = params;
+      params = {};
+    }
+
+    params = params ? params : {};
+    cb = cb ? cb : defaultFunction;
     var fromRemote = params.fromRemote;
     if (fromRemote === undefined) {
       fromRemote = false;
@@ -103,6 +115,13 @@ appForm.api = function (module) {
      * @return {[type]}          [description]
      */
   function getForm(params, cb) {
+    if(typeof(params) === 'function'){
+      cb = params;
+      params = {};
+    }
+
+    params = params ? params : {};
+    cb = cb ? cb : defaultFunction;
     new appForm.models.Form(params, cb);
   }
   /**
@@ -111,6 +130,13 @@ appForm.api = function (module) {
      * @param {Function} cb {err, themeData} . themeData = {"json" : {<theme json definition>}, "css" : "css" : "<css style definition for this app>"}
      */
   function getTheme(params, cb) {
+    if(typeof(params) === 'function'){
+      cb = params;
+      params = {};
+    }
+
+    params = params ? params : {};
+    cb = cb ? cb : defaultFunction;
     var theme = appForm.models.theme;
     if (!params.fromRemote) {
       params.fromRemote = false;
@@ -134,9 +160,17 @@ appForm.api = function (module) {
      * @param {Function} cb     (err, submittedArray)
      */
   function getSubmissions(params, cb) {
+    if(typeof(params) === 'function'){
+      cb = params;
+      params = {};
+    }
+
+    params = params ? params : {};
+    cb = cb ? cb : defaultFunction;
+
     //Getting submissions that have been completed.
     var submissions = appForm.models.submissions;
-    if (_submissions == null) {
+    if (_submissions === null) {
       appForm.models.submissions.loadLocal(function (err) {
         if (err) {
           console.error(err);
@@ -160,6 +194,22 @@ appForm.api = function (module) {
       });
     } else {
       return cb('Invalid submission object.');
+    }
+  }
+
+  /*
+  * Function for downloading a submission stored on the remote server.
+  *
+  * @param params {}
+  * @param {function} cb (err, downloadTask)
+  * */
+  function downloadSubmission(params, cb){
+    params = params ? params : {};
+    cb = cb ? cb : defaultFunction;
+
+    if(params.submissionId){
+      var submissionToDownload = new appForm.models.submission.newInstance(null, {submissionId: params.submissionId});
+      submissionToDownload.download(cb);
     }
   }
   return module;

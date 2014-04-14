@@ -6,15 +6,24 @@ appForm.models = function (module) {
     'newInstance': newInstance,
     'fromLocal': fromLocal
   };
+
+
   var _uploadTasks = {};
-  //mem cache for singleton.
+
   var Model = appForm.models.Model;
+
   function newInstance(submissionModel) {
-    var utObj = new UploadTask();
-    utObj.init(submissionModel);
-    _uploadTasks[utObj.getLocalId()] = utObj;
-    return utObj;
+    if(submissionModel){
+      var utObj = new UploadTask();
+      utObj.init(submissionModel);
+      _uploadTasks[utObj.getLocalId()] = utObj;
+      return utObj;
+    } else {
+      return {};
+    }
   }
+
+
   function fromLocal(localId, cb) {
     if (_uploadTasks[localId]) {
       return cb(null, _uploadTasks[localId]);
@@ -24,32 +33,51 @@ appForm.models = function (module) {
     _uploadTasks[localId] = utObj;
     utObj.loadLocal(cb);
   }
+
+
   function UploadTask() {
     Model.call(this, { '_type': 'uploadTask' });
   }
+
+
   appForm.utils.extend(UploadTask, Model);
   UploadTask.prototype.init = function (submissionModel) {
-    var json = submissionModel.getProps();
-    var files = submissionModel.getFileInputValues();
+    var self = this;
     var submissionLocalId = submissionModel.getLocalId();
-    this.setLocalId(submissionLocalId + '_' + 'uploadTask');
-    this.set('submissionLocalId', submissionLocalId);
-    this.set('jsonTask', json);
-    this.set('fileTasks', []);
-    this.set('currentTask', null);
-    this.set('completed', false);
-    this.set('mbaasCompleted', false);
-    this.set('retryAttempts', 0);
-    this.set('retryNeeded', false);
-    this.set('formId', submissionModel.get('formId'));
-    for (var i = 0; i<files.length ; i++) {
-      var file = files[i];
-      this.addFileTask(file);
+    self.setLocalId(submissionLocalId + '_' + 'uploadTask');
+    self.set('submissionLocalId', submissionLocalId);
+    self.set('fileTasks', []);
+    self.set('currentTask', null);
+    self.set('completed', false);
+    self.set('retryAttempts', 0);
+    self.set('retryNeeded', false);
+    self.set('mbaasCompleted', false);
+    self.set('submissionTransferType', 'upload');
+
+    function initSubmissionUpload(){
+      var json = submissionModel.getProps();
+      self.addFileTasks(submissionModel);
+      self.set('jsonTask', json);
+      self.set('formId', submissionModel.get('formId'));
+
+    }
+
+    function initSubmissionDownload(){
+      self.set('submissionId', submissionModel.getRemoteSubmissionId());
+      self.set('jsonTask', {});
+      self.set('submissionTransferType', 'download');
+    }
+
+    if(submissionModel.downloadSubmission){
+      initSubmissionDownload();
+    } else {
+      initSubmissionUpload();
     }
   };
   UploadTask.prototype.getTotalSize = function () {
-    var jsonSize = JSON.stringify(this.get('jsonTask')).length;
-    var fileTasks = this.get('fileTasks');
+    var self = this;
+    var jsonSize = JSON.stringify(self.get('jsonTask')).length;
+    var fileTasks = self.get('fileTasks');
     var fileSize = 0;
     var fileTask;
     for (var i = 0; i<fileTasks.length ; i++) {
@@ -75,6 +103,14 @@ appForm.models = function (module) {
   UploadTask.prototype.getRemoteStore = function () {
     return appForm.stores.mBaaS;
   };
+  UploadTask.prototype.addFileTasks = function(submissionModel){
+    var self = this;
+    var files = submissionModel.getFileInputValues();
+    for (var i = 0; i<files.length ; i++) {
+      var file = files[i];
+      self.addFileTask(file);
+    }
+  };
   UploadTask.prototype.addFileTask = function (fileDef) {
     this.get('fileTasks').push(fileDef);
   };
@@ -98,59 +134,107 @@ appForm.models = function (module) {
     return this.getCurrentTask() == null ? false : true;
   };
   /**
-   * upload form submission
+   * upload/download form submission
    * @param  {Function} cb [description]
    * @return {[type]}      [description]
    */
   UploadTask.prototype.uploadForm = function (cb) {
-    var that = this;
+    var self = this;
 
     function processUploadDataResult(res){
       if(res.error){
-        console.error("Error submitting form " + res.error);
+        $fh.forms.log.e("Error submitting form " + res.error);
         return cb("Error submitting form " + res.error);
       } else {
         var submissionId = res.submissionId;
         // form data submitted successfully.
         formSub.lastUpdate = appForm.utils.getTime();
-        that.set('submissionId', submissionId);
-        that.increProgress();
-        that.saveLocal(function (err) {
+        self.set('submissionId', submissionId);
+        self.increProgress();
+        self.saveLocal(function (err) {
           if (err) {
-            console.error(err);
+            $fh.forms.log.e("Error saving uploadTask to local storage" + err);
           }
         });
-        that.emit('progress', that.getProgress());
+        self.emit('progress', self.getProgress());
         return cb(null);
       }
     }
 
-    var formSub = this.get('jsonTask');
-
-    var formSubmissionModel = new appForm.models.FormSubmission(formSub);
-    this.getRemoteStore().create(formSubmissionModel, function (err, res) {
-      if (err) {
+    function processDownloadDataResult(err, res){
+      if(err){
+        $fh.forms.log.e("Error downloading submission data"+ err);
         return cb(err);
-      } else {
-        var updatedFormDefinition = res.updatedFormDefinition;
+      }
 
-        if (updatedFormDefinition) {
-          // remote form definition is updated
-          that.refreshForm(updatedFormDefinition, function (err) {
-            //refresh form def in parallel. maybe not needed.
-            console.log("Form Updated, refreshed");
+      //Have the definition of the submission
+      self.submissionModel(function(err, submissionModel){
+        if(err){
+          return cb(err);
+        }
+
+        //Instantiate the model from the json definition
+        submissionModel.fromJSON(res);
+        self.set('jsonTask', res);
+        submissionModel.saveLocal(function(err){
+          if(err){
+            $fh.forms.log.e("Error saving updated submission from download submission: " + err);
+          }
+
+          //Submission Model is now populated with all the fields in the submission
+          self.addFileTasks(submissionModel);
+          self.increProgress();
+          self.saveLocal(function (err) {
             if (err) {
-              console.error(err);
+              $fh.forms.log.e("Error saving downloadTask to local storage" + err);
             }
 
-            processUploadDataResult(res);
+            self.emit('progress', self.getProgress());
           });
+        });
+      });
+    }
+
+    function uploadSubmissionJSON(){
+      var formSub = self.get('jsonTask');
+      var formSubmissionModel = new appForm.models.FormSubmission(formSub);
+      self.getRemoteStore().create(formSubmissionModel, function (err, res) {
+        if (err) {
+          return cb(err);
         } else {
-          processUploadDataResult(res);
+          var updatedFormDefinition = res.updatedFormDefinition;
+          if (updatedFormDefinition) {
+            // remote form definition is updated
+            self.refreshForm(updatedFormDefinition, function (err) {
+              //refresh form def in parallel. maybe not needed.
+              $fh.forms.log.d("Form Updated, refreshed");
+              if (err) {
+                $fh.forms.log.e(err);
+              }
+              processUploadDataResult(res);
+            });
+          } else {
+            processUploadDataResult(res);
+          }
         }
-      }
-    });
+      });
+    }
+
+    function downloadSubmissionJSON(){
+      var formSubmissionDownload = new appForm.models.FormSubmissionDownload(self);
+      self.getRemoteStore.read(formSubmissionDownload, processDownloadDataResult);
+    }
+
+    if(self.get("submissionTransferType" === "upload")){
+      uploadSubmissionJSON();
+    } else if(self.get("submissionTransferType") === "download"){
+      downloadSubmissionJSON();
+    } else {
+      $fh.forms.log.e("Submission Transfer is neither upload or download");
+      return cb("Submission Transfer is neither upload or download");
+    }
   };
+
   /**
    * Handles the case where a call to completeSubmission returns a status other than "completed".
    * Will only ever get to this function when a call is made to the completeSubmission server.
@@ -173,6 +257,7 @@ appForm.models = function (module) {
     }
     cb(errorMessage);
   };
+
   /**
    * Handles the case where the current submission status is required from the server.
    * Based on the files waiting to be uploaded, the upload task is re-built with pendingFiles from the server.
@@ -214,6 +299,7 @@ appForm.models = function (module) {
       }
     });
   };
+
   /**
    * Resetting the upload task based on the response from getSubmissionStatus
    * @param pendingFiles -- Array of files still waiting to upload
@@ -383,20 +469,20 @@ appForm.models = function (module) {
   };
   UploadTask.prototype.uploadComplete = function (cb) {
     var submissionId = this.get('submissionId', null);
-    var that = this;
+    var self = this;
     if (submissionId === null) {
       return cb('Failed to complete submission. Submission Id not found.');
     }
-    var remoteStore = this.getRemoteStore();
-    var completeSubmission = new appForm.models.FormSubmissionComplete(this);
+    var remoteStore = self.getRemoteStore();
+    var completeSubmission = new appForm.models.FormSubmissionComplete(self);
     remoteStore.create(completeSubmission, function (err, res) {
       //if status is not "completed", then handle the completion err
       res = res || {};
       if (res.status !== 'complete') {
-        return that.handleCompletionError(err, res, cb);
+        return self.handleCompletionError(err, res, cb);
       }
       //Completion is now completed sucessfully.. we can make the progress further.
-      that.increProgress();
+      self.increProgress();
       cb(null);
     });
   };
@@ -490,15 +576,17 @@ appForm.models = function (module) {
     }
   };
   UploadTask.prototype.getProgress = function () {
+    var self = this;
     var rtn = {
         'formJSON': false,
         'currentFileIndex': 0,
-        'totalFiles': this.get('fileTasks').length,
-        'totalSize': this.getTotalSize(),
-        'uploaded': this.getUploadedSize(),
-        'retryAttempts': this.getRetryAttempts()
+        'totalFiles': self.get('fileTasks').length,
+        'totalSize': self.getTotalSize(),
+        'uploaded': self.getUploadedSize(),
+        'retryAttempts': self.getRetryAttempts(),
+        'submissionTransferType': self.get('submissionTransferType')
       };
-    var progress = this.getCurrentTask();
+    var progress = self.getCurrentTask();
     if (progress === null) {
       return rtn;
     } else {
@@ -526,7 +614,7 @@ appForm.models = function (module) {
   UploadTask.prototype.submissionModel = function (cb) {
     appForm.models.submission.fromLocal(this.get('submissionLocalId'), function (err, submission) {
       if (err) {
-        console.error(err);
+        $fh.forms.log.e("Error getting submission model from local memory " + err);
       }
       cb(err, submission);
     });

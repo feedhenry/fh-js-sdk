@@ -129,7 +129,8 @@ appForm.models = function (module) {
         'deviceFormTimestamp',
         'errorMessage',
         'submissionStartedTimestamp',
-        'submittedDate'
+        'submittedDate',
+        'submissionId'
       ];
     var data = submission.getProps();
     var rtn = {};
