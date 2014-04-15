@@ -20,6 +20,7 @@ appForm.models = (function(module) {
   appForm.utils.extend(Log, Model);
 
   Log.prototype.info = function(logLevel, msgs) {
+    console.log("Log: ", logLevel, msgs);
     if ($fh.forms.config.get("logger") == "true") {
       var levelString = "";
       var curLevel = $fh.forms.config.get("log_level");

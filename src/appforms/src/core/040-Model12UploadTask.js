@@ -53,10 +53,10 @@ appForm.models = function (module) {
     self.set('retryNeeded', false);
     self.set('mbaasCompleted', false);
     self.set('submissionTransferType', 'upload');
+    submissionModel.setUploadTaskId(self.getLocalId());
 
     function initSubmissionUpload(){
       var json = submissionModel.getProps();
-      self.addFileTasks(submissionModel);
       self.set('jsonTask', json);
       self.set('formId', submissionModel.get('formId'));
 
@@ -103,13 +103,19 @@ appForm.models = function (module) {
   UploadTask.prototype.getRemoteStore = function () {
     return appForm.stores.mBaaS;
   };
-  UploadTask.prototype.addFileTasks = function(submissionModel){
+  UploadTask.prototype.addFileTasks = function(submissionModel, cb){
     var self = this;
-    var files = submissionModel.getFileInputValues();
-    for (var i = 0; i<files.length ; i++) {
-      var file = files[i];
-      self.addFileTask(file);
-    }
+    submissionModel.getFileInputValues(function(err, files){
+      if(err){
+        $fh.forms.log.e("Error getting file Input values: " + err);
+        return cb(err);
+      }
+      for (var i = 0; i<files.length ; i++) {
+        var file = files[i];
+        self.addFileTask(file);
+      }
+      cb();
+    });
   };
   UploadTask.prototype.addFileTask = function (fileDef) {
     this.get('fileTasks').push(fileDef);
@@ -142,6 +148,7 @@ appForm.models = function (module) {
     var self = this;
 
     function processUploadDataResult(res){
+      var formSub = self.get("jsonTask");
       if(res.error){
         $fh.forms.log.e("Error submitting form " + res.error);
         return cb("Error submitting form " + res.error);
@@ -182,14 +189,18 @@ appForm.models = function (module) {
           }
 
           //Submission Model is now populated with all the fields in the submission
-          self.addFileTasks(submissionModel);
-          self.increProgress();
-          self.saveLocal(function (err) {
-            if (err) {
-              $fh.forms.log.e("Error saving downloadTask to local storage" + err);
+          self.addFileTasks(submissionModel, function(err){
+            if(err){
+              return cb(err);
             }
+            self.increProgress();
+            self.saveLocal(function (err) {
+              if (err) {
+                $fh.forms.log.e("Error saving downloadTask to local storage" + err);
+              }
 
-            self.emit('progress', self.getProgress());
+              self.emit('progress', self.getProgress());
+            });
           });
         });
       });
@@ -197,27 +208,40 @@ appForm.models = function (module) {
 
     function uploadSubmissionJSON(){
       var formSub = self.get('jsonTask');
-      var formSubmissionModel = new appForm.models.FormSubmission(formSub);
-      self.getRemoteStore().create(formSubmissionModel, function (err, res) {
-        if (err) {
+      self.submissionModel(function(err, submissionModel){
+        if(err){
           return cb(err);
-        } else {
-          var updatedFormDefinition = res.updatedFormDefinition;
-          if (updatedFormDefinition) {
-            // remote form definition is updated
-            self.refreshForm(updatedFormDefinition, function (err) {
-              //refresh form def in parallel. maybe not needed.
-              $fh.forms.log.d("Form Updated, refreshed");
-              if (err) {
-                $fh.forms.log.e(err);
-              }
-              processUploadDataResult(res);
-            });
-          } else {
-            processUploadDataResult(res);
-          }
         }
+        self.addFileTasks(submissionModel, function(err){
+          if(err){
+            $fh.forms.log.e("Error adding file tasks for submission upload");
+            return cb(err);
+          }
+
+          var formSubmissionModel = new appForm.models.FormSubmission(formSub);
+          self.getRemoteStore().create(formSubmissionModel, function (err, res) {
+            if (err) {
+              return cb(err);
+            } else {
+              var updatedFormDefinition = res.updatedFormDefinition;
+              if (updatedFormDefinition) {
+                // remote form definition is updated
+                self.refreshForm(updatedFormDefinition, function (err) {
+                  //refresh form def in parallel. maybe not needed.
+                  $fh.forms.log.d("Form Updated, refreshed");
+                  if (err) {
+                    $fh.forms.log.e(err);
+                  }
+                  processUploadDataResult(res);
+                });
+              } else {
+                processUploadDataResult(res);
+              }
+            }
+          });
+        });
       });
+
     }
 
     function downloadSubmissionJSON(){
@@ -225,7 +249,7 @@ appForm.models = function (module) {
       self.getRemoteStore.read(formSubmissionDownload, processDownloadDataResult);
     }
 
-    if(self.get(self.isDownloadTask())){
+    if(self.isDownloadTask()){
       downloadSubmissionJSON();
     } else {
       uploadSubmissionJSON();
@@ -242,6 +266,7 @@ appForm.models = function (module) {
    * @param cb Function callback
    */
   UploadTask.prototype.handleCompletionError = function (err, res, cb) {
+    $fh.forms.log.d("handleCompletionError Called");
     var errorMessage = err;
     if (res.status === 'pending') {
       //The submission is not yet complete, there are files waiting to upload. This is an unexpected state as all of the files should have been uploaded.
@@ -263,39 +288,53 @@ appForm.models = function (module) {
    */
   UploadTask.prototype.handleIncompleteSubmission = function (cb) {
     var self = this;
-    var remoteStore = this.getRemoteStore();
-    var submissionStatus = new appForm.models.FormSubmissionStatus(self);
+    function processUploadIncompleteSubmission(){
 
-    remoteStore.submissionStatus(submissionStatus, function (err, res) {
-      var errMessage="";
-      if (err) {
-        cb(err);
-      } else if (res.status === 'error') {
-        //The server had an error submitting the form, finish with an error
-         errMessage= 'Error submitting form.';
-        cb(errMessage);
-      } else if (res.status === 'complete') {
-        //Submission is complete, make uploading progress further
-        self.increProgress();
-        cb();
-      } else if (res.status === 'pending') {
-        //Submission is still pending, check for files not uploaded yet.
-        var pendingFiles = res.pendingFiles || [];
-        if (pendingFiles.length > 0) {
-          self.resetUploadTask(pendingFiles, function () {
-            cb();
-          });
-        } else {
-          //No files pending on the server, make the progress further
+      var remoteStore = self.getRemoteStore();
+      var submissionStatus = new appForm.models.FormSubmissionStatus(self);
+
+      remoteStore.submissionStatus(submissionStatus, function (err, res) {
+        var errMessage="";
+        if (err) {
+          cb(err);
+        } else if (res.status === 'error') {
+          //The server had an error submitting the form, finish with an error
+          errMessage= 'Error submitting form.';
+          cb(errMessage);
+        } else if (res.status === 'complete') {
+          //Submission is complete, make uploading progress further
           self.increProgress();
           cb();
+        } else if (res.status === 'pending') {
+          //Submission is still pending, check for files not uploaded yet.
+          var pendingFiles = res.pendingFiles || [];
+          if (pendingFiles.length > 0) {
+            self.resetUploadTask(pendingFiles, function () {
+              cb();
+            });
+          } else {
+            //No files pending on the server, make the progress further
+            self.increProgress();
+            cb();
+          }
+        } else {
+          //Should not get to this point. Only valid status responses are error, pending and complete.
+          errMessage = 'Invalid submission status response.';
+          cb(errMessage);
         }
-      } else {
-        //Should not get to this point. Only valid status responses are error, pending and complete.
-        errMessage = 'Invalid submission status response.';
-        cb(errMessage);
-      }
-    });
+      });
+    }
+
+    function processDownloadIncompleteSubmission(){
+      //No need to go the the server to get submission details -- The current progress status is valid locally
+      cb();
+    }
+
+    if(self.isDownloadTask()){
+      processDownloadIncompleteSubmission();
+    } else {
+      processUploadIncompleteSubmission();
+    }
   };
 
   /**
@@ -407,9 +446,18 @@ appForm.models = function (module) {
           submissionModel.updateFileLocalURI(fileTask, localFilePath, function(err){
             if(err){
               $fh.forms.log.e("Error updating file local url for fileTask " + JSON.stringify(fileTask));
+              return cb(err);
             }
 
-            return cb(err);
+            self.increProgress();
+            self.saveLocal(function (err) {
+              //save current status.
+              if (err) {
+                $fh.forms.log.e("Error saving download task");
+              }
+            });
+            self.emit('progress', self.getProgress());
+            return cb();
           });
         });
       });
@@ -439,35 +487,37 @@ appForm.models = function (module) {
     return this.get('retryNeeded');
   };
   UploadTask.prototype.uploadTick = function (cb) {
-    var that = this;
+    var self = this;
     function _handler(err) {
       if (err) {
-        console.error('Err, retrying:', err);
+        $fh.forms.log.d('Err, retrying transfer: ' + self.getLocalId());
         //If the upload has encountered an error -- flag the submission as needing a retry on the next tick -- User should be insulated from an error until the retries are finished.
-        that.increRetryAttempts();
-        if (that.getRetryAttempts() <= $fh.forms.config.get('max_retries')) {
-          that.setRetryNeeded(true);
-          that.saveLocal(function (err) {
-            if (err)
-              console.error(err);
+        self.increRetryAttempts();
+        if (self.getRetryAttempts() <= $fh.forms.config.get('max_retries')) {
+          self.setRetryNeeded(true);
+          self.saveLocal(function (err) {
+            if (err){
+              $fh.forms.log.e("Error saving upload taskL " + err);
+            }
+
             cb();
           });
         } else {
           //The number of retry attempts exceeds the maximum number of retry attempts allowed, flag the upload as an error.
-          that.setRetryNeeded(true);
-          that.resetRetryAttempts();
-          that.error(err, function () {
+          self.setRetryNeeded(true);
+          self.resetRetryAttempts();
+          self.error(err, function () {
             cb(err);
           });
         }
       } else {
         //no error.
-        that.setRetryNeeded(false);
-        that.saveLocal(function (_err) {
+        self.setRetryNeeded(false);
+        self.saveLocal(function (_err) {
           if (_err)
-            console.error(_err);
+            $fh.forms.log.e("Error saving upload task to local memory" + _err);
         });
-        that.submissionModel(function (err, submission) {
+        self.submissionModel(function (err, submission) {
           if (err) {
             cb(err);
           } else {
@@ -511,46 +561,84 @@ appForm.models = function (module) {
     this.set('currentTask', curTask);
   };
   UploadTask.prototype.uploadComplete = function (cb) {
-    var submissionId = this.get('submissionId', null);
+    $fh.forms.log.d("UploadComplete Called");
     var self = this;
+    var submissionId = self.get('submissionId', null);
+
     if (submissionId === null) {
       return cb('Failed to complete submission. Submission Id not found.');
     }
-    var remoteStore = self.getRemoteStore();
-    var completeSubmission = new appForm.models.FormSubmissionComplete(self);
-    remoteStore.create(completeSubmission, function (err, res) {
-      //if status is not "completed", then handle the completion err
-      res = res || {};
-      if (res.status !== 'complete') {
-        return self.handleCompletionError(err, res, cb);
-      }
-      //Completion is now completed sucessfully.. we can make the progress further.
+
+    function processDownloadComplete(){
+      $fh.forms.log.d("processDownloadComplete Called");
       self.increProgress();
       cb(null);
-    });
+    }
+
+    function processUploadComplete(){
+      $fh.forms.log.d("processUploadComplete Called");
+      var remoteStore = self.getRemoteStore();
+      var completeSubmission = new appForm.models.FormSubmissionComplete(self);
+      remoteStore.create(completeSubmission, function (err, res) {
+        //if status is not "completed", then handle the completion err
+        res = res || {};
+        if (res.status !== 'complete') {
+          return self.handleCompletionError(err, res, cb);
+        }
+        //Completion is now completed sucessfully.. we can make the progress further.
+        self.increProgress();
+        cb(null);
+      });
+    }
+
+    if(self.isDownloadTask()){
+      processDownloadComplete();
+    } else {
+      processUploadComplete();
+    }
   };
   /**
    * the upload task is successfully completed. This will be called when all uploading process finished successfully.
    * @return {[type]} [description]
    */
   UploadTask.prototype.success = function (cb) {
-    var that = this;
-    var submissionId = that.get('submissionId', null);
-    that.set('completed', true);
-    that.saveLocal(function (err) {
+    $fh.forms.log.d("Transfer Sucessful. Success Called.");
+    var self = this;
+    var submissionId = self.get('submissionId', null);
+    self.set('completed', true);
+    $fh.forms.log.d("Clearing Upload Task");
+    self.saveLocal(function (err) {
       if (err) {
-        console.error(err);
-        console.error('Upload task save failed');
+        $fh.forms.log.e("Error Clearing Upload Task");
       }
     });
-    that.submissionModel(function (_err, model) {
-      model.set('submissionId', submissionId);
-      if (_err) {
-        cb(_err);
-      } else {
-        model.submitted(cb);
-      }
-    });
+
+    function processUploadSuccess(){
+      self.submissionModel(function (_err, model) {
+        model.set('submissionId', submissionId);
+        if (_err) {
+          cb(_err);
+        } else {
+          model.submitted(cb);
+        }
+      });
+    }
+
+    function processDownloadSuccess(){
+      self.submissionModel(function (_err, model) {
+        if (_err) {
+          cb(_err);
+        } else {
+          model.downloaded(cb);
+        }
+      });
+    }
+
+    if(self.isDownloadTask()){
+      processDownloadSuccess();
+    } else {
+      processUploadSuccess();
+    }
   };
   /**
    * the upload task is failed. It will not complete the task but will set error with error returned.
@@ -563,7 +651,7 @@ appForm.models = function (module) {
     this.saveLocal(function (err) {
       if (err) {
         console.error(err);
-        console.error('Upload task save failed');
+        $fh.forms.log.e('Upload task save failed');
       }
     });
     this.submissionModel(function (_err, model) {
@@ -606,11 +694,12 @@ appForm.models = function (module) {
     return this.get('completed', false);
   };
   UploadTask.prototype.isMBaaSCompleted = function () {
-    if (!this.isFileCompleted()) {
+    var self = this;
+    if (!self.isFileCompleted()) {
       return false;
     } else {
-      var curTask = this.getCurrentTask();
-      if (curTask > this.get('fileTasks', []).length) {
+      var curTask = self.getCurrentTask();
+      if (curTask > self.get('fileTasks', []).length) {
         //change offset if completion bit is changed
         return true;
       } else {

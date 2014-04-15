@@ -4,14 +4,16 @@
 appForm.models = function (module) {
   var Model = appForm.models.Model;
   function UploadManager() {
-    Model.call(this, {
+    var self = this;
+    Model.call(self, {
       '_type': 'uploadManager',
       '_ludid': 'uploadManager_queue'
     });
-    this.set('taskQueue', []);
-    this.sending = false;
-    this.timerInterval = 200;
-    this.sendingStart = appForm.utils.getTime();
+
+    self.set('taskQueue', []);
+    self.sending = false;
+    self.timerInterval = 200;
+    self.sendingStart = appForm.utils.getTime();
   };
   appForm.utils.extend(UploadManager, Model);
 
@@ -22,6 +24,7 @@ appForm.models = function (module) {
      * @return {[type]}                 [description]
      */
   UploadManager.prototype.queueSubmission = function (submissionModel, cb) {
+    $fh.forms.log.d("Queueing Submission for uploadManager");
     var utId;
     var uploadTask = null;
     var self = this;
@@ -31,9 +34,10 @@ appForm.models = function (module) {
       uploadTask = appForm.models.uploadTask.newInstance(submissionModel);
       utId = uploadTask.getLocalId();
     }
-    this.push(utId);
-    if (!this.timer) {
-      this.start();
+    self.push(utId);
+    if (!self.timer) {
+      $fh.forms.log.d("Starting timer for uploadManager");
+      self.start();
     }
     if (uploadTask) {
       uploadTask.saveLocal(function (err) {
@@ -42,14 +46,18 @@ appForm.models = function (module) {
         }
         self.saveLocal(function (err) {
           if (err) {
-            console.error(err);
+            $fh.forms.log.e("Error saving upload manager: " + err);
           }
-          submissionModel.setUploadTaskId(utId);
           cb(null, uploadTask);
         });
       });
     } else {
-      self.getTaskById(utId, cb);
+      self.saveLocal(function (err) {
+        if (err) {
+          $fh.forms.log.e("Error saving upload manager: " + err);
+        }
+        self.getTaskById(utId, cb);
+      });
     }
   };
 
@@ -116,8 +124,9 @@ appForm.models = function (module) {
   UploadManager.prototype.push = function (uploadTaskId) {
     this.get('taskQueue').push(uploadTaskId);
     this.saveLocal(function (err) {
-      if (err)
-        console.error(err);
+      if (err){
+        $fh.forms.log.e("Error saving local Upload manager", err);
+      }
     });
   };
   UploadManager.prototype.shift = function () {

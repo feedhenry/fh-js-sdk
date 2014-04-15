@@ -15,7 +15,7 @@ appForm.stores = function(module) {
       cb("Studio mode not supported");
     } else {
       var url = _getUrl(model);
-      if(self.isFileAndPhoneGap()){
+      if(self.isFileAndPhoneGap(model)){
         appForm.web.uploadFile(url, model.getProps(), cb);
       } else {
         appForm.web.ajax.post(url, model.getProps(), cb);
@@ -24,7 +24,7 @@ appForm.stores = function(module) {
   };
   MBaaS.prototype.isFileAndPhoneGap = function(model){
     var self = this;
-    return self.isFileTransfer() && self.isPhoneGap();
+    return self.isFileTransfer(model) && self.isPhoneGap();
   };
   MBaaS.prototype.isFileTransfer = function(model){
     return (model.get("_type") == "fileSubmission" || model.get("_type") == "base64fileSubmission" || model.get("_type") == "fileSubmissionDownload");

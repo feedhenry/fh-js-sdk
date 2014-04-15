@@ -194,6 +194,14 @@ appForm.models = function (module) {
     params.status = "inprogress";
     return this.findByStatus(params);
   };
+  Submissions.prototype.getDownloaded = function(params) {
+    $fh.forms.log.d("Submissions getDownloaded: ", params);
+    if(!params){
+      params = {};
+    }
+    params.status = "downloaded";
+    return this.findByStatus(params);
+  };
   Submissions.prototype.findByStatus = function(params) {
     $fh.forms.log.d("Submissions findByStatus: ", params);
     if(!params){

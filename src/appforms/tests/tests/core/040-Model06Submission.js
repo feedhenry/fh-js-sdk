@@ -48,15 +48,11 @@ describe("Submission model", function() {
             var localId = submission.getLocalId();
             submission.saveDraft(function(err) {
                 assert(!err);
-                try {
-                    submission.submitted(function() {
 
-                    });
-                } catch (e) {
-                    error = true;
-                }
-                assert(error);
-                done();
+                submission.submitted(function(err) {
+                  assert(err);
+                  done();
+                });
             });
         });
     });
@@ -325,7 +321,7 @@ describe("Submission model", function() {
     describe("download a submission using a submission Id", function(){
       it("how to queue a submission for download", function(done) {
         var submissionToDownload = null;
-        appForm.models.submission.newInstance(null, {"submissionId": "testSubmissionId"});
+        submissionToDownload = appForm.models.submission.newInstance(null, {"submissionId": "testSubmissionId"});
 
         submissionToDownload.on("progress", function(err, progress){
           assert.ok(!err);
