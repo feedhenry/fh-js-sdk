@@ -1,7 +1,7 @@
 appForm.web = function (module) {
 
   module.uploadFile = function(url, fileProps, cb){
-    $fh.forms.log.d("uploadFile ", url, fileProps);
+    $fh.forms.log.d("Phonegap uploadFile ", url, fileProps);
     var filePath = fileProps.fullPath;
 
     var success = function (r) {
@@ -35,6 +35,39 @@ appForm.web = function (module) {
     $fh.forms.log.d("Beginning file upload ",url, options);
     var ft = new FileTransfer();
     ft.upload(filePath, encodeURI(url), success, fail, options);
+  };
+
+  module.downloadFile = function(url, fileMetaData, cb){
+    $fh.forms.log.d("Phonegap downloadFile ", url, fileMetaData);
+    var ft = new FileTransfer();
+
+    appforms.utils.fileSystem.getBasePath(function(err, basePath){
+      if(err){
+        $fh.forms.log.e("Error getting base path for file download: " + url);
+        return cb(err);
+      }
+
+      function success(fileEntry){
+        $fh.forms.log.d("File Download Completed Successfully. FilePath: " + fileEntry.fullPath);
+        return cb(null, fileEntry.fullPath);
+      };
+
+      function fail(error){
+        $fh.forms.log.e("Error downloading file " + fileMetaData.fileName + " code: " + error.code);
+        return cb("Error downloading file " + fileMetaData.fileName + " code: " + error.code);
+      };
+
+      if(fileMetaData.fileName){
+        $fh.forms.log.d("File name for file " + fileMetaData.fileName + " found. Starting download");
+        var fullPath = basePath + fileMetaData.fileName;
+        ft.download(encodeURI(url), fullPath, success, fail, {headers: {
+          "Connection": "close"
+        }});
+      } else {
+        $fh.forms.log.e("No file name associated with the file to download");
+        return cb("No file name associated with the file to download");
+      }
+    });
   };
 
   return module;

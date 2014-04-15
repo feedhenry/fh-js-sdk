@@ -225,13 +225,10 @@ appForm.models = function (module) {
       self.getRemoteStore.read(formSubmissionDownload, processDownloadDataResult);
     }
 
-    if(self.get("submissionTransferType" === "upload")){
-      uploadSubmissionJSON();
-    } else if(self.get("submissionTransferType") === "download"){
+    if(self.get(self.isDownloadTask())){
       downloadSubmissionJSON();
     } else {
-      $fh.forms.log.e("Submission Transfer is neither upload or download");
-      return cb("Submission Transfer is neither upload or download");
+      uploadSubmissionJSON();
     }
   };
 
@@ -265,9 +262,10 @@ appForm.models = function (module) {
    * @param cb
    */
   UploadTask.prototype.handleIncompleteSubmission = function (cb) {
+    var self = this;
     var remoteStore = this.getRemoteStore();
-    var submissionStatus = new appForm.models.FormSubmissionStatus(this);
-    var that = this;
+    var submissionStatus = new appForm.models.FormSubmissionStatus(self);
+
     remoteStore.submissionStatus(submissionStatus, function (err, res) {
       var errMessage="";
       if (err) {
@@ -278,18 +276,18 @@ appForm.models = function (module) {
         cb(errMessage);
       } else if (res.status === 'complete') {
         //Submission is complete, make uploading progress further
-        that.increProgress();
+        self.increProgress();
         cb();
       } else if (res.status === 'pending') {
         //Submission is still pending, check for files not uploaded yet.
         var pendingFiles = res.pendingFiles || [];
         if (pendingFiles.length > 0) {
-          that.resetUploadTask(pendingFiles, function () {
+          self.resetUploadTask(pendingFiles, function () {
             cb();
           });
         } else {
           //No files pending on the server, make the progress further
-          that.increProgress();
+          self.increProgress();
           cb();
         }
       } else {
@@ -332,20 +330,28 @@ appForm.models = function (module) {
     this.saveLocal(cb);  //Saving the reset files list to local
   };
   UploadTask.prototype.uploadFile = function (cb) {
-    var that = this;
-    var submissionId = this.get('submissionId');
-    if (submissionId) {
-      var progress = this.getCurrentTask();
-      if (progress == null) {
-        progress = 0;
-        that.set('currentTask', progress);
-      }
-      var fileTask = this.get('fileTasks', [])[progress];
-      if (!fileTask) {
-        return cb('cannot find file task');
-      }
-      var fileSubmissionModel;
-      if (fileTask.contentType == 'base64') {
+    var progress = self.getCurrentTask();
+    var self = this;
+    if (progress == null) {
+      progress = 0;
+      self.set('currentTask', progress);
+    }
+    var fileTask = self.get('fileTasks', [])[progress];
+    var submissionId = self.get('submissionId');
+    var fileSubmissionModel;
+    if (!fileTask) {
+      $fh.forms.log.e("No file task found when trying to transfer a file.");
+      return cb('cannot find file task');
+    }
+
+    if(!submissionId){
+      $fh.forms.log.e("No submission id found when trying to transfer a file.");
+      return cb("No submission Id found");
+    }
+
+    function processUploadFile(){
+      $fh.forms.log.d("processUploadFile for submissionId: " + err);
+      if (fileTask.contentType === 'base64') {
         fileSubmissionModel = new appForm.models.Base64FileSubmission(fileTask);
       } else {
         fileSubmissionModel = new appForm.models.FileSubmission(fileTask);
@@ -353,22 +359,24 @@ appForm.models = function (module) {
       fileSubmissionModel.setSubmissionId(submissionId);
       fileSubmissionModel.loadFile(function (err) {
         if (err) {
+          $fh.forms.log.e("Error loading file for upload: " + err);
           return cb(err);
         } else {
-          that.getRemoteStore().create(fileSubmissionModel, function (err, res) {
+          self.getRemoteStore().create(fileSubmissionModel, function (err, res) {
             if (err) {
               cb(err);
             } else {
               if (res.status == 'ok' || res.status == '200') {
                 fileTask.updateDate = appForm.utils.getTime();
-                that.increProgress();
-                that.saveLocal(function (err) {
+                self.increProgress();
+                self.saveLocal(function (err) {
                   //save current status.
                   if (err) {
+                    $fh.forms.log.e("Error saving upload task");
                     console.error(err);
                   }
                 });
-                that.emit('progress', that.getProgress());
+                self.emit('progress', self.getProgress());
                 cb(null);
               } else {
                 var errorMessage = 'File upload failed for file: ' + fileTask.fileName;
@@ -378,10 +386,45 @@ appForm.models = function (module) {
           });
         }
       });
+    };
+
+    function processDownloadFile(){
+      $fh.forms.log.d("processDownloadFile called");
+      fileSubmissionModel = new appForm.models.FileSubmissionDownload(fileTask);
+      self.getRemoteStore().read(fileSubmissionModel, function (err, localFilePath) {
+        if(err){
+          $fh.forms.log.e("Error downloading a file from remote: " + err);
+          return cb(err);
+        }
+
+        //Update the submission model to add local file uri to a file submission object
+        self.submissionModel(function(err, submissionModel){
+          if(err){
+            $fh.forms.log.e("Error Loading submission model for processDownloadFile " + err);
+            return cb(err);
+          }
+
+          submissionModel.updateFileLocalURI(fileTask, localFilePath, function(err){
+            if(err){
+              $fh.forms.log.e("Error updating file local url for fileTask " + JSON.stringify(fileTask));
+            }
+
+            return cb(err);
+          });
+        });
+      });
+    };
+
+    if(self.isDownloadTask()){
+      processDownloadFile();
     } else {
-      cb('Failed to upload file. Submission Id not found.');
+      processUploadFile();
     }
+
   };
+  UploadTask.prototype.isDownloadTask = function(){
+    return this.get("submissionTransferType") === "download";
+  }
   //The upload task needs to be retried
   UploadTask.prototype.setRetryNeeded = function (retryNeeded) {
     //If there is a submissionId, then a retry is needed. If not, then the current task should be set to null to retry the submission.

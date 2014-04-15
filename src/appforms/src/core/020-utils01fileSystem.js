@@ -60,6 +60,19 @@ appForm.utils = function (module) {
     return retVal;
   }
 
+
+  function getBasePath(cb){
+    _getFileEntry("dummy.html", size, { create: true, exclusive: false }, function (err, fileEntry) {
+      if(err){
+        return cb(err);
+      }
+
+      var sPath = fileEntry.fullPath.replace("dummy.html","");
+      fileEntry.remove();
+      return cb(null, sPath);
+    });
+  }
+
   /**
      * Save a content to file system into a file
      * @param  {[type]} fileName file name to be stored.

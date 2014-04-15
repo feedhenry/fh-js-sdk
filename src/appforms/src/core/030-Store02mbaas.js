@@ -10,18 +10,30 @@ appForm.stores = function(module) {
     return appForm.config.get("studioMode");
   };
   MBaaS.prototype.create = function(model, cb) {
-    if (this.checkStudio()) {
+    var self = this;
+    if (self.checkStudio()) {
       cb("Studio mode not supported");
     } else {
       var url = _getUrl(model);
-      if((model.get("_type") == "fileSubmission" || model.get("_type") == "base64fileSubmission") && (typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined")){
+      if(self.isFileAndPhoneGap()){
         appForm.web.uploadFile(url, model.getProps(), cb);
       } else {
         appForm.web.ajax.post(url, model.getProps(), cb);
       }
     }
   };
+  MBaaS.prototype.isFileAndPhoneGap = function(model){
+    var self = this;
+    return self.isFileTransfer() && self.isPhoneGap();
+  };
+  MBaaS.prototype.isFileTransfer = function(model){
+    return (model.get("_type") == "fileSubmission" || model.get("_type") == "base64fileSubmission" || model.get("_type") == "fileSubmissionDownload");
+  };
+  MBaaS.prototype.isPhoneGap = function(){
+    return (typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined");
+  };
   MBaaS.prototype.read = function(model, cb) {
+    var self = this;
     if (this.checkStudio()) {
       cb("Studio mode not supported");
     } else {
@@ -29,7 +41,12 @@ appForm.stores = function(module) {
         cb("offlinetest. ignore");
       } else {
         var url = _getUrl(model);
-        appForm.web.ajax.get(url, cb);
+
+        if(self.isFileTransfer(model) && self.isPhoneGap()){
+          appForm.web.downloadFile(url, model.getFileMetaData(), cb);
+        } else {
+          appForm.web.ajax.get(url, cb);
+        }
       }
     }
   };

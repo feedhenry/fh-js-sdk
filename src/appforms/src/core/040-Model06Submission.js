@@ -569,7 +569,7 @@ appForm.models = function(module) {
       //For Submission downloads, there needs to be a scan through the formFields param
       var formFields = self.get("formFields", []);
 
-      for(var formFieldIndex = 0; formFieldIndex < formFields.lenght; formFieldIndex++){
+      for(var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++){
         var formFieldEntry = formFields[formFieldIndex].fieldId || {};
         if(formFieldEntry.type === 'file' || formFieldEntry.type === 'photo'){
           if(formFieldEntry._id){
@@ -582,6 +582,50 @@ appForm.models = function(module) {
     }
 
     return formFieldIds;
+  };
+
+  Submission.prototype.updateFileLocalURI = function(fileDetails, newLocalFileURI, cb){
+    var self = this;
+    fileDetails = fileDetails || {};
+    var fileInputValues = self.getFileInputValues();
+
+    if(fileDetails.fileName && newLocalFileURI){
+      //Search for the file placeholder name.
+      var fieldDetails = self.findFilePlaceholderFieldId(fileDetails.fileName);
+      if(fieldDetails.fieldId){
+        var tmpObj = self.getInputValueObjectById(fieldDetails.fieldId)[fieldDetails.valueIndex];
+        tmpObj.localURI = newLocalFileURI;
+        self.getInputValueObjectById(fieldDetails.fieldId)[fieldDetails.valueIndex] = tmpObj;
+        self.saveLocal(cb);
+      } else {
+        $fh.forms.log.e("No file field matches the placeholder name " + fileDetails.fileName);
+        return cb("No file field matches the placeholder name " + fileDetails.fileName);
+      }
+    } else {
+      $fh.forms.log.e("Submission: updateFileLocalURI : No fileName for submissionId : "+ JSON.stringify(fileDetails));
+      return cb("Submission: updateFileLocalURI : No fileName for submissionId : "+ JSON.stringify(fileDetails));
+    }
+  };
+
+  Submission.prototype.findFilePlaceholderFieldId = function(filePlaceholderName){
+    var self = this;
+    var fieldDetails = {};
+    var fieldIds = self.getFileFieldsId();
+    for (var i = 0; i< fieldIds.length; i++) {
+      var fieldId = fieldIds[i];
+      var inputValue = self.getInputValueObjectById(fieldId);
+      for (var j = 0; j < inputValue.fieldValues.length; j++) {
+        var tmpObj = inputValue.fieldValues[j];
+        if (tmpObj) {
+          if(tmpObj.fileName !== null && tmpObj.fileName === filePlaceholderName){
+            fieldDetails.fieldId = fieldId;
+            fieldDetails.valueIndex = j;
+          }
+        }
+      }
+    }
+
+    return fieldId;
   };
 
   Submission.prototype.getInputValueArray = function(fieldIds) {
