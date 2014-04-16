@@ -27,7 +27,7 @@
       },
       "fieldValues": [
         {
-          "url": "/api/v2/forms/submission/file/53457f3c6f81402d48000003?rand=0.07748547941446304",
+          "url": "/mbaas/forms/appid/submission/submissionId/files/filegroupid",
           "fieldId": "5335b546bfe537474a9132ad",
           "fileUpdateTime": 1397063480651,
           "imgHeader": "data:image/png;base64,",
