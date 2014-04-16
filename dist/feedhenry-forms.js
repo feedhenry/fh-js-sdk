@@ -7456,7 +7456,7 @@ fh.sync = api_sync;
 fh.ajax = fh.__ajax = ajax;
 fh.mbaas = api_mbaas;
 fh._getDeviceId = device.getDeviceId;
-fh.fh_timeout = 20000; //keep backward compatible
+fh.fh_timeout = 60000; //keep backward compatible
 
 fh.getCloudURL = function(){
   return cloud.getCloudHostUrl();
