@@ -5,7 +5,7 @@ var ajax = require("./ajax");
 var JSON = require("JSON");
 var handleError = require("./handleError");
 var consts = require("./constants");
-
+var appProps = require("./appProps");
 
 module.exports = function(opts, success, fail){
   logger.debug("mbaas is called.");
@@ -33,7 +33,7 @@ module.exports = function(opts, success, fail){
         "dataType": "json",
         "data": JSON.stringify(params),
         "contentType": "application/json",
-        "timeout": opts.timeout || consts.fh_timeout,
+        "timeout": opts.timeout || appProps.timeout,
         "success": success,
         "error": function(req, statusText, error){
           return handleError(fail, req, statusText, error);

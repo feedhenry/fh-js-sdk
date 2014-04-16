@@ -10,7 +10,6 @@
 
 var eventsHandler = require("./events");
 var XDomainRequestWrapper = require("./XDomainRequestWrapper");
-var consts = require("./constants");
 var logger = require("./logger");
 
 var type
@@ -35,6 +34,11 @@ var jsonpID = 0,
 
 var ajax = module.exports = function (options) {
   var settings = extend({}, options || {})
+  //keep backward compatibility
+  if(window && window.$fh && typeof window.$fh.fh_timeout === "number"){
+    ajax.settings.timeout = window.$fh.fh_timeout;
+  }
+
   for (key in ajax.settings)
     if (settings[key] === undefined) settings[key] = ajax.settings[key]
 
@@ -282,9 +286,7 @@ ajax.settings = {
     text: 'text/plain'
   },
   // Whether the request is to another domain
-  crossDomain: false,
-  // Default timeout
-  timeout: consts.fh_timeout
+  crossDomain: false
 }
 
 function mimeToDataType(mime) {

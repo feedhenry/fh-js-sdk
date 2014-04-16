@@ -6680,8 +6680,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -7156,7 +7156,7 @@ process.chdir = function (dir) {
 module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -7456,6 +7456,7 @@ fh.sync = api_sync;
 fh.ajax = fh.__ajax = ajax;
 fh.mbaas = api_mbaas;
 fh._getDeviceId = device.getDeviceId;
+fh.fh_timeout = 60000; //keep backward compatible
 
 fh.getCloudURL = function(){
   return cloud.getCloudHostUrl();
@@ -7575,7 +7576,6 @@ module.exports = XDomainRequestWrapper;
 
 var eventsHandler = _dereq_("./events");
 var XDomainRequestWrapper = _dereq_("./XDomainRequestWrapper");
-var consts = _dereq_("./constants");
 var logger = _dereq_("./logger");
 
 var type
@@ -7600,6 +7600,11 @@ var jsonpID = 0,
 
 var ajax = module.exports = function (options) {
   var settings = extend({}, options || {})
+  //keep backward compatibility
+  if(window && window.$fh && typeof window.$fh.fh_timeout === "number"){
+    ajax.settings.timeout = window.$fh.fh_timeout;
+  }
+
   for (key in ajax.settings)
     if (settings[key] === undefined) settings[key] = ajax.settings[key]
 
@@ -7847,9 +7852,7 @@ ajax.settings = {
     text: 'text/plain'
   },
   // Whether the request is to another domain
-  crossDomain: false,
-  // Default timeout
-  timeout: consts.fh_timeout
+  crossDomain: false
 }
 
 function mimeToDataType(mime) {
@@ -7938,13 +7941,14 @@ function extend(target) {
   })
   return target
 }
-},{"./XDomainRequestWrapper":17,"./constants":27,"./events":30,"./logger":38,"type-of":15}],19:[function(_dereq_,module,exports){
+},{"./XDomainRequestWrapper":17,"./events":30,"./logger":38,"type-of":15}],19:[function(_dereq_,module,exports){
 var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
 var ajax = _dereq_("./ajax");
 var JSON = _dereq_("JSON");
 var handleError = _dereq_("./handleError");
+var appProps = _dereq_("./appProps");
 
 function doActCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
@@ -7958,7 +7962,7 @@ function doActCall(opts, success, fail){
     "dataType": "json",
     "data": JSON.stringify(params),
     "contentType": "application/json",
-    "timeout": opts.timeout,
+    "timeout": opts.timeout || appProps.timeout,
     "success": success,
     "error": function(req, statusText, error){
       return handleError(fail, req, statusText, error);
@@ -7987,7 +7991,7 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":18,"./fhparams":31,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],20:[function(_dereq_,module,exports){
+},{"./ajax":18,"./appProps":25,"./fhparams":31,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],20:[function(_dereq_,module,exports){
 var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -8042,7 +8046,7 @@ module.exports = function(opts, success, fail){
         "data": JSON.stringify(req),
         "dataType": "json",
         "contentType": "application/json",
-        "timeout" : opts.timeout || app_props.timeout || constants.fh_timeout,
+        "timeout" : opts.timeout || app_props.timeout,
         success: function(res) {
           checkAuth.handleAuthResponse(endurl, res, success, fail);
         },
@@ -8060,6 +8064,7 @@ var fhparams = _dereq_("./fhparams");
 var ajax = _dereq_("./ajax");
 var JSON = _dereq_("JSON");
 var handleError = _dereq_("./handleError");
+var appProps = _dereq_("./appProps");
 
 function doCloudCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
@@ -8072,7 +8077,7 @@ function doCloudCall(opts, success, fail){
     "dataType": opts.dataType || "json",
     "data": JSON.stringify(params),
     "contentType": opts.contentType || "application/json",
-    "timeout": opts.timeout,
+    "timeout": opts.timeout || appProps.timeout,
     "success": success,
     "error": function(req, statusText, error){
       return handleError(fail, req, statusText, error);
@@ -8097,7 +8102,7 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":18,"./fhparams":31,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],22:[function(_dereq_,module,exports){
+},{"./ajax":18,"./appProps":25,"./fhparams":31,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],22:[function(_dereq_,module,exports){
 var hashImpl = _dereq_("./security/hash");
 
 module.exports = function(p, s, f){
@@ -8117,7 +8122,7 @@ var ajax = _dereq_("./ajax");
 var JSON = _dereq_("JSON");
 var handleError = _dereq_("./handleError");
 var consts = _dereq_("./constants");
-
+var appProps = _dereq_("./appProps");
 
 module.exports = function(opts, success, fail){
   logger.debug("mbaas is called.");
@@ -8145,7 +8150,7 @@ module.exports = function(opts, success, fail){
         "dataType": "json",
         "data": JSON.stringify(params),
         "contentType": "application/json",
-        "timeout": opts.timeout || consts.fh_timeout,
+        "timeout": opts.timeout || appProps.timeout,
         "success": success,
         "error": function(req, statusText, error){
           return handleError(fail, req, statusText, error);
@@ -8155,7 +8160,7 @@ module.exports = function(opts, success, fail){
   });
 } 
 
-},{"./ajax":18,"./constants":27,"./fhparams":31,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],24:[function(_dereq_,module,exports){
+},{"./ajax":18,"./appProps":25,"./constants":27,"./fhparams":31,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],24:[function(_dereq_,module,exports){
 var keygen = _dereq_("./security/aes-keygen");
 var aes = _dereq_("./security/aes-node");
 var rsa = _dereq_("./security/rsa-node");
@@ -8380,9 +8385,8 @@ module.exports = {
 
 },{"./fhparams":31,"./logger":38,"./queryMap":40,"JSON":3}],27:[function(_dereq_,module,exports){
 module.exports = {
-  "fh_timeout": 20000,
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.0.2-alpha",
+  "sdk_version": "2.0.3-alpha",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit"
 };
@@ -8797,7 +8801,7 @@ var loadCloudProps = function(app_props, callback) {
       "dataType": "json",
       "contentType": "application/json",
       "data": JSON.stringify(data),
-      "timeout": app_props.timeout || consts.fh_timeout,
+      "timeout": app_props.timeout,
       "success": function(initRes) {
         storage.save({
           key: "fh_init",
