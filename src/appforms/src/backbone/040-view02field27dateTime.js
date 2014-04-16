@@ -10,13 +10,13 @@ FieldDateTimeView = FieldView.extend({
     var unit=this.getUnit();
     var template="";
     var buttonLabel="";
-    if (unit=="datetime"){
+    if (unit==="datetime"){
       template=this.inputDateTime;
       buttonLabel="<i class='fa fa-calendar'></i> <i class='fa fa-clock-o'></i>&nbspGet Current Date & Time";
-    }else if (unit=="date"){
+    }else if (unit==="date"){
       template=this.inputDate;
       buttonLabel="<i class='fa fa-calendar'></i>&nbspGet Current Date";
-    }else if (unit=="time"){
+    }else if (unit==="time"){
       template=this.inputTime;
       buttonLabel="<i class='fa fa-clock-o'></i>&nbspGet Current Time";
     }

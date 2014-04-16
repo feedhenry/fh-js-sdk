@@ -8,10 +8,10 @@ appForm.models.Field = function (module) {
   module.prototype.process_file = function (params, cb) {
     var inputValue = params.value;
     var isStore = params.isStore === undefined ? true : params.isStore;
-    if (typeof inputValue == 'undefined' || inputValue == null) {
+    if (typeof inputValue === 'undefined' || inputValue === null) {
       return cb(null, null);
     }
-    if (typeof inputValue != 'object' || !inputValue instanceof HTMLInputElement && !inputValue instanceof File && !checkFileObj(inputValue)) {
+    if (typeof inputValue !== 'object' || !inputValue instanceof HTMLInputElement && !inputValue instanceof File && !checkFileObj(inputValue)) {
       throw 'the input value for file field should be a html file input element or a File object';
     }
     if (checkFileObj(inputValue)) {

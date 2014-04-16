@@ -137,7 +137,7 @@ appForm.models = function (module) {
     this.set('retryAttempts', 0);
   };
   UploadTask.prototype.isStarted = function () {
-    return this.getCurrentTask() == null ? false : true;
+    return this.getCurrentTask() === null ? false : true;
   };
   /**
    * upload/download form submission
@@ -395,7 +395,7 @@ appForm.models = function (module) {
     var self = this;
     var progress = self.getCurrentTask();
 
-    if (progress == null) {
+    if (progress === null) {
       progress = 0;
       self.set('currentTask', progress);
     }
@@ -429,7 +429,7 @@ appForm.models = function (module) {
             if (err) {
               cb(err);
             } else {
-              if (res.status == 'ok' || res.status == '200') {
+              if (res.status === 'ok' || res.status === '200') {
                 fileTask.updateDate = appForm.utils.getTime();
                 self.increProgress();
                 self.saveLocal(function (err) {
@@ -449,7 +449,7 @@ appForm.models = function (module) {
           });
         }
       });
-    };
+    }
 
     function processDownloadFile(){
       $fh.forms.log.d("processDownloadFile called");
@@ -487,18 +487,17 @@ appForm.models = function (module) {
           });
         });
       });
-    };
+    }
 
     if(self.isDownloadTask()){
       processDownloadFile();
     } else {
       processUploadFile();
     }
-
   };
   UploadTask.prototype.isDownloadTask = function(){
     return this.get("submissionTransferType") === "download";
-  }
+  };
   //The upload task needs to be retried
   UploadTask.prototype.setRetryNeeded = function (retryNeeded) {
     //If there is a submissionId, then a retry is needed. If not, then the current task should be set to null to retry the submission.
@@ -540,15 +539,16 @@ appForm.models = function (module) {
         //no error.
         self.setRetryNeeded(false);
         self.saveLocal(function (_err) {
-          if (_err)
+          if (_err){
             $fh.forms.log.e("Error saving upload task to local memory" + _err);
+          }
         });
         self.submissionModel(function (err, submission) {
           if (err) {
             cb(err);
           } else {
             var status = submission.get('status');
-            if (status != 'inprogress' && status != 'submitted' && status != 'downloaded') {
+            if (status !== 'inprogress' && status !== 'submitted' && status !== 'downloaded') {
               $fh.forms.log.e('Submission status is incorrect. Upload task should be started by submission object\'s upload method.' + status);
               cb('Submission status is incorrect. Upload task should be started by submission object\'s upload method.');
             } else {

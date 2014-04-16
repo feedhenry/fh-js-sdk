@@ -27,7 +27,7 @@ appForm.stores = function(module) {
     return self.isFileTransfer(model) && self.isPhoneGap();
   };
   MBaaS.prototype.isFileTransfer = function(model){
-    return (model.get("_type") == "fileSubmission" || model.get("_type") == "base64fileSubmission" || model.get("_type") == "fileSubmissionDownload");
+    return (model.get("_type") === "fileSubmission" || model.get("_type") === "base64fileSubmission" || model.get("_type") === "fileSubmissionDownload");
   };
   MBaaS.prototype.isPhoneGap = function(){
     return (typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined");
@@ -37,7 +37,7 @@ appForm.stores = function(module) {
     if (this.checkStudio()) {
       cb("Studio mode not supported");
     } else {
-      if (model.get("_type") == "offlineTest") {
+      if (model.get("_type") === "offlineTest") {
         cb("offlinetest. ignore");
       } else {
         var url = _getUrl(model);

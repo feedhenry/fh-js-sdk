@@ -124,7 +124,7 @@ FieldSignatureView = FieldView.extend({
 
   encodeData: function(data) {
     var strData = "";
-    if (typeof data == "string") {
+    if (typeof data === "string") {
       strData = data;
     } else {
       var aData = data;

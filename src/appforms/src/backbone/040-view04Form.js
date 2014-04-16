@@ -64,7 +64,7 @@ var FormView = BaseView.extend({
     for (var fieldId in res) {
       if (res[fieldId]) {
         var fieldView = this.getFieldViewById(fieldId);
-        if (firstView==null){
+        if (firstView===null){
           firstView=fieldView;
         }
         var errorMsgs = res[fieldId].fieldErrorMessage;
@@ -170,10 +170,10 @@ var FormView = BaseView.extend({
   },
   performRuleAction: function(type, targetId, action) {
     var target = null;
-    if (type == "field") {
+    if (type === "field") {
       target = this.getFieldViewById(targetId);
     }
-    if (target == null) {
+    if (target === null) {
       console.error("cannot find target with id:" + targetId);
       return;
     }
@@ -215,7 +215,7 @@ var FormView = BaseView.extend({
     for (var i = 0; i< this.pageViews.length ; i++) {
       var pageView = this.pageViews[i];
       var pId = pageView.model.getPageId();
-      if (pId == pageId) {
+      if (pId === pageId) {
         return pageView;
       }
     }
@@ -225,7 +225,7 @@ var FormView = BaseView.extend({
     for (var i = 0; i<this.fieldViews.length; i++) {
       var fieldView = this.fieldViews[i];
       var pId = fieldView.model.getFieldId();
-      if (pId == fieldId) {
+      if (pId === fieldId) {
         return fieldView;
       }
     }
@@ -285,7 +285,7 @@ var FormView = BaseView.extend({
       var pageId = this.pageViews[pageIndex].model.getPageId();
       var pageAction = self.pageViewStatus[pageId].action;
 
-      if(pageAction == "show"){
+      if(pageAction === "show"){
         return pageIndex;
       }
     }
@@ -296,7 +296,7 @@ var FormView = BaseView.extend({
       var pageId = self.pageViews[pageIndex].model.getPageId();
       var pageAction = self.pageViewStatus[pageId].action;
 
-      if(pageAction == "show"){
+      if(pageAction === "show"){
         return pageIndex;
       }
     }
@@ -309,7 +309,7 @@ var FormView = BaseView.extend({
       var pageId = this.pageViews[pageIndex].model.getPageId();
       var pageAction = self.pageViewStatus[pageId].action;
 
-      if(pageAction == "hide"){
+      if(pageAction === "hide"){
         currentIndex -= 1;
       }
     }
@@ -326,7 +326,7 @@ var FormView = BaseView.extend({
       var pageId = this.pageViews[pageIndex].model.getPageId();
       var pageAction = self.pageViewStatus[pageId].action;
 
-      if(pageAction == "show"){
+      if(pageAction === "show"){
         displayedPages.push(pageId);
       }
     }
@@ -374,7 +374,9 @@ var FormView = BaseView.extend({
     var self = this;
     this.populateFieldViewsToSubmission(function() {
       self.submission.saveDraft(function(err, res) {
-        if(err) console.error(err, res);
+        if(err) {
+          $fh.forms.log.e(err);
+        }
         self.el.empty();
       });
     });
@@ -433,7 +435,7 @@ var FormView = BaseView.extend({
     var self = this;
     for (var i = 0; i<this.fieldValue.length; i++) {
       var item = this.fieldValue[i];
-      if (item.id == fieldId) {
+      if (item.id === fieldId) {
         this.fieldValue.splice(i, 1);
       }
     }

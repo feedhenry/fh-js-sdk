@@ -25,7 +25,7 @@ appForm.models = function(module) {
   Config.prototype.refresh = function (fromRemote, cb) {
     var dataAgent = this.getDataAgent();
     var self = this;
-    if (typeof cb == 'undefined') {
+    if (typeof cb === 'undefined') {
       cb = fromRemote;
       fromRemote = false;
     }
@@ -55,7 +55,9 @@ appForm.models = function(module) {
       }
     }
     self.loadLocal(function(err, localConfig){
-      if(err) $fh.forms.log.e("Config loadLocal ", err);
+      if(err) {
+        $fh.forms.log.e("Config loadLocal ", err);
+      }
 
       dataAgent.remoteStore.read(self, _handler);
     });

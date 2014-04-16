@@ -26,12 +26,12 @@ appForm.models = (function(module) {
       console.log(logLevel, msgs);
     }
 
-    if ($fh.forms.config.get("logger") == "true") {
+    if ($fh.forms.config.get("logger") === "true") {
       var levelString = "";
       var curLevel = $fh.forms.config.get("log_level");
       var log_levels = $fh.forms.config.get("log_levels");
       var self = this;
-      if (typeof logLevel == "string") {
+      if (typeof logLevel === "string") {
         levelString = logLevel;
         logLevel = log_levels.indexOf(logLevel.toLowerCase());
       } else {
@@ -69,7 +69,7 @@ appForm.models = (function(module) {
   Log.prototype.wrap = function(msg, levelString) {
     var now = new Date();
     var dateStr = now.toISOString();
-    if (typeof msg == "object") {
+    if (typeof msg === "object") {
       msg = JSON.stringify(msg);
     }
     var finalMsg = dateStr + " " + levelString.toUpperCase() + " " + msg;

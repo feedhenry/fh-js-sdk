@@ -91,7 +91,7 @@ appForm.models = function (module) {
     var submissions = this.get('submissions');
     for (var i = 0; i < submissions.length; i++) {
       var obj = submissions[i];
-      if (submissions[i].formId == formId) {
+      if (submissions[i].formId === formId) {
         rtn.push(obj);
       }
     }
@@ -107,7 +107,7 @@ appForm.models = function (module) {
     var submissions = this.get('submissions');
     for (var i = 0; i < submissions.length; i++) {
       var obj = submissions[i];
-      if (submissions[i]._ludid == localId) {
+      if (submissions[i]._ludid === localId) {
         return obj;
       }
     }
@@ -229,10 +229,10 @@ appForm.models = function (module) {
     if(!params){
       params = {};
     }
-    if (typeof params =="string"){
+    if (typeof params ==="string"){
       params={status:params};
     }
-    if(params.status == null){
+    if(params.status === null){
       return [];
     }
 
@@ -242,9 +242,9 @@ appForm.models = function (module) {
     var submissions = this.get("submissions");
     var rtn = [];
     for (var i = 0; i < submissions.length; i++) {
-        if (submissions[i].status == status) {
+        if (submissions[i].status === status) {
           if(formId != null){
-            if(submissions[i].formId == formId){
+            if(submissions[i].formId === formId){
               rtn.push(submissions[i]);
             }
           } else {
@@ -284,7 +284,7 @@ appForm.models = function (module) {
     var submissions = this.get('submissions');
     for (var i = 0; i < submissions.length; i++) {
       var obj = submissions[i];
-      if (submissions[i]._ludid == localId) {
+      if (submissions[i]._ludid === localId) {
         return i;
       }
     }

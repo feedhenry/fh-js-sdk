@@ -82,7 +82,7 @@ appForm.models = function(module) {
     Model.call(this, {
       '_type': 'submission'
     });
-    if (typeof form != 'undefined' && form) {
+    if (typeof form !== 'undefined' && form) {
       this.set('formName', form.get('name'));
       this.set('formId', form.get('_id'));
       this.set('deviceFormTimestamp', form.getLastUpdate());
@@ -172,7 +172,9 @@ appForm.models = function(module) {
     var that = this;
     this.set('timezoneOffset', appForm.utils.getTime(true));
     this.getForm(function(err, form) {
-      if(err) $fh.forms.log.e("Submission submit: Error getting form ", err);
+      if(err) {
+        $fh.forms.log.e("Submission submit: Error getting form ", err);
+      }
       var ruleEngine = form.getRuleEngine();
       var submission = that.getProps();
       ruleEngine.validateForm(submission, function(err, res) {
@@ -310,7 +312,9 @@ appForm.models = function(module) {
         } else {
           ut.set("error", null);
           ut.saveLocal(function(err) {
-            if (err) $fh.forms.log.e("Error saving upload task: " + err);
+            if (err) {
+              $fh.forms.log.e("Error saving upload task: " + err);
+            }
           });
           self.emit("inprogress", ut);
           ut.on("progress", function(progress) {
@@ -341,7 +345,9 @@ appForm.models = function(module) {
           }
           downloadTask.set("error", null);
           downloadTask.saveLocal(function(err) {
-            if (err) $fh.forms.log.e("Error saving download task: " + err);
+            if (err) {
+              $fh.forms.log.e("Error saving download task: " + err);
+            }
           });
           that.emit("inprogress", downloadTask);
           downloadTask.on("progress", function(progress) {
@@ -381,15 +387,15 @@ appForm.models = function(module) {
     if (nextStatus.indexOf(targetStatus) > -1) {
       return true;
     } else {
-      return false;
       this.set('status', 'error');
+      return false;
     }
   };
   Submission.prototype.addComment = function(msg, user) {
     var now = appForm.utils.getTime();
     var ts = now.getTime();
     var newComment = {
-      'madeBy': typeof user == 'undefined' ? '' : user.toString(),
+      'madeBy': typeof user === 'undefined' ? '' : user.toString(),
       'madeOn': now,
       'value': msg,
       'timeStamp': ts
@@ -404,7 +410,7 @@ appForm.models = function(module) {
     var comments = this.getComments();
     for (var i = 0; i < comments.length; i++) {
       var comment = comments[i];
-      if (comment.timeStamp == timeStamp) {
+      if (comment.timeStamp === timeStamp) {
         comments.splice(i, 1);
         return;
       }
@@ -558,7 +564,7 @@ appForm.models = function(module) {
     } else {
       targetArr = this.getInputValueObjectById(fieldId).fieldId;
     }
-    if (typeof index == 'undefined') {
+    if (typeof index === 'undefined') {
       targetArr.splice(0, targetArr.length);
     } else {
       if (targetArr.length > index) {

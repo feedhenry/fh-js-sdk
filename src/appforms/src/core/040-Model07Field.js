@@ -86,7 +86,7 @@ appForm.models = function (module) {
       return cb(null, inputValue);
     }
     // try to find specified processor
-    if (this[processorName] && typeof this[processorName] == 'function') {
+    if (this[processorName] && typeof this[processorName] === 'function') {
       this[processorName](params, cb);
     } else {
       cb(null, inputValue);
@@ -102,7 +102,7 @@ appForm.models = function (module) {
     var type = this.getType();
     var processorName = 'convert_' + type;
     // try to find specified processor
-    if (this[processorName] && typeof this[processorName] == 'function') {
+    if (this[processorName] && typeof this[processorName] === 'function') {
       this[processorName](submissionValue, cb);
     } else {
       cb(null, submissionValue);

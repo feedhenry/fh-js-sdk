@@ -142,8 +142,9 @@ appForm.api = function (module) {
       params.fromRemote = false;
     }
     theme.refresh(params.fromRemote, function (err, updatedTheme) {
-      if (err)
+      if (err) {
         return cb(err);
+      }
       if (updatedTheme === null) {
         return cb(new Error('No theme defined for this app'));
       }
@@ -187,8 +188,10 @@ appForm.api = function (module) {
   function submitForm(submission, cb) {
     if (submission) {
       submission.submit(function (err) {
-        if (err)
+        if (err){
           return cb(err);
+        }
+
         //Submission finished and validated. Now upload the form
         submission.upload(cb);
       });
@@ -244,7 +247,7 @@ appForm.api = function (module) {
   return module;
 }(appForm.api || {});
 //mockup $fh apis for Addons.
-if (typeof $fh == 'undefined') {
+if (typeof $fh === 'undefined') {
   $fh = {};
 }
 if ($fh.forms === undefined) {

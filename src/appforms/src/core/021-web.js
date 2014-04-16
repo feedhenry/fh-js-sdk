@@ -7,7 +7,7 @@ appForm.web = function (module) {
     var success = function (r) {
       $fh.forms.log.d("upload to url ", url, " sucessful");
       r.response = r.response || {};
-      if(typeof r.response == "string"){
+      if(typeof r.response === "string"){
         r.response = JSON.parse(r.response);
       }
       cb(null, r.response);
@@ -50,12 +50,12 @@ appForm.web = function (module) {
       function success(fileEntry){
         $fh.forms.log.d("File Download Completed Successfully. FilePath: " + fileEntry.fullPath);
         return cb(null, fileEntry.fullPath);
-      };
+      }
 
       function fail(error){
         $fh.forms.log.e("Error downloading file " + fileMetaData.fileName + " code: " + error.code);
         return cb("Error downloading file " + fileMetaData.fileName + " code: " + error.code);
-      };
+      }
 
       if(fileMetaData.fileName){
         $fh.forms.log.d("File name for file " + fileMetaData.fileName + " found. Starting download");

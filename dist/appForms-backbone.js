@@ -3573,7 +3573,7 @@ var FormView = BaseView.extend({
     }
     switch (action) {
       case "show":
-        target.show();
+        target.removeClass("fh_appform_hidden");
         break;
       case "hide":
         target.hide();
@@ -3631,44 +3631,44 @@ var FormView = BaseView.extend({
     var displayedIndex = this.getDisplayIndex();
 
     if (displayedIndex === 0 && displayedIndex === displayedPages - 1) {
-      this.el.find(" button.fh_appform_button_previous").hide();
-      this.el.find("button.fh_appform_button_next").hide();
-      this.el.find("button.fh_appform_button_saveDraft").show();
-      this.el.find(" button.fh_appform_button_submit").show();
+      this.el.find(" button.fh_appform_button_previous").addClass("fh_appform_hidden");
+      this.el.find("button.fh_appform_button_next").addClass("fh_appform_hidden");
+      this.el.find("button.fh_appform_button_saveDraft").removeClass("fh_appform_hidden");
+      this.el.find(" button.fh_appform_button_submit").removeClass("fh_appform_hidden");
       this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_three_button');
       this.el.find(".fh_appform_button_bar button").addClass('fh_appform_two_button');
     } else if (displayedIndex === 0) {
-      this.el.find(" button.fh_appform_button_previous").hide();
-      this.el.find("button.fh_appform_button_next").show();
-      this.el.find("button.fh_appform_button_saveDraft").show();
-      this.el.find(" button.fh_appform_button_submit").hide();
+      this.el.find(" button.fh_appform_button_previous").addClass("fh_appform_hidden");
+      this.el.find("button.fh_appform_button_next").removeClass("fh_appform_hidden");
+      this.el.find("button.fh_appform_button_saveDraft").removeClass("fh_appform_hidden");
+      this.el.find(" button.fh_appform_button_submit").addClass("fh_appform_hidden");
       this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_three_button');
       this.el.find(".fh_appform_button_bar button").addClass('fh_appform_two_button');
     } else if (displayedIndex === displayedPages - 1) {
-      this.el.find(" button.fh_appform_button_previous").show();
-      this.el.find(" button.fh_appform_button_next").hide();
-      this.el.find(" button.fh_appform_button_saveDraft").show();
-      this.el.find(" button.fh_appform_button_submit").show();
+      this.el.find(" button.fh_appform_button_previous").removeClass("fh_appform_hidden");
+      this.el.find(" button.fh_appform_button_next").addClass("fh_appform_hidden");
+      this.el.find(" button.fh_appform_button_saveDraft").removeClass("fh_appform_hidden");
+      this.el.find(" button.fh_appform_button_submit").removeClass("fh_appform_hidden");
       this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_two_button');
       this.el.find(".fh_appform_button_bar button").addClass('fh_appform_three_button');
     } else {
-      this.el.find(" button.fh_appform_button_previous").show();
-      this.el.find(" button.fh_appform_button_next").show();
-      this.el.find(" button.fh_appform_button_saveDraft").show();
-      this.el.find(" button.fh_appform_button_submit").hide();
+      this.el.find(" button.fh_appform_button_previous").removeClass("fh_appform_hidden");
+      this.el.find(" button.fh_appform_button_next").removeClass("fh_appform_hidden");
+      this.el.find(" button.fh_appform_button_saveDraft").removeClass("fh_appform_hidden");
+      this.el.find(" button.fh_appform_button_submit").addClass("fh_appform_hidden");
       this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_two_button');
       this.el.find(".fh_appform_button_bar button").addClass('fh_appform_three_button');
     }
     if (this.readonly) {
-      this.el.find("button.fh_appform_button_saveDraft").hide();
-      this.el.find(" button.fh_appform_button_submit").hide();
+      this.el.find("button.fh_appform_button_saveDraft").addClass("fh_appform_hidden");
+      this.el.find(" button.fh_appform_button_submit").addClass("fh_appform_hidden");
     }
 
   },
   render: function() {
     this.el.find("#fh_appform_container.fh_appform_form_area").append(this.templates.buttons);
     this.rebindButtons();
-    this.pageViews[0].show();
+    this.pageViews[0].removeClass("fh_appform_hidden");
     this.pageNum = 0;
     this.steps.activePageChange(this);
     this.checkRules();
@@ -3730,20 +3730,20 @@ var FormView = BaseView.extend({
   nextPage: function() {
     this.hideAllPages();
     this.pageNum = this.getNextPageIndex(this.pageNum);
-    this.pageViews[this.pageNum].show();
+    this.pageViews[this.pageNum].removeClass("fh_appform_hidden");
     this.steps.activePageChange(this);
     this.checkPages();
   },
   prevPage: function() {
     this.hideAllPages();
     this.pageNum = this.getPrevPageIndex(this.pageNum);
-    this.pageViews[this.pageNum].show();
+    this.pageViews[this.pageNum].removeClass("fh_appform_hidden");
     this.steps.activePageChange(this);
     this.checkPages();
   },
   hideAllPages: function() {
     this.pageViews.forEach(function(view) {
-      view.hide();
+      view.addClass("fh_appform_hidden");
     });
   },
   submit: function() {

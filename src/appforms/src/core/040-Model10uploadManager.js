@@ -14,7 +14,7 @@ appForm.models = function (module) {
     self.sending = false;
     self.timerInterval = 200;
     self.sendingStart = appForm.utils.getTime();
-  };
+  }
   appForm.utils.extend(UploadManager, Model);
 
   /**
@@ -77,7 +77,7 @@ appForm.models = function (module) {
       }
       this.getTaskById(uploadTId, function (err, task) {
         if (err) {
-          console.error(err);
+          $fh.forms.log.e(err);
           cb(err, task);
         } else {
           if (task) {
@@ -88,8 +88,9 @@ appForm.models = function (module) {
         }
       });
       this.saveLocal(function (err) {
-        if (err)
-          console.error(err);
+        if (err){
+          $fh.forms.log.e(err);
+        }
       });
     } else {
       cb(null, null);
@@ -132,8 +133,9 @@ appForm.models = function (module) {
   UploadManager.prototype.shift = function () {
     var shiftedTask = this.get('taskQueue').shift();
     this.saveLocal(function (err) {
-      if (err)
-        console.error(err);
+      if (err) {
+        $fh.forms.log.e(err);
+      }
     });
     return shiftedTask;
   };

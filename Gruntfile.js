@@ -10,7 +10,7 @@ module.exports = function(grunt) {
     pkg: pkg,
     meta: {},
     jshint: {
-      all: ['src/*.js'],
+      all: ['src/*.js', 'src/appforms/src/core/*.js','src/appforms/src/backbone/*.js', '!src/appforms/src/core/000*.js', '!src/appforms/src/core/060*.js', '!src/appforms/src/core/999*.js', '!src/appforms/src/backbone/000*.js', '!src/appforms/src/backbone/001*.js', '!src/appforms/src/backbone/999*.js'],
       options: {
         curly: true,
         eqeqeq: true,

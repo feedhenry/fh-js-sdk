@@ -27,7 +27,7 @@ appForm.models = function (module) {
   FileSubmission.prototype.getProps = function () {
     if(this.fileObj){
       $fh.forms.log.d("FileSubmissionDownload: file object found");
-      return this.fileObj
+      return this.fileObj;
     } else {
       $fh.forms.log.e("FileSubmissionDownload: no file object found");
     }
