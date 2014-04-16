@@ -44,7 +44,11 @@ appForm.stores = function(module) {
 
         if(self.isFileTransfer(model) && self.isPhoneGap()){
           appForm.web.downloadFile(url, model.getFileMetaData(), cb);
-        } else {
+        }
+        else if(self.isFileTransfer(model)) {//Trying to download a file without phone. No need as the direct web urls can be used
+          return cb(null, model.getRemoteFileURL());
+        }
+        else {
           appForm.web.ajax.get(url, cb);
         }
       }

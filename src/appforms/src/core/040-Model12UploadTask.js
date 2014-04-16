@@ -460,6 +460,8 @@ appForm.models = function (module) {
           return cb(err);
         }
 
+        $fh.forms.log.d("processDownloadFile called. Local File Path: " + localFilePath);
+
         //Update the submission model to add local file uri to a file submission object
         self.submissionModel(function(err, submissionModel){
           if(err){

@@ -423,7 +423,7 @@ appForm.models = function(module) {
       if(formFieldEntry.type === 'file' || formFieldEntry.type === 'photo'){
         var tmpFieldValues = formFields[formFieldIndex].fieldValues || [];
         for(var fieldValIndex = 0; fieldValIndex < tmpFieldValues.length; tmpFieldValues++){
-          formFields.push(tmpFieldValues[fieldValIndex]);
+          submissionFiles.push(tmpFieldValues[fieldValIndex]);
         }
       }
     }
@@ -570,8 +570,15 @@ appForm.models = function(module) {
     var formFields = this.get('formFields', []);
     for (var i = 0; i < formFields.length; i++) {
       var formField = formFields[i];
-      if (formField.fieldId == fieldId) {
-        return formField;
+
+      if(formField.fieldId._id){
+        if (formField.fieldId._id === fieldId) {
+          return formField;
+        }
+      } else {
+        if (formField.fieldId === fieldId) {
+          return formField;
+        }
       }
     }
     var newField = {
@@ -663,6 +670,7 @@ appForm.models = function(module) {
   };
 
   Submission.prototype.updateFileLocalURI = function(fileDetails, newLocalFileURI, cb){
+    $fh.forms.log.d("updateFileLocalURI: " + newLocalFileURI);
     var self = this;
     fileDetails = fileDetails || {};
 
@@ -673,9 +681,9 @@ appForm.models = function(module) {
           return cb(err);
         }
         if(fieldDetails.fieldId){
-          var tmpObj = self.getInputValueObjectById(fieldDetails.fieldId)[fieldDetails.valueIndex];
+          var tmpObj = self.getInputValueObjectById(fieldDetails.fieldId).fieldValues[fieldDetails.valueIndex];
           tmpObj.localURI = newLocalFileURI;
-          self.getInputValueObjectById(fieldDetails.fieldId)[fieldDetails.valueIndex] = tmpObj;
+          self.getInputValueObjectById(fieldDetails.fieldId).fieldValues[fieldDetails.valueIndex] = tmpObj;
           self.saveLocal(cb);
         } else {
           $fh.forms.log.e("No file field matches the placeholder name " + fileDetails.fileName);

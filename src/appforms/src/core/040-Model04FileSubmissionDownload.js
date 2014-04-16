@@ -37,6 +37,10 @@ appForm.models = function (module) {
   FileSubmissionDownload.prototype.getFileGroupId = function(){
     $fh.forms.log.d("FileSubmission getFileGroupId: ", this.get('data'));
     return this.get('data', {}).groupId || "notset";
-  }
+  };
+  FileSubmissionDownload.prototype.getRemoteFileURL = function(){
+    $fh.forms.log.d("FileSubmission getRemoteFileURL: ");
+    return this.get('data', {}).url || "notset";
+  };
   return module;
 }(appForm.models || {});
