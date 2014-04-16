@@ -10,26 +10,47 @@ appForm.stores = function(module) {
     return appForm.config.get("studioMode");
   };
   MBaaS.prototype.create = function(model, cb) {
-    if (this.checkStudio()) {
+    var self = this;
+    if (self.checkStudio()) {
       cb("Studio mode not supported");
     } else {
       var url = _getUrl(model);
-      if((model.get("_type") == "fileSubmission" || model.get("_type") == "base64fileSubmission") && (typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined")){
+      if(self.isFileAndPhoneGap(model)){
         appForm.web.uploadFile(url, model.getProps(), cb);
       } else {
         appForm.web.ajax.post(url, model.getProps(), cb);
       }
     }
   };
+  MBaaS.prototype.isFileAndPhoneGap = function(model){
+    var self = this;
+    return self.isFileTransfer(model) && self.isPhoneGap();
+  };
+  MBaaS.prototype.isFileTransfer = function(model){
+    return (model.get("_type") === "fileSubmission" || model.get("_type") === "base64fileSubmission" || model.get("_type") === "fileSubmissionDownload");
+  };
+  MBaaS.prototype.isPhoneGap = function(){
+    return (typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined");
+  };
   MBaaS.prototype.read = function(model, cb) {
+    var self = this;
     if (this.checkStudio()) {
       cb("Studio mode not supported");
     } else {
-      if (model.get("_type") == "offlineTest") {
+      if (model.get("_type") === "offlineTest") {
         cb("offlinetest. ignore");
       } else {
         var url = _getUrl(model);
-        appForm.web.ajax.get(url, cb);
+
+        if(self.isFileTransfer(model) && self.isPhoneGap()){
+          appForm.web.downloadFile(url, model.getFileMetaData(), cb);
+        }
+        else if(self.isFileTransfer(model)) {//Trying to download a file without phone. No need as the direct web urls can be used
+          return cb(null, model.getRemoteFileURL());
+        }
+        else {
+          appForm.web.ajax.get(url, cb);
+        }
       }
     }
   };
@@ -87,6 +108,13 @@ appForm.stores = function(module) {
         break;
       case 'completeSubmission':
         props.submissionId = model.get('submissionId');
+        break;
+      case 'formSubmissionDownload':
+        props.submissionId = model.getSubmissionId();
+        break;
+      case 'fileSubmissionDownload':
+        props.submissionId = model.getSubmissionId();
+        props.submissionId = model.getFileGroupId();
         break;
       case 'offlineTest':
         return "http://127.0.0.1:8453";

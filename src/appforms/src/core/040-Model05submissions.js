@@ -91,7 +91,7 @@ appForm.models = function (module) {
     var submissions = this.get('submissions');
     for (var i = 0; i < submissions.length; i++) {
       var obj = submissions[i];
-      if (submissions[i].formId == formId) {
+      if (submissions[i].formId === formId) {
         rtn.push(obj);
       }
     }
@@ -107,12 +107,34 @@ appForm.models = function (module) {
     var submissions = this.get('submissions');
     for (var i = 0; i < submissions.length; i++) {
       var obj = submissions[i];
-      if (submissions[i]._ludid == localId) {
+      if (submissions[i]._ludid === localId) {
         return obj;
       }
     }
 
     $fh.forms.log.e("Submissions findMetaByLocalId: No submissions for localId: ", localId);
+    return null;
+  };
+
+  /**
+   * Finding a submission object by it's remote Id
+   * @param remoteId
+   * @returns {*}
+   */
+  Submissions.prototype.findMetaByRemoteId = function (remoteId) {
+    remoteId = remoteId || "";
+
+    $fh.forms.log.d("Submissions findMetaByRemoteId: "+ remoteId);
+    var submissions = this.get('submissions');
+    for (var i = 0; i < submissions.length; i++) {
+      var obj = submissions[i];
+      if(submissions[i].submissionId){
+        if (submissions[i].submissionId === remoteId) {
+          return obj;
+        }
+      }
+    }
+
     return null;
   };
   Submissions.prototype.pruneSubmission = function (submission) {
@@ -129,7 +151,8 @@ appForm.models = function (module) {
         'deviceFormTimestamp',
         'errorMessage',
         'submissionStartedTimestamp',
-        'submittedDate'
+        'submittedDate',
+        'submissionId'
       ];
     var data = submission.getProps();
     var rtn = {};
@@ -145,7 +168,7 @@ appForm.models = function (module) {
     var that = this;
     this.clearLocal(function(err) {
         if (err) {
-            console.error(err);
+            $fh.forms.log.e(err);
             cb(err);
         } else {
             that.set("submissions", []);
@@ -193,15 +216,23 @@ appForm.models = function (module) {
     params.status = "inprogress";
     return this.findByStatus(params);
   };
+  Submissions.prototype.getDownloaded = function(params) {
+    $fh.forms.log.d("Submissions getDownloaded: ", params);
+    if(!params){
+      params = {};
+    }
+    params.status = "downloaded";
+    return this.findByStatus(params);
+  };
   Submissions.prototype.findByStatus = function(params) {
     $fh.forms.log.d("Submissions findByStatus: ", params);
     if(!params){
       params = {};
     }
-    if (typeof params =="string"){
+    if (typeof params ==="string"){
       params={status:params};
     }
-    if(params.status == null){
+    if(params.status === null){
       return [];
     }
 
@@ -211,9 +242,9 @@ appForm.models = function (module) {
     var submissions = this.get("submissions");
     var rtn = [];
     for (var i = 0; i < submissions.length; i++) {
-        if (submissions[i].status == status) {
+        if (submissions[i].status === status) {
           if(formId != null){
-            if(submissions[i].formId == formId){
+            if(submissions[i].formId === formId){
               rtn.push(submissions[i]);
             }
           } else {
@@ -253,7 +284,7 @@ appForm.models = function (module) {
     var submissions = this.get('submissions');
     for (var i = 0; i < submissions.length; i++) {
       var obj = submissions[i];
-      if (submissions[i]._ludid == localId) {
+      if (submissions[i]._ludid === localId) {
         return i;
       }
     }

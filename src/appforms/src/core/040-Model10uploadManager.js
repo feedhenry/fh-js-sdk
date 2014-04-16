@@ -4,16 +4,19 @@
 appForm.models = function (module) {
   var Model = appForm.models.Model;
   function UploadManager() {
-    Model.call(this, {
+    var self = this;
+    Model.call(self, {
       '_type': 'uploadManager',
       '_ludid': 'uploadManager_queue'
     });
-    this.set('taskQueue', []);
-    this.sending = false;
-    this.timerInterval = 200;
-    this.sendingStart = appForm.utils.getTime();
+
+    self.set('taskQueue', []);
+    self.sending = false;
+    self.timerInterval = 200;
+    self.sendingStart = appForm.utils.getTime();
   }
   appForm.utils.extend(UploadManager, Model);
+
   /**
      * Queue a submission to uploading tasks queue
      * @param  {[type]} submissionModel [description]
@@ -21,6 +24,7 @@ appForm.models = function (module) {
      * @return {[type]}                 [description]
      */
   UploadManager.prototype.queueSubmission = function (submissionModel, cb) {
+    $fh.forms.log.d("Queueing Submission for uploadManager");
     var utId;
     var uploadTask = null;
     var self = this;
@@ -30,27 +34,33 @@ appForm.models = function (module) {
       uploadTask = appForm.models.uploadTask.newInstance(submissionModel);
       utId = uploadTask.getLocalId();
     }
-    this.push(utId);
-    if (!this.timer) {
-      this.start();
+    self.push(utId);
+    if (!self.timer) {
+      $fh.forms.log.d("Starting timer for uploadManager");
+      self.start();
     }
     if (uploadTask) {
       uploadTask.saveLocal(function (err) {
         if (err) {
-          console.error(err);
+          $fh.forms.log.e(err);
         }
         self.saveLocal(function (err) {
           if (err) {
-            console.error(err);
+            $fh.forms.log.e("Error saving upload manager: " + err);
           }
-          submissionModel.setUploadTaskId(utId);
           cb(null, uploadTask);
         });
       });
     } else {
-      self.getTaskById(utId, cb);
+      self.saveLocal(function (err) {
+        if (err) {
+          $fh.forms.log.e("Error saving upload manager: " + err);
+        }
+        self.getTaskById(utId, cb);
+      });
     }
   };
+
   /**
      * cancel a submission uploading
      * @param  {[type]}   submissionsModel [description]
@@ -67,7 +77,7 @@ appForm.models = function (module) {
       }
       this.getTaskById(uploadTId, function (err, task) {
         if (err) {
-          console.error(err);
+          $fh.forms.log.e(err);
           cb(err, task);
         } else {
           if (task) {
@@ -78,8 +88,9 @@ appForm.models = function (module) {
         }
       });
       this.saveLocal(function (err) {
-        if (err)
-          console.error(err);
+        if (err){
+          $fh.forms.log.e(err);
+        }
       });
     } else {
       cb(null, null);
@@ -114,15 +125,17 @@ appForm.models = function (module) {
   UploadManager.prototype.push = function (uploadTaskId) {
     this.get('taskQueue').push(uploadTaskId);
     this.saveLocal(function (err) {
-      if (err)
-        console.error(err);
+      if (err){
+        $fh.forms.log.e("Error saving local Upload manager", err);
+      }
     });
   };
   UploadManager.prototype.shift = function () {
     var shiftedTask = this.get('taskQueue').shift();
     this.saveLocal(function (err) {
-      if (err)
-        console.error(err);
+      if (err) {
+        $fh.forms.log.e(err);
+      }
     });
     return shiftedTask;
   };
@@ -135,7 +148,7 @@ appForm.models = function (module) {
       var timePassed = now.getTime() - this.sendingStart.getTime();
       if (timePassed > $fh.forms.config.get("timeout") * 1000) {
         //time expired. roll current task to the end of queue
-        console.error('Uploading content timeout. it will try to reupload.');
+        $fh.forms.log.e('Uploading content timeout. it will try to reupload.');
         this.sending = false;
         this.rollTask();
       }
@@ -146,7 +159,7 @@ appForm.models = function (module) {
         var that = this;
         this.getCurrentTask(function (err, task) {
           if (err || !task) {
-            console.error(err);
+            $fh.forms.log.e(err);
             that.sending = false;
           } else {
             if (task.isCompleted() || task.isError()) {

@@ -14,7 +14,7 @@ appForm.models = function (module) {
     var formLastUpdate = formModel.getLastUpdate();
     var formMeta = this.getFormMetaById(id);
     if (formMeta) {
-      return formLastUpdate != formMeta.lastUpdatedTimestamp;
+      return formLastUpdate !== formMeta.lastUpdatedTimestamp;
     } else {
       //could have been deleted. leave it for now
       return false;
@@ -28,7 +28,7 @@ appForm.models = function (module) {
     var forms = this.get('forms');
     for (var i = 0; i < forms.length; i++) {
       var form = forms[i];
-      if (form._id == formId) {
+      if (form._id === formId) {
         return form;
       }
     }

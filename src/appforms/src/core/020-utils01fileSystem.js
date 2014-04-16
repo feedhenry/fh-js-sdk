@@ -47,7 +47,7 @@ appForm.utils = function (module) {
                           window.WebKitBlobBuilder ||
                           window.MozBlobBuilder ||
                           window.MSBlobBuilder;
-        if (e.name == 'TypeError' && blobBuilder) {
+        if (e.name === 'TypeError' && blobBuilder) {
           var bb = new blobBuilder();
           bb.append([contentstr.buffer]);
           retVal = bb.getBlob(targetContentType);
@@ -60,6 +60,19 @@ appForm.utils = function (module) {
     return retVal;
   }
 
+
+  function getBasePath(cb){
+    _getFileEntry("dummy.html", size, { create: true, exclusive: false }, function (err, fileEntry) {
+      if(err){
+        return cb(err);
+      }
+
+      var sPath = fileEntry.fullPath.replace("dummy.html","");
+      fileEntry.remove();
+      return cb(null, sPath);
+    });
+  }
+
   /**
      * Save a content to file system into a file
      * @param  {[type]} fileName file name to be stored.
@@ -70,7 +83,7 @@ appForm.utils = function (module) {
   function save(fileName, content, cb) {
     var saveObj = null;
     var size = 0;
-    if (typeof content == 'object') {
+    if (typeof content === 'object') {
       if (content instanceof File) {
         //File object
         saveObj = content;
@@ -84,7 +97,7 @@ appForm.utils = function (module) {
         saveObj = _createBlobOrString(contentstr);
         size = saveObj.size || saveObj.length;
       }
-    } else if (typeof content == 'string') {
+    } else if (typeof content === 'string') {
       saveObj = _createBlobOrString(content);
       size = saveObj.size || saveObj.length;
     }
@@ -120,7 +133,7 @@ appForm.utils = function (module) {
   function remove(fileName, cb) {
     _getFileEntry(fileName, 0, {}, function (err, fileEntry) {
       if (err) {
-        if (!(err.name == 'NotFoundError' || err.code == 1)) {
+        if (!(err.name === 'NotFoundError' || err.code === 1)) {
           return cb(err);
         } else {
           return cb(null, null);
@@ -230,7 +243,7 @@ appForm.utils = function (module) {
       fileSystem.root.getFile(fileName, params, function gotFileEntry(fileEntry) {
         cb(null, fileEntry);
       }, function (err) {
-        if (err.name == 'QuotaExceededError' || err.code == 10) {
+        if (err.name === 'QuotaExceededError' || err.code === 10) {
           //this happens only on browser. request for 1 gb storage
           //TODO configurable from cloud
           var bigSize = 1024 * 1024 * 1024;

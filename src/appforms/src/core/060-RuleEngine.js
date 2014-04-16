@@ -824,8 +824,8 @@ function rulesEngine (formDef) {
           var args = Array.prototype.slice.call(arguments, 1);
           if (typeof console !== 'undefined') {
             if (err) {
-              if (console.error) {
-                console.error(err);
+              if ($fh.forms.log) {
+                $fh.forms.log.e(err);
               }
             }
             else if (console[name]) {

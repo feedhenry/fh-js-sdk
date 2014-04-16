@@ -7,7 +7,7 @@ appForm.models = function (module) {
     };
     this.utils = appForm.utils;
     this.events = {};
-    if (typeof opt != 'undefined') {
+    if (typeof opt !== 'undefined') {
       for (var key in opt) {
         this.props[key] = opt[key];
       }
@@ -48,7 +48,7 @@ appForm.models = function (module) {
     return this.props;
   };
   Model.prototype.get = function (key, def) {
-    return typeof this.props[key] == 'undefined' ? def : this.props[key];
+    return typeof this.props[key] === 'undefined' ? def : this.props[key];
   };
   Model.prototype.set = function (key, val) {
     this.props[key] = val;
@@ -60,7 +60,7 @@ appForm.models = function (module) {
     return this.get('_ludid');
   };
   Model.prototype.fromJSON = function (json) {
-    if (typeof json == 'string') {
+    if (typeof json === 'string') {
       this.fromJSONStr(json);
     } else {
       for (var key in json) {
@@ -96,7 +96,7 @@ appForm.models = function (module) {
   Model.prototype.refresh = function (fromRemote, cb) {
     var dataAgent = this.getDataAgent();
     var that = this;
-    if (typeof cb == 'undefined') {
+    if (typeof cb === 'undefined') {
       cb = fromRemote;
       fromRemote = false;
     }

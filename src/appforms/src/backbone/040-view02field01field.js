@@ -118,7 +118,7 @@ var FieldView = Backbone.View.extend({
   renderHelpText: function() {
     var helpText = this.model.getHelpText();
 
-    if(typeof helpText == "string" && helpText.length > 0){
+    if(typeof helpText === "string" && helpText.length > 0){
       return _.template(this.instructions, {
         "helpText": helpText
       });

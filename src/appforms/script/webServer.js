@@ -6,6 +6,7 @@ var app = express();
 var srcDir=__dirname+"/../src";
 var testDir=__dirname+"/../tests/tests";
 var rootDir=__dirname+"/../tests";
+
 function initServer(){
     var done=this.async();
     app.use(express.bodyParser());

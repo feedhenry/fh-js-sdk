@@ -31,13 +31,13 @@ appForm.models = function (module) {
   Rule.prototype.test = function (param) {
     var fields = this.getRelatedFieldId();
     var logic = this.getLogic();
-    var res = logic == 'or' ? false : true;
+    var res = logic === 'or' ? false : true;
     for (var i = 0; i< fields.length ; i++) {
       var fieldId = fields[i];
       var val = param[fieldId];
       if (val) {
         var tmpRes = this.testField(fieldId, val);
-        if (logic == 'or') {
+        if (logic === 'or') {
           res = res || tmpRes;
           if (res === true) {
             //break directly
@@ -51,7 +51,7 @@ appForm.models = function (module) {
           }
         }
       } else {
-        if (logic == 'or') {
+        if (logic === 'or') {
           res = res || false;
         } else {
           return false;
@@ -76,7 +76,7 @@ appForm.models = function (module) {
     var statements = this.getDefinition().ruleConditionalStatements;
     for (var i = 0; i<statements.length; i++) {
       var statement = statements[i];
-      if (statement.sourceField == fieldId) {
+      if (statement.sourceField === fieldId) {
         return statement;
       }
     }
@@ -93,7 +93,7 @@ appForm.models = function (module) {
     var def = this.getDefinition();
     var target = {
         'action': def.type,
-        'targetId': this.get('type') == 'page' ? def.targetPage : def.targetField,
+        'targetId': this.get('type') === 'page' ? def.targetPage : def.targetField,
         'targetType': this.get('type')
       };
     return target;

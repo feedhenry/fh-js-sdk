@@ -71,7 +71,7 @@ var ConfigView = Backbone.View.extend({
           '<%'+
               'for (var i=0;i<log_levels.length;i++){'+
                 'var val=log_levels[i];'+
-                'var selected=(i==log_level)?"selected":"";'+
+                'var selected=(i===log_level)?"selected":"";'+
                 '%>'+
                   '<option value="<%= i %>" <%= selected%>><%= val%></option>'+
                 '<%'+
@@ -149,7 +149,7 @@ var ConfigView = Backbone.View.extend({
         var key = $(this).data().key;
         var val = $(this).val();
 
-        if ($(this).attr("type") && $(this).attr("type").toLowerCase() == "checkbox") {
+        if ($(this).attr("type") && $(this).attr("type").toLowerCase() === "checkbox") {
           if (!$(this).attr("checked")) {
             val = false;
           }

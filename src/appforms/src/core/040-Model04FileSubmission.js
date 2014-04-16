@@ -25,7 +25,12 @@ appForm.models = function (module) {
     });
   };
   FileSubmission.prototype.getProps = function () {
-    return this.fileObj;
+    if(this.fileObj){
+      $fh.forms.log.d("FileSubmissionDownload: file object found");
+      return this.fileObj;
+    } else {
+      $fh.forms.log.e("FileSubmissionDownload: no file object found");
+    }
   };
   FileSubmission.prototype.setSubmissionId = function (submissionId) {
     $fh.forms.log.d("FileSubmission setSubmissionId.", submissionId);

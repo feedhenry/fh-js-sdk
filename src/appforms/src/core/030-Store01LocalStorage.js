@@ -19,7 +19,7 @@ appForm.stores = function(module) {
   };
   //read a model from local storage
   LocalStorage.prototype.read = function(model, cb) {
-    if (model.get("_type") == "offlineTest") {
+    if (model.get("_type") === "offlineTest") {
       cb(null, {});
     } else {
       var key = model.getLocalId();
@@ -55,7 +55,7 @@ appForm.stores = function(module) {
   };
   LocalStorage.prototype.upsert = function(model, cb) {
     var key = model.getLocalId();
-    if (key == null) {
+    if (key === null) {
       this.create(model, cb);
     } else {
       this.update(model, cb);
@@ -85,17 +85,19 @@ appForm.stores = function(module) {
   //use $fh data
   function _fhLSData(options, success, failure) {
     //allow for no $fh api in studio
-    if(! $fh || ! $fh.data) return success();
+    if(! $fh || ! $fh.data) {
+      return success();
+    }
 
     $fh.data(options, function (res) {
-      if (typeof res == 'undefined') {
+      if (typeof res === 'undefined') {
         res = {
           key: options.key,
           val: options.val
         };
       }
       //unify the interfaces
-      if (options.act.toLowerCase() == 'remove') {
+      if (options.act.toLowerCase() === 'remove') {
         return success(null, null);
       }
       success(null, res.val ? res.val : null);
@@ -154,7 +156,7 @@ appForm.stores = function(module) {
       filenameForKey(key, function(hash) {
         fileSystem.remove(hash, function(err) {
           if (err) {
-            if (err.name == 'NotFoundError' || err.code == 1) {
+            if (err.name === 'NotFoundError' || err.code === 1) {
               //same respons of $fh.data if key not found.
               success(null, null);
             } else {
@@ -171,7 +173,7 @@ appForm.stores = function(module) {
       filenameForKey(key, function(hash) {
         fileSystem.readAsText(hash, function(err, text) {
           if (err) {
-            if (err.name == 'NotFoundError' || err.code == 1) {
+            if (err.name === 'NotFoundError' || err.code === 1) {
               //same respons of $fh.data if key not found.
               success(null, null);
             } else {

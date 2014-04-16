@@ -16,8 +16,8 @@ appForm.models = function (module) {
     var fromRemote = params.fromRemote;
     $fh.forms.log.d("Form: ", rawMode, rawData, formId, fromRemote);
 
-    if (typeof fromRemote == 'function' || typeof cb == 'function') {
-      if (typeof fromRemote == 'function') {
+    if (typeof fromRemote === 'function' || typeof cb === 'function') {
+      if (typeof fromRemote === 'function') {
         cb = fromRemote;
         fromRemote = false;
       }
@@ -223,7 +223,7 @@ appForm.models = function (module) {
   Form.prototype.getPageModelById = function (pageId) {
     $fh.forms.log.d("Form: getPageModelById: ", pageId);
     var index = this.getPageRef()[pageId];
-    if (typeof index == 'undefined') {
+    if (typeof index === 'undefined') {
       throw 'page id is not found';
     } else {
       return this.pages[index];
@@ -247,7 +247,7 @@ appForm.models = function (module) {
     var fieldsId = [];
     for (var fieldId in this.fields) {
       var field = this.fields[fieldId];
-      if (field.getType() == 'file' || field.getType() == 'photo' || field.getType() == 'signature') {
+      if (field.getType() === 'file' || field.getType() === 'photo' || field.getType() === 'signature') {
         fieldsId.push(fieldId);
       }
     }

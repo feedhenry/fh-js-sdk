@@ -121,8 +121,8 @@ describe("$fh.forms API", function() {
         });
         newSubmission.endInputTransaction(true);
 
-        newSubmission.on("submitted", function(err) {
-          assert.ok(!err);
+        newSubmission.on("submitted", function(submissionId) {
+          assert.ok(submissionId);
           done();
         });
 
@@ -139,6 +139,35 @@ describe("$fh.forms API", function() {
           });
         });
       });
+    });
+  });
+  it("$fh.forms.downloadSubmission", function(done){
+    this.timeout(10000);
+    var submissionId = "submissionData";
+    var downloadSubmission = appForm.api.downloadSubmission;
+
+    downloadSubmission({fromRemote: true, submissionId: submissionId}, function(err, submission){
+      assert.ok(!err);
+      assert.ok(submission);
+      console.log("Submission Data: ", submission);
+      assert.ok(submission.getRemoteSubmissionId().length > 0);
+      done();
+    });
+  });
+  it("$fh.forms.downloadSubmission with files", function(done){
+    this.timeout(10000);
+    var submissionId = "submissionFile";
+    var downloadSubmission = appForm.api.downloadSubmission;
+
+    downloadSubmission({fromRemote: true, submissionId: submissionId}, function(err, submission){
+      assert.ok(!err);
+      assert.ok(submission);
+      console.log("Submission File: ", submission);
+      assert.ok(submission.getRemoteSubmissionId().length > 0);
+      assert.ok(submission.getSubmissionFiles().length === 1);
+      assert.ok(submission.getSubmissionFiles()[0].url);
+      assert.ok(submission.getSubmissionFiles()[0].localURI);
+      done();
     });
   });
 });

@@ -32,7 +32,6 @@ describe("Submission model", function() {
                     assert(submission1.getStatus() == "draft");
                     done();
                 });
-
             });
         });
     });
@@ -49,15 +48,11 @@ describe("Submission model", function() {
             var localId = submission.getLocalId();
             submission.saveDraft(function(err) {
                 assert(!err);
-                try {
-                    submission.submitted(function() {
 
-                    });
-                } catch (e) {
-                    error = true;
-                }
-                assert(error);
-                done();
+                submission.submitted(function(err) {
+                  assert(err);
+                  done();
+                });
             });
         });
     });
@@ -311,14 +306,52 @@ describe("Submission model", function() {
             submission.on("error", function(err ,progress){
               console.log("ERROR: ", err, progress);
             });
-            submission.on("submitted", function(err) {
-                assert(!err);
+            submission.on("submitted", function(submissionId) {
+                assert.ok(submissionId);
+                assert.ok(submission.getLocalId());
+                assert.ok(submission.getRemoteSubmissionId());
                 done();
             });
             submission.submit(function(err) {
                 assert(!err);
             });
         });
+    });
 
+    describe("download a submission using a submission Id", function(){
+      it("how to queue a submission for download", function(done) {
+        this.timeout(20000);
+        var submissionToDownload = null;
+        submissionToDownload = appForm.models.submission.newInstance(null, {"submissionId": "testSubmissionId"});
+
+        submissionToDownload.on("progress", function(progress){
+          console.log("DOWNLOAD PROGRESS: ", progress);
+          assert.ok(progress);
+        });
+
+        submissionToDownload.on("downloaded", function(){
+          console.log("downloaded event called");
+          done();
+        });
+
+        submissionToDownload.on("error", function(err, progress){
+          console.error("error event called");
+          assert.ok(!err);
+          assert.ok(progress);
+          done();
+        });
+
+        submissionToDownload.download(function(err, downloadTask){
+          console.log(err, downloadTask);
+          assert.ok(!err);
+          assert.ok(downloadTask);
+
+          submissionToDownload.getDownloadTask(function(err, downloadTask){
+            console.log(err, downloadTask);
+            assert.ok(!err);
+            assert.ok(downloadTask);
+          });
+        });
+      });
     });
 });

@@ -1,4 +1,3 @@
-;
 (function (root) {
 
   //!!!lib start!!!

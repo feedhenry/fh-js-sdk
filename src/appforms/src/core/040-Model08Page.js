@@ -4,7 +4,7 @@
 appForm.models = function (module) {
   var Model = appForm.models.Model;
   function Page(opt, parentForm) {
-    if (typeof opt == 'undefined' || typeof parentForm == 'undefined') {
+    if (typeof opt === 'undefined' || typeof parentForm === 'undefined') {
       throw 'Page initialise failed: new Page(pageDefinitionJSON, parentFormModel)';
     }
     Model.call(this, { '_type': 'page' });
@@ -44,7 +44,7 @@ appForm.models = function (module) {
   Page.prototype.checkForSectionBreaks=function(){ //Checking for any sections
     for (var i=0;i<this.fieldsIds.length;i++){
       var fieldModel = this.form.getFieldModelById(this.fieldsIds[i]);
-      if(fieldModel && fieldModel.getType() == "sectionBreak"){
+      if(fieldModel && fieldModel.getType() === "sectionBreak"){
         return true;
       }
     }
@@ -60,7 +60,7 @@ appForm.models = function (module) {
       //If there are section breaks, the first field in the form must be a section break. If not, add a placeholder
       var firstField = this.form.getFieldModelById(this.fieldsIds[0]);
 
-      if(firstField.getType() != "sectionBreak"){
+      if(firstField.getType() !== "sectionBreak"){
         insertSectionBreak = true;
       }
     } else {
@@ -75,11 +75,11 @@ appForm.models = function (module) {
         sectionList[currentSection] = sectionList[currentSection] ? sectionList[currentSection] : [];
       }
 
-      if(currentSection !== null && fieldModel.getType() != "sectionBreak"){
+      if(currentSection !== null && fieldModel.getType() !== "sectionBreak"){
         sectionList[currentSection].push(fieldModel);
       }
 
-      if(fieldModel.getType() == "sectionBreak"){
+      if(fieldModel.getType() === "sectionBreak"){
         currentSection = "sectionBreak" + i;
         sectionList[currentSection] = sectionList[currentSection] ? sectionList[currentSection] : [];
         sectionList[currentSection].push(fieldModel);
