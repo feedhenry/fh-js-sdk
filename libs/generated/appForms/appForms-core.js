@@ -3462,7 +3462,7 @@ appForm.models = function (module) {
     var that = this;
     this.clearLocal(function(err) {
         if (err) {
-            console.error(err);
+            $fh.forms.log.e(err);
             cb(err);
         } else {
             that.set("submissions", []);
@@ -3666,7 +3666,6 @@ appForm.models = function(module) {
 
   function Submission(form, params) {
     params = params || {};
-    console.log(form, params);
     $fh.forms.log.d("Submission: ", params);
     Model.call(this, {
       '_type': 'submission'
@@ -3818,7 +3817,7 @@ appForm.models = function(module) {
     var that = this;
     appForm.models.uploadManager.cancelSubmission(this, function(err) {
       if (err) {
-        console.error(err);
+        $fh.forms.log.e(err);
       }
       that.changeStatus(targetStatus, cb);
     });
@@ -3832,7 +3831,9 @@ appForm.models = function(module) {
   Submission.prototype.submitted = function(cb) {
     var self = this;
     if(self.isDownloadSubmission()){
-      console.error("SHOULD NOT BE HERE");
+      var errMsg = "Downloaded submissions should not call submitted function.";
+      $fh.forms.log.e(errMsg);
+      return cb(errMsg);
     }
     $fh.forms.log.d("Submission submitted called");
 
@@ -3879,7 +3880,7 @@ appForm.models = function(module) {
       this.set('status', status);
       this.saveToList(function(err) {
         if (err) {
-          console.error(err);
+          $fh.forms.log.e(err);
         }
       });
       this.saveLocal(cb);
@@ -4015,7 +4016,7 @@ appForm.models = function(module) {
 
     for(var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++){
       var formFieldEntry = formFields[formFieldIndex].fieldId || {};
-      if(formFieldEntry.type === 'file' || formFieldEntry.type === 'photo'){
+      if(formFieldEntry.type === 'file' || formFieldEntry.type === 'photo'  || formFieldEntry.type === 'signature'){
         var tmpFieldValues = formFields[formFieldIndex].fieldValues || [];
         for(var fieldValIndex = 0; fieldValIndex < tmpFieldValues.length; tmpFieldValues++){
           submissionFiles.push(tmpFieldValues[fieldValIndex]);
@@ -4332,19 +4333,19 @@ appForm.models = function(module) {
     //remove from uploading list
     appForm.models.uploadManager.cancelSubmission(self, function(err, uploadTask) {
       if (err) {
-        console.error(err);
+        $fh.forms.log.e(err);
         return cb(err);
       }
       //remove from submission list
       appForm.models.submissions.removeSubmission(self.getLocalId(), function(err) {
         if (err) {
-          console.err(err);
+          $fh.forms.log.e(err);
           return cb(err);
         }
         self.clearLocalSubmissionFiles(function() {
           Model.prototype.clearLocal.call(self, function(err) {
             if (err) {
-              console.error(err);
+              $fh.forms.log.e(err);
               return cb(err);
             }
             cb(null, null);
@@ -4573,7 +4574,7 @@ appForm.models.Field = function (module) {
       if (isStore) {
         appForm.utils.fileSystem.save(hashName, file, function (err, res) {
           if (err) {
-            console.error(err);
+            $fh.forms.log.e(err);
             cb(err);
           } else {
             cb(null, rtnJSON);
@@ -4702,7 +4703,7 @@ appForm.models.Field = function (module) {
       if (isStore) {
         appForm.utils.fileSystem.save(imgName, dataArr[1], function (err, res) {
           if (err) {
-            console.error(err);
+            $fh.forms.log.e(err);
             cb(err);
           } else {
             cb(null, meta);
@@ -4738,7 +4739,7 @@ appForm.models.Field = function (module) {
       var name = meta.hashName;
       appForm.utils.fileSystem.readAsText(name, function (err, text) {
         if (err) {
-          console.error(err);
+          $fh.forms.log.e(err);
         }
         meta.data = text;
         cb(err, meta);
@@ -4916,7 +4917,7 @@ appForm.models = function (module) {
     if (uploadTask) {
       uploadTask.saveLocal(function (err) {
         if (err) {
-          console.error(err);
+          $fh.forms.log.e(err);
         }
         self.saveLocal(function (err) {
           if (err) {
@@ -5022,7 +5023,7 @@ appForm.models = function (module) {
       var timePassed = now.getTime() - this.sendingStart.getTime();
       if (timePassed > $fh.forms.config.get("timeout") * 1000) {
         //time expired. roll current task to the end of queue
-        console.error('Uploading content timeout. it will try to reupload.');
+        $fh.forms.log.e('Uploading content timeout. it will try to reupload.');
         this.sending = false;
         this.rollTask();
       }
@@ -5033,7 +5034,7 @@ appForm.models = function (module) {
         var that = this;
         this.getCurrentTask(function (err, task) {
           if (err || !task) {
-            console.error(err);
+            $fh.forms.log.e(err);
             that.sending = false;
           } else {
             if (task.isCompleted() || task.isError()) {
@@ -5613,8 +5614,7 @@ appForm.models = function (module) {
                 self.saveLocal(function (err) {
                   //save current status.
                   if (err) {
-                    $fh.forms.log.e("Error saving upload task");
-                    console.error(err);
+                    $fh.forms.log.e("Error saving upload task" + err);
                   }
                 });
                 self.emit('progress', self.getProgress());
@@ -5818,7 +5818,7 @@ appForm.models = function (module) {
     });
 
     function processUploadSuccess(){
-      console.log("processUploadSuccess Called");
+      $fh.forms.log.d("processUploadSuccess Called");
       self.submissionModel(function (_err, model) {
         if(_err){
           return cb(_err);
@@ -5829,7 +5829,7 @@ appForm.models = function (module) {
     }
 
     function processDownloadSuccess(){
-      console.log("processDownloadSuccess Called");
+      $fh.forms.log.d("processDownloadSuccess Called");
       self.submissionModel(function (_err, model) {
         if(_err){
           return cb(_err);
@@ -5855,8 +5855,7 @@ appForm.models = function (module) {
     this.set('error', err);
     this.saveLocal(function (err) {
       if (err) {
-        console.error(err);
-        $fh.forms.log.e('Upload task save failed');
+        $fh.forms.log.e('Upload task save failed: ' + err);
       }
     });
     this.submissionModel(function (_err, model) {
@@ -5941,10 +5940,10 @@ appForm.models = function (module) {
     var formId = this.get('formId');
     new appForm.models.Form({'formId': formId, 'rawMode': true, 'rawData' : updatedForm }, function (err, form) {
       if (err) {
-        console.error(err);
+        $fh.forms.log.e(err);
       }
 
-      console.log('successfully updated form the form with id ' + updatedForm._id);
+      $fh.forms.log.l('successfully updated form the form with id ' + updatedForm._id);
       cb();
     });
   };
@@ -6306,7 +6305,7 @@ appForm.api = function (module) {
     if (_submissions === null) {
       appForm.models.submissions.loadLocal(function (err) {
         if (err) {
-          console.error(err);
+          $fh.forms.log.e(err);
           cb(err);
         } else {
           _submissions = appForm.models.submissions;
@@ -7211,8 +7210,8 @@ function rulesEngine (formDef) {
           var args = Array.prototype.slice.call(arguments, 1);
           if (typeof console !== 'undefined') {
             if (err) {
-              if (console.error) {
-                console.error(err);
+              if ($fh.forms.log) {
+                $fh.forms.log.e(err);
               }
             }
             else if (console[name]) {

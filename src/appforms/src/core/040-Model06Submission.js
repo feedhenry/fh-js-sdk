@@ -244,7 +244,7 @@ appForm.models = function(module) {
     if(self.isDownloadSubmission()){
       var errMsg = "Downloaded submissions should not call submitted function.";
       $fh.forms.log.e(errMsg);
-      return cb(errMsg)
+      return cb(errMsg);
     }
     $fh.forms.log.d("Submission submitted called");
 
