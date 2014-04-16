@@ -138,8 +138,8 @@ appForm.models = function(module) {
       'fileSubmission': '/forms/:appId/:submissionId/:fieldId/:hashName/submitFormFile',
       'base64fileSubmission': '/forms/:appId/:submissionId/:fieldId/:hashName/submitFormFileBase64',
       'submissionStatus': '/forms/:appId/:submissionId/status',
-      'downloadSubmission': '/forms/:appId/submission/:submissionId',
-      'downloadSubmissionFile': '/forms/:appId/submission/:submissionId/file/:fileId',
+      'formSubmissionDownload': '/forms/:appId/submission/:submissionId',
+      'fileSubmissionDownload': '/forms/:appId/submission/:submissionId/file/:fileId',
       'completeSubmission': '/forms/:appId/:submissionId/completeSubmission',
       "config": '/forms/:appid/config/:deviceId'
     });

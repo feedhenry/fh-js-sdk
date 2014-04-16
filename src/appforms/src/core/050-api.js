@@ -208,8 +208,37 @@ appForm.api = function (module) {
     cb = cb ? cb : defaultFunction;
 
     if(params.submissionId){
-      var submissionToDownload = new appForm.models.submission.newInstance(null, {submissionId: params.submissionId});
-      submissionToDownload.download(cb);
+
+      var submissionAlreadySaved = appForm.models.submissions.findMetaByRemoteId(params.submissionId);
+
+      if(submissionAlreadySaved === null){
+        var submissionToDownload = new appForm.models.submission.newInstance(null, {submissionId: params.submissionId});
+
+        submissionToDownload.on('error', function(err){
+          $fh.forms.log.e("Error downloading submission with id " + params.submissionId);
+          submissionToDownload.clearEvents();
+          return cb(err);
+        });
+
+        submissionToDownload.on('downloaded', function(){
+          $fh.forms.log.l("Download of submission with id " + params.submissionId + " completed successfully");
+          submissionToDownload.clearEvents();
+          return cb(null, submissionToDownload);
+        });
+
+        submissionToDownload.download(function(err){
+          if(err){
+            $fh.forms.log.e("Error queueing submission for download " + err);
+            submissionToDownload.clearEvents();
+            return cb(err);
+          }
+        });
+      } else {
+        appForm.models.submissions.getSubmissionByMeta(submissionAlreadySaved, cb);
+      }
+    } else {
+      $fh.forms.log.e("No submissionId passed to download a submission");
+      return cb("No submissionId passed to download a submission");
     }
   }
   return module;

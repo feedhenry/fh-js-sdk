@@ -115,6 +115,28 @@ appForm.models = function (module) {
     $fh.forms.log.e("Submissions findMetaByLocalId: No submissions for localId: ", localId);
     return null;
   };
+
+  /**
+   * Finding a submission object by it's remote Id
+   * @param remoteId
+   * @returns {*}
+   */
+  Submissions.prototype.findMetaByRemoteId = function (remoteId) {
+    remoteId = remoteId || "";
+
+    $fh.forms.log.d("Submissions findMetaByRemoteId: "+ remoteId);
+    var submissions = this.get('submissions');
+    for (var i = 0; i < submissions.length; i++) {
+      var obj = submissions[i];
+      if(submissions[i].submissionId){
+        if (submissions[i].submissionId === remoteId) {
+          return obj;
+        }
+      }
+    }
+
+    return null;
+  };
   Submissions.prototype.pruneSubmission = function (submission) {
     $fh.forms.log.d("Submissions pruneSubmission");
     var fields = [

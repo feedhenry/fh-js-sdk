@@ -12,6 +12,7 @@ var failedFileUploadFileHash = "";
 var submissionStatusCounter = 0;
 var testPhoto = __dirname+"/sampleData/testPhoto.jpg";
 var testFile = __dirname+"/sampleData/testFile.pdf";
+var responseDelay = 100;
 
 function applyServer(app) {
   app.use(function(req, res, next) {
@@ -72,7 +73,7 @@ function _postInit(req, res) {
   res.json({
     "status": "ok",
     "hosts":{
-      "url": "somehost"
+      "url": ""
     }
   });
 }
@@ -90,7 +91,7 @@ function _postForms(req, res) {
       "status": "ok",
       "body": req.body
     });
-  }, 1000);
+  }, responseDelay);
 }
 
 function _getSubmissionStatus(req, res) {
@@ -126,7 +127,7 @@ function _getSubmissionStatus(req, res) {
 
   setTimeout(function() {
     res.json(responseJSON);
-  }, 1000);
+  }, responseDelay);
 
 }
 
@@ -151,7 +152,7 @@ function _completeSubmission(req, res) {
   console.log(resJSON);
   setTimeout(function() {
     res.json(resJSON);
-  }, 1000);
+  }, responseDelay);
 
 }
 
@@ -187,7 +188,7 @@ function _postFormSubmission(req, res) {
     console.log("Returning: ", body.testText);
     console.log("submissionId: ", submissionId);
     res.json(rtn);
-  }, 1000);
+  }, responseDelay);
 
 }
 
@@ -242,7 +243,7 @@ function _appFileSubmission(req, res) {
   console.log(resJSON, req.params.submissionId);
   setTimeout(function() {
     res.json(resJSON);
-  }, 1000);
+  }, responseDelay);
 }
 
 function _getTheme(req, res) {

@@ -320,28 +320,34 @@ describe("Submission model", function() {
 
     describe("download a submission using a submission Id", function(){
       it("how to queue a submission for download", function(done) {
+        this.timeout(20000);
         var submissionToDownload = null;
         submissionToDownload = appForm.models.submission.newInstance(null, {"submissionId": "testSubmissionId"});
 
-        submissionToDownload.on("progress", function(err, progress){
-          assert.ok(!err);
+        submissionToDownload.on("progress", function(progress){
+          console.log("DOWNLOAD PROGRESS: ", progress);
           assert.ok(progress);
         });
 
         submissionToDownload.on("downloaded", function(){
+          console.log("downloaded event called");
           done();
         });
 
         submissionToDownload.on("error", function(err, progress){
+          console.error("error event called");
           assert.ok(!err);
           assert.ok(progress);
+          done();
         });
 
         submissionToDownload.download(function(err, downloadTask){
+          console.log(err, downloadTask);
           assert.ok(!err);
           assert.ok(downloadTask);
 
           submissionToDownload.getDownloadTask(function(err, downloadTask){
+            console.log(err, downloadTask);
             assert.ok(!err);
             assert.ok(downloadTask);
           });

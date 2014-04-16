@@ -141,15 +141,15 @@ describe("$fh.forms API", function() {
       });
     });
   });
-  it("$fh.forms.getSubmission", function(done){
-    var submissionId = "submissionFile";
-    var getSubmission = appForm.api.getSubmission;
+  it("$fh.forms.downloadSubmission", function(done){
+    var submissionId = "submissionData";
+    var downloadSubmission = appForm.api.downloadSubmission;
 
-    getSubmission({fromRemote: true, submissionId: submissionId}, function(err, submission){
+    downloadSubmission({fromRemote: true, submissionId: submissionId}, function(err, submission){
       assert.ok(!err);
       assert.ok(submission);
-      assert.ok(submission.getSubmissionId())
-
+      assert.ok(submission.getRemoteSubmissionId().length > 0);
+      done();
     });
   });
 });

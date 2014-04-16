@@ -68,7 +68,7 @@ appForm.models = function (module) {
       self.set('submissionTransferType', 'download');
     }
 
-    if(submissionModel.downloadSubmission){
+    if(submissionModel.isDownloadSubmission()){
       initSubmissionDownload();
     } else {
       initSubmissionUpload();
@@ -148,6 +148,7 @@ appForm.models = function (module) {
     var self = this;
 
     function processUploadDataResult(res){
+      $fh.forms.log.d("In processUploadDataResult");
       var formSub = self.get("jsonTask");
       if(res.error){
         $fh.forms.log.e("Error submitting form " + res.error);
@@ -169,6 +170,7 @@ appForm.models = function (module) {
     }
 
     function processDownloadDataResult(err, res){
+      $fh.forms.log.d("In processDownloadDataResult");
       if(err){
         $fh.forms.log.e("Error downloading submission data"+ err);
         return cb(err);
@@ -176,20 +178,39 @@ appForm.models = function (module) {
 
       //Have the definition of the submission
       self.submissionModel(function(err, submissionModel){
+        $fh.forms.log.d("Got SubmissionModel", err, submissionModel);
         if(err){
           return cb(err);
         }
+        var JSONRes = {};
 
         //Instantiate the model from the json definition
-        submissionModel.fromJSON(res);
+        if(typeof(res) === "string"){
+          try{
+            JSONRes = JSON.parse(res);
+          } catch (e){
+            $fh.forms.log.e("processDownloadDataResult Invalid JSON Object Returned", res);
+            return cb("Invalid JSON Object Returned");
+          }
+        } else {
+          JSONRes = res;
+        }
+
+        if(JSONRes.status){
+          delete JSONRes.status;
+        }
+
+        submissionModel.fromJSON(JSONRes);
         self.set('jsonTask', res);
         submissionModel.saveLocal(function(err){
+          $fh.forms.log.d("Saved SubmissionModel", err, submissionModel);
           if(err){
             $fh.forms.log.e("Error saving updated submission from download submission: " + err);
           }
 
           //Submission Model is now populated with all the fields in the submission
           self.addFileTasks(submissionModel, function(err){
+            $fh.forms.log.d("addFileTasks called", err, submissionModel);
             if(err){
               return cb(err);
             }
@@ -200,6 +221,7 @@ appForm.models = function (module) {
               }
 
               self.emit('progress', self.getProgress());
+              return cb();
             });
           });
         });
@@ -207,6 +229,7 @@ appForm.models = function (module) {
     }
 
     function uploadSubmissionJSON(){
+      $fh.forms.log.d("In uploadSubmissionJSON");
       var formSub = self.get('jsonTask');
       self.submissionModel(function(err, submissionModel){
         if(err){
@@ -246,7 +269,7 @@ appForm.models = function (module) {
 
     function downloadSubmissionJSON(){
       var formSubmissionDownload = new appForm.models.FormSubmissionDownload(self);
-      self.getRemoteStore.read(formSubmissionDownload, processDownloadDataResult);
+      self.getRemoteStore().read(formSubmissionDownload, processDownloadDataResult);
     }
 
     if(self.isDownloadTask()){
@@ -369,8 +392,9 @@ appForm.models = function (module) {
     this.saveLocal(cb);  //Saving the reset files list to local
   };
   UploadTask.prototype.uploadFile = function (cb) {
-    var progress = self.getCurrentTask();
     var self = this;
+    var progress = self.getCurrentTask();
+
     if (progress == null) {
       progress = 0;
       self.set('currentTask', progress);
@@ -389,7 +413,7 @@ appForm.models = function (module) {
     }
 
     function processUploadFile(){
-      $fh.forms.log.d("processUploadFile for submissionId: " + err);
+      $fh.forms.log.d("processUploadFile for submissionId: ");
       if (fileTask.contentType === 'base64') {
         fileSubmissionModel = new appForm.models.Base64FileSubmission(fileTask);
       } else {
@@ -522,7 +546,8 @@ appForm.models = function (module) {
             cb(err);
           } else {
             var status = submission.get('status');
-            if (status != 'inprogress' && status != 'submitted') {
+            if (status != 'inprogress' && status != 'submitted' && status != 'downloaded') {
+              $fh.forms.log.e('Submission status is incorrect. Upload task should be started by submission object\'s upload method.' + status);
               cb('Submission status is incorrect. Upload task should be started by submission object\'s upload method.');
             } else {
               cb();
@@ -606,7 +631,6 @@ appForm.models = function (module) {
     var self = this;
     var submissionId = self.get('submissionId', null);
     self.set('completed', true);
-    $fh.forms.log.d("Clearing Upload Task");
     self.saveLocal(function (err) {
       if (err) {
         $fh.forms.log.e("Error Clearing Upload Task");
@@ -614,20 +638,21 @@ appForm.models = function (module) {
     });
 
     function processUploadSuccess(){
+      console.log("processUploadSuccess Called");
       self.submissionModel(function (_err, model) {
-        model.set('submissionId', submissionId);
-        if (_err) {
-          cb(_err);
-        } else {
-          model.submitted(cb);
+        if(_err){
+          return cb(_err);
         }
+        model.set('submissionId', submissionId);
+        model.submitted(cb);
       });
     }
 
     function processDownloadSuccess(){
+      console.log("processDownloadSuccess Called");
       self.submissionModel(function (_err, model) {
-        if (_err) {
-          cb(_err);
+        if(_err){
+          return cb(_err);
         } else {
           model.downloaded(cb);
         }

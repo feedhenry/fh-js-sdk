@@ -17,7 +17,8 @@ appForm.models = function(module) {
       'draft'
     ],
     'pending': [
-      'inprogress'
+      'inprogress',
+      'error'
     ],
     'inprogress': [
       'submitted',
@@ -32,7 +33,8 @@ appForm.models = function(module) {
       'pending',
       'inprogress',
       'error'
-    ]
+    ],
+    'downloaded' : []
   };
 
   function newInstance(form, params) {
@@ -75,6 +77,7 @@ appForm.models = function(module) {
 
   function Submission(form, params) {
     params = params || {};
+    console.log(form, params);
     $fh.forms.log.d("Submission: ", params);
     Model.call(this, {
       '_type': 'submission'
@@ -210,7 +213,7 @@ appForm.models = function(module) {
   Submission.prototype.getDownloadTask = function(cb){
     var self = this;
     $fh.forms.log.d("getDownloadTask");
-    if(self.isDownloadTask()){
+    if(self.isDownloadSubmission()){
       self.getUploadTask(cb);
     } else {
       if(cb && typeof(cb) === 'function'){
@@ -236,20 +239,26 @@ appForm.models = function(module) {
     this.set('uploadTaskId', utId);
   };
   Submission.prototype.submitted = function(cb) {
-    var that = this;
+    var self = this;
+    if(self.isDownloadSubmission()){
+      console.error("SHOULD NOT BE HERE");
+    }
+    $fh.forms.log.d("Submission submitted called");
+
     var targetStatus = 'submitted';
 
-    that.set('submittedDate', appForm.utils.getTime());
-    that.changeStatus(targetStatus, function(err) {
+    self.set('submittedDate', appForm.utils.getTime());
+    self.changeStatus(targetStatus, function(err) {
       if (err) {
         cb(err);
       } else {
-        that.emit('submitted', that.get('submissionId'));
+        self.emit('submitted', self.get('submissionId'));
         cb(null, null);
       }
     });
   };
   Submission.prototype.downloaded = function(cb){
+    $fh.forms.log.d("Submission Downloaded called");
     var that = this;
     var targetStatus = 'downloaded';
 
@@ -324,6 +333,7 @@ appForm.models = function(module) {
       this.set("status", targetStatus);
       targetStatus = "inprogress";
       if(this.isStatusValid(targetStatus)){
+        this.set("status", targetStatus);
         //Status is valid, add the submission to the
         appForm.models.uploadManager.queueSubmission(that, function(err, downloadTask) {
           if(err){

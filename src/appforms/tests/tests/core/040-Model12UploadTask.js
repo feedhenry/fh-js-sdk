@@ -362,7 +362,8 @@ describe("UploadTask model", function() {
   });
 
   it("how to download a submission definition", function(done){
-    var submission = appForm.models.Submission.newDownloadInstance({submissionId: "submissionFile"});
+    this.timeout(20000);
+    var submission = appForm.models.submission.newInstance(null ,{submissionId: "submissionData"});
 
     submission.changeStatus("pending", function(err){
       assert.ok(!err);
@@ -372,29 +373,24 @@ describe("UploadTask model", function() {
 
         var downloadTask = appForm.models.uploadTask.newInstance(submission);
         //First download tick will download the json definition of the submission
-        downloadTask.downloadTick(function(err){
+        downloadTask.uploadTick(function(err){
           assert.ok(!err);
-          assert.ok(submission.getDownloadedSize());
-          var currentDownloadedSize = submission.getDownloadedSize();
-          assert.ok(submission.getTotalSize() > 0);
+
+          console.log(downloadTask.getProgress());
+          assert.ok(downloadTask.getProgress());
           assert.ok(submission.getStatus() === "inprogress");
 
           //Second download tick will download the file from the server
-          downloadTask.downloadTick(function(err){
+          downloadTask.uploadTick(function(err){
             assert.ok(!err);
-            assert.ok(submission.getDownloadedSize());
-            assert.ok(submission.getTotalSize() > currentDownloadedSize);
             assert.ok(submission.getStatus() === "inprogress");
 
             //Third download tick will mark the submission as downloaded
-            downloadTask.downloadTick(function(err){
+            downloadTask.uploadTick(function(err){
               assert.ok(!err);
 
               assert.ok(submission.getStatus() === "downloaded");
               //It should have downloaded a file
-              assert.ok(Array.isArray(submission.getDownloadedFiles()));
-              assert.ok(submission.getDownloadedFiles().length === 1);
-              assert.ok(submission.getDownloadedFiles()[0].localUri);
               done();
             });
           });
@@ -402,6 +398,4 @@ describe("UploadTask model", function() {
       });
     });
   });
-  it("how to download a submission file", function(done){});
-  it("how to check submission download progress", function(done){});
 });
