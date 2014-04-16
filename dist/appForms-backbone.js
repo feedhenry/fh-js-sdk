@@ -1775,7 +1775,7 @@ var FieldView = Backbone.View.extend({
   renderHelpText: function() {
     var helpText = this.model.getHelpText();
 
-    if(typeof helpText == "string" && helpText.length > 0){
+    if(typeof helpText === "string" && helpText.length > 0){
       return _.template(this.instructions, {
         "helpText": helpText
       });
@@ -2670,21 +2670,21 @@ FieldMapView = FieldView.extend({
   },
   onMapInit: function(index) {
     this.mapInited++;
-    if (this.mapInited == this.curRepeat) {
+    if (this.mapInited === this.curRepeat) {
       // all map initialised
       this.allMapInit();
     }
   },
   allMapInit: function() {
-    while ((func = this.allMapInitFunc.shift()) != null) {
+    while ((func = this.allMapInitFunc.shift()) !== null) {
       func();
     }
   },
   onAllMapInit: function(func) {
-    if (this.mapInited == this.curRepeat) {
+    if (this.mapInited === this.curRepeat) {
       func();
     } else {
-      if (this.allMapInitFunc.indexOf(func) == -1) {
+      if (this.allMapInitFunc.indexOf(func) === -1) {
         this.allMapInitFunc.push(func);
       }
     }
@@ -2986,7 +2986,7 @@ FieldSignatureView = FieldView.extend({
 
   encodeData: function(data) {
     var strData = "";
-    if (typeof data == "string") {
+    if (typeof data === "string") {
       strData = data;
     } else {
       var aData = data;
@@ -3170,13 +3170,13 @@ FieldDateTimeView = FieldView.extend({
     var unit=this.getUnit();
     var template="";
     var buttonLabel="";
-    if (unit=="datetime"){
+    if (unit==="datetime"){
       template=this.inputDateTime;
       buttonLabel="<i class='fa fa-calendar'></i> <i class='fa fa-clock-o'></i>&nbspGet Current Date & Time";
-    }else if (unit=="date"){
+    }else if (unit==="date"){
       template=this.inputDate;
       buttonLabel="<i class='fa fa-calendar'></i>&nbspGet Current Date";
-    }else if (unit=="time"){
+    }else if (unit==="time"){
       template=this.inputTime;
       buttonLabel="<i class='fa fa-clock-o'></i>&nbspGet Current Time";
     }
@@ -3308,7 +3308,9 @@ var PageView=BaseView.extend({
       }
     } else {
       fieldModelList.forEach(function (field, index) {
-        if(!field) return;
+        if(!field) {
+          return;
+        }
         var fieldType = field.getType();
         if (self.viewMap[fieldType]) {
 
@@ -3458,7 +3460,7 @@ var FormView = BaseView.extend({
     for (var fieldId in res) {
       if (res[fieldId]) {
         var fieldView = this.getFieldViewById(fieldId);
-        if (firstView==null){
+        if (firstView===null){
           firstView=fieldView;
         }
         var errorMsgs = res[fieldId].fieldErrorMessage;
@@ -3564,10 +3566,10 @@ var FormView = BaseView.extend({
   },
   performRuleAction: function(type, targetId, action) {
     var target = null;
-    if (type == "field") {
+    if (type === "field") {
       target = this.getFieldViewById(targetId);
     }
-    if (target == null) {
+    if (target === null) {
       console.error("cannot find target with id:" + targetId);
       return;
     }
@@ -3609,7 +3611,7 @@ var FormView = BaseView.extend({
     for (var i = 0; i< this.pageViews.length ; i++) {
       var pageView = this.pageViews[i];
       var pId = pageView.model.getPageId();
-      if (pId == pageId) {
+      if (pId === pageId) {
         return pageView;
       }
     }
@@ -3619,7 +3621,7 @@ var FormView = BaseView.extend({
     for (var i = 0; i<this.fieldViews.length; i++) {
       var fieldView = this.fieldViews[i];
       var pId = fieldView.model.getFieldId();
-      if (pId == fieldId) {
+      if (pId === fieldId) {
         return fieldView;
       }
     }
@@ -3679,7 +3681,7 @@ var FormView = BaseView.extend({
       var pageId = this.pageViews[pageIndex].model.getPageId();
       var pageAction = self.pageViewStatus[pageId].action;
 
-      if(pageAction == "show"){
+      if(pageAction === "show"){
         return pageIndex;
       }
     }
@@ -3690,7 +3692,7 @@ var FormView = BaseView.extend({
       var pageId = self.pageViews[pageIndex].model.getPageId();
       var pageAction = self.pageViewStatus[pageId].action;
 
-      if(pageAction == "show"){
+      if(pageAction === "show"){
         return pageIndex;
       }
     }
@@ -3703,7 +3705,7 @@ var FormView = BaseView.extend({
       var pageId = this.pageViews[pageIndex].model.getPageId();
       var pageAction = self.pageViewStatus[pageId].action;
 
-      if(pageAction == "hide"){
+      if(pageAction === "hide"){
         currentIndex -= 1;
       }
     }
@@ -3720,7 +3722,7 @@ var FormView = BaseView.extend({
       var pageId = this.pageViews[pageIndex].model.getPageId();
       var pageAction = self.pageViewStatus[pageId].action;
 
-      if(pageAction == "show"){
+      if(pageAction === "show"){
         displayedPages.push(pageId);
       }
     }
@@ -3768,7 +3770,9 @@ var FormView = BaseView.extend({
     var self = this;
     this.populateFieldViewsToSubmission(function() {
       self.submission.saveDraft(function(err, res) {
-        if(err) console.error(err, res);
+        if(err) {
+          $fh.forms.log.e(err);
+        }
         self.el.empty();
       });
     });
@@ -3827,7 +3831,7 @@ var FormView = BaseView.extend({
     var self = this;
     for (var i = 0; i<this.fieldValue.length; i++) {
       var item = this.fieldValue[i];
-      if (item.id == fieldId) {
+      if (item.id === fieldId) {
         this.fieldValue.splice(i, 1);
       }
     }
@@ -4016,7 +4020,7 @@ var ConfigView = Backbone.View.extend({
           '<%'+
               'for (var i=0;i<log_levels.length;i++){'+
                 'var val=log_levels[i];'+
-                'var selected=(i==log_level)?"selected":"";'+
+                'var selected=(i===log_level)?"selected":"";'+
                 '%>'+
                   '<option value="<%= i %>" <%= selected%>><%= val%></option>'+
                 '<%'+
@@ -4094,7 +4098,7 @@ var ConfigView = Backbone.View.extend({
         var key = $(this).data().key;
         var val = $(this).val();
 
-        if ($(this).attr("type") && $(this).attr("type").toLowerCase() == "checkbox") {
+        if ($(this).attr("type") && $(this).attr("type").toLowerCase() === "checkbox") {
           if (!$(this).attr("checked")) {
             val = false;
           }
@@ -4109,7 +4113,7 @@ var ConfigView = Backbone.View.extend({
     }
   }
 });
-if (typeof $fh == 'undefined') {
+if (typeof $fh === 'undefined') {
   $fh = {};
 }
 if (!$fh.forms) {
@@ -4122,9 +4126,9 @@ $fh.forms.renderForm = function (params, cb) {
   var type = params.type || 'backbone';
   var form = new FormView({ parentEl: parentEl });
   form.loadForm(params, function () {
-    if (type == 'backbone') {
+    if (type === 'backbone') {
       cb(null, form);
-    } else if (type == 'html') {
+    } else if (type === 'html') {
       //TODO convert backbone view to html.
       cb(null, form);
     }
@@ -4136,18 +4140,23 @@ $fh.forms.renderForm = function (params, cb) {
  * no io being done so no need for callback
  */
 $fh.forms.renderFormFromJSON = function (params) {
-  if (!params)
+  if (!params){
     throw new Error('params cannot be empty');
-  if (!params.rawData)
+  }
+  if (!params.rawData) {
     throw new Error('raw json data must be passed in the params.rawData');
-  if (!params.container)
+  }
+  if (!params.container) {
     throw new Error('a container element must be passed in the params.container');
+  }
+
   params.formId = new Date().getTime();
   params.rawMode = true;
   var formView = new FormView({ parentEl: params.container });
   formView.loadForm(params, function (err) {
-    if (err)
+    if (err) {
       console.error('error loading form for renderFormFromJSON ', err);
+    }
     formView.render();
   });
 };

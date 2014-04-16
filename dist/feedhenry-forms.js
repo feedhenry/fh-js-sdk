@@ -10689,7 +10689,6 @@ module.exports = {
 },{"./appProps":25,"./constants":27,"./events":30,"./hosts":34,"./initializer":35,"./logger":38}]},{},[16])
 (16)
 });
-;
 (function (root) {
 
   //!!!lib start!!!
@@ -12027,8 +12026,8 @@ module.exports = {
 var appForm = function (module) {
     module.init = init;
     function init(params, cb) {
-      def = { 'updateForms': true };
-      if (typeof cb == 'undefined') {
+      var def = { 'updateForms': true };
+      if (typeof cb === 'undefined') {
         cb = params;
       } else {
         for (var key in params) {
@@ -12041,20 +12040,28 @@ var appForm = function (module) {
       var config = def.config || {};
       appForm.config = appForm.models.config;
       appForm.config.init(config, function (err) {
-        if(err) $fh.forms.log.e("Form config loading error: ", err);
+        if(err){
+          $fh.forms.log.e("Form config loading error: ", err);
+        }
         //Loading the current state of the uploadManager for any upload tasks that are still in progress.
         appForm.models.uploadManager.loadLocal(function (err) {
           $fh.forms.log.d("Upload Manager loaded from memory.");
-          if (err) $fh.forms.log.e("Error loading upload manager from memory ", err);
+          if (err) {
+            $fh.forms.log.e("Error loading upload manager from memory ", err);
+          }
           //init forms module
           $fh.forms.log.l("Refreshing Theme.");
           appForm.models.theme.refresh(true, function (err) {
-            if (err) $fh.forms.log.e("Error refreshing theme ", err);
+            if (err) {
+              $fh.forms.log.e("Error refreshing theme ", err);
+            }
             if (def.updateForms === true) {
               $fh.forms.log.l("Refreshing Forms.");
               appForm.models.forms.refresh(true, function (err) {
-                if (err)
+                if (err) {
                   $fh.forms.log.e(err);
+                }
+
                 appForm.models.log.loadLocal(function(){
                   cb();
                 });
@@ -12089,7 +12096,7 @@ appForm.utils = function(module) {
 
   function extend(child, parent) {
 
-    if (parent.constructor && parent.constructor == Function) {
+    if (parent.constructor && parent.constructor === Function) {
       for (var mkey in parent.prototype) {
         child.prototype[mkey] = parent.prototype[mkey];
       }
@@ -12131,7 +12138,7 @@ appForm.utils = function(module) {
    * @return {[type]}       [description]
    */
   function md5(str, cb) {
-    if (typeof $fh != 'undefined' && $fh.hash) {
+    if (typeof $fh !== 'undefined' && $fh.hash) {
       $fh.hash({
         algorithm: 'MD5',
         text: str
@@ -12207,7 +12214,7 @@ appForm.utils = function (module) {
                           window.WebKitBlobBuilder ||
                           window.MozBlobBuilder ||
                           window.MSBlobBuilder;
-        if (e.name == 'TypeError' && blobBuilder) {
+        if (e.name === 'TypeError' && blobBuilder) {
           var bb = new blobBuilder();
           bb.append([contentstr.buffer]);
           retVal = bb.getBlob(targetContentType);
@@ -12243,7 +12250,7 @@ appForm.utils = function (module) {
   function save(fileName, content, cb) {
     var saveObj = null;
     var size = 0;
-    if (typeof content == 'object') {
+    if (typeof content === 'object') {
       if (content instanceof File) {
         //File object
         saveObj = content;
@@ -12257,7 +12264,7 @@ appForm.utils = function (module) {
         saveObj = _createBlobOrString(contentstr);
         size = saveObj.size || saveObj.length;
       }
-    } else if (typeof content == 'string') {
+    } else if (typeof content === 'string') {
       saveObj = _createBlobOrString(content);
       size = saveObj.size || saveObj.length;
     }
@@ -12293,7 +12300,7 @@ appForm.utils = function (module) {
   function remove(fileName, cb) {
     _getFileEntry(fileName, 0, {}, function (err, fileEntry) {
       if (err) {
-        if (!(err.name == 'NotFoundError' || err.code == 1)) {
+        if (!(err.name === 'NotFoundError' || err.code === 1)) {
           return cb(err);
         } else {
           return cb(null, null);
@@ -12403,7 +12410,7 @@ appForm.utils = function (module) {
       fileSystem.root.getFile(fileName, params, function gotFileEntry(fileEntry) {
         cb(null, fileEntry);
       }, function (err) {
-        if (err.name == 'QuotaExceededError' || err.code == 10) {
+        if (err.name === 'QuotaExceededError' || err.code === 10) {
           //this happens only on browser. request for 1 gb storage
           //TODO configurable from cloud
           var bigSize = 1024 * 1024 * 1024;
@@ -12596,7 +12603,7 @@ appForm.web = function (module) {
     var success = function (r) {
       $fh.forms.log.d("upload to url ", url, " sucessful");
       r.response = r.response || {};
-      if(typeof r.response == "string"){
+      if(typeof r.response === "string"){
         r.response = JSON.parse(r.response);
       }
       cb(null, r.response);
@@ -12639,12 +12646,12 @@ appForm.web = function (module) {
       function success(fileEntry){
         $fh.forms.log.d("File Download Completed Successfully. FilePath: " + fileEntry.fullPath);
         return cb(null, fileEntry.fullPath);
-      };
+      }
 
       function fail(error){
         $fh.forms.log.e("Error downloading file " + fileMetaData.fileName + " code: " + error.code);
         return cb("Error downloading file " + fileMetaData.fileName + " code: " + error.code);
-      };
+      }
 
       if(fileMetaData.fileName){
         $fh.forms.log.d("File name for file " + fileMetaData.fileName + " found. Starting download");
@@ -12662,7 +12669,7 @@ appForm.web = function (module) {
   return module;
 }(appForm.web || {});
 appForm.web.ajax = function (module) {
-  module = typeof $fh != 'undefined' && $fh.__ajax ? $fh.__ajax : _myAjax;
+  module = typeof $fh !== 'undefined' && $fh.__ajax ? $fh.__ajax : _myAjax;
   module.get = get;
   module.post = post;
   var _ajax = module;
@@ -12688,7 +12695,7 @@ appForm.web.ajax = function (module) {
     $fh.forms.log.d("Ajax post ", url, body);
     var file = false;
     var formData;
-    if (typeof body == 'object') {
+    if (typeof body === 'object') {
       if (body instanceof File) {
         file = true;
         formData = new FormData();
@@ -12768,7 +12775,7 @@ appForm.stores = function(module) {
   };
   //read a model from local storage
   LocalStorage.prototype.read = function(model, cb) {
-    if (model.get("_type") == "offlineTest") {
+    if (model.get("_type") === "offlineTest") {
       cb(null, {});
     } else {
       var key = model.getLocalId();
@@ -12804,7 +12811,7 @@ appForm.stores = function(module) {
   };
   LocalStorage.prototype.upsert = function(model, cb) {
     var key = model.getLocalId();
-    if (key == null) {
+    if (key === null) {
       this.create(model, cb);
     } else {
       this.update(model, cb);
@@ -12834,17 +12841,19 @@ appForm.stores = function(module) {
   //use $fh data
   function _fhLSData(options, success, failure) {
     //allow for no $fh api in studio
-    if(! $fh || ! $fh.data) return success();
+    if(! $fh || ! $fh.data) {
+      return success();
+    }
 
     $fh.data(options, function (res) {
-      if (typeof res == 'undefined') {
+      if (typeof res === 'undefined') {
         res = {
           key: options.key,
           val: options.val
         };
       }
       //unify the interfaces
-      if (options.act.toLowerCase() == 'remove') {
+      if (options.act.toLowerCase() === 'remove') {
         return success(null, null);
       }
       success(null, res.val ? res.val : null);
@@ -12903,7 +12912,7 @@ appForm.stores = function(module) {
       filenameForKey(key, function(hash) {
         fileSystem.remove(hash, function(err) {
           if (err) {
-            if (err.name == 'NotFoundError' || err.code == 1) {
+            if (err.name === 'NotFoundError' || err.code === 1) {
               //same respons of $fh.data if key not found.
               success(null, null);
             } else {
@@ -12920,7 +12929,7 @@ appForm.stores = function(module) {
       filenameForKey(key, function(hash) {
         fileSystem.readAsText(hash, function(err, text) {
           if (err) {
-            if (err.name == 'NotFoundError' || err.code == 1) {
+            if (err.name === 'NotFoundError' || err.code === 1) {
               //same respons of $fh.data if key not found.
               success(null, null);
             } else {
@@ -12979,7 +12988,7 @@ appForm.stores = function(module) {
     return self.isFileTransfer(model) && self.isPhoneGap();
   };
   MBaaS.prototype.isFileTransfer = function(model){
-    return (model.get("_type") == "fileSubmission" || model.get("_type") == "base64fileSubmission" || model.get("_type") == "fileSubmissionDownload");
+    return (model.get("_type") === "fileSubmission" || model.get("_type") === "base64fileSubmission" || model.get("_type") === "fileSubmissionDownload");
   };
   MBaaS.prototype.isPhoneGap = function(){
     return (typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined");
@@ -12989,7 +12998,7 @@ appForm.stores = function(module) {
     if (this.checkStudio()) {
       cb("Studio mode not supported");
     } else {
-      if (model.get("_type") == "offlineTest") {
+      if (model.get("_type") === "offlineTest") {
         cb("offlinetest. ignore");
       } else {
         var url = _getUrl(model);
@@ -13167,7 +13176,7 @@ appForm.models = function (module) {
     };
     this.utils = appForm.utils;
     this.events = {};
-    if (typeof opt != 'undefined') {
+    if (typeof opt !== 'undefined') {
       for (var key in opt) {
         this.props[key] = opt[key];
       }
@@ -13208,7 +13217,7 @@ appForm.models = function (module) {
     return this.props;
   };
   Model.prototype.get = function (key, def) {
-    return typeof this.props[key] == 'undefined' ? def : this.props[key];
+    return typeof this.props[key] === 'undefined' ? def : this.props[key];
   };
   Model.prototype.set = function (key, val) {
     this.props[key] = val;
@@ -13220,7 +13229,7 @@ appForm.models = function (module) {
     return this.get('_ludid');
   };
   Model.prototype.fromJSON = function (json) {
-    if (typeof json == 'string') {
+    if (typeof json === 'string') {
       this.fromJSONStr(json);
     } else {
       for (var key in json) {
@@ -13256,7 +13265,7 @@ appForm.models = function (module) {
   Model.prototype.refresh = function (fromRemote, cb) {
     var dataAgent = this.getDataAgent();
     var that = this;
-    if (typeof cb == 'undefined') {
+    if (typeof cb === 'undefined') {
       cb = fromRemote;
       fromRemote = false;
     }
@@ -13362,7 +13371,7 @@ appForm.models = function(module) {
   Config.prototype.refresh = function (fromRemote, cb) {
     var dataAgent = this.getDataAgent();
     var self = this;
-    if (typeof cb == 'undefined') {
+    if (typeof cb === 'undefined') {
       cb = fromRemote;
       fromRemote = false;
     }
@@ -13392,7 +13401,9 @@ appForm.models = function(module) {
       }
     }
     self.loadLocal(function(err, localConfig){
-      if(err) $fh.forms.log.e("Config loadLocal ", err);
+      if(err) {
+        $fh.forms.log.e("Config loadLocal ", err);
+      }
 
       dataAgent.remoteStore.read(self, _handler);
     });
@@ -13501,7 +13512,7 @@ appForm.models = function (module) {
     var formLastUpdate = formModel.getLastUpdate();
     var formMeta = this.getFormMetaById(id);
     if (formMeta) {
-      return formLastUpdate != formMeta.lastUpdatedTimestamp;
+      return formLastUpdate !== formMeta.lastUpdatedTimestamp;
     } else {
       //could have been deleted. leave it for now
       return false;
@@ -13515,7 +13526,7 @@ appForm.models = function (module) {
     var forms = this.get('forms');
     for (var i = 0; i < forms.length; i++) {
       var form = forms[i];
-      if (form._id == formId) {
+      if (form._id === formId) {
         return form;
       }
     }
@@ -13553,8 +13564,8 @@ appForm.models = function (module) {
     var fromRemote = params.fromRemote;
     $fh.forms.log.d("Form: ", rawMode, rawData, formId, fromRemote);
 
-    if (typeof fromRemote == 'function' || typeof cb == 'function') {
-      if (typeof fromRemote == 'function') {
+    if (typeof fromRemote === 'function' || typeof cb === 'function') {
+      if (typeof fromRemote === 'function') {
         cb = fromRemote;
         fromRemote = false;
       }
@@ -13760,7 +13771,7 @@ appForm.models = function (module) {
   Form.prototype.getPageModelById = function (pageId) {
     $fh.forms.log.d("Form: getPageModelById: ", pageId);
     var index = this.getPageRef()[pageId];
-    if (typeof index == 'undefined') {
+    if (typeof index === 'undefined') {
       throw 'page id is not found';
     } else {
       return this.pages[index];
@@ -13784,7 +13795,7 @@ appForm.models = function (module) {
     var fieldsId = [];
     for (var fieldId in this.fields) {
       var field = this.fields[fieldId];
-      if (field.getType() == 'file' || field.getType() == 'photo' || field.getType() == 'signature') {
+      if (field.getType() === 'file' || field.getType() === 'photo' || field.getType() === 'signature') {
         fieldsId.push(fieldId);
       }
     }
@@ -13832,7 +13843,7 @@ appForm.models = function (module) {
   FileSubmission.prototype.getProps = function () {
     if(this.fileObj){
       $fh.forms.log.d("FileSubmissionDownload: file object found");
-      return this.fileObj
+      return this.fileObj;
     } else {
       $fh.forms.log.e("FileSubmissionDownload: no file object found");
     }
@@ -14065,7 +14076,7 @@ appForm.models = function (module) {
     var submissions = this.get('submissions');
     for (var i = 0; i < submissions.length; i++) {
       var obj = submissions[i];
-      if (submissions[i].formId == formId) {
+      if (submissions[i].formId === formId) {
         rtn.push(obj);
       }
     }
@@ -14081,7 +14092,7 @@ appForm.models = function (module) {
     var submissions = this.get('submissions');
     for (var i = 0; i < submissions.length; i++) {
       var obj = submissions[i];
-      if (submissions[i]._ludid == localId) {
+      if (submissions[i]._ludid === localId) {
         return obj;
       }
     }
@@ -14203,10 +14214,10 @@ appForm.models = function (module) {
     if(!params){
       params = {};
     }
-    if (typeof params =="string"){
+    if (typeof params ==="string"){
       params={status:params};
     }
-    if(params.status == null){
+    if(params.status === null){
       return [];
     }
 
@@ -14216,9 +14227,9 @@ appForm.models = function (module) {
     var submissions = this.get("submissions");
     var rtn = [];
     for (var i = 0; i < submissions.length; i++) {
-        if (submissions[i].status == status) {
+        if (submissions[i].status === status) {
           if(formId != null){
-            if(submissions[i].formId == formId){
+            if(submissions[i].formId === formId){
               rtn.push(submissions[i]);
             }
           } else {
@@ -14258,7 +14269,7 @@ appForm.models = function (module) {
     var submissions = this.get('submissions');
     for (var i = 0; i < submissions.length; i++) {
       var obj = submissions[i];
-      if (submissions[i]._ludid == localId) {
+      if (submissions[i]._ludid === localId) {
         return i;
       }
     }
@@ -14351,7 +14362,7 @@ appForm.models = function(module) {
     Model.call(this, {
       '_type': 'submission'
     });
-    if (typeof form != 'undefined' && form) {
+    if (typeof form !== 'undefined' && form) {
       this.set('formName', form.get('name'));
       this.set('formId', form.get('_id'));
       this.set('deviceFormTimestamp', form.getLastUpdate());
@@ -14441,7 +14452,9 @@ appForm.models = function(module) {
     var that = this;
     this.set('timezoneOffset', appForm.utils.getTime(true));
     this.getForm(function(err, form) {
-      if(err) $fh.forms.log.e("Submission submit: Error getting form ", err);
+      if(err) {
+        $fh.forms.log.e("Submission submit: Error getting form ", err);
+      }
       var ruleEngine = form.getRuleEngine();
       var submission = that.getProps();
       ruleEngine.validateForm(submission, function(err, res) {
@@ -14579,7 +14592,9 @@ appForm.models = function(module) {
         } else {
           ut.set("error", null);
           ut.saveLocal(function(err) {
-            if (err) $fh.forms.log.e("Error saving upload task: " + err);
+            if (err) {
+              $fh.forms.log.e("Error saving upload task: " + err);
+            }
           });
           self.emit("inprogress", ut);
           ut.on("progress", function(progress) {
@@ -14610,7 +14625,9 @@ appForm.models = function(module) {
           }
           downloadTask.set("error", null);
           downloadTask.saveLocal(function(err) {
-            if (err) $fh.forms.log.e("Error saving download task: " + err);
+            if (err) {
+              $fh.forms.log.e("Error saving download task: " + err);
+            }
           });
           that.emit("inprogress", downloadTask);
           downloadTask.on("progress", function(progress) {
@@ -14650,15 +14667,15 @@ appForm.models = function(module) {
     if (nextStatus.indexOf(targetStatus) > -1) {
       return true;
     } else {
-      return false;
       this.set('status', 'error');
+      return false;
     }
   };
   Submission.prototype.addComment = function(msg, user) {
     var now = appForm.utils.getTime();
     var ts = now.getTime();
     var newComment = {
-      'madeBy': typeof user == 'undefined' ? '' : user.toString(),
+      'madeBy': typeof user === 'undefined' ? '' : user.toString(),
       'madeOn': now,
       'value': msg,
       'timeStamp': ts
@@ -14673,7 +14690,7 @@ appForm.models = function(module) {
     var comments = this.getComments();
     for (var i = 0; i < comments.length; i++) {
       var comment = comments[i];
-      if (comment.timeStamp == timeStamp) {
+      if (comment.timeStamp === timeStamp) {
         comments.splice(i, 1);
         return;
       }
@@ -14827,7 +14844,7 @@ appForm.models = function(module) {
     } else {
       targetArr = this.getInputValueObjectById(fieldId).fieldId;
     }
-    if (typeof index == 'undefined') {
+    if (typeof index === 'undefined') {
       targetArr.splice(0, targetArr.length);
     } else {
       if (targetArr.length > index) {
@@ -15125,7 +15142,7 @@ appForm.models = function (module) {
       return cb(null, inputValue);
     }
     // try to find specified processor
-    if (this[processorName] && typeof this[processorName] == 'function') {
+    if (this[processorName] && typeof this[processorName] === 'function') {
       this[processorName](params, cb);
     } else {
       cb(null, inputValue);
@@ -15141,7 +15158,7 @@ appForm.models = function (module) {
     var type = this.getType();
     var processorName = 'convert_' + type;
     // try to find specified processor
-    if (this[processorName] && typeof this[processorName] == 'function') {
+    if (this[processorName] && typeof this[processorName] === 'function') {
       this[processorName](submissionValue, cb);
     } else {
       cb(null, submissionValue);
@@ -15215,10 +15232,10 @@ appForm.models.Field = function (module) {
   module.prototype.process_file = function (params, cb) {
     var inputValue = params.value;
     var isStore = params.isStore === undefined ? true : params.isStore;
-    if (typeof inputValue == 'undefined' || inputValue == null) {
+    if (typeof inputValue === 'undefined' || inputValue === null) {
       return cb(null, null);
     }
-    if (typeof inputValue != 'object' || !inputValue instanceof HTMLInputElement && !inputValue instanceof File && !checkFileObj(inputValue)) {
+    if (typeof inputValue !== 'object' || !inputValue instanceof HTMLInputElement && !inputValue instanceof File && !checkFileObj(inputValue)) {
       throw 'the input value for file field should be a html file input element or a File object';
     }
     if (checkFileObj(inputValue)) {
@@ -15433,7 +15450,7 @@ appForm.models.Field = function (module) {
 appForm.models = function (module) {
   var Model = appForm.models.Model;
   function Page(opt, parentForm) {
-    if (typeof opt == 'undefined' || typeof parentForm == 'undefined') {
+    if (typeof opt === 'undefined' || typeof parentForm === 'undefined') {
       throw 'Page initialise failed: new Page(pageDefinitionJSON, parentFormModel)';
     }
     Model.call(this, { '_type': 'page' });
@@ -15473,7 +15490,7 @@ appForm.models = function (module) {
   Page.prototype.checkForSectionBreaks=function(){ //Checking for any sections
     for (var i=0;i<this.fieldsIds.length;i++){
       var fieldModel = this.form.getFieldModelById(this.fieldsIds[i]);
-      if(fieldModel && fieldModel.getType() == "sectionBreak"){
+      if(fieldModel && fieldModel.getType() === "sectionBreak"){
         return true;
       }
     }
@@ -15489,7 +15506,7 @@ appForm.models = function (module) {
       //If there are section breaks, the first field in the form must be a section break. If not, add a placeholder
       var firstField = this.form.getFieldModelById(this.fieldsIds[0]);
 
-      if(firstField.getType() != "sectionBreak"){
+      if(firstField.getType() !== "sectionBreak"){
         insertSectionBreak = true;
       }
     } else {
@@ -15504,11 +15521,11 @@ appForm.models = function (module) {
         sectionList[currentSection] = sectionList[currentSection] ? sectionList[currentSection] : [];
       }
 
-      if(currentSection !== null && fieldModel.getType() != "sectionBreak"){
+      if(currentSection !== null && fieldModel.getType() !== "sectionBreak"){
         sectionList[currentSection].push(fieldModel);
       }
 
-      if(fieldModel.getType() == "sectionBreak"){
+      if(fieldModel.getType() === "sectionBreak"){
         currentSection = "sectionBreak" + i;
         sectionList[currentSection] = sectionList[currentSection] ? sectionList[currentSection] : [];
         sectionList[currentSection].push(fieldModel);
@@ -15562,7 +15579,7 @@ appForm.models = function (module) {
     self.sending = false;
     self.timerInterval = 200;
     self.sendingStart = appForm.utils.getTime();
-  };
+  }
   appForm.utils.extend(UploadManager, Model);
 
   /**
@@ -15625,7 +15642,7 @@ appForm.models = function (module) {
       }
       this.getTaskById(uploadTId, function (err, task) {
         if (err) {
-          console.error(err);
+          $fh.forms.log.e(err);
           cb(err, task);
         } else {
           if (task) {
@@ -15636,8 +15653,9 @@ appForm.models = function (module) {
         }
       });
       this.saveLocal(function (err) {
-        if (err)
-          console.error(err);
+        if (err){
+          $fh.forms.log.e(err);
+        }
       });
     } else {
       cb(null, null);
@@ -15680,8 +15698,9 @@ appForm.models = function (module) {
   UploadManager.prototype.shift = function () {
     var shiftedTask = this.get('taskQueue').shift();
     this.saveLocal(function (err) {
-      if (err)
-        console.error(err);
+      if (err) {
+        $fh.forms.log.e(err);
+      }
     });
     return shiftedTask;
   };
@@ -15778,13 +15797,13 @@ appForm.models = function (module) {
   Rule.prototype.test = function (param) {
     var fields = this.getRelatedFieldId();
     var logic = this.getLogic();
-    var res = logic == 'or' ? false : true;
+    var res = logic === 'or' ? false : true;
     for (var i = 0; i< fields.length ; i++) {
       var fieldId = fields[i];
       var val = param[fieldId];
       if (val) {
         var tmpRes = this.testField(fieldId, val);
-        if (logic == 'or') {
+        if (logic === 'or') {
           res = res || tmpRes;
           if (res === true) {
             //break directly
@@ -15798,7 +15817,7 @@ appForm.models = function (module) {
           }
         }
       } else {
-        if (logic == 'or') {
+        if (logic === 'or') {
           res = res || false;
         } else {
           return false;
@@ -15823,7 +15842,7 @@ appForm.models = function (module) {
     var statements = this.getDefinition().ruleConditionalStatements;
     for (var i = 0; i<statements.length; i++) {
       var statement = statements[i];
-      if (statement.sourceField == fieldId) {
+      if (statement.sourceField === fieldId) {
         return statement;
       }
     }
@@ -15840,7 +15859,7 @@ appForm.models = function (module) {
     var def = this.getDefinition();
     var target = {
         'action': def.type,
-        'targetId': this.get('type') == 'page' ? def.targetPage : def.targetField,
+        'targetId': this.get('type') === 'page' ? def.targetPage : def.targetField,
         'targetType': this.get('type')
       };
     return target;
@@ -15987,7 +16006,7 @@ appForm.models = function (module) {
     this.set('retryAttempts', 0);
   };
   UploadTask.prototype.isStarted = function () {
-    return this.getCurrentTask() == null ? false : true;
+    return this.getCurrentTask() === null ? false : true;
   };
   /**
    * upload/download form submission
@@ -16245,7 +16264,7 @@ appForm.models = function (module) {
     var self = this;
     var progress = self.getCurrentTask();
 
-    if (progress == null) {
+    if (progress === null) {
       progress = 0;
       self.set('currentTask', progress);
     }
@@ -16279,7 +16298,7 @@ appForm.models = function (module) {
             if (err) {
               cb(err);
             } else {
-              if (res.status == 'ok' || res.status == '200') {
+              if (res.status === 'ok' || res.status === '200') {
                 fileTask.updateDate = appForm.utils.getTime();
                 self.increProgress();
                 self.saveLocal(function (err) {
@@ -16299,7 +16318,7 @@ appForm.models = function (module) {
           });
         }
       });
-    };
+    }
 
     function processDownloadFile(){
       $fh.forms.log.d("processDownloadFile called");
@@ -16337,18 +16356,17 @@ appForm.models = function (module) {
           });
         });
       });
-    };
+    }
 
     if(self.isDownloadTask()){
       processDownloadFile();
     } else {
       processUploadFile();
     }
-
   };
   UploadTask.prototype.isDownloadTask = function(){
     return this.get("submissionTransferType") === "download";
-  }
+  };
   //The upload task needs to be retried
   UploadTask.prototype.setRetryNeeded = function (retryNeeded) {
     //If there is a submissionId, then a retry is needed. If not, then the current task should be set to null to retry the submission.
@@ -16390,15 +16408,16 @@ appForm.models = function (module) {
         //no error.
         self.setRetryNeeded(false);
         self.saveLocal(function (_err) {
-          if (_err)
+          if (_err){
             $fh.forms.log.e("Error saving upload task to local memory" + _err);
+          }
         });
         self.submissionModel(function (err, submission) {
           if (err) {
             cb(err);
           } else {
             var status = submission.get('status');
-            if (status != 'inprogress' && status != 'submitted' && status != 'downloaded') {
+            if (status !== 'inprogress' && status !== 'submitted' && status !== 'downloaded') {
               $fh.forms.log.e('Submission status is incorrect. Upload task should be started by submission object\'s upload method.' + status);
               cb('Submission status is incorrect. Upload task should be started by submission object\'s upload method.');
             } else {
@@ -16673,12 +16692,12 @@ appForm.models = (function(module) {
       console.log(logLevel, msgs);
     }
 
-    if ($fh.forms.config.get("logger") == "true") {
+    if ($fh.forms.config.get("logger") === "true") {
       var levelString = "";
       var curLevel = $fh.forms.config.get("log_level");
       var log_levels = $fh.forms.config.get("log_levels");
       var self = this;
-      if (typeof logLevel == "string") {
+      if (typeof logLevel === "string") {
         levelString = logLevel;
         logLevel = log_levels.indexOf(logLevel.toLowerCase());
       } else {
@@ -16716,7 +16735,7 @@ appForm.models = (function(module) {
   Log.prototype.wrap = function(msg, levelString) {
     var now = new Date();
     var dateStr = now.toISOString();
-    if (typeof msg == "object") {
+    if (typeof msg === "object") {
       msg = JSON.stringify(msg);
     }
     var finalMsg = dateStr + " " + levelString.toUpperCase() + " " + msg;
@@ -16952,8 +16971,9 @@ appForm.api = function (module) {
       params.fromRemote = false;
     }
     theme.refresh(params.fromRemote, function (err, updatedTheme) {
-      if (err)
+      if (err) {
         return cb(err);
+      }
       if (updatedTheme === null) {
         return cb(new Error('No theme defined for this app'));
       }
@@ -16997,8 +17017,10 @@ appForm.api = function (module) {
   function submitForm(submission, cb) {
     if (submission) {
       submission.submit(function (err) {
-        if (err)
+        if (err){
           return cb(err);
+        }
+
         //Submission finished and validated. Now upload the form
         submission.upload(cb);
       });
@@ -17054,7 +17076,7 @@ appForm.api = function (module) {
   return module;
 }(appForm.api || {});
 //mockup $fh apis for Addons.
-if (typeof $fh == 'undefined') {
+if (typeof $fh === 'undefined') {
   $fh = {};
 }
 if ($fh.forms === undefined) {
