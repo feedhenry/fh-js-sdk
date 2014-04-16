@@ -5607,7 +5607,7 @@ appForm.models = function (module) {
             if (err) {
               cb(err);
             } else {
-              if (res.status === 'ok' || res.status === '200') {
+              if (res.status === 'ok' || res.status === 200 || res.status === '200') {
                 fileTask.updateDate = appForm.utils.getTime();
                 self.increProgress();
                 self.saveLocal(function (err) {
@@ -5995,12 +5995,6 @@ appForm.models = (function(module) {
   appForm.utils.extend(Log, Model);
 
   Log.prototype.info = function(logLevel, msgs) {
-    if(logLevel === 'error'){
-      console.error(logLevel, msgs);
-    } else {
-      console.log(logLevel, msgs);
-    }
-
     if ($fh.forms.config.get("logger") === "true") {
       var levelString = "";
       var curLevel = $fh.forms.config.get("log_level");
