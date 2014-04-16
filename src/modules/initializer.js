@@ -97,7 +97,7 @@ var loadCloudProps = function(app_props, callback) {
       "dataType": "json",
       "contentType": "application/json",
       "data": JSON.stringify(data),
-      "timeout": app_props.timeout || consts.fh_timeout,
+      "timeout": app_props.timeout,
       "success": function(initRes) {
         storage.save({
           key: "fh_init",

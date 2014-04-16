@@ -6680,8 +6680,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,require("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(require,module,exports){
+}).call(this,require("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(require,module,exports){
 (function (global){
 /*global window, global*/
 var util = require("util")
@@ -7156,7 +7156,7 @@ process.chdir = function (dir) {
 module.exports=require(6)
 },{}],13:[function(require,module,exports){
 module.exports=require(7)
-},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(require,module,exports){
+},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(require,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -7386,7 +7386,7 @@ module.exports = function(val){
   return typeof val
 }
 
-},{}],"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
+},{}],"/Users/weili/work/fh-sdks/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
 module.exports=require('il4jYc');
 },{}],"il4jYc":[function(require,module,exports){
 var constants = require("./modules/constants");
@@ -7577,7 +7577,6 @@ module.exports = XDomainRequestWrapper;
 
 var eventsHandler = require("./events");
 var XDomainRequestWrapper = require("./XDomainRequestWrapper");
-var consts = require("./constants");
 var logger = require("./logger");
 
 var type
@@ -7602,6 +7601,11 @@ var jsonpID = 0,
 
 var ajax = module.exports = function (options) {
   var settings = extend({}, options || {})
+  //keep backward compatibility
+  if(window && window.$fh && typeof window.$fh.fh_timeout === "number"){
+    ajax.settings.timeout = window.$fh.fh_timeout;
+  }
+
   for (key in ajax.settings)
     if (settings[key] === undefined) settings[key] = ajax.settings[key]
 
@@ -7849,9 +7853,7 @@ ajax.settings = {
     text: 'text/plain'
   },
   // Whether the request is to another domain
-  crossDomain: false,
-  // Default timeout
-  timeout: consts.fh_timeout
+  crossDomain: false
 }
 
 function mimeToDataType(mime) {
@@ -7940,13 +7942,14 @@ function extend(target) {
   })
   return target
 }
-},{"./XDomainRequestWrapper":18,"./constants":28,"./events":31,"./logger":39,"type-of":15}],20:[function(require,module,exports){
+},{"./XDomainRequestWrapper":18,"./events":31,"./logger":39,"type-of":15}],20:[function(require,module,exports){
 var logger =require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
 var ajax = require("./ajax");
 var JSON = require("JSON");
 var handleError = require("./handleError");
+var appProps = require("./appProps");
 
 function doActCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
@@ -7960,7 +7963,7 @@ function doActCall(opts, success, fail){
     "dataType": "json",
     "data": JSON.stringify(params),
     "contentType": "application/json",
-    "timeout": opts.timeout,
+    "timeout": opts.timeout || appProps.timeout,
     "success": success,
     "error": function(req, statusText, error){
       return handleError(fail, req, statusText, error);
@@ -7989,7 +7992,7 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":19,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],21:[function(require,module,exports){
+},{"./ajax":19,"./appProps":26,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],21:[function(require,module,exports){
 var logger =require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
@@ -8044,7 +8047,7 @@ module.exports = function(opts, success, fail){
         "data": JSON.stringify(req),
         "dataType": "json",
         "contentType": "application/json",
-        "timeout" : opts.timeout || app_props.timeout || constants.fh_timeout,
+        "timeout" : opts.timeout || app_props.timeout,
         success: function(res) {
           checkAuth.handleAuthResponse(endurl, res, success, fail);
         },
@@ -8062,6 +8065,7 @@ var fhparams = require("./fhparams");
 var ajax = require("./ajax");
 var JSON = require("JSON");
 var handleError = require("./handleError");
+var appProps = require("./appProps");
 
 function doCloudCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
@@ -8074,7 +8078,7 @@ function doCloudCall(opts, success, fail){
     "dataType": opts.dataType || "json",
     "data": JSON.stringify(params),
     "contentType": opts.contentType || "application/json",
-    "timeout": opts.timeout,
+    "timeout": opts.timeout || appProps.timeout,
     "success": success,
     "error": function(req, statusText, error){
       return handleError(fail, req, statusText, error);
@@ -8099,7 +8103,7 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":19,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],23:[function(require,module,exports){
+},{"./ajax":19,"./appProps":26,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],23:[function(require,module,exports){
 var hashImpl = require("./security/hash");
 
 module.exports = function(p, s, f){
@@ -8119,7 +8123,7 @@ var ajax = require("./ajax");
 var JSON = require("JSON");
 var handleError = require("./handleError");
 var consts = require("./constants");
-
+var appProps = require("./appProps");
 
 module.exports = function(opts, success, fail){
   logger.debug("mbaas is called.");
@@ -8147,7 +8151,7 @@ module.exports = function(opts, success, fail){
         "dataType": "json",
         "data": JSON.stringify(params),
         "contentType": "application/json",
-        "timeout": opts.timeout || consts.fh_timeout,
+        "timeout": opts.timeout || appProps.timeout,
         "success": success,
         "error": function(req, statusText, error){
           return handleError(fail, req, statusText, error);
@@ -8157,7 +8161,7 @@ module.exports = function(opts, success, fail){
   });
 } 
 
-},{"./ajax":19,"./constants":28,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],25:[function(require,module,exports){
+},{"./ajax":19,"./appProps":26,"./constants":28,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],25:[function(require,module,exports){
 var keygen = require("./security/aes-keygen");
 var aes = require("./security/aes-node");
 var rsa = require("./security/rsa-node");
@@ -8382,7 +8386,6 @@ module.exports = {
 
 },{"./fhparams":32,"./logger":39,"./queryMap":41,"JSON":3}],28:[function(require,module,exports){
 module.exports = {
-  "fh_timeout": 20000,
   "boxprefix": "/box/srv/1.1/",
   "sdk_version": "BUILD_VERSION",
   "config_js": "fhconfig.json",
@@ -8799,7 +8802,7 @@ var loadCloudProps = function(app_props, callback) {
       "dataType": "json",
       "contentType": "application/json",
       "data": JSON.stringify(data),
-      "timeout": app_props.timeout || consts.fh_timeout,
+      "timeout": app_props.timeout,
       "success": function(initRes) {
         storage.save({
           key: "fh_init",

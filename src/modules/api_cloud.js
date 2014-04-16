@@ -4,6 +4,7 @@ var fhparams = require("./fhparams");
 var ajax = require("./ajax");
 var JSON = require("JSON");
 var handleError = require("./handleError");
+var appProps = require("./appProps");
 
 function doCloudCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
@@ -16,7 +17,7 @@ function doCloudCall(opts, success, fail){
     "dataType": opts.dataType || "json",
     "data": JSON.stringify(params),
     "contentType": opts.contentType || "application/json",
-    "timeout": opts.timeout,
+    "timeout": opts.timeout || appProps.timeout,
     "success": success,
     "error": function(req, statusText, error){
       return handleError(fail, req, statusText, error);
