@@ -40,7 +40,7 @@ appForm.models.Field = function (module) {
       if (isStore) {
         appForm.utils.fileSystem.save(hashName, file, function (err, res) {
           if (err) {
-            console.error(err);
+            $fh.forms.log.e(err);
             cb(err);
           } else {
             cb(null, rtnJSON);

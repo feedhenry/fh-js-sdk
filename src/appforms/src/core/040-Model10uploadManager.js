@@ -42,7 +42,7 @@ appForm.models = function (module) {
     if (uploadTask) {
       uploadTask.saveLocal(function (err) {
         if (err) {
-          console.error(err);
+          $fh.forms.log.e(err);
         }
         self.saveLocal(function (err) {
           if (err) {
@@ -148,7 +148,7 @@ appForm.models = function (module) {
       var timePassed = now.getTime() - this.sendingStart.getTime();
       if (timePassed > $fh.forms.config.get("timeout") * 1000) {
         //time expired. roll current task to the end of queue
-        console.error('Uploading content timeout. it will try to reupload.');
+        $fh.forms.log.e('Uploading content timeout. it will try to reupload.');
         this.sending = false;
         this.rollTask();
       }
@@ -159,7 +159,7 @@ appForm.models = function (module) {
         var that = this;
         this.getCurrentTask(function (err, task) {
           if (err || !task) {
-            console.error(err);
+            $fh.forms.log.e(err);
             that.sending = false;
           } else {
             if (task.isCompleted() || task.isError()) {

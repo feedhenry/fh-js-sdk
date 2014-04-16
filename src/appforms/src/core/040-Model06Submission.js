@@ -77,7 +77,6 @@ appForm.models = function(module) {
 
   function Submission(form, params) {
     params = params || {};
-    console.log(form, params);
     $fh.forms.log.d("Submission: ", params);
     Model.call(this, {
       '_type': 'submission'
@@ -229,7 +228,7 @@ appForm.models = function(module) {
     var that = this;
     appForm.models.uploadManager.cancelSubmission(this, function(err) {
       if (err) {
-        console.error(err);
+        $fh.forms.log.e(err);
       }
       that.changeStatus(targetStatus, cb);
     });
@@ -243,7 +242,9 @@ appForm.models = function(module) {
   Submission.prototype.submitted = function(cb) {
     var self = this;
     if(self.isDownloadSubmission()){
-      console.error("SHOULD NOT BE HERE");
+      var errMsg = "Downloaded submissions should not call submitted function.";
+      $fh.forms.log.e(errMsg);
+      return cb(errMsg)
     }
     $fh.forms.log.d("Submission submitted called");
 
@@ -290,7 +291,7 @@ appForm.models = function(module) {
       this.set('status', status);
       this.saveToList(function(err) {
         if (err) {
-          console.error(err);
+          $fh.forms.log.e(err);
         }
       });
       this.saveLocal(cb);
@@ -426,7 +427,7 @@ appForm.models = function(module) {
 
     for(var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++){
       var formFieldEntry = formFields[formFieldIndex].fieldId || {};
-      if(formFieldEntry.type === 'file' || formFieldEntry.type === 'photo'){
+      if(formFieldEntry.type === 'file' || formFieldEntry.type === 'photo'  || formFieldEntry.type === 'signature'){
         var tmpFieldValues = formFields[formFieldIndex].fieldValues || [];
         for(var fieldValIndex = 0; fieldValIndex < tmpFieldValues.length; tmpFieldValues++){
           submissionFiles.push(tmpFieldValues[fieldValIndex]);
@@ -743,19 +744,19 @@ appForm.models = function(module) {
     //remove from uploading list
     appForm.models.uploadManager.cancelSubmission(self, function(err, uploadTask) {
       if (err) {
-        console.error(err);
+        $fh.forms.log.e(err);
         return cb(err);
       }
       //remove from submission list
       appForm.models.submissions.removeSubmission(self.getLocalId(), function(err) {
         if (err) {
-          console.err(err);
+          $fh.forms.log.e(err);
           return cb(err);
         }
         self.clearLocalSubmissionFiles(function() {
           Model.prototype.clearLocal.call(self, function(err) {
             if (err) {
-              console.error(err);
+              $fh.forms.log.e(err);
               return cb(err);
             }
             cb(null, null);

@@ -174,7 +174,7 @@ appForm.api = function (module) {
     if (_submissions === null) {
       appForm.models.submissions.loadLocal(function (err) {
         if (err) {
-          console.error(err);
+          $fh.forms.log.e(err);
           cb(err);
         } else {
           _submissions = appForm.models.submissions;

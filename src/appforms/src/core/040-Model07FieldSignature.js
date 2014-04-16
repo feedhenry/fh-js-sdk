@@ -31,7 +31,7 @@ appForm.models.Field = function (module) {
       if (isStore) {
         appForm.utils.fileSystem.save(imgName, dataArr[1], function (err, res) {
           if (err) {
-            console.error(err);
+            $fh.forms.log.e(err);
             cb(err);
           } else {
             cb(null, meta);
@@ -67,7 +67,7 @@ appForm.models.Field = function (module) {
       var name = meta.hashName;
       appForm.utils.fileSystem.readAsText(name, function (err, text) {
         if (err) {
-          console.error(err);
+          $fh.forms.log.e(err);
         }
         meta.data = text;
         cb(err, meta);

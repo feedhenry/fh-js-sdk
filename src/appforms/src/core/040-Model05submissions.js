@@ -168,7 +168,7 @@ appForm.models = function (module) {
     var that = this;
     this.clearLocal(function(err) {
         if (err) {
-            console.error(err);
+            $fh.forms.log.e(err);
             cb(err);
         } else {
             that.set("submissions", []);

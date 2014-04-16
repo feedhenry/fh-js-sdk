@@ -435,8 +435,7 @@ appForm.models = function (module) {
                 self.saveLocal(function (err) {
                   //save current status.
                   if (err) {
-                    $fh.forms.log.e("Error saving upload task");
-                    console.error(err);
+                    $fh.forms.log.e("Error saving upload task" + err);
                   }
                 });
                 self.emit('progress', self.getProgress());
@@ -640,7 +639,7 @@ appForm.models = function (module) {
     });
 
     function processUploadSuccess(){
-      console.log("processUploadSuccess Called");
+      $fh.forms.log.d("processUploadSuccess Called");
       self.submissionModel(function (_err, model) {
         if(_err){
           return cb(_err);
@@ -651,7 +650,7 @@ appForm.models = function (module) {
     }
 
     function processDownloadSuccess(){
-      console.log("processDownloadSuccess Called");
+      $fh.forms.log.d("processDownloadSuccess Called");
       self.submissionModel(function (_err, model) {
         if(_err){
           return cb(_err);
@@ -677,8 +676,7 @@ appForm.models = function (module) {
     this.set('error', err);
     this.saveLocal(function (err) {
       if (err) {
-        console.error(err);
-        $fh.forms.log.e('Upload task save failed');
+        $fh.forms.log.e('Upload task save failed: ' + err);
       }
     });
     this.submissionModel(function (_err, model) {
@@ -763,10 +761,10 @@ appForm.models = function (module) {
     var formId = this.get('formId');
     new appForm.models.Form({'formId': formId, 'rawMode': true, 'rawData' : updatedForm }, function (err, form) {
       if (err) {
-        console.error(err);
+        $fh.forms.log.e(err);
       }
 
-      console.log('successfully updated form the form with id ' + updatedForm._id);
+      $fh.forms.log.l('successfully updated form the form with id ' + updatedForm._id);
       cb();
     });
   };
