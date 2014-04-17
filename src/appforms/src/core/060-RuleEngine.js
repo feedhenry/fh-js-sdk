@@ -1822,6 +1822,7 @@ function rulesEngine (formDef) {
       }
 
       function validatorFile (fieldValue, fieldDefinition, previousFieldValues, cb) {
+        console.log("VALIDATOR FILE: ", fieldValue, fieldDefinition, previousFieldValues);
         if(typeof fieldValue !== "object"){
           return cb(new Error("Expected object but got " + typeof(fieldValue)));
         }
