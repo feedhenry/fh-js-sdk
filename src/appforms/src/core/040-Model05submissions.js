@@ -112,7 +112,7 @@ appForm.models = function (module) {
       }
     }
 
-    $fh.forms.log.e("Submissions findMetaByLocalId: No submissions for localId: ", localId);
+    //$fh.forms.log.e("Submissions findMetaByLocalId: No submissions for localId: ", localId);
     return null;
   };
 

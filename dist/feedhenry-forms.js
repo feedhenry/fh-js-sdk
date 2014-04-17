@@ -12422,7 +12422,6 @@ appForm.utils = function (module) {
             _getFileEntry(fileName, size, params, cb);
           });
         } else {
-          console.error('Failed to get file entry:' + err.message);
           cb(err);
         }
       });
@@ -12452,7 +12451,7 @@ appForm.utils = function (module) {
       _requestFileSystem = window.webkitRequestFileSystem;
       fileSystemAvailable = true;
     } else {
-      fileSystemAvailable = false;  // console.error("No filesystem available. Fallback use $fh.data for storage");
+      fileSystemAvailable = false;
     }
     if (window.LocalFileSystem) {
       PERSISTENT = window.LocalFileSystem.PERSISTENT;
@@ -13115,9 +13114,9 @@ appForm.stores = function (module) {
     this.localStore.read(model, function (err, locRes) {
       if (err || !locRes) {
         //local loading failed
-        if (err) {
-          $fh.forms.log.e("Error reading model from localStore ", model, err);
-        }
+
+        $fh.forms.log.d("Error reading model from localStore ", model, err);
+
         that.refreshRead(model, cb);
       } else {
         //local loading succeed
@@ -13247,7 +13246,7 @@ appForm.models = function (module) {
       var json = JSON.parse(jsonStr);
       this.fromJSON(json);
     } catch (e) {
-      console.error(e);
+      console.error("Error parsing JSON", e);
     }
   };
 
@@ -13946,8 +13945,7 @@ appForm.models = function (module) {
   };
   FormSubmission.prototype.getFormId = function () {
     if(!this.get('data')){
-      console.log(this);
-      console.trace();
+      $fh.forms.log.e("No form data for form submission");
     }
 
     return this.get('data').formId;
@@ -14119,7 +14117,7 @@ appForm.models = function (module) {
       }
     }
 
-    $fh.forms.log.e("Submissions findMetaByLocalId: No submissions for localId: ", localId);
+    //$fh.forms.log.e("Submissions findMetaByLocalId: No submissions for localId: ", localId);
     return null;
   };
 
@@ -14755,42 +14753,48 @@ appForm.models = function(module) {
     var that = this;
     var fieldId = params.fieldId;
     var inputValue = params.value;
-    var index = params.index === undefined ? -1 : params.index;
-    this.getForm(function(err, form) {
-      var fieldModel = form.getFieldModelById(fieldId);
-      if (that.transactionMode) {
-        if (!that.tmpFields[fieldId]) {
-          that.tmpFields[fieldId] = [];
-        }
-        fieldModel.processInput(params, function(err, result) {
-          if (err) {
-            cb(err);
-          } else {
-            if (index > -1) {
-              that.tmpFields[fieldId][index] = result;
-            } else {
-              that.tmpFields[fieldId].push(result);
-            }
-            cb(null, result);
-          }
-        });
-      } else {
-        var target = that.getInputValueObjectById(fieldId);
-        fieldModel.processInput(params, function(err, result) {
-          if (err) {
-            cb(err);
-          } else {
-            if (index > -1) {
-              target.fieldValues[index] = result;
-            } else {
-              target.fieldValues.push(result);
-            }
 
-            cb(null, result);
+    if(inputValue !== null && typeof(inputValue) !== 'undefined'){
+      var index = params.index === undefined ? -1 : params.index;
+      this.getForm(function(err, form) {
+        var fieldModel = form.getFieldModelById(fieldId);
+        if (that.transactionMode) {
+          if (!that.tmpFields[fieldId]) {
+            that.tmpFields[fieldId] = [];
           }
-        });
-      }
-    });
+          fieldModel.processInput(params, function(err, result) {
+            if (err) {
+              return cb(err);
+            } else {
+              if (index > -1) {
+                that.tmpFields[fieldId][index] = result;
+              } else {
+                that.tmpFields[fieldId].push(result);
+              }
+              return cb(null, result);
+            }
+          });
+        } else {
+          var target = that.getInputValueObjectById(fieldId);
+          fieldModel.processInput(params, function(err, result) {
+            if (err) {
+              return cb(err);
+            } else {
+              if (index > -1) {
+                target.fieldValues[index] = result;
+              } else {
+                target.fieldValues.push(result);
+              }
+
+              return cb(null, result);
+            }
+          });
+        }
+      });
+    } else {
+      $fh.forms.log.e("addInputValue: Input value was null. Params: " + fieldId);
+      return cb(null, {});
+    }
   };
   Submission.prototype.getInputValueByFieldId = function(fieldId, cb) {
     var values = this.getInputValueObjectById(fieldId).fieldValues;
