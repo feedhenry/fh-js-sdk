@@ -251,7 +251,6 @@ appForm.utils = function (module) {
             _getFileEntry(fileName, size, params, cb);
           });
         } else {
-          console.error('Failed to get file entry:' + err.message);
           cb(err);
         }
       });
@@ -281,7 +280,7 @@ appForm.utils = function (module) {
       _requestFileSystem = window.webkitRequestFileSystem;
       fileSystemAvailable = true;
     } else {
-      fileSystemAvailable = false;  // console.error("No filesystem available. Fallback use $fh.data for storage");
+      fileSystemAvailable = false;
     }
     if (window.LocalFileSystem) {
       PERSISTENT = window.LocalFileSystem.PERSISTENT;

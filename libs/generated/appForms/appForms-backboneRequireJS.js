@@ -3807,20 +3807,29 @@ var FormView = BaseView.extend({
       fieldId = item.id;
       var value = item.value;
       var index=item.index;
-      submission.addInputValue({
-        fieldId: fieldId,
-        value: value,
-        index: index,
-        isStore:isStore
-      }, function(err, res) {
-        if (err) {
-          console.error(err);
-        }
+
+      if(value !== null || typeof(value) !== 'undefined'){
+        submission.addInputValue({
+          fieldId: fieldId,
+          value: value,
+          index: index,
+          isStore:isStore
+        }, function(err, res) {
+          if (err) {
+            console.error(err);
+          }
+          count--;
+          if (count === 0) {
+            cb();
+          }
+        });
+      } else {
+        $fh.forms.log.e("Input value for fieldId " + fieldId + " was not defined");
         count--;
         if (count === 0) {
           cb();
         }
-      });
+      }
     }
   },
 

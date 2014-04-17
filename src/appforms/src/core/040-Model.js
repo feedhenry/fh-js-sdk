@@ -74,7 +74,7 @@ appForm.models = function (module) {
       var json = JSON.parse(jsonStr);
       this.fromJSON(json);
     } catch (e) {
-      console.error(e);
+      console.error("Error parsing JSON", e);
     }
   };
 
