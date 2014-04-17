@@ -13884,7 +13884,7 @@ appForm.models = function (module) {
   };
   FileSubmissionDownload.prototype.getSubmissionId = function () {
     $fh.forms.log.d("FileSubmission getSubmissionId: ", this.get('submissionId'));
-    return this.get('submissionId');
+    return this.get('submissionId', "");
   };
   FileSubmissionDownload.prototype.getHashName = function () {
     $fh.forms.log.d("FileSubmission getHashName: ", this.get('data').hashName);
@@ -13908,8 +13908,26 @@ appForm.models = function (module) {
     return this.get('data', {}).groupId || "notset";
   };
   FileSubmissionDownload.prototype.getRemoteFileURL = function(){
+    var self = this;
     $fh.forms.log.d("FileSubmission getRemoteFileURL: ");
-    return this.get('data', {}).url || "notset";
+
+    //RemoteFileUrl = cloudHost + /mbaas/forms/submission/:submissionId/file/:fileGroupId
+    //Returned by the mbaas.
+    function buildRemoteFileUrl(){
+      var submissionId = self.getSubmissionId();
+      var fileGroupId = self.getFileGroupId();
+      var urlTemplate =  self.get('data', {}).mbaasUrl;
+      if(urlTemplate){
+        urlTemplate = urlTemplate.replace(":submissionId", submissionId);
+        urlTemplate = urlTemplate.replace(":fileGroupId", fileGroupId);
+        urlTemplate = urlTemplate.replace(":appId", appForm.config.get('appId', "notSet"));
+        return urlTemplate;
+      } else {
+        return  "notset";
+      }
+    }
+
+    return buildRemoteFileUrl();
   };
   return module;
 }(appForm.models || {});
