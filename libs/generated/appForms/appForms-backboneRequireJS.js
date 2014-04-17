@@ -2194,7 +2194,12 @@ FieldCameraView = FieldView.extend({
       e.preventDefault();
       params.sourceType = Camera.PictureSourceType.PHOTOLIBRARY;
       self.model.utils.takePhoto(params, function (err, base64Image) {
-        self.setImage(index, base64Image);
+        if(err){
+          console.error("error occured with take photo ", JSON.stringify(err));
+        }
+        if(base64Image) {
+          self.setImage(index, base64Image);
+        }
       });
     } else {
       var file = document.createElement('input');
