@@ -1658,7 +1658,7 @@ var FieldView = Backbone.View.extend({
   addInputButtonClass: ".fh_appform_addInputBtn",
   removeInputButtonClass: ".fh_appform_removeInputBtn",
   fieldWrapper: '<div class="fh_appform_input_wrapper"></div>',
-  input: "<input class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' value='<%= inputValue %>' />",
+  input: "<input class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' />",
   inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>'> <div class='fh_appform_field_input_container non_repeating' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden' ></div></div><br style='clear:both'/>    </div>",
   inputTemplateRepeating: "<div id='wrapper_<%= fieldId %>_<%= index %>' > <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container repeating' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden'></div></div><br style='clear:both'/></div>",
 
@@ -1721,13 +1721,11 @@ var FieldView = Backbone.View.extend({
     var fieldId = this.model.getFieldId();
     var type = this.getHTMLInputType();
     var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
-    var def = this.model.get('definition');
-    var defaultVal = def.defaultValue || undefined;
+
     return _.template(this.input, {
       "fieldId": fieldId,
       "index": index,
       "inputType": type,
-      "inputValue": defaultVal,
       "repeatingClassName": repeatingClassName
     });
   },
