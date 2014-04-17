@@ -12422,7 +12422,6 @@ appForm.utils = function (module) {
             _getFileEntry(fileName, size, params, cb);
           });
         } else {
-          console.error('Failed to get file entry:' + err.message);
           cb(err);
         }
       });
@@ -12452,7 +12451,7 @@ appForm.utils = function (module) {
       _requestFileSystem = window.webkitRequestFileSystem;
       fileSystemAvailable = true;
     } else {
-      fileSystemAvailable = false;  // console.error("No filesystem available. Fallback use $fh.data for storage");
+      fileSystemAvailable = false;
     }
     if (window.LocalFileSystem) {
       PERSISTENT = window.LocalFileSystem.PERSISTENT;
@@ -13247,7 +13246,7 @@ appForm.models = function (module) {
       var json = JSON.parse(jsonStr);
       this.fromJSON(json);
     } catch (e) {
-      console.error(e);
+      console.error("Error parsing JSON", e);
     }
   };
 
@@ -13946,8 +13945,7 @@ appForm.models = function (module) {
   };
   FormSubmission.prototype.getFormId = function () {
     if(!this.get('data')){
-      console.log(this);
-      console.trace();
+      $fh.forms.log.e("No form data for form submission");
     }
 
     return this.get('data').formId;
@@ -16713,9 +16711,6 @@ appForm.models = (function(module) {
   appForm.utils.extend(Log, Model);
 
   Log.prototype.info = function(logLevel, msgs) {
-    if(logLevel === 'error'){
-      console.error(msgs);
-    }
     if ($fh.forms.config.get("logger") === "true") {
       var levelString = "";
       var curLevel = $fh.forms.config.get("log_level");
