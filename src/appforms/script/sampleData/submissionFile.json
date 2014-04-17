@@ -36,7 +36,8 @@
           "contentType": "base64",
           "hashName": "filePlaceHolder0ccab58f76e51dd5994c82284db8c825",
           "fileName": "filePlaceHolder0ccab58f76e51dd5994c82284db8c825.png",
-          "groupId": "53457f3c6f81402d48000003"
+          "groupId": "53457f3c6f81402d48000003",
+          "mbaasUrl" : "/mbaas/forms/:appid/submission/submissionId/files/filegroupid"
         }
       ]
     },
