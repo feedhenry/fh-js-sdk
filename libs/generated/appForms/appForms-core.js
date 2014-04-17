@@ -2420,9 +2420,9 @@ appForm.stores = function (module) {
     this.localStore.read(model, function (err, locRes) {
       if (err || !locRes) {
         //local loading failed
-        if (err) {
-          $fh.forms.log.e("Error reading model from localStore ", model, err);
-        }
+
+        $fh.forms.log.d("Error reading model from localStore ", model, err);
+
         that.refreshRead(model, cb);
       } else {
         //local loading succeed
@@ -3424,7 +3424,7 @@ appForm.models = function (module) {
       }
     }
 
-    $fh.forms.log.e("Submissions findMetaByLocalId: No submissions for localId: ", localId);
+    //$fh.forms.log.e("Submissions findMetaByLocalId: No submissions for localId: ", localId);
     return null;
   };
 
@@ -4060,42 +4060,48 @@ appForm.models = function(module) {
     var that = this;
     var fieldId = params.fieldId;
     var inputValue = params.value;
-    var index = params.index === undefined ? -1 : params.index;
-    this.getForm(function(err, form) {
-      var fieldModel = form.getFieldModelById(fieldId);
-      if (that.transactionMode) {
-        if (!that.tmpFields[fieldId]) {
-          that.tmpFields[fieldId] = [];
-        }
-        fieldModel.processInput(params, function(err, result) {
-          if (err) {
-            cb(err);
-          } else {
-            if (index > -1) {
-              that.tmpFields[fieldId][index] = result;
-            } else {
-              that.tmpFields[fieldId].push(result);
-            }
-            cb(null, result);
-          }
-        });
-      } else {
-        var target = that.getInputValueObjectById(fieldId);
-        fieldModel.processInput(params, function(err, result) {
-          if (err) {
-            cb(err);
-          } else {
-            if (index > -1) {
-              target.fieldValues[index] = result;
-            } else {
-              target.fieldValues.push(result);
-            }
 
-            cb(null, result);
+    if(inputValue !== null && typeof(inputValue) !== 'undefined'){
+      var index = params.index === undefined ? -1 : params.index;
+      this.getForm(function(err, form) {
+        var fieldModel = form.getFieldModelById(fieldId);
+        if (that.transactionMode) {
+          if (!that.tmpFields[fieldId]) {
+            that.tmpFields[fieldId] = [];
           }
-        });
-      }
-    });
+          fieldModel.processInput(params, function(err, result) {
+            if (err) {
+              return cb(err);
+            } else {
+              if (index > -1) {
+                that.tmpFields[fieldId][index] = result;
+              } else {
+                that.tmpFields[fieldId].push(result);
+              }
+              return cb(null, result);
+            }
+          });
+        } else {
+          var target = that.getInputValueObjectById(fieldId);
+          fieldModel.processInput(params, function(err, result) {
+            if (err) {
+              return cb(err);
+            } else {
+              if (index > -1) {
+                target.fieldValues[index] = result;
+              } else {
+                target.fieldValues.push(result);
+              }
+
+              return cb(null, result);
+            }
+          });
+        }
+      });
+    } else {
+      $fh.forms.log.e("addInputValue: Input value was null. Params: " + fieldId);
+      return cb(null, {});
+    }
   };
   Submission.prototype.getInputValueByFieldId = function(fieldId, cb) {
     var values = this.getInputValueObjectById(fieldId).fieldValues;
@@ -6012,6 +6018,9 @@ appForm.models = (function(module) {
   appForm.utils.extend(Log, Model);
 
   Log.prototype.info = function(logLevel, msgs) {
+    if(logLevel === 'error'){
+      console.error(msgs);
+    }
     if ($fh.forms.config.get("logger") === "true") {
       var levelString = "";
       var curLevel = $fh.forms.config.get("log_level");

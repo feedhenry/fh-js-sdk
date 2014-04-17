@@ -453,42 +453,48 @@ appForm.models = function(module) {
     var that = this;
     var fieldId = params.fieldId;
     var inputValue = params.value;
-    var index = params.index === undefined ? -1 : params.index;
-    this.getForm(function(err, form) {
-      var fieldModel = form.getFieldModelById(fieldId);
-      if (that.transactionMode) {
-        if (!that.tmpFields[fieldId]) {
-          that.tmpFields[fieldId] = [];
-        }
-        fieldModel.processInput(params, function(err, result) {
-          if (err) {
-            cb(err);
-          } else {
-            if (index > -1) {
-              that.tmpFields[fieldId][index] = result;
-            } else {
-              that.tmpFields[fieldId].push(result);
-            }
-            cb(null, result);
-          }
-        });
-      } else {
-        var target = that.getInputValueObjectById(fieldId);
-        fieldModel.processInput(params, function(err, result) {
-          if (err) {
-            cb(err);
-          } else {
-            if (index > -1) {
-              target.fieldValues[index] = result;
-            } else {
-              target.fieldValues.push(result);
-            }
 
-            cb(null, result);
+    if(inputValue !== null && typeof(inputValue) !== 'undefined'){
+      var index = params.index === undefined ? -1 : params.index;
+      this.getForm(function(err, form) {
+        var fieldModel = form.getFieldModelById(fieldId);
+        if (that.transactionMode) {
+          if (!that.tmpFields[fieldId]) {
+            that.tmpFields[fieldId] = [];
           }
-        });
-      }
-    });
+          fieldModel.processInput(params, function(err, result) {
+            if (err) {
+              return cb(err);
+            } else {
+              if (index > -1) {
+                that.tmpFields[fieldId][index] = result;
+              } else {
+                that.tmpFields[fieldId].push(result);
+              }
+              return cb(null, result);
+            }
+          });
+        } else {
+          var target = that.getInputValueObjectById(fieldId);
+          fieldModel.processInput(params, function(err, result) {
+            if (err) {
+              return cb(err);
+            } else {
+              if (index > -1) {
+                target.fieldValues[index] = result;
+              } else {
+                target.fieldValues.push(result);
+              }
+
+              return cb(null, result);
+            }
+          });
+        }
+      });
+    } else {
+      $fh.forms.log.e("addInputValue: Input value was null. Params: " + fieldId);
+      return cb(null, {});
+    }
   };
   Submission.prototype.getInputValueByFieldId = function(fieldId, cb) {
     var values = this.getInputValueObjectById(fieldId).fieldValues;

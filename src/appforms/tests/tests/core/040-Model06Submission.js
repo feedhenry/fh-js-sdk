@@ -169,6 +169,20 @@ describe("Submission model", function() {
             });
         });
 
+        it("how to handle a null user input", function() {
+          submission.reset();
+          submission.addInputValue({
+            fieldId: testData.fieldId,
+            value: null
+          }, function(err) {
+            assert(!err)
+          });
+          submission.getInputValueByFieldId(testData.fieldId, function(err, res) {
+            assert(!err);
+            assert(res.length === 0);
+          });
+        });
+
         it("how to use transaction to input a series of user values to submission model", function() {
             submission.reset();
             submission.addInputValue({
