@@ -61,6 +61,8 @@ var FormView = BaseView.extend({
     },
     onValidateError: function(res) {
         var firstView = null;
+        //Clear validate errors
+
         for (var fieldId in res) {
             if (res[fieldId]) {
                 var fieldView = this.getFieldViewById(fieldId);
@@ -148,8 +150,6 @@ var FormView = BaseView.extend({
         self.fieldViews = fieldViews;
         self.pageViews = pageViews;
         self.pageCount = pageViews.length;
-
-        self.checkRules();
     },
     checkRules: function() {
         var self = this;
