@@ -47,7 +47,7 @@ appForm.models = function (module) {
     function buildRemoteFileUrl(){
       var submissionId = self.getSubmissionId();
       var fileGroupId = self.getFileGroupId();
-      var urlTemplate =  self.get('data', {}).mbaasUrl;
+      var urlTemplate =  appForm.config.get('formUrls', {}).fileSubmissionDownload;
       if(urlTemplate){
         urlTemplate = urlTemplate.replace(":submissionId", submissionId);
         urlTemplate = urlTemplate.replace(":fileGroupId", fileGroupId);

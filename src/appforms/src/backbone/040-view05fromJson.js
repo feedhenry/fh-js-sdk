@@ -6,13 +6,13 @@ var FromJsonView = BaseView.extend({
       _.bindAll(this, 'render');
     },
     show: function () {
-      $(this.el).show();
+      $(this.$el).show();
     },
     hide: function () {
-      $(this.el).hide();
+      $(this.$el).hide();
     },
     render: function () {
-      $(this.el).html(this.templates.body);
+      $(this.$el).html(this.templates.body);
       this.show();
     },
     convert: function () {

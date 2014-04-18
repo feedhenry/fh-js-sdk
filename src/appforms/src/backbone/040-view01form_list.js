@@ -38,11 +38,11 @@ var FormListView = BaseView.extend({
   },
 
   show: function () {
-    $(this.el).show();
+    $(this.$el).show();
   },
 
   hide: function () {
-    $(this.el).hide();
+    $(this.$el).hide();
   },
 
   renderErrorHandler: function(msg) {
@@ -58,7 +58,7 @@ var FormListView = BaseView.extend({
       enabledClass: 'fh_appform_button_cancel',//TODO May not be this class. Double check
       dataClass: 'fetched'
     });
-    $('ul', this.el).append(html);
+    $('ul', this.$el).append(html);
 
   },
 
@@ -84,7 +84,7 @@ var FormListView = BaseView.extend({
     // console.log(form);
     var view = new FormListItemView({model: form});
     this.views.push(view);
-    $('ul', this.options.parentEl).append(view.render().el);
+    $('ul', this.options.parentEl).append(view.render().$el);
   },
   initFormList: function(fromRemote,cb){
     var that=this;
