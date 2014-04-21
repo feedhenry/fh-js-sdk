@@ -23,6 +23,11 @@ var load = function(cb) {
     return cb(null, app_props);
   }
 
+  if (typeof Titanium !== 'undefined'){
+    app_props = Titanium.fh_config;
+    return cb(null, app_props);
+  }
+
   var config_url = url_params.fhconfig || consts.config_js;
   ajax({
     url: config_url,

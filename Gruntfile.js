@@ -29,7 +29,8 @@ module.exports = function(grunt) {
           "libs/lawnchair/lawnchairWindowNameStorageAdapter.js",
           "libs/lawnchair/lawnchairLocalStorageAdapter.js",
           "libs/lawnchair/lawnchairWebkitSqlAdapter.js",
-          "libs/lawnchair/lawnchairHtml5FileSystem.js"
+          "libs/lawnchair/lawnchairHtml5FileSystem.js",
+          "libs/lawnchair/lawnchairTitanium.js",
         ],
         dest: "libs/generated/lawnchair.js"
       },
@@ -179,7 +180,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-mocha-phantomjs');
   grunt.loadNpmTasks('grunt-contrib-watch');
 
-  var spawns = []; 
+  var spawns = [];
   grunt.registerTask('start-local-servers', function () {
     var done = this.async();
     var spawn = require('child_process').spawn;
@@ -188,7 +189,7 @@ module.exports = function(grunt) {
       grunt.log.writeln('Spawning server on port ' + port + ' in cwd ' + __dirname + ' using file ' + __dirname + '/' + script);
       var env = {};
       env.FH_PORT = port;
-      var server = spawn('node', [__dirname + '/' + script], {
+      var server = spawn('node', [__dirname + './bin/' + script], {
         cwd: __dirname,
         env: env
       }).on('exit', function (code) {
@@ -220,7 +221,7 @@ module.exports = function(grunt) {
       }
       return done();
     });
-    
+
   });
 
   var stopLocalServers = function(){
@@ -239,7 +240,7 @@ module.exports = function(grunt) {
     stopLocalServers();
   });
 
-  //use this task for local development. Load example/index.html file in the browser after server started. 
+  //use this task for local development. Load example/index.html file in the browser after server started.
   //can run grunt watch as well in another terminal to auto generate the combined js file
   grunt.registerTask('local', ['start-local-servers', 'connect:server:keepalive']);
 

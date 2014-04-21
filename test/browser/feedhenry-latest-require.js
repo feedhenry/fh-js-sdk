@@ -4429,6 +4429,113 @@ Lawnchair.adapter('html5-filesystem', (function(global){
     }
   };
 }(this)));
+Lawnchair.adapter('titanium', (function(global){
+
+    return {
+        // boolean; true if the adapter is valid for the current environment
+        valid: function() {
+            return typeof Titanium !== 'undefined';
+        },
+
+        // constructor call and callback. 'name' is the most common option
+        init: function( options, callback ) {
+          if (callback){
+            return callback(this);
+          }
+        },
+
+        // returns all the keys in the store
+        keys: function( callback ) {
+            return Titanium.App.Properties.listProperties();
+        },
+
+        // save an object
+        save: function( obj, callback ) {
+            Titanium.App.Properties.setObject(obj.key, obj);
+            return this;
+        },
+
+        // batch save array of objs
+        batch: function( objs, callback ) {
+            var me = this;
+            var saved = [];
+            for ( var i = 0, il = objs.length; i < il; i++ ) {
+                me.save( objs[i], function( obj ) {
+                    saved.push( obj );
+                    if ( saved.length === il && callback ) {
+                        me.lambda( callback ).call( me, saved );
+                    }
+                });
+            }
+            return this;
+        },
+
+        // retrieve obj (or array of objs) and apply callback to each
+        get: function( key /* or array */, callback ) {
+            var me = this;
+            if ( this.isArray( key ) ) {
+                var values = [];
+                for ( var i = 0, il = key.length; i < il; i++ ) {
+                    me.get( key[i], function( result ) {
+                        if ( result ) values.push( result );
+                        if ( values.length === il && callback ) {
+                            me.lambda( callback ).call( me, values );
+                        }
+                    });
+                }
+            } else {
+                return Titanium.App.Properties.getObject(key);
+            }
+            return this;
+        },
+
+        // check if an obj exists in the collection
+        exists: function( key, callback ) {
+            if (callback){
+              if (Titanium.App.Properties.getObject(key)){
+                return cb(this, true);
+              }else{
+                return cb(this, false);
+              }
+            }
+
+            return this;
+        },
+
+        // returns all the objs to the callback as an array
+        all: function( callback ) {
+            var me = this;
+            if ( callback ) {
+                this.keys(function( keys ) {
+                    if ( !keys.length ) {
+                        me.fn( me.name, callback ).call( me, [] );
+                    } else {
+                        me.get( keys, function( values ) {
+                            me.fn( me.name, callback ).call( me, values );
+                        });
+                    }
+                });
+            }
+            return this;
+        },
+
+        // remove a doc or collection of em
+        remove: function( key /* or object */, callback ) {
+            var me = this;
+            Titanium.App.Properties.removeProperty(key);
+            if (callback) {
+              return callback(this);
+            }
+            return this;
+        },
+
+        // destroy everything
+        nuke: function( callback ) {
+            // nah, lets not do that
+        }
+    };
+}(this)));
+
 ; browserify_shim__define__module__export__(typeof Lawnchair != "undefined" ? Lawnchair : window.Lawnchair);
 
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
@@ -6680,8 +6787,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,require("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(require,module,exports){
+}).call(this,require("/Users/cianclarke/workspace/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/cianclarke/workspace/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(require,module,exports){
 (function (global){
 /*global window, global*/
 var util = require("util")
@@ -7156,7 +7263,7 @@ process.chdir = function (dir) {
 module.exports=require(6)
 },{}],13:[function(require,module,exports){
 module.exports=require(7)
-},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(require,module,exports){
+},{"./support/isBuffer":12,"/Users/cianclarke/workspace/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(require,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -7386,7 +7493,7 @@ module.exports = function(val){
   return typeof val
 }
 
-},{}],"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
+},{}],"/Users/cianclarke/workspace/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
 module.exports=require('il4jYc');
 },{}],"il4jYc":[function(require,module,exports){
 var constants = require("./modules/constants");
@@ -7566,12 +7673,12 @@ XDomainRequestWrapper.prototype.getResponseHeader = function(n){
 module.exports = XDomainRequestWrapper;
 
 },{}],19:[function(require,module,exports){
-//a shameless copy from https://github.com/ForbesLindesay/ajax/blob/master/index.js. 
+//a shameless copy from https://github.com/ForbesLindesay/ajax/blob/master/index.js.
 //it has the same methods and config options as jQuery/zeptojs but very light weight. see http://api.jquery.com/jQuery.ajax/
 //a few small changes are made for supporting IE 8 and other features:
 //1. use getXhr function to replace the default XMLHttpRequest implementation for supporting IE8
 //2. Integrate with events emitter. So to subscribe ajax events, you can do $fh.on("ajaxStart", handler). See http://api.jquery.com/Ajax_Events/ for full list of events
-//3. allow passing xhr factory method through options: e.g. $fh.ajax({xhr: function(){/*own implementation of xhr*/}}); 
+//3. allow passing xhr factory method through options: e.g. $fh.ajax({xhr: function(){/*own implementation of xhr*/}});
 //4. Use fh_timeout value as the default timeout
 //5. an extra option called "tryJSONP" to allow try the same call with JSONP if normal CORS failed - should only be used internally
 //6. for jsonp, allow to specify the callback query param name using the "jsonp" option
@@ -7825,6 +7932,16 @@ function getXhr(crossDomain){
   if(isIE() && (crossDomain === true) && typeof window.XDomainRequest !== "undefined"){
     xhr = new XDomainRequestWrapper(new XDomainRequest());
   }
+  // For Titanium SDK
+  if (typeof Titanium !== 'undefined'){
+    xhr = Titanium.Network.createHTTPClient({
+      timeout: ajax.settings.timeout,
+      onerror : function(){
+        //NOOP - xhr.onreadystatechange is sufficient
+      }
+    });
+  }
+
   return xhr;
 }
 
@@ -7943,6 +8060,7 @@ function extend(target) {
   })
   return target
 }
+
 },{"./XDomainRequestWrapper":18,"./events":31,"./logger":39,"type-of":15}],20:[function(require,module,exports){
 var logger =require("./logger");
 var cloud = require("./waitForCloud");
@@ -8232,6 +8350,11 @@ var load = function(cb) {
     return cb(null, app_props);
   }
 
+  if (typeof Titanium !== 'undefined'){
+    app_props = Titanium.fh_config;
+    return cb(null, app_props);
+  }
+
   var config_url = url_params.fhconfig || consts.config_js;
   ajax({
     url: config_url,
@@ -8277,6 +8400,7 @@ module.exports = {
   getAppProps: getAppProps,
   setAppProps: setAppProps
 };
+
 },{"./ajax":19,"./constants":28,"./logger":39,"./queryMap":41}],27:[function(require,module,exports){
 var logger = require("./logger");
 var queryMap = require("./queryMap");
@@ -8375,7 +8499,7 @@ if (window.addEventListener) {
   window.addEventListener('load', function(){
     checkAuth(window.location.href);
   }, false); //W3C
-} else {
+} else if (window.attachEvent) {
   window.attachEvent('onload', function(){
     checkAuth(window.location.href);
   }); //IE
@@ -8386,12 +8510,25 @@ module.exports = {
 };
 
 },{"./fhparams":32,"./logger":39,"./queryMap":41,"JSON":3}],28:[function(require,module,exports){
+if (typeof window === 'undefined'){
+  window = { top : {}, location : { protocol : '', href : '' } };
+}
+if (typeof document === 'undefined'){
+  document = { location : { href : '' } };
+}
+if (typeof navigator === 'undefined'){
+  navigator = { userAgent : 'Unknown' };
+  if (typeof Titanium !== 'undefined'){
+    navigator.userAgent = 'Titanium';
+  }
+}
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
   "sdk_version": "BUILD_VERSION",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit"
 };
+
 },{}],29:[function(require,module,exports){
 module.exports = {
   readCookieValue  : function (cookie_name) {
@@ -8760,7 +8897,7 @@ var loadCloudProps = function(app_props, callback) {
   //as dom, webkit-sqlite, localFileStorage, window-name
   var lcConf = {
     name: "fh_init_storage",
-    adapter: ["dom", "webkit-sqlite", "localFileStorage", "window-name"],
+    adapter: ["dom", "webkit-sqlite", "localFileStorage", "window-name", "titanium"],
     fail: function(msg, err) {
       var error_message = 'read/save from/to local storage failed  msg:' + msg + ' err:' + err;
       return fail(error_message, {});
@@ -8849,6 +8986,7 @@ module.exports = {
   "init": init,
   "loadCloudProps": loadCloudProps
 }
+
 },{"../../libs/generated/lawnchair":2,"./ajax":19,"./appProps":26,"./constants":28,"./fhparams":32,"./findFHPath":33,"./handleError":34,"./lawnchair-ext":37,"./loadScript":38,"./logger":39,"./security/hash":45,"JSON":3}],37:[function(require,module,exports){
 var Lawnchair = require('../../libs/generated/lawnchair');
 

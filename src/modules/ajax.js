@@ -1,9 +1,9 @@
-//a shameless copy from https://github.com/ForbesLindesay/ajax/blob/master/index.js. 
+//a shameless copy from https://github.com/ForbesLindesay/ajax/blob/master/index.js.
 //it has the same methods and config options as jQuery/zeptojs but very light weight. see http://api.jquery.com/jQuery.ajax/
 //a few small changes are made for supporting IE 8 and other features:
 //1. use getXhr function to replace the default XMLHttpRequest implementation for supporting IE8
 //2. Integrate with events emitter. So to subscribe ajax events, you can do $fh.on("ajaxStart", handler). See http://api.jquery.com/Ajax_Events/ for full list of events
-//3. allow passing xhr factory method through options: e.g. $fh.ajax({xhr: function(){/*own implementation of xhr*/}}); 
+//3. allow passing xhr factory method through options: e.g. $fh.ajax({xhr: function(){/*own implementation of xhr*/}});
 //4. Use fh_timeout value as the default timeout
 //5. an extra option called "tryJSONP" to allow try the same call with JSONP if normal CORS failed - should only be used internally
 //6. for jsonp, allow to specify the callback query param name using the "jsonp" option
@@ -257,6 +257,16 @@ function getXhr(crossDomain){
   if(isIE() && (crossDomain === true) && typeof window.XDomainRequest !== "undefined"){
     xhr = new XDomainRequestWrapper(new XDomainRequest());
   }
+  // For Titanium SDK
+  if (typeof Titanium !== 'undefined'){
+    xhr = Titanium.Network.createHTTPClient({
+      timeout: ajax.settings.timeout,
+      onerror : function(){
+        //NOOP - xhr.onreadystatechange is sufficient
+      }
+    });
+  }
+
   return xhr;
 }
 

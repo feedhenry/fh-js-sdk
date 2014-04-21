@@ -95,7 +95,7 @@ if (window.addEventListener) {
   window.addEventListener('load', function(){
     checkAuth(window.location.href);
   }, false); //W3C
-} else {
+} else if (window.attachEvent) {
   window.attachEvent('onload', function(){
     checkAuth(window.location.href);
   }); //IE
