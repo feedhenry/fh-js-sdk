@@ -3338,6 +3338,7 @@ var PageView=BaseView.extend({
   },
 
   hide: function () {
+
     this.$el.addClass('fh_appform_hidden');
   },
 
@@ -3667,7 +3668,7 @@ var FormView = BaseView.extend({
   render: function() {
     this.el.find("#fh_appform_container.fh_appform_form_area").append(this.templates.buttons);
     this.rebindButtons();
-    this.pageViews[0].removeClass("fh_appform_hidden");
+    this.pageViews[0].$el.removeClass("fh_appform_hidden");
     this.pageNum = 0;
     this.steps.activePageChange(this);
     this.checkRules();
@@ -3729,20 +3730,21 @@ var FormView = BaseView.extend({
   nextPage: function() {
     this.hideAllPages();
     this.pageNum = this.getNextPageIndex(this.pageNum);
-    this.pageViews[this.pageNum].removeClass("fh_appform_hidden");
+    this.pageViews[this.pageNum].$el.removeClass("fh_appform_hidden");
     this.steps.activePageChange(this);
     this.checkPages();
   },
   prevPage: function() {
     this.hideAllPages();
     this.pageNum = this.getPrevPageIndex(this.pageNum);
-    this.pageViews[this.pageNum].removeClass("fh_appform_hidden");
+    this.pageViews[this.pageNum].$el.removeClass("fh_appform_hidden");
     this.steps.activePageChange(this);
     this.checkPages();
   },
   hideAllPages: function() {
     this.pageViews.forEach(function(view) {
-      view.addClass("fh_appform_hidden");
+      //make sure to use $el when calling jquery func
+      view.$el.addClass("fh_appform_hidden");
     });
   },
   submit: function() {
