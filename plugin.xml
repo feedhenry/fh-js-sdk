@@ -12,7 +12,7 @@
     
     <!-- see http://cordova.apache.org/docs/en/3.0.0/plugin_ref_spec.md.html#Plugin%20Specification for element details-->
 
-    <js-module src="dist/feedhenry-latest.js" name="FHJSSDK">
+    <js-module src="dist/feedhenry-forms.js" name="FHJSSDK">
       <merges target="$fh" />
     </js-module>
 </plugin>
