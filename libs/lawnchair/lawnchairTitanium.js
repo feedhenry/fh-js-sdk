@@ -53,7 +53,7 @@ Lawnchair.adapter('titanium', (function(global){
                     });
                 }
             } else {
-                return Titanium.App.Properties.getObject(key);
+                return callback(this, Titanium.App.Properties.getObject(key));
             }
             return this;
         },

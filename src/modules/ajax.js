@@ -75,9 +75,21 @@ var ajax = module.exports = function (options) {
     baseHeaders['Content-Type'] = (settings.contentType || 'application/x-www-form-urlencoded')
   settings.headers = extend(baseHeaders, settings.headers || {})
 
+  if (typeof Titanium !== 'undefined') {
+    xhr.setOnerror(function(){
+      if (!abortTimeout){
+        return;
+      }
+      clearTimeout(abortTimeout);
+      ajaxError(null, 'error', xhr, settings);
+    });
+  }
+
   xhr.onreadystatechange = function () {
+
     if (xhr.readyState == 4) {
       clearTimeout(abortTimeout)
+      abortTimeout = undefined;
       var result, error = false
       if(settings.tryJSONP){
         //check if the request has fail. In some cases, we may want to try jsonp as well. Again, FH only...
@@ -218,6 +230,7 @@ ajax.JSONP = function (options) {
 
   window[callbackName] = function (data) {
     clearTimeout(abortTimeout)
+    abortTimeout = undefined;
     //todo: remove script
     //$(script).remove()
     delete window[callbackName]

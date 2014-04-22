@@ -1,5 +1,9 @@
 module.exports = {
   readCookieValue  : function (cookie_name) {
+    if (typeof Titanium !== 'undefined'){
+  	  return Titanium.App.Properties.getObject(cookie_name)
+  	}
+
     var name_str = cookie_name + "=";
     var cookies = document.cookie.split(";");
     for (var i = 0; i < cookies.length; i++) {
@@ -15,6 +19,10 @@ module.exports = {
   },
 
   createCookie : function (cookie_name, cookie_value) {
+    if (typeof Titanium !== 'undefined'){
+  	  return Titanium.App.Properties.setObject(cookie_name, cookie_value)
+  	}
+    
     var date = new Date();
     date.setTime(date.getTime() + 36500 * 24 * 60 * 60 * 1000); //100 years
     var expires = "; expires=" + date.toGMTString();

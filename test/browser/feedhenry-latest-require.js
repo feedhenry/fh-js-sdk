@@ -4484,7 +4484,7 @@ Lawnchair.adapter('titanium', (function(global){
                     });
                 }
             } else {
-                return Titanium.App.Properties.getObject(key);
+                return callback(this, Titanium.App.Properties.getObject(key));
             }
             return this;
         },
@@ -7493,8 +7493,6 @@ module.exports = function(val){
   return typeof val
 }
 
-},{}],"/Users/cianclarke/workspace/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
-module.exports=require('il4jYc');
 },{}],"il4jYc":[function(require,module,exports){
 var constants = require("./modules/constants");
 var logger = require("./modules/logger");
@@ -7607,7 +7605,9 @@ module.exports = fh;
 
 
 
-},{"./modules/ajax":19,"./modules/api_act":20,"./modules/api_auth":21,"./modules/api_cloud":22,"./modules/api_hash":23,"./modules/api_mbaas":24,"./modules/api_sec":25,"./modules/appProps":26,"./modules/constants":28,"./modules/device":30,"./modules/events":31,"./modules/fhparams":32,"./modules/logger":39,"./modules/sync-cli":47,"./modules/waitForCloud":49}],18:[function(require,module,exports){
+},{"./modules/ajax":19,"./modules/api_act":20,"./modules/api_auth":21,"./modules/api_cloud":22,"./modules/api_hash":23,"./modules/api_mbaas":24,"./modules/api_sec":25,"./modules/appProps":26,"./modules/constants":28,"./modules/device":30,"./modules/events":31,"./modules/fhparams":32,"./modules/logger":39,"./modules/sync-cli":47,"./modules/waitForCloud":49}],"/Users/cianclarke/workspace/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
+module.exports=require('il4jYc');
+},{}],18:[function(require,module,exports){
 var XDomainRequestWrapper = function(xdr){
   this.xdr = xdr;
   this.isWrapper = true;
@@ -7750,9 +7750,22 @@ var ajax = module.exports = function (options) {
     baseHeaders['Content-Type'] = (settings.contentType || 'application/x-www-form-urlencoded')
   settings.headers = extend(baseHeaders, settings.headers || {})
 
+  if (typeof Titanium !== 'undefined') {
+    xhr.setOnerror(function(){
+      if (!abortTimeout){
+        return;
+      }
+      clearTimeout(abortTimeout);
+      ajaxError(null, 'error', xhr, settings);
+    });
+    xhr.setRequestHeader("Content-Type", settings.headers["Content-Type"]);
+  }
+
   xhr.onreadystatechange = function () {
+
     if (xhr.readyState == 4) {
       clearTimeout(abortTimeout)
+      abortTimeout = undefined;
       var result, error = false
       if(settings.tryJSONP){
         //check if the request has fail. In some cases, we may want to try jsonp as well. Again, FH only...
@@ -7893,6 +7906,7 @@ ajax.JSONP = function (options) {
 
   window[callbackName] = function (data) {
     clearTimeout(abortTimeout)
+    abortTimeout = undefined;
     //todo: remove script
     //$(script).remove()
     delete window[callbackName]
@@ -8111,6 +8125,7 @@ module.exports = function(opts, success, fail){
     }
   })
 }
+
 },{"./ajax":19,"./appProps":26,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],21:[function(require,module,exports){
 var logger =require("./logger");
 var cloud = require("./waitForCloud");
@@ -8514,13 +8529,13 @@ if (typeof window === 'undefined'){
   window = { top : {}, location : { protocol : '', href : '' } };
 }
 if (typeof document === 'undefined'){
-  document = { location : { href : '' } };
+  document = { location : { href : '', search : '' } };
 }
 if (typeof navigator === 'undefined'){
   navigator = { userAgent : 'Unknown' };
   if (typeof Titanium !== 'undefined'){
     navigator.userAgent = 'Titanium';
-  }
+   }
 }
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
@@ -8532,6 +8547,10 @@ module.exports = {
 },{}],29:[function(require,module,exports){
 module.exports = {
   readCookieValue  : function (cookie_name) {
+    if (typeof Titanium !== 'undefined'){
+  	  return Titanium.App.Properties.getObject(cookie_name)
+  	}
+
     var name_str = cookie_name + "=";
     var cookies = document.cookie.split(";");
     for (var i = 0; i < cookies.length; i++) {
@@ -8547,6 +8566,10 @@ module.exports = {
   },
 
   createCookie : function (cookie_name, cookie_value) {
+    if (typeof Titanium !== 'undefined'){
+  	  return Titanium.App.Properties.setObject(cookie_name, cookie_value)
+  	}
+    
     var date = new Date();
     date.setTime(date.getTime() + 36500 * 24 * 60 * 60 * 1000); //100 years
     var expires = "; expires=" + date.toGMTString();
