@@ -349,6 +349,7 @@ var FormView = BaseView.extend({
   },
   hideAllPages: function() {
     this.pageViews.forEach(function(view) {
+      //make sure to use $el when calling jquery func
       view.$el.addClass("fh_appform_hidden");
     });
   },
