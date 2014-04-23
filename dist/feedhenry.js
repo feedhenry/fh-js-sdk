@@ -7756,7 +7756,6 @@ var ajax = module.exports = function (options) {
       clearTimeout(abortTimeout);
       ajaxError(null, 'error', xhr, settings);
     });
-    xhr.setRequestHeader("Content-Type", settings.headers["Content-Type"]);
   }
 
   xhr.onreadystatechange = function () {
@@ -8364,8 +8363,12 @@ var load = function(cb) {
   }
 
   if (typeof Titanium !== 'undefined'){
-    app_props = Titanium.fh_config;
-    return cb(null, app_props);
+  	/*
+     We use eval here because Titanium also does require to include third party scripts.
+     It bypasses browserify's require, but still triggers when in a Titanium app
+     */
+    app_props = eval("require(\"fhconfig\")");
+  	return cb(null, app_props);
   }
 
   var config_url = url_params.fhconfig || consts.config_js;
