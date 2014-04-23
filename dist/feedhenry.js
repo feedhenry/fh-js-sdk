@@ -7946,10 +7946,7 @@ function getXhr(crossDomain){
   // For Titanium SDK
   if (typeof Titanium !== 'undefined'){
     xhr = Titanium.Network.createHTTPClient({
-      timeout: ajax.settings.timeout,
-      onerror : function(){
-        //NOOP - xhr.onreadystatechange is sufficient
-      }
+      timeout: ajax.settings.timeout
     });
   }
 
@@ -8526,17 +8523,16 @@ module.exports = {
 };
 
 },{"./fhparams":31,"./logger":38,"./queryMap":40,"JSON":3}],27:[function(_dereq_,module,exports){
-if (typeof window === 'undefined'){
-  window = { top : {}, location : { protocol : '', href : '' } };
-}
-if (typeof document === 'undefined'){
-  document = { location : { href : '', search : '' } };
-}
-if (typeof navigator === 'undefined'){
-  navigator = { userAgent : 'Unknown' };
-  if (typeof Titanium !== 'undefined'){
-    navigator.userAgent = 'Titanium';
-   }
+if (typeof Titanium === 'undefined'){
+  if (typeof window === 'undefined'){
+    window = { top : {}, location : { protocol : '', href : '' } };
+  }
+  if (typeof document === 'undefined'){
+    document = { location : { href : '', search : '' } };
+  }
+  if (typeof navigator === 'undefined'){
+    navigator = { userAgent : 'Titanium' };
+  }
 }
 module.exports = {
   "boxprefix": "/box/srv/1.1/",

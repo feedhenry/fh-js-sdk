@@ -273,10 +273,7 @@ function getXhr(crossDomain){
   // For Titanium SDK
   if (typeof Titanium !== 'undefined'){
     xhr = Titanium.Network.createHTTPClient({
-      timeout: ajax.settings.timeout,
-      onerror : function(){
-        //NOOP - xhr.onreadystatechange is sufficient
-      }
+      timeout: ajax.settings.timeout
     });
   }
 
