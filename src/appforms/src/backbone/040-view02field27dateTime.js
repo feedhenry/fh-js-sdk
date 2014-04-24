@@ -10,13 +10,13 @@ FieldDateTimeView = FieldView.extend({
     var unit=this.getUnit();
     var template="";
     var buttonLabel="";
-    if (unit=="datetime"){
+    if (unit==="datetime"){
       template=this.inputDateTime;
       buttonLabel="<i class='fa fa-calendar'></i> <i class='fa fa-clock-o'></i>&nbspGet Current Date & Time";
-    }else if (unit=="date"){
+    }else if (unit==="date"){
       template=this.inputDate;
       buttonLabel="<i class='fa fa-calendar'></i>&nbspGet Current Date";
-    }else if (unit=="time"){
+    }else if (unit==="time"){
       template=this.inputTime;
       buttonLabel="<i class='fa fa-clock-o'></i>&nbspGet Current Time";
     }
@@ -52,7 +52,7 @@ FieldDateTimeView = FieldView.extend({
     }
   },
   getDate:function(d){
-    return "YYYY-MM-DD".replace("YYYY",d.getFullYear()).replace("MM",this.twoDigi(d.getMonth()+1)).replace("DD",this.twoDigi(d.getDate()));
+    return "YYYY/MM/DD".replace("YYYY",d.getFullYear()).replace("MM",this.twoDigi(d.getMonth()+1)).replace("DD",this.twoDigi(d.getDate()));
   },
   getTime:function(d){
     return "HH:mm:ss".replace("HH",this.twoDigi(d.getHours())).replace("mm",this.twoDigi(d.getMinutes())).replace("ss",this.twoDigi(d.getSeconds()));

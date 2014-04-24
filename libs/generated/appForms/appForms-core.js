@@ -1,1325 +1,2064 @@
 ;
-(function (root) {
+(function(root) {
 
-  //!!!lib start!!!
-  /*
-   json2.js
-   2008-03-24
+    //!!!lib start!!!
+    /*
+    json2.js
+    2008-03-24
 
-   Public Domain.
+    Public Domain.
 
-   NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
+    NO WARRANTY EXPRESSED OR IMPLIED. USE AT YOUR OWN RISK.
 
-   See http://www.JSON.org/js.html
+    See http://www.JSON.org/js.html
 
-   This file creates a global JSON object containing three methods: stringify,
-   parse, and quote.
+    This file creates a global JSON object containing three methods: stringify,
+    parse, and quote.
 
 
-   JSON.stringify(value, replacer, space)
-   value       any JavaScript value, usually an object or array.
+        JSON.stringify(value, replacer, space)
+            value       any JavaScript value, usually an object or array.
 
-   replacer    an optional parameter that determines how object
-   values are stringified for objects without a toJSON
-   method. It can be a function or an array.
+            replacer    an optional parameter that determines how object
+                        values are stringified for objects without a toJSON
+                        method. It can be a function or an array.
 
-   space       an optional parameter that specifies the indentation
-   of nested structures. If it is omitted, the text will
-   be packed without extra whitespace. If it is a number,
-   it will specify the number of spaces to indent at each
-   level. If it is a string (such as '\t'), it contains the
-   characters used to indent at each level.
+            space       an optional parameter that specifies the indentation
+                        of nested structures. If it is omitted, the text will
+                        be packed without extra whitespace. If it is a number,
+                        it will specify the number of spaces to indent at each
+                        level. If it is a string (such as '\t'), it contains the
+                        characters used to indent at each level.
 
-   This method produces a JSON text from a JavaScript value.
+            This method produces a JSON text from a JavaScript value.
 
-   When an object value is found, if the object contains a toJSON
-   method, its toJSON method with be called and the result will be
-   stringified. A toJSON method does not serialize: it returns the
-   value represented by the name/value pair that should be serialized,
-   or undefined if nothing should be serialized. The toJSON method will
-   be passed the key associated with the value, and this will be bound
-   to the object holding the key.
+            When an object value is found, if the object contains a toJSON
+            method, its toJSON method with be called and the result will be
+            stringified. A toJSON method does not serialize: it returns the
+            value represented by the name/value pair that should be serialized,
+            or undefined if nothing should be serialized. The toJSON method will
+            be passed the key associated with the value, and this will be bound
+            to the object holding the key.
 
-   This is the toJSON method added to Dates:
+            This is the toJSON method added to Dates:
 
-   function toJSON(key) {
-   return this.getUTCFullYear()   + '-' +
-   f(this.getUTCMonth() + 1) + '-' +
-   f(this.getUTCDate())      + 'T' +
-   f(this.getUTCHours())     + ':' +
-   f(this.getUTCMinutes())   + ':' +
-   f(this.getUTCSeconds())   + 'Z';
-   }
-
-   You can provide an optional replacer method. It will be passed the
-   key and value of each member, with this bound to the containing
-   object. The value that is returned from your method will be
-   serialized. If your method returns undefined, then the member will
-   be excluded from the serialization.
-
-   If no replacer parameter is provided, then a default replacer
-   will be used:
-
-   function replacer(key, value) {
-   return Object.hasOwnProperty.call(this, key) ?
-   value : undefined;
-   }
-
-   The default replacer is passed the key and value for each item in
-   the structure. It excludes inherited members.
-
-   If the replacer parameter is an array, then it will be used to
-   select the members to be serialized. It filters the results such
-   that only members with keys listed in the replacer array are
-   stringified.
-
-   Values that do not have JSON representaions, such as undefined or
-   functions, will not be serialized. Such values in objects will be
-   dropped; in arrays they will be replaced with null. You can use
-   a replacer function to replace those with JSON values.
-   JSON.stringify(undefined) returns undefined.
-
-   The optional space parameter produces a stringification of the value
-   that is filled with line breaks and indentation to make it easier to
-   read.
-
-   If the space parameter is a non-empty string, then that string will
-   be used for indentation. If the space parameter is a number, then
-   then indentation will be that many spaces.
-
-   Example:
-
-   text = JSON.stringify(['e', {pluribus: 'unum'}]);
-   // text is '["e",{"pluribus":"unum"}]'
-
-
-   text = JSON.stringify(['e', {pluribus: 'unum'}], null, '\t');
-   // text is '[\n\t"e",\n\t{\n\t\t"pluribus": "unum"\n\t}\n]'
-
-
-   JSON.parse(text, reviver)
-   This method parses a JSON text to produce an object or array.
-   It can throw a SyntaxError exception.
-
-   The optional reviver parameter is a function that can filter and
-   transform the results. It receives each of the keys and values, and
-   its return value is used instead of the original value. If it
-   returns what it received, then structure is not modified. If it
-   returns undefined then the member is deleted.
-
-   Example:
-
-   // Parse the text. Values that look like ISO date strings will
-   // be converted to Date objects.
-
-   myData = JSON.parse(text, function (key, value) {
-   var a;
-   if (typeof value === 'string') {
-   a =
-   /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)Z$/.exec(value);
-   if (a) {
-   return new Date(Date.UTC(+a[1], +a[2] - 1, +a[3], +a[4],
-   +a[5], +a[6]));
-   }
-   }
-   return value;
-   });
-
-
-   JSON.quote(text)
-   This method wraps a string in quotes, escaping some characters
-   as needed.
-
-
-   This is a reference implementation. You are free to copy, modify, or
-   redistribute.
-
-   USE YOUR OWN COPY. IT IS EXTREMELY UNWISE TO LOAD THIRD PARTY
-   CODE INTO YOUR PAGES.
-   */
-
-  /*jslint regexp: true, forin: true, evil: true */
-
-  /*global JSON */
-
-  /*members "", "\b", "\t", "\n", "\f", "\r", "\"", JSON, "\\", apply,
-   call, charCodeAt, floor, getUTCDate, getUTCFullYear, getUTCHours,
-   getUTCMinutes, getUTCMonth, getUTCSeconds, hasOwnProperty, join, length,
-   parse, propertyIsEnumerable, prototype, push, quote, replace, stringify,
-   test, toJSON, toString
-   */
-
-  if (!JSON) {
-
-// Create a JSON object only if one does not already exist. We create the
-// object in a closure to avoid global variables.
-
-    var JSON = function () {
-
-      function f(n) {    // Format integers to have at least two digits.
-        return n < 10 ? '0' + n : n;
-      }
-
-      Date.prototype.toJSON = function () {
-
-// Eventually, this method will be based on the date.toISOString method.
-
-        return this.getUTCFullYear() + '-' +
-          f(this.getUTCMonth() + 1) + '-' +
-          f(this.getUTCDate()) + 'T' +
-          f(this.getUTCHours()) + ':' +
-          f(this.getUTCMinutes()) + ':' +
-          f(this.getUTCSeconds()) + 'Z';
-      };
-
-
-      var escapeable = /["\\\x00-\x1f\x7f-\x9f]/g,
-        gap,
-        indent,
-        meta = {    // table of character substitutions
-          '\b': '\\b',
-          '\t': '\\t',
-          '\n': '\\n',
-          '\f': '\\f',
-          '\r': '\\r',
-          '"': '\\"',
-          '\\': '\\\\'
-        },
-        rep;
-
-
-      function quote(string) {
-
-// If the string contains no control characters, no quote characters, and no
-// backslash characters, then we can safely slap some quotes around it.
-// Otherwise we must also replace the offending characters with safe escape
-// sequences.
-
-        return escapeable.test(string) ?
-          '"' + string.replace(escapeable, function (a) {
-            var c = meta[a];
-            if (typeof c === 'string') {
-              return c;
-            }
-            c = a.charCodeAt();
-            return '\\u00' + Math.floor(c / 16).toString(16) +
-              (c % 16).toString(16);
-          }) + '"' :
-          '"' + string + '"';
-      }
-
-
-      function str(key, holder) {
-
-// Produce a string from holder[key].
-
-        var i,          // The loop counter.
-          k,          // The member key.
-          v,          // The member value.
-          length,
-          mind = gap,
-          partial,
-          value = holder[key];
-
-// If the value has a toJSON method, call it to obtain a replacement value.
-
-        if (value && typeof value === 'object' &&
-          typeof value.toJSON === 'function') {
-          value = value.toJSON(key);
-        }
-
-// If we were called with a replacer function, then call the replacer to
-// obtain a replacement value.
-
-        if (typeof rep === 'function') {
-          value = rep.call(holder, key, value);
-        }
-
-// What happens next depends on the value's type.
-
-        switch (typeof value) {
-          case 'string':
-            return quote(value);
-
-          case 'number':
-
-// JSON numbers must be finite. Encode non-finite numbers as null.
-
-            return isFinite(value) ? String(value) : 'null';
-
-          case 'boolean':
-          case 'null':
-
-// If the value is a boolean or null, convert it to a string. Note:
-// typeof null does not produce 'null'. The case is included here in
-// the remote chance that this gets fixed someday.
-
-            return String(value);
-
-// If the type is 'object', we might be dealing with an object or an array or
-// null.
-
-          case 'object':
-
-// Due to a specification blunder in ECMAScript, typeof null is 'object',
-// so watch out for that case.
-
-            if (!value) {
-              return 'null';
-            }
-
-// Make an array to hold the partial results of stringifying this object value.
-
-            gap += indent;
-            partial = [];
-
-// If the object has a dontEnum length property, we'll treat it as an array.
-
-            if (typeof value.length === 'number' && !(value.propertyIsEnumerable('length'))) {
-
-// The object is an array. Stringify every element. Use null as a placeholder
-// for non-JSON values.
-
-              length = value.length;
-              for (i = 0; i < length; i += 1) {
-                partial[i] = str(i, value) || 'null';
-              }
-
-// Join all of the elements together, separated with commas, and wrap them in
-// brackets.
-
-              v = partial.length === 0 ? '[]' :
-                gap ? '[\n' + gap + partial.join(',\n' + gap) +
-                  '\n' + mind + ']' :
-                  '[' + partial.join(',') + ']';
-              gap = mind;
-              return v;
-            }
-
-// If the replacer is an array, use it to select the members to be stringified.
-
-            if (typeof rep === 'object') {
-              length = rep.length;
-              for (i = 0; i < length; i += 1) {
-                k = rep[i];
-                if (typeof k === 'string') {
-                  v = str(k, value, rep);
-                  if (v) {
-                    partial.push(quote(k) + (gap ? ': ' : ':') + v);
-                  }
+                function toJSON(key) {
+                    return this.getUTCFullYear()   + '-' +
+                         f(this.getUTCMonth() + 1) + '-' +
+                         f(this.getUTCDate())      + 'T' +
+                         f(this.getUTCHours())     + ':' +
+                         f(this.getUTCMinutes())   + ':' +
+                         f(this.getUTCSeconds())   + 'Z';
                 }
-              }
-            } else {
 
-// Otherwise, iterate through all of the keys in the object.
+            You can provide an optional replacer method. It will be passed the
+            key and value of each member, with this bound to the containing
+            object. The value that is returned from your method will be
+            serialized. If your method returns undefined, then the member will
+            be excluded from the serialization.
 
-              for (k in value) {
-                v = str(k, value, rep);
-                if (v) {
-                  partial.push(quote(k) + (gap ? ': ' : ':') + v);
+            If no replacer parameter is provided, then a default replacer
+            will be used:
+
+                function replacer(key, value) {
+                    return Object.hasOwnProperty.call(this, key) ?
+                        value : undefined;
                 }
-              }
+
+            The default replacer is passed the key and value for each item in
+            the structure. It excludes inherited members.
+
+            If the replacer parameter is an array, then it will be used to
+            select the members to be serialized. It filters the results such
+            that only members with keys listed in the replacer array are
+            stringified.
+
+            Values that do not have JSON representaions, such as undefined or
+            functions, will not be serialized. Such values in objects will be
+            dropped; in arrays they will be replaced with null. You can use
+            a replacer function to replace those with JSON values.
+            JSON.stringify(undefined) returns undefined.
+
+            The optional space parameter produces a stringification of the value
+            that is filled with line breaks and indentation to make it easier to
+            read.
+
+            If the space parameter is a non-empty string, then that string will
+            be used for indentation. If the space parameter is a number, then
+            then indentation will be that many spaces.
+
+            Example:
+
+            text = JSON.stringify(['e', {pluribus: 'unum'}]);
+            // text is '["e",{"pluribus":"unum"}]'
+
+
+            text = JSON.stringify(['e', {pluribus: 'unum'}], null, '\t');
+            // text is '[\n\t"e",\n\t{\n\t\t"pluribus": "unum"\n\t}\n]'
+
+
+        JSON.parse(text, reviver)
+            This method parses a JSON text to produce an object or array.
+            It can throw a SyntaxError exception.
+
+            The optional reviver parameter is a function that can filter and
+            transform the results. It receives each of the keys and values, and
+            its return value is used instead of the original value. If it
+            returns what it received, then structure is not modified. If it
+            returns undefined then the member is deleted.
+
+            Example:
+
+            // Parse the text. Values that look like ISO date strings will
+            // be converted to Date objects.
+
+            myData = JSON.parse(text, function (key, value) {
+                var a;
+                if (typeof value === 'string') {
+                    a =
+/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2}(?:\.\d*)?)Z$/.exec(value);
+                    if (a) {
+                        return new Date(Date.UTC(+a[1], +a[2] - 1, +a[3], +a[4],
+                            +a[5], +a[6]));
+                    }
+                }
+                return value;
+            });
+
+
+        JSON.quote(text)
+            This method wraps a string in quotes, escaping some characters
+            as needed.
+
+
+    This is a reference implementation. You are free to copy, modify, or
+    redistribute.
+
+    USE YOUR OWN COPY. IT IS EXTREMELY UNWISE TO LOAD THIRD PARTY
+    CODE INTO YOUR PAGES.
+*/
+
+    /*jslint regexp: true, forin: true, evil: true */
+
+    /*global JSON */
+
+    /*members "", "\b", "\t", "\n", "\f", "\r", "\"", JSON, "\\", apply,
+    call, charCodeAt, floor, getUTCDate, getUTCFullYear, getUTCHours,
+    getUTCMinutes, getUTCMonth, getUTCSeconds, hasOwnProperty, join, length,
+    parse, propertyIsEnumerable, prototype, push, quote, replace, stringify,
+    test, toJSON, toString
+*/
+
+    if (!JSON) {
+
+        // Create a JSON object only if one does not already exist. We create the
+        // object in a closure to avoid global variables.
+
+        var JSON = function() {
+
+            function f(n) { // Format integers to have at least two digits.
+                return n < 10 ? '0' + n : n;
             }
 
-// Join all of the member texts together, separated with commas,
-// and wrap them in braces.
+            Date.prototype.toJSON = function() {
 
-            v = partial.length === 0 ? '{}' :
-              gap ? '{\n' + gap + partial.join(',\n' + gap) +
-                '\n' + mind + '}' :
-                '{' + partial.join(',') + '}';
-            gap = mind;
-            return v;
-        }
-      }
+                // Eventually, this method will be based on the date.toISOString method.
 
-
-// Return the JSON object containing the stringify, parse, and quote methods.
-
-      return {
-        stringify: function (value, replacer, space) {
-
-// The stringify method takes a value and an optional replacer, and an optional
-// space parameter, and returns a JSON text. The replacer can be a function
-// that can replace values, or an array of strings that will select the keys.
-// A default replacer method can be provided. Use of the space parameter can
-// produce text that is more easily readable.
-
-          var i;
-          gap = '';
-          indent = '';
-          if (space) {
-
-// If the space parameter is a number, make an indent string containing that
-// many spaces.
-
-            if (typeof space === 'number') {
-              for (i = 0; i < space; i += 1) {
-                indent += ' ';
-              }
-
-// If the space parameter is a string, it will be used as the indent string.
-
-            } else if (typeof space === 'string') {
-              indent = space;
-            }
-          }
-
-// If there is no replacer parameter, use the default replacer.
-
-          if (!replacer) {
-            rep = function (key, value) {
-              if (!Object.hasOwnProperty.call(this, key)) {
-                return undefined;
-              }
-              return value;
+                return this.getUTCFullYear() + '-' +
+                    f(this.getUTCMonth() + 1) + '-' +
+                    f(this.getUTCDate()) + 'T' +
+                    f(this.getUTCHours()) + ':' +
+                    f(this.getUTCMinutes()) + ':' +
+                    f(this.getUTCSeconds()) + 'Z';
             };
 
-// The replacer can be a function or an array. Otherwise, throw an error.
 
-          } else if (typeof replacer === 'function' ||
-            (typeof replacer === 'object' &&
-              typeof replacer.length === 'number')) {
-            rep = replacer;
-          } else {
-            throw new Error('JSON.stringify');
-          }
+            var escapeable = /["\\\x00-\x1f\x7f-\x9f]/g,
+                gap,
+                indent,
+                meta = { // table of character substitutions
+                    '\b': '\\b',
+                    '\t': '\\t',
+                    '\n': '\\n',
+                    '\f': '\\f',
+                    '\r': '\\r',
+                    '"': '\\"',
+                    '\\': '\\\\'
+                },
+                rep;
 
-// Make a fake root object containing our value under the key of ''.
-// Return the result of stringifying the value.
 
-          return str('', {'': value});
-        },
+            function quote(string) {
+
+                // If the string contains no control characters, no quote characters, and no
+                // backslash characters, then we can safely slap some quotes around it.
+                // Otherwise we must also replace the offending characters with safe escape
+                // sequences.
+
+                return escapeable.test(string) ?
+                    '"' + string.replace(escapeable, function(a) {
+                        var c = meta[a];
+                        if (typeof c === 'string') {
+                            return c;
+                        }
+                        c = a.charCodeAt();
+                        return '\\u00' + Math.floor(c / 16).toString(16) +
+                            (c % 16).toString(16);
+                    }) + '"' :
+                    '"' + string + '"';
+            }
 
 
-        parse: function (text, reviver) {
+            function str(key, holder) {
 
-// The parse method takes a text and an optional reviver function, and returns
-// a JavaScript value if the text is a valid JSON text.
+                // Produce a string from holder[key].
 
-          var j;
+                var i, // The loop counter.
+                    k, // The member key.
+                    v, // The member value.
+                    length,
+                    mind = gap,
+                    partial,
+                    value = holder[key];
 
-          function walk(holder, key) {
+                // If the value has a toJSON method, call it to obtain a replacement value.
 
-// The walk method is used to recursively walk the resulting structure so
-// that modifications can be made.
-
-            var k, v, value = holder[key];
-            if (value && typeof value === 'object') {
-              for (k in value) {
-                if (Object.hasOwnProperty.call(value, k)) {
-                  v = walk(value, k);
-                  if (v !== undefined) {
-                    value[k] = v;
-                  } else {
-                    delete value[k];
-                  }
+                if (value && typeof value === 'object' &&
+                    typeof value.toJSON === 'function') {
+                    value = value.toJSON(key);
                 }
-              }
+
+                // If we were called with a replacer function, then call the replacer to
+                // obtain a replacement value.
+
+                if (typeof rep === 'function') {
+                    value = rep.call(holder, key, value);
+                }
+
+                // What happens next depends on the value's type.
+
+                switch (typeof value) {
+                    case 'string':
+                        return quote(value);
+
+                    case 'number':
+
+                        // JSON numbers must be finite. Encode non-finite numbers as null.
+
+                        return isFinite(value) ? String(value) : 'null';
+
+                    case 'boolean':
+                    case 'null':
+
+                        // If the value is a boolean or null, convert it to a string. Note:
+                        // typeof null does not produce 'null'. The case is included here in
+                        // the remote chance that this gets fixed someday.
+
+                        return String(value);
+
+                        // If the type is 'object', we might be dealing with an object or an array or
+                        // null.
+
+                    case 'object':
+
+                        // Due to a specification blunder in ECMAScript, typeof null is 'object',
+                        // so watch out for that case.
+
+                        if (!value) {
+                            return 'null';
+                        }
+
+                        // Make an array to hold the partial results of stringifying this object value.
+
+                        gap += indent;
+                        partial = [];
+
+                        // If the object has a dontEnum length property, we'll treat it as an array.
+
+                        if (typeof value.length === 'number' && !(value.propertyIsEnumerable('length'))) {
+
+                            // The object is an array. Stringify every element. Use null as a placeholder
+                            // for non-JSON values.
+
+                            length = value.length;
+                            for (i = 0; i < length; i += 1) {
+                                partial[i] = str(i, value) || 'null';
+                            }
+
+                            // Join all of the elements together, separated with commas, and wrap them in
+                            // brackets.
+
+                            v = partial.length === 0 ? '[]' :
+                                gap ? '[\n' + gap + partial.join(',\n' + gap) +
+                                '\n' + mind + ']' :
+                                '[' + partial.join(',') + ']';
+                            gap = mind;
+                            return v;
+                        }
+
+                        // If the replacer is an array, use it to select the members to be stringified.
+
+                        if (typeof rep === 'object') {
+                            length = rep.length;
+                            for (i = 0; i < length; i += 1) {
+                                k = rep[i];
+                                if (typeof k === 'string') {
+                                    v = str(k, value, rep);
+                                    if (v) {
+                                        partial.push(quote(k) + (gap ? ': ' : ':') + v);
+                                    }
+                                }
+                            }
+                        } else {
+
+                            // Otherwise, iterate through all of the keys in the object.
+
+                            for (k in value) {
+                                v = str(k, value, rep);
+                                if (v) {
+                                    partial.push(quote(k) + (gap ? ': ' : ':') + v);
+                                }
+                            }
+                        }
+
+                        // Join all of the member texts together, separated with commas,
+                        // and wrap them in braces.
+
+                        v = partial.length === 0 ? '{}' :
+                            gap ? '{\n' + gap + partial.join(',\n' + gap) +
+                            '\n' + mind + '}' :
+                            '{' + partial.join(',') + '}';
+                        gap = mind;
+                        return v;
+                }
             }
-            return reviver.call(holder, key, value);
-          }
 
 
-// Parsing happens in three stages. In the first stage, we run the text against
-// regular expressions that look for non-JSON patterns. We are especially
-// concerned with '()' and 'new' because they can cause invocation, and '='
-// because it can cause mutation. But just to be safe, we want to reject all
-// unexpected forms.
+            // Return the JSON object containing the stringify, parse, and quote methods.
 
-// We split the first stage into 4 regexp operations in order to work around
-// crippling inefficiencies in IE's and Safari's regexp engines. First we
-// replace all backslash pairs with '@' (a non-JSON character). Second, we
-// replace all simple value tokens with ']' characters. Third, we delete all
-// open brackets that follow a colon or comma or that begin the text. Finally,
-// we look to see that the remaining characters are only whitespace or ']' or
-// ',' or ':' or '{' or '}'. If that is so, then the text is safe for eval.
+            return {
+                stringify: function(value, replacer, space) {
 
-          if (/^[\],:{}\s]*$/.test(text.replace(/\\["\\\/bfnrtu]/g, '@').
-            replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']').
-            replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
+                    // The stringify method takes a value and an optional replacer, and an optional
+                    // space parameter, and returns a JSON text. The replacer can be a function
+                    // that can replace values, or an array of strings that will select the keys.
+                    // A default replacer method can be provided. Use of the space parameter can
+                    // produce text that is more easily readable.
 
-// In the second stage we use the eval function to compile the text into a
-// JavaScript structure. The '{' operator is subject to a syntactic ambiguity
-// in JavaScript: it can begin a block or an object literal. We wrap the text
-// in parens to eliminate the ambiguity.
+                    var i;
+                    gap = '';
+                    indent = '';
+                    if (space) {
 
-            j = eval('(' + text + ')');
+                        // If the space parameter is a number, make an indent string containing that
+                        // many spaces.
 
-// In the optional third stage, we recursively walk the new structure, passing
-// each name/value pair to a reviver function for possible transformation.
+                        if (typeof space === 'number') {
+                            for (i = 0; i < space; i += 1) {
+                                indent += ' ';
+                            }
 
-            return typeof reviver === 'function' ?
-              walk({'': j}, '') : j;
-          }
+                            // If the space parameter is a string, it will be used as the indent string.
 
-// If the text is not JSON parseable, then a SyntaxError is thrown.
+                        } else if (typeof space === 'string') {
+                            indent = space;
+                        }
+                    }
 
-          throw new SyntaxError('JSON.parse');
-        },
+                    // If there is no replacer parameter, use the default replacer.
 
-        quote: quote
-      };
-    }();
-  }
+                    if (!replacer) {
+                        rep = function(key, value) {
+                            if (!Object.hasOwnProperty.call(this, key)) {
+                                return undefined;
+                            }
+                            return value;
+                        };
 
-//json end
+                        // The replacer can be a function or an array. Otherwise, throw an error.
 
-//persist-min start
+                    } else if (typeof replacer === 'function' ||
+                        (typeof replacer === 'object' &&
+                            typeof replacer.length === 'number')) {
+                        rep = replacer;
+                    } else {
+                        throw new Error('JSON.stringify');
+                    }
 
-  (function(){if(window.google&&google.gears)
-    return;var F=null;if(typeof GearsFactory!='undefined'){F=new GearsFactory();}else{try{F=new ActiveXObject('Gears.Factory');if(F.getBuildInfo().indexOf('ie_mobile')!=-1)
-    F.privateSetGlobalObject(this);}catch(e){if((typeof navigator.mimeTypes!='undefined')&&navigator.mimeTypes["application/x-googlegears"]){F=document.createElement("object");F.style.display="none";F.width=0;F.height=0;F.type="application/x-googlegears";document.documentElement.appendChild(F);}}}
-    if(!F)
-      return;if(!window.google)
-      google={};if(!google.gears)
-      google.gears={factory:F};})();Persist=(function(){var VERSION='0.2.0',P,B,esc,init,empty,ec;ec=(function(){var EPOCH='Thu, 01-Jan-1970 00:00:01 GMT',RATIO=1000*60*60*24,KEYS=['expires','path','domain'],esc=escape,un=unescape,doc=document,me;var get_now=function(){var r=new Date();r.setTime(r.getTime());return r;}
-    var cookify=function(c_key,c_val){var i,key,val,r=[],opt=(arguments.length>2)?arguments[2]:{};r.push(esc(c_key)+'='+esc(c_val));for(i=0;i<KEYS.length;i++){key=KEYS[i];if(val=opt[key])
-      r.push(key+'='+val);}
-      if(opt.secure)
-        r.push('secure');return r.join('; ');}
-    var alive=function(){var k='__EC_TEST__',v=new Date();v=v.toGMTString();this.set(k,v);this.enabled=(this.remove(k)==v);return this.enabled;}
-    me={set:function(key,val){var opt=(arguments.length>2)?arguments[2]:{},now=get_now(),expire_at,cfg={};if(opt.expires){opt.expires*=RATIO;cfg.expires=new Date(now.getTime()+opt.expires);cfg.expires=cfg.expires.toGMTString();}
-      var keys=['path','domain','secure'];for(i=0;i<keys.length;i++)
-        if(opt[keys[i]])
-          cfg[keys[i]]=opt[keys[i]];var r=cookify(key,val,cfg);doc.cookie=r;return val;},has:function(key){key=esc(key);var c=doc.cookie,ofs=c.indexOf(key+'='),len=ofs+key.length+1,sub=c.substring(0,key.length);return((!ofs&&key!=sub)||ofs<0)?false:true;},get:function(key){key=esc(key);var c=doc.cookie,ofs=c.indexOf(key+'='),len=ofs+key.length+1,sub=c.substring(0,key.length),end;if((!ofs&&key!=sub)||ofs<0)
-      return null;end=c.indexOf(';',len);if(end<0)
-      end=c.length;return un(c.substring(len,end));},remove:function(k){var r=me.get(k),opt={expires:EPOCH};doc.cookie=cookify(k,'',opt);return r;},keys:function(){var c=doc.cookie,ps=c.split('; '),i,p,r=[];for(i=0;i<ps.length;i++){p=ps[i].split('=');r.push(un(p[0]));}
-      return r;},all:function(){var c=doc.cookie,ps=c.split('; '),i,p,r=[];for(i=0;i<ps.length;i++){p=ps[i].split('=');r.push([un(p[0]),un(p[1])]);}
-      return r;},version:'0.2.1',enabled:false};me.enabled=alive.call(me);return me;}());var index_of=(function(){if(Array.prototype.indexOf)
-    return function(ary,val){return Array.prototype.indexOf.call(ary,val);};else
-    return function(ary,val){var i,l;for(i=0,l=ary.length;i<l;i++)
-      if(ary[i]==val)
-        return i;return-1;};})();empty=function(){};esc=function(str){return'PS'+str.replace(/_/g,'__').replace(/ /g,'_s');};C={search_order:['localstorage','whatwg_db','globalstorage','gears','ie','flash','cookie'],name_re:/^[a-z][a-z0-9_ -]+$/i,methods:['init','get','set','remove','load','save'],sql:{version:'1',create:"CREATE TABLE IF NOT EXISTS persist_data (k TEXT UNIQUE NOT NULL PRIMARY KEY, v TEXT NOT NULL)",get:"SELECT v FROM persist_data WHERE k = ?",set:"INSERT INTO persist_data(k, v) VALUES (?, ?)",remove:"DELETE FROM persist_data WHERE k = ?"},flash:{div_id:'_persist_flash_wrap',id:'_persist_flash',path:'persist.swf',size:{w:1,h:1},args:{autostart:true}}};B={gears:{size:-1,test:function(){return(window.google&&window.google.gears)?true:false;},methods:{transaction:function(fn){var db=this.db;db.execute('BEGIN').close();fn.call(this,db);db.execute('COMMIT').close();},init:function(){var db;db=this.db=google.gears.factory.create('beta.database');db.open(esc(this.name));db.execute(C.sql.create).close();},get:function(key,fn,scope){var r,sql=C.sql.get;if(!fn)
-    return;this.transaction(function(t){var is_valid,val;r=t.execute(sql,[key]);is_valid=r.isValidRow();val=is_valid?r.field(0):null;r.close();fn.call(scope||this,is_valid,val);});},set:function(key,val,fn,scope){var rm_sql=C.sql.remove,sql=C.sql.set,r;this.transaction(function(t){t.execute(rm_sql,[key]).close();t.execute(sql,[key,val]).close();if(fn)
-    fn.call(scope||this,true,val);});},remove:function(key,fn,scope){var get_sql=C.sql.get;sql=C.sql.remove,r,val=null,is_valid=false;this.transaction(function(t){if(fn){r=t.execute(get_sql,[key]);is_valid=r.isValidRow();val=is_valid?r.field(0):null;r.close();}
-    if(!fn||is_valid){t.execute(sql,[key]).close();}
-    if(fn)
-      fn.call(scope||this,is_valid,val);});}}},whatwg_db:{size:200*1024,test:function(){var name='PersistJS Test',desc='Persistent database test.';if(!window.openDatabase)
-    return false;if(!window.openDatabase(name,C.sql.version,desc,B.whatwg_db.size))
-    return false;return true;},methods:{transaction:function(fn){if(!this.db_created){this.db.transaction(function(t){t.executeSql(C.sql.create,[],function(){this.db_created=true;});},empty);}
-    this.db.transaction(fn);},init:function(){this.db=openDatabase(this.name,C.sql.version,this.o.about||("Persistent storage for "+this.name),this.o.size||B.whatwg_db.size);},get:function(key,fn,scope){var sql=C.sql.get;if(!fn)
-    return;scope=scope||this;this.transaction(function(t){t.executeSql(sql,[key],function(t,r){if(r.rows.length>0)
-    fn.call(scope,true,r.rows.item(0)['v']);else
-    fn.call(scope,false,null);});});},set:function(key,val,fn,scope){var rm_sql=C.sql.remove,sql=C.sql.set;this.transaction(function(t){t.executeSql(rm_sql,[key],function(){t.executeSql(sql,[key,val],function(t,r){if(fn)
-    fn.call(scope||this,true,val);});});});return val;},remove:function(key,fn,scope){var get_sql=C.sql.get;sql=C.sql.remove;this.transaction(function(t){if(fn){t.executeSql(get_sql,[key],function(t,r){if(r.rows.length>0){var val=r.rows.item(0)['v'];t.executeSql(sql,[key],function(t,r){fn.call(scope||this,true,val);});}else{fn.call(scope||this,false,null);}});}else{t.executeSql(sql,[key]);}});}}},globalstorage:{size:5*1024*1024,test:function(){return window.globalStorage?true:false;},methods:{key:function(key){return esc(this.name)+esc(key);},init:function(){alert('domain = '+this.o.domain);this.store=globalStorage[this.o.domain];},get:function(key,fn,scope){key=this.key(key);if(fn)
-    fn.call(scope||this,true,this.store.getItem(key));},set:function(key,val,fn,scope){key=this.key(key);this.store.setItem(key,val);if(fn)
-    fn.call(scope||this,true,val);},remove:function(key,fn,scope){var val;key=this.key(key);val=this.store[key];this.store.removeItem(key);if(fn)
-    fn.call(scope||this,(val!==null),val);}}},localstorage:{size:-1,test:function(){return window.localStorage?true:false;},methods:{key:function(key){return esc(this.name)+esc(key);},init:function(){this.store=localStorage;},get:function(key,fn,scope){key=this.key(key);if(fn)
-    fn.call(scope||this,true,this.store.getItem(key));},set:function(key,val,fn,scope){key=this.key(key);this.store.setItem(key,val);if(fn)
-    fn.call(scope||this,true,val);},remove:function(key,fn,scope){var val;key=this.key(key);val=this.store.getItem(key);this.store.removeItem(key);if(fn)
-    fn.call(scope||this,(val!==null),val);}}},ie:{prefix:'_persist_data-',size:64*1024,test:function(){return window.ActiveXObject?true:false;},make_userdata:function(id){var el=document.createElement('div');el.id=id;el.style.display='none';el.addBehavior('#default#userdata');document.body.appendChild(el);return el;},methods:{init:function(){var id=B.ie.prefix+esc(this.name);this.el=B.ie.make_userdata(id);if(this.o.defer)
-    this.load();},get:function(key,fn,scope){var val;key=esc(key);if(!this.o.defer)
-    this.load();val=this.el.getAttribute(key);if(fn)
-    fn.call(scope||this,val?true:false,val);},set:function(key,val,fn,scope){key=esc(key);this.el.setAttribute(key,val);if(!this.o.defer)
-    this.save();if(fn)
-    fn.call(scope||this,true,val);},remove:function(key,fn,scope){var val;key=esc(key);if(!this.o.defer)
-    this.load();val=this.el.getAttribute(key);this.el.removeAttribute(key);if(!this.o.defer)
-    this.save();if(fn)
-    fn.call(scope||this,val?true:false,val);},load:function(){this.el.load(esc(this.name));},save:function(){this.el.save(esc(this.name));}}},cookie:{delim:':',size:4000,test:function(){return P.Cookie.enabled?true:false;},methods:{key:function(key){return this.name+B.cookie.delim+key;},get:function(key,fn,scope){var val;key=this.key(key);val=ec.get(key);if(fn)
-    fn.call(scope||this,val!=null,val);},set:function(key,val,fn,scope){key=this.key(key);ec.set(key,val,this.o);if(fn)
-    fn.call(scope||this,true,val);},remove:function(key,val,fn,scope){var val;key=this.key(key);val=ec.remove(key)
-    if(fn)
-      fn.call(scope||this,val!=null,val);}}},flash:{test:function(){if(!deconcept||!deconcept.SWFObjectUtil)
-    return false;var major=deconcept.SWFObjectUtil.getPlayerVersion().major;return(major>=8)?true:false;},methods:{init:function(){if(!B.flash.el){var o,key,el,cfg=C.flash;el=document.createElement('div');el.id=cfg.div_id;document.body.appendChild(el);o=new deconcept.SWFObject(this.o.swf_path||cfg.path,cfg.id,cfg.size.w,cfg.size.h,'8');for(key in cfg.args)
-    o.addVariable(key,cfg.args[key]);o.write(el);B.flash.el=document.getElementById(cfg.id);}
-    this.el=B.flash.el;},get:function(key,fn,scope){var val;key=esc(key);val=this.el.get(this.name,key);if(fn)
-    fn.call(scope||this,val!==null,val);},set:function(key,val,fn,scope){var old_val;key=esc(key);old_val=this.el.set(this.name,key,val);if(fn)
-    fn.call(scope||this,true,val);},remove:function(key,fn,scope){var val;key=esc(key);val=this.el.remove(this.name,key);if(fn)
-    fn.call(scope||this,true,val);}}}};var init=function(){var i,l,b,key,fns=C.methods,keys=C.search_order;for(i=0,l=fns.length;i<l;i++)
-    P.Store.prototype[fns[i]]=empty;P.type=null;P.size=-1;for(i=0,l=keys.length;!P.type&&i<l;i++){b=B[keys[i]];if(b.test()){P.type=keys[i];P.size=b.size;for(key in b.methods)
-    P.Store.prototype[key]=b.methods[key];}}
-    P._init=true;};P={VERSION:VERSION,type:null,size:0,add:function(o){B[o.id]=o;C.search_order=[o.id].concat(C.search_order);init();},remove:function(id){var ofs=index_of(C.search_order,id);if(ofs<0)
-    return;C.search_order.splice(ofs,1);delete B[id];init();},Cookie:ec,Store:function(name,o){if(!C.name_re.exec(name))
-    throw new Error("Invalid name");if(!P.type)
-    throw new Error("No suitable storage found");o=o||{};this.name=name;o.domain=o.domain||location.host||'localhost';o.domain=o.domain.replace(/:\d+$/,'')
-    this.o=o;o.expires=o.expires||365*2;o.path=o.path||'/';this.init();}};init();return P;})();
-//persist-min end
+                    // Make a fake root object containing our value under the key of ''.
+                    // Return the result of stringifying the value.
 
-//swfobject-min start
+                    return str('', {
+                        '': value
+                    });
+                },
 
-  if(typeof deconcept=="undefined")var deconcept=new Object();if(typeof deconcept.util=="undefined")deconcept.util=new Object();if(typeof deconcept.SWFObjectUtil=="undefined")deconcept.SWFObjectUtil=new Object();deconcept.SWFObject=function(swf,id,w,h,ver,c,quality,xiRedirectUrl,redirectUrl,detectKey){if(!document.getElementById){return;}
-    this.DETECT_KEY=detectKey?detectKey:'detectflash';this.skipDetect=deconcept.util.getRequestParameter(this.DETECT_KEY);this.params=new Object();this.variables=new Object();this.attributes=new Array();if(swf){this.setAttribute('swf',swf);}
-    if(id){this.setAttribute('id',id);}
-    if(w){this.setAttribute('width',w);}
-    if(h){this.setAttribute('height',h);}
-    if(ver){this.setAttribute('version',new deconcept.PlayerVersion(ver.toString().split(".")));}
-    this.installedVer=deconcept.SWFObjectUtil.getPlayerVersion();if(!window.opera&&document.all&&this.installedVer.major>7){deconcept.SWFObject.doPrepUnload=true;}
-    if(c){this.addParam('bgcolor',c);}
-    var q=quality?quality:'high';this.addParam('quality',q);this.setAttribute('useExpressInstall',false);this.setAttribute('doExpressInstall',false);var xir=(xiRedirectUrl)?xiRedirectUrl:window.location;this.setAttribute('xiRedirectUrl',xir);this.setAttribute('redirectUrl','');if(redirectUrl){this.setAttribute('redirectUrl',redirectUrl);}}
-  deconcept.SWFObject.prototype={useExpressInstall:function(path){this.xiSWFPath=!path?"expressinstall.swf":path;this.setAttribute('useExpressInstall',true);},setAttribute:function(name,value){this.attributes[name]=value;},getAttribute:function(name){return this.attributes[name];},addParam:function(name,value){this.params[name]=value;},getParams:function(){return this.params;},addVariable:function(name,value){this.variables[name]=value;},getVariable:function(name){return this.variables[name];},getVariables:function(){return this.variables;},getVariablePairs:function(){var variablePairs=new Array();var key;var variables=this.getVariables();for(key in variables){variablePairs.push(key+"="+variables[key]);}
-    return variablePairs;},getSWFHTML:function(){var swfNode="";if(navigator.plugins&&navigator.mimeTypes&&navigator.mimeTypes.length){if(this.getAttribute("doExpressInstall")){this.addVariable("MMplayerType","PlugIn");this.setAttribute('swf',this.xiSWFPath);}
-    swfNode='<embed type="application/x-shockwave-flash" src="'+this.getAttribute('swf')+'" width="'+this.getAttribute('width')+'" height="'+this.getAttribute('height')+'"';swfNode+=' id="'+this.getAttribute('id')+'" name="'+this.getAttribute('id')+'" ';var params=this.getParams();for(var key in params){swfNode+=[key]+'="'+params[key]+'" ';}
-    var pairs=this.getVariablePairs().join("&");if(pairs.length>0){swfNode+='flashvars="'+pairs+'"';}
-    swfNode+='/>';}else{if(this.getAttribute("doExpressInstall")){this.addVariable("MMplayerType","ActiveX");this.setAttribute('swf',this.xiSWFPath);}
-    swfNode='<object id="'+this.getAttribute('id')+'" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="'+this.getAttribute('width')+'" height="'+this.getAttribute('height')+'">';swfNode+='<param name="movie" value="'+this.getAttribute('swf')+'" />';var params=this.getParams();for(var key in params){swfNode+='<param name="'+key+'" value="'+params[key]+'" />';}
-    var pairs=this.getVariablePairs().join("&");if(pairs.length>0){swfNode+='<param name="flashvars" value="'+pairs+'" />';}
-    swfNode+="</object>";}
-    return swfNode;},write:function(elementId){if(this.getAttribute('useExpressInstall')){var expressInstallReqVer=new deconcept.PlayerVersion([6,0,65]);if(this.installedVer.versionIsValid(expressInstallReqVer)&&!this.installedVer.versionIsValid(this.getAttribute('version'))){this.setAttribute('doExpressInstall',true);this.addVariable("MMredirectURL",escape(this.getAttribute('xiRedirectUrl')));document.title=document.title.slice(0,47)+" - Flash Player Installation";this.addVariable("MMdoctitle",document.title);}}
-    if(this.skipDetect||this.getAttribute('doExpressInstall')||this.installedVer.versionIsValid(this.getAttribute('version'))){var n=(typeof elementId=='string')?document.getElementById(elementId):elementId;n.innerHTML=this.getSWFHTML();return true;}else{if(this.getAttribute('redirectUrl')!=""){document.location.replace(this.getAttribute('redirectUrl'));}}
-    return false;}}
-  deconcept.SWFObjectUtil.getPlayerVersion=function(){var PlayerVersion=new deconcept.PlayerVersion([0,0,0]);if(navigator.plugins&&navigator.mimeTypes.length){var x=navigator.plugins["Shockwave Flash"];if(x&&x.description){PlayerVersion=new deconcept.PlayerVersion(x.description.replace(/([a-zA-Z]|\s)+/,"").replace(/(\s+r|\s+b[0-9]+)/,".").split("."));}}else{try{var axo=new ActiveXObject("ShockwaveFlash.ShockwaveFlash.7");}catch(e){try{var axo=new ActiveXObject("ShockwaveFlash.ShockwaveFlash.6");PlayerVersion=new deconcept.PlayerVersion([6,0,21]);axo.AllowScriptAccess="always";}catch(e){if(PlayerVersion.major==6){return PlayerVersion;}}
-    try{axo=new ActiveXObject("ShockwaveFlash.ShockwaveFlash");}catch(e){}}
-    if(axo!=null){PlayerVersion=new deconcept.PlayerVersion(axo.GetVariable("$version").split(" ")[1].split(","));}}
-    return PlayerVersion;}
-  deconcept.PlayerVersion=function(arrVersion){this.major=arrVersion[0]!=null?parseInt(arrVersion[0]):0;this.minor=arrVersion[1]!=null?parseInt(arrVersion[1]):0;this.rev=arrVersion[2]!=null?parseInt(arrVersion[2]):0;}
-  deconcept.PlayerVersion.prototype.versionIsValid=function(fv){if(this.major<fv.major)return false;if(this.major>fv.major)return true;if(this.minor<fv.minor)return false;if(this.minor>fv.minor)return true;if(this.rev<fv.rev)return false;return true;}
-  deconcept.util={getRequestParameter:function(param){var q=document.location.search||document.location.hash;if(q){var pairs=q.substring(1).split("&");for(var i=0;i<pairs.length;i++){if(pairs[i].substring(0,pairs[i].indexOf("="))==param){return pairs[i].substring((pairs[i].indexOf("=")+1));}}}
-    return"";}}
-  deconcept.SWFObjectUtil.cleanupSWFs=function(){var objects=document.getElementsByTagName("OBJECT");for(var i=0;i<objects.length;i++){objects[i].style.display='none';for(var x in objects[i]){if(typeof objects[i][x]=='function'){objects[i][x]=function(){};}}}}
-  if(deconcept.SWFObject.doPrepUnload){deconcept.SWFObjectUtil.prepUnload=function(){__flash_unloadHandler=function(){};__flash_savedUnloadHandler=function(){};window.attachEvent("onunload",deconcept.SWFObjectUtil.cleanupSWFs);}
-    window.attachEvent("onbeforeunload",deconcept.SWFObjectUtil.prepUnload);}
-  if(Array.prototype.push==null){Array.prototype.push=function(item){this[this.length]=item;return this.length;}}
-  var getQueryParamValue=deconcept.util.getRequestParameter;var FlashObject=deconcept.SWFObject;var SWFObject=deconcept.SWFObject;
-//swfobject-min end
 
-  //!!!lib end!!!
+                parse: function(text, reviver) {
 
-  var $fh = root.$fh || {};
+                    // The parse method takes a text and an optional reviver function, and returns
+                    // a JavaScript value if the text is a valid JSON text.
 
-  var defaultargs = {
-    success: function () {
-    },
-    failure: function () {
-    },
-    params: {}
-  };
+                    var j;
 
-  var handleargs = function (inargs, defaultparams, applyto) {
-    var outargs = [null, null, null];
-    var origargs = [null, null, null];
-    var numargs = inargs.length;
+                    function walk(holder, key) {
 
-    if (2 < numargs) {
-      origargs[0] = inargs[numargs - 3];
-      origargs[1] = inargs[numargs - 2];
-      origargs[2] = inargs[numargs - 1];
-    } else if (2 == numargs) {
-      origargs[1] = inargs[0];
-      origargs[2] = inargs[1];
-    } else if (1 == numargs) {
-      origargs[2] = inargs[0];
+                        // The walk method is used to recursively walk the resulting structure so
+                        // that modifications can be made.
+
+                        var k, v, value = holder[key];
+                        if (value && typeof value === 'object') {
+                            for (k in value) {
+                                if (Object.hasOwnProperty.call(value, k)) {
+                                    v = walk(value, k);
+                                    if (v !== undefined) {
+                                        value[k] = v;
+                                    } else {
+                                        delete value[k];
+                                    }
+                                }
+                            }
+                        }
+                        return reviver.call(holder, key, value);
+                    }
+
+
+                    // Parsing happens in three stages. In the first stage, we run the text against
+                    // regular expressions that look for non-JSON patterns. We are especially
+                    // concerned with '()' and 'new' because they can cause invocation, and '='
+                    // because it can cause mutation. But just to be safe, we want to reject all
+                    // unexpected forms.
+
+                    // We split the first stage into 4 regexp operations in order to work around
+                    // crippling inefficiencies in IE's and Safari's regexp engines. First we
+                    // replace all backslash pairs with '@' (a non-JSON character). Second, we
+                    // replace all simple value tokens with ']' characters. Third, we delete all
+                    // open brackets that follow a colon or comma or that begin the text. Finally,
+                    // we look to see that the remaining characters are only whitespace or ']' or
+                    // ',' or ':' or '{' or '}'. If that is so, then the text is safe for eval.
+
+                    if (/^[\],:{}\s]*$/.test(text.replace(/\\["\\\/bfnrtu]/g, '@').replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g, ']').replace(/(?:^|:|,)(?:\s*\[)+/g, ''))) {
+
+                        // In the second stage we use the eval function to compile the text into a
+                        // JavaScript structure. The '{' operator is subject to a syntactic ambiguity
+                        // in JavaScript: it can begin a block or an object literal. We wrap the text
+                        // in parens to eliminate the ambiguity.
+
+                        j = eval('(' + text + ')');
+
+                        // In the optional third stage, we recursively walk the new structure, passing
+                        // each name/value pair to a reviver function for possible transformation.
+
+                        return typeof reviver === 'function' ?
+                            walk({
+                                '': j
+                            }, '') : j;
+                    }
+
+                    // If the text is not JSON parseable, then a SyntaxError is thrown.
+
+                    throw new SyntaxError('JSON.parse');
+                },
+
+                quote: quote
+            };
+        }();
     }
 
-    var i = 0,
-      j = 0;
-    for (; i < 3; i++) {
-      var a = origargs[i];
-      var ta = typeof a;
-      //console.log('iter i:'+i+' j:'+j+' ta:'+ta);
-      if (a && 0 == j && ('object' == ta || 'boolean' == ta)) {
-        //console.log('object i:'+i+' j:'+j+' ta:'+ta);
-        outargs[j++] = a;
-      } else if (a && 'function' == ta) {
-        j = 0 == j ? 1 : j;
-        //console.log('function i:'+i+' j:'+j+' ta:'+ta);
-        outargs[j++] = a;
-      }
-    }
+    //json end
 
-    if (null == outargs[0]) {
-      outargs[0] = defaultparams ? defaultparams : defaultargs.params;
-    } else {
-      var paramsarg = outargs[0];
-      paramsarg._defaults = [];
-      for (var n in defaultparams) {
-        if (defaultparams.hasOwnProperty(n)) {
-          if (typeof paramsarg[n] === "undefined") {  //we don't want to use !paramsarg[n] here because the parameter could exists in the argument and it could be false
-            paramsarg[n] = defaultparams[n];
-            paramsarg._defaults.push(n);
-          }
-        }
-      }
-    }
+    //persist-min start
 
-    outargs[1] = null == outargs[1] ? defaultargs.success : outargs[1];
-    outargs[2] = null == outargs[2] ? defaultargs.failure : outargs[2];
-
-    applyto(outargs[0], outargs[1], outargs[2]);
-  }
-
-  var eventSupported = function (event) {
-    var element = document.createElement('i');
-    return event in element || element.setAttribute && element.setAttribute(event, "return;") || false;
-  }
-
-  var __is_ready = false;
-  var __ready_list = [];
-  var __ready_bound = false;
-  var boxprefix = "/box/srv/1.1/";
-
-  _getHostPrefix = function () {
-    return $fh.app_props.host + boxprefix;
-  }
-
-  var __ready = function () {
-    if (!__is_ready) {
-      __is_ready = true;
-      if (__ready_list) {
-        try {
-          while (__ready_list[0]) {
-            __ready_list.shift().apply(document, []);
-          }
-
-        } finally {
-
-        }
-        __ready_list = null;
-      }
-    }
-  };
-
-  var __bind_ready = function () {
-    if (__ready_bound) return;
-    __ready_bound = true;
-
-    // Mozilla, Opera and webkit nightlies currently support this event
-    if (document.addEventListener) {
-      // Use the handy event callback
-      document.addEventListener("DOMContentLoaded", function () {
-        document.removeEventListener("DOMContentLoaded", arguments.callee, false);
-        __ready();
-      }, false);
-
-      window.addEventListener("load", __ready, false);
-
-      // If IE event model is used
-    } else if (document.attachEvent) {
-      // ensure firing before onload,
-      // maybe late but safe also for iframes
-      document.attachEvent("onreadystatechange", function () {
-        if (document.readyState === "complete") {
-          document.detachEvent("onreadystatechange", arguments.callee);
-          __ready();
-        }
-      });
-
-      window.attachEvent("onload", __ready);
-
-      // If IE and not an iframe
-      // continually check to see if the document is ready
-      if (document.documentElement.doScroll && window == window.top)(function () {
-        if (__is_ready) return;
-
-        try {
-          // If IE is used, use the trick by Diego Perini
-          // http://javascript.nwbox.com/IEContentLoaded/
-          document.documentElement.doScroll("left");
-        } catch (error) {
-          setTimeout(arguments.callee, 0);
-          return;
-        }
-
-        // and execute any waiting functions
-        __ready();
-      })();
-    }
-  };
-
-  __bind_ready();
-
-  // destination functions
-  var _mapScriptLoaded = (typeof google != "undefined") && (typeof google.maps != "undefined") && (typeof google.maps.Map != "undefined");
-  var mapFuncs = [];
-  var loadingScript = false;
-  var _loadMapScript = function () {
-    if (loadingScript) return;
-    loadingScript = true;
-    var script = document.createElement("script");
-    script.type = "text/javascript";
-    var protocol = document.location.protocol;
-    protocol = (protocol === "http:" || protocol === "https:") ? protocol : "https:";
-    script.src = protocol + "//maps.google.com/maps/api/js?sensor=true&callback=$fh._mapLoaded";
-
-    document.body.appendChild(script);
-
-  };
-
-  var audio_obj = null;
-  var audio_is_playing = false;
-
-  $fh.__dest__ = {
-    send: function (p, s, f) {
-      f('send_nosupport');
-    },
-    notify: function (p, s, f) {
-      f('notify_nosupport');
-    },
-    contacts: function (p, s, f) {
-      f('contacts_nosupport');
-    },
-    acc: function (p, s, f) {
-      f('acc_nosupport');
-    },
-    geo: function (p, s, f) {
-      f('geo_nosupport');
-    },
-    cam: function (p, s, f) {
-      f('cam_nosupport');
-    },
-    device: function (p, s, f) {
-      f('device_nosupport');
-    },
-    listen: function (p, s, f) {
-      f('listen_nosupport');
-    },
-    handlers: function (p, s, f) {
-      f('handlers_no_support');
-    },
-    file: function (p, s, f) {
-      f('file_nosupport');
-    },
-    push: function (p, s, f) {
-      f('push_nosupport');
-    },
-    env: function (p, s, f) {
-      s({
-        height: window.innerHeight,
-        width: window.innerWidth
-      });
-    },
-    data: function (p, s, f) {
-      if (!$fh._persist) {
-        $fh._persist = new Persist.Store('FH' + $fh.app_props.appid, {
-          swf_path: '/static/c/start/swf/persist.swf'
-        });
-      }
-
-      if (!p.key) {
-        f('data_nokey');
-        return;
-      }
-
-      var acts = {
-        load: function () {
-          $fh._persist.get(p.key, function (ok, val) {
-            ok ? s({
-              key: p.key,
-              val: val
-            }) : s({
-              key: p.key,
-              val: null
-            });
-          });
-        },
-        save: function () {
-          if (!p.val) {
-            f('data_noval');
+    (function() {
+        if (window.google && google.gears)
             return;
-          }
-          try {
-            $fh._persist.set(p.key, p.val);
-          } catch (e) {
-            f('data_error', {}, p);
+        var F = null;
+        if (typeof GearsFactory != 'undefined') {
+            F = new GearsFactory();
+        } else {
+            try {
+                F = new ActiveXObject('Gears.Factory');
+                if (F.getBuildInfo().indexOf('ie_mobile') != -1)
+                    F.privateSetGlobalObject(this);
+            } catch (e) {
+                if ((typeof navigator.mimeTypes != 'undefined') && navigator.mimeTypes["application/x-googlegears"]) {
+                    F = document.createElement("object");
+                    F.style.display = "none";
+                    F.width = 0;
+                    F.height = 0;
+                    F.type = "application/x-googlegears";
+                    document.documentElement.appendChild(F);
+                }
+            }
+        }
+        if (!F)
             return;
-          }
-          s();
+        if (!window.google)
+            google = {};
+        if (!google.gears)
+            google.gears = {
+                factory: F
+            };
+    })();
+    Persist = (function() {
+        var VERSION = '0.2.0',
+            P, B, esc, init, empty, ec;
+        ec = (function() {
+            var EPOCH = 'Thu, 01-Jan-1970 00:00:01 GMT',
+                RATIO = 1000 * 60 * 60 * 24,
+                KEYS = ['expires', 'path', 'domain'],
+                esc = escape,
+                un = unescape,
+                doc = document,
+                me;
+            var get_now = function() {
+                var r = new Date();
+                r.setTime(r.getTime());
+                return r;
+            }
+            var cookify = function(c_key, c_val) {
+                var i, key, val, r = [],
+                    opt = (arguments.length > 2) ? arguments[2] : {};
+                r.push(esc(c_key) + '=' + esc(c_val));
+                for (i = 0; i < KEYS.length; i++) {
+                    key = KEYS[i];
+                    if (val = opt[key])
+                        r.push(key + '=' + val);
+                }
+                if (opt.secure)
+                    r.push('secure');
+                return r.join('; ');
+            }
+            var alive = function() {
+                var k = '__EC_TEST__',
+                    v = new Date();
+                v = v.toGMTString();
+                this.set(k, v);
+                this.enabled = (this.remove(k) == v);
+                return this.enabled;
+            }
+            me = {
+                set: function(key, val) {
+                    var opt = (arguments.length > 2) ? arguments[2] : {}, now = get_now(),
+                        expire_at, cfg = {};
+                    if (opt.expires) {
+                        opt.expires *= RATIO;
+                        cfg.expires = new Date(now.getTime() + opt.expires);
+                        cfg.expires = cfg.expires.toGMTString();
+                    }
+                    var keys = ['path', 'domain', 'secure'];
+                    for (i = 0; i < keys.length; i++)
+                        if (opt[keys[i]])
+                            cfg[keys[i]] = opt[keys[i]];
+                    var r = cookify(key, val, cfg);
+                    doc.cookie = r;
+                    return val;
+                },
+                has: function(key) {
+                    key = esc(key);
+                    var c = doc.cookie,
+                        ofs = c.indexOf(key + '='),
+                        len = ofs + key.length + 1,
+                        sub = c.substring(0, key.length);
+                    return ((!ofs && key != sub) || ofs < 0) ? false : true;
+                },
+                get: function(key) {
+                    key = esc(key);
+                    var c = doc.cookie,
+                        ofs = c.indexOf(key + '='),
+                        len = ofs + key.length + 1,
+                        sub = c.substring(0, key.length),
+                        end;
+                    if ((!ofs && key != sub) || ofs < 0)
+                        return null;
+                    end = c.indexOf(';', len);
+                    if (end < 0)
+                        end = c.length;
+                    return un(c.substring(len, end));
+                },
+                remove: function(k) {
+                    var r = me.get(k),
+                        opt = {
+                            expires: EPOCH
+                        };
+                    doc.cookie = cookify(k, '', opt);
+                    return r;
+                },
+                keys: function() {
+                    var c = doc.cookie,
+                        ps = c.split('; '),
+                        i, p, r = [];
+                    for (i = 0; i < ps.length; i++) {
+                        p = ps[i].split('=');
+                        r.push(un(p[0]));
+                    }
+                    return r;
+                },
+                all: function() {
+                    var c = doc.cookie,
+                        ps = c.split('; '),
+                        i, p, r = [];
+                    for (i = 0; i < ps.length; i++) {
+                        p = ps[i].split('=');
+                        r.push([un(p[0]), un(p[1])]);
+                    }
+                    return r;
+                },
+                version: '0.2.1',
+                enabled: false
+            };
+            me.enabled = alive.call(me);
+            return me;
+        }());
+        var index_of = (function() {
+            if (Array.prototype.indexOf)
+                return function(ary, val) {
+                    return Array.prototype.indexOf.call(ary, val);
+                };
+            else
+                return function(ary, val) {
+                    var i, l;
+                    for (i = 0, l = ary.length; i < l; i++)
+                        if (ary[i] == val)
+                            return i;
+                    return -1;
+                };
+        })();
+        empty = function() {};
+        esc = function(str) {
+            return 'PS' + str.replace(/_/g, '__').replace(/ /g, '_s');
+        };
+        C = {
+            search_order: ['localstorage', 'whatwg_db', 'globalstorage', 'gears', 'ie', 'flash', 'cookie'],
+            name_re: /^[a-z][a-z0-9_ -]+$/i,
+            methods: ['init', 'get', 'set', 'remove', 'load', 'save'],
+            sql: {
+                version: '1',
+                create: "CREATE TABLE IF NOT EXISTS persist_data (k TEXT UNIQUE NOT NULL PRIMARY KEY, v TEXT NOT NULL)",
+                get: "SELECT v FROM persist_data WHERE k = ?",
+                set: "INSERT INTO persist_data(k, v) VALUES (?, ?)",
+                remove: "DELETE FROM persist_data WHERE k = ?"
+            },
+            flash: {
+                div_id: '_persist_flash_wrap',
+                id: '_persist_flash',
+                path: 'persist.swf',
+                size: {
+                    w: 1,
+                    h: 1
+                },
+                args: {
+                    autostart: true
+                }
+            }
+        };
+        B = {
+            gears: {
+                size: -1,
+                test: function() {
+                    try{
+                      return (window.google && window.google.gears) ? true : false;
+                    }catch(e){
+                      return false;
+                    }
+                    
+                },
+                methods: {
+                    transaction: function(fn) {
+                        var db = this.db;
+                        db.execute('BEGIN').close();
+                        fn.call(this, db);
+                        db.execute('COMMIT').close();
+                    },
+                    init: function() {
+                        var db;
+                        db = this.db = google.gears.factory.create('beta.database');
+                        db.open(esc(this.name));
+                        db.execute(C.sql.create).close();
+                    },
+                    get: function(key, fn, scope) {
+                        var r, sql = C.sql.get;
+                        if (!fn)
+                            return;
+                        this.transaction(function(t) {
+                            var is_valid, val;
+                            r = t.execute(sql, [key]);
+                            is_valid = r.isValidRow();
+                            val = is_valid ? r.field(0) : null;
+                            r.close();
+                            fn.call(scope || this, is_valid, val);
+                        });
+                    },
+                    set: function(key, val, fn, scope) {
+                        var rm_sql = C.sql.remove,
+                            sql = C.sql.set,
+                            r;
+                        this.transaction(function(t) {
+                            t.execute(rm_sql, [key]).close();
+                            t.execute(sql, [key, val]).close();
+                            if (fn)
+                                fn.call(scope || this, true, val);
+                        });
+                    },
+                    remove: function(key, fn, scope) {
+                        var get_sql = C.sql.get;
+                        sql = C.sql.remove, r, val = null, is_valid = false;
+                        this.transaction(function(t) {
+                            if (fn) {
+                                r = t.execute(get_sql, [key]);
+                                is_valid = r.isValidRow();
+                                val = is_valid ? r.field(0) : null;
+                                r.close();
+                            }
+                            if (!fn || is_valid) {
+                                t.execute(sql, [key]).close();
+                            }
+                            if (fn)
+                                fn.call(scope || this, is_valid, val);
+                        });
+                    }
+                }
+            },
+            whatwg_db: {
+                size: 200 * 1024,
+                test: function() {
+                    try{
+                      var name = 'PersistJS Test',
+                        desc = 'Persistent database test.';
+                        if (!window.openDatabase)
+                            return false;
+                        if (!window.openDatabase(name, C.sql.version, desc, B.whatwg_db.size))
+                            return false;
+                        return true;
+                    }catch(e){
+                      return false;
+                    }
+                    
+                },
+                methods: {
+                    transaction: function(fn) {
+                        if (!this.db_created) {
+                            this.db.transaction(function(t) {
+                                t.executeSql(C.sql.create, [], function() {
+                                    this.db_created = true;
+                                });
+                            }, empty);
+                        }
+                        this.db.transaction(fn);
+                    },
+                    init: function() {
+                        this.db = openDatabase(this.name, C.sql.version, this.o.about || ("Persistent storage for " + this.name), this.o.size || B.whatwg_db.size);
+                    },
+                    get: function(key, fn, scope) {
+                        var sql = C.sql.get;
+                        if (!fn)
+                            return;
+                        scope = scope || this;
+                        this.transaction(function(t) {
+                            t.executeSql(sql, [key], function(t, r) {
+                                if (r.rows.length > 0)
+                                    fn.call(scope, true, r.rows.item(0)['v']);
+                                else
+                                    fn.call(scope, false, null);
+                            });
+                        });
+                    },
+                    set: function(key, val, fn, scope) {
+                        var rm_sql = C.sql.remove,
+                            sql = C.sql.set;
+                        this.transaction(function(t) {
+                            t.executeSql(rm_sql, [key], function() {
+                                t.executeSql(sql, [key, val], function(t, r) {
+                                    if (fn)
+                                        fn.call(scope || this, true, val);
+                                });
+                            });
+                        });
+                        return val;
+                    },
+                    remove: function(key, fn, scope) {
+                        var get_sql = C.sql.get;
+                        sql = C.sql.remove;
+                        this.transaction(function(t) {
+                            if (fn) {
+                                t.executeSql(get_sql, [key], function(t, r) {
+                                    if (r.rows.length > 0) {
+                                        var val = r.rows.item(0)['v'];
+                                        t.executeSql(sql, [key], function(t, r) {
+                                            fn.call(scope || this, true, val);
+                                        });
+                                    } else {
+                                        fn.call(scope || this, false, null);
+                                    }
+                                });
+                            } else {
+                                t.executeSql(sql, [key]);
+                            }
+                        });
+                    }
+                }
+            },
+            globalstorage: {
+                size: 5 * 1024 * 1024,
+                test: function() {
+                    try{
+                      return window.globalStorage ? true : false;
+                    }catch(e){
+                      return false;
+                    }
+                },
+                methods: {
+                    key: function(key) {
+                        return esc(this.name) + esc(key);
+                    },
+                    init: function() {
+                        alert('domain = ' + this.o.domain);
+                        this.store = globalStorage[this.o.domain];
+                    },
+                    get: function(key, fn, scope) {
+                        key = this.key(key);
+                        if (fn)
+                            fn.call(scope || this, true, this.store.getItem(key));
+                    },
+                    set: function(key, val, fn, scope) {
+                        key = this.key(key);
+                        this.store.setItem(key, val);
+                        if (fn)
+                            fn.call(scope || this, true, val);
+                    },
+                    remove: function(key, fn, scope) {
+                        var val;
+                        key = this.key(key);
+                        val = this.store[key];
+                        this.store.removeItem(key);
+                        if (fn)
+                            fn.call(scope || this, (val !== null), val);
+                    }
+                }
+            },
+            localstorage: {
+                size: -1,
+                test: function() {
+                    try{
+                        return window.localStorage ? true : false;
+                    }catch(e){
+                        return false;
+                    }
+                    
+                },
+                methods: {
+                    key: function(key) {
+                        return esc(this.name) + esc(key);
+                    },
+                    init: function() {
+                        this.store = localStorage;
+                    },
+                    get: function(key, fn, scope) {
+                        key = this.key(key);
+                        if (fn)
+                            fn.call(scope || this, true, this.store.getItem(key));
+                    },
+                    set: function(key, val, fn, scope) {
+                        key = this.key(key);
+                        this.store.setItem(key, val);
+                        if (fn)
+                            fn.call(scope || this, true, val);
+                    },
+                    remove: function(key, fn, scope) {
+                        var val;
+                        key = this.key(key);
+                        val = this.store.getItem(key);
+                        this.store.removeItem(key);
+                        if (fn)
+                            fn.call(scope || this, (val !== null), val);
+                    }
+                }
+            },
+            ie: {
+                prefix: '_persist_data-',
+                size: 64 * 1024,
+                test: function() {
+                    try{
+                        return window.ActiveXObject ? true : false;
+                    }catch(e){
+                        return false;
+                    }
+                    
+                },
+                make_userdata: function(id) {
+                    var el = document.createElement('div');
+                    el.id = id;
+                    el.style.display = 'none';
+                    el.addBehavior('#default#userdata');
+                    document.body.appendChild(el);
+                    return el;
+                },
+                methods: {
+                    init: function() {
+                        var id = B.ie.prefix + esc(this.name);
+                        this.el = B.ie.make_userdata(id);
+                        if (this.o.defer)
+                            this.load();
+                    },
+                    get: function(key, fn, scope) {
+                        var val;
+                        key = esc(key);
+                        if (!this.o.defer)
+                            this.load();
+                        val = this.el.getAttribute(key);
+                        if (fn)
+                            fn.call(scope || this, val ? true : false, val);
+                    },
+                    set: function(key, val, fn, scope) {
+                        key = esc(key);
+                        this.el.setAttribute(key, val);
+                        if (!this.o.defer)
+                            this.save();
+                        if (fn)
+                            fn.call(scope || this, true, val);
+                    },
+                    remove: function(key, fn, scope) {
+                        var val;
+                        key = esc(key);
+                        if (!this.o.defer)
+                            this.load();
+                        val = this.el.getAttribute(key);
+                        this.el.removeAttribute(key);
+                        if (!this.o.defer)
+                            this.save();
+                        if (fn)
+                            fn.call(scope || this, val ? true : false, val);
+                    },
+                    load: function() {
+                        this.el.load(esc(this.name));
+                    },
+                    save: function() {
+                        this.el.save(esc(this.name));
+                    }
+                }
+            },
+            cookie: {
+                delim: ':',
+                size: 4000,
+                test: function() {
+                    try{
+                        return P.Cookie.enabled ? true : false;
+                    }catch(e){
+                        return false;
+                    }
+                    
+                },
+                methods: {
+                    key: function(key) {
+                        return this.name + B.cookie.delim + key;
+                    },
+                    get: function(key, fn, scope) {
+                        var val;
+                        key = this.key(key);
+                        val = ec.get(key);
+                        if (fn)
+                            fn.call(scope || this, val != null, val);
+                    },
+                    set: function(key, val, fn, scope) {
+                        key = this.key(key);
+                        ec.set(key, val, this.o);
+                        if (fn)
+                            fn.call(scope || this, true, val);
+                    },
+                    remove: function(key, val, fn, scope) {
+                        var val;
+                        key = this.key(key);
+                        val = ec.remove(key)
+                        if (fn)
+                            fn.call(scope || this, val != null, val);
+                    }
+                }
+            },
+            flash: {
+                test: function() {
+                    try{
+                        if (!deconcept || !deconcept.SWFObjectUtil)
+                        return false;
+                        var major = deconcept.SWFObjectUtil.getPlayerVersion().major;
+                        return (major >= 8) ? true : false;
+                    }catch(e){
+                        return false;
+                    }
+                    
+                },
+                methods: {
+                    init: function() {
+                        if (!B.flash.el) {
+                            var o, key, el, cfg = C.flash;
+                            el = document.createElement('div');
+                            el.id = cfg.div_id;
+                            document.body.appendChild(el);
+                            o = new deconcept.SWFObject(this.o.swf_path || cfg.path, cfg.id, cfg.size.w, cfg.size.h, '8');
+                            for (key in cfg.args)
+                                o.addVariable(key, cfg.args[key]);
+                            o.write(el);
+                            B.flash.el = document.getElementById(cfg.id);
+                        }
+                        this.el = B.flash.el;
+                    },
+                    get: function(key, fn, scope) {
+                        var val;
+                        key = esc(key);
+                        val = this.el.get(this.name, key);
+                        if (fn)
+                            fn.call(scope || this, val !== null, val);
+                    },
+                    set: function(key, val, fn, scope) {
+                        var old_val;
+                        key = esc(key);
+                        old_val = this.el.set(this.name, key, val);
+                        if (fn)
+                            fn.call(scope || this, true, val);
+                    },
+                    remove: function(key, fn, scope) {
+                        var val;
+                        key = esc(key);
+                        val = this.el.remove(this.name, key);
+                        if (fn)
+                            fn.call(scope || this, true, val);
+                    }
+                }
+            }
+        };
+        var init = function() {
+            var i, l, b, key, fns = C.methods,
+                keys = C.search_order;
+            for (i = 0, l = fns.length; i < l; i++)
+                P.Store.prototype[fns[i]] = empty;
+            P.type = null;
+            P.size = -1;
+            for (i = 0, l = keys.length; !P.type && i < l; i++) {
+                b = B[keys[i]];
+                if (b.test()) {
+                    P.type = keys[i];
+                    P.size = b.size;
+                    for (key in b.methods)
+                        P.Store.prototype[key] = b.methods[key];
+                }
+            }
+            P._init = true;
+        };
+        P = {
+            VERSION: VERSION,
+            type: null,
+            size: 0,
+            add: function(o) {
+                B[o.id] = o;
+                C.search_order = [o.id].concat(C.search_order);
+                init();
+            },
+            remove: function(id) {
+                var ofs = index_of(C.search_order, id);
+                if (ofs < 0)
+                    return;
+                C.search_order.splice(ofs, 1);
+                delete B[id];
+                init();
+            },
+            Cookie: ec,
+            Store: function(name, o) {
+                if (!C.name_re.exec(name))
+                    throw new Error("Invalid name");
+                if (!P.type)
+                    throw new Error("No suitable storage found");
+                o = o || {};
+                this.name = name;
+                o.domain = o.domain || location.host || 'localhost';
+                o.domain = o.domain.replace(/:\d+$/, '')
+                this.o = o;
+                o.expires = o.expires || 365 * 2;
+                o.path = o.path || '/';
+                this.init();
+            }
+        };
+        init();
+        return P;
+    })();
+    //persist-min end
+
+    //swfobject-min start
+
+    if (typeof deconcept == "undefined") var deconcept = new Object();
+    if (typeof deconcept.util == "undefined") deconcept.util = new Object();
+    if (typeof deconcept.SWFObjectUtil == "undefined") deconcept.SWFObjectUtil = new Object();
+    deconcept.SWFObject = function(swf, id, w, h, ver, c, quality, xiRedirectUrl, redirectUrl, detectKey) {
+        if (!document.getElementById) {
+            return;
+        }
+        this.DETECT_KEY = detectKey ? detectKey : 'detectflash';
+        this.skipDetect = deconcept.util.getRequestParameter(this.DETECT_KEY);
+        this.params = new Object();
+        this.variables = new Object();
+        this.attributes = new Array();
+        if (swf) {
+            this.setAttribute('swf', swf);
+        }
+        if (id) {
+            this.setAttribute('id', id);
+        }
+        if (w) {
+            this.setAttribute('width', w);
+        }
+        if (h) {
+            this.setAttribute('height', h);
+        }
+        if (ver) {
+            this.setAttribute('version', new deconcept.PlayerVersion(ver.toString().split(".")));
+        }
+        this.installedVer = deconcept.SWFObjectUtil.getPlayerVersion();
+        if (!window.opera && document.all && this.installedVer.major > 7) {
+            deconcept.SWFObject.doPrepUnload = true;
+        }
+        if (c) {
+            this.addParam('bgcolor', c);
+        }
+        var q = quality ? quality : 'high';
+        this.addParam('quality', q);
+        this.setAttribute('useExpressInstall', false);
+        this.setAttribute('doExpressInstall', false);
+        var xir = (xiRedirectUrl) ? xiRedirectUrl : window.location;
+        this.setAttribute('xiRedirectUrl', xir);
+        this.setAttribute('redirectUrl', '');
+        if (redirectUrl) {
+            this.setAttribute('redirectUrl', redirectUrl);
+        }
+    }
+    deconcept.SWFObject.prototype = {
+        useExpressInstall: function(path) {
+            this.xiSWFPath = !path ? "expressinstall.swf" : path;
+            this.setAttribute('useExpressInstall', true);
         },
-        remove: function () {
-          $fh._persist.remove(p.key, function (ok, val) {
-            ok ? s({
-              key: p.key,
-              val: val
-            }) : s({
-              key: p.key,
-              val: null
-            });
-          });
-        }
-      };
-
-      acts[p.act] ? acts[p.act]() : f('data_badact', p);
-    },
-    log: function (p, s, f) {
-      typeof console === "undefined" ? f('log_nosupport') : console.log(p.message);
-    },
-    ori: function (p, s, f) {
-      if (typeof p.act == "undefined" || p.act == "listen") {
-        if (eventSupported('onorientationchange')) {
-          window.addEventListener('orientationchange', s, false);
-        } else {
-          f('ori_nosupport', {}, p);
-        }
-      } else if (p.act == "set") {
-        if (!p.value) {
-          f('ori_no_value', {}, p);
-          return;
-        }
-        if (p.value == "portrait") {
-          document.getElementsByTagName("body")[0].style['-moz-transform'] = "";
-          document.getElementsByTagName("body")[0].style['-webkit-transform'] = "";
-          s({orientation: 'portrait'});
-        } else {
-          document.getElementsByTagName("body")[0].style['-moz-transform'] = 'rotate(90deg)';
-          document.getElementsByTagName("body")[0].style['-webkit-transform'] = 'rotate(90deg)';
-          s({orientation: 'landscape'});
-        }
-      } else {
-        f('ori_badact', {}, p);
-      }
-    },
-    map: function (p, s, f) {
-      if (!p.target) {
-        f('map_notarget', {}, p);
-        return;
-      }
-      if (!p.lat) {
-        f('map_nolatitude', {}, p);
-        return;
-      }
-      if (!p.lon) {
-        f('map_nologitude', {}, p);
-        return;
-      }
-      var target = p.target;
-      if (typeof target === "string") {
-        var target_dom = null;
-        if (typeof jQuery != "undefined") {
-          try {
-            var jq_obj = jQuery(target);
-            if (jq_obj.length > 0) {
-              target_dom = jq_obj[0];
+        setAttribute: function(name, value) {
+            this.attributes[name] = value;
+        },
+        getAttribute: function(name) {
+            return this.attributes[name];
+        },
+        addParam: function(name, value) {
+            this.params[name] = value;
+        },
+        getParams: function() {
+            return this.params;
+        },
+        addVariable: function(name, value) {
+            this.variables[name] = value;
+        },
+        getVariable: function(name) {
+            return this.variables[name];
+        },
+        getVariables: function() {
+            return this.variables;
+        },
+        getVariablePairs: function() {
+            var variablePairs = new Array();
+            var key;
+            var variables = this.getVariables();
+            for (key in variables) {
+                variablePairs.push(key + "=" + variables[key]);
             }
-          } catch (e) {
-            target_dom = null;
-          }
-        }
-        if (null == target_dom) {
-          target_dom = document.getElementById(target);
-        }
-        target = target_dom;
-      }
-      else if (typeof target === "object") {
-        if (target.nodeType === 1 && typeof target.nodeName === "string") {
-          // A DOM Element, do nothing
-        } else {
-          //A jQuery node
-          target = target[0];
-        }
-      }
-      else {
-        target = null;
-      }
-
-      if (!target) {
-        f('map_nocontainer', {}, p);
-        return;
-      }
-      $fh._mapLoaded = function () {
-        var fMap;
-        while (fMap = mapFuncs.pop()) {
-          fMap();
-        }
-      };
-      mapFuncs.push(function () {
-        var mapOptions = {};
-        mapOptions.zoom = p.zoom ? p.zoom : 8;
-        mapOptions.center = new google.maps.LatLng(p.lat, p.lon);
-        mapOptions.mapTypeId = google.maps.MapTypeId.ROADMAP;
-        var map = new google.maps.Map(target, mapOptions);
-        s({
-          map: map
-        });
-      });
-      _mapScriptLoaded = (typeof google != "undefined") && (typeof google.maps != "undefined") && (typeof google.maps.Map != "undefined");
-      if (!_mapScriptLoaded) {
-        _loadMapScript();
-        //after 20 secs, if the map script is still not loaded, run the fail function
-        setTimeout(function () {
-          _mapScriptLoaded = (typeof google != "undefined") && (typeof google.maps != "undefined") && (typeof google.maps.Map != "undefined");
-          if (!_mapScriptLoaded) {
-            f('map_timeout', {}, p);
-          }
-        }, 20000);
-      } else {
-        $fh._mapLoaded();
-      }
-    },
-    audio: function (p, s, f) {
-      if (!audio_obj == null && p.act == "play" && (!p.path || p.path == "")) {
-        f('no_audio_path');
-        return;
-      }
-      var acts = {
-        'play': function () {
-          if (null == audio_obj) {
-            audio_obj = document.createElement("audio");
-            if (!((audio_obj.play) ? true : false)) {
-              f('audio_not_support');
-              return;
-            }
-            if (p.type) {
-              var canplay = audio_obj.canPlayType(p.type);
-              if (canplay == "no" || canplay == "") {
-                f("audio_type_not_supported");
-                return;
-              }
-            }
-            audio_obj.src = p.path;
-            if (p.controls) {
-              audio_obj.controls = "controls";
-            }
-            if (p.autoplay) {
-              audio_obj.autoplay = "autoplay";
-            }
-            if (p.loop) {
-              audio_obj.loop = "loop";
-            }
-            document.body.appendChild(audio_obj);
-            audio_obj.play();
-            audio_is_playing = true;
-            s();
-          } else {
-            //playing a new audio
-            if (p.path && (p.path != audio_obj.src)) {
-              if (audio_is_playing) {
-                acts['stop'](true);
-              }
-              acts['play']();
+            return variablePairs;
+        },
+        getSWFHTML: function() {
+            var swfNode = "";
+            if (navigator.plugins && navigator.mimeTypes && navigator.mimeTypes.length) {
+                if (this.getAttribute("doExpressInstall")) {
+                    this.addVariable("MMplayerType", "PlugIn");
+                    this.setAttribute('swf', this.xiSWFPath);
+                }
+                swfNode = '<embed type="application/x-shockwave-flash" src="' + this.getAttribute('swf') + '" width="' + this.getAttribute('width') + '" height="' + this.getAttribute('height') + '"';
+                swfNode += ' id="' + this.getAttribute('id') + '" name="' + this.getAttribute('id') + '" ';
+                var params = this.getParams();
+                for (var key in params) {
+                    swfNode += [key] + '="' + params[key] + '" ';
+                }
+                var pairs = this.getVariablePairs().join("&");
+                if (pairs.length > 0) {
+                    swfNode += 'flashvars="' + pairs + '"';
+                }
+                swfNode += '/>';
             } else {
-              //resume the existing audio
-              if (!audio_is_playing) {
-                audio_obj.play();
-                audio_is_playing = true;
-                s();
-              }
+                if (this.getAttribute("doExpressInstall")) {
+                    this.addVariable("MMplayerType", "ActiveX");
+                    this.setAttribute('swf', this.xiSWFPath);
+                }
+                swfNode = '<object id="' + this.getAttribute('id') + '" classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000" width="' + this.getAttribute('width') + '" height="' + this.getAttribute('height') + '">';
+                swfNode += '<param name="movie" value="' + this.getAttribute('swf') + '" />';
+                var params = this.getParams();
+                for (var key in params) {
+                    swfNode += '<param name="' + key + '" value="' + params[key] + '" />';
+                }
+                var pairs = this.getVariablePairs().join("&");
+                if (pairs.length > 0) {
+                    swfNode += '<param name="flashvars" value="' + pairs + '" />';
+                }
+                swfNode += "</object>";
             }
-          }
+            return swfNode;
         },
-
-        'pause': function () {
-          if (null != audio_obj && audio_is_playing) {
-            if (typeof audio_obj.pause == "function") {
-              audio_obj.pause();
-            } else if (typeof audio_obj.stop == "function") {
-              audio_obj.stop();
+        write: function(elementId) {
+            if (this.getAttribute('useExpressInstall')) {
+                var expressInstallReqVer = new deconcept.PlayerVersion([6, 0, 65]);
+                if (this.installedVer.versionIsValid(expressInstallReqVer) && !this.installedVer.versionIsValid(this.getAttribute('version'))) {
+                    this.setAttribute('doExpressInstall', true);
+                    this.addVariable("MMredirectURL", escape(this.getAttribute('xiRedirectUrl')));
+                    document.title = document.title.slice(0, 47) + " - Flash Player Installation";
+                    this.addVariable("MMdoctitle", document.title);
+                }
             }
-            audio_is_playing = false;
-            s();
-          } else {
-            f('no_audio_playing');
-          }
-        },
-
-        'stop': function (nocallback) {
-          if (null != audio_obj) {
-            if (typeof audio_obj.stop == "function") {
-              audio_obj.stop();
-            } else if (typeof audio_obj.pause == "function") {
-              audio_obj.pause();
+            if (this.skipDetect || this.getAttribute('doExpressInstall') || this.installedVer.versionIsValid(this.getAttribute('version'))) {
+                var n = (typeof elementId == 'string') ? document.getElementById(elementId) : elementId;
+                n.innerHTML = this.getSWFHTML();
+                return true;
+            } else {
+                if (this.getAttribute('redirectUrl') != "") {
+                    document.location.replace(this.getAttribute('redirectUrl'));
+                }
             }
-            document.body.removeChild(audio_obj);
-            audio_obj = null;
-            audio_is_playing = false;
-            if (!nocallback) {
-              s();
-            }
-          } else {
-            f('no_audio');
-          }
+            return false;
         }
-      }
-
-      acts[p.act] ? acts[p.act]() : f('data_badact', p);
-    },
-    webview: function (p, s, f) {
-      f('webview_nosupport');
-    },
-
-    ready: function (p, s, f) {
-      __bind_ready();
-      if (__is_ready) {
-        s.apply(document, []);
-      } else {
-        __ready_list.push(s);
-      }
     }
-  }
-
-  //Overriding $fh.ready if the app is on-device.
-  if(window.PhoneGap || window.cordova){
-    $fh._readyCallbacks = [];
-    $fh._readyState = false;
-    $fh.__dest__.ready = function (p, s, f) {
-      if ($fh._readyState) {
-        try {
-          s();
-        } catch (e) {
-          console.log("Error during $fh.ready. Skip. Error = " + e.message);
+    deconcept.SWFObjectUtil.getPlayerVersion = function() {
+        var PlayerVersion = new deconcept.PlayerVersion([0, 0, 0]);
+        if (navigator.plugins && navigator.mimeTypes.length) {
+            var x = navigator.plugins["Shockwave Flash"];
+            if (x && x.description) {
+                PlayerVersion = new deconcept.PlayerVersion(x.description.replace(/([a-zA-Z]|\s)+/, "").replace(/(\s+r|\s+b[0-9]+)/, ".").split("."));
+            }
+        } else {
+            try {
+                var axo = new ActiveXObject("ShockwaveFlash.ShockwaveFlash.7");
+            } catch (e) {
+                try {
+                    var axo = new ActiveXObject("ShockwaveFlash.ShockwaveFlash.6");
+                    PlayerVersion = new deconcept.PlayerVersion([6, 0, 21]);
+                    axo.AllowScriptAccess = "always";
+                } catch (e) {
+                    if (PlayerVersion.major == 6) {
+                        return PlayerVersion;
+                    }
+                }
+                try {
+                    axo = new ActiveXObject("ShockwaveFlash.ShockwaveFlash");
+                } catch (e) {}
+            }
+            if (axo != null) {
+                PlayerVersion = new deconcept.PlayerVersion(axo.GetVariable("$version").split(" ")[1].split(","));
+            }
         }
-      } else {
-        $fh._readyCallbacks.push(s);
-      }
+        return PlayerVersion;
+    }
+    deconcept.PlayerVersion = function(arrVersion) {
+        this.major = arrVersion[0] != null ? parseInt(arrVersion[0]) : 0;
+        this.minor = arrVersion[1] != null ? parseInt(arrVersion[1]) : 0;
+        this.rev = arrVersion[2] != null ? parseInt(arrVersion[2]) : 0;
+    }
+    deconcept.PlayerVersion.prototype.versionIsValid = function(fv) {
+        if (this.major < fv.major) return false;
+        if (this.major > fv.major) return true;
+        if (this.minor < fv.minor) return false;
+        if (this.minor > fv.minor) return true;
+        if (this.rev < fv.rev) return false;
+        return true;
+    }
+    deconcept.util = {
+        getRequestParameter: function(param) {
+            var q = document.location.search || document.location.hash;
+            if (q) {
+                var pairs = q.substring(1).split("&");
+                for (var i = 0; i < pairs.length; i++) {
+                    if (pairs[i].substring(0, pairs[i].indexOf("=")) == param) {
+                        return pairs[i].substring((pairs[i].indexOf("=") + 1));
+                    }
+                }
+            }
+            return "";
+        }
+    }
+    deconcept.SWFObjectUtil.cleanupSWFs = function() {
+        var objects = document.getElementsByTagName("OBJECT");
+        for (var i = 0; i < objects.length; i++) {
+            objects[i].style.display = 'none';
+            for (var x in objects[i]) {
+                if (typeof objects[i][x] == 'function') {
+                    objects[i][x] = function() {};
+                }
+            }
+        }
+    }
+    if (deconcept.SWFObject.doPrepUnload) {
+        deconcept.SWFObjectUtil.prepUnload = function() {
+            __flash_unloadHandler = function() {};
+            __flash_savedUnloadHandler = function() {};
+            window.attachEvent("onunload", deconcept.SWFObjectUtil.cleanupSWFs);
+        }
+        window.attachEvent("onbeforeunload", deconcept.SWFObjectUtil.prepUnload);
+    }
+    if (Array.prototype.push == null) {
+        Array.prototype.push = function(item) {
+            this[this.length] = item;
+            return this.length;
+        }
+    }
+    var getQueryParamValue = deconcept.util.getRequestParameter;
+    var FlashObject = deconcept.SWFObject;
+    var SWFObject = deconcept.SWFObject;
+    //swfobject-min end
+
+    //!!!lib end!!!
+
+    var $fh = root.$fh || {};
+    if (typeof fh_app_props === "object") {
+        $fh.app_props = fh_app_props;
+    }
+
+    $fh.legacy = {};
+
+    var defaultargs = {
+        success: function() {},
+        failure: function() {},
+        params: {}
     };
-  }
 
-  $fh.send = function () {
-    handleargs(arguments, {
-      type: 'email'
-    }, $fh.__dest__.send);
-  }
+    var handleargs = function(inargs, defaultparams, applyto) {
+        var outargs = [null, null, null];
+        var origargs = [null, null, null];
+        var numargs = inargs.length;
 
-  $fh.notify = function () {
-    handleargs(arguments, {
-      type: 'vibrate'
-    }, $fh.__dest__.notify);
-  }
+        if (2 < numargs) {
+            origargs[0] = inargs[numargs - 3];
+            origargs[1] = inargs[numargs - 2];
+            origargs[2] = inargs[numargs - 1];
+        } else if (2 == numargs) {
+            origargs[1] = inargs[0];
+            origargs[2] = inargs[1];
+        } else if (1 == numargs) {
+            origargs[2] = inargs[0];
+        }
 
-  $fh.contacts = function () {
-    handleargs(arguments, {
-      act: 'list'
-    }, $fh.__dest__.contacts);
-  }
-
-  $fh.acc = function () {
-    handleargs(arguments, {
-      act: 'register',
-      interval: 0
-    }, $fh.__dest__.acc);
-  }
-
-  $fh.geo = function () {
-    handleargs(arguments, {
-      act: 'register',
-      interval: 0
-    }, $fh.__dest__.geo);
-  }
-
-  $fh.cam = function () {
-    handleargs(arguments, {
-      act: 'picture'
-    }, $fh.__dest__.cam);
-  }
-
-  $fh.data = function () {
-    handleargs(arguments, {
-      act: 'load'
-    }, $fh.__dest__.data);
-  }
-
-  $fh.log = function () {
-    handleargs(arguments, {
-      message: 'none'
-    }, $fh.__dest__.log);
-  }
-
-  $fh.device = function () {
-    handleargs(arguments, {}, $fh.__dest__.device);
-  }
-
-  $fh.listen = function () {
-    handleargs(arguments, {
-      act: 'add'
-    }, $fh.__dest__.listen);
-  }
-
-  $fh.ori = function () {
-    handleargs(arguments, {}, $fh.__dest__.ori);
-  }
-
-  $fh.map = function () {
-    handleargs(arguments, {}, $fh.__dest__.map);
-  }
-
-  $fh.audio = function () {
-    handleargs(arguments, {}, $fh.__dest__.audio);
-  }
-
-  $fh.webview = function () {
-    handleargs(arguments, {}, $fh.__dest__.webview);
-  }
-
-  $fh.ready = function () {
-    handleargs(arguments, {}, $fh.__dest__.ready);
-  };
-
-  $fh.handlers = function () {
-    handleargs(arguments, {
-      type: 'back'
-    }, $fh.__dest__.handlers);
-  };
-
-  $fh.file = function () {
-    handleargs(arguments, {
-      act: 'upload'
-    }, $fh.__dest__.file);
-  };
-
-  $fh.push = function () {
-    handleargs(arguments, {}, $fh.__dest__.push);
-  };
-
-  // new functions
-  $fh.env = function () {
-    handleargs(arguments, {}, function (p, s, f) {
-      // flat property set - no sub objects!
-      $fh.__dest__.env({}, function (destEnv) {
-        destEnv.application = $fh.app_props.appid;
-        destEnv.agent = navigator.userAgent || 'unknown';
-        s(destEnv);
-      });
-    });
-  }
-
-  $fh.device = function () {
-    handleargs(arguments, {}, function (p, s, f) {
-
-    });
-  }
-
-
-  // defaults:
-  //    {act:'get'} -> {geoip:{...}}
-  //  failures: geoip_badact
-  //
-  $fh.geoip = function () {
-    handleargs(arguments, {
-      act: 'get'
-    }, function (p, s, f) {
-      if ('get' == p.act) {
-        var data = {instance: $fh.app_props.appid, domain: $fh.cloud_props.domain}
-        $fh.__ajax({
-          "url": _getHostPrefix() + "act/wid/geoip/resolve",
-          "type": "POST",
-          "data": JSON.stringify(data),
-          "success": function (res) {
-            // backwards compat
-            for (var n in res.geoip) {
-              res[n] = res['geoip'][n];
+        var i = 0,
+            j = 0;
+        for (; i < 3; i++) {
+            var a = origargs[i];
+            var ta = typeof a;
+            //console.log('iter i:'+i+' j:'+j+' ta:'+ta);
+            if (a && 0 == j && ('object' == ta || 'boolean' == ta)) {
+                //console.log('object i:'+i+' j:'+j+' ta:'+ta);
+                outargs[j++] = a;
+            } else if (a && 'function' == ta) {
+                j = 0 == j ? 1 : j;
+                //console.log('function i:'+i+' j:'+j+' ta:'+ta);
+                outargs[j++] = a;
             }
-            s(res);
-          }
-        });
-      } else {
-        f('geoip_badact', p);
-      }
-    });
-  };
-
-  $fh.web = function (p, s, f) {
-    handleargs(arguments, {
-      method: 'GET'
-    }, function (p, s, f) {
-      if (!p.url) {
-        f('bad_url');
-      }
-
-      if (p.is_local) {
-        $fh.__ajax({
-          url: p.url,
-          type: "GET",
-          dataType: "html",
-          //xhr: $fh.xhr,
-          success: function (data) {
-            var res = {};
-            res.status = 200;
-            res.body = data;
-            s(res);
-          },
-          error: function () {
-            f();
-          }
-        })
-      } else {
-        $fh.__ajax({
-          "url": _getHostPrefix() + "act/wid/web",
-          "type": "POST",
-          "data": JSON.stringify(p),
-          "success": function (res) {
-            s(res);
-          }
-        });
-      }
-    });
-  };
-
-  $fh.__webview_win = undefined;
-  $fh.__dest__.webview = function (p, s, f) {
-    if (!('act' in p) || p.act === 'open') {
-      if (!p.url) {
-        f('no_url');
-        return;
-      }
-      var old_url = p.url;
-      $fh.__webview_win = window.open(p.url, '_blank');
-      s("opened");
-    } else {
-      if (p.act === 'close') {
-        if (typeof $fh.__webview_win != 'undefined') {
-          $fh.__webview_win.close();
-          $fh.__webview_win = undefined;
         }
-        s("closed");
-      }
+
+        if (null == outargs[0]) {
+            outargs[0] = defaultparams ? defaultparams : defaultargs.params;
+        } else {
+            var paramsarg = outargs[0];
+            paramsarg._defaults = [];
+            for (var n in defaultparams) {
+                if (defaultparams.hasOwnProperty(n)) {
+                    if (typeof paramsarg[n] === "undefined") { //we don't want to use !paramsarg[n] here because the parameter could exists in the argument and it could be false
+                        paramsarg[n] = defaultparams[n];
+                        paramsarg._defaults.push(n);
+                    }
+                }
+            }
+        }
+
+        outargs[1] = null == outargs[1] ? defaultargs.success : outargs[1];
+        outargs[2] = null == outargs[2] ? defaultargs.failure : outargs[2];
+
+        applyto(outargs[0], outargs[1], outargs[2]);
     }
-  };
 
-  $fh.__dest__.geo = function (p, s, f) {
-    if (typeof navigator.geolocation != 'undefined') {
-      if (!p.act || p.act == "register") {
-        if ($fh.__dest__._geoWatcher) {
-          f('geo_inuse', {}, p);
-          return;
-        }
-        if (p.interval == 0) {
-          navigator.geolocation.getCurrentPosition(function (position) {
-            var coords = position.coords;
-            var resdata = {
-              lon: coords.longitude,
-              lat: coords.latitude,
-              alt: coords.altitude,
-              acc: coords.accuracy,
-              head: coords.heading,
-              speed: coords.speed,
-              when: position.timestamp
-            };
-            s(resdata);
-          }, function () {
-            f('error_geo', {}, p);
-          })
-        }
-        ;
-        if (p.interval > 0) {
-          var internalWatcher = navigator.geolocation.watchPosition(function (position) {
-            var coords = position.coords;
-            var resdata = {
-              lon: coords.longitude,
-              lat: coords.latitude,
-              alt: coords.altitude,
-              acc: coords.accuracy,
-              head: coords.heading,
-              speed: coords.speed,
-              when: position.timestamp
-            };
-            s(resdata);
-          }, function () {
-            f('error_geo', {}, p);
-          }, {
-            frequency: p.interval
-          });
-          $fh.__dest__._geoWatcher = internalWatcher;
-        }
-        ;
-      } else if (p.act == "unregister") {
-        if ($fh.__dest__._geoWatcher) {
-          navigator.geolocation.clearWatch($fh.__dest__._geoWatcher);
-          $fh.__dest__._geoWatcher = undefined;
-        }
-        ;
-        s();
-      } else {
-        f('geo_badact', {}, p);
-      }
-    } else {
-      f('geo_nosupport', {}, p);
+    var eventSupported = function(event) {
+        var element = document.createElement('i');
+        return event in element || element.setAttribute && element.setAttribute(event, "return;") || false;
     }
-  };
 
-  $fh.__dest__.acc = function (p, s, f) {
-    s({ x: (Math.random() * 4) - 2, y: (Math.random() * 4) - 2, z: (Math.random() * 4) - 2, when: new Date().getTime() });
-  }
+    var __is_ready = false;
+    var __ready_list = [];
+    var __ready_bound = false;
+    var boxprefix = "/box/srv/1.1/";
 
-  root.$fh = $fh;
+    _getHostPrefix = function() {
+        return $fh.app_props.host + boxprefix;
+    }
+
+    var __ready = function() {
+        if (!__is_ready) {
+            __is_ready = true;
+            if (__ready_list) {
+                try {
+                    while (__ready_list[0]) {
+                        __ready_list.shift().apply(document, []);
+                    }
+
+                } finally {
+
+                }
+                __ready_list = null;
+            }
+        }
+    };
+
+    var __bind_ready = function() {
+        if (__ready_bound) return;
+        __ready_bound = true;
+
+        // Mozilla, Opera and webkit nightlies currently support this event
+        if (document.addEventListener) {
+            // Use the handy event callback
+            document.addEventListener("DOMContentLoaded", function() {
+                document.removeEventListener("DOMContentLoaded", arguments.callee, false);
+                __ready();
+            }, false);
+
+            window.addEventListener("load", __ready, false);
+
+            // If IE event model is used
+        } else if (document.attachEvent) {
+            // ensure firing before onload,
+            // maybe late but safe also for iframes
+            document.attachEvent("onreadystatechange", function() {
+                if (document.readyState === "complete") {
+                    document.detachEvent("onreadystatechange", arguments.callee);
+                    __ready();
+                }
+            });
+
+            window.attachEvent("onload", __ready);
+
+            // If IE and not an iframe
+            // continually check to see if the document is ready
+            if (document.documentElement.doScroll && window == window.top)(function() {
+                if (__is_ready) return;
+
+                try {
+                    // If IE is used, use the trick by Diego Perini
+                    // http://javascript.nwbox.com/IEContentLoaded/
+                    document.documentElement.doScroll("left");
+                } catch (error) {
+                    setTimeout(arguments.callee, 0);
+                    return;
+                }
+
+                // and execute any waiting functions
+                __ready();
+            })();
+        }
+    };
+
+    __bind_ready();
+
+    // destination functions
+    var _mapScriptLoaded = (typeof google != "undefined") && (typeof google.maps != "undefined") && (typeof google.maps.Map != "undefined");
+    var _loadMapScript = function() {
+        var script = document.createElement("script");
+        script.type = "text/javascript";
+        var protocol = document.location.protocol;
+        protocol = (protocol === "http:" || protocol === "https:") ? protocol : "https:";
+        script.src = protocol + "//maps.google.com/maps/api/js?sensor=true&callback=$fh._mapLoaded";
+        document.body.appendChild(script);
+    };
+
+    var audio_obj = null;
+    var audio_is_playing = false;
+
+    $fh.__dest__ = {
+        send: function(p, s, f) {
+            f('send_nosupport');
+        },
+        notify: function(p, s, f) {
+            f('notify_nosupport');
+        },
+        contacts: function(p, s, f) {
+            f('contacts_nosupport');
+        },
+        acc: function(p, s, f) {
+            f('acc_nosupport');
+        },
+        geo: function(p, s, f) {
+            f('geo_nosupport');
+        },
+        cam: function(p, s, f) {
+            f('cam_nosupport');
+        },
+        device: function(p, s, f) {
+            f('device_nosupport');
+        },
+        listen: function(p, s, f) {
+            f('listen_nosupport');
+        },
+        handlers: function(p, s, f) {
+            f('handlers_no_support');
+        },
+        file: function(p, s, f) {
+            f('file_nosupport');
+        },
+        push: function(p, s, f) {
+            f('push_nosupport');
+        },
+        env: function(p, s, f) {
+            s({
+                height: window.innerHeight,
+                width: window.innerWidth
+            });
+        }
+
+        ,
+        data: function(p, s, f) {
+            if (!$fh._persist) {
+                $fh._persist = new Persist.Store('FH' + $fh.app_props.appid, {
+                    swf_path: '/static/c/start/swf/persist.swf'
+                });
+            }
+
+            if (!p.key) {
+                f('data_nokey');
+                return;
+            }
+
+            var acts = {
+                load: function() {
+                    $fh._persist.get(p.key, function(ok, val) {
+                        ok ? s({
+                            key: p.key,
+                            val: val
+                        }) : s({
+                            key: p.key,
+                            val: null
+                        });
+                    });
+                },
+                save: function() {
+                    if (!p.val) {
+                        f('data_noval');
+                        return;
+                    }
+                    try {
+                        $fh._persist.set(p.key, p.val);
+                    } catch (e) {
+                        f('data_error', {}, p);
+                        return;
+                    }
+                    s();
+                },
+                remove: function() {
+                    $fh._persist.remove(p.key, function(ok, val) {
+                        ok ? s({
+                            key: p.key,
+                            val: val
+                        }) : s({
+                            key: p.key,
+                            val: null
+                        });
+                    });
+                }
+            };
+
+            acts[p.act] ? acts[p.act]() : f('data_badact', p);
+        }
+
+        ,
+        log: function(p, s, f) {
+            typeof console === "undefined" ? f('log_nosupport') : console.log(p.message);
+        }
+
+        ,
+        ori: function(p, s, f) {
+            if (typeof p.act == "undefined" || p.act == "listen") {
+                if (eventSupported('onorientationchange')) {
+                    window.addEventListener('orientationchange', s, false);
+                } else {
+                    f('ori_nosupport', {}, p);
+                }
+            } else if (p.act == "set") {
+                if (!p.value) {
+                    f('ori_no_value', {}, p);
+                    return;
+                }
+                if (p.value == "portrait") {
+                    document.getElementsByTagName("body")[0].style['-moz-transform'] = "";
+                    document.getElementsByTagName("body")[0].style['-webkit-transform'] = "";
+                    s({
+                        orientation: 'portrait'
+                    });
+                } else {
+                    document.getElementsByTagName("body")[0].style['-moz-transform'] = 'rotate(90deg)';
+                    document.getElementsByTagName("body")[0].style['-webkit-transform'] = 'rotate(90deg)';
+                    s({
+                        orientation: 'landscape'
+                    });
+                }
+            } else {
+                f('ori_badact', {}, p);
+            }
+        }
+
+        ,
+        map: function(p, s, f) {
+            if (!p.target) {
+                f('map_notarget', {}, p);
+                return;
+            }
+            if (!p.lat) {
+                f('map_nolatitude', {}, p);
+                return;
+            }
+            if (!p.lon) {
+                f('map_nologitude', {}, p);
+                return;
+            }
+            var target = p.target;
+            if (typeof target === "string") {
+                var target_dom = null;
+                if (typeof jQuery != "undefined") {
+                    try {
+                        var jq_obj = jQuery(target);
+                        if (jq_obj.length > 0) {
+                            target_dom = jq_obj[0];
+                        }
+                    } catch (e) {
+                        target_dom = null;
+                    }
+                }
+                if (null == target_dom) {
+                    target_dom = document.getElementById(target);
+                }
+                target = target_dom;
+            } else if (typeof target === "object") {
+                if (target.nodeType === 1 && typeof target.nodeName === "string") {
+                    // A DOM Element, do nothing
+                } else {
+                    //A jQuery node
+                    target = target[0];
+                }
+            } else {
+                target = null;
+            }
+
+            if (!target) {
+                f('map_nocontainer', {}, p);
+                return;
+            }
+
+            if (!_mapScriptLoaded) {
+                $fh._mapLoaded = function() {
+                    _mapScriptLoaded = true;
+                    var mapOptions = {};
+                    mapOptions.zoom = p.zoom ? p.zoom : 8;
+                    mapOptions.center = new google.maps.LatLng(p.lat, p.lon);
+                    mapOptions.mapTypeId = google.maps.MapTypeId.ROADMAP;
+                    var map = new google.maps.Map(target, mapOptions);
+                    s({
+                        map: map
+                    });
+                };
+                _loadMapScript();
+                //after 20 secs, if the map script is still not loaded, run the fail function
+                setTimeout(function() {
+                    if (!_mapScriptLoaded) {
+                        f('map_timeout', {}, p);
+                    }
+                }, 20000);
+            } else {
+                var mapOptions = {};
+                mapOptions.zoom = p.zoom ? p.zoom : 8;
+                mapOptions.center = new google.maps.LatLng(p.lat, p.lon);
+                mapOptions.mapTypeId = google.maps.MapTypeId.ROADMAP;
+                var map = new google.maps.Map(target, mapOptions);
+                s({
+                    map: map
+                });
+            }
+        }
+
+        ,
+        audio: function(p, s, f) {
+            if (!audio_obj == null && p.act == "play" && (!p.path || p.path == "")) {
+                f('no_audio_path');
+                return;
+            }
+            var acts = {
+                'play': function() {
+                    if (null == audio_obj) {
+                        audio_obj = document.createElement("audio");
+                        if (!((audio_obj.play) ? true : false)) {
+                            f('audio_not_support');
+                            return;
+                        }
+                        if (p.type) {
+                            var canplay = audio_obj.canPlayType(p.type);
+                            if (canplay == "no" || canplay == "") {
+                                f("audio_type_not_supported");
+                                return;
+                            }
+                        }
+                        audio_obj.src = p.path;
+                        if (p.controls) {
+                            audio_obj.controls = "controls";
+                        }
+                        if (p.autoplay) {
+                            audio_obj.autoplay = "autoplay";
+                        }
+                        if (p.loop) {
+                            audio_obj.loop = "loop";
+                        }
+                        document.body.appendChild(audio_obj);
+                        audio_obj.play();
+                        audio_is_playing = true;
+                        s();
+                    } else {
+                        //playing a new audio
+                        if (p.path && (p.path != audio_obj.src)) {
+                            if (audio_is_playing) {
+                                acts['stop'](true);
+                            }
+                            acts['play']();
+                        } else {
+                            //resume the existing audio
+                            if (!audio_is_playing) {
+                                audio_obj.play();
+                                audio_is_playing = true;
+                                s();
+                            }
+                        }
+                    }
+                },
+
+                'pause': function() {
+                    if (null != audio_obj && audio_is_playing) {
+                        if (typeof audio_obj.pause == "function") {
+                            audio_obj.pause();
+                        } else if (typeof audio_obj.stop == "function") {
+                            audio_obj.stop();
+                        }
+                        audio_is_playing = false;
+                        s();
+                    } else {
+                        f('no_audio_playing');
+                    }
+                },
+
+                'stop': function(nocallback) {
+                    if (null != audio_obj) {
+                        if (typeof audio_obj.stop == "function") {
+                            audio_obj.stop();
+                        } else if (typeof audio_obj.pause == "function") {
+                            audio_obj.pause();
+                        }
+                        document.body.removeChild(audio_obj);
+                        audio_obj = null;
+                        audio_is_playing = false;
+                        if (!nocallback) {
+                            s();
+                        }
+                    } else {
+                        f('no_audio');
+                    }
+                }
+            }
+
+            acts[p.act] ? acts[p.act]() : f('data_badact', p);
+        }
+
+        ,
+        webview: function(p, s, f) {
+            f('webview_nosupport');
+        },
+
+        ready: function(p, s, f) {
+            __bind_ready();
+            if (__is_ready) {
+                s.apply(document, []);
+            } else {
+                __ready_list.push(s);
+            }
+        }
+    }
+
+    $fh.send = function() {
+        handleargs(arguments, {
+            type: 'email'
+        }, $fh.__dest__.send);
+    }
+
+    $fh.notify = function() {
+        handleargs(arguments, {
+            type: 'vibrate'
+        }, $fh.__dest__.notify);
+    }
+
+    $fh.contacts = function() {
+        handleargs(arguments, {
+            act: 'list'
+        }, $fh.__dest__.contacts);
+    }
+
+    $fh.acc = function() {
+        handleargs(arguments, {
+            act: 'register',
+            interval: 0
+        }, $fh.__dest__.acc);
+    }
+
+    $fh.geo = function() {
+        handleargs(arguments, {
+            act: 'register',
+            interval: 0
+        }, $fh.__dest__.geo);
+    }
+
+    $fh.cam = function() {
+        handleargs(arguments, {
+            act: 'picture'
+        }, $fh.__dest__.cam);
+    }
+
+    $fh.data = function() {
+        handleargs(arguments, {
+            act: 'load'
+        }, $fh.__dest__.data);
+    }
+
+    $fh.log = function() {
+        handleargs(arguments, {
+            message: 'none'
+        }, $fh.__dest__.log);
+    }
+
+    $fh.device = function() {
+        handleargs(arguments, {}, $fh.__dest__.device);
+    }
+
+    $fh.listen = function() {
+        handleargs(arguments, {
+            act: 'add'
+        }, $fh.__dest__.listen);
+    }
+
+    $fh.ori = function() {
+        handleargs(arguments, {}, $fh.__dest__.ori);
+    }
+
+    $fh.map = function() {
+        handleargs(arguments, {}, $fh.__dest__.map);
+    }
+
+    $fh.audio = function() {
+        handleargs(arguments, {}, $fh.__dest__.audio);
+    }
+
+    $fh.webview = function() {
+        handleargs(arguments, {}, $fh.__dest__.webview);
+    }
+
+    $fh.ready = function() {
+        handleargs(arguments, {}, $fh.__dest__.ready);
+    };
+
+    $fh.handlers = function() {
+        handleargs(arguments, {
+            type: 'back'
+        }, $fh.__dest__.handlers);
+    };
+
+    $fh.file = function() {
+        handleargs(arguments, {
+            act: 'upload'
+        }, $fh.__dest__.file);
+    };
+
+    $fh.push = function() {
+        handleargs(arguments, {}, $fh.__dest__.push);
+    };
+
+    // new functions
+    $fh.env = function() {
+        handleargs(arguments, {}, function(p, s, f) {
+            // flat property set - no sub objects!
+            $fh.__dest__.env({}, function(destEnv) {
+                destEnv.application = $fh.app_props.appid;
+                if ($fh._getDeviceId) {
+                    destEnv.uuid = $fh._getDeviceId();
+                }
+                destEnv.agent = navigator.userAgent || 'unknown';
+                s(destEnv);
+            });
+        });
+    }
+
+    $fh.device = function() {
+        handleargs(arguments, {}, function(p, s, f) {
+
+        });
+    }
+
+
+    // defaults: 
+    //    {act:'get'} -> {geoip:{...}}
+    //  failures: geoip_badact
+    //
+    $fh.geoip = function() {
+        handleargs(arguments, {
+            act: 'get'
+        }, function(p, s, f) {
+            if ('get' == p.act) {
+                var data = {
+                    instance: $fh.app_props.appid,
+                    domain: $fh.cloud_props.domain
+                }
+                $fh.__ajax({
+                    "url": _getHostPrefix() + "act/wid/geoip/resolve",
+                    "type": "POST",
+                    "data": JSON.stringify(data),
+                    "success": function(res) {
+                        // backwards compat
+                        for (var n in res.geoip) {
+                            res[n] = res['geoip'][n];
+                        }
+                        s(res);
+                    }
+                });
+            } else {
+                f('geoip_badact', p);
+            }
+        });
+    };
+
+    $fh.web = function(p, s, f) {
+        handleargs(arguments, {
+            method: 'GET'
+        }, function(p, s, f) {
+            if (!p.url) {
+                f('bad_url');
+            }
+
+            if (p.is_local) {
+                $fh.__ajax({
+                    url: p.url,
+                    type: "GET",
+                    dataType: "html",
+                    //xhr: $fh.xhr,
+                    success: function(data) {
+                        var res = {};
+                        res.status = 200;
+                        res.body = data;
+                        s(res);
+                    },
+                    error: function() {
+                        f();
+                    }
+                })
+            } else {
+                $fh.__ajax({
+                    "url": _getHostPrefix() + "act/wid/web",
+                    "type": "POST",
+                    "data": JSON.stringify(p),
+                    "success": function(res) {
+                        s(res);
+                    }
+                });
+            }
+        });
+    };
+
+    $fh.__webview_win = undefined;
+    $fh.__dest__.webview = function(p, s, f) {
+        if (!('act' in p) || p.act === 'open') {
+            if (!p.url) {
+                f('no_url');
+                return;
+            }
+            var old_url = p.url;
+            $fh.__webview_win = window.open(p.url, '_blank');
+            s("opened");
+        } else {
+            if (p.act === 'close') {
+                if (typeof $fh.__webview_win != 'undefined') {
+                    $fh.__webview_win.close();
+                    $fh.__webview_win = undefined;
+                }
+                s("closed");
+            }
+        }
+    };
+
+    $fh.__dest__.geo = function(p, s, f) {
+        if (typeof navigator.geolocation != 'undefined') {
+            if (!p.act || p.act == "register") {
+                if ($fh.__dest__._geoWatcher) {
+                    f('geo_inuse', {}, p);
+                    return;
+                }
+                if (p.interval == 0) {
+                    navigator.geolocation.getCurrentPosition(function(position) {
+                        var coords = position.coords;
+                        var resdata = {
+                            lon: coords.longitude,
+                            lat: coords.latitude,
+                            alt: coords.altitude,
+                            acc: coords.accuracy,
+                            head: coords.heading,
+                            speed: coords.speed,
+                            when: position.timestamp
+                        };
+                        s(resdata);
+                    }, function() {
+                        f('error_geo', {}, p);
+                    })
+                };
+                if (p.interval > 0) {
+                    var internalWatcher = navigator.geolocation.watchPosition(function(position) {
+                        var coords = position.coords;
+                        var resdata = {
+                            lon: coords.longitude,
+                            lat: coords.latitude,
+                            alt: coords.altitude,
+                            acc: coords.accuracy,
+                            head: coords.heading,
+                            speed: coords.speed,
+                            when: position.timestamp
+                        };
+                        s(resdata);
+                    }, function() {
+                        f('error_geo', {}, p);
+                    }, {
+                        frequency: p.interval
+                    });
+                    $fh.__dest__._geoWatcher = internalWatcher;
+                };
+            } else if (p.act == "unregister") {
+                if ($fh.__dest__._geoWatcher) {
+                    navigator.geolocation.clearWatch($fh.__dest__._geoWatcher);
+                    $fh.__dest__._geoWatcher = undefined;
+                };
+                s();
+            } else {
+                f('geo_badact', {}, p);
+            }
+        } else {
+            f('geo_nosupport', {}, p);
+        }
+    };
+
+    $fh.__dest__.acc = function(p, s, f) {
+        s({
+            x: (Math.random() * 4) - 2,
+            y: (Math.random() * 4) - 2,
+            z: (Math.random() * 4) - 2,
+            when: new Date().getTime()
+        });
+    }
+
+    root.$fh = $fh;
 
 })(this);
 /**
@@ -1337,7 +2076,7 @@ var appForm = function (module) {
     module.init = init;
     function init(params, cb) {
       var def = { 'updateForms': true };
-      if (typeof cb == 'undefined') {
+      if (typeof cb === 'undefined') {
         cb = params;
       } else {
         for (var key in params) {
@@ -1350,20 +2089,28 @@ var appForm = function (module) {
       var config = def.config || {};
       appForm.config = appForm.models.config;
       appForm.config.init(config, function (err) {
-        if(err) $fh.forms.log.e("Form config loading error: ", err);
+        if(err){
+          $fh.forms.log.e("Form config loading error: ", err);
+        }
         //Loading the current state of the uploadManager for any upload tasks that are still in progress.
         appForm.models.uploadManager.loadLocal(function (err) {
           $fh.forms.log.d("Upload Manager loaded from memory.");
-          if (err) $fh.forms.log.e("Error loading upload manager from memory ", err);
+          if (err) {
+            $fh.forms.log.e("Error loading upload manager from memory ", err);
+          }
           //init forms module
           $fh.forms.log.l("Refreshing Theme.");
           appForm.models.theme.refresh(true, function (err) {
-            if (err) $fh.forms.log.e("Error refreshing theme ", err);
+            if (err) {
+              $fh.forms.log.e("Error refreshing theme ", err);
+            }
             if (def.updateForms === true) {
               $fh.forms.log.l("Refreshing Forms.");
               appForm.models.forms.refresh(true, function (err) {
-                if (err)
+                if (err) {
                   $fh.forms.log.e(err);
+                }
+
                 appForm.models.log.loadLocal(function(){
                   cb();
                 });
@@ -1398,7 +2145,7 @@ appForm.utils = function(module) {
 
   function extend(child, parent) {
 
-    if (parent.constructor && parent.constructor == Function) {
+    if (parent.constructor && parent.constructor === Function) {
       for (var mkey in parent.prototype) {
         child.prototype[mkey] = parent.prototype[mkey];
       }
@@ -1440,7 +2187,7 @@ appForm.utils = function(module) {
    * @return {[type]}       [description]
    */
   function md5(str, cb) {
-    if (typeof $fh != 'undefined' && $fh.hash) {
+    if (typeof $fh !== 'undefined' && $fh.hash) {
       $fh.hash({
         algorithm: 'MD5',
         text: str
@@ -1467,289 +2214,321 @@ appForm.utils = function(module) {
   return module;
 }(appForm.utils || {});
 
-appForm.utils = function (module) {
-  module.fileSystem = {
-    isFileSystemAvailable: isFileSystemAvailable,
-    save: save,
-    remove: remove,
-    readAsText: readAsText,
-    readAsBlob: readAsBlob,
-    readAsBase64Encoded: readAsBase64Encoded,
-    readAsFile: readAsFile,
-    fileToBase64: fileToBase64
-  };
-  var fileSystemAvailable = false;
-  var _requestFileSystem = function () {
-    console.error("No file system available");
-  };
-  //placeholder
-  var PERSISTENT = 1;
-  //placeholder
-  function isFileSystemAvailable() {
-    return fileSystemAvailable;
-  }
-  //convert a file object to base64 encoded.
-  function fileToBase64(file, cb) {
-    if (!file instanceof File) {
-      throw 'Only file object can be used for converting';
-    }
-    var fileReader = new FileReader();
-    fileReader.onloadend = function (evt) {
-      var text = evt.target.result;
-      return cb(null, text);
+appForm.utils = function(module) {
+    module.fileSystem = {
+        isFileSystemAvailable: isFileSystemAvailable,
+        save: save,
+        remove: remove,
+        readAsText: readAsText,
+        readAsBlob: readAsBlob,
+        readAsBase64Encoded: readAsBase64Encoded,
+        readAsFile: readAsFile,
+        fileToBase64: fileToBase64
     };
-    fileReader.readAsDataURL(file);
-  }
-
-  function _createBlobOrString(contentstr) {
-    var retVal;
-    if (appForm.utils.isPhoneGap()) {  // phonegap filewriter works with strings, later versions also ork with binary arrays, and if passed a blob will just convert to binary array anyway
-      retVal = contentstr;
-    } else {
-      var targetContentType = 'text/plain';
-      try {
-        retVal = new Blob( [contentstr], { type: targetContentType });  // Blob doesn't exist on all androids
-      }
-      catch (e){
-        // TypeError old chrome and FF
-        var blobBuilder = window.BlobBuilder ||
-                          window.WebKitBlobBuilder ||
-                          window.MozBlobBuilder ||
-                          window.MSBlobBuilder;
-        if (e.name == 'TypeError' && blobBuilder) {
-          var bb = new blobBuilder();
-          bb.append([contentstr.buffer]);
-          retVal = bb.getBlob(targetContentType);
-        } else {
-          // We can't make a Blob, so just return the stringified content
-          retVal = contentstr;
-        }
-      }
+    var fileSystemAvailable = false;
+    var _requestFileSystem = function() {
+        console.error("No file system available");
+    };
+    //placeholder
+    var PERSISTENT = 1;
+    //placeholder
+    function isFileSystemAvailable() {
+        _checkEnv();
+        return fileSystemAvailable;
     }
-    return retVal;
-  }
+    //convert a file object to base64 encoded.
+    function fileToBase64(file, cb) {
+        if (!file instanceof File) {
+            throw 'Only file object can be used for converting';
+        }
+        var fileReader = new FileReader();
+        fileReader.onloadend = function(evt) {
+            var text = evt.target.result;
+            return cb(null, text);
+        };
+        fileReader.readAsDataURL(file);
+    }
 
-  /**
+    function _createBlobOrString(contentstr) {
+        var retVal;
+        if (appForm.utils.isPhoneGap()) { // phonegap filewriter works with strings, later versions also ork with binary arrays, and if passed a blob will just convert to binary array anyway
+            retVal = contentstr;
+        } else {
+            var targetContentType = 'text/plain';
+            try {
+                retVal = new Blob([contentstr], {
+                    type: targetContentType
+                }); // Blob doesn't exist on all androids
+            } catch (e) {
+                // TypeError old chrome and FF
+                var blobBuilder = window.BlobBuilder ||
+                    window.WebKitBlobBuilder ||
+                    window.MozBlobBuilder ||
+                    window.MSBlobBuilder;
+                if (e.name === 'TypeError' && blobBuilder) {
+                    var bb = new blobBuilder();
+                    bb.append([contentstr.buffer]);
+                    retVal = bb.getBlob(targetContentType);
+                } else {
+                    // We can't make a Blob, so just return the stringified content
+                    retVal = contentstr;
+                }
+            }
+        }
+        return retVal;
+    }
+
+
+    function getBasePath(cb) {
+        _getFileEntry("dummy.html", size, {
+            create: true,
+            exclusive: false
+        }, function(err, fileEntry) {
+            if (err) {
+                return cb(err);
+            }
+
+            var sPath = fileEntry.fullPath.replace("dummy.html", "");
+            fileEntry.remove();
+            return cb(null, sPath);
+        });
+    }
+
+    /**
      * Save a content to file system into a file
      * @param  {[type]} fileName file name to be stored.
      * @param  {[type]} content  json object / string /  file object / blob object
      * @param  {[type]} cb  (err, result)
      * @return {[type]}          [description]
      */
-  function save(fileName, content, cb) {
-    var saveObj = null;
-    var size = 0;
-    if (typeof content == 'object') {
-      if (content instanceof File) {
-        //File object
-        saveObj = content;
-        size = saveObj.size;
-      } else if (content instanceof Blob) {
-        saveObj = content;
-        size = saveObj.size;
-      } else {
-        //JSON object
-        var contentstr = JSON.stringify(content);
-        saveObj = _createBlobOrString(contentstr);
-        size = saveObj.size || saveObj.length;
-      }
-    } else if (typeof content == 'string') {
-      saveObj = _createBlobOrString(content);
-      size = saveObj.size || saveObj.length;
-    }
+    function save(fileName, content, cb) {
+        var saveObj = null;
+        var size = 0;
+        if (typeof content === 'object') {
+            if (content instanceof File) {
+                //File object
+                saveObj = content;
+                size = saveObj.size;
+            } else if (content instanceof Blob) {
+                saveObj = content;
+                size = saveObj.size;
+            } else {
+                //JSON object
+                var contentstr = JSON.stringify(content);
+                saveObj = _createBlobOrString(contentstr);
+                size = saveObj.size || saveObj.length;
+            }
+        } else if (typeof content === 'string') {
+            saveObj = _createBlobOrString(content);
+            size = saveObj.size || saveObj.length;
+        }
 
-    _getFileEntry(fileName, size, { create: true }, function (err, fileEntry) {
-      if (err) {
-        console.error(err);
-        cb(err);
-      } else {
-        fileEntry.createWriter(function (writer) {
-          function _onFinished(evt) {
-            return cb(null, evt);
-          }
-          function _onTruncated() {
-            writer.onwriteend = _onFinished;
-            writer.write(saveObj);  //write method can take a blob or file object according to html5 standard.
-          }
-          writer.onwriteend = _onTruncated;
-          //truncate the file first.
-          writer.truncate(0);
-        }, function (e) {
-          cb('Failed to create file write:' + e);
+        _getFileEntry(fileName, size, {
+            create: true
+        }, function(err, fileEntry) {
+            if (err) {
+                console.error("_getFileEntry Error " + err);
+                cb(err);
+            } else {
+                fileEntry.createWriter(function(writer) {
+                    function _onFinished(evt) {
+                        return cb(null, evt);
+                    }
+
+                    function _onTruncated() {
+                        writer.onwriteend = _onFinished;
+                        writer.write(saveObj); //write method can take a blob or file object according to html5 standard.
+                    }
+                    writer.onwriteend = _onTruncated;
+                    //truncate the file first.
+                    writer.truncate(0);
+                }, function(e) {
+                    console.error("fileEntry.createWriter Failed to create file write: " + e);
+                    cb('Failed to create file write:' + e);
+                });
+            }
         });
-      }
-    });
-  }
-  /**
+    }
+    /**
      * Remove a file from file system
      * @param  {[type]}   fileName file name of file to be removed
      * @param  {Function} cb
      * @return {[type]}            [description]
      */
-  function remove(fileName, cb) {
-    _getFileEntry(fileName, 0, {}, function (err, fileEntry) {
-      if (err) {
-        if (!(err.name == 'NotFoundError' || err.code == 1)) {
-          return cb(err);
-        } else {
-          return cb(null, null);
-        }
-      }
-      fileEntry.remove(function () {
-        cb(null, null);
-      }, function (e) {
-        // console.error(e);
-        cb('Failed to remove file' + e);
-      });
-    });
-  }
-  /**
+    function remove(fileName, cb) {
+        _getFileEntry(fileName, 0, {}, function(err, fileEntry) {
+            if (err) {
+                console.error("file remove _getFileEntry finished err: " + err + " " + err.name);
+                if (!(err.name === 'NotFoundError' || err.code === 1)) {
+                    return cb(err);
+                } else {
+                    return cb(null, null);
+                }
+            }
+            fileEntry.remove(function() {
+                cb(null, null);
+            }, function(e) {
+                console.error("file remove fileEntry.remove failed " + e);
+                cb('Failed to remove file' + e);
+            });
+        });
+    }
+    /**
      * Read a file as text
      * @param  {[type]}   fileName [description]
      * @param  {Function} cb       (err,text)
      * @return {[type]}            [description]
      */
-  function readAsText(fileName, cb) {
-    _getFile(fileName, function (err, file) {
-      if (err) {
-        cb(err);
-      } else {
-        var reader = new FileReader();
-        reader.onloadend = function (evt) {
-          var text = evt.target.result;
-          // Check for URLencoded
-          // PG 2.2 bug in readAsText()
-          try {
-            text = decodeURIComponent(text);
-          } catch (e) {
-          }
-          // console.log('load: ' + key + '. Filename: ' + hash + " value:" + evt.target.result);
-          return cb(null, text);
-        };
-        reader.readAsText(file);
-      }
-    });
-  }
-  /**
+    function readAsText(fileName, cb) {
+        _getFile(fileName, function(err, file) {
+            if (err) {
+                console.error("readAsText _getFile failed: " + err);
+                cb(err);
+            } else {
+                var reader = new FileReader();
+                reader.onloadend = function(evt) {
+                    var text = evt.target.result;
+                    // Check for URLencoded
+                    // PG 2.2 bug in readAsText()
+                    try {
+                        text = decodeURIComponent(text);
+                    } catch (e) {
+                        console.error("readAsText trying decodeURIComponent exception: " + e);
+                    }
+                    return cb(null, text);
+                };
+                reader.readAsText(file);
+            }
+        });
+    }
+    /**
      * Read a file and return base64 encoded data
      * @param  {[type]}   fileName [description]
      * @param  {Function} cb       (err,base64Encoded)
      * @return {[type]}            [description]
      */
-  function readAsBase64Encoded(fileName, cb) {
-    _getFile(fileName, function (err, file) {
-      if (err) {
-        return cb(err);
-      }
-      var reader = new FileReader();
-      reader.onloadend = function (evt) {
-        var text = evt.target.result;
-        return cb(null, text);
-      };
-      reader.readAsDataURL(file);
-    });
-  }
-  /**
+    function readAsBase64Encoded(fileName, cb) {
+        _getFile(fileName, function(err, file) {
+            if (err) {
+                console.error("readAsBase64Encoded _getFile called err: " + err);
+                return cb(err);
+            }
+            var reader = new FileReader();
+            reader.onloadend = function(evt) {
+                var text = evt.target.result;
+                return cb(null, text);
+            };
+            reader.readAsDataURL(file);
+        });
+    }
+    /**
      * Read a file return blob object (which can be used for XHR uploading binary)
      * @param  {[type]}   fileName [description]
      * @param  {Function} cb       (err, blob)
      * @return {[type]}            [description]
      */
-  function readAsBlob(fileName, cb) {
-    _getFile(fileName, function (err, file) {
-      if (err) {
-        return cb(err);
-      } else {
-        var type = file.type;
-        var reader = new FileReader();
-        reader.onloadend = function (evt) {
-          var arrayBuffer = evt.target.result;
-          var blob = new Blob([arrayBuffer], { 'type': type });
-          cb(null, blob);
-        };
-        reader.readAsArrayBuffer(file);
-      }
-    });
-  }
-  function readAsFile(fileName, cb) {
-    _getFile(fileName, cb);
-  }
-  /**
+    function readAsBlob(fileName, cb) {
+        _getFile(fileName, function(err, file) {
+            if (err) {
+                return cb(err);
+            } else {
+                var type = file.type;
+                var reader = new FileReader();
+                reader.onloadend = function(evt) {
+                    var arrayBuffer = evt.target.result;
+                    var blob = new Blob([arrayBuffer], {
+                        'type': type
+                    });
+                    cb(null, blob);
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        });
+    }
+
+    function readAsFile(fileName, cb) {
+        _getFile(fileName, cb);
+    }
+    /**
      * Retrieve a file object
      * @param  {[type]}   fileName [description]
      * @param  {Function} cb     (err,file)
      * @return {[type]}            [description]
      */
-  function _getFile(fileName, cb) {
-    _getFileEntry(fileName, 0, {}, function (err, fe) {
-      if (err) {
-        return cb(err);
-      }
-      fe.file(function (file) {
-        cb(null, file);
-      }, function (e) {
-        console.error('Failed to get file:' + e);
-        cb(e);
-      });
-    });
-  }
-  function _getFileEntry(fileName, size, params, cb) {
-    _checkEnv();
-    _requestFileSystem(PERSISTENT, size, function gotFS(fileSystem) {
-      fileSystem.root.getFile(fileName, params, function gotFileEntry(fileEntry) {
-        cb(null, fileEntry);
-      }, function (err) {
-        if (err.name == 'QuotaExceededError' || err.code == 10) {
-          //this happens only on browser. request for 1 gb storage
-          //TODO configurable from cloud
-          var bigSize = 1024 * 1024 * 1024;
-          _requestQuote(bigSize, function (err, bigSize) {
-            _getFileEntry(fileName, size, params, cb);
-          });
-        } else {
-          console.error('Failed to get file entry:' + err.message);
-          cb(err);
-        }
-      });
-    }, function () {
-      cb('Failed to requestFileSystem');
-    });
-  }
-  function _requestQuote(size, cb) {
-    if (navigator.webkitPersistentStorage) {
-      //webkit browser
-      navigator.webkitPersistentStorage.requestQuota(size, function (size) {
-        cb(null, size);
-      }, function (err) {
-        cb(err, 0);
-      });
-    } else {
-      //PhoneGap does not need to do this.return directly.
-      cb(null, size);
+    function _getFile(fileName, cb) {
+        _getFileEntry(fileName, 0, {}, function(err, fe) {
+            if (err) {
+                console.error("_getFile _getFileEntry failed: " + err);
+                return cb(err);
+            }
+            fe.file(function(file) {
+                cb(null, file);
+            }, function(e) {
+                console.error('Failed to get file:' + e);
+                cb(e);
+            });
+        });
     }
-  }
-  function _checkEnv() {
-    // debugger;
-    if (window.requestFileSystem) {
-      _requestFileSystem = window.requestFileSystem;
-      fileSystemAvailable = true;
-    } else if (window.webkitRequestFileSystem) {
-      _requestFileSystem = window.webkitRequestFileSystem;
-      fileSystemAvailable = true;
-    } else {
-      fileSystemAvailable = false;  // console.error("No filesystem available. Fallback use $fh.data for storage");
-    }
-    if (window.LocalFileSystem) {
-      PERSISTENT = window.LocalFileSystem.PERSISTENT;
-    } else if (window.PERSISTENT) {
-      PERSISTENT = window.PERSISTENT;
-    }
-  }
-  // debugger;
-  _checkEnv();
-  return module;
-}(appForm.utils || {});
 
+    function _getFileEntry(fileName, size, params, cb) {
+        _checkEnv();
+        _requestFileSystem(PERSISTENT, size, function gotFS(fileSystem) {
+            fileSystem.root.getFile(fileName, params, function gotFileEntry(fileEntry) {
+                cb(null, fileEntry);
+            }, function(err) {
+                console.error("_getFileEntry _requestFileSystem called fail: " + err + " " + err.name);
+                if (err.name === 'QuotaExceededError' || err.code === 10) {
+                    //this happens only on browser. request for 1 gb storage
+                    //TODO configurable from cloud
+                    var bigSize = 1024 * 1024 * 1024;
+                    _requestQuote(bigSize, function(err, bigSize) {
+                        _getFileEntry(fileName, size, params, cb);
+                    });
+                } else {
+                    cb(err);
+                }
+            });
+        }, function() {
+            console.error('Failed to requestFileSystem: ' + fileName);
+            cb('Failed to requestFileSystem');
+        });
+    }
+
+    function _requestQuote(size, cb) {
+        if (navigator.webkitPersistentStorage) {
+            //webkit browser
+            navigator.webkitPersistentStorage.requestQuota(size, function(size) {
+                cb(null, size);
+            }, function(err) {
+                cb(err, 0);
+            });
+        } else {
+            //PhoneGap does not need to do this.return directly.
+            cb(null, size);
+        }
+    }
+
+    function _checkEnv() {
+        // debugger;
+        if (window.requestFileSystem) {
+            _requestFileSystem = window.requestFileSystem;
+            fileSystemAvailable = true;
+        } else if (window.webkitRequestFileSystem) {
+            _requestFileSystem = window.webkitRequestFileSystem;
+            fileSystemAvailable = true;
+        } else {
+            fileSystemAvailable = false;
+        }
+        if (window.LocalFileSystem) {
+            PERSISTENT = window.LocalFileSystem.PERSISTENT;
+        } else if (window.PERSISTENT) {
+            PERSISTENT = window.PERSISTENT;
+        }
+    }
+    // debugger;
+    _checkEnv();
+    return module;
+}(appForm.utils || {});
 appForm.utils = function (module) {
   module.takePhoto = takePhoto;
   module.isPhoneGapCamAvailable = isPhoneGapAvailable;
@@ -1886,13 +2665,13 @@ appForm.utils = function (module) {
 appForm.web = function (module) {
 
   module.uploadFile = function(url, fileProps, cb){
-    $fh.forms.log.d("uploadFile ", url, fileProps);
+    $fh.forms.log.d("Phonegap uploadFile ", url, fileProps);
     var filePath = fileProps.fullPath;
 
     var success = function (r) {
       $fh.forms.log.d("upload to url ", url, " sucessful");
       r.response = r.response || {};
-      if(typeof r.response == "string"){
+      if(typeof r.response === "string"){
         r.response = JSON.parse(r.response);
       }
       cb(null, r.response);
@@ -1922,10 +2701,43 @@ appForm.web = function (module) {
     ft.upload(filePath, encodeURI(url), success, fail, options);
   };
 
+  module.downloadFile = function(url, fileMetaData, cb){
+    $fh.forms.log.d("Phonegap downloadFile ", url, fileMetaData);
+    var ft = new FileTransfer();
+
+    appforms.utils.fileSystem.getBasePath(function(err, basePath){
+      if(err){
+        $fh.forms.log.e("Error getting base path for file download: " + url);
+        return cb(err);
+      }
+
+      function success(fileEntry){
+        $fh.forms.log.d("File Download Completed Successfully. FilePath: " + fileEntry.fullPath);
+        return cb(null, fileEntry.fullPath);
+      }
+
+      function fail(error){
+        $fh.forms.log.e("Error downloading file " + fileMetaData.fileName + " code: " + error.code);
+        return cb("Error downloading file " + fileMetaData.fileName + " code: " + error.code);
+      }
+
+      if(fileMetaData.fileName){
+        $fh.forms.log.d("File name for file " + fileMetaData.fileName + " found. Starting download");
+        var fullPath = basePath + fileMetaData.fileName;
+        ft.download(encodeURI(url), fullPath, success, fail, {headers: {
+          "Connection": "close"
+        }});
+      } else {
+        $fh.forms.log.e("No file name associated with the file to download");
+        return cb("No file name associated with the file to download");
+      }
+    });
+  };
+
   return module;
 }(appForm.web || {});
 appForm.web.ajax = function (module) {
-  module = typeof $fh != 'undefined' && $fh.__ajax ? $fh.__ajax : _myAjax;
+  module = typeof $fh !== 'undefined' && $fh.__ajax ? $fh.__ajax : _myAjax;
   module.get = get;
   module.post = post;
   var _ajax = module;
@@ -1951,7 +2763,7 @@ appForm.web.ajax = function (module) {
     $fh.forms.log.d("Ajax post ", url, body);
     var file = false;
     var formData;
-    if (typeof body == 'object') {
+    if (typeof body === 'object') {
       if (body instanceof File) {
         file = true;
         formData = new FormData();
@@ -2031,7 +2843,7 @@ appForm.stores = function(module) {
   };
   //read a model from local storage
   LocalStorage.prototype.read = function(model, cb) {
-    if (model.get("_type") == "offlineTest") {
+    if (model.get("_type") === "offlineTest") {
       cb(null, {});
     } else {
       var key = model.getLocalId();
@@ -2067,7 +2879,7 @@ appForm.stores = function(module) {
   };
   LocalStorage.prototype.upsert = function(model, cb) {
     var key = model.getLocalId();
-    if (key == null) {
+    if (key === null) {
       this.create(model, cb);
     } else {
       this.update(model, cb);
@@ -2097,17 +2909,19 @@ appForm.stores = function(module) {
   //use $fh data
   function _fhLSData(options, success, failure) {
     //allow for no $fh api in studio
-    if(! $fh || ! $fh.data) return success();
+    if(! $fh || ! $fh.data) {
+      return success();
+    }
 
     $fh.data(options, function (res) {
-      if (typeof res == 'undefined') {
+      if (typeof res === 'undefined') {
         res = {
           key: options.key,
           val: options.val
         };
       }
       //unify the interfaces
-      if (options.act.toLowerCase() == 'remove') {
+      if (options.act.toLowerCase() === 'remove') {
         return success(null, null);
       }
       success(null, res.val ? res.val : null);
@@ -2166,7 +2980,7 @@ appForm.stores = function(module) {
       filenameForKey(key, function(hash) {
         fileSystem.remove(hash, function(err) {
           if (err) {
-            if (err.name == 'NotFoundError' || err.code == 1) {
+            if (err.name === 'NotFoundError' || err.code === 1) {
               //same respons of $fh.data if key not found.
               success(null, null);
             } else {
@@ -2183,7 +2997,7 @@ appForm.stores = function(module) {
       filenameForKey(key, function(hash) {
         fileSystem.readAsText(hash, function(err, text) {
           if (err) {
-            if (err.name == 'NotFoundError' || err.code == 1) {
+            if (err.name === 'NotFoundError' || err.code === 1) {
               //same respons of $fh.data if key not found.
               success(null, null);
             } else {
@@ -2225,26 +3039,47 @@ appForm.stores = function(module) {
     return appForm.config.get("studioMode");
   };
   MBaaS.prototype.create = function(model, cb) {
-    if (this.checkStudio()) {
+    var self = this;
+    if (self.checkStudio()) {
       cb("Studio mode not supported");
     } else {
       var url = _getUrl(model);
-      if((model.get("_type") == "fileSubmission" || model.get("_type") == "base64fileSubmission") && (typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined")){
+      if(self.isFileAndPhoneGap(model)){
         appForm.web.uploadFile(url, model.getProps(), cb);
       } else {
         appForm.web.ajax.post(url, model.getProps(), cb);
       }
     }
   };
+  MBaaS.prototype.isFileAndPhoneGap = function(model){
+    var self = this;
+    return self.isFileTransfer(model) && self.isPhoneGap();
+  };
+  MBaaS.prototype.isFileTransfer = function(model){
+    return (model.get("_type") === "fileSubmission" || model.get("_type") === "base64fileSubmission" || model.get("_type") === "fileSubmissionDownload");
+  };
+  MBaaS.prototype.isPhoneGap = function(){
+    return (typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined");
+  };
   MBaaS.prototype.read = function(model, cb) {
+    var self = this;
     if (this.checkStudio()) {
       cb("Studio mode not supported");
     } else {
-      if (model.get("_type") == "offlineTest") {
+      if (model.get("_type") === "offlineTest") {
         cb("offlinetest. ignore");
       } else {
         var url = _getUrl(model);
-        appForm.web.ajax.get(url, cb);
+
+        if(self.isFileTransfer(model) && self.isPhoneGap()){
+          appForm.web.downloadFile(url, model.getFileMetaData(), cb);
+        }
+        else if(self.isFileTransfer(model)) {//Trying to download a file without phone. No need as the direct web urls can be used
+          return cb(null, model.getRemoteFileURL());
+        }
+        else {
+          appForm.web.ajax.get(url, cb);
+        }
       }
     }
   };
@@ -2303,6 +3138,13 @@ appForm.stores = function(module) {
       case 'completeSubmission':
         props.submissionId = model.get('submissionId');
         break;
+      case 'formSubmissionDownload':
+        props.submissionId = model.getSubmissionId();
+        break;
+      case 'fileSubmissionDownload':
+        props.submissionId = model.getSubmissionId();
+        props.submissionId = model.getFileGroupId();
+        break;
       case 'offlineTest':
         return "http://127.0.0.1:8453";
     }
@@ -2337,9 +3179,9 @@ appForm.stores = function (module) {
     this.localStore.read(model, function (err, locRes) {
       if (err || !locRes) {
         //local loading failed
-        if (err) {
-          $fh.forms.log.e("Error reading model from localStore ", model, err);
-        }
+
+        $fh.forms.log.d("Error reading model from localStore ", model, err);
+
         that.refreshRead(model, cb);
       } else {
         //local loading succeed
@@ -2402,7 +3244,7 @@ appForm.models = function (module) {
     };
     this.utils = appForm.utils;
     this.events = {};
-    if (typeof opt != 'undefined') {
+    if (typeof opt !== 'undefined') {
       for (var key in opt) {
         this.props[key] = opt[key];
       }
@@ -2443,7 +3285,7 @@ appForm.models = function (module) {
     return this.props;
   };
   Model.prototype.get = function (key, def) {
-    return typeof this.props[key] == 'undefined' ? def : this.props[key];
+    return typeof this.props[key] === 'undefined' ? def : this.props[key];
   };
   Model.prototype.set = function (key, val) {
     this.props[key] = val;
@@ -2455,7 +3297,7 @@ appForm.models = function (module) {
     return this.get('_ludid');
   };
   Model.prototype.fromJSON = function (json) {
-    if (typeof json == 'string') {
+    if (typeof json === 'string') {
       this.fromJSONStr(json);
     } else {
       for (var key in json) {
@@ -2469,7 +3311,7 @@ appForm.models = function (module) {
       var json = JSON.parse(jsonStr);
       this.fromJSON(json);
     } catch (e) {
-      console.error(e);
+      console.error("Error parsing JSON", e);
     }
   };
 
@@ -2491,7 +3333,7 @@ appForm.models = function (module) {
   Model.prototype.refresh = function (fromRemote, cb) {
     var dataAgent = this.getDataAgent();
     var that = this;
-    if (typeof cb == 'undefined') {
+    if (typeof cb === 'undefined') {
       cb = fromRemote;
       fromRemote = false;
     }
@@ -2597,7 +3439,7 @@ appForm.models = function(module) {
   Config.prototype.refresh = function (fromRemote, cb) {
     var dataAgent = this.getDataAgent();
     var self = this;
-    if (typeof cb == 'undefined') {
+    if (typeof cb === 'undefined') {
       cb = fromRemote;
       fromRemote = false;
     }
@@ -2627,7 +3469,9 @@ appForm.models = function(module) {
       }
     }
     self.loadLocal(function(err, localConfig){
-      if(err) $fh.forms.log.e("Config loadLocal ", err);
+      if(err) {
+        $fh.forms.log.e("Config loadLocal ", err);
+      }
 
       dataAgent.remoteStore.read(self, _handler);
     });
@@ -2710,6 +3554,8 @@ appForm.models = function(module) {
       'fileSubmission': '/forms/:appId/:submissionId/:fieldId/:hashName/submitFormFile',
       'base64fileSubmission': '/forms/:appId/:submissionId/:fieldId/:hashName/submitFormFileBase64',
       'submissionStatus': '/forms/:appId/:submissionId/status',
+      'formSubmissionDownload': '/forms/:appId/submission/:submissionId',
+      'fileSubmissionDownload': '/forms/:appId/submission/:submissionId/file/:fileId',
       'completeSubmission': '/forms/:appId/:submissionId/completeSubmission',
       "config": '/forms/:appid/config/:deviceId'
     });
@@ -2734,7 +3580,7 @@ appForm.models = function (module) {
     var formLastUpdate = formModel.getLastUpdate();
     var formMeta = this.getFormMetaById(id);
     if (formMeta) {
-      return formLastUpdate != formMeta.lastUpdatedTimestamp;
+      return formLastUpdate !== formMeta.lastUpdatedTimestamp;
     } else {
       //could have been deleted. leave it for now
       return false;
@@ -2748,7 +3594,7 @@ appForm.models = function (module) {
     var forms = this.get('forms');
     for (var i = 0; i < forms.length; i++) {
       var form = forms[i];
-      if (form._id == formId) {
+      if (form._id === formId) {
         return form;
       }
     }
@@ -2786,8 +3632,8 @@ appForm.models = function (module) {
     var fromRemote = params.fromRemote;
     $fh.forms.log.d("Form: ", rawMode, rawData, formId, fromRemote);
 
-    if (typeof fromRemote == 'function' || typeof cb == 'function') {
-      if (typeof fromRemote == 'function') {
+    if (typeof fromRemote === 'function' || typeof cb === 'function') {
+      if (typeof fromRemote === 'function') {
         cb = fromRemote;
         fromRemote = false;
       }
@@ -2993,7 +3839,7 @@ appForm.models = function (module) {
   Form.prototype.getPageModelById = function (pageId) {
     $fh.forms.log.d("Form: getPageModelById: ", pageId);
     var index = this.getPageRef()[pageId];
-    if (typeof index == 'undefined') {
+    if (typeof index === 'undefined') {
       throw 'page id is not found';
     } else {
       return this.pages[index];
@@ -3017,7 +3863,7 @@ appForm.models = function (module) {
     var fieldsId = [];
     for (var fieldId in this.fields) {
       var field = this.fields[fieldId];
-      if (field.getType() == 'file' || field.getType() == 'photo' || field.getType() == 'signature') {
+      if (field.getType() === 'file' || field.getType() === 'photo' || field.getType() === 'signature') {
         fieldsId.push(fieldId);
       }
     }
@@ -3063,7 +3909,12 @@ appForm.models = function (module) {
     });
   };
   FileSubmission.prototype.getProps = function () {
-    return this.fileObj;
+    if(this.fileObj){
+      $fh.forms.log.d("FileSubmissionDownload: file object found");
+      return this.fileObj;
+    } else {
+      $fh.forms.log.e("FileSubmissionDownload: no file object found");
+    }
   };
   FileSubmission.prototype.setSubmissionId = function (submissionId) {
     $fh.forms.log.d("FileSubmission setSubmissionId.", submissionId);
@@ -3082,6 +3933,70 @@ appForm.models = function (module) {
 }(appForm.models || {});
 appForm.models = function (module) {
   var Model = appForm.models.Model;
+  module.FileSubmissionDownload = FileSubmissionDownload;
+  function FileSubmissionDownload(fileData) {
+    $fh.forms.log.d("FileSubmissionDownload ", fileData);
+    Model.call(this, {
+      '_type': 'fileSubmissionDownload',
+      'data': fileData
+    });
+  }
+  appForm.utils.extend(FileSubmissionDownload, Model);
+  FileSubmissionDownload.prototype.setSubmissionId = function (submissionId) {
+    $fh.forms.log.d("FileSubmission setSubmissionId.", submissionId);
+    this.set('submissionId', submissionId);
+  };
+  FileSubmissionDownload.prototype.getSubmissionId = function () {
+    $fh.forms.log.d("FileSubmission getSubmissionId: ", this.get('submissionId'));
+    return this.get('submissionId', "");
+  };
+  FileSubmissionDownload.prototype.getHashName = function () {
+    $fh.forms.log.d("FileSubmission getHashName: ", this.get('data').hashName);
+    return this.get('data', {}).hashName;
+  };
+  FileSubmissionDownload.prototype.getFieldId = function () {
+    $fh.forms.log.d("FileSubmission getFieldId: ", this.get('data').fieldId);
+    return this.get('data', {}).fieldId;
+  };
+  FileSubmissionDownload.prototype.getFileMetaData = function(){
+    $fh.forms.log.d("FileSubmission getFileMetaData: ", this.get('data'));
+    if(this.get('data')){
+      $fh.forms.log.d("FileSubmission getFileMetaData: data found", this.get('data'));
+    } else {
+      $fh.forms.log.e("FileSubmission getFileMetaData: No data found");
+    }
+    return this.get('data', {});
+  };
+  FileSubmissionDownload.prototype.getFileGroupId = function(){
+    $fh.forms.log.d("FileSubmission getFileGroupId: ", this.get('data'));
+    return this.get('data', {}).groupId || "notset";
+  };
+  FileSubmissionDownload.prototype.getRemoteFileURL = function(){
+    var self = this;
+    $fh.forms.log.d("FileSubmission getRemoteFileURL: ");
+
+    //RemoteFileUrl = cloudHost + /mbaas/forms/submission/:submissionId/file/:fileGroupId
+    //Returned by the mbaas.
+    function buildRemoteFileUrl(){
+      var submissionId = self.getSubmissionId();
+      var fileGroupId = self.getFileGroupId();
+      var urlTemplate =  appForm.config.get('formUrls', {}).fileSubmissionDownload;
+      if(urlTemplate){
+        urlTemplate = urlTemplate.replace(":submissionId", submissionId);
+        urlTemplate = urlTemplate.replace(":fileGroupId", fileGroupId);
+        urlTemplate = urlTemplate.replace(":appId", appForm.config.get('appId', "notSet"));
+        return urlTemplate;
+      } else {
+        return  "notset";
+      }
+    }
+
+    return buildRemoteFileUrl();
+  };
+  return module;
+}(appForm.models || {});
+appForm.models = function (module) {
+  var Model = appForm.models.Model;
   module.FormSubmission = FormSubmission;
   function FormSubmission(submissionJSON) {
     Model.call(this, {
@@ -3095,8 +4010,7 @@ appForm.models = function (module) {
   };
   FormSubmission.prototype.getFormId = function () {
     if(!this.get('data')){
-      console.log(this);
-      console.trace();
+      $fh.forms.log.e("No form data for form submission");
     }
 
     return this.get('data').formId;
@@ -3114,6 +4028,21 @@ appForm.models = function (module) {
     });
   }
   appForm.utils.extend(FormSubmissionComplete, Model);
+  return module;
+}(appForm.models || {});
+appForm.models = function (module) {
+  var Model = appForm.models.Model;
+  module.FormSubmissionDownload = FormSubmissionDownload;
+  function FormSubmissionDownload(uploadTask) {
+    Model.call(this, {
+      '_type': 'formSubmissionDownload',
+      'data': uploadTask
+    });
+  }
+  appForm.utils.extend(FormSubmissionDownload, Model);
+  FormSubmissionDownload.prototype.getSubmissionId = function () {
+    return this.get('data').get("submissionId", "not-set");
+  };
   return module;
 }(appForm.models || {});
 appForm.models = function (module) {
@@ -3139,269 +4068,304 @@ appForm.models = function (module) {
   appForm.utils.extend(Base64FileSubmission, FileSubmission);
   return module;
 }(appForm.models || {});
-appForm.models = function (module) {
-  var Model = appForm.models.Model;
-  function Submissions() {
-    Model.call(this, {
-      '_type': 'submissions',
-      '_ludid': 'submissions_list',
-      'submissions': []
-    });
-  }
-  appForm.utils.extend(Submissions, Model);
-  Submissions.prototype.setLocalId = function () {
-    $fh.forms.log.e("Submissions setLocalId. Not Permitted for submissions.");
-  };
-  /**
+appForm.models = function(module) {
+    var Model = appForm.models.Model;
+
+    function Submissions() {
+        Model.call(this, {
+            '_type': 'submissions',
+            '_ludid': 'submissions_list',
+            'submissions': []
+        });
+    }
+    appForm.utils.extend(Submissions, Model);
+    Submissions.prototype.setLocalId = function() {
+        $fh.forms.log.e("Submissions setLocalId. Not Permitted for submissions.");
+    };
+    /**
      * save a submission to list and store it immediately
      * @param  {[type]}   submission [description]
      * @param  {Function} cb         [description]
      * @return {[type]}              [description]
      */
-  Submissions.prototype.saveSubmission = function (submission, cb) {
-    $fh.forms.log.d("Submissions saveSubmission");
-    var self=this;
-    this.updateSubmissionWithoutSaving(submission);
-    this.clearSentSubmission(function(){
-      self.saveLocal(cb);  
-    });
-  };
-  Submissions.prototype.updateSubmissionWithoutSaving = function (submission) {
-    $fh.forms.log.d("Submissions updateSubmissionWithoutSaving");
-    var pruneData = this.pruneSubmission(submission);
-    var localId = pruneData._ludid;
-    if (localId) {
-      var meta = this.findMetaByLocalId(localId);
-      var submissions = this.get('submissions');
-      if (meta) {
-        //existed, remove the old meta and save the new one.
-        submissions.splice(submissions.indexOf(meta), 1);
-        submissions.push(pruneData);
-      } else {
-        // not existed, insert to the tail.
-        submissions.push(pruneData);
-      }
-    } else {
-      // invalid local id.
-      $fh.forms.log.e('Invalid submission for localId:', localId, JSON.stringify(submission));
-    }
-  };
-  Submissions.prototype.clearSentSubmission=function(cb){
-    $fh.forms.log.d("Submissions clearSentSubmission");
-    var self=this;
-    var maxSent= $fh.forms.config.get("max_sent_saved") ? $fh.forms.config.get("max_sent_saved") : $fh.forms.config.get("sent_save_min");
-    var submissions=this.get("submissions");
-    var sentSubmissions=this.getSubmitted();
-
-
-    if (sentSubmissions.length>maxSent){
-      $fh.forms.log.d("Submissions clearSentSubmission pruning sentSubmissions.length>maxSent");
-      sentSubmissions=sentSubmissions.sort(function(a,b){
-        if (a.submittedDate<b.submittedDate){
-          return -1;
-        }else {
-          return 1;
-        }
-      });
-      var toBeRemoved=[];
-      while (sentSubmissions.length>maxSent){
-        toBeRemoved.push(sentSubmissions.pop());
-      }
-      var count=toBeRemoved.length;
-      for (var i=0;i<toBeRemoved.length;i++){
-        var subMeta=toBeRemoved[i];
-        self.getSubmissionByMeta(subMeta,function(err,submission){
-          submission.clearLocal(function(err){
-            if (err){
-              $fh.forms.log.e("Submissions clearSentSubmission submission clearLocal", err);
-            }
-            count--;
-            if (count===0){
-              cb(null,null);
-            }
-          });
+    Submissions.prototype.saveSubmission = function(submission, cb) {
+        $fh.forms.log.d("Submissions saveSubmission");
+        var self = this;
+        this.updateSubmissionWithoutSaving(submission);
+        this.clearSentSubmission(function() {
+            self.saveLocal(cb);
         });
-      }
-    }else{
-      cb(null,null);
-    }
-  };
-  Submissions.prototype.findByFormId = function (formId) {
-    $fh.forms.log.d("Submissions findByFormId", formId);
-    var rtn = [];
-    var submissions = this.get('submissions');
-    for (var i = 0; i < submissions.length; i++) {
-      var obj = submissions[i];
-      if (submissions[i].formId == formId) {
-        rtn.push(obj);
-      }
-    }
-    return rtn;
-  };
-  Submissions.prototype.getSubmissions = function () {
-    return this.get('submissions');
-  };
-  Submissions.prototype.getSubmissionMetaList = Submissions.prototype.getSubmissions;
-  //function alias
-  Submissions.prototype.findMetaByLocalId = function (localId) {
-    $fh.forms.log.d("Submissions findMetaByLocalId", localId);
-    var submissions = this.get('submissions');
-    for (var i = 0; i < submissions.length; i++) {
-      var obj = submissions[i];
-      if (submissions[i]._ludid == localId) {
-        return obj;
-      }
-    }
-
-    $fh.forms.log.e("Submissions findMetaByLocalId: No submissions for localId: ", localId);
-    return null;
-  };
-  Submissions.prototype.pruneSubmission = function (submission) {
-    $fh.forms.log.d("Submissions pruneSubmission");
-    var fields = [
-        '_id',
-        '_ludid',
-        'status',
-        'formName',
-        'formId',
-        '_localLastUpdate',
-        'createDate',
-        'submitDate',
-        'deviceFormTimestamp',
-        'errorMessage',
-        'submissionStartedTimestamp',
-        'submittedDate'
-      ];
-    var data = submission.getProps();
-    var rtn = {};
-    for (var i = 0; i < fields.length; i++) {
-      var key = fields[i];
-      rtn[key] = data[key];
-    }
-    return rtn;
-  };
-
-  Submissions.prototype.clear = function(cb) {
-    $fh.forms.log.d("Submissions clear");
-    var that = this;
-    this.clearLocal(function(err) {
-        if (err) {
-            console.error(err);
-            cb(err);
+    };
+    Submissions.prototype.updateSubmissionWithoutSaving = function(submission) {
+        $fh.forms.log.d("Submissions updateSubmissionWithoutSaving");
+        var pruneData = this.pruneSubmission(submission);
+        var localId = pruneData._ludid;
+        if (localId) {
+            var meta = this.findMetaByLocalId(localId);
+            var submissions = this.get('submissions');
+            if (meta) {
+                //existed, remove the old meta and save the new one.
+                submissions.splice(submissions.indexOf(meta), 1);
+                submissions.push(pruneData);
+            } else {
+                // not existed, insert to the tail.
+                submissions.push(pruneData);
+            }
         } else {
-            that.set("submissions", []);
+            // invalid local id.
+            $fh.forms.log.e('Invalid submission for localId:', localId, JSON.stringify(submission));
+        }
+    };
+    Submissions.prototype.clearSentSubmission = function(cb) {
+        $fh.forms.log.d("Submissions clearSentSubmission");
+        var self = this;
+        var maxSent = $fh.forms.config.get("max_sent_saved") ? $fh.forms.config.get("max_sent_saved") : $fh.forms.config.get("sent_save_min");
+        var submissions = this.get("submissions");
+        var sentSubmissions = this.getSubmitted();
+
+
+        if (sentSubmissions.length > maxSent) {
+            $fh.forms.log.d("Submissions clearSentSubmission pruning sentSubmissions.length>maxSent");
+            sentSubmissions = sentSubmissions.sort(function(a, b) {
+                if (a.submittedDate < b.submittedDate) {
+                    return -1;
+                } else {
+                    return 1;
+                }
+            });
+            var toBeRemoved = [];
+            while (sentSubmissions.length > maxSent) {
+                toBeRemoved.push(sentSubmissions.pop());
+            }
+            var count = toBeRemoved.length;
+            for (var i = 0; i < toBeRemoved.length; i++) {
+                var subMeta = toBeRemoved[i];
+                self.getSubmissionByMeta(subMeta, function(err, submission) {
+                    submission.clearLocal(function(err) {
+                        if (err) {
+                            $fh.forms.log.e("Submissions clearSentSubmission submission clearLocal", err);
+                        }
+                        count--;
+                        if (count === 0) {
+                            cb(null, null);
+                        }
+                    });
+                });
+            }
+        } else {
             cb(null, null);
         }
-    });
-  };
-  Submissions.prototype.getDrafts = function(params) {
-    $fh.forms.log.d("Submissions getDrafts: ", params);
-    if(!params){
-      params = {};
-    }
-    params.status = "draft";
-    return this.findByStatus(params);
-  };
-  Submissions.prototype.getPending = function(params) {
-    $fh.forms.log.d("Submissions getPending: ", params);
-    if(!params){
-      params = {};
-    }
-    params.status = "pending";
-    return this.findByStatus(params);
-  };
-  Submissions.prototype.getSubmitted = function(params) {
-    $fh.forms.log.d("Submissions getSubmitted: ", params);
-    if(!params){
-      params = {};
-    }
-    params.status = "submitted";
-    return this.findByStatus(params);
-  };
-  Submissions.prototype.getError = function(params) {
-    $fh.forms.log.d("Submissions getError: ", params);
-    if(!params){
-      params = {};
-    }
-    params.status = "error";
-    return this.findByStatus(params);
-  };
-  Submissions.prototype.getInProgress = function(params) {
-    $fh.forms.log.d("Submissions getInProgress: ", params);
-    if(!params){
-      params = {};
-    }
-    params.status = "inprogress";
-    return this.findByStatus(params);
-  };
-  Submissions.prototype.findByStatus = function(params) {
-    $fh.forms.log.d("Submissions findByStatus: ", params);
-    if(!params){
-      params = {};
-    }
-    if (typeof params =="string"){
-      params={status:params};
-    }
-    if(params.status == null){
-      return [];
-    }
-
-    var status = params.status;
-    var formId = params.formId;
-
-    var submissions = this.get("submissions");
-    var rtn = [];
-    for (var i = 0; i < submissions.length; i++) {
-        if (submissions[i].status == status) {
-          if(formId != null){
-            if(submissions[i].formId == formId){
-              rtn.push(submissions[i]);
+    };
+    Submissions.prototype.findByFormId = function(formId) {
+        $fh.forms.log.d("Submissions findByFormId", formId);
+        var rtn = [];
+        var submissions = this.get('submissions');
+        for (var i = 0; i < submissions.length; i++) {
+            var obj = submissions[i];
+            if (submissions[i].formId === formId) {
+                rtn.push(obj);
             }
-          } else {
-            rtn.push(submissions[i]);
-          }
-
         }
-    }
-    return rtn;
-  };
-  /**
-   * return a submission model object by the meta data passed in.
-   * @param  {[type]}   meta [description]
-   * @param  {Function} cb   [description]
-   * @return {[type]}        [description]
-   */
-  Submissions.prototype.getSubmissionByMeta = function (meta, cb) {
-    $fh.forms.log.d("Submissions getSubmissionByMeta: ", meta);
-    var localId = meta._ludid;
-    if (localId) {
-      appForm.models.submission.fromLocal(localId, cb);
-    } else {
-      $fh.forms.log.e("Submissions getSubmissionByMeta: local id not found for retrieving submission.", localId, meta);
-      cb("local id not found for retrieving submission");
-    }
-  };
-  Submissions.prototype.removeSubmission = function (localId, cb) {
-    $fh.forms.log.d("Submissions removeSubmission: ", localId);
-    var index = this.indexOf(localId);
-    if (index > -1) {
-      this.get('submissions').splice(index, 1);
-    }
-    this.saveLocal(cb);
-  };
-  Submissions.prototype.indexOf = function (localId, cb) {
-    $fh.forms.log.d("Submissions indexOf: ", localId);
-    var submissions = this.get('submissions');
-    for (var i = 0; i < submissions.length; i++) {
-      var obj = submissions[i];
-      if (submissions[i]._ludid == localId) {
-        return i;
-      }
-    }
-    return -1;
-  };
-  module.submissions = new Submissions();
-  return module;
+        return rtn;
+    };
+    Submissions.prototype.getSubmissions = function() {
+        return this.get('submissions');
+    };
+    Submissions.prototype.getSubmissionMetaList = Submissions.prototype.getSubmissions;
+    //function alias
+    Submissions.prototype.findMetaByLocalId = function(localId) {
+        $fh.forms.log.d("Submissions findMetaByLocalId", localId);
+        var submissions = this.get('submissions');
+        for (var i = 0; i < submissions.length; i++) {
+            var obj = submissions[i];
+            if (submissions[i]._ludid === localId) {
+                return obj;
+            }
+        }
+
+        //$fh.forms.log.e("Submissions findMetaByLocalId: No submissions for localId: ", localId);
+        return null;
+    };
+
+    /**
+     * Finding a submission object by it's remote Id
+     * @param remoteId
+     * @returns {*}
+     */
+    Submissions.prototype.findMetaByRemoteId = function(remoteId) {
+        remoteId = remoteId || "";
+
+        $fh.forms.log.d("Submissions findMetaByRemoteId: " + remoteId);
+        var submissions = this.get('submissions');
+        for (var i = 0; i < submissions.length; i++) {
+            var obj = submissions[i];
+            if (submissions[i].submissionId) {
+                if (submissions[i].submissionId === remoteId) {
+                    return obj;
+                }
+            }
+        }
+
+        return null;
+    };
+    Submissions.prototype.pruneSubmission = function(submission) {
+        $fh.forms.log.d("Submissions pruneSubmission");
+        var fields = [
+            '_id',
+            '_ludid',
+            'status',
+            'formName',
+            'formId',
+            '_localLastUpdate',
+            'createDate',
+            'submitDate',
+            'deviceFormTimestamp',
+            'errorMessage',
+            'submissionStartedTimestamp',
+            'submittedDate',
+            'submissionId',
+            'saveDate'
+        ];
+        var data = submission.getProps();
+        var rtn = {};
+        for (var i = 0; i < fields.length; i++) {
+            var key = fields[i];
+            rtn[key] = data[key];
+        }
+        return rtn;
+    };
+
+    Submissions.prototype.clear = function(cb) {
+        $fh.forms.log.d("Submissions clear");
+        var that = this;
+        this.clearLocal(function(err) {
+            if (err) {
+                $fh.forms.log.e(err);
+                cb(err);
+            } else {
+                that.set("submissions", []);
+                cb(null, null);
+            }
+        });
+    };
+    Submissions.prototype.getDrafts = function(params) {
+        $fh.forms.log.d("Submissions getDrafts: ", params);
+        if (!params) {
+            params = {};
+        }
+        params.status = "draft";
+        return this.findByStatus(params);
+    };
+    Submissions.prototype.getPending = function(params) {
+        $fh.forms.log.d("Submissions getPending: ", params);
+        if (!params) {
+            params = {};
+        }
+        params.status = "pending";
+        return this.findByStatus(params);
+    };
+    Submissions.prototype.getSubmitted = function(params) {
+        $fh.forms.log.d("Submissions getSubmitted: ", params);
+        if (!params) {
+            params = {};
+        }
+        params.status = "submitted";
+        return this.findByStatus(params);
+    };
+    Submissions.prototype.getError = function(params) {
+        $fh.forms.log.d("Submissions getError: ", params);
+        if (!params) {
+            params = {};
+        }
+        params.status = "error";
+        return this.findByStatus(params);
+    };
+    Submissions.prototype.getInProgress = function(params) {
+        $fh.forms.log.d("Submissions getInProgress: ", params);
+        if (!params) {
+            params = {};
+        }
+        params.status = "inprogress";
+        return this.findByStatus(params);
+    };
+    Submissions.prototype.getDownloaded = function(params) {
+        $fh.forms.log.d("Submissions getDownloaded: ", params);
+        if (!params) {
+            params = {};
+        }
+        params.status = "downloaded";
+        return this.findByStatus(params);
+    };
+    Submissions.prototype.findByStatus = function(params) {
+        $fh.forms.log.d("Submissions findByStatus: ", params);
+        if (!params) {
+            params = {};
+        }
+        if (typeof params === "string") {
+            params = {
+                status: params
+            };
+        }
+        if (params.status === null) {
+            return [];
+        }
+
+        var status = params.status;
+        var formId = params.formId;
+
+        var submissions = this.get("submissions");
+        var rtn = [];
+        for (var i = 0; i < submissions.length; i++) {
+            if (submissions[i].status === status) {
+                if (formId != null) {
+                    if (submissions[i].formId === formId) {
+                        rtn.push(submissions[i]);
+                    }
+                } else {
+                    rtn.push(submissions[i]);
+                }
+
+            }
+        }
+        return rtn;
+    };
+    /**
+     * return a submission model object by the meta data passed in.
+     * @param  {[type]}   meta [description]
+     * @param  {Function} cb   [description]
+     * @return {[type]}        [description]
+     */
+    Submissions.prototype.getSubmissionByMeta = function(meta, cb) {
+        $fh.forms.log.d("Submissions getSubmissionByMeta: ", meta);
+        var localId = meta._ludid;
+        if (localId) {
+            appForm.models.submission.fromLocal(localId, cb);
+        } else {
+            $fh.forms.log.e("Submissions getSubmissionByMeta: local id not found for retrieving submission.", localId, meta);
+            cb("local id not found for retrieving submission");
+        }
+    };
+    Submissions.prototype.removeSubmission = function(localId, cb) {
+        $fh.forms.log.d("Submissions removeSubmission: ", localId);
+        var index = this.indexOf(localId);
+        if (index > -1) {
+            this.get('submissions').splice(index, 1);
+        }
+        this.saveLocal(cb);
+    };
+    Submissions.prototype.indexOf = function(localId, cb) {
+        $fh.forms.log.d("Submissions indexOf: ", localId);
+        var submissions = this.get('submissions');
+        for (var i = 0; i < submissions.length; i++) {
+            var obj = submissions[i];
+            if (submissions[i]._ludid === localId) {
+                return i;
+            }
+        }
+        return -1;
+    };
+    module.submissions = new Submissions();
+    return module;
 }(appForm.models || {});
 appForm.models = function(module) {
   module.submission = {
@@ -3421,12 +4385,16 @@ appForm.models = function(module) {
       'pending',
       'draft'
     ],
-    'pending': ['inprogress'],
+    'pending': [
+      'inprogress',
+      'error'
+    ],
     'inprogress': [
       'submitted',
       'pending',
       'error',
-      'inprogress'
+      'inprogress',
+      'downloaded'
     ],
     'submitted': [],
     'error': [
@@ -3434,11 +4402,14 @@ appForm.models = function(module) {
       'pending',
       'inprogress',
       'error'
-    ]
+    ],
+    'downloaded' : []
   };
 
-  function newInstance(form) {
-    return new Submission(form);
+  function newInstance(form, params) {
+    params = params ? params : {};
+
+    return new Submission(form, params);
   }
 
   function fromLocal(localId, cb) {
@@ -3450,9 +4421,9 @@ appForm.models = function(module) {
     } else {
       //load from storage
       $fh.forms.log.d("Submission fromLocal not in cache. Loading from local storage.: ", localId);
-      var obj = new Submission();
-      obj.setLocalId(localId);
-      obj.loadLocal(function(err, submission) {
+      var submissionObject = new Submission();
+      submissionObject.setLocalId(localId);
+      submissionObject.loadLocal(function(err, submission) {
         if (err) {
           $fh.forms.log.e("Submission fromLocal. Error loading from local: ", localId, err);
           cb(err);
@@ -3473,34 +4444,40 @@ appForm.models = function(module) {
     }
   }
 
-  function Submission(form) {
-    $fh.forms.log.d("Submission: ");
+  function Submission(form, params) {
+    params = params || {};
+    $fh.forms.log.d("Submission: ", params);
     Model.call(this, {
       '_type': 'submission'
     });
-    if (typeof form != 'undefined' && form) {
+    if (typeof form !== 'undefined' && form) {
       this.set('formName', form.get('name'));
       this.set('formId', form.get('_id'));
       this.set('deviceFormTimestamp', form.getLastUpdate());
-      this.form = form; //TODO may contain whole form definition in props.
+      this.set('createDate', appForm.utils.getTime());
+      this.set('timezoneOffset', appForm.utils.getTime(true));
+      this.set('appId', appForm.config.get('appId'));
+      this.set('appEnvironment', appForm.config.get('env'));
+      this.set('appCloudName', '');
+      this.set('comments', []);
+      this.set('formFields', []);
+      this.set('saveDate', null);
+      this.set('submitDate', null);
+      this.set('uploadStartDate', null);
+      this.set('submittedDate', null);
+      this.set('userId', null);
+      this.set('deviceId', appForm.config.get('deviceId'));
+      this.transactionMode = false;
+    } else {
+      this.set('appId', appForm.config.get('appId'));
+      if(params.submissionId){
+        this.set('downloadSubmission', true);
+        this.setRemoteSubmissionId(params.submissionId);
+      } else {
+        this.set('status', 'new');
+      }
     }
     this.set('status', 'new');
-    this.set('createDate', appForm.utils.getTime());
-    this.set('timezoneOffset', appForm.utils.getTime(true));
-    this.set('appId', appForm.config.get('appId'));
-    this.set('appEnvironment', appForm.config.get('env'));
-    this.set('appCloudName', '');
-
-    this.set('comments', []);
-    this.set('formFields', []);
-    this.set('saveDate', null);
-    this.set('submitDate', null);
-    this.set('uploadStartDate', null);
-    this.set('submittedDate', null);
-    this.set('userId', null);
-    this.set('filesInSubmission', {});
-    this.set('deviceId', appForm.config.get('deviceId'));
-    this.transactionMode = false;
     this.genLocalId();
     var localId = this.getLocalId();
     _submissions[localId] = this;
@@ -3563,7 +4540,9 @@ appForm.models = function(module) {
     var that = this;
     this.set('timezoneOffset', appForm.utils.getTime(true));
     this.getForm(function(err, form) {
-      if(err) $fh.forms.log.e("Submission submit: Error getting form ", err);
+      if(err) {
+        $fh.forms.log.e("Submission submit: Error getting form ", err);
+      }
       var ruleEngine = form.getRuleEngine();
       var submission = that.getProps();
       ruleEngine.validateForm(submission, function(err, res) {
@@ -3601,12 +4580,24 @@ appForm.models = function(module) {
       cb(null, null);
     }
   };
+  Submission.prototype.getDownloadTask = function(cb){
+    var self = this;
+    $fh.forms.log.d("getDownloadTask");
+    if(self.isDownloadSubmission()){
+      self.getUploadTask(cb);
+    } else {
+      if(cb && typeof(cb) === 'function'){
+        $fh.forms.log.e("Submission is not a download submission");
+        return cb("Submission is not a download submission");
+      }
+    }
+  };
   Submission.prototype.cancelUploadTask = function(cb) {
     var targetStatus = 'submit';
     var that = this;
     appForm.models.uploadManager.cancelSubmission(this, function(err) {
       if (err) {
-        console.error(err);
+        $fh.forms.log.e(err);
       }
       that.changeStatus(targetStatus, cb);
     });
@@ -3618,15 +4609,38 @@ appForm.models = function(module) {
     this.set('uploadTaskId', utId);
   };
   Submission.prototype.submitted = function(cb) {
+    var self = this;
+    if(self.isDownloadSubmission()){
+      var errMsg = "Downloaded submissions should not call submitted function.";
+      $fh.forms.log.e(errMsg);
+      return cb(errMsg);
+    }
+    $fh.forms.log.d("Submission submitted called");
+
     var targetStatus = 'submitted';
-    var that = this;
-    this.set('submittedDate', appForm.utils.getTime());
-    this.changeStatus(targetStatus, function(err) {
+
+    self.set('submittedDate', appForm.utils.getTime());
+    self.changeStatus(targetStatus, function(err) {
       if (err) {
         cb(err);
       } else {
-        that.emit('submitted', that.get('submissionId'));
+        self.emit('submitted', self.get('submissionId'));
         cb(null, null);
+      }
+    });
+  };
+  Submission.prototype.downloaded = function(cb){
+    $fh.forms.log.d("Submission Downloaded called");
+    var that = this;
+    var targetStatus = 'downloaded';
+
+    that.set('downloadedDate', appForm.utils.getTime());
+    that.changeStatus(targetStatus, function(err) {
+      if (err) {
+        cb(err);
+      } else {
+        that.emit('downloaded', that.get('submissionId'));
+        cb(null, that);
       }
     });
   };
@@ -3646,32 +4660,36 @@ appForm.models = function(module) {
       this.set('status', status);
       this.saveToList(function(err) {
         if (err) {
-          console.error(err);
+          $fh.forms.log.e(err);
         }
       });
       this.saveLocal(cb);
     } else {
-      throw 'Target status is not valid: ' + status;
+      $fh.forms.log.e('Target status is not valid: ' + status);
+      cb('Target status is not valid: ' + status);
     }
   };
   Submission.prototype.upload = function(cb) {
     var targetStatus = "inprogress";
-    var that = this;
+    var self = this;
     if (this.isStatusValid(targetStatus)) {
       this.set("status", targetStatus);
       this.set("uploadStartDate", appForm.utils.getTime());
       appForm.models.submissions.updateSubmissionWithoutSaving(this);
-      appForm.models.uploadManager.queueSubmission(this, function(err, ut) {
+      appForm.models.uploadManager.queueSubmission(self, function(err, ut) {
         if (err) {
           cb(err);
         } else {
           ut.set("error", null);
           ut.saveLocal(function(err) {
-            if (err) console.error(err);
+            if (err) {
+              $fh.forms.log.e("Error saving upload task: " + err);
+            }
           });
-          that.emit("inprogress", ut);
+          self.emit("inprogress", ut);
           ut.on("progress", function(progress) {
-            that.emit("progress", progress);
+            $fh.forms.log.d("Emitting upload progress for submission: " + self.getLocalId() + JSON.stringify(progress));
+            self.emit("progress", progress);
           });
           cb(null, ut);
         }
@@ -3679,6 +4697,40 @@ appForm.models = function(module) {
 
     } else {
       return cb("Invalid Status to upload a form submission.");
+    }
+  };
+  Submission.prototype.download = function(cb){
+    var that = this;
+    $fh.forms.log.d("Starting download for submission: " + that.getLocalId());
+    var targetStatus = "pending";
+    if(this.isStatusValid(targetStatus)){
+      this.set("status", targetStatus);
+      targetStatus = "inprogress";
+      if(this.isStatusValid(targetStatus)){
+        this.set("status", targetStatus);
+        //Status is valid, add the submission to the
+        appForm.models.uploadManager.queueSubmission(that, function(err, downloadTask) {
+          if(err){
+            return cb(err);
+          }
+          downloadTask.set("error", null);
+          downloadTask.saveLocal(function(err) {
+            if (err) {
+              $fh.forms.log.e("Error saving download task: " + err);
+            }
+          });
+          that.emit("inprogress", downloadTask);
+          downloadTask.on("progress", function(progress) {
+            $fh.forms.log.d("Emitting download progress for submission: " + that.getLocalId() + JSON.stringify(progress));
+            that.emit("progress", progress);
+          });
+          return cb(null, downloadTask);
+        });
+      } else {
+        return cb("Invalid Status to dowload a form submission");
+      }
+    } else {
+      return cb("Invalid Status to download a form submission.");
     }
   };
   Submission.prototype.saveToList = function(cb) {
@@ -3699,11 +4751,13 @@ appForm.models = function(module) {
    * @return {Boolean}              [description]
    */
   Submission.prototype.isStatusValid = function(targetStatus) {
+    $fh.forms.log.d("isStatusValid. Target Status: " + targetStatus + " Current Status: " + this.get('status').toLowerCase());
     var status = this.get('status').toLowerCase();
     var nextStatus = statusMachine[status];
     if (nextStatus.indexOf(targetStatus) > -1) {
       return true;
     } else {
+      this.set('status', 'error');
       return false;
     }
   };
@@ -3711,7 +4765,7 @@ appForm.models = function(module) {
     var now = appForm.utils.getTime();
     var ts = now.getTime();
     var newComment = {
-      'madeBy': typeof user == 'undefined' ? '' : user.toString(),
+      'madeBy': typeof user === 'undefined' ? '' : user.toString(),
       'madeOn': now,
       'value': msg,
       'timeStamp': ts
@@ -3726,21 +4780,33 @@ appForm.models = function(module) {
     var comments = this.getComments();
     for (var i = 0; i < comments.length; i++) {
       var comment = comments[i];
-      if (comment.timeStamp == timeStamp) {
+      if (comment.timeStamp === timeStamp) {
         comments.splice(i, 1);
         return;
       }
     }
   };
-  Submission.prototype.addSubmissionFile = function(fileHash) {
-    var filesInSubmission = this.get('filesInSubmission', {});
-    filesInSubmission[fileHash] = true;
-    this.set('filesInSubmission', filesInSubmission);
-    this.saveLocal(function(err) {
-      if (err)
-        console.error(err);
-    });
+
+  Submission.prototype.getSubmissionFiles = function(){
+    var self = this;
+    $fh.forms.log.d("In getSubmissionFiles: " + self.getLocalId());
+    var submissionFiles = [];
+
+    var formFields = self.get("formFields", []);
+
+    for(var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++){
+      var formFieldEntry = formFields[formFieldIndex].fieldId || {};
+      if(formFieldEntry.type === 'file' || formFieldEntry.type === 'photo'  || formFieldEntry.type === 'signature'){
+        var tmpFieldValues = formFields[formFieldIndex].fieldValues || [];
+        for(var fieldValIndex = 0; fieldValIndex < tmpFieldValues.length; tmpFieldValues++){
+          submissionFiles.push(tmpFieldValues[fieldValIndex]);
+        }
+      }
+    }
+
+    return submissionFiles;
   };
+
   /**
    * Add a value to submission.
    * This will not cause the field been validated.
@@ -3756,47 +4822,48 @@ appForm.models = function(module) {
     var that = this;
     var fieldId = params.fieldId;
     var inputValue = params.value;
-    var index = params.index === undefined ? -1 : params.index;
-    this.getForm(function(err, form) {
-      var fieldModel = form.getFieldModelById(fieldId);
-      if (that.transactionMode) {
-        if (!that.tmpFields[fieldId]) {
-          that.tmpFields[fieldId] = [];
+
+    if(inputValue !== null && typeof(inputValue) !== 'undefined'){
+      var index = params.index === undefined ? -1 : params.index;
+      this.getForm(function(err, form) {
+        var fieldModel = form.getFieldModelById(fieldId);
+        if (that.transactionMode) {
+          if (!that.tmpFields[fieldId]) {
+            that.tmpFields[fieldId] = [];
+          }
+          fieldModel.processInput(params, function(err, result) {
+            if (err) {
+              return cb(err);
+            } else {
+              if (index > -1) {
+                that.tmpFields[fieldId][index] = result;
+              } else {
+                that.tmpFields[fieldId].push(result);
+              }
+              return cb(null, result);
+            }
+          });
+        } else {
+          var target = that.getInputValueObjectById(fieldId);
+          fieldModel.processInput(params, function(err, result) {
+            if (err) {
+              return cb(err);
+            } else {
+              if (index > -1) {
+                target.fieldValues[index] = result;
+              } else {
+                target.fieldValues.push(result);
+              }
+
+              return cb(null, result);
+            }
+          });
         }
-        fieldModel.processInput(params, function(err, result) {
-          if (err) {
-            cb(err);
-          } else {
-            if (index > -1) {
-              that.tmpFields[fieldId][index] = result;
-            } else {
-              that.tmpFields[fieldId].push(result);
-            }
-            if (result != null && result.hashName) {
-              that.addSubmissionFile(result.hashName);
-            }
-            cb(null, result);
-          }
-        });
-      } else {
-        var target = that.getInputValueObjectById(fieldId);
-        fieldModel.processInput(params, function(err, result) {
-          if (err) {
-            cb(err);
-          } else {
-            if (index > -1) {
-              target.fieldValues[index] = result;
-            } else {
-              target.fieldValues.push(result);
-            }
-            if (result != null && result.hashName) {
-              that.addSubmissionFile(result.hashName);
-            }
-            cb(null, result);
-          }
-        });
-      }
-    });
+      });
+    } else {
+      $fh.forms.log.e("addInputValue: Input value was null. Params: " + fieldId);
+      return cb(null, {});
+    }
   };
   Submission.prototype.getInputValueByFieldId = function(fieldId, cb) {
     var values = this.getInputValueObjectById(fieldId).fieldValues;
@@ -3809,15 +4876,31 @@ appForm.models = function(module) {
    * Reset submission
    * @return {[type]} [description]
    */
-  Submission.prototype.reset = function(cb) {
-    this.set('formFields', []);
+  Submission.prototype.reset = function() {
+    var self = this;
+    self.clearLocalSubmissionFiles(function(err){
+      self.set('formFields', []);
+    });
+  };
+  Submission.prototype.isDownloadSubmission = function(){
+    return this.get("downloadSubmission") === true;
   };
   Submission.prototype.clearLocalSubmissionFiles = function(cb) {
-    var filesInSubmission = this.get('filesInSubmission', {});
-    for (var fileHashName in filesInSubmission) {
-      appForm.utils.fileSystem.remove(fileHashName, function(err) {
-        if (err)
-          console.error(err);
+    $fh.forms.log.d("In clearLocalSubmissionFiles");
+    var self = this;
+    var filesInSubmission = this.getSubmissionFiles();
+    var localFileName = "";
+    if(self.isDownloadSubmission()){
+      localFileName = "fileName";
+    } else {
+      localFileName = "fileHash";
+    }
+
+    for (var fileMetaObject in filesInSubmission) {
+      appForm.utils.fileSystem.remove(fileMetaObject[localFileName], function(err) {
+        if (err){
+          $fh.forms.log.e("Error removing files from " + err);
+        }
       });
     }
     cb();
@@ -3857,7 +4940,7 @@ appForm.models = function(module) {
     } else {
       targetArr = this.getInputValueObjectById(fieldId).fieldId;
     }
-    if (typeof index == 'undefined') {
+    if (typeof index === 'undefined') {
       targetArr.splice(0, targetArr.length);
     } else {
       if (targetArr.length > index) {
@@ -3869,8 +4952,15 @@ appForm.models = function(module) {
     var formFields = this.get('formFields', []);
     for (var i = 0; i < formFields.length; i++) {
       var formField = formFields[i];
-      if (formField.fieldId == fieldId) {
-        return formField;
+
+      if(formField.fieldId._id){
+        if (formField.fieldId._id === fieldId) {
+          return formField;
+        }
+      } else {
+        if (formField.fieldId === fieldId) {
+          return formField;
+        }
       }
     }
     var newField = {
@@ -3887,10 +4977,17 @@ appForm.models = function(module) {
   Submission.prototype.getForm = function(cb) {
     var Form = appForm.models.Form;
     var formId = this.get('formId');
-    new Form({
-      'formId': formId,
-      'rawMode': true
-    }, cb);
+
+    if(formId){
+      $fh.forms.log.d("FormId found for getForm: " + formId);
+      new Form({
+        'formId': formId,
+        'rawMode': true
+      }, cb);
+    } else {
+      $fh.forms.log.e("No form Id specified for getForm");
+      return cb("No form Id specified for getForm");
+    }
   };
   Submission.prototype.reloadForm = function(cb) {
     var Form = appForm.models.Form;
@@ -3913,11 +5010,93 @@ appForm.models = function(module) {
   };
   /**
    * Retrieve all file fields related value
+   * If the submission has been downloaded, there is no gurantee that the form is  on-device.
    * @return {[type]} [description]
    */
-  Submission.prototype.getFileInputValues = function() {
-    var fileFieldIds = this.form.getFileFieldsId();
-    return this.getInputValueArray(fileFieldIds);
+  Submission.prototype.getFileInputValues = function(cb) {
+    var self = this;
+    self.getFileFieldsId(function(err, fileFieldIds){
+      if(err){
+        return cb(err);
+      }
+      return cb(null, self.getInputValueArray(fileFieldIds));
+    });
+  };
+
+  Submission.prototype.getFileFieldsId = function(cb){
+    var self = this;
+    var formFieldIds = [];
+
+    if(self.isDownloadSubmission()){
+      //For Submission downloads, there needs to be a scan through the formFields param
+      var formFields = self.get("formFields", []);
+
+      for(var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++){
+        var formFieldEntry = formFields[formFieldIndex].fieldId || {};
+        if(formFieldEntry.type === 'file' || formFieldEntry.type === 'photo'){
+          if(formFieldEntry._id){
+            formFieldIds.push(formFieldEntry._id);
+          }
+        }
+      }
+      return cb(null, formFieldIds);
+    } else {
+      self.getForm(function(err, form){
+        if(err){
+          $fh.forms.log.e("Error getting form for getFileFieldsId" + err);
+          return cb(err);
+        }
+        return cb(err, form.getFileFieldsId());
+      });
+    }
+  };
+
+  Submission.prototype.updateFileLocalURI = function(fileDetails, newLocalFileURI, cb){
+    $fh.forms.log.d("updateFileLocalURI: " + newLocalFileURI);
+    var self = this;
+    fileDetails = fileDetails || {};
+
+    if(fileDetails.fileName && newLocalFileURI){
+      //Search for the file placeholder name.
+      self.findFilePlaceholderFieldId(fileDetails.fileName, function(err, fieldDetails){
+        if(err){
+          return cb(err);
+        }
+        if(fieldDetails.fieldId){
+          var tmpObj = self.getInputValueObjectById(fieldDetails.fieldId).fieldValues[fieldDetails.valueIndex];
+          tmpObj.localURI = newLocalFileURI;
+          self.getInputValueObjectById(fieldDetails.fieldId).fieldValues[fieldDetails.valueIndex] = tmpObj;
+          self.saveLocal(cb);
+        } else {
+          $fh.forms.log.e("No file field matches the placeholder name " + fileDetails.fileName);
+          return cb("No file field matches the placeholder name " + fileDetails.fileName);
+        }
+      });
+    } else {
+      $fh.forms.log.e("Submission: updateFileLocalURI : No fileName for submissionId : "+ JSON.stringify(fileDetails));
+      return cb("Submission: updateFileLocalURI : No fileName for submissionId : "+ JSON.stringify(fileDetails));
+    }
+  };
+
+  Submission.prototype.findFilePlaceholderFieldId = function(filePlaceholderName, cb){
+    var self = this;
+    var fieldDetails = {};
+    self.getFileFieldsId(function(err, fieldIds){
+      for (var i = 0; i< fieldIds.length; i++) {
+        var fieldId = fieldIds[i];
+        var inputValue = self.getInputValueObjectById(fieldId);
+        for (var j = 0; j < inputValue.fieldValues.length; j++) {
+          var tmpObj = inputValue.fieldValues[j];
+          if (tmpObj) {
+            if(tmpObj.fileName !== null && tmpObj.fileName === filePlaceholderName){
+              fieldDetails.fieldId = fieldId;
+              fieldDetails.valueIndex = j;
+            }
+          }
+        }
+      }
+      return cb(null, fieldDetails);
+    });
   };
 
   Submission.prototype.getInputValueArray = function(fieldIds) {
@@ -3940,19 +5119,19 @@ appForm.models = function(module) {
     //remove from uploading list
     appForm.models.uploadManager.cancelSubmission(self, function(err, uploadTask) {
       if (err) {
-        console.error(err);
+        $fh.forms.log.e(err);
         return cb(err);
       }
       //remove from submission list
       appForm.models.submissions.removeSubmission(self.getLocalId(), function(err) {
         if (err) {
-          console.err(err);
+          $fh.forms.log.e(err);
           return cb(err);
         }
         self.clearLocalSubmissionFiles(function() {
           Model.prototype.clearLocal.call(self, function(err) {
             if (err) {
-              console.error(err);
+              $fh.forms.log.e(err);
               return cb(err);
             }
             cb(null, null);
@@ -3960,6 +5139,14 @@ appForm.models = function(module) {
         });
       });
     });
+  };
+  Submission.prototype.getRemoteSubmissionId = function() {
+    return this.get("submissionId", "");
+  };
+  Submission.prototype.setRemoteSubmissionId = function(submissionId){
+    if(submissionId){
+      this.set("submissionId", submissionId);
+    }
   };
   return module;
 }(appForm.models || {});
@@ -4051,7 +5238,7 @@ appForm.models = function (module) {
       return cb(null, inputValue);
     }
     // try to find specified processor
-    if (this[processorName] && typeof this[processorName] == 'function') {
+    if (this[processorName] && typeof this[processorName] === 'function') {
       this[processorName](params, cb);
     } else {
       cb(null, inputValue);
@@ -4067,7 +5254,7 @@ appForm.models = function (module) {
     var type = this.getType();
     var processorName = 'convert_' + type;
     // try to find specified processor
-    if (this[processorName] && typeof this[processorName] == 'function') {
+    if (this[processorName] && typeof this[processorName] === 'function') {
       this[processorName](submissionValue, cb);
     } else {
       cb(null, submissionValue);
@@ -4141,10 +5328,10 @@ appForm.models.Field = function (module) {
   module.prototype.process_file = function (params, cb) {
     var inputValue = params.value;
     var isStore = params.isStore === undefined ? true : params.isStore;
-    if (typeof inputValue == 'undefined' || inputValue == null) {
+    if (typeof inputValue === 'undefined' || inputValue === null) {
       return cb(null, null);
     }
-    if (typeof inputValue != 'object' || !inputValue instanceof HTMLInputElement && !inputValue instanceof File && !checkFileObj(inputValue)) {
+    if (typeof inputValue !== 'object' || !inputValue instanceof HTMLInputElement && !inputValue instanceof File && !checkFileObj(inputValue)) {
       throw 'the input value for file field should be a html file input element or a File object';
     }
     if (checkFileObj(inputValue)) {
@@ -4173,7 +5360,7 @@ appForm.models.Field = function (module) {
       if (isStore) {
         appForm.utils.fileSystem.save(hashName, file, function (err, res) {
           if (err) {
-            console.error(err);
+            $fh.forms.log.e(err);
             cb(err);
           } else {
             cb(null, rtnJSON);
@@ -4302,7 +5489,7 @@ appForm.models.Field = function (module) {
       if (isStore) {
         appForm.utils.fileSystem.save(imgName, dataArr[1], function (err, res) {
           if (err) {
-            console.error(err);
+            $fh.forms.log.e(err);
             cb(err);
           } else {
             cb(null, meta);
@@ -4338,7 +5525,7 @@ appForm.models.Field = function (module) {
       var name = meta.hashName;
       appForm.utils.fileSystem.readAsText(name, function (err, text) {
         if (err) {
-          console.error(err);
+          $fh.forms.log.e(err);
         }
         meta.data = text;
         cb(err, meta);
@@ -4359,7 +5546,7 @@ appForm.models.Field = function (module) {
 appForm.models = function (module) {
   var Model = appForm.models.Model;
   function Page(opt, parentForm) {
-    if (typeof opt == 'undefined' || typeof parentForm == 'undefined') {
+    if (typeof opt === 'undefined' || typeof parentForm === 'undefined') {
       throw 'Page initialise failed: new Page(pageDefinitionJSON, parentFormModel)';
     }
     Model.call(this, { '_type': 'page' });
@@ -4399,7 +5586,7 @@ appForm.models = function (module) {
   Page.prototype.checkForSectionBreaks=function(){ //Checking for any sections
     for (var i=0;i<this.fieldsIds.length;i++){
       var fieldModel = this.form.getFieldModelById(this.fieldsIds[i]);
-      if(fieldModel && fieldModel.getType() == "sectionBreak"){
+      if(fieldModel && fieldModel.getType() === "sectionBreak"){
         return true;
       }
     }
@@ -4415,7 +5602,7 @@ appForm.models = function (module) {
       //If there are section breaks, the first field in the form must be a section break. If not, add a placeholder
       var firstField = this.form.getFieldModelById(this.fieldsIds[0]);
 
-      if(firstField.getType() != "sectionBreak"){
+      if(firstField.getType() !== "sectionBreak"){
         insertSectionBreak = true;
       }
     } else {
@@ -4430,11 +5617,11 @@ appForm.models = function (module) {
         sectionList[currentSection] = sectionList[currentSection] ? sectionList[currentSection] : [];
       }
 
-      if(currentSection !== null && fieldModel.getType() != "sectionBreak"){
+      if(currentSection !== null && fieldModel.getType() !== "sectionBreak"){
         sectionList[currentSection].push(fieldModel);
       }
 
-      if(fieldModel.getType() == "sectionBreak"){
+      if(fieldModel.getType() === "sectionBreak"){
         currentSection = "sectionBreak" + i;
         sectionList[currentSection] = sectionList[currentSection] ? sectionList[currentSection] : [];
         sectionList[currentSection].push(fieldModel);
@@ -4478,16 +5665,19 @@ appForm.models = function (module) {
 appForm.models = function (module) {
   var Model = appForm.models.Model;
   function UploadManager() {
-    Model.call(this, {
+    var self = this;
+    Model.call(self, {
       '_type': 'uploadManager',
       '_ludid': 'uploadManager_queue'
     });
-    this.set('taskQueue', []);
-    this.sending = false;
-    this.timerInterval = 200;
-    this.sendingStart = appForm.utils.getTime();
+
+    self.set('taskQueue', []);
+    self.sending = false;
+    self.timerInterval = 200;
+    self.sendingStart = appForm.utils.getTime();
   }
   appForm.utils.extend(UploadManager, Model);
+
   /**
      * Queue a submission to uploading tasks queue
      * @param  {[type]} submissionModel [description]
@@ -4495,6 +5685,7 @@ appForm.models = function (module) {
      * @return {[type]}                 [description]
      */
   UploadManager.prototype.queueSubmission = function (submissionModel, cb) {
+    $fh.forms.log.d("Queueing Submission for uploadManager");
     var utId;
     var uploadTask = null;
     var self = this;
@@ -4504,27 +5695,33 @@ appForm.models = function (module) {
       uploadTask = appForm.models.uploadTask.newInstance(submissionModel);
       utId = uploadTask.getLocalId();
     }
-    this.push(utId);
-    if (!this.timer) {
-      this.start();
+    self.push(utId);
+    if (!self.timer) {
+      $fh.forms.log.d("Starting timer for uploadManager");
+      self.start();
     }
     if (uploadTask) {
       uploadTask.saveLocal(function (err) {
         if (err) {
-          console.error(err);
+          $fh.forms.log.e(err);
         }
         self.saveLocal(function (err) {
           if (err) {
-            console.error(err);
+            $fh.forms.log.e("Error saving upload manager: " + err);
           }
-          submissionModel.setUploadTaskId(utId);
           cb(null, uploadTask);
         });
       });
     } else {
-      self.getTaskById(utId, cb);
+      self.saveLocal(function (err) {
+        if (err) {
+          $fh.forms.log.e("Error saving upload manager: " + err);
+        }
+        self.getTaskById(utId, cb);
+      });
     }
   };
+
   /**
      * cancel a submission uploading
      * @param  {[type]}   submissionsModel [description]
@@ -4541,7 +5738,7 @@ appForm.models = function (module) {
       }
       this.getTaskById(uploadTId, function (err, task) {
         if (err) {
-          console.error(err);
+          $fh.forms.log.e(err);
           cb(err, task);
         } else {
           if (task) {
@@ -4552,8 +5749,9 @@ appForm.models = function (module) {
         }
       });
       this.saveLocal(function (err) {
-        if (err)
-          console.error(err);
+        if (err){
+          $fh.forms.log.e(err);
+        }
       });
     } else {
       cb(null, null);
@@ -4588,15 +5786,17 @@ appForm.models = function (module) {
   UploadManager.prototype.push = function (uploadTaskId) {
     this.get('taskQueue').push(uploadTaskId);
     this.saveLocal(function (err) {
-      if (err)
-        console.error(err);
+      if (err){
+        $fh.forms.log.e("Error saving local Upload manager", err);
+      }
     });
   };
   UploadManager.prototype.shift = function () {
     var shiftedTask = this.get('taskQueue').shift();
     this.saveLocal(function (err) {
-      if (err)
-        console.error(err);
+      if (err) {
+        $fh.forms.log.e(err);
+      }
     });
     return shiftedTask;
   };
@@ -4609,7 +5809,7 @@ appForm.models = function (module) {
       var timePassed = now.getTime() - this.sendingStart.getTime();
       if (timePassed > $fh.forms.config.get("timeout") * 1000) {
         //time expired. roll current task to the end of queue
-        console.error('Uploading content timeout. it will try to reupload.');
+        $fh.forms.log.e('Uploading content timeout. it will try to reupload.');
         this.sending = false;
         this.rollTask();
       }
@@ -4620,7 +5820,7 @@ appForm.models = function (module) {
         var that = this;
         this.getCurrentTask(function (err, task) {
           if (err || !task) {
-            console.error(err);
+            $fh.forms.log.e(err);
             that.sending = false;
           } else {
             if (task.isCompleted() || task.isError()) {
@@ -4693,13 +5893,13 @@ appForm.models = function (module) {
   Rule.prototype.test = function (param) {
     var fields = this.getRelatedFieldId();
     var logic = this.getLogic();
-    var res = logic == 'or' ? false : true;
+    var res = logic === 'or' ? false : true;
     for (var i = 0; i< fields.length ; i++) {
       var fieldId = fields[i];
       var val = param[fieldId];
       if (val) {
         var tmpRes = this.testField(fieldId, val);
-        if (logic == 'or') {
+        if (logic === 'or') {
           res = res || tmpRes;
           if (res === true) {
             //break directly
@@ -4713,7 +5913,7 @@ appForm.models = function (module) {
           }
         }
       } else {
-        if (logic == 'or') {
+        if (logic === 'or') {
           res = res || false;
         } else {
           return false;
@@ -4738,7 +5938,7 @@ appForm.models = function (module) {
     var statements = this.getDefinition().ruleConditionalStatements;
     for (var i = 0; i<statements.length; i++) {
       var statement = statements[i];
-      if (statement.sourceField == fieldId) {
+      if (statement.sourceField === fieldId) {
         return statement;
       }
     }
@@ -4755,7 +5955,7 @@ appForm.models = function (module) {
     var def = this.getDefinition();
     var target = {
         'action': def.type,
-        'targetId': this.get('type') == 'page' ? def.targetPage : def.targetField,
+        'targetId': this.get('type') === 'page' ? def.targetPage : def.targetField,
         'targetType': this.get('type')
       };
     return target;
@@ -4771,15 +5971,24 @@ appForm.models = function (module) {
     'newInstance': newInstance,
     'fromLocal': fromLocal
   };
+
+
   var _uploadTasks = {};
-  //mem cache for singleton.
+
   var Model = appForm.models.Model;
+
   function newInstance(submissionModel) {
-    var utObj = new UploadTask();
-    utObj.init(submissionModel);
-    _uploadTasks[utObj.getLocalId()] = utObj;
-    return utObj;
+    if(submissionModel){
+      var utObj = new UploadTask();
+      utObj.init(submissionModel);
+      _uploadTasks[utObj.getLocalId()] = utObj;
+      return utObj;
+    } else {
+      return {};
+    }
   }
+
+
   function fromLocal(localId, cb) {
     if (_uploadTasks[localId]) {
       return cb(null, _uploadTasks[localId]);
@@ -4789,32 +5998,51 @@ appForm.models = function (module) {
     _uploadTasks[localId] = utObj;
     utObj.loadLocal(cb);
   }
+
+
   function UploadTask() {
     Model.call(this, { '_type': 'uploadTask' });
   }
+
+
   appForm.utils.extend(UploadTask, Model);
   UploadTask.prototype.init = function (submissionModel) {
-    var json = submissionModel.getProps();
-    var files = submissionModel.getFileInputValues();
+    var self = this;
     var submissionLocalId = submissionModel.getLocalId();
-    this.setLocalId(submissionLocalId + '_' + 'uploadTask');
-    this.set('submissionLocalId', submissionLocalId);
-    this.set('jsonTask', json);
-    this.set('fileTasks', []);
-    this.set('currentTask', null);
-    this.set('completed', false);
-    this.set('mbaasCompleted', false);
-    this.set('retryAttempts', 0);
-    this.set('retryNeeded', false);
-    this.set('formId', submissionModel.get('formId'));
-    for (var i = 0; i<files.length ; i++) {
-      var file = files[i];
-      this.addFileTask(file);
+    self.setLocalId(submissionLocalId + '_' + 'uploadTask');
+    self.set('submissionLocalId', submissionLocalId);
+    self.set('fileTasks', []);
+    self.set('currentTask', null);
+    self.set('completed', false);
+    self.set('retryAttempts', 0);
+    self.set('retryNeeded', false);
+    self.set('mbaasCompleted', false);
+    self.set('submissionTransferType', 'upload');
+    submissionModel.setUploadTaskId(self.getLocalId());
+
+    function initSubmissionUpload(){
+      var json = submissionModel.getProps();
+      self.set('jsonTask', json);
+      self.set('formId', submissionModel.get('formId'));
+
+    }
+
+    function initSubmissionDownload(){
+      self.set('submissionId', submissionModel.getRemoteSubmissionId());
+      self.set('jsonTask', {});
+      self.set('submissionTransferType', 'download');
+    }
+
+    if(submissionModel.isDownloadSubmission()){
+      initSubmissionDownload();
+    } else {
+      initSubmissionUpload();
     }
   };
   UploadTask.prototype.getTotalSize = function () {
-    var jsonSize = JSON.stringify(this.get('jsonTask')).length;
-    var fileTasks = this.get('fileTasks');
+    var self = this;
+    var jsonSize = JSON.stringify(self.get('jsonTask')).length;
+    var fileTasks = self.get('fileTasks');
     var fileSize = 0;
     var fileTask;
     for (var i = 0; i<fileTasks.length ; i++) {
@@ -4840,6 +6068,20 @@ appForm.models = function (module) {
   UploadTask.prototype.getRemoteStore = function () {
     return appForm.stores.mBaaS;
   };
+  UploadTask.prototype.addFileTasks = function(submissionModel, cb){
+    var self = this;
+    submissionModel.getFileInputValues(function(err, files){
+      if(err){
+        $fh.forms.log.e("Error getting file Input values: " + err);
+        return cb(err);
+      }
+      for (var i = 0; i<files.length ; i++) {
+        var file = files[i];
+        self.addFileTask(file);
+      }
+      cb();
+    });
+  };
   UploadTask.prototype.addFileTask = function (fileDef) {
     this.get('fileTasks').push(fileDef);
   };
@@ -4860,62 +6102,148 @@ appForm.models = function (module) {
     this.set('retryAttempts', 0);
   };
   UploadTask.prototype.isStarted = function () {
-    return this.getCurrentTask() == null ? false : true;
+    return this.getCurrentTask() === null ? false : true;
   };
   /**
-   * upload form submission
+   * upload/download form submission
    * @param  {Function} cb [description]
    * @return {[type]}      [description]
    */
   UploadTask.prototype.uploadForm = function (cb) {
-    var that = this;
+    var self = this;
 
     function processUploadDataResult(res){
+      $fh.forms.log.d("In processUploadDataResult");
+      var formSub = self.get("jsonTask");
       if(res.error){
-        console.error("Error submitting form " + res.error);
+        $fh.forms.log.e("Error submitting form " + res.error);
         return cb("Error submitting form " + res.error);
       } else {
         var submissionId = res.submissionId;
         // form data submitted successfully.
         formSub.lastUpdate = appForm.utils.getTime();
-        that.set('submissionId', submissionId);
-        that.increProgress();
-        that.saveLocal(function (err) {
+        self.set('submissionId', submissionId);
+        self.increProgress();
+        self.saveLocal(function (err) {
           if (err) {
-            console.error(err);
+            $fh.forms.log.e("Error saving uploadTask to local storage" + err);
           }
         });
-        that.emit('progress', that.getProgress());
+        self.emit('progress', self.getProgress());
         return cb(null);
       }
     }
 
-    var formSub = this.get('jsonTask');
-
-    var formSubmissionModel = new appForm.models.FormSubmission(formSub);
-    this.getRemoteStore().create(formSubmissionModel, function (err, res) {
-      if (err) {
+    function processDownloadDataResult(err, res){
+      $fh.forms.log.d("In processDownloadDataResult");
+      if(err){
+        $fh.forms.log.e("Error downloading submission data"+ err);
         return cb(err);
-      } else {
-        var updatedFormDefinition = res.updatedFormDefinition;
-
-        if (updatedFormDefinition) {
-          // remote form definition is updated
-          that.refreshForm(updatedFormDefinition, function (err) {
-            //refresh form def in parallel. maybe not needed.
-            console.log("Form Updated, refreshed");
-            if (err) {
-              console.error(err);
-            }
-
-            processUploadDataResult(res);
-          });
-        } else {
-          processUploadDataResult(res);
-        }
       }
-    });
+
+      //Have the definition of the submission
+      self.submissionModel(function(err, submissionModel){
+        $fh.forms.log.d("Got SubmissionModel", err, submissionModel);
+        if(err){
+          return cb(err);
+        }
+        var JSONRes = {};
+
+        //Instantiate the model from the json definition
+        if(typeof(res) === "string"){
+          try{
+            JSONRes = JSON.parse(res);
+          } catch (e){
+            $fh.forms.log.e("processDownloadDataResult Invalid JSON Object Returned", res);
+            return cb("Invalid JSON Object Returned");
+          }
+        } else {
+          JSONRes = res;
+        }
+
+        if(JSONRes.status){
+          delete JSONRes.status;
+        }
+
+        submissionModel.fromJSON(JSONRes);
+        self.set('jsonTask', res);
+        submissionModel.saveLocal(function(err){
+          $fh.forms.log.d("Saved SubmissionModel", err, submissionModel);
+          if(err){
+            $fh.forms.log.e("Error saving updated submission from download submission: " + err);
+          }
+
+          //Submission Model is now populated with all the fields in the submission
+          self.addFileTasks(submissionModel, function(err){
+            $fh.forms.log.d("addFileTasks called", err, submissionModel);
+            if(err){
+              return cb(err);
+            }
+            self.increProgress();
+            self.saveLocal(function (err) {
+              if (err) {
+                $fh.forms.log.e("Error saving downloadTask to local storage" + err);
+              }
+
+              self.emit('progress', self.getProgress());
+              return cb();
+            });
+          });
+        });
+      });
+    }
+
+    function uploadSubmissionJSON(){
+      $fh.forms.log.d("In uploadSubmissionJSON");
+      var formSub = self.get('jsonTask');
+      self.submissionModel(function(err, submissionModel){
+        if(err){
+          return cb(err);
+        }
+        self.addFileTasks(submissionModel, function(err){
+          if(err){
+            $fh.forms.log.e("Error adding file tasks for submission upload");
+            return cb(err);
+          }
+
+          var formSubmissionModel = new appForm.models.FormSubmission(formSub);
+          self.getRemoteStore().create(formSubmissionModel, function (err, res) {
+            if (err) {
+              return cb(err);
+            } else {
+              var updatedFormDefinition = res.updatedFormDefinition;
+              if (updatedFormDefinition) {
+                // remote form definition is updated
+                self.refreshForm(updatedFormDefinition, function (err) {
+                  //refresh form def in parallel. maybe not needed.
+                  $fh.forms.log.d("Form Updated, refreshed");
+                  if (err) {
+                    $fh.forms.log.e(err);
+                  }
+                  processUploadDataResult(res);
+                });
+              } else {
+                processUploadDataResult(res);
+              }
+            }
+          });
+        });
+      });
+
+    }
+
+    function downloadSubmissionJSON(){
+      var formSubmissionDownload = new appForm.models.FormSubmissionDownload(self);
+      self.getRemoteStore().read(formSubmissionDownload, processDownloadDataResult);
+    }
+
+    if(self.isDownloadTask()){
+      downloadSubmissionJSON();
+    } else {
+      uploadSubmissionJSON();
+    }
   };
+
   /**
    * Handles the case where a call to completeSubmission returns a status other than "completed".
    * Will only ever get to this function when a call is made to the completeSubmission server.
@@ -4926,6 +6254,7 @@ appForm.models = function (module) {
    * @param cb Function callback
    */
   UploadTask.prototype.handleCompletionError = function (err, res, cb) {
+    $fh.forms.log.d("handleCompletionError Called");
     var errorMessage = err;
     if (res.status === 'pending') {
       //The submission is not yet complete, there are files waiting to upload. This is an unexpected state as all of the files should have been uploaded.
@@ -4938,6 +6267,7 @@ appForm.models = function (module) {
     }
     cb(errorMessage);
   };
+
   /**
    * Handles the case where the current submission status is required from the server.
    * Based on the files waiting to be uploaded, the upload task is re-built with pendingFiles from the server.
@@ -4945,40 +6275,56 @@ appForm.models = function (module) {
    * @param cb
    */
   UploadTask.prototype.handleIncompleteSubmission = function (cb) {
-    var remoteStore = this.getRemoteStore();
-    var submissionStatus = new appForm.models.FormSubmissionStatus(this);
-    var that = this;
-    remoteStore.submissionStatus(submissionStatus, function (err, res) {
-      var errMessage="";
-      if (err) {
-        cb(err);
-      } else if (res.status === 'error') {
-        //The server had an error submitting the form, finish with an error
-         errMessage= 'Error submitting form.';
-        cb(errMessage);
-      } else if (res.status === 'complete') {
-        //Submission is complete, make uploading progress further
-        that.increProgress();
-        cb();
-      } else if (res.status === 'pending') {
-        //Submission is still pending, check for files not uploaded yet.
-        var pendingFiles = res.pendingFiles || [];
-        if (pendingFiles.length > 0) {
-          that.resetUploadTask(pendingFiles, function () {
-            cb();
-          });
-        } else {
-          //No files pending on the server, make the progress further
-          that.increProgress();
+    var self = this;
+    function processUploadIncompleteSubmission(){
+
+      var remoteStore = self.getRemoteStore();
+      var submissionStatus = new appForm.models.FormSubmissionStatus(self);
+
+      remoteStore.submissionStatus(submissionStatus, function (err, res) {
+        var errMessage="";
+        if (err) {
+          cb(err);
+        } else if (res.status === 'error') {
+          //The server had an error submitting the form, finish with an error
+          errMessage= 'Error submitting form.';
+          cb(errMessage);
+        } else if (res.status === 'complete') {
+          //Submission is complete, make uploading progress further
+          self.increProgress();
           cb();
+        } else if (res.status === 'pending') {
+          //Submission is still pending, check for files not uploaded yet.
+          var pendingFiles = res.pendingFiles || [];
+          if (pendingFiles.length > 0) {
+            self.resetUploadTask(pendingFiles, function () {
+              cb();
+            });
+          } else {
+            //No files pending on the server, make the progress further
+            self.increProgress();
+            cb();
+          }
+        } else {
+          //Should not get to this point. Only valid status responses are error, pending and complete.
+          errMessage = 'Invalid submission status response.';
+          cb(errMessage);
         }
-      } else {
-        //Should not get to this point. Only valid status responses are error, pending and complete.
-        errMessage = 'Invalid submission status response.';
-        cb(errMessage);
-      }
-    });
+      });
+    }
+
+    function processDownloadIncompleteSubmission(){
+      //No need to go the the server to get submission details -- The current progress status is valid locally
+      cb();
+    }
+
+    if(self.isDownloadTask()){
+      processDownloadIncompleteSubmission();
+    } else {
+      processUploadIncompleteSubmission();
+    }
   };
+
   /**
    * Resetting the upload task based on the response from getSubmissionStatus
    * @param pendingFiles -- Array of files still waiting to upload
@@ -5011,20 +6357,29 @@ appForm.models = function (module) {
     this.saveLocal(cb);  //Saving the reset files list to local
   };
   UploadTask.prototype.uploadFile = function (cb) {
-    var that = this;
-    var submissionId = this.get('submissionId');
-    if (submissionId) {
-      var progress = this.getCurrentTask();
-      if (progress == null) {
-        progress = 0;
-        that.set('currentTask', progress);
-      }
-      var fileTask = this.get('fileTasks', [])[progress];
-      if (!fileTask) {
-        return cb('cannot find file task');
-      }
-      var fileSubmissionModel;
-      if (fileTask.contentType == 'base64') {
+    var self = this;
+    var progress = self.getCurrentTask();
+
+    if (progress === null) {
+      progress = 0;
+      self.set('currentTask', progress);
+    }
+    var fileTask = self.get('fileTasks', [])[progress];
+    var submissionId = self.get('submissionId');
+    var fileSubmissionModel;
+    if (!fileTask) {
+      $fh.forms.log.e("No file task found when trying to transfer a file.");
+      return cb('cannot find file task');
+    }
+
+    if(!submissionId){
+      $fh.forms.log.e("No submission id found when trying to transfer a file.");
+      return cb("No submission Id found");
+    }
+
+    function processUploadFile(){
+      $fh.forms.log.d("processUploadFile for submissionId: ");
+      if (fileTask.contentType === 'base64') {
         fileSubmissionModel = new appForm.models.Base64FileSubmission(fileTask);
       } else {
         fileSubmissionModel = new appForm.models.FileSubmission(fileTask);
@@ -5032,22 +6387,23 @@ appForm.models = function (module) {
       fileSubmissionModel.setSubmissionId(submissionId);
       fileSubmissionModel.loadFile(function (err) {
         if (err) {
+          $fh.forms.log.e("Error loading file for upload: " + err);
           return cb(err);
         } else {
-          that.getRemoteStore().create(fileSubmissionModel, function (err, res) {
+          self.getRemoteStore().create(fileSubmissionModel, function (err, res) {
             if (err) {
               cb(err);
             } else {
-              if (res.status == 'ok' || res.status == '200') {
+              if (res.status === 'ok' || res.status === 200 || res.status === '200') {
                 fileTask.updateDate = appForm.utils.getTime();
-                that.increProgress();
-                that.saveLocal(function (err) {
+                self.increProgress();
+                self.saveLocal(function (err) {
                   //save current status.
                   if (err) {
-                    console.error(err);
+                    $fh.forms.log.e("Error saving upload task" + err);
                   }
                 });
-                that.emit('progress', that.getProgress());
+                self.emit('progress', self.getProgress());
                 cb(null);
               } else {
                 var errorMessage = 'File upload failed for file: ' + fileTask.fileName;
@@ -5057,9 +6413,54 @@ appForm.models = function (module) {
           });
         }
       });
-    } else {
-      cb('Failed to upload file. Submission Id not found.');
     }
+
+    function processDownloadFile(){
+      $fh.forms.log.d("processDownloadFile called");
+      fileSubmissionModel = new appForm.models.FileSubmissionDownload(fileTask);
+      self.getRemoteStore().read(fileSubmissionModel, function (err, localFilePath) {
+        if(err){
+          $fh.forms.log.e("Error downloading a file from remote: " + err);
+          return cb(err);
+        }
+
+        $fh.forms.log.d("processDownloadFile called. Local File Path: " + localFilePath);
+
+        //Update the submission model to add local file uri to a file submission object
+        self.submissionModel(function(err, submissionModel){
+          if(err){
+            $fh.forms.log.e("Error Loading submission model for processDownloadFile " + err);
+            return cb(err);
+          }
+
+          submissionModel.updateFileLocalURI(fileTask, localFilePath, function(err){
+            if(err){
+              $fh.forms.log.e("Error updating file local url for fileTask " + JSON.stringify(fileTask));
+              return cb(err);
+            }
+
+            self.increProgress();
+            self.saveLocal(function (err) {
+              //save current status.
+              if (err) {
+                $fh.forms.log.e("Error saving download task");
+              }
+            });
+            self.emit('progress', self.getProgress());
+            return cb();
+          });
+        });
+      });
+    }
+
+    if(self.isDownloadTask()){
+      processDownloadFile();
+    } else {
+      processUploadFile();
+    }
+  };
+  UploadTask.prototype.isDownloadTask = function(){
+    return this.get("submissionTransferType") === "download";
   };
   //The upload task needs to be retried
   UploadTask.prototype.setRetryNeeded = function (retryNeeded) {
@@ -5075,40 +6476,44 @@ appForm.models = function (module) {
     return this.get('retryNeeded');
   };
   UploadTask.prototype.uploadTick = function (cb) {
-    var that = this;
+    var self = this;
     function _handler(err) {
       if (err) {
-        console.error('Err, retrying:', err);
+        $fh.forms.log.d('Err, retrying transfer: ' + self.getLocalId());
         //If the upload has encountered an error -- flag the submission as needing a retry on the next tick -- User should be insulated from an error until the retries are finished.
-        that.increRetryAttempts();
-        if (that.getRetryAttempts() <= $fh.forms.config.get('max_retries')) {
-          that.setRetryNeeded(true);
-          that.saveLocal(function (err) {
-            if (err)
-              console.error(err);
+        self.increRetryAttempts();
+        if (self.getRetryAttempts() <= $fh.forms.config.get('max_retries')) {
+          self.setRetryNeeded(true);
+          self.saveLocal(function (err) {
+            if (err){
+              $fh.forms.log.e("Error saving upload taskL " + err);
+            }
+
             cb();
           });
         } else {
           //The number of retry attempts exceeds the maximum number of retry attempts allowed, flag the upload as an error.
-          that.setRetryNeeded(true);
-          that.resetRetryAttempts();
-          that.error(err, function () {
+          self.setRetryNeeded(true);
+          self.resetRetryAttempts();
+          self.error(err, function () {
             cb(err);
           });
         }
       } else {
         //no error.
-        that.setRetryNeeded(false);
-        that.saveLocal(function (_err) {
-          if (_err)
-            console.error(_err);
+        self.setRetryNeeded(false);
+        self.saveLocal(function (_err) {
+          if (_err){
+            $fh.forms.log.e("Error saving upload task to local memory" + _err);
+          }
         });
-        that.submissionModel(function (err, submission) {
+        self.submissionModel(function (err, submission) {
           if (err) {
             cb(err);
           } else {
             var status = submission.get('status');
-            if (status != 'inprogress' && status != 'submitted') {
+            if (status !== 'inprogress' && status !== 'submitted' && status !== 'downloaded') {
+              $fh.forms.log.e('Submission status is incorrect. Upload task should be started by submission object\'s upload method.' + status);
               cb('Submission status is incorrect. Upload task should be started by submission object\'s upload method.');
             } else {
               cb();
@@ -5147,46 +6552,84 @@ appForm.models = function (module) {
     this.set('currentTask', curTask);
   };
   UploadTask.prototype.uploadComplete = function (cb) {
-    var submissionId = this.get('submissionId', null);
-    var that = this;
+    $fh.forms.log.d("UploadComplete Called");
+    var self = this;
+    var submissionId = self.get('submissionId', null);
+
     if (submissionId === null) {
       return cb('Failed to complete submission. Submission Id not found.');
     }
-    var remoteStore = this.getRemoteStore();
-    var completeSubmission = new appForm.models.FormSubmissionComplete(this);
-    remoteStore.create(completeSubmission, function (err, res) {
-      //if status is not "completed", then handle the completion err
-      res = res || {};
-      if (res.status !== 'complete') {
-        return that.handleCompletionError(err, res, cb);
-      }
-      //Completion is now completed sucessfully.. we can make the progress further.
-      that.increProgress();
+
+    function processDownloadComplete(){
+      $fh.forms.log.d("processDownloadComplete Called");
+      self.increProgress();
       cb(null);
-    });
+    }
+
+    function processUploadComplete(){
+      $fh.forms.log.d("processUploadComplete Called");
+      var remoteStore = self.getRemoteStore();
+      var completeSubmission = new appForm.models.FormSubmissionComplete(self);
+      remoteStore.create(completeSubmission, function (err, res) {
+        //if status is not "completed", then handle the completion err
+        res = res || {};
+        if (res.status !== 'complete') {
+          return self.handleCompletionError(err, res, cb);
+        }
+        //Completion is now completed sucessfully.. we can make the progress further.
+        self.increProgress();
+        cb(null);
+      });
+    }
+
+    if(self.isDownloadTask()){
+      processDownloadComplete();
+    } else {
+      processUploadComplete();
+    }
   };
   /**
    * the upload task is successfully completed. This will be called when all uploading process finished successfully.
    * @return {[type]} [description]
    */
   UploadTask.prototype.success = function (cb) {
-    var that = this;
-    var submissionId = that.get('submissionId', null);
-    that.set('completed', true);
-    that.saveLocal(function (err) {
+    $fh.forms.log.d("Transfer Sucessful. Success Called.");
+    var self = this;
+    var submissionId = self.get('submissionId', null);
+    self.set('completed', true);
+    self.saveLocal(function (err) {
       if (err) {
-        console.error(err);
-        console.error('Upload task save failed');
+        $fh.forms.log.e("Error Clearing Upload Task");
       }
     });
-    that.submissionModel(function (_err, model) {
-      model.set('submissionId', submissionId);
-      if (_err) {
-        cb(_err);
-      } else {
+
+    function processUploadSuccess(){
+      $fh.forms.log.d("processUploadSuccess Called");
+      self.submissionModel(function (_err, model) {
+        if(_err){
+          return cb(_err);
+        }
+        model.set('submissionId', submissionId);
         model.submitted(cb);
-      }
-    });
+      });
+    }
+
+    function processDownloadSuccess(){
+      $fh.forms.log.d("processDownloadSuccess Called");
+      self.submissionModel(function (_err, model) {
+        if(_err){
+          return cb(_err);
+        } else {
+          model.downloaded(cb);
+        }
+      });
+    }
+
+    if(self.isDownloadTask()){
+      processDownloadSuccess();
+    } else {
+      processUploadSuccess();
+    }
   };
   /**
    * the upload task is failed. It will not complete the task but will set error with error returned.
@@ -5198,8 +6641,7 @@ appForm.models = function (module) {
     this.set('error', err);
     this.saveLocal(function (err) {
       if (err) {
-        console.error(err);
-        console.error('Upload task save failed');
+        $fh.forms.log.e('Upload task save failed: ' + err);
       }
     });
     this.submissionModel(function (_err, model) {
@@ -5242,11 +6684,12 @@ appForm.models = function (module) {
     return this.get('completed', false);
   };
   UploadTask.prototype.isMBaaSCompleted = function () {
-    if (!this.isFileCompleted()) {
+    var self = this;
+    if (!self.isFileCompleted()) {
       return false;
     } else {
-      var curTask = this.getCurrentTask();
-      if (curTask > this.get('fileTasks', []).length) {
+      var curTask = self.getCurrentTask();
+      if (curTask > self.get('fileTasks', []).length) {
         //change offset if completion bit is changed
         return true;
       } else {
@@ -5255,15 +6698,17 @@ appForm.models = function (module) {
     }
   };
   UploadTask.prototype.getProgress = function () {
+    var self = this;
     var rtn = {
         'formJSON': false,
         'currentFileIndex': 0,
-        'totalFiles': this.get('fileTasks').length,
-        'totalSize': this.getTotalSize(),
-        'uploaded': this.getUploadedSize(),
-        'retryAttempts': this.getRetryAttempts()
+        'totalFiles': self.get('fileTasks').length,
+        'totalSize': self.getTotalSize(),
+        'uploaded': self.getUploadedSize(),
+        'retryAttempts': self.getRetryAttempts(),
+        'submissionTransferType': self.get('submissionTransferType')
       };
-    var progress = this.getCurrentTask();
+    var progress = self.getCurrentTask();
     if (progress === null) {
       return rtn;
     } else {
@@ -5281,17 +6726,17 @@ appForm.models = function (module) {
     var formId = this.get('formId');
     new appForm.models.Form({'formId': formId, 'rawMode': true, 'rawData' : updatedForm }, function (err, form) {
       if (err) {
-        console.error(err);
+        $fh.forms.log.e(err);
       }
 
-      console.log('successfully updated form the form with id ' + updatedForm._id);
+      $fh.forms.log.l('successfully updated form the form with id ' + updatedForm._id);
       cb();
     });
   };
   UploadTask.prototype.submissionModel = function (cb) {
     appForm.models.submission.fromLocal(this.get('submissionLocalId'), function (err, submission) {
       if (err) {
-        console.error(err);
+        $fh.forms.log.e("Error getting submission model from local memory " + err);
       }
       cb(err, submission);
     });
@@ -5335,12 +6780,12 @@ appForm.models = (function(module) {
   appForm.utils.extend(Log, Model);
 
   Log.prototype.info = function(logLevel, msgs) {
-    if ($fh.forms.config.get("logger") == "true") {
+    if ($fh.forms.config.get("logger") === "true") {
       var levelString = "";
       var curLevel = $fh.forms.config.get("log_level");
       var log_levels = $fh.forms.config.get("log_levels");
       var self = this;
-      if (typeof logLevel == "string") {
+      if (typeof logLevel === "string") {
         levelString = logLevel;
         logLevel = log_levels.indexOf(logLevel.toLowerCase());
       } else {
@@ -5378,7 +6823,7 @@ appForm.models = (function(module) {
   Log.prototype.wrap = function(msg, levelString) {
     var now = new Date();
     var dateStr = now.toISOString();
-    if (typeof msg == "object") {
+    if (typeof msg === "object") {
       msg = JSON.stringify(msg);
     }
     var finalMsg = dateStr + " " + levelString.toUpperCase() + " " + msg;
@@ -5479,10 +6924,15 @@ appForm.api = function (module) {
   module.getTheme = getTheme;
   module.submitForm = submitForm;
   module.getSubmissions = getSubmissions;
+  module.downloadSubmission = downloadSubmission;
   module.init = appForm.init;
   module.log=appForm.models.log;
   var _submissions = null;
   var formConfig = appForm.models.config;
+  var defaultFunction = function(err){
+    err = err ? err : "";
+    $fh.forms.log.w("Default Function Called " + err);
+  };
 
   /**
    * Get and set config values. Can only set a config value if you are an config_admin_user
@@ -5562,6 +7012,13 @@ appForm.api = function (module) {
      * @return {[type]}          [description]
      */
   function getForms(params, cb) {
+    if(typeof(params) === 'function'){
+      cb = params;
+      params = {};
+    }
+
+    params = params ? params : {};
+    cb = cb ? cb : defaultFunction;
     var fromRemote = params.fromRemote;
     if (fromRemote === undefined) {
       fromRemote = false;
@@ -5575,6 +7032,13 @@ appForm.api = function (module) {
      * @return {[type]}          [description]
      */
   function getForm(params, cb) {
+    if(typeof(params) === 'function'){
+      cb = params;
+      params = {};
+    }
+
+    params = params ? params : {};
+    cb = cb ? cb : defaultFunction;
     new appForm.models.Form(params, cb);
   }
   /**
@@ -5583,13 +7047,21 @@ appForm.api = function (module) {
      * @param {Function} cb {err, themeData} . themeData = {"json" : {<theme json definition>}, "css" : "css" : "<css style definition for this app>"}
      */
   function getTheme(params, cb) {
+    if(typeof(params) === 'function'){
+      cb = params;
+      params = {};
+    }
+
+    params = params ? params : {};
+    cb = cb ? cb : defaultFunction;
     var theme = appForm.models.theme;
     if (!params.fromRemote) {
       params.fromRemote = false;
     }
     theme.refresh(params.fromRemote, function (err, updatedTheme) {
-      if (err)
+      if (err) {
         return cb(err);
+      }
       if (updatedTheme === null) {
         return cb(new Error('No theme defined for this app'));
       }
@@ -5606,12 +7078,20 @@ appForm.api = function (module) {
      * @param {Function} cb     (err, submittedArray)
      */
   function getSubmissions(params, cb) {
+    if(typeof(params) === 'function'){
+      cb = params;
+      params = {};
+    }
+
+    params = params ? params : {};
+    cb = cb ? cb : defaultFunction;
+
     //Getting submissions that have been completed.
     var submissions = appForm.models.submissions;
-    if (_submissions == null) {
+    if (_submissions === null) {
       appForm.models.submissions.loadLocal(function (err) {
         if (err) {
-          console.error(err);
+          $fh.forms.log.e(err);
           cb(err);
         } else {
           _submissions = appForm.models.submissions;
@@ -5625,8 +7105,10 @@ appForm.api = function (module) {
   function submitForm(submission, cb) {
     if (submission) {
       submission.submit(function (err) {
-        if (err)
+        if (err){
           return cb(err);
+        }
+
         //Submission finished and validated. Now upload the form
         submission.upload(cb);
       });
@@ -5634,18 +7116,63 @@ appForm.api = function (module) {
       return cb('Invalid submission object.');
     }
   }
+
+  /*
+  * Function for downloading a submission stored on the remote server.
+  *
+  * @param params {}
+  * @param {function} cb (err, downloadTask)
+  * */
+  function downloadSubmission(params, cb){
+    params = params ? params : {};
+    cb = cb ? cb : defaultFunction;
+
+    if(params.submissionId){
+
+      var submissionAlreadySaved = appForm.models.submissions.findMetaByRemoteId(params.submissionId);
+
+      if(submissionAlreadySaved === null){
+        var submissionToDownload = new appForm.models.submission.newInstance(null, {submissionId: params.submissionId});
+
+        submissionToDownload.on('error', function(err){
+          $fh.forms.log.e("Error downloading submission with id " + params.submissionId);
+          submissionToDownload.clearEvents();
+          return cb(err);
+        });
+
+        submissionToDownload.on('downloaded', function(){
+          $fh.forms.log.l("Download of submission with id " + params.submissionId + " completed successfully");
+          submissionToDownload.clearEvents();
+          return cb(null, submissionToDownload);
+        });
+
+        submissionToDownload.download(function(err){
+          if(err){
+            $fh.forms.log.e("Error queueing submission for download " + err);
+            submissionToDownload.clearEvents();
+            return cb(err);
+          }
+        });
+      } else {
+        appForm.models.submissions.getSubmissionByMeta(submissionAlreadySaved, cb);
+      }
+    } else {
+      $fh.forms.log.e("No submissionId passed to download a submission");
+      return cb("No submissionId passed to download a submission");
+    }
+  }
   return module;
 }(appForm.api || {});
 //mockup $fh apis for Addons.
-if (typeof $fh == 'undefined') {
+if (typeof $fh === 'undefined') {
   $fh = {};
 }
 if ($fh.forms === undefined) {
   $fh.forms = appForm.api;
 }
-/*! fh-forms - v0.5.3 -  */
+/*! fh-forms - v0.5.7 -  */
 /*! async - v0.2.9 -  */
-/*! 2014-04-10 */
+/*! 2014-04-24 */
 /* This is the prefix file */
 if(appForm){
   appForm.RulesEngine=rulesEngine;
@@ -6624,7 +8151,7 @@ function rulesEngine (formDef) {
 
   (function () {
 
-    var async=require('async');
+    var async = require('async');
 
     /*
      * Sample Usage
@@ -6690,7 +8217,7 @@ function rulesEngine (formDef) {
     var FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY = "time";
     var FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME = "datetime";
 
-    var formsRulesEngine = function(formDef) {
+    var formsRulesEngine = function (formDef) {
       var initialised;
 
       var definition = formDef;
@@ -6705,53 +8232,53 @@ function rulesEngine (formDef) {
       var pageRuleSubjectMap = {};
       var submissionFieldsMap = {};
       var validatorsMap = {
-        "text":         validatorString,
-        "textarea":     validatorString,
-        "number":       validatorNumericString,
+        "text": validatorString,
+        "textarea": validatorString,
+        "number": validatorNumericString,
         "emailAddress": validatorEmail,
-        "dropdown":     validatorDropDown,
-        "radio":        validatorDropDown,
-        "checkboxes":   validatorCheckboxes,
-        "location":     validatorLocation,
-        "locationMap":  validatorLocationMap,
-        "photo":        validatorFile,
-        "signature":    validatorFile,
-        "file":         validatorFile,
-        "dateTime":     validatorDateTime,
-        "url":          validatorString,
+        "dropdown": validatorDropDown,
+        "radio": validatorDropDown,
+        "checkboxes": validatorCheckboxes,
+        "location": validatorLocation,
+        "locationMap": validatorLocationMap,
+        "photo": validatorFile,
+        "signature": validatorFile,
+        "file": validatorFile,
+        "dateTime": validatorDateTime,
+        "url": validatorString,
         "sectionBreak": validatorSection
       };
 
       var validatorsClientMap = {
-        "text":         validatorString,
-        "textarea":     validatorString,
-        "number":       validatorNumericString,
+        "text": validatorString,
+        "textarea": validatorString,
+        "number": validatorNumericString,
         "emailAddress": validatorEmail,
-        "dropdown":     validatorDropDown,
-        "radio":        validatorDropDown,
-        "checkboxes":   validatorCheckboxes,
-        "location":     validatorLocation,
-        "locationMap":  validatorLocationMap,
-        "photo":        validatorAnyFile,
-        "signature":    validatorAnyFile,
-        "file":         validatorAnyFile,
-        "dateTime":     validatorDateTime,
-        "url":          validatorString,
+        "dropdown": validatorDropDown,
+        "radio": validatorDropDown,
+        "checkboxes": validatorCheckboxes,
+        "location": validatorLocation,
+        "locationMap": validatorLocationMap,
+        "photo": validatorAnyFile,
+        "signature": validatorAnyFile,
+        "file": validatorAnyFile,
+        "dateTime": validatorDateTime,
+        "url": validatorString,
         "sectionBreak": validatorSection
       };
 
-      var isFieldRuleSubject = function(fieldId) {
+      var isFieldRuleSubject = function (fieldId) {
         return !!fieldRuleSubjectMap[fieldId];
       };
 
-      var isPageRuleSubject = function(pageId) {
+      var isPageRuleSubject = function (pageId) {
         return !!pageRuleSubjectMap[pageId];
       };
 
       function buildFieldMap(cb) {
         // Iterate over all fields in form definition & build fieldMap
-        async.each(definition.pages, function(page, cbPages) {
-          async.each(page.fields, function(field, cbFields) {
+        async.each(definition.pages, function (page, cbPages) {
+          async.each(page.fields, function (field, cbFields) {
             field.pageId = page._id;
 
             field.fieldOptions = field.fieldOptions ? field.fieldOptions : {};
@@ -6760,7 +8287,11 @@ function rulesEngine (formDef) {
 
             fieldMap[field._id] = field;
             if (field.required) {
-              requiredFieldMap[field._id] = {field: field, submitted: false, validated: false};
+              requiredFieldMap[field._id] = {
+                field: field,
+                submitted: false,
+                validated: false
+              };
             }
             return cbFields();
           }, function (err) {
@@ -6771,8 +8302,8 @@ function rulesEngine (formDef) {
 
       function buildFieldRuleMaps(cb) {
         // Iterate over all rules in form definition & build ruleSubjectMap
-        async.each(definition.fieldRules, function(rule, cbRules) {
-          async.each(rule.ruleConditionalStatements, function(ruleConditionalStatement, cbRuleConditionalStatements) {
+        async.each(definition.fieldRules, function (rule, cbRules) {
+          async.each(rule.ruleConditionalStatements, function (ruleConditionalStatement, cbRuleConditionalStatements) {
             var fieldId = ruleConditionalStatement.sourceField;
             fieldRulePredicateMap[fieldId] = fieldRulePredicateMap[fieldId] || [];
             fieldRulePredicateMap[fieldId].push(rule);
@@ -6787,9 +8318,9 @@ function rulesEngine (formDef) {
 
       function buildPageRuleMap(cb) {
         // Iterate over all rules in form definition & build ruleSubjectMap
-        async.each(definition.pageRules, function(rule, cbRules) {
+        async.each(definition.pageRules, function (rule, cbRules) {
           var rulesId = rule._id;
-          async.each(rule.ruleConditionalStatements, function(ruleConditionalStatement, cbRulePredicates) {
+          async.each(rule.ruleConditionalStatements, function (ruleConditionalStatement, cbRulePredicates) {
             var fieldId = ruleConditionalStatement.sourceField;
             pageRulePredicateMap[fieldId] = pageRulePredicateMap[fieldId] || [];
             pageRulePredicateMap[fieldId].push(rule);
@@ -6807,7 +8338,7 @@ function rulesEngine (formDef) {
         submissionFieldsMap = {}; // start with empty map, rulesEngine can be called with multiple submissions
 
         // iterate over all the fields in the submissions and build a map for easier lookup
-        async.each(submission.formFields, function(formField, cb) {
+        async.each(submission.formFields, function (formField, cb) {
           if (!formField.fieldId) return cb(new Error("No fieldId in this submission entry: " + util.inspect(formField)));
 
           submissionFieldsMap[formField.fieldId] = formField;
@@ -6816,12 +8347,12 @@ function rulesEngine (formDef) {
       }
 
       function init(cb) {
-        if(initialised) return cb();
+        if (initialised) return cb();
         async.parallel([
           buildFieldMap,
           buildFieldRuleMaps,
           buildPageRuleMap
-        ], function(err) {
+        ], function (err) {
           if (err) return cb(err);
           initialised = true;
           return cb();
@@ -6829,7 +8360,7 @@ function rulesEngine (formDef) {
       }
 
       function initSubmission(formSubmission, cb) {
-        init(function(err){
+        init(function (err) {
           if (err) return cb(err);
 
           submission = formSubmission;
@@ -6838,7 +8369,7 @@ function rulesEngine (formDef) {
       }
 
       function getPreviousFieldValues(submittedField, previousSubmission, cb) {
-        if(previousSubmission && previousSubmission.formFields) {
+        if (previousSubmission && previousSubmission.formFields) {
           async.filter(previousSubmission.formFields, function (formField, cb) {
             return cb(formField.fieldId.toString() == submittedField.fieldId.toString());
           }, function (results) {
@@ -6858,15 +8389,20 @@ function rulesEngine (formDef) {
           cb = previousSubmission;
           previousSubmission = null;
         }
-        init(function(err){
+        init(function (err) {
           if (err) return cb(err);
 
           initSubmission(submission, function (err) {
             if (err) return cb(err);
 
             async.waterfall([
+
               function (cb) {
-                return cb(undefined, {validation:{valid: true}});  // any invalid fields will set this to false
+                return cb(undefined, {
+                  validation: {
+                    valid: true
+                  }
+                }); // any invalid fields will set this to false
               },
               function (res, cb) {
                 validateSubmittedFields(res, previousSubmission, cb);
@@ -6883,26 +8419,26 @@ function rulesEngine (formDef) {
 
       function validateSubmittedFields(res, previousSubmission, cb) {
         // for each field, call validateField
-        async.each(submission.formFields, function(submittedField, callback) {
+        async.each(submission.formFields, function (submittedField, callback) {
           var fieldID = submittedField.fieldId;
           var fieldDef = fieldMap[fieldID];
 
           getPreviousFieldValues(submittedField, previousSubmission, function (err, previousFieldValues) {
-            if(err) return callback(err);
-            getFieldValidationStatus(submittedField, fieldDef, previousFieldValues, function(err, fieldRes) {
-              if(err) return callback(err);
+            if (err) return callback(err);
+            getFieldValidationStatus(submittedField, fieldDef, previousFieldValues, function (err, fieldRes) {
+              if (err) return callback(err);
 
               if (!fieldRes.valid) {
-                res.validation.valid = false;        // indicate invalid form if any fields invalid
-                res.validation[fieldID] = fieldRes;  // add invalid field info to validate form result
+                res.validation.valid = false; // indicate invalid form if any fields invalid
+                res.validation[fieldID] = fieldRes; // add invalid field info to validate form result
               }
 
               return callback();
             });
 
           });
-        }, function(err) {
-          if( err ) {
+        }, function (err) {
+          if (err) {
             return cb(err);
           }
           return cb(undefined, res);
@@ -6915,7 +8451,7 @@ function rulesEngine (formDef) {
           if (!submissionRequiredFieldsMap[requiredFieldId].submitted) {
             isFieldVisible(requiredFieldId, true, function (err, visible) {
               if (err) return cb(err);
-              if (visible) {  // we only care about required fields if they are visible
+              if (visible) { // we only care about required fields if they are visible
                 resField.fieldId = requiredFieldId;
                 resField.valid = false;
                 resField.fieldErrorMessage = ["Required Field Not Submitted"];
@@ -6948,7 +8484,7 @@ function rulesEngine (formDef) {
        *         }
        */
       function validateField(fieldId, submission, cb) {
-        init(function(err){
+        init(function (err) {
           if (err) return cb(err);
 
           initSubmission(submission, function (err) {
@@ -6958,7 +8494,9 @@ function rulesEngine (formDef) {
             var fieldDef = fieldMap[fieldId];
             getFieldValidationStatus(submissionField, fieldDef, null, function (err, res) {
               if (err) return cb(err);
-              var ret = {validation: {}};
+              var ret = {
+                validation: {}
+              };
               ret.validation[fieldId] = res;
               return cb(undefined, ret);
             });
@@ -6987,12 +8525,12 @@ function rulesEngine (formDef) {
           valueIndex = 0;
         }
 
-        init(function(err){
+        init(function (err) {
           if (err) return cb(err);
           var fieldDefinition = fieldMap[fieldId];
 
           var required = false;
-          if(fieldDefinition.repeating &&
+          if (fieldDefinition.repeating &&
             fieldDefinition.fieldOptions &&
             fieldDefinition.fieldOptions.definition &&
             fieldDefinition.fieldOptions.definition.minRepeat) {
@@ -7003,17 +8541,21 @@ function rulesEngine (formDef) {
 
           var validation = (fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) ? fieldDefinition.fieldOptions.validation : undefined;
 
-          if( validation && false === validation.validateImmediately){
-            var ret = {validation: {}};
-            ret.validation[fieldId] = {"valid":true};
-            return cb(undefined, ret );
+          if (validation && false === validation.validateImmediately) {
+            var ret = {
+              validation: {}
+            };
+            ret.validation[fieldId] = {
+              "valid": true
+            };
+            return cb(undefined, ret);
           }
 
-          if(fieldEmpty(inputValue)) {
-            if(required) {
+          if (fieldEmpty(inputValue)) {
+            if (required) {
               return formatResponse("No value specified for required input", cb);
             } else {
-              return formatResponse(undefined, cb);  // optional field not supplied is valid
+              return formatResponse(undefined, cb); // optional field not supplied is valid
             }
           }
 
@@ -7023,8 +8565,8 @@ function rulesEngine (formDef) {
 
             validator(inputValue, fieldDefinition, undefined, function (err) {
               var message;
-              if(err) {
-                if(err.message) {
+              if (err) {
+                if (err.message) {
                   message = err.message;
                 } else {
                   message = "Unknown error message";
@@ -7036,13 +8578,17 @@ function rulesEngine (formDef) {
         });
 
         function formatResponse(msg, cb) {
-          var messages = {errorMessages: []};
-          if(msg) {
+          var messages = {
+            errorMessages: []
+          };
+          if (msg) {
             messages.errorMessages.push(msg);
           }
           return createValidatorResponse(fieldId, messages, function (err, res) {
             if (err) return cb(err);
-            var ret = {validation: {}};
+            var ret = {
+              validation: {}
+            };
             ret.validation[fieldId] = res;
             return cb(undefined, ret);
           });
@@ -7066,7 +8612,7 @@ function rulesEngine (formDef) {
 
       function getFieldValidationStatus(submittedField, fieldDef, previousFieldValues, cb) {
         validateFieldInternal(submittedField, fieldDef, previousFieldValues, function (err, messages) {
-          if(err) return cb(err);
+          if (err) return cb(err);
           createValidatorResponse(submittedField.fieldId, messages, cb);
         });
       }
@@ -7098,33 +8644,33 @@ function rulesEngine (formDef) {
           previousFieldValues = null;
         }
 
-        countSubmittedValues(submittedField, function(err, numSubmittedValues) {
-          if(err) return cb(err);
+        countSubmittedValues(submittedField, function (err, numSubmittedValues) {
+          if (err) return cb(err);
           async.series({
-            valuesSubmitted:
-              async.apply(checkValueSubmitted, submittedField, fieldDef),
-            repeats:
-              async.apply(checkRepeat, numSubmittedValues, fieldDef),
-            values:
-              async.apply(checkValues, submittedField, fieldDef, previousFieldValues)
+            valuesSubmitted: async.apply(checkValueSubmitted, submittedField, fieldDef),
+            repeats: async.apply(checkRepeat, numSubmittedValues, fieldDef),
+            values: async.apply(checkValues, submittedField, fieldDef, previousFieldValues)
           }, function (err, results) {
-            if(err) return cb(err);
+            if (err) return cb(err);
 
             var fieldErrorMessages = [];
-            if(results.valuesSubmitted) {
+            if (results.valuesSubmitted) {
               fieldErrorMessages.push(results.valuesSubmitted);
             }
-            if(results.repeats) {
+            if (results.repeats) {
               fieldErrorMessages.push(results.repeats);
             }
-            return cb(undefined, {fieldErrorMessage: fieldErrorMessages, errorMessages: results.values});
+            return cb(undefined, {
+              fieldErrorMessage: fieldErrorMessages,
+              errorMessages: results.values
+            });
           });
         });
 
-        return;  // just functions below this
+        return; // just functions below this
 
         function checkValueSubmitted(submittedField, fieldDefinition, cb) {
-          if(! fieldDefinition.required) return cb(undefined, null);
+          if (!fieldDefinition.required) return cb(undefined, null);
           var valueSubmitted = submittedField && submittedField.fieldValues && (submittedField.fieldValues.length > 0);
           if (!valueSubmitted) {
             return cb(undefined, "No value submitted for field " + fieldDefinition.name);
@@ -7134,9 +8680,9 @@ function rulesEngine (formDef) {
 
         function countSubmittedValues(submittedField, cb) {
           var numSubmittedValues = 0;
-          if(submittedField && submittedField.fieldValues && submittedField.fieldValues.length > 0) {
-            for(var i=0; i<submittedField.fieldValues.length; i += 1) {
-              if(submittedField.fieldValues[i]) {
+          if (submittedField && submittedField.fieldValues && submittedField.fieldValues.length > 0) {
+            for (var i = 0; i < submittedField.fieldValues.length; i += 1) {
+              if (submittedField.fieldValues[i]) {
                 numSubmittedValues += 1;
               }
             }
@@ -7146,20 +8692,20 @@ function rulesEngine (formDef) {
 
         function checkRepeat(numSubmittedValues, fieldDefinition, cb) {
 
-          if(fieldDefinition.repeating && fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.definition){
-            if(fieldDefinition.fieldOptions.definition.minRepeat){
-              if(numSubmittedValues < fieldDefinition.fieldOptions.definition.minRepeat){
+          if (fieldDefinition.repeating && fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.definition) {
+            if (fieldDefinition.fieldOptions.definition.minRepeat) {
+              if (numSubmittedValues < fieldDefinition.fieldOptions.definition.minRepeat) {
                 return cb(undefined, "Expected min of " + fieldDefinition.fieldOptions.definition.minRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues);
               }
             }
 
-            if (fieldDefinition.fieldOptions.definition.maxRepeat){
-              if(numSubmittedValues > fieldDefinition.fieldOptions.definition.maxRepeat){
+            if (fieldDefinition.fieldOptions.definition.maxRepeat) {
+              if (numSubmittedValues > fieldDefinition.fieldOptions.definition.maxRepeat) {
                 return cb(undefined, "Expected max of " + fieldDefinition.fieldOptions.definition.maxRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues);
               }
             }
           } else {
-            if(numSubmittedValues > 1) {
+            if (numSubmittedValues > 1) {
               return cb(undefined, "Should not have multiple values for non-repeating field");
             }
           }
@@ -7170,19 +8716,19 @@ function rulesEngine (formDef) {
         function checkValues(submittedField, fieldDefinition, previousFieldValues, cb) {
           getValidatorFunction(fieldDefinition.type, function (err, validator) {
             if (err) return cb(err);
-            async.map(submittedField.fieldValues, function(fieldValue, cb){
-              if(fieldEmpty(fieldValue)) {
+            async.map(submittedField.fieldValues, function (fieldValue, cb) {
+              if (fieldEmpty(fieldValue)) {
                 return cb(undefined, null);
               } else {
-                validator(fieldValue, fieldDefinition, previousFieldValues, function(validationError) {
+                validator(fieldValue, fieldDefinition, previousFieldValues, function (validationError) {
                   var errorMessage;
-                  if(validationError) {
+                  if (validationError) {
                     errorMessage = validationError.message || "Error during validation of field";
                   } else {
                     errorMessage = null;
                   }
 
-                  if (submissionRequiredFieldsMap[fieldDefinition._id]) {   // set to true if at least one value
+                  if (submissionRequiredFieldsMap[fieldDefinition._id]) { // set to true if at least one value
                     submissionRequiredFieldsMap[fieldDefinition._id].submitted = true;
                   }
 
@@ -7245,8 +8791,8 @@ function rulesEngine (formDef) {
         return validFormatRegex(fieldValue, regex);
       }
 
-      function validatorString (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(typeof fieldValue !== "string"){
+      function validatorString(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        if (typeof fieldValue !== "string") {
           return cb(new Error("Expected string but got " + typeof(fieldValue)));
         }
 
@@ -7261,19 +8807,19 @@ function rulesEngine (formDef) {
         field_format_string = field_format_string.trim();
 
         if (field_format_string && (field_format_string.length > 0) && field_format_mode && (field_format_mode.length > 0)) {
-          if(!validFormat(fieldValue, field_format_mode, field_format_string)) {
+          if (!validFormat(fieldValue, field_format_mode, field_format_string)) {
             return cb(new Error("field value in incorrect format, expected format: " + field_format_string + " but submission value is: " + fieldValue));
           }
         }
 
-        if(fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.min){
-          if(fieldValue.length < fieldDefinition.fieldOptions.validation.min){
+        if (fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.min) {
+          if (fieldValue.length < fieldDefinition.fieldOptions.validation.min) {
             return cb(new Error("Expected minimum string length of " + fieldDefinition.fieldOptions.validation.min + " but submission is " + fieldValue.length + ". Submitted val: " + fieldValue));
           }
         }
 
-        if(fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.max){
-          if(fieldValue.length > fieldDefinition.fieldOptions.validation.max){
+        if (fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.max) {
+          if (fieldValue.length > fieldDefinition.fieldOptions.validation.max) {
             return cb(new Error("Expected maximum string length of " + fieldDefinition.fieldOptions.validation.max + " but submission is " + fieldValue.length + ". Submitted val: " + fieldValue));
           }
         }
@@ -7281,29 +8827,29 @@ function rulesEngine (formDef) {
         return cb();
       }
 
-      function validatorNumericString (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        var testVal = (fieldValue - 0);  // coerce to number (or NaN)
+      function validatorNumericString(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        var testVal = (fieldValue - 0); // coerce to number (or NaN)
         var numeric = (testVal == fieldValue); // testVal co-erced to numeric above, so numeric comparison and NaN != NaN
-        if(!numeric) {
+        if (!numeric) {
           return cb(new Error("Expected numeric but got: " + fieldValue));
         }
 
         return validatorNumber(testVal, fieldDefinition, previousFieldValues, cb);
       }
 
-      function validatorNumber (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(typeof fieldValue !== "number"){
+      function validatorNumber(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        if (typeof fieldValue !== "number") {
           return cb(new Error("Expected number but got " + typeof(fieldValue)));
         }
 
-        if(fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.min){
-          if(fieldValue < fieldDefinition.fieldOptions.validation.min){
+        if (fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.min) {
+          if (fieldValue < fieldDefinition.fieldOptions.validation.min) {
             return cb(new Error("Expected minimum Number " + fieldDefinition.fieldOptions.validation.min + " but submission is " + fieldValue + ". Submitted number: " + fieldValue));
           }
         }
 
-        if (fieldDefinition.fieldOptions.validation.max){
-          if(fieldValue > fieldDefinition.fieldOptions.validation.max){
+        if (fieldDefinition.fieldOptions.validation.max) {
+          if (fieldValue > fieldDefinition.fieldOptions.validation.max) {
             return cb(new Error("Expected maximum Number " + fieldDefinition.fieldOptions.validation.max + " but submission is " + fieldValue + ". Submitted number: " + fieldValue));
           }
         }
@@ -7311,25 +8857,25 @@ function rulesEngine (formDef) {
         return cb();
       }
 
-      function validatorEmail (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(typeof(fieldValue) !== "string"){
+      function validatorEmail(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        if (typeof(fieldValue) !== "string") {
           return cb(new Error("Expected string but got " + typeof(fieldValue)));
         }
 
-        if(fieldValue.match(/[-0-9a-zA-Z.+_]+@[-0-9a-zA-Z.+_]+\.[a-zA-Z]{2,4}/g) === null){
+        if (fieldValue.match(/[-0-9a-zA-Z.+_]+@[-0-9a-zA-Z.+_]+\.[a-zA-Z]{2,4}/g) === null) {
           return cb(new Error("Invalid email address format: " + fieldValue));
         } else {
           return cb();
         }
       }
 
-      function validatorDropDown (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(typeof(fieldValue) !== "string"){
+      function validatorDropDown(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        if (typeof(fieldValue) !== "string") {
           return cb(new Error("Expected submission to be string but got " + typeof(fieldValue)));
         }
 
         //Check value exists in the field definition
-        if(!fieldDefinition.fieldOptions.definition.options){
+        if (!fieldDefinition.fieldOptions.definition.options) {
           return cb(new Error("No options exist for field " + fieldDefinition.name));
         }
 
@@ -7344,7 +8890,7 @@ function rulesEngine (formDef) {
         });
       }
 
-      function validatorCheckboxes (fieldValue, fieldDefinition, previousFieldValues, cb) {
+      function validatorCheckboxes(fieldValue, fieldDefinition, previousFieldValues, cb) {
         var minVal;
         if (fieldDefinition && fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) {
           minVal = fieldDefinition.fieldOptions.validation.min;
@@ -7355,18 +8901,18 @@ function rulesEngine (formDef) {
         }
 
         if (minVal) {
-          if(fieldValue.selections === null || fieldValue.selections === undefined || fieldValue.selections.length < minVal){
+          if (fieldValue.selections === null || fieldValue.selections === undefined || fieldValue.selections.length < minVal) {
             var len;
-            if(fieldValue.selections) {
+            if (fieldValue.selections) {
               len = fieldValue.selections.length;
             }
             return cb(new Error("Expected a minimum number of selections " + minVal + " but got " + len));
           }
         }
 
-        if(maxVal){
-          if(fieldValue.selections){
-            if(fieldValue.selections.length > maxVal){
+        if (maxVal) {
+          if (fieldValue.selections) {
+            if (fieldValue.selections.length > maxVal) {
               return cb(new Error("Expected a maximum number of selections " + maxVal + " but got " + fieldValue.selections.length));
             }
           }
@@ -7374,18 +8920,18 @@ function rulesEngine (formDef) {
 
         var optionsInCheckbox = [];
 
-        async.eachSeries(fieldDefinition.fieldOptions.definition.options, function(choice, cb){
-          for(var choiceName in choice){
+        async.eachSeries(fieldDefinition.fieldOptions.definition.options, function (choice, cb) {
+          for (var choiceName in choice) {
             optionsInCheckbox.push(choice[choiceName]);
           }
           return cb();
-        }, function(err){
-          async.eachSeries(fieldValue.selections, function(selection, cb){
-            if(typeof(selection) !== "string"){
+        }, function (err) {
+          async.eachSeries(fieldValue.selections, function (selection, cb) {
+            if (typeof(selection) !== "string") {
               return cb(new Error("Expected checkbox submission to be string but got " + typeof(selection)));
             }
 
-            if(optionsInCheckbox.indexOf(selection) === -1){
+            if (optionsInCheckbox.indexOf(selection) === -1) {
               return cb(new Error("Checkbox Option " + selection + " does not exist in the field."));
             }
 
@@ -7394,9 +8940,9 @@ function rulesEngine (formDef) {
         });
       }
 
-      function validatorLocationMap (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(fieldValue.lat && fieldValue["long"]) {
-          if(isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue["long"]))) {
+      function validatorLocationMap(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        if (fieldValue.lat && fieldValue["long"]) {
+          if (isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue["long"]))) {
             return cb(new Error("Invalid latitude and longitude values"));
           } else {
             return cb();
@@ -7407,10 +8953,10 @@ function rulesEngine (formDef) {
       }
 
 
-      function validatorLocation (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(fieldDefinition.fieldOptions.definition.locationUnit === "latlong") {
-          if(fieldValue.lat && fieldValue["long"]){
-            if(isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue["long"]))){
+      function validatorLocation(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        if (fieldDefinition.fieldOptions.definition.locationUnit === "latlong") {
+          if (fieldValue.lat && fieldValue["long"]) {
+            if (isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue["long"]))) {
               return cb(new Error("Invalid latitude and longitude values"));
             } else {
               return cb();
@@ -7419,7 +8965,7 @@ function rulesEngine (formDef) {
             return cb(new Error("Invalid object for latitude longitude submission"));
           }
         } else {
-          if(fieldValue.zone && fieldValue.eastings && fieldValue.northings){
+          if (fieldValue.zone && fieldValue.eastings && fieldValue.northings) {
             //Zone must be 3 characters, eastings 6 and northings 9
             return validateNorthingsEastings(fieldValue, cb);
           } else {
@@ -7427,18 +8973,18 @@ function rulesEngine (formDef) {
           }
         }
 
-        function validateNorthingsEastings(fieldValue, cb){
-          if(typeof(fieldValue.zone) !== "string" || fieldValue.zone.length === 0){
+        function validateNorthingsEastings(fieldValue, cb) {
+          if (typeof(fieldValue.zone) !== "string" || fieldValue.zone.length === 0) {
             return cb(new Error("Invalid zone definition for northings and eastings location. " + fieldValue.zone));
           }
 
-          var east = parseInt(fieldValue.eastings,10);
-          if(isNaN(east)){
+          var east = parseInt(fieldValue.eastings, 10);
+          if (isNaN(east)) {
             return cb(new Error("Invalid eastings definition for northings and eastings location. " + fieldValue.eastings));
           }
 
           var north = parseInt(fieldValue.northings, 10);
-          if(isNaN(north)){
+          if (isNaN(north)) {
             return cb(new Error("Invalid northings definition for northings and eastings location. " + fieldValue.northings));
           }
 
@@ -7449,15 +8995,15 @@ function rulesEngine (formDef) {
       function validatorAnyFile(fieldValue, fieldDefinition, previousFieldValues, cb) {
         // if any of the following validators return ok, then return ok.
         validatorBase64(fieldValue, fieldDefinition, previousFieldValues, function (err) {
-          if(!err) {
+          if (!err) {
             return cb();
           }
           validatorFile(fieldValue, fieldDefinition, previousFieldValues, function (err) {
-            if(!err) {
+            if (!err) {
               return cb();
             }
             validatorFileObj(fieldValue, fieldDefinition, previousFieldValues, function (err) {
-              if(!err) {
+              if (!err) {
                 return cb();
               }
               return cb(err);
@@ -7466,17 +9012,55 @@ function rulesEngine (formDef) {
         });
       }
 
-      function validatorFile (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(typeof fieldValue !== "object"){
+      function checkFileSize(fieldDefinition, fieldValue, sizeKey, cb) {
+        fieldDefinition = fieldDefinition || {};
+        var fieldOptions = fieldDefinition.fieldOptions || {};
+        var fieldOptionsDef = fieldOptions.definition || {};
+        var fileSizeMax = fieldOptionsDef.file_size || null; //FileSizeMax will be in KB. File size is in bytes
+
+        if (fileSizeMax !== null) {
+          var fieldValueSize = fieldValue[sizeKey];
+          var fieldValueSizeKB = 1;
+          if (fieldValueSize > 1000) {
+            fieldValueSizeKB = fieldValueSize / 1000;
+          }
+          console.log("Comparing File Size: ", fileSizeMax, fieldValueSize);
+          if (fieldValueSize > (fileSizeMax * 1000)) {
+            return cb(new Error("File size is too large. File can be a maximum of " + fileSizeMax + "KB. Size of file selected: " + fieldValueSizeKB + "KB"));
+          } else {
+            return cb();
+          }
+        } else {
+          return cb();
+        }
+      }
+
+      function validatorFile(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        if (typeof fieldValue !== "object") {
           return cb(new Error("Expected object but got " + typeof(fieldValue)));
         }
 
         var keyTypes = [
-          { keyName: "fileName", valueType: "string" },
-          { keyName: "fileSize", valueType: "number" },
-          { keyName: "fileType", valueType: "string" },
-          { keyName: "fileUpdateTime", valueType: "number" },
-          { keyName: "hashName", valueType: "string" }
+          {
+            keyName: "fileName",
+            valueType: "string"
+          },
+          {
+            keyName: "fileSize",
+            valueType: "number"
+          },
+          {
+            keyName: "fileType",
+            valueType: "string"
+          },
+          {
+            keyName: "fileUpdateTime",
+            valueType: "number"
+          },
+          {
+            keyName: "hashName",
+            valueType: "string"
+          }
         ];
 
         async.each(keyTypes, function (keyType, cb) {
@@ -7484,7 +9068,7 @@ function rulesEngine (formDef) {
           if (actualType !== keyType.valueType) {
             return cb(new Error("Expected " + keyType.valueType + " but got " + actualType));
           }
-          if (keyType.keyName === "fileName" && fieldValue[keyType.keyName].length <=0) {
+          if (keyType.keyName === "fileName" && fieldValue[keyType.keyName].length <= 0) {
             return cb(new Error("Expected value for " + keyType.keyName));
           }
 
@@ -7492,25 +9076,36 @@ function rulesEngine (formDef) {
         }, function (err) {
           if (err) return cb(err);
 
-          if(fieldValue.hashName.indexOf("filePlaceHolder") > -1){ //TODO abstract out to config
-            return cb();
-          } else if (previousFieldValues && previousFieldValues.hashName && previousFieldValues.hashName.indexOf(fieldValue.hashName) > -1){
-            return cb();
-          } else {
-            return cb(new Error("Invalid file placeholder text" + fieldValue.hashName));
-          }
+          checkFileSize(fieldDefinition, fieldValue, "fileSize", function (err) {
+            if (err) {
+              return cb(err);
+            }
 
+            if (fieldValue.hashName.indexOf("filePlaceHolder") > -1) { //TODO abstract out to config
+              return cb();
+            } else if (previousFieldValues && previousFieldValues.hashName && previousFieldValues.hashName.indexOf(fieldValue.hashName) > -1) {
+              return cb();
+            } else {
+              return cb(new Error("Invalid file placeholder text" + fieldValue.hashName));
+            }
+          });
         });
       }
 
-      function validatorFileObj (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if((typeof File !== "function") || !(fieldValue instanceof File)) {
+      function validatorFileObj(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        if ((typeof File !== "function") || !(fieldValue instanceof File)) {
           return cb(new Error("Expected File object but got " + typeof(fieldValue)));
         }
 
         var keyTypes = [
-          { keyName: "name", valueType: "string" },
-          { keyName: "size", valueType: "number" }
+          {
+            keyName: "name",
+            valueType: "string"
+          },
+          {
+            keyName: "size",
+            valueType: "number"
+          }
         ];
 
         async.each(keyTypes, function (keyType, cb) {
@@ -7518,47 +9113,52 @@ function rulesEngine (formDef) {
           if (actualType !== keyType.valueType) {
             return cb(new Error("Expected " + keyType.valueType + " but got " + actualType));
           }
-          if (actualType === "string" && fieldValue[keyType.keyName].length <=0) {
+          if (actualType === "string" && fieldValue[keyType.keyName].length <= 0) {
             return cb(new Error("Expected value for " + keyType.keyName));
           }
-          if (actualType === "number" && fieldValue[keyType.keyName] <=0) {
+          if (actualType === "number" && fieldValue[keyType.keyName] <= 0) {
             return cb(new Error("Expected > 0 value for " + keyType.keyName));
           }
 
           return cb();
         }, function (err) {
           if (err) return cb(err);
-          return cb();
-        });
 
+
+          checkFileSize(fieldDefinition, fieldValue, "size", function (err) {
+            if (err) {
+              return cb(err);
+            }
+            return cb();
+          });
+        });
       }
 
-      function validatorBase64 (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(typeof fieldValue !== "string"){
+      function validatorBase64(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        if (typeof fieldValue !== "string") {
           return cb(new Error("Expected base64 string but got " + typeof(fieldValue)));
         }
 
-        if(fieldValue.length <= 0){
+        if (fieldValue.length <= 0) {
           return cb(new Error("Expected base64 string but was empty"));
         }
 
         return cb();
       }
 
-      function validatorDateTime  (fieldValue, fieldDefinition, previousFieldValues, cb) {
+      function validatorDateTime(fieldValue, fieldDefinition, previousFieldValues, cb) {
         var testDate;
 
-        if(typeof(fieldValue) !== "string"){
+        if (typeof(fieldValue) !== "string") {
           return cb(new Error("Expected string but got " + typeof(fieldValue)));
         }
 
-        switch (fieldDefinition.fieldOptions.definition.datetimeUnit)
-        {
+        switch (fieldDefinition.fieldOptions.definition.datetimeUnit) {
           case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-            try{
+            try {
               testDate = new Date(fieldValue);
               valid = (testDate.toString() !== "Invalid Date");
-            }catch(e){
+            } catch (e) {
               valid = false;
             }
             if (valid) {
@@ -7586,15 +9186,15 @@ function rulesEngine (formDef) {
             }
             break;
           case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-            try{
+            try {
               testDate = new Date(fieldValue);
 
-              if(testDate.toString() === "Invalid Date"){
+              if (testDate.toString() === "Invalid Date") {
                 return cb(new Error("Invalid dateTime string " + fieldValue));
               } else {
                 return cb();
               }
-            }catch(e){
+            } catch (e) {
               return cb(new Error("Invalid dateTime string " + fieldValue));
             }
             break;
@@ -7603,7 +9203,7 @@ function rulesEngine (formDef) {
         }
       }
 
-      function validatorSection (value, fieldDefinition, previousFieldValues, cb) {
+      function validatorSection(value, fieldDefinition, previousFieldValues, cb) {
         return cb(new Error("Should not submit section field: " + fieldDefinition.name));
       }
 
@@ -7611,11 +9211,11 @@ function rulesEngine (formDef) {
         var visible = true;
 
         // Itterate over each rule that this field is a predicate of
-        async.each(rules, function(rule, cbRule) {
+        async.each(rules, function (rule, cbRule) {
           // For each rule, itterate over the predicate fields and evaluate the rule
           var predicateMapQueries = [];
           var predicateMapPassed = [];
-          async.each(rule.ruleConditionalStatements, function(ruleConditionalStatement, cbPredicates) {
+          async.each(rule.ruleConditionalStatements, function (ruleConditionalStatement, cbPredicates) {
             var field = fieldMap[ruleConditionalStatement.sourceField];
             var passed = false;
             var submissionValues = [];
@@ -7629,23 +9229,24 @@ function rulesEngine (formDef) {
               // Validate rule predictes on the first entry only.
               passed = isConditionActive(field, submissionValues[0], testValue, condition);
             }
-            predicateMapQueries.push({"field": field,
+            predicateMapQueries.push({
+              "field": field,
               "submissionValues": submissionValues,
               "condition": condition,
               "testValue": testValue,
-              "passed" : passed
+              "passed": passed
             });
 
-            if( passed ) {
+            if (passed) {
               predicateMapPassed.push(field);
             }
             return cbPredicates();
-          }, function(err) {
-            if(err) cbRule(err);
+          }, function (err) {
+            if (err) cbRule(err);
 
-            function rulesPassed (condition, passed, queries) {
-              return ( (condition === "and" ) && (( passed.length == queries.length ))) ||  // "and" condition - all rules must pass
-                ( (condition === "or" )  && (( passed.length > 0 )));                        // "or" condition - only one rule must pass
+            function rulesPassed(condition, passed, queries) {
+              return ((condition === "and") && ((passed.length == queries.length))) || // "and" condition - all rules must pass
+                ((condition === "or") && ((passed.length > 0))); // "or" condition - only one rule must pass
             }
 
             if (rulesPassed(rule.ruleConditionalOperator, predicateMapPassed, predicateMapQueries)) {
@@ -7655,7 +9256,7 @@ function rulesEngine (formDef) {
             }
             return cbRule();
           });
-        }, function(err) {
+        }, function (err) {
           if (err) return cb(err);
 
           return cb(undefined, visible);
@@ -7663,13 +9264,13 @@ function rulesEngine (formDef) {
       }
 
       function isPageVisible(pageId, cb) {
-        init(function(err){
+        init(function (err) {
           if (err) return cb(err);
 
-          if (isPageRuleSubject(pageId)) {  // if the page is the target of a rule
-            return rulesResult(pageRuleSubjectMap[pageId], cb);  // execute page rules
+          if (isPageRuleSubject(pageId)) { // if the page is the target of a rule
+            return rulesResult(pageRuleSubjectMap[pageId], cb); // execute page rules
           } else {
-            return cb(undefined, true);  // if page is not subject of any rule then must be visible
+            return cb(undefined, true); // if page is not subject of any rule then must be visible
           }
         });
       }
@@ -7679,7 +9280,7 @@ function rulesEngine (formDef) {
          * fieldId = Id of field to check for reule predeciate references
          * checkContainingPage = if true check page containing field, and return false if the page is hidden
          */
-        init(function(err){
+        init(function (err) {
           if (err) return cb(err);
 
           // Fields are visable by default
@@ -7689,6 +9290,7 @@ function rulesEngine (formDef) {
           if (!fieldId) return cb(new Error("Field does not exist in form"));
 
           async.waterfall([
+
             function testPage(cb) {
               if (checkContainingPage) {
                 isPageVisible(field.pageId, cb);
@@ -7697,12 +9299,12 @@ function rulesEngine (formDef) {
               }
             },
             function testField(pageVisible, cb) {
-              if (!pageVisible) {  // if page containing field is not visible then don't need to check field
+              if (!pageVisible) { // if page containing field is not visible then don't need to check field
                 return cb(undefined, false);
               }
 
-              if (isFieldRuleSubject(fieldId) ) { // If the field is the subject of a rule it may have been hidden
-                return rulesResult(fieldRuleSubjectMap[fieldId], cb);  // execute field rules
+              if (isFieldRuleSubject(fieldId)) { // If the field is the subject of a rule it may have been hidden
+                return rulesResult(fieldRuleSubjectMap[fieldId], cb); // execute field rules
               } else {
                 return cb(undefined, true); // if not subject of field rules then can't be hidden
               }
@@ -7728,20 +9330,24 @@ function rulesEngine (formDef) {
        *      }
        */
       function checkRules(submissionJSON, cb) {
-        init(function(err){
+        init(function (err) {
           if (err) return cb(err);
 
           initSubmission(submissionJSON, function (err) {
-            if(err) return cb(err);
+            if (err) return cb(err);
             var actions = {};
 
             async.parallel([
+
               function (cb) {
                 actions.fields = {};
                 async.eachSeries(Object.keys(fieldRuleSubjectMap), function (fieldId, cb) {
                   isFieldVisible(fieldId, false, function (err, fieldVisible) {
                     if (err) return cb(err);
-                    actions.fields[fieldId] = {targetId: fieldId, action: (fieldVisible?"show":"hide")};
+                    actions.fields[fieldId] = {
+                      targetId: fieldId,
+                      action: (fieldVisible ? "show" : "hide")
+                    };
                     return cb();
                   });
                 }, cb);
@@ -7751,15 +9357,20 @@ function rulesEngine (formDef) {
                 async.eachSeries(Object.keys(pageRuleSubjectMap), function (pageId, cb) {
                   isPageVisible(pageId, function (err, pageVisible) {
                     if (err) return cb(err);
-                    actions.pages[pageId] = {targetId: pageId, action: (pageVisible?"show":"hide")};
+                    actions.pages[pageId] = {
+                      targetId: pageId,
+                      action: (pageVisible ? "show" : "hide")
+                    };
                     return cb();
                   });
                 }, cb);
               }
             ], function (err) {
-              if(err) return cb(err);
+              if (err) return cb(err);
 
-              return cb(undefined, {actions: actions});
+              return cb(undefined, {
+                actions: actions
+              });
             });
           });
         });
@@ -7780,7 +9391,7 @@ function rulesEngine (formDef) {
     };
 
     function isNumberBetween(num, min, max) {
-      var numVal = parseInt(num,10);
+      var numVal = parseInt(num, 10);
       return (!isNaN(numVal) && (numVal >= min) && (numVal <= max));
     }
 
@@ -7811,26 +9422,22 @@ function rulesEngine (formDef) {
       var fieldOptions = field.fieldOptions ? field.fieldOptions : {};
 
       var valid = true;
-      if( "is equal to" === condition) {
+      if ("is equal to" === condition) {
         valid = fieldValue === testValue;
-      }
-      else if( "is greater than" === condition) {
+      } else if ("is greater than" === condition) {
         // TODO - do numeric checking
         valid = fieldValue > testValue;
-      }
-      else if( "is less than" === condition) {
+      } else if ("is less than" === condition) {
         // TODO - do numeric checking
         valid = fieldValue < testValue;
-      }
-      else if( "is at" === condition) {
+      } else if ("is at" === condition) {
         valid = false;
-        if( fieldType === FIELD_TYPE_DATETIME ) {
-          switch (fieldOptions.definition.datetimeUnit)
-          {
+        if (fieldType === FIELD_TYPE_DATETIME) {
+          switch (fieldOptions.definition.datetimeUnit) {
             case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-              try{
+              try {
                 valid = (new Date(new Date(fieldValue).toDateString()).getTime() == new Date(new Date(testValue).toDateString()).getTime());
-              }catch(e){
+              } catch (e) {
                 valid = false;
               }
               break;
@@ -7838,27 +9445,25 @@ function rulesEngine (formDef) {
               valid = cvtTimeToSeconds(fieldValue) === cvtTimeToSeconds(testValue);
               break;
             case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-              try{
+              try {
                 valid = (new Date(fieldValue).getTime() == new Date(testValue).getTime());
-              }catch(e){
+              } catch (e) {
                 valid = false;
               }
               break;
             default:
-              valid = false;  // TODO should raise error here?
+              valid = false; // TODO should raise error here?
               break;
           }
         }
-      }
-      else if( "is before" === condition) {
+      } else if ("is before" === condition) {
         valid = false;
-        if( fieldType === FIELD_TYPE_DATETIME ) {
-          switch (fieldOptions.definition.datetimeUnit)
-          {
+        if (fieldType === FIELD_TYPE_DATETIME) {
+          switch (fieldOptions.definition.datetimeUnit) {
             case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-              try{
+              try {
                 valid = (new Date(new Date(fieldValue).toDateString()).getTime() < new Date(new Date(testValue).toDateString()).getTime());
-              }catch(e){
+              } catch (e) {
                 valid = false;
               }
               break;
@@ -7866,27 +9471,25 @@ function rulesEngine (formDef) {
               valid = cvtTimeToSeconds(fieldValue) < cvtTimeToSeconds(testValue);
               break;
             case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-              try{
+              try {
                 valid = (new Date(fieldValue).getTime() < new Date(testValue).getTime());
-              }catch(e){
+              } catch (e) {
                 valid = false;
               }
               break;
             default:
-              valid = false;  // TODO should raise error here?
+              valid = false; // TODO should raise error here?
               break;
           }
         }
-      }
-      else if( "is after" === condition) {
+      } else if ("is after" === condition) {
         valid = false;
-        if( fieldType === FIELD_TYPE_DATETIME ) {
-          switch (fieldOptions.definition.datetimeUnit)
-          {
+        if (fieldType === FIELD_TYPE_DATETIME) {
+          switch (fieldOptions.definition.datetimeUnit) {
             case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-              try{
+              try {
                 valid = (new Date(new Date(fieldValue).toDateString()).getTime() > new Date(new Date(testValue).toDateString()).getTime());
-              }catch(e){
+              } catch (e) {
                 valid = false;
               }
               break;
@@ -7894,45 +9497,38 @@ function rulesEngine (formDef) {
               valid = cvtTimeToSeconds(fieldValue) > cvtTimeToSeconds(testValue);
               break;
             case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-              try{
+              try {
                 valid = (new Date(fieldValue).getTime() > new Date(testValue).getTime());
-              }catch(e){
+              } catch (e) {
                 valid = false;
               }
               break;
             default:
-              valid = false;  // TODO should raise error here?
+              valid = false; // TODO should raise error here?
               break;
           }
         }
-      }
-      else if( "is" === condition) {
+      } else if ("is" === condition) {
         if (fieldType === FIELD_TYPE_CHECKBOX) {
           valid = fieldValue && fieldValue.selections && fieldValue.selections.indexOf(testValue) !== -1;
         } else {
           valid = fieldValue === testValue;
         }
-      }
-      else if( "is not" === condition) {
+      } else if ("is not" === condition) {
         if (fieldType === FIELD_TYPE_CHECKBOX) {
           valid = fieldValue && fieldValue.selections && fieldValue.selections.indexOf(testValue) === -1;
         } else {
           valid = fieldValue !== testValue;
         }
-      }
-      else if( "contains" === condition) {
+      } else if ("contains" === condition) {
         valid = fieldValue.indexOf(testValue) !== -1;
-      }
-      else if( "does not contain" === condition) {
+      } else if ("does not contain" === condition) {
         valid = fieldValue.indexOf(testValue) === -1;
-      }
-      else if( "begins with" === condition) {
+      } else if ("begins with" === condition) {
         valid = fieldValue.substring(0, testValue.length) === testValue;
-      }
-      else if( "ends with" === condition) {
+      } else if ("ends with" === condition) {
         valid = fieldValue.substring(Math.max(0, (fieldValue.length - testValue.length)), fieldValue.length) === testValue;
-      }
-      else {
+      } else {
         valid = false;
       }
 
@@ -7944,7 +9540,6 @@ function rulesEngine (formDef) {
     }
 
   }());
-
   /* This is the suffix file */
   return module.exports(formDef);
 }

@@ -41,7 +41,7 @@ To help debugging, you can run
 grunt local
 ```
 
-This will start mock servers locally and you can go to http://localhost:8100/example/index.html page to debug. You may want to run 
+This will start mock servers locally and you can go to http://localhost:8200/example/index.html page to debug. You may want to run 
 
 ```
 grunt watch

@@ -114,6 +114,8 @@ describe("test all cloud related", function(){
       var $fh = process.env.LIB_COV? require("../../src-cov/feedhenry") : require("../../src/feedhenry");
       $fh.reset();
 
+      $fh.fh_timeout = 30000;
+
       $fh.act({}, success, fail);
 
       expect(fail).to.have.been.calledOnce;

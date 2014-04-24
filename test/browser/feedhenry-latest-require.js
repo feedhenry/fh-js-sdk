@@ -3707,7 +3707,12 @@ Lawnchair.adapter('window-name', (function() {
 // not chainable: valid, keys
 //
 Lawnchair.adapter('dom', (function() {
-  var storage = window.localStorage
+  var storage = null;
+  try{
+    storage = window.localStorage;
+  }catch(e){
+
+  }
   // the indexer is an encapsulation of the helpers needed to keep an ordered index of the keys
   var indexer = function(name) {
     return {
@@ -7550,6 +7555,7 @@ fh.sync = api_sync;
 fh.ajax = fh.__ajax = ajax;
 fh.mbaas = api_mbaas;
 fh._getDeviceId = device.getDeviceId;
+fh.fh_timeout = 60000; //keep backward compatible
 
 fh.getCloudURL = function(){
   return cloud.getCloudHostUrl();
@@ -7669,7 +7675,6 @@ module.exports = XDomainRequestWrapper;
 
 var eventsHandler = require("./events");
 var XDomainRequestWrapper = require("./XDomainRequestWrapper");
-var consts = require("./constants");
 var logger = require("./logger");
 
 var type
@@ -7694,6 +7699,11 @@ var jsonpID = 0,
 
 var ajax = module.exports = function (options) {
   var settings = extend({}, options || {})
+  //keep backward compatibility
+  if(window && window.$fh && typeof window.$fh.fh_timeout === "number"){
+    ajax.settings.timeout = window.$fh.fh_timeout;
+  }
+
   for (key in ajax.settings)
     if (settings[key] === undefined) settings[key] = ajax.settings[key]
 
@@ -7941,9 +7951,7 @@ ajax.settings = {
     text: 'text/plain'
   },
   // Whether the request is to another domain
-  crossDomain: false,
-  // Default timeout
-  timeout: consts.fh_timeout
+  crossDomain: false
 }
 
 function mimeToDataType(mime) {
@@ -8032,13 +8040,14 @@ function extend(target) {
   })
   return target
 }
-},{"./XDomainRequestWrapper":18,"./constants":28,"./events":31,"./logger":38,"type-of":15}],20:[function(require,module,exports){
+},{"./XDomainRequestWrapper":18,"./events":31,"./logger":38,"type-of":15}],20:[function(require,module,exports){
 var logger =require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
 var ajax = require("./ajax");
 var JSON = require("JSON");
 var handleError = require("./handleError");
+var appProps = require("./appProps");
 
 function doActCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
@@ -8052,7 +8061,7 @@ function doActCall(opts, success, fail){
     "dataType": "json",
     "data": JSON.stringify(params),
     "contentType": "application/json",
-    "timeout": opts.timeout,
+    "timeout": opts.timeout || appProps.timeout,
     "success": success,
     "error": function(req, statusText, error){
       return handleError(fail, req, statusText, error);
@@ -8081,7 +8090,7 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":19,"./fhparams":32,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],21:[function(require,module,exports){
+},{"./ajax":19,"./appProps":26,"./fhparams":32,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],21:[function(require,module,exports){
 var logger =require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
@@ -8136,7 +8145,7 @@ module.exports = function(opts, success, fail){
         "data": JSON.stringify(req),
         "dataType": "json",
         "contentType": "application/json",
-        "timeout" : opts.timeout || app_props.timeout || constants.fh_timeout,
+        "timeout" : opts.timeout || app_props.timeout,
         success: function(res) {
           checkAuth.handleAuthResponse(endurl, res, success, fail);
         },
@@ -8154,6 +8163,7 @@ var fhparams = require("./fhparams");
 var ajax = require("./ajax");
 var JSON = require("JSON");
 var handleError = require("./handleError");
+var appProps = require("./appProps");
 
 function doCloudCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
@@ -8166,7 +8176,7 @@ function doCloudCall(opts, success, fail){
     "dataType": opts.dataType || "json",
     "data": JSON.stringify(params),
     "contentType": opts.contentType || "application/json",
-    "timeout": opts.timeout,
+    "timeout": opts.timeout || appProps.timeout,
     "success": success,
     "error": function(req, statusText, error){
       return handleError(fail, req, statusText, error);
@@ -8191,7 +8201,7 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":19,"./fhparams":32,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],23:[function(require,module,exports){
+},{"./ajax":19,"./appProps":26,"./fhparams":32,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],23:[function(require,module,exports){
 var hashImpl = require("./security/hash");
 
 module.exports = function(p, s, f){
@@ -8211,7 +8221,7 @@ var ajax = require("./ajax");
 var JSON = require("JSON");
 var handleError = require("./handleError");
 var consts = require("./constants");
-
+var appProps = require("./appProps");
 
 module.exports = function(opts, success, fail){
   logger.debug("mbaas is called.");
@@ -8239,7 +8249,7 @@ module.exports = function(opts, success, fail){
         "dataType": "json",
         "data": JSON.stringify(params),
         "contentType": "application/json",
-        "timeout": opts.timeout || consts.fh_timeout,
+        "timeout": opts.timeout || appProps.timeout,
         "success": success,
         "error": function(req, statusText, error){
           return handleError(fail, req, statusText, error);
@@ -8249,7 +8259,7 @@ module.exports = function(opts, success, fail){
   });
 } 
 
-},{"./ajax":19,"./constants":28,"./fhparams":32,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],25:[function(require,module,exports){
+},{"./ajax":19,"./appProps":26,"./constants":28,"./fhparams":32,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],25:[function(require,module,exports){
 var keygen = require("./security/aes-keygen");
 var aes = require("./security/aes-node");
 var rsa = require("./security/rsa-node");
@@ -8474,7 +8484,6 @@ module.exports = {
 
 },{"./fhparams":32,"./logger":38,"./queryMap":40,"JSON":3}],28:[function(require,module,exports){
 module.exports = {
-  "fh_timeout": 20000,
   "boxprefix": "/box/srv/1.1/",
   "sdk_version": "BUILD_VERSION",
   "config_js": "fhconfig.json",
@@ -8826,40 +8835,14 @@ var loadCloudProps = function(app_props, callback) {
   //as dom, webkit-sqlite, localFileStorage, window-name
   var lcConf = {
     name: "fh_init_storage",
-    adapter: ["dom", "webkit-sqlite", "localFileStorage", "window-name"],
+    adapter: ["dom", "webkit-sqlite", "window-name"],
     fail: function(msg, err) {
       var error_message = 'read/save from/to local storage failed  msg:' + msg + ' err:' + err;
       return fail(error_message, {});
     }
   };
 
-  var storage = null;
-  try {
-    storage = new Lawnchair(lcConf, function() {});
-  } catch (e) {
-    //when dom adapter failed, Lawnchair throws an error
-    //shoudn't go in here anymore
-    lcConf.adapter = undefined;
-    storage = new Lawnchair(lcConf, function() {});
-  }
-
-  var path = app_props.host + consts.boxprefix + "app/init";
-
-  storage.get('fh_init', function(storage_res) {
-    var savedHost = null;
-    if (storage_res && storage_res.value !== null && typeof(storage_res.value) !== "undefined" && storage_res !== "") {
-      storage_res = typeof(storage_res) === "string" ? JSON.parse(storage_res) : storage_res;
-      storage_res.value = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value) : storage_res.value;
-      if (storage_res.value.init) {
-        app_props.init = storage_res.value.init;
-      } else {
-        //keep it backward compatible.
-        app_props.init = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value) : storage_res.value;
-      }
-      if (storage_res.value.hosts) {
-        savedHost = storage_res.value;
-      }
-    }
+  var doInit = function(path, appProps, savedHost, storage){
     var data = fhparams.buildFHParams();
 
     ajax({
@@ -8869,12 +8852,14 @@ var loadCloudProps = function(app_props, callback) {
       "dataType": "json",
       "contentType": "application/json",
       "data": JSON.stringify(data),
-      "timeout": app_props.timeout || consts.fh_timeout,
-      "success": function(initRes) {
-        storage.save({
-          key: "fh_init",
-          value: initRes
-        }, function() {});
+      "timeout": appProps.timeout,
+      "success": function(initRes){
+        if(storage){
+          storage.save({
+            key: "fh_init",
+            value: initRes
+          }, function() {});
+        }
         if (callback) {
           callback(null, {
             cloud: initRes
@@ -8908,7 +8893,34 @@ var loadCloudProps = function(app_props, callback) {
         }
       }
     });
-  });
+  }
+
+  var storage = null;
+  var path = app_props.host + consts.boxprefix + "app/init";
+  try {
+    storage = new Lawnchair(lcConf, function() {});
+    storage.get('fh_init', function(storage_res) {
+      var savedHost = null;
+      if (storage_res && storage_res.value !== null && typeof(storage_res.value) !== "undefined" && storage_res !== "") {
+        storage_res = typeof(storage_res) === "string" ? JSON.parse(storage_res) : storage_res;
+        storage_res.value = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value) : storage_res.value;
+        if (storage_res.value.init) {
+          app_props.init = storage_res.value.init;
+        } else {
+          //keep it backward compatible.
+          app_props.init = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value) : storage_res.value;
+        }
+        if (storage_res.value.hosts) {
+          savedHost = storage_res.value;
+        }
+      }
+
+      doInit(path, app_props, savedHost, storage);
+    });
+  } catch (e) {
+    //for whatever reason (e.g. localStorage is disabled) Lawnchair is failed to init, just do the init
+    doInit(path, app_props, null, null);
+  }  
 };
 
 module.exports = {

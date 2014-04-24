@@ -19,7 +19,7 @@ appForm.utils = function(module) {
 
   function extend(child, parent) {
 
-    if (parent.constructor && parent.constructor == Function) {
+    if (parent.constructor && parent.constructor === Function) {
       for (var mkey in parent.prototype) {
         child.prototype[mkey] = parent.prototype[mkey];
       }
@@ -61,7 +61,7 @@ appForm.utils = function(module) {
    * @return {[type]}       [description]
    */
   function md5(str, cb) {
-    if (typeof $fh != 'undefined' && $fh.hash) {
+    if (typeof $fh !== 'undefined' && $fh.hash) {
       $fh.hash({
         algorithm: 'MD5',
         text: str

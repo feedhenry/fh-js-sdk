@@ -22,9 +22,9 @@ appForm.stores = function (module) {
     this.localStore.read(model, function (err, locRes) {
       if (err || !locRes) {
         //local loading failed
-        if (err) {
-          $fh.forms.log.e("Error reading model from localStore ", model, err);
-        }
+
+        $fh.forms.log.d("Error reading model from localStore ", model, err);
+
         that.refreshRead(model, cb);
       } else {
         //local loading succeed

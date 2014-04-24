@@ -13,8 +13,7 @@ appForm.models = function (module) {
   };
   FormSubmission.prototype.getFormId = function () {
     if(!this.get('data')){
-      console.log(this);
-      console.trace();
+      $fh.forms.log.e("No form data for form submission");
     }
 
     return this.get('data').formId;

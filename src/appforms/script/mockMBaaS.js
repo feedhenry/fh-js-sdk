@@ -1,12 +1,18 @@
 module.exports = applyServer;
 
+var fileHandler = require('fs');
 var getFormsData = require("./sampleData/getForms.json");
 var allForms = require("./sampleData/getForm.json");
 var theme = require("./sampleData/getTheme.json");
 var config = require("./sampleData/getConfig.json");
+var submissionFile = require("./sampleData/submissionFile.json");
+var submissionData = require("./sampleData/submissionData.json");
 var submissionStatusFileHash = "";
 var failedFileUploadFileHash = "";
 var submissionStatusCounter = 0;
+var testPhoto = __dirname+"/sampleData/testPhoto.jpg";
+var testFile = __dirname+"/sampleData/testFile.pdf";
+var responseDelay = 100;
 
 function applyServer(app) {
   app.use(function(req, res, next) {
@@ -18,6 +24,8 @@ function applyServer(app) {
   app.get("/mbaas/forms/:appId/theme", _getTheme);
   app.get("/mbaas/forms/:appid/config/:deviceId", _getConfig);
   app.get("/mbaas/forms/:appId", _getForms);
+  app.get("/mbaas/forms/:appId/submission/:submissionId", _getSubmissionData);
+  app.get("/mbaas/forms/:appId/submission/:submissionId/file/:fileId", _getSubmissionFile);
 
   app.get("/mbaas/forms/:appId/:formId", _getForm);
   app.post("/mbaas/forms/:appId", _postForms);
@@ -35,11 +43,38 @@ function _getConfig(req, res){
   res.json(config);
 };
 
+
+function _getSubmissionData(req, res){
+  console.log("In _getSubmissionData", req.params);
+  var retVal = {};
+
+  if(req.params.submissionId === "submissionData"){
+    retVal = submissionData;
+  } else if(req.params.submissionId === "submissionFile"){
+    retVal = submissionFile;
+  } else {   //If it is not either of these, send back an error
+    retVal = {error: "No submission matches id: "+ req.params.submissionId }
+  }
+  res.json(retVal);
+};
+
+function _getSubmissionFile(req, res){
+  console.log("In _getSubmissionData", req.params);
+  var fileToRead = req.params.fileId === "photo" ? testPhoto : testFile;
+
+
+  var fileStream = fileHandler.createReadStream(fileToRead);
+
+  fileStream.pipe(res);
+};
+
 function _postInit(req, res) {
   console.log("In _postInit, ", req.params);
   res.json({
     "status": "ok",
-    "hosts":{}
+    "hosts":{
+      "url": ""
+    }
   });
 }
 
@@ -56,7 +91,7 @@ function _postForms(req, res) {
       "status": "ok",
       "body": req.body
     });
-  }, 1000);
+  }, responseDelay);
 }
 
 function _getSubmissionStatus(req, res) {
@@ -92,7 +127,7 @@ function _getSubmissionStatus(req, res) {
 
   setTimeout(function() {
     res.json(responseJSON);
-  }, 1000);
+  }, responseDelay);
 
 }
 
@@ -117,7 +152,7 @@ function _completeSubmission(req, res) {
   console.log(resJSON);
   setTimeout(function() {
     res.json(resJSON);
-  }, 1000);
+  }, responseDelay);
 
 }
 
@@ -153,7 +188,7 @@ function _postFormSubmission(req, res) {
     console.log("Returning: ", body.testText);
     console.log("submissionId: ", submissionId);
     res.json(rtn);
-  }, 1000);
+  }, responseDelay);
 
 }
 
@@ -208,7 +243,7 @@ function _appFileSubmission(req, res) {
   console.log(resJSON, req.params.submissionId);
   setTimeout(function() {
     res.json(resJSON);
-  }, 1000);
+  }, responseDelay);
 }
 
 function _getTheme(req, res) {

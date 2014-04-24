@@ -359,5 +359,43 @@ describe("UploadTask model", function() {
         });
       });
     });
-  })
+  });
+
+  it("how to download a submission definition", function(done){
+    this.timeout(20000);
+    var submission = appForm.models.submission.newInstance(null ,{submissionId: "submissionData"});
+
+    submission.changeStatus("pending", function(err){
+      assert.ok(!err);
+
+      submission.changeStatus("inprogress", function(err){
+        assert.ok(!err);
+
+        var downloadTask = appForm.models.uploadTask.newInstance(submission);
+        //First download tick will download the json definition of the submission
+        downloadTask.uploadTick(function(err){
+          assert.ok(!err);
+
+          console.log(downloadTask.getProgress());
+          assert.ok(downloadTask.getProgress());
+          assert.ok(submission.getStatus() === "inprogress");
+
+          //Second download tick will download the file from the server
+          downloadTask.uploadTick(function(err){
+            assert.ok(!err);
+            assert.ok(submission.getStatus() === "inprogress");
+
+            //Third download tick will mark the submission as downloaded
+            downloadTask.uploadTick(function(err){
+              assert.ok(!err);
+
+              assert.ok(submission.getStatus() === "downloaded");
+              //It should have downloaded a file
+              done();
+            });
+          });
+        });
+      });
+    });
+  });
 });

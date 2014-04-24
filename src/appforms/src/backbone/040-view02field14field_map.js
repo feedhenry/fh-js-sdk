@@ -28,21 +28,24 @@ FieldMapView = FieldView.extend({
   },
   onMapInit: function(index) {
     this.mapInited++;
-    if (this.mapInited == this.curRepeat) {
+    if (this.mapInited === this.curRepeat) {
       // all map initialised
       this.allMapInit();
     }
   },
   allMapInit: function() {
-    while ((func = this.allMapInitFunc.shift()) != null) {
-      func();
+    var func;
+    while ((func = this.allMapInitFunc.shift()) !== null) {
+      if(typeof(func) === "function"){
+        func();
+      }
     }
   },
   onAllMapInit: function(func) {
-    if (this.mapInited == this.curRepeat) {
+    if (this.mapInited === this.curRepeat) {
       func();
     } else {
-      if (this.allMapInitFunc.indexOf(func) == -1) {
+      if (this.allMapInitFunc.indexOf(func) === -1) {
         this.allMapInitFunc.push(func);
       }
     }

@@ -18,7 +18,7 @@ var FormListItemView = BaseView.extend({
       return this;
     },
     unrender: function () {
-      $(this.el).remove();
+      $(this.$el).remove();
     },
     show: function () {
       var formId = this.model._id;

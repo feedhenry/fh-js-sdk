@@ -78,7 +78,9 @@ var PageView=BaseView.extend({
       }
     } else {
       fieldModelList.forEach(function (field, index) {
-        if(!field) return;
+        if(!field) {
+          return;
+        }
         var fieldType = field.getType();
         if (self.viewMap[fieldType]) {
 
@@ -109,6 +111,7 @@ var PageView=BaseView.extend({
   },
 
   hide: function () {
+
     this.$el.addClass('fh_appform_hidden');
   },
 

@@ -57,6 +57,23 @@ describe("submissions model",function(){
         assert(rtn);
     });
 
+    it ("how to get downloaded submissions ",function(done){
+      var submissionId = "submissionData";
+      var downloadSubmission = appForm.api.downloadSubmission;
+
+      downloadSubmission({fromRemote: true, submissionId: submissionId}, function(err, submission){
+        assert.ok(!err);
+        assert.ok(submission);
+        assert.ok(submission.getRemoteSubmissionId().length > 0);
+        var rtn=appForm.models.submissions.getDownloaded();
+        assert(Array.isArray(rtn));
+        assert(rtn.length === 1);
+        assert(rtn[0].submissionId === submissionId);
+        done();
+      });
+
+    });
+
     it ("how to get a submission model from meta data",function(done){
         var metaList=appForm.models.submissions.getSubmissionMetaList();
         var meta=metaList[0];

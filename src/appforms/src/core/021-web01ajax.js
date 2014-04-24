@@ -1,5 +1,5 @@
 appForm.web.ajax = function (module) {
-  module = typeof $fh != 'undefined' && $fh.__ajax ? $fh.__ajax : _myAjax;
+  module = typeof $fh !== 'undefined' && $fh.__ajax ? $fh.__ajax : _myAjax;
   module.get = get;
   module.post = post;
   var _ajax = module;
@@ -25,7 +25,7 @@ appForm.web.ajax = function (module) {
     $fh.forms.log.d("Ajax post ", url, body);
     var file = false;
     var formData;
-    if (typeof body == 'object') {
+    if (typeof body === 'object') {
       if (body instanceof File) {
         file = true;
         formData = new FormData();

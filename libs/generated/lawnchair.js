@@ -305,7 +305,12 @@ Lawnchair.adapter('window-name', (function() {
 // not chainable: valid, keys
 //
 Lawnchair.adapter('dom', (function() {
-  var storage = window.localStorage
+  var storage = null;
+  try{
+    storage = window.localStorage;
+  }catch(e){
+
+  }
   // the indexer is an encapsulation of the helpers needed to keep an ordered index of the keys
   var indexer = function(name) {
     return {
