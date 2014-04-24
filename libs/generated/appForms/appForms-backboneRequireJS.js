@@ -1514,104 +1514,108 @@ var BaseView=Backbone.View.extend({
     "onLoadEnd":function(){}
 }); 
 var FormListView = BaseView.extend({
-  events: {
-    'click button#formlist_reload': 'reload'
-  },
+    events: {
+        'click button#formlist_reload': 'reload'
+    },
 
-  templates: {
-    list: '<ul class="form_list fh_appform_body"></ul>',
-    header: '<h2>Your Forms</h2><h4>Choose a form from the list below</h4>',
-    error: '<li><button id="formlist_reload" class="button-block <%= enabledClass %> <%= dataClass %> fh_appform_button_default"><%= name %><div class="loading"></div></button></li>'
-  },
+    templates: {
+        list: '<ul class="form_list fh_appform_body"></ul>',
+        header: '<h2>Your Forms</h2><h4>Choose a form from the list below</h4>',
+        error: '<li><button id="formlist_reload" class="button-block <%= enabledClass %> <%= dataClass %> fh_appform_button_default"><%= name %><div class="loading"></div></button></li>'
+    },
 
-  initialize: function() {
-    $fh.forms.log.l("Initialize Form List");
-    _.bindAll(this, 'render', 'appendForm');
-    this.views = [];
+    initialize: function() {
+        $fh.forms.log.l("Initialize Form List");
+        _.bindAll(this, 'render', 'appendForm');
+        this.views = [];
 
-    App.collections.forms.bind('reset', function (collection, options) {
-       if (options == null || !options.noFetch) {
-         App.collections.forms.each(function (form) {
-           form.fetch();
-         });
-       }
-    });
+        App.collections.forms.bind('reset', function(collection, options) {
+            if (options == null || !options.noFetch) {
+                App.collections.forms.each(function(form) {
+                    form.fetch();
+                });
+            }
+        });
 
-    App.collections.forms.bind('add remove reset error', this.render, this);
-    this.model.on("updated",this.render);
-  },
+        App.collections.forms.bind('add remove reset error', this.render, this);
+        this.model.on("updated", this.render);
+    },
 
-  reload: function() {
-    $fh.forms.log.l("Reload Form List");
-    var that=this;
-    this.onLoad();
-    this.model.refresh(true,function(err,formList){
-      this.onLoadEnd();
-      that.model=formList;
-      that.render();
-    });
-  },
+    reload: function() {
+        $fh.forms.log.l("Reload Form List");
+        var that = this;
+        this.onLoad();
+        this.model.refresh(true, function(err, formList) {
+            this.onLoadEnd();
+            that.model = formList;
+            that.render();
+        });
+    },
 
-  show: function () {
-    $(this.$el).show();
-  },
+    show: function() {
+        $(this.$el).show();
+    },
 
-  hide: function () {
-    $(this.$el).hide();
-  },
+    hide: function() {
+        $(this.$el).hide();
+    },
 
-  renderErrorHandler: function(msg) {
-    try {
-      if(msg == null || msg.match("error_ajaxfail")) {
-        msg = "An unexpected error occurred.";
-      }
-    } catch(e) {
-      msg = "An unexpected error occurred.";
+    renderErrorHandler: function(msg) {
+        try {
+            if (msg == null || msg.match("error_ajaxfail")) {
+                msg = "An unexpected error occurred.";
+            }
+        } catch (e) {
+            msg = "An unexpected error occurred.";
+        }
+        var html = _.template(this.templates.error, {
+            name: msg + "<br/>Please Retry Later",
+            enabledClass: 'fh_appform_button_cancel', //TODO May not be this class. Double check
+            dataClass: 'fetched'
+        });
+        $('ul', this.$el).append(html);
+
+    },
+
+    render: function() {
+
+        // Empty our existing view
+        // this.options.parentEl.empty();
+
+        // Add list
+        this.options.parentEl.append(this.templates.list);
+        var formList = this.model.getFormsList();
+        if (formList.length > 0) {
+            // Add header
+            this.options.parentEl.find('ul').append(this.templates.header);
+            _(formList).forEach(function(form) {
+                this.appendForm(form);
+            }, this);
+        } else {
+            this.renderErrorHandler(arguments[1]);
+        }
+    },
+
+    appendForm: function(form) {
+        var view = new FormListItemView({
+            model: form
+        });
+        this.views.push(view);
+        $('ul', this.options.parentEl).append(view.render().$el);
+    },
+    initFormList: function(fromRemote, cb) {
+        var that = this;
+        $fh.forms.getForms({
+            fromRemote: fromRemote
+        }, function(err, formsModel) {
+            if (err) {
+                cb(err);
+            } else {
+                that.model = formsModel;
+                cb(null, that);
+            }
+        });
     }
-    var html = _.template(this.templates.error, {
-      name: msg + "<br/>Please Retry Later",
-      enabledClass: 'fh_appform_button_cancel',//TODO May not be this class. Double check
-      dataClass: 'fetched'
-    });
-    $('ul', this.$el).append(html);
-
-  },
-
-  render: function() {
-    
-    // Empty our existing view
-    // this.options.parentEl.empty();
-
-    // Add list
-    this.options.parentEl.append(this.templates.list);
-    var formList=this.model.getFormsList();
-    if(formList.length>0) {
-      // Add header
-      this.options.parentEl.find('ul').append(this.templates.header);
-      _(formList).forEach(function(form) {this.appendForm(form);}, this);
-    } else {
-      this.renderErrorHandler(arguments[1]);
-    }
-  },
-
-  appendForm: function(form) {
-    // this.options.parentEl.find('ul').append("<li>"+form.name+"("+form.description+")"+"</li>");
-    // console.log(form);
-    var view = new FormListItemView({model: form});
-    this.views.push(view);
-    $('ul', this.options.parentEl).append(view.render().$el);
-  },
-  initFormList: function(fromRemote,cb){
-    var that=this;
-    $fh.forms.getForms({fromRemote:fromRemote},function(err,formsModel){
-      if (err){
-        cb(err);
-      }else{
-        that.model=formsModel;
-        cb(null,that);  
-      }
-    });
-  }
 });
 var FormListItemView = BaseView.extend({
     events: {
@@ -1786,7 +1790,7 @@ var FieldView = Backbone.View.extend({
 
     },
     onElementShow: function(index) {
-        console.log("Show done for field " + index);
+        $fh.forms.log.d("Show done for field " + index);
     },
     render: function() {
         var self = this;
@@ -1828,7 +1832,6 @@ var FieldView = Backbone.View.extend({
         if (submission) {
             this.submission = submission;
             this.submission.getInputValueByFieldId(this.model.get('_id'), function(err, res) {
-                //console.log(err, res);
                 self.value(res);
             });
         }
@@ -1852,7 +1855,7 @@ var FieldView = Backbone.View.extend({
     },
 
     dumpContent: function() {
-        console.log("Value changed :: " + JSON.stringify(this.value()));
+        $fh.forms.log.d("Value changed :: " + JSON.stringify(this.value()));
     },
 
     getTopView: function() {
@@ -1871,7 +1874,6 @@ var FieldView = Backbone.View.extend({
         var fieldId = self.model.getFieldId();
         self.model.validate(element, function(err, res) {
             if (err) {
-                console.error(err);
                 self.setErrorText(index, "Error validating field: " + err);
                 if (cb) {
                     cb(err);
@@ -2075,190 +2077,189 @@ var FieldView = Backbone.View.extend({
 
 });
 FieldCameraView = FieldView.extend({
-  input: "<img class='imageThumb' width='100%' data-field='<%= fieldId %>' data-index='<%= index %>'  type='<%= inputType %>'>",
-  html5Cam: '<div class="html5Cam">' +
-    '<div class="camActionBar"><button class="camCancel camBtn fh_appform_button_cancel">Cancel</button><button class="camOk camBtn fh_appform_button_action">Ok</button></div>' +
-    '<div class="cam"></div>' +
-    '</div>',
-  onElementShow: function(index) {
-    var captureBtn = $(this.renderButton(index, "<i class='fa fa-camera'></i>&nbsp;Capture Photo From Camera", "fhcam"));
-    var libBtn = $(this.renderButton(index, "<i class='fa fa-folder'></i>&nbsp;Choose Photo from Library", "fhcam_lib"));
-    var rmBtn = $(this.renderButton(index, "<i class='fa fa-times-circle'></i>&nbsp;Remove Photo", "remove"));
+    input: "<img class='imageThumb' width='100%' data-field='<%= fieldId %>' data-index='<%= index %>'  type='<%= inputType %>'>",
+    html5Cam: '<div class="html5Cam">' +
+        '<div class="camActionBar"><button class="camCancel camBtn fh_appform_button_cancel">Cancel</button><button class="camOk camBtn fh_appform_button_action">Ok</button></div>' +
+        '<div class="cam"></div>' +
+        '</div>',
+    onElementShow: function(index) {
+        var captureBtn = $(this.renderButton(index, "<i class='fa fa-camera'></i>&nbsp;Capture Photo From Camera", "fhcam"));
+        var libBtn = $(this.renderButton(index, "<i class='fa fa-folder'></i>&nbsp;Choose Photo from Library", "fhcam_lib"));
+        var rmBtn = $(this.renderButton(index, "<i class='fa fa-times-circle'></i>&nbsp;Remove Photo", "remove"));
 
-    this.getWrapper(index).append(captureBtn);
-    this.getWrapper(index).append(libBtn);
-    this.getWrapper(index).append(rmBtn);
-    var self = this;
-    captureBtn.on('click', function (e) {
-      self.addFromCamera(e, index);
-    });
-    libBtn.on('click', function (e) {
-      self.addFromLibrary(e, index);
-    });
-    rmBtn.on('click', function (e) {
-      self.removeThumb(e, index);
-    });
-    rmBtn.hide();
-  },
-  setImage: function (index, base64Img) {
-    var wrapper = this.getWrapper(index);
-    var img = wrapper.find('img.imageThumb');
-    img.attr('src', base64Img).show();
-    wrapper.find('button').hide();
-    wrapper.find('.remove').show();
-  },
-  getImageThumb: function (index) {
-    var wrapper = this.getWrapper(index);
-    var img = wrapper.find('img.imageThumb');
-    return img;
-  },
-  getCameraBtn: function (index) {
-    var wrapper = this.getWrapper(index);
-    return wrapper.find('button.fhcam');
-  },
-  getLibBtn: function (index) {
-    var wrapper = this.getWrapper(index);
-    return wrapper.find('button.fhcam_lib');
-  },
-  getRemoveBtn: function (index) {
-    var wrapper = this.getWrapper(index);
-    return wrapper.find('button.remove');
-  },
-  removeThumb: function (e, index) {
-    e.preventDefault();
-    var img = this.getImageThumb(index);
-    img.removeAttr('src').hide();
-    this.getLibBtn(index).show();
-    this.getCameraBtn(index).show();
-    this.getRemoveBtn(index).hide();  // this.trigger('imageRemoved'); // trigger events used by grouped camera fields NOTE: don't move to setImageData fn, could result in infinite event callback triggering as group camera field may call into setImageData()
-  },
-  addFromCamera: function (e, index) {
-    e.preventDefault();
-    var self = this;
-    var params = {};
+        this.getWrapper(index).append(captureBtn);
+        this.getWrapper(index).append(libBtn);
+        this.getWrapper(index).append(rmBtn);
+        var self = this;
+        captureBtn.on('click', function(e) {
+            self.addFromCamera(e, index);
+        });
+        libBtn.on('click', function(e) {
+            self.addFromLibrary(e, index);
+        });
+        rmBtn.on('click', function(e) {
+            self.removeThumb(e, index);
+        });
+        rmBtn.hide();
+    },
+    setImage: function(index, base64Img) {
+        var wrapper = this.getWrapper(index);
+        var img = wrapper.find('img.imageThumb');
+        img.attr('src', base64Img).show();
+        wrapper.find('button').hide();
+        wrapper.find('.remove').show();
+    },
+    getImageThumb: function(index) {
+        var wrapper = this.getWrapper(index);
+        var img = wrapper.find('img.imageThumb');
+        return img;
+    },
+    getCameraBtn: function(index) {
+        var wrapper = this.getWrapper(index);
+        return wrapper.find('button.fhcam');
+    },
+    getLibBtn: function(index) {
+        var wrapper = this.getWrapper(index);
+        return wrapper.find('button.fhcam_lib');
+    },
+    getRemoveBtn: function(index) {
+        var wrapper = this.getWrapper(index);
+        return wrapper.find('button.remove');
+    },
+    removeThumb: function(e, index) {
+        e.preventDefault();
+        var img = this.getImageThumb(index);
+        img.removeAttr('src').hide();
+        this.getLibBtn(index).show();
+        this.getCameraBtn(index).show();
+        this.getRemoveBtn(index).hide(); // this.trigger('imageRemoved'); // trigger events used by grouped camera fields NOTE: don't move to setImageData fn, could result in infinite event callback triggering as group camera field may call into setImageData()
+    },
+    addFromCamera: function(e, index) {
+        e.preventDefault();
+        var self = this;
+        var params = {};
 
-    params = this.model.getPhotoOptions();
+        params = this.model.getPhotoOptions();
 
-    if (this.model.utils.isPhoneGapCamAvailable()) {
-      this.model.utils.takePhoto(params, function (err, imageURI) {
-        if (err) {
-          console.error(err);
-        } else {
-          self.setImage(index, imageURI);
-        }
-      });
-    } else if (this.model.utils.isHtml5CamAvailable()) {
-      var camObj = $(self.html5Cam);
-      var actionBar = camObj.find('.camActionBar');
-      camObj.css({
-        'position': 'fixed',
-        'top': 0,
-        'bottom': 0,
-        'left': 0,
-        'right': 0,
-        'background': '#000',
-        'z-index': 9999
-      });
-      actionBar.css({
-        'text-align': 'center',
-        'padding': '10px',
-        'background': '#999'
-      });
-      actionBar.find('button').css({
-        'width': '80px',
-        'height': '30px',
-        'margin-right': '8px',
-        'font-size': '1.3em'
-      });
-      self.$el.append(camObj);
-      actionBar.find('.camCancel').on('click', function () {
-        self.model.utils.cancelHtml5Camera();
-        camObj.remove();
-      });
-      this.model.utils.initHtml5Camera(params, function (err, video) {
-        if (err) {
-          console.error(err);
-          camObj.remove();
-        } else {
-          $(video).css('width', '100%');
-          camObj.find('.cam').append(video);
-          actionBar.find('.camOk').on('click', function () {
-            self.model.utils.takePhoto(params, function (err, base64Img) {
-              camObj.remove();
-              if (err) {
-                console.error(err);
-              } else {
-                self.setImage(index, base64Img);
-              }
+        if (this.model.utils.isPhoneGapCamAvailable()) {
+            this.model.utils.takePhoto(params, function(err, imageURI) {
+                if (err) {
+                    $fh.forms.log.e("Error Taking Photo", err);
+                } else {
+                    self.setImage(index, imageURI);
+                }
             });
-          });
+        } else if (this.model.utils.isHtml5CamAvailable()) {
+            var camObj = $(self.html5Cam);
+            var actionBar = camObj.find('.camActionBar');
+            camObj.css({
+                'position': 'fixed',
+                'top': 0,
+                'bottom': 0,
+                'left': 0,
+                'right': 0,
+                'background': '#000',
+                'z-index': 9999
+            });
+            actionBar.css({
+                'text-align': 'center',
+                'padding': '10px',
+                'background': '#999'
+            });
+            actionBar.find('button').css({
+                'width': '80px',
+                'height': '30px',
+                'margin-right': '8px',
+                'font-size': '1.3em'
+            });
+            self.$el.append(camObj);
+            actionBar.find('.camCancel').on('click', function() {
+                self.model.utils.cancelHtml5Camera();
+                camObj.remove();
+            });
+            this.model.utils.initHtml5Camera(params, function(err, video) {
+                if (err) {
+                    $fh.forms.log.e(err);
+                    camObj.remove();
+                } else {
+                    $(video).css('width', '100%');
+                    camObj.find('.cam').append(video);
+                    actionBar.find('.camOk').on('click', function() {
+                        self.model.utils.takePhoto(params, function(err, base64Img) {
+                            camObj.remove();
+                            if (err) {
+                                $fh.forms.log.e(err);
+                            } else {
+                                self.setImage(index, base64Img);
+                            }
+                        });
+                    });
+                }
+            });
+        } else {
+            var sampleImg = self.sampleImage();
+            self.setImage(index, sampleImg);
         }
-      });
-    } else {
-      var sampleImg = self.sampleImage();
-      self.setImage(index, sampleImg);
+    },
+    addFromLibrary: function(e, index) {
+        var self = this;
+        var params = {};
+        if (self.model.utils.isPhoneGapCamAvailable()) {
+            e.preventDefault();
+            params.sourceType = Camera.PictureSourceType.PHOTOLIBRARY;
+            self.model.utils.takePhoto(params, function(err, base64Image) {
+                if (err) {
+                    $fh.forms.log.e("error occured with take photo ", JSON.stringify(err));
+                }
+                if (base64Image) {
+                    self.setImage(index, base64Image);
+                }
+            });
+        } else {
+            var file = document.createElement('input');
+            file.type = 'file';
+            var fileObj = $(file);
+            fileObj.hide();
+            self.$el.append(fileObj);
+            fileObj.on('change', function() {
+                var file = fileObj[0];
+                if (file.files && file.files.length > 0) {
+                    file = file.files[0];
+                    fileObj.remove();
+                    self.model.utils.fileSystem.fileToBase64(file, function(err, base64Img) {
+                        if (err) {
+                            $fh.forms.log.e(err);
+                        } else {
+                            self.setImage(index, base64Img);
+                        }
+                    });
+                }
+            });
+            fileObj.click();
+        }
+    },
+    valueFromElement: function(index) {
+        var img = this.getImageThumb(index);
+        return img.attr('src');
+    },
+    valuePopulateToElement: function(index, value) {
+        if (value) {
+            var base64Data = value.data;
+            var base64Img = value.imgHeader + base64Data;
+            this.setImage(index, base64Img);
+        }
+    },
+    sampleImages: [
+        '/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAAAAAAD/4QMraHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjAtYzA2MCA2MS4xMzQ3NzcsIDIwMTAvMDIvMTItMTc6MzI6MDAgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzUgTWFjaW50b3NoIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjVEMzgyQjRCMTU1MjExRTJBNzNDQzMyMEE5ODI5OEU0IiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOjVEMzgyQjRDMTU1MjExRTJBNzNDQzMyMEE5ODI5OEU0Ij4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6NUQzODJCNDkxNTUyMTFFMkE3M0NDMzIwQTk4Mjk4RTQiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6NUQzODJCNEExNTUyMTFFMkE3M0NDMzIwQTk4Mjk4RTQiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz7/7gAOQWRvYmUAZMAAAAAB/9sAhAAbGhopHSlBJiZBQi8vL0JHPz4+P0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHAR0pKTQmND8oKD9HPzU/R0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0f/wAARCAAyADIDASIAAhEBAxEB/8QATQABAQAAAAAAAAAAAAAAAAAAAAQBAQEBAAAAAAAAAAAAAAAAAAAEBRABAAAAAAAAAAAAAAAAAAAAABEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8AiASt8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//9k=',
+        'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAALklEQVQYV2NkwAT/oUKMyFIoHKAETBFIDU6FIEUgSaJMBJk0MhQihx2W8IcIAQBhewsKNsLKIgAAAABJRU5ErkJggg==',
+        'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAYUlEQVQYV2NkQAJlM1X/g7hd6bdBFCOyHCNIEigBppElkNkgeYIKYBrwKoQ6A+wEuDtwOQHmLLgbQbqQ3YnubhSfwRTj9DUu3+J0I7oGkPVwXwMZKOEHdCdcPdQJILczAAACnDmkK8T25gAAAABJRU5ErkJggg=='
+    ],
+    sampleImage: function() {
+        window.sampleImageNum = (window.sampleImageNum += 1) % this.sampleImages.length;
+        return this.sampleImages[window.sampleImageNum];
     }
-  },
-  addFromLibrary: function (e, index) {
-    var self = this;
-    var params = {};
-    if (self.model.utils.isPhoneGapCamAvailable()) {
-      e.preventDefault();
-      params.sourceType = Camera.PictureSourceType.PHOTOLIBRARY;
-      self.model.utils.takePhoto(params, function (err, base64Image) {
-        if(err){
-          console.error("error occured with take photo ", JSON.stringify(err));
-        }
-        if(base64Image) {
-          self.setImage(index, base64Image);
-        }
-      });
-    } else {
-      var file = document.createElement('input');
-      file.type = 'file';
-      var fileObj = $(file);
-      fileObj.hide();
-      self.$el.append(fileObj);
-      fileObj.on('change', function () {
-        var file = fileObj[0];
-        if (file.files && file.files.length > 0) {
-          file = file.files[0];
-          fileObj.remove();
-          self.model.utils.fileSystem.fileToBase64(file, function (err, base64Img) {
-            if (err) {
-              console.error(err);
-            } else {
-              self.setImage(index, base64Img);
-            }
-          });
-        }
-      });
-      fileObj.click();
-    }
-  },
-  valueFromElement: function (index) {
-    var img = this.getImageThumb(index);
-    return img.attr('src');
-  },
-  valuePopulateToElement: function (index, value) {
-    if (value) {
-      var base64Data = value.data;
-      var base64Img = value.imgHeader + base64Data;
-      this.setImage(index, base64Img);
-    }
-  },
-  sampleImages: [
-    '/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAAAAAAD/4QMraHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjAtYzA2MCA2MS4xMzQ3NzcsIDIwMTAvMDIvMTItMTc6MzI6MDAgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzUgTWFjaW50b3NoIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjVEMzgyQjRCMTU1MjExRTJBNzNDQzMyMEE5ODI5OEU0IiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOjVEMzgyQjRDMTU1MjExRTJBNzNDQzMyMEE5ODI5OEU0Ij4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6NUQzODJCNDkxNTUyMTFFMkE3M0NDMzIwQTk4Mjk4RTQiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6NUQzODJCNEExNTUyMTFFMkE3M0NDMzIwQTk4Mjk4RTQiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz7/7gAOQWRvYmUAZMAAAAAB/9sAhAAbGhopHSlBJiZBQi8vL0JHPz4+P0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHAR0pKTQmND8oKD9HPzU/R0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0f/wAARCAAyADIDASIAAhEBAxEB/8QATQABAQAAAAAAAAAAAAAAAAAAAAQBAQEBAAAAAAAAAAAAAAAAAAAEBRABAAAAAAAAAAAAAAAAAAAAABEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8AiASt8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//9k=',
-    'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAALklEQVQYV2NkwAT/oUKMyFIoHKAETBFIDU6FIEUgSaJMBJk0MhQihx2W8IcIAQBhewsKNsLKIgAAAABJRU5ErkJggg==',
-    'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAYUlEQVQYV2NkQAJlM1X/g7hd6bdBFCOyHCNIEigBppElkNkgeYIKYBrwKoQ6A+wEuDtwOQHmLLgbQbqQ3YnubhSfwRTj9DUu3+J0I7oGkPVwXwMZKOEHdCdcPdQJILczAAACnDmkK8T25gAAAABJRU5ErkJggg=='
-  ],
-  sampleImage: function () {
-    window.sampleImageNum = (window.sampleImageNum += 1) % this.sampleImages.length;
-    return this.sampleImages[window.sampleImageNum];
-  }
 });
 window.sampleImageNum = -1;
-
 FieldCameraGroupView = FieldCameraView.extend({
   initialize: function() {
     FieldCameraView.prototype.initialize.call(this);
@@ -2522,7 +2523,6 @@ FieldFileView = FieldView.extend({
 
         button.off("click");
         button.on("click", function() {
-            console.log("FILE BUTTON CLICKED");
             var index = $(this).data().index;
             fileEle.click();
         });
@@ -2691,8 +2691,11 @@ FieldMapView = FieldView.extend({
     }
   },
   allMapInit: function() {
+    var func;
     while ((func = this.allMapInitFunc.shift()) !== null) {
-      func();
+      if(typeof(func) === "function"){
+        func();
+      }
     }
   },
   onAllMapInit: function(func) {
@@ -2876,282 +2879,281 @@ FieldSelectView = FieldView.extend({
   }
 });
 FieldSignatureView = FieldView.extend({
-  extension_type: 'fhsig',
-  input: "<img class='sigImage' style='width: 100%;' data-field='<%= fieldId %>' data-index='<%= index %>'/>",
-  templates: {
-    signaturePad: ['<div class="sigPad">', '<ul class="sigNav" style="text-align: center;">', '<button class="clearButton fh_appform_button_cancel">Clear</button><button class="cap_sig_done_btn fh_appform_button_action">Done</button>', '<br style="clear:both;" />', '</ul>', '<div class="sig sigWrapper">', '<canvas class="pad" width="<%= canvasWidth %>" height="<%= canvasHeight %>"></canvas>', '</div>', '</div>']
-  },
+    extension_type: 'fhsig',
+    input: "<img class='sigImage' style='width: 100%;' data-field='<%= fieldId %>' data-index='<%= index %>'/>",
+    templates: {
+        signaturePad: ['<div class="sigPad">', '<ul class="sigNav" style="text-align: center;">', '<button class="clearButton fh_appform_button_cancel">Clear</button><button class="cap_sig_done_btn fh_appform_button_action">Done</button>', '<br style="clear:both;" />', '</ul>', '<div class="sig sigWrapper">', '<canvas class="pad" width="<%= canvasWidth %>" height="<%= canvasHeight %>"></canvas>', '</div>', '</div>']
+    },
 
-  initialize: function() {
-    FieldView.prototype.initialize.call(this);
-    this.on('visible', this.clearError);
-  },
-  onElementShow: function(index) {
-    var html = $(this.renderButton(index, "<i class='fa fa-pencil'></i>&nbsp;Capture Signature", this.extension_type));
-    this.getWrapper(index).append(html);
-    var self = this;
-    html.on("click", function() {
-      self.showSignatureCapture(index);
-    });
-  },
-  validate: function(e) {
-    if (!$fh.forms.config.get("studioMode")) {
-      this.trigger("checkrules");
-    }
-  },
-  showSignatureCapture: function(index) {
-    var self = this;
-    var winHeight = $(window).height();
-    var winWidth = $(window).width();
-    var canvasHeight = winHeight - 70;
-    var canvasWidth = winWidth - 2;
-    var lineTop = canvasHeight - 20;
-
-    this.$el.append(_.template(this.templates.signaturePad.join(''), {
-      "canvasHeight": canvasHeight,
-      "canvasWidth": canvasWidth
-    }));
-    var signaturePad = $('.sigPad', this.$el);
-    signaturePad.css({
-      position: 'fixed',
-      'z-index': 9999,
-      'bottom': '0px',
-      'right': '0px',
-      top: '0px',
-      left: '0px',
-      'background-color': '#fff'
-    });
-
-    var navHeight = $('.sigNav', this.$el).outerHeight();
-    $('.sigPad', this.$el).css({
-      width: '100%',
-      height: winHeight + 'px'
-    });
-    $('.sigWrapper', this.$el).css({
-      height: (winHeight - navHeight - 20) + "px"
-    });
-    sigPad = $('.sigPad', this.$el).signaturePad({
-      drawOnly: true,
-      lineTop: lineTop
-    });
-
-    $(this.$el).data('sigpadInited', true);
-    // Bind capture
-    $('.cap_sig_done_btn', this.$el).unbind('click').bind('click', function(e) {
-      // var loadingView = new LoadingView();
-      // loadingView.show("generating signature");
-      e.preventDefault();
-      var sig = sigPad.getSignature(); // get the default image type
-      if (sig && sig.length) {
-        var sigData = sigPad.getSignatureImage();
-        if (self.isEmptyImage(sigData)) { //toDataUrl not supported by current browser. fallback use bmp encoder
-          sigData = self.toBmp();
+    initialize: function() {
+        FieldView.prototype.initialize.call(this);
+        this.on('visible', this.clearError);
+    },
+    onElementShow: function(index) {
+        var html = $(this.renderButton(index, "<i class='fa fa-pencil'></i>&nbsp;Capture Signature", this.extension_type));
+        this.getWrapper(index).append(html);
+        var self = this;
+        html.on("click", function() {
+            self.showSignatureCapture(index);
+        });
+    },
+    validate: function(e) {
+        if (!$fh.forms.config.get("studioMode")) {
+            this.trigger("checkrules");
         }
-        self.setSignature(index, sigData);
-      }
-      $('.sigPad', self.$el).hide();
-    });
-  },
-  setSignature: function(index, base64Img) {
-    var wrapper = this.getWrapper(index);
-    wrapper.find("img.sigImage").attr("src", base64Img);
-  },
-  valueFromElement: function(index) {
-    var wrapper = this.getWrapper(index);
-    var img = wrapper.find("img.sigImage");
-    return img.attr("src");
-  },
-  valuePopulateToElement: function(index, value) {
-    if (value) {
-      var base64Data = value.data;
-      var base64Img = value.imgHeader + base64Data;
-      var wrapper = this.getWrapper(index);
-      var img = wrapper.find("img.sigImage");
-      img.attr("src", base64Img);
+    },
+    showSignatureCapture: function(index) {
+        var self = this;
+        var winHeight = $(window).height();
+        var winWidth = $(window).width();
+        var canvasHeight = winHeight - 70;
+        var canvasWidth = winWidth - 2;
+        var lineTop = canvasHeight - 20;
+
+        this.$el.append(_.template(this.templates.signaturePad.join(''), {
+            "canvasHeight": canvasHeight,
+            "canvasWidth": canvasWidth
+        }));
+        var signaturePad = $('.sigPad', this.$el);
+        signaturePad.css({
+            position: 'fixed',
+            'z-index': 9999,
+            'bottom': '0px',
+            'right': '0px',
+            top: '0px',
+            left: '0px',
+            'background-color': '#fff'
+        });
+
+        var navHeight = $('.sigNav', this.$el).outerHeight();
+        $('.sigPad', this.$el).css({
+            width: '100%',
+            height: winHeight + 'px'
+        });
+        $('.sigWrapper', this.$el).css({
+            height: (winHeight - navHeight - 20) + "px"
+        });
+        sigPad = $('.sigPad', this.$el).signaturePad({
+            drawOnly: true,
+            lineTop: lineTop
+        });
+
+        $(this.$el).data('sigpadInited', true);
+        // Bind capture
+        $('.cap_sig_done_btn', this.$el).unbind('click').bind('click', function(e) {
+            // var loadingView = new LoadingView();
+            // loadingView.show("generating signature");
+            e.preventDefault();
+            var sig = sigPad.getSignature(); // get the default image type
+            if (sig && sig.length) {
+                var sigData = sigPad.getSignatureImage();
+                if (self.isEmptyImage(sigData)) { //toDataUrl not supported by current browser. fallback use bmp encoder
+                    sigData = self.toBmp();
+                }
+                self.setSignature(index, sigData);
+            }
+            $('.sigPad', self.$el).hide();
+        });
+    },
+    setSignature: function(index, base64Img) {
+        var wrapper = this.getWrapper(index);
+        wrapper.find("img.sigImage").attr("src", base64Img);
+    },
+    valueFromElement: function(index) {
+        var wrapper = this.getWrapper(index);
+        var img = wrapper.find("img.sigImage");
+        return img.attr("src");
+    },
+    valuePopulateToElement: function(index, value) {
+        if (value) {
+            var base64Data = value.data;
+            var base64Img = value.imgHeader + base64Data;
+            var wrapper = this.getWrapper(index);
+            var img = wrapper.find("img.sigImage");
+            img.attr("src", base64Img);
+        }
+
+    },
+    dbgImage: function(msg, image) {
+        $fh.forms.log.d(msg + (image ? (image.substring(0, image.indexOf(",")) + "[len=" + image.length + "]") : " empty"));
+    },
+
+    toBmp: function(image) {
+        image = _.extend({}, image || {}, {
+            quality: 100,
+            width: 248,
+            height: 100
+        });
+        var sigData;
+        var cnvs = $('.sigPad', self.$el).find('canvas')[0];
+
+        var oScaledCanvas = this.scaleCanvas(cnvs, image.width, image.height);
+        var oData = this.readCanvasData(oScaledCanvas);
+        var strImgData = this.createBMP(oData);
+
+        sigData = this.makeDataURI(strImgData, "image/bmp");
+        return sigData;
+    },
+
+    // bitMap handling code
+    readCanvasData: function(canvas) {
+        var iWidth = parseInt(canvas.width, 10);
+        var iHeight = parseInt(canvas.height, 10);
+        return canvas.getContext("2d").getImageData(0, 0, iWidth, iHeight);
+    },
+
+    encodeData: function(data) {
+        var strData = "";
+        if (typeof data === "string") {
+            strData = data;
+        } else {
+            var aData = data;
+            for (var i = 0; i < aData.length; i++) {
+                strData += String.fromCharCode(aData[i]);
+            }
+        }
+        return btoa(strData);
+    },
+
+    createBMP: function(oData) {
+        var aHeader = [];
+
+        var iWidth = oData.width;
+        var iHeight = oData.height;
+
+        aHeader.push(0x42); // magic 1
+        aHeader.push(0x4D);
+
+        var iFileSize = iWidth * iHeight * 3 + 54; // total header size = 54
+        // bytes
+        aHeader.push(iFileSize % 256);
+        iFileSize = Math.floor(iFileSize / 256);
+        aHeader.push(iFileSize % 256);
+        iFileSize = Math.floor(iFileSize / 256);
+        aHeader.push(iFileSize % 256);
+        iFileSize = Math.floor(iFileSize / 256);
+        aHeader.push(iFileSize % 256);
+
+        aHeader.push(0); // reserved
+        aHeader.push(0);
+        aHeader.push(0); // reserved
+        aHeader.push(0);
+
+        aHeader.push(54); // dataoffset
+        aHeader.push(0);
+        aHeader.push(0);
+        aHeader.push(0);
+
+        var aInfoHeader = [];
+        aInfoHeader.push(40); // info header size
+        aInfoHeader.push(0);
+        aInfoHeader.push(0);
+        aInfoHeader.push(0);
+
+        var iImageWidth = iWidth;
+        aInfoHeader.push(iImageWidth % 256);
+        iImageWidth = Math.floor(iImageWidth / 256);
+        aInfoHeader.push(iImageWidth % 256);
+        iImageWidth = Math.floor(iImageWidth / 256);
+        aInfoHeader.push(iImageWidth % 256);
+        iImageWidth = Math.floor(iImageWidth / 256);
+        aInfoHeader.push(iImageWidth % 256);
+
+        var iImageHeight = iHeight;
+        aInfoHeader.push(iImageHeight % 256);
+        iImageHeight = Math.floor(iImageHeight / 256);
+        aInfoHeader.push(iImageHeight % 256);
+        iImageHeight = Math.floor(iImageHeight / 256);
+        aInfoHeader.push(iImageHeight % 256);
+        iImageHeight = Math.floor(iImageHeight / 256);
+        aInfoHeader.push(iImageHeight % 256);
+
+        aInfoHeader.push(1); // num of planes
+        aInfoHeader.push(0);
+
+        aInfoHeader.push(24); // num of bits per pixel
+        aInfoHeader.push(0);
+
+        aInfoHeader.push(0); // compression = none
+        aInfoHeader.push(0);
+        aInfoHeader.push(0);
+        aInfoHeader.push(0);
+
+        var iDataSize = iWidth * iHeight * 3;
+        aInfoHeader.push(iDataSize % 256);
+        iDataSize = Math.floor(iDataSize / 256);
+        aInfoHeader.push(iDataSize % 256);
+        iDataSize = Math.floor(iDataSize / 256);
+        aInfoHeader.push(iDataSize % 256);
+        iDataSize = Math.floor(iDataSize / 256);
+        aInfoHeader.push(iDataSize % 256);
+
+        for (var i = 0; i < 16; i++) {
+            aInfoHeader.push(0); // these bytes not used
+        }
+
+        var iPadding = (4 - ((iWidth * 3) % 4)) % 4;
+
+        var aImgData = oData.data;
+
+        var strPixelData = "";
+        var y = iHeight;
+        do {
+            var iOffsetY = iWidth * (y - 1) * 4;
+            var strPixelRow = "";
+            for (var x = 0; x < iWidth; x++) {
+                var iOffsetX = 4 * x;
+
+                strPixelRow += String.fromCharCode(aImgData[iOffsetY + iOffsetX + 2]);
+                strPixelRow += String.fromCharCode(aImgData[iOffsetY + iOffsetX + 1]);
+                strPixelRow += String.fromCharCode(aImgData[iOffsetY + iOffsetX]);
+            }
+            for (var c = 0; c < iPadding; c++) {
+                strPixelRow += String.fromCharCode(0);
+            }
+            strPixelData += strPixelRow;
+        } while (--y);
+
+        var strEncoded = this.encodeData(aHeader.concat(aInfoHeader)) + this.encodeData(strPixelData);
+
+        return strEncoded;
+    },
+    makeDataURI: function(strData, strMime) {
+        return "data:" + strMime + ";base64," + strData;
+    },
+    scaleCanvas: function(canvas, iWidth, iHeight) {
+        if (iWidth && iHeight) {
+            var oSaveCanvas = document.createElement("canvas");
+            oSaveCanvas.width = iWidth;
+            oSaveCanvas.height = iHeight;
+            oSaveCanvas.style.width = iWidth + "px";
+            oSaveCanvas.style.height = iHeight + "px";
+
+            var oSaveCtx = oSaveCanvas.getContext("2d");
+
+            oSaveCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, iWidth, iHeight);
+            return oSaveCanvas;
+        }
+        return canvas;
+    },
+    isEmptyImage: function(image) {
+        return image === null || image === "" || image === "data:,";
+    },
+    splitImage: function(image) {
+        var PREFIX = "data:";
+        var ENCODING = ";base64,";
+        var start = image.indexOf(PREFIX);
+        var content_type = "image/bmp";
+        var ext = "bmp";
+        if (start >= 0) {
+            var end = image.indexOf(ENCODING, start) + 1;
+            content_type = image.substring(start, end - 1);
+            ext = content_type.split("/")[1];
+        }
+        return [content_type, ext];
     }
-
-  },
-  dbgImage: function(msg, image) {
-    console.log(msg + (image ? (image.substring(0, image.indexOf(",")) + "[len=" + image.length + "]") : " empty"));
-  },
-
-  toBmp: function(image) {
-    image = _.extend({}, image || {}, {
-      quality: 100,
-      width: 248,
-      height: 100
-    });
-    var sigData;
-    var cnvs = $('.sigPad', self.$el).find('canvas')[0];
-
-    var oScaledCanvas = this.scaleCanvas(cnvs, image.width, image.height);
-    var oData = this.readCanvasData(oScaledCanvas);
-    var strImgData = this.createBMP(oData);
-
-    sigData = this.makeDataURI(strImgData, "image/bmp");
-    return sigData;
-  },
-
-  // bitMap handling code
-  readCanvasData: function(canvas) {
-    var iWidth = parseInt(canvas.width, 10);
-    var iHeight = parseInt(canvas.height, 10);
-    return canvas.getContext("2d").getImageData(0, 0, iWidth, iHeight);
-  },
-
-  encodeData: function(data) {
-    var strData = "";
-    if (typeof data === "string") {
-      strData = data;
-    } else {
-      var aData = data;
-      for (var i = 0; i < aData.length; i++) {
-        strData += String.fromCharCode(aData[i]);
-      }
-    }
-    return btoa(strData);
-  },
-
-  createBMP: function(oData) {
-    var aHeader = [];
-
-    var iWidth = oData.width;
-    var iHeight = oData.height;
-
-    aHeader.push(0x42); // magic 1
-    aHeader.push(0x4D);
-
-    var iFileSize = iWidth * iHeight * 3 + 54; // total header size = 54
-    // bytes
-    aHeader.push(iFileSize % 256);
-    iFileSize = Math.floor(iFileSize / 256);
-    aHeader.push(iFileSize % 256);
-    iFileSize = Math.floor(iFileSize / 256);
-    aHeader.push(iFileSize % 256);
-    iFileSize = Math.floor(iFileSize / 256);
-    aHeader.push(iFileSize % 256);
-
-    aHeader.push(0); // reserved
-    aHeader.push(0);
-    aHeader.push(0); // reserved
-    aHeader.push(0);
-
-    aHeader.push(54); // dataoffset
-    aHeader.push(0);
-    aHeader.push(0);
-    aHeader.push(0);
-
-    var aInfoHeader = [];
-    aInfoHeader.push(40); // info header size
-    aInfoHeader.push(0);
-    aInfoHeader.push(0);
-    aInfoHeader.push(0);
-
-    var iImageWidth = iWidth;
-    aInfoHeader.push(iImageWidth % 256);
-    iImageWidth = Math.floor(iImageWidth / 256);
-    aInfoHeader.push(iImageWidth % 256);
-    iImageWidth = Math.floor(iImageWidth / 256);
-    aInfoHeader.push(iImageWidth % 256);
-    iImageWidth = Math.floor(iImageWidth / 256);
-    aInfoHeader.push(iImageWidth % 256);
-
-    var iImageHeight = iHeight;
-    aInfoHeader.push(iImageHeight % 256);
-    iImageHeight = Math.floor(iImageHeight / 256);
-    aInfoHeader.push(iImageHeight % 256);
-    iImageHeight = Math.floor(iImageHeight / 256);
-    aInfoHeader.push(iImageHeight % 256);
-    iImageHeight = Math.floor(iImageHeight / 256);
-    aInfoHeader.push(iImageHeight % 256);
-
-    aInfoHeader.push(1); // num of planes
-    aInfoHeader.push(0);
-
-    aInfoHeader.push(24); // num of bits per pixel
-    aInfoHeader.push(0);
-
-    aInfoHeader.push(0); // compression = none
-    aInfoHeader.push(0);
-    aInfoHeader.push(0);
-    aInfoHeader.push(0);
-
-    var iDataSize = iWidth * iHeight * 3;
-    aInfoHeader.push(iDataSize % 256);
-    iDataSize = Math.floor(iDataSize / 256);
-    aInfoHeader.push(iDataSize % 256);
-    iDataSize = Math.floor(iDataSize / 256);
-    aInfoHeader.push(iDataSize % 256);
-    iDataSize = Math.floor(iDataSize / 256);
-    aInfoHeader.push(iDataSize % 256);
-
-    for (var i = 0; i < 16; i++) {
-      aInfoHeader.push(0); // these bytes not used
-    }
-
-    var iPadding = (4 - ((iWidth * 3) % 4)) % 4;
-
-    var aImgData = oData.data;
-
-    var strPixelData = "";
-    var y = iHeight;
-    do {
-      var iOffsetY = iWidth * (y - 1) * 4;
-      var strPixelRow = "";
-      for (var x = 0; x < iWidth; x++) {
-        var iOffsetX = 4 * x;
-
-        strPixelRow += String.fromCharCode(aImgData[iOffsetY + iOffsetX + 2]);
-        strPixelRow += String.fromCharCode(aImgData[iOffsetY + iOffsetX + 1]);
-        strPixelRow += String.fromCharCode(aImgData[iOffsetY + iOffsetX]);
-      }
-      for (var c = 0; c < iPadding; c++) {
-        strPixelRow += String.fromCharCode(0);
-      }
-      strPixelData += strPixelRow;
-    } while (--y);
-
-    var strEncoded = this.encodeData(aHeader.concat(aInfoHeader)) + this.encodeData(strPixelData);
-
-    return strEncoded;
-  },
-  makeDataURI: function(strData, strMime) {
-    return "data:" + strMime + ";base64," + strData;
-  },
-  scaleCanvas: function(canvas, iWidth, iHeight) {
-    if (iWidth && iHeight) {
-      var oSaveCanvas = document.createElement("canvas");
-      oSaveCanvas.width = iWidth;
-      oSaveCanvas.height = iHeight;
-      oSaveCanvas.style.width = iWidth + "px";
-      oSaveCanvas.style.height = iHeight + "px";
-
-      var oSaveCtx = oSaveCanvas.getContext("2d");
-
-      oSaveCtx.drawImage(canvas, 0, 0, canvas.width, canvas.height, 0, 0, iWidth, iHeight);
-      return oSaveCanvas;
-    }
-    return canvas;
-  },
-  isEmptyImage: function(image) {
-    return image === null || image === "" || image === "data:,";
-  },
-  splitImage: function(image) {
-    var PREFIX = "data:";
-    var ENCODING = ";base64,";
-    var start = image.indexOf(PREFIX);
-    var content_type = "image/bmp";
-    var ext = "bmp";
-    if (start >= 0) {
-      var end = image.indexOf(ENCODING, start) + 1;
-      content_type = image.substring(start, end - 1);
-      ext = content_type.split("/")[1];
-    }
-    return [content_type, ext];
-  }
 
 });
-
 FieldTextView = FieldView.extend({
 
 });
@@ -3243,170 +3245,174 @@ FieldDateTimeView = FieldView.extend({
 FieldUrlView = FieldView.extend({
   type: "url"
 });
-var PageView=BaseView.extend({
+var PageView = BaseView.extend({
 
-  viewMap: {
-    "text": FieldTextView,
-    "number": FieldNumberView,
-    "textarea": FieldTextareaView,
-    "radio": FieldRadioView,
-    "checkboxes": FieldCheckboxView,
-    "dropdown": FieldSelectView,
-    "file": FieldFileView,
-    "emailAddress": FieldEmailView,
-    "phone": FieldPhoneView,
-    "location": FieldGeoView,
-    "photo": FieldCameraView,
-    "signature": FieldSignatureView,
-    "locationMap": FieldMapView,
-    "dateTime":FieldDateTimeView,
-    "sectionBreak":FieldSectionBreak,
-    "url":FieldUrlView
-  },
-  templates : {
-    pageTitle : '<div class="fh_appform_page_title"><%= pageTitle %></div>',
-    pageDescription: '<div class="fh_appform_page_description"><%= pageDescription%></div>',
-    section: '<div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area"></div>'
-  },
+    viewMap: {
+        "text": FieldTextView,
+        "number": FieldNumberView,
+        "textarea": FieldTextareaView,
+        "radio": FieldRadioView,
+        "checkboxes": FieldCheckboxView,
+        "dropdown": FieldSelectView,
+        "file": FieldFileView,
+        "emailAddress": FieldEmailView,
+        "phone": FieldPhoneView,
+        "location": FieldGeoView,
+        "photo": FieldCameraView,
+        "signature": FieldSignatureView,
+        "locationMap": FieldMapView,
+        "dateTime": FieldDateTimeView,
+        "sectionBreak": FieldSectionBreak,
+        "url": FieldUrlView
+    },
+    templates: {
+        pageTitle: '<div class="fh_appform_page_title"><%= pageTitle %></div>',
+        pageDescription: '<div class="fh_appform_page_description"><%= pageDescription%></div>',
+        section: '<div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area"></div>'
+    },
 
-  initialize: function() {
-    var self = this;
-    _.bindAll(this, 'render',"show","hide");
-    // Page Model will emit events if user input meets page rule to hide / show the page.
-    this.model.on("visible",self.show);
-    this.model.on("hidden",self.hide);
-    this.render();
-  },
+    initialize: function() {
+        var self = this;
+        _.bindAll(this, 'render', "show", "hide");
+        // Page Model will emit events if user input meets page rule to hide / show the page.
+        this.model.on("visible", self.show);
+        this.model.on("hidden", self.hide);
+        this.render();
+    },
 
-  render: function() {
-    var self = this;
-    this.fieldViews = {};
-    this.sectionViews = {};
-    // all pages hidden initially
-    this.$el.empty().addClass('fh_appform_page fh_appform_hidden');
+    render: function() {
+        var self = this;
+        this.fieldViews = {};
+        this.sectionViews = {};
+        // all pages hidden initially
+        this.$el.empty().addClass('fh_appform_page fh_appform_hidden');
 
-    //Need to add the page title and description
-    this.$el.append(_.template(this.templates.pageDescription, {pageDescription: this.model.getDescription()}));
+        //Need to add the page title and description
+        this.$el.append(_.template(this.templates.pageDescription, {
+            pageDescription: this.model.getDescription()
+        }));
 
-    // add to parent before init fields so validation can work
-    this.options.parentEl.append(this.$el);
+        // add to parent before init fields so validation can work
+        this.options.parentEl.append(this.$el);
 
-    var fieldModelList=this.model.getFieldModelList();
+        var fieldModelList = this.model.getFieldModelList();
 
-    var sections = this.model.getSections();
+        var sections = this.model.getSections();
 
-    if(sections != null){
-      var sectionKey;
-      for(sectionKey in sections){
-        this.$el.append(_.template(this.templates.section, {"sectionId": sectionKey}));
-      }
+        if (sections != null) {
+            var sectionKey;
+            for (sectionKey in sections) {
+                this.$el.append(_.template(this.templates.section, {
+                    "sectionId": sectionKey
+                }));
+            }
 
-      //Add the section fields
-      for(sectionKey in sections){
-        sections[sectionKey].forEach(function(field, index){
-          var fieldType = field.getType();
-          if (self.viewMap[fieldType]) {
+            //Add the section fields
+            for (sectionKey in sections) {
+                sections[sectionKey].forEach(function(field, index) {
+                    var fieldType = field.getType();
+                    if (self.viewMap[fieldType]) {
 
-            console.log("*- "+fieldType);
+                        $fh.forms.log.d("*- " + fieldType);
 
-            self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
-              parentEl: self.$el,
-              parentView: self,
-              model: field,
-              formView: self.options.formView,
-              sectionName: sectionKey
-            });
-          } else {
-            console.warn('FIELD NOT SUPPORTED:' + fieldType);
-          }
-        });
-      }
-    } else {
-      fieldModelList.forEach(function (field, index) {
-        if(!field) {
-          return;
-        }
-        var fieldType = field.getType();
-        if (self.viewMap[fieldType]) {
-
-          console.log("*- "+fieldType);
-
-          self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
-            parentEl: self.$el,
-            parentView: self,
-            model: field,
-            formView: self.options.formView
-          });
+                        self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
+                            parentEl: self.$el,
+                            parentView: self,
+                            model: field,
+                            formView: self.options.formView,
+                            sectionName: sectionKey
+                        });
+                    } else {
+                        $fh.forms.log.w('FIELD NOT SUPPORTED:' + fieldType);
+                    }
+                });
+            }
         } else {
-          console.warn('FIELD NOT SUPPORTED:' + fieldType);
+            fieldModelList.forEach(function(field, index) {
+                if (!field) {
+                    return;
+                }
+                var fieldType = field.getType();
+                if (self.viewMap[fieldType]) {
+
+                    $fh.forms.log.d("*- " + fieldType);
+
+                    self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
+                        parentEl: self.$el,
+                        parentView: self,
+                        model: field,
+                        formView: self.options.formView
+                    });
+                } else {
+                    $fh.forms.log.w('FIELD NOT SUPPORTED:' + fieldType);
+                }
+            });
         }
-      });
+    },
+
+    show: function() {
+        var self = this;
+        self.$el.removeClass('fh_appform_hidden');
+
+        for (var fieldViewId in self.fieldViews) {
+            if (self.fieldViews[fieldViewId].mapResize) {
+                self.fieldViews[fieldViewId].mapResize();
+            }
+        }
+    },
+
+    hide: function() {
+        this.$el.addClass('fh_appform_hidden');
+    },
+
+    showField: function(id) {
+        // show field if it's on this page
+        if (this.fieldViews[id]) {
+            this.fieldViews[id].show();
+        }
+    },
+
+    hideField: function(id) {
+        // hide field if it's on this page
+        if (this.fieldViews[id]) {
+            this.fieldViews[id].hide();
+        }
+    },
+
+    isValid: function() {
+        // only validate form inputs on this page that are visible or type=hidden, or have validate_ignore class
+        var validateEls = this.$el.find('.fh_appform_field_input').not('.validate_ignore]:hidden');
+        return validateEls.length ? validateEls.valid() : true;
     }
-  },
 
-  show: function () {
-    var self = this;
-    self.$el.removeClass('fh_appform_hidden');
-
-    for(var fieldViewId in self.fieldViews){
-      if(self.fieldViews[fieldViewId].mapResize){
-        self.fieldViews[fieldViewId].mapResize();
-      }
-    }
-  },
-
-  hide: function () {
-    this.$el.addClass('fh_appform_hidden');
-  },
-
-  showField: function (id) {
-    // show field if it's on this page
-    if (this.fieldViews[id]) {
-      this.fieldViews[id].show();
-    }
-  },
-
-  hideField: function (id) {
-    // hide field if it's on this page
-    if (this.fieldViews[id]) {
-      this.fieldViews[id].hide();
-    }
-  },
-
-  isValid: function () {
-    // only validate form inputs on this page that are visible or type=hidden, or have validate_ignore class
-    var validateEls = this.$el.find('.fh_appform_field_input').not('.validate_ignore]:hidden');
-    return validateEls.length ? validateEls.valid() : true;
-  }
-
-//  checkRules: function () {
-//    var self = this;
-//    var result = {};
-//
-//    var rules = {
-//      SkipToPage: function (rulePasses, params) {
-//        var pageToSkipTo = params.Setting.Page;
-//        if (rulePasses) {
-//          result.skipToPage = pageToSkipTo;
-//        }
-//      }
-//    };
-//
-//    // iterate over page rules, if any, calling relevant rule function
-//    _(this.model.get('Rules') || []).forEach(function (rule, index) {
-//      // get element that rule condition is based on
-//      var jqEl = self.$el.find('#Field' + rule.condition.FieldName + ',' + '#radioField' + rule.condition.FieldName);
-//      rule.fn = rules[rule.Type];
-//      if(jqEl.data("type") === 'radio') {
-//        var rEl = self.$el.find('#Field' + rule.condition.FieldName + '_' + index);
-//        rEl.wufoo_rules('exec', rule);
-//      } else {
-//        jqEl.wufoo_rules('exec', rule);
-//      }
-//    });
-//
-//    return result;
-//  }
+    //  checkRules: function () {
+    //    var self = this;
+    //    var result = {};
+    //
+    //    var rules = {
+    //      SkipToPage: function (rulePasses, params) {
+    //        var pageToSkipTo = params.Setting.Page;
+    //        if (rulePasses) {
+    //          result.skipToPage = pageToSkipTo;
+    //        }
+    //      }
+    //    };
+    //
+    //    // iterate over page rules, if any, calling relevant rule function
+    //    _(this.model.get('Rules') || []).forEach(function (rule, index) {
+    //      // get element that rule condition is based on
+    //      var jqEl = self.$el.find('#Field' + rule.condition.FieldName + ',' + '#radioField' + rule.condition.FieldName);
+    //      rule.fn = rules[rule.Type];
+    //      if(jqEl.data("type") === 'radio') {
+    //        var rEl = self.$el.find('#Field' + rule.condition.FieldName + '_' + index);
+    //        rEl.wufoo_rules('exec', rule);
+    //      } else {
+    //        jqEl.wufoo_rules('exec', rule);
+    //      }
+    //    });
+    //
+    //    return result;
+    //  }
 
 });
 var FormView = BaseView.extend({
@@ -3422,12 +3428,7 @@ var FormView = BaseView.extend({
         formContainer: '<div id="fh_appform_container" class="fh_appform_form_area fh_appform_container"></div>',
         buttons: '<div id="fh_appform_navigation_buttons" class="fh_appform_button_bar"><button class="fh_appform_button_saveDraft fh_appform_hidden fh_appform_button_main fh_appform_button_action">Save Draft</button><button class="fh_appform_button_previous fh_appform_hidden fh_appform_button_default">Previous</button><button class="fh_appform_button_next fh_appform_hidden fh_appform_button_default">Next</button><button class="fh_appform_button_submit fh_appform_hidden fh_appform_button_action">Submit</button></div>'
     },
-    events: {
-        "click button.fh_appform_button_next": "nextPage",
-        "click button.fh_appform_button_previous": "prevPage",
-        "click button.fh_appform_button_saveDraft": "saveToDraft",
-        "click button.fh_appform_button_submit": "submit"
-    },
+    events: {},
     elementNames: {
         formContainer: "#fh_appform_container"
     },
@@ -3472,6 +3473,8 @@ var FormView = BaseView.extend({
     },
     onValidateError: function(res) {
         var firstView = null;
+        //Clear validate errors
+
         for (var fieldId in res) {
             if (res[fieldId]) {
                 var fieldView = this.getFieldViewById(fieldId);
@@ -3559,16 +3562,16 @@ var FormView = BaseView.extend({
         self.fieldViews = fieldViews;
         self.pageViews = pageViews;
         self.pageCount = pageViews.length;
-
-        self.checkRules();
     },
-    checkRules: function() {
+    checkRules: function(params) {
         var self = this;
-        self.populateFieldViewsToSubmission(false, function() {
-            var submission = self.submission;
+        var submission = self.submission;
+        params = params || {};
+
+        function checkSubmissionRules() {
             submission.checkRules(function(err, res) {
                 if (err) {
-                    console.error(err);
+                    $fh.forms.log.e(err);
                 } else {
                     var actions = res.actions;
                     var targetId;
@@ -3584,7 +3587,15 @@ var FormView = BaseView.extend({
                 }
                 self.checkPages();
             });
-        });
+        }
+
+        if (params.initialising) {
+            checkSubmissionRules();
+        } else {
+            self.populateFieldViewsToSubmission(false, function() {
+                checkSubmissionRules();
+            });
+        }
     },
     performRuleAction: function(type, targetId, action) {
         var target = null;
@@ -3592,7 +3603,7 @@ var FormView = BaseView.extend({
             target = this.getFieldViewById(targetId);
         }
         if (target === null) {
-            console.error("cannot find target with id:" + targetId);
+            $fh.forms.log.e("cannot find target with id:" + targetId);
             return;
         }
         switch (action) {
@@ -3603,7 +3614,7 @@ var FormView = BaseView.extend({
                 target.hide();
                 break;
             default:
-                console.error("action not defined:" + action);
+                $fh.forms.log.e("action not defined:" + action);
         }
     },
     rebindButtons: function() {
@@ -3695,7 +3706,9 @@ var FormView = BaseView.extend({
         this.pageViews[0].$el.show();
         this.pageNum = 0;
         this.steps.activePageChange(this);
-        this.checkRules();
+        this.checkRules({
+            initialising: true
+        });
     },
     getNextPageIndex: function(currentPageIndex) {
         var self = this;
@@ -3775,11 +3788,11 @@ var FormView = BaseView.extend({
         this.populateFieldViewsToSubmission(function() {
             self.submission.submit(function(err, res) {
                 if (err) {
-                    console.error(err);
+                    $fh.forms.log.e(err);
                 } else {
                     self.submission.upload(function(err, uploadTask) {
                         if (err) {
-                            console.error(err);
+                            $fh.forms.log.e(err);
                         }
 
                         self.$el.empty();
@@ -3841,7 +3854,7 @@ var FormView = BaseView.extend({
                     isStore: isStore
                 }, function(err, res) {
                     if (err) {
-                        console.error(err);
+                        $fh.forms.log.e(err);
                     }
                     count--;
                     if (count === 0) {
@@ -3876,42 +3889,48 @@ var FormView = BaseView.extend({
     }
 });
 var FromJsonView = BaseView.extend({
-    events: { 'click button#convert': 'convert' },
-    templates: { body: '<h1>Insert JSON</h1><textarea id="jsonBox" rows="30" cols="50"></textarea><button id="convert">Convert</button><div id="resultArea"></div>' },
+    events: {
+        'click button#convert': 'convert'
+    },
+    templates: {
+        body: '<h1>Insert JSON</h1><textarea id="jsonBox" rows="30" cols="50"></textarea><button id="convert">Convert</button><div id="resultArea"></div>'
+    },
     el: '#jsonPage',
-    initialize: function () {
-      _.bindAll(this, 'render');
+    initialize: function() {
+        _.bindAll(this, 'render');
     },
-    show: function () {
-      $(this.$el).show();
+    show: function() {
+        $(this.$el).show();
     },
-    hide: function () {
-      $(this.$el).hide();
+    hide: function() {
+        $(this.$el).hide();
     },
-    render: function () {
-      $(this.$el).html(this.templates.body);
-      this.show();
+    render: function() {
+        $(this.$el).html(this.templates.body);
+        this.show();
     },
-    convert: function () {
-      var json = $('#jsonBox').val();
-      var jsonData;
-      try {
-        jsonData = JSON.parse(json);
-      } catch (e) {
-        console.log(e);
-        throw 'Invalid JSON object';
-      }
-      var params = {
-          formId: new Date().getTime(),
-          rawMode: true,
-          rawData: jsonData
+    convert: function() {
+        var json = $('#jsonBox').val();
+        var jsonData;
+        try {
+            jsonData = JSON.parse(json);
+        } catch (e) {
+            $fh.forms.log.d(e);
+            throw 'Invalid JSON object';
+        }
+        var params = {
+            formId: new Date().getTime(),
+            rawMode: true,
+            rawData: jsonData
         };
-      var formView = new FormView({ parentEl: $('#backbone #resultArea') });
-      formView.loadForm(params, function (err) {
-        formView.render();
-      });
+        var formView = new FormView({
+            parentEl: $('#backbone #resultArea')
+        });
+        formView.loadForm(params, function(err) {
+            formView.render();
+        });
     }
-  });
+});
 SectionView=BaseView.extend({
 
   initialize: function() {

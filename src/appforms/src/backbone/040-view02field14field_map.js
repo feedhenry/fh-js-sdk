@@ -34,8 +34,11 @@ FieldMapView = FieldView.extend({
     }
   },
   allMapInit: function() {
+    var func;
     while ((func = this.allMapInitFunc.shift()) !== null) {
-      func();
+      if(typeof(func) === "function"){
+        func();
+      }
     }
   },
   onAllMapInit: function(func) {

@@ -11,12 +11,7 @@ var FormView = BaseView.extend({
         formContainer: '<div id="fh_appform_container" class="fh_appform_form_area fh_appform_container"></div>',
         buttons: '<div id="fh_appform_navigation_buttons" class="fh_appform_button_bar"><button class="fh_appform_button_saveDraft fh_appform_hidden fh_appform_button_main fh_appform_button_action">Save Draft</button><button class="fh_appform_button_previous fh_appform_hidden fh_appform_button_default">Previous</button><button class="fh_appform_button_next fh_appform_hidden fh_appform_button_default">Next</button><button class="fh_appform_button_submit fh_appform_hidden fh_appform_button_action">Submit</button></div>'
     },
-    events: {
-        "click button.fh_appform_button_next": "nextPage",
-        "click button.fh_appform_button_previous": "prevPage",
-        "click button.fh_appform_button_saveDraft": "saveToDraft",
-        "click button.fh_appform_button_submit": "submit"
-    },
+    events: {},
     elementNames: {
         formContainer: "#fh_appform_container"
     },
@@ -151,13 +146,15 @@ var FormView = BaseView.extend({
         self.pageViews = pageViews;
         self.pageCount = pageViews.length;
     },
-    checkRules: function() {
+    checkRules: function(params) {
         var self = this;
-        self.populateFieldViewsToSubmission(false, function() {
-            var submission = self.submission;
+        var submission = self.submission;
+        params = params || {};
+
+        function checkSubmissionRules() {
             submission.checkRules(function(err, res) {
                 if (err) {
-                    console.error(err);
+                    $fh.forms.log.e(err);
                 } else {
                     var actions = res.actions;
                     var targetId;
@@ -173,7 +170,15 @@ var FormView = BaseView.extend({
                 }
                 self.checkPages();
             });
-        });
+        }
+
+        if (params.initialising) {
+            checkSubmissionRules();
+        } else {
+            self.populateFieldViewsToSubmission(false, function() {
+                checkSubmissionRules();
+            });
+        }
     },
     performRuleAction: function(type, targetId, action) {
         var target = null;
@@ -181,7 +186,7 @@ var FormView = BaseView.extend({
             target = this.getFieldViewById(targetId);
         }
         if (target === null) {
-            console.error("cannot find target with id:" + targetId);
+            $fh.forms.log.e("cannot find target with id:" + targetId);
             return;
         }
         switch (action) {
@@ -192,7 +197,7 @@ var FormView = BaseView.extend({
                 target.hide();
                 break;
             default:
-                console.error("action not defined:" + action);
+                $fh.forms.log.e("action not defined:" + action);
         }
     },
     rebindButtons: function() {
@@ -284,7 +289,9 @@ var FormView = BaseView.extend({
         this.pageViews[0].$el.show();
         this.pageNum = 0;
         this.steps.activePageChange(this);
-        this.checkRules();
+        this.checkRules({
+            initialising: true
+        });
     },
     getNextPageIndex: function(currentPageIndex) {
         var self = this;
@@ -364,11 +371,11 @@ var FormView = BaseView.extend({
         this.populateFieldViewsToSubmission(function() {
             self.submission.submit(function(err, res) {
                 if (err) {
-                    console.error(err);
+                    $fh.forms.log.e(err);
                 } else {
                     self.submission.upload(function(err, uploadTask) {
                         if (err) {
-                            console.error(err);
+                            $fh.forms.log.e(err);
                         }
 
                         self.$el.empty();
@@ -430,7 +437,7 @@ var FormView = BaseView.extend({
                     isStore: isStore
                 }, function(err, res) {
                     if (err) {
-                        console.error(err);
+                        $fh.forms.log.e(err);
                     }
                     count--;
                     if (count === 0) {

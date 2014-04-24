@@ -137,7 +137,7 @@ var FieldView = Backbone.View.extend({
 
     },
     onElementShow: function(index) {
-        console.log("Show done for field " + index);
+        $fh.forms.log.d("Show done for field " + index);
     },
     render: function() {
         var self = this;
@@ -179,7 +179,6 @@ var FieldView = Backbone.View.extend({
         if (submission) {
             this.submission = submission;
             this.submission.getInputValueByFieldId(this.model.get('_id'), function(err, res) {
-                //console.log(err, res);
                 self.value(res);
             });
         }
@@ -203,7 +202,7 @@ var FieldView = Backbone.View.extend({
     },
 
     dumpContent: function() {
-        console.log("Value changed :: " + JSON.stringify(this.value()));
+        $fh.forms.log.d("Value changed :: " + JSON.stringify(this.value()));
     },
 
     getTopView: function() {
@@ -222,7 +221,6 @@ var FieldView = Backbone.View.extend({
         var fieldId = self.model.getFieldId();
         self.model.validate(element, function(err, res) {
             if (err) {
-                console.error(err);
                 self.setErrorText(index, "Error validating field: " + err);
                 if (cb) {
                     cb(err);
