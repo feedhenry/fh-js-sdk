@@ -6772,8 +6772,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,require("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(require,module,exports){
+}).call(this,require("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(require,module,exports){
 (function (global){
 /*global window, global*/
 var util = require("util")
@@ -7248,7 +7248,7 @@ process.chdir = function (dir) {
 module.exports=require(6)
 },{}],13:[function(require,module,exports){
 module.exports=require(7)
-},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(require,module,exports){
+},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(require,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -9387,8 +9387,11 @@ var self = {
     // Is the background sync with the cloud currently active
     "storage_strategy" : "html5-filesystem",
     // Storage strategy to use for Lawnchair - supported strategies are 'html5-filesystem' and 'dom'
-    "file_system_quota" : 50 * 1024 * 1204
+    "file_system_quota" : 50 * 1024 * 1204,
     // Amount of space to request from the HTML5 filesystem API when running in browser
+    "has_custom_sync" : null
+    //If the app has custom cloud sync function, it should be set to true. If set to false, the default mbaas sync implementation will be used. When set to null or undefined, 
+    //a check will be performed to determine which implementation to use
   },
 
   notifications: {
@@ -9423,7 +9426,7 @@ var self = {
 
   notify_callback: undefined,
 
-  hasCustomSync : undefined,
+  init_is_called: false,
 
   // PUBLIC FUNCTION IMPLEMENTATIONS
   init: function(options) {
@@ -9434,12 +9437,11 @@ var self = {
       self.config[i] = options[i];
     }
 
-    //for testing
-    if(typeof options.custom_sync !== "undefined"){
-      self.hasCustomSync = options.custom_sync;
+    //prevent multiple monitors from created if init is called multiple times
+    if(!self.init_is_called){
+      self.init_is_called = true;
+      self.datasetMonitor();
     }
-
-    self.datasetMonitor();
   },
 
   notify: function(callback) {
@@ -10120,46 +10122,49 @@ var self = {
   },
 
   checkHasCustomSync : function(dataset_id, cb) {
-    if(self.hasCustomSync != null) {
+    var dataset = self.datasets[dataset_id];
+    if(dataset && dataset.config){
+      self.consoleLog("dataset.config.has_custom_sync = " + dataset.config.has_custom_sync);
+      if(dataset.config.has_custom_sync != null) {
+        return cb();
+      }
+      self.consoleLog('starting check has custom sync');
+
+      actAPI({
+        'act' : dataset_id,
+        'req': {
+          'fn': 'sync'
+        }
+      }, function(res) {
+        //if the custom sync is defined in the cloud, this call should success.
+        //if failed, we think this the custom sync is not defined
+        self.consoleLog('check has_custom_sync - success - ', res);
+        dataset.config.has_custom_sync = true;
+        return cb();
+      }, function(msg,err) {
+        self.consoleLog('check has_custom_sync - failure - ', err);
+        if(err.status && err.status === 500){
+          //if we receive 500, it could be that there is an error occured due to missing parameters or similar,
+          //but the endpoint is defined.
+          self.consoleLog('check has_custom_sync - failed with 500, endpoint does exists');
+          dataset.config.has_custom_sync = true;
+        } else {
+          dataset.config.has_custom_sync = false;
+        }
+        return cb();
+      });
+    } else {
       return cb();
     }
-    self.consoleLog('starting check has custom sync');
-
-    actAPI({
-      'act' : dataset_id,
-      'req': {
-        'fn': 'sync'
-      }
-    }, function(res) {
-      //if the custom sync is defined in the cloud, this call should success.
-      //if failed, we think this the custom sync is not defined
-      self.consoleLog('checkHasCustomSync - success - ', res);
-      self.hasCustomSync = true;
-      return cb();
-    }, function(msg,err) {
-      self.consoleLog('checkHasCustomSync - failure - ', err);
-      if(err.status && err.status === 500){
-        //if we receive 500, it could be that there is an error occured due to missing parameters or similar,
-        //but the endpoint is defined.
-        self.consoleLog('checkHasCustomSync - failed with 500, endpoint does exists');
-        self.hasCustomSync = true;
-      } else {
-        self.hasCustomSync = false;
-      }
-      return cb();
-    });
-  },
-
-  setHasCustomSync : function(custom_sync){
-    self.hasCustomSync = custom_sync;
-  },
-
-  getHasCustomSync: function(){
-    return self.hasCustomSync;
   },
 
   doCloudCall: function(params, success, failure) {
-    if( self.hasCustomSync ) {
+    var hasCustomSync = false;
+    var dataset = self.datasets[params.dataset_id];
+    if(dataset && dataset.config){
+      hasCustomSync = dataset.config.has_custom_sync;
+    }
+    if( hasCustomSync == true ) {
       actAPI({
         'act' : params.dataset_id,
         'req' : params.req
@@ -10219,7 +10224,7 @@ var self = {
 
         Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       
           this.get( "dataset_" + dataset_id, function (data){
-            if (data && data.val !== null) {
+            if (data && data.val) {
               var dataset = data.val;
               if(typeof dataset === "string"){
                 dataset = JSON.parse(dataset);
@@ -10616,27 +10621,23 @@ var self = {
           if(previousPendingHash){
             //we have previous pending in meta data, see if it's resolved
             previousPendingResolved = false;
-            if( newData && newData.updates && newData.updates.hashes ){
-              var resolved = newData.updates.hashes[previousPendingHash];
-              if(resolved){
-                self.consoleLog("updateMetaFromNewData - Found previousPendingUid in meta data resolved - resolved = " + JSON.stringify(resolved));
-                //the previous pending is resolved in the cloud
-                metadata.previousPendingUid = undefined;
-                previousPendingResolved = true;
-              }
+            var resolved = newData.updates.hashes[previousPendingHash];
+            if(resolved){
+              self.consoleLog("updateMetaFromNewData - Found previousPendingUid in meta data resolved - resolved = " + JSON.stringify(resolved));
+              //the previous pending is resolved in the cloud
+              metadata.previousPendingUid = undefined;
+              previousPendingResolved = true;
             }
           }
           if(pendingHash){
             //we have current pending in meta data, see if it's resolved
             pendingResolved = false;
-            if( newData && newData.updates && newData.updates.hashes ){
-              var resolved = newData.updates.hashes[pendingHash];
-              if(resolved){
-                self.consoleLog("updateMetaFromNewData - Found pendingUid in meta data resolved - resolved = " + JSON.stringify(resolved));
-                //the current pending is resolved in the cloud
-                metadata.pendingUid = undefined;
-                pendingResolved = true;
-              }
+            var resolved = newData.updates.hashes[pendingHash];
+            if(resolved){
+              self.consoleLog("updateMetaFromNewData - Found pendingUid in meta data resolved - resolved = " + JSON.stringify(resolved));
+              //the current pending is resolved in the cloud
+              metadata.pendingUid = undefined;
+              pendingResolved = true;
             }
           }
 
@@ -10711,9 +10712,7 @@ module.exports = {
   forceSync: self.forceSync,
   generateHash: self.generateHash,
   loadDataSet: self.loadDataSet,
-  setHasCustomSync: self.setHasCustomSync,
-  checkHasCustomSync: self.checkHasCustomSync,
-  getHasCustomSync: self.getHasCustomSync
+  checkHasCustomSync: self.checkHasCustomSync
 };
 },{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":20,"./api_cloud":22,"JSON":3}],47:[function(require,module,exports){
 module.exports = {

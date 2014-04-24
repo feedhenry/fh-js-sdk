@@ -40,10 +40,9 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
       sync_frequency: 1,
       sync_active: false,
       storage_strategy: ['memory'],
-      crashed_count_wait: 0,
-      custom_sync: false
+      crashed_count_wait: 0
     });
-    syncClient.manage(dataSetId, {"sync_active": false}, {}, {}, done);
+    syncClient.manage(dataSetId, {"sync_active": false, "has_custom_sync": false}, {}, {}, done);
   });
 
   beforeEach(function(done){
@@ -55,11 +54,14 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
       requests.push(req);
     }
 
-    syncClient.setHasCustomSync(false);
+    
 
-    syncClient.clearPending(dataSetId, function(){
-      done(); 
+    syncClient.manage(dataSetId, {"has_custom_sync": false}, {}, {}, function(){
+      syncClient.clearPending(dataSetId, function(){
+        done(); 
+      });
     });
+    
   });
 
   afterEach(function(done){
@@ -295,6 +297,8 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
                     }
                   }
 
+                  //we deliberately return collision here. Then the crashed pending record should be resolved, and the delay pending
+                  //record should have the initial value as the pre data 
                    mockRes.updates.hashes[pendingHash] = mockRes.updates.collisions[pendingHash] = {
                     "cuid": "9F3930FE2A434E0BA0AD6F5A40C77CD7",
                     "type": "collision",
@@ -314,7 +318,11 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
 
                   expect(_.size(dataset.pending)).to.equal(1);
 
+                  //making sure the delayed pending record has the correct pre data, 
+                  //it shouldn't be "item1_updat_failed" as cloud returns collision
                   expect(_.values(dataset.pending)[0].pre.name).to.equal("item1");
+                  expect(_.values(dataset.pending)[0].preHash).to.equal(prehash);
+                  expect(_.values(dataset.pending)[0].post.name).to.equal("item1_updated");
 
                   onSync(function(){
                     expect(requests.length).to.equal(4);
@@ -323,7 +331,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
 
                     expect(reqBody3.pending.length).to.equal(1);
                     var pendingHash = reqBody3.pending[0].hash;
-                    var predata = reqBody3.pending[0].pre;
+                   
                     var prehash = reqBody3.pending[0].preHash;
 
                     var mockRes = {
@@ -448,6 +456,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
 
           expect(_.size(dataset.pending)).to.equal(1);
           expect(_.values(dataset.pending)[0].pre.name).to.equal("item2");
+          expect(_.values(dataset.pending)[0].post).to.be.null;
 
           onSync(function(){
             expect(requests.length).to.equal(1);
@@ -498,6 +507,10 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
 
             syncClient.getDataset(dataSetId, function(dataset){
               expect(dataset.hash).to.equal("f9f17defccf22d9bf1d0fb73e1f6af6b67c266e8");
+              //The tests are running in sequential, there was one record created in a previous test create test.
+              //this record is a new record created in "test remote data change". 
+              //So after this one is deleted, there is still one left int the local dataset. 
+              //We are not resetting local datasets after every test.
               expect(_.size(dataset.data)).to.equal(1);
               expect(_.size(dataset.pending)).to.equal(0);
               done();
@@ -651,6 +664,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
         var reqObj = requests[0];
         var reqBody = JSON.parse(reqObj.requestBody);
         var pendingObj = reqBody.pending[0];
+        //Probably not valid response, but we are testing this particular function "updateNewDataFromInFlight" and the hash is not used in this function. So it's ok to return empty data.
         var mockRes = {
           records : {
 
@@ -681,7 +695,8 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
                    hash: "424e4dff5aa27c2fb7bf0fc74d39b944823asdfhfj"
                 }
                 reqObj1.respond(200, header, JSON.stringify(mockRes1));
-
+                //This is to test the remote data should be updated with in flight changes. At this point, there is a in flight update for the uid, and it has not yet been applied to the cloud.
+                //So the remote data should be updated with the local change, and the pending data should continue to have the local change.
                 expect(dataset.data[pendingObj1.uid].data.name).to.equal("item8");
 
                 syncClient.clearPending(dataSetId, function(){
@@ -741,6 +756,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
 
                   }
                 }
+                //doesn't really matter what is remote data is. As the same data entry is deleted locally, even if there is a different remote data,  the entry should remain deleted
                 mockRes1.records[res.uid] = {
                   data:{
                     name:"item13"
@@ -751,6 +767,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
                 reqObj1.respond(200, header, JSON.stringify(mockRes1));
 
                 expect(dataset.data[res.uid]).to.be.empty;
+                expect(_.size(dataset.pending)).to.equal(1);
 
                 done();
               });
@@ -762,7 +779,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
   });
 
   it("test updateCrashedInFlightFromNewData create", function(done){
-    syncClient.setConfig(dataSetId, {crashed_count_wait: 10}, function(){
+    syncClient.setConfig(dataSetId, {crashed_count_wait: 10, has_custom_sync: false}, function(){
       var createRecord = {name:'item13'};
       syncClient.doCreate(dataSetId, createRecord, function(){
         onSync(function(){
@@ -918,7 +935,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
   });
 
   it("test updateCrashedInFlightFromNewData resend", function(done){
-    syncClient.setConfig(dataSetId, {"resend_crashed_updates": false, "crashed_count_wait": 0}, function(){
+    syncClient.setConfig(dataSetId, {"resend_crashed_updates": false, "crashed_count_wait": 0, "has_custom_sync": false}, function(){
       syncClient.doCreate(dataSetId, {name: "item16"}, function(){
         onSync(function(){
           var reqObj = requests[0];
@@ -963,6 +980,15 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
     var reqObj = requests[0];
     reqObj.respond(500, header, null);
     expect(fail).to.have.been.called;
+
+    syncClient.listCollisions(dataSetId, success, fail);
+    expect(requests.length).to.equal(2);
+    reqObj = requests[1];
+    reqObj.respond(200, header, JSON.stringify({}));
+
+    expect(success).to.have.been.called;
+    expect(success).to.have.been.calledWith({});
+
     done();
   });
 
@@ -974,33 +1000,52 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
     var reqObj = requests[0];
     reqObj.respond(500, header, null);
     expect(fail).to.have.been.called;
+
+    syncClient.removeCollision(dataSetId, null, success, fail);
+    expect(requests.length).to.equal(2);
+    reqObj = requests[1];
+    reqObj.respond(200, header, JSON.stringify({}));
+    expect(success).to.have.been.called;
+    expect(success).to.have.been.calledWith({});
+    
     done();
   });
 
 
   it("test checkHasCustomSync", function(done){
-    syncClient.setHasCustomSync(null);
-    syncClient.checkHasCustomSync(dataSetId, function(){});
-    expect(requests.length).to.equal(1);
-    var reqObj = requests[0];
-    reqObj.respond(200, header, null);
-    expect(syncClient.getHasCustomSync()).to.be.true;
 
-    syncClient.setHasCustomSync(null);
-    syncClient.checkHasCustomSync(dataSetId, function(){});
-    expect(requests.length).to.equal(2);
-    var reqObj1 = requests[1];
-    reqObj1.respond(500, header, null);
-    expect(syncClient.getHasCustomSync()).to.be.true;
+    var resetCustomSync = function(cb){
+      syncClient.manage(dataSetId, {has_custom_sync: null}, {}, {}, cb);
+    }
 
-    syncClient.setHasCustomSync(null);
-    syncClient.checkHasCustomSync(dataSetId, function(){});
-    expect(requests.length).to.equal(3);
-    var reqObj2 = requests[2];
-    reqObj2.respond(404, header, null);
-    expect(syncClient.getHasCustomSync()).to.be.false;
+    resetCustomSync(function(){
+      syncClient.checkHasCustomSync(dataSetId, function(){});
+      expect(requests.length).to.equal(1);
+      var reqObj = requests[0];
+      reqObj.respond(200, header, null);
 
-    done();
+      var dataset = syncClient.getDataset(dataSetId, function(dataset){
+        expect(dataset.config.has_custom_sync).to.be.true;
+
+        resetCustomSync(function(){
+          syncClient.checkHasCustomSync(dataSetId, function(){});
+          var reqObj1 = requests[1];
+          reqObj1.respond(500, header, null);
+          expect(dataset.config.has_custom_sync).to.be.true;
+
+          resetCustomSync(function(){
+            syncClient.checkHasCustomSync(dataSetId, function(){});
+            expect(requests.length).to.equal(3);
+            var reqObj2 = requests[2];
+            reqObj2.respond(404, header, null);
+
+            expect(dataset.config.has_custom_sync).to.be.false;
+
+            done();
+          });
+        });
+      });
+    });
 
   });
 

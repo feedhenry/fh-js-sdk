@@ -154,7 +154,6 @@ describe("test sync framework offline", function(){
   var uid;
 
   it("sync.doCreate", function(done){
-    var success = sinon.spy();
     var fail = sinon.spy();
 
     var updateCB = sinon.spy();
@@ -216,7 +215,6 @@ describe("test sync framework offline", function(){
 
 
   it("sync.doUpdate", function(done){
-    var success = sinon.spy();
     var fail = sinon.spy();
 
     var updateCB = sinon.spy();
