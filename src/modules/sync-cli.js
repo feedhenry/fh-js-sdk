@@ -44,8 +44,11 @@ var self = {
     // Is the background sync with the cloud currently active
     "storage_strategy" : "html5-filesystem",
     // Storage strategy to use for Lawnchair - supported strategies are 'html5-filesystem' and 'dom'
-    "file_system_quota" : 50 * 1024 * 1204
+    "file_system_quota" : 50 * 1024 * 1204,
     // Amount of space to request from the HTML5 filesystem API when running in browser
+    "has_custom_sync" : null
+    //If the app has custom cloud sync function, it should be set to true. If set to false, the default mbaas sync implementation will be used. When set to null or undefined, 
+    //a check will be performed to determine which implementation to use
   },
 
   notifications: {
@@ -80,7 +83,7 @@ var self = {
 
   notify_callback: undefined,
 
-  hasCustomSync : undefined,
+  init_is_called: false,
 
   // PUBLIC FUNCTION IMPLEMENTATIONS
   init: function(options) {
@@ -91,7 +94,11 @@ var self = {
       self.config[i] = options[i];
     }
 
-    self.datasetMonitor();
+    //prevent multiple monitors from created if init is called multiple times
+    if(!self.init_is_called){
+      self.init_is_called = true;
+      self.datasetMonitor();
+    }
   },
 
   notify: function(callback) {
@@ -100,6 +107,8 @@ var self = {
 
   manage: function(dataset_id, options, query_params, meta_data, cb) {
     self.consoleLog('manage - START');
+
+    var options = options || {};
 
     var doManage = function(dataset) {
       self.consoleLog('doManage dataset :: initialised = ' + dataset.initialised + " :: " + dataset_id + ' :: ' + JSON.stringify(options));
@@ -112,7 +121,9 @@ var self = {
       dataset.syncRunning = false;
       dataset.syncPending = true;
       dataset.initialised = true;
-      dataset.meta = {};
+      if(typeof dataset.meta === "undefined"){
+        dataset.meta = {};
+      }
 
       self.saveDataSet(dataset_id, function() {
 
@@ -145,7 +156,9 @@ var self = {
           // No dataset in memory or local storage - create a new one and put it in memory
           self.consoleLog('manage - Creating new dataset for id ' + dataset_id);
           var dataset = {};
+          dataset.data = {};
           dataset.pending = {};
+          dataset.meta = {};
           self.datasets[dataset_id] = dataset;
           doManage(dataset);
         });
@@ -182,11 +195,16 @@ var self = {
   },
 
   create: function(dataset_id, data, success, failure) {
+    if(data == null){
+      if(failure){
+        return failure("null_data");
+      }
+    }
     self.addPendingObj(dataset_id, null, data, "create", success, failure);
   },
 
   read: function(dataset_id, uid, success, failure) {
-      self.getDataSet(dataset_id, function(dataset) {
+    self.getDataSet(dataset_id, function(dataset) {
       var rec = dataset.data[uid];
       if (!rec) {
         failure("unknown_uid");
@@ -300,7 +318,9 @@ var self = {
     if (dataset) {
       success(dataset);
     } else {
-      failure('unknown_dataset ' + dataset_id, dataset_id);
+      if(failure){
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
     }
   },
 
@@ -310,7 +330,9 @@ var self = {
     if (dataset) {
       success(dataset.query_params);
     } else {
-      failure('unknown_dataset ' + dataset_id, dataset_id);
+      if(failure){
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
     }
   },
 
@@ -336,7 +358,9 @@ var self = {
     if (dataset) {
       success(dataset.meta_data);
     } else {
-      failure('unknown_dataset ' + dataset_id, dataset_id);
+      if(failure){
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
     }
   },
 
@@ -362,7 +386,9 @@ var self = {
     if (dataset) {
       success(dataset.config);
     } else {
-      failure('unknown_dataset ' + dataset_id, dataset_id);
+      if(failure){
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
     }
   },
 
@@ -510,7 +536,9 @@ var self = {
         pendingObj.preHash = self.generateHash(rec.data);
         storePendingObject(pendingObj);
       }, function(code, msg) {
-        failure(code, msg);
+        if(failure){
+          failure(code, msg);
+        }
       });
     }
   },
@@ -585,6 +613,9 @@ var self = {
 
                 //Check to see if any delayed pending records can now be set to ready
                 self.updateDelayedFromNewData(dataset_id, dataSet, res);
+
+                //Check meta data as well to make sure it contains the correct info
+                self.updateMetaFromNewData(dataset_id, dataSet, res);
 
                 // Update the new dataset with details of any inflight updates which we have not received a response on
                 self.updateNewDataFromInFlight(dataset_id, dataSet, res);
@@ -714,11 +745,13 @@ var self = {
       if( self.datasets.hasOwnProperty(dataset_id) ) {
         var dataset = self.datasets[dataset_id];
 
-        if( !dataset.syncRunning && dataset.config.sync_active) {
+        if( !dataset.syncRunning && (dataset.config.sync_active || dataset.syncForced)) {
           // Check to see if it is time for the sync loop to run again
           var lastSyncStart = dataset.syncLoopStart;
           var lastSyncCmp = dataset.syncLoopEnd;
-          if( lastSyncStart == null ) {
+          if(dataset.syncForced){
+            dataset.syncPending = true;
+          } else if( lastSyncStart == null ) {
             self.consoleLog(dataset_id +' - Performing initial sync');
             // Dataset has never been synced before - do initial sync
             dataset.syncPending = true;
@@ -729,8 +762,6 @@ var self = {
               // Time between sync loops has passed - do another sync
               dataset.syncPending = true;
             }
-          } else if( dataset.syncForced ) {
-            dataset.syncPending = true;
           }
 
           if( dataset.syncPending ) {
@@ -748,38 +779,49 @@ var self = {
   },
 
   checkHasCustomSync : function(dataset_id, cb) {
-    if(self.hasCustomSync != null) {
+    var dataset = self.datasets[dataset_id];
+    if(dataset && dataset.config){
+      self.consoleLog("dataset.config.has_custom_sync = " + dataset.config.has_custom_sync);
+      if(dataset.config.has_custom_sync != null) {
+        return cb();
+      }
+      self.consoleLog('starting check has custom sync');
+
+      actAPI({
+        'act' : dataset_id,
+        'req': {
+          'fn': 'sync'
+        }
+      }, function(res) {
+        //if the custom sync is defined in the cloud, this call should success.
+        //if failed, we think this the custom sync is not defined
+        self.consoleLog('check has_custom_sync - success - ', res);
+        dataset.config.has_custom_sync = true;
+        return cb();
+      }, function(msg,err) {
+        self.consoleLog('check has_custom_sync - failure - ', err);
+        if(err.status && err.status === 500){
+          //if we receive 500, it could be that there is an error occured due to missing parameters or similar,
+          //but the endpoint is defined.
+          self.consoleLog('check has_custom_sync - failed with 500, endpoint does exists');
+          dataset.config.has_custom_sync = true;
+        } else {
+          dataset.config.has_custom_sync = false;
+        }
+        return cb();
+      });
+    } else {
       return cb();
     }
-    self.consoleLog('starting check has custom sync');
-
-    actAPI({
-      'act' : dataset_id,
-      'req': {
-        'fn': 'sync'
-      }
-    }, function(res) {
-      //if the custom sync is defined in the cloud, this call should success.
-      //if failed, we think this the custom sync is not defined
-      self.consoleLog('checkHasCustomSync - success - ', res);
-      self.hasCustomSync = true;
-      return cb();
-    }, function(msg,err) {
-      self.consoleLog('checkHasCustomSync - failure - ', err);
-      if(err.status && err.status === 500){
-        //if we receive 500, it could be that there is an error occured due to missing parameters or similar,
-        //but the endpoint is defined.
-        self.consoleLog('checkHasCustomSync - failed with 500, endpoint does exists');
-        self.hasCustomSync = true;
-      } else {
-        self.hasCustomSync = false;
-      }
-      return cb();
-    });
   },
 
   doCloudCall: function(params, success, failure) {
-    if( self.hasCustomSync ) {
+    var hasCustomSync = false;
+    var dataset = self.datasets[params.dataset_id];
+    if(dataset && dataset.config){
+      hasCustomSync = dataset.config.has_custom_sync;
+    }
+    if( hasCustomSync == true ) {
       actAPI({
         'act' : params.dataset_id,
         'req' : params.req
@@ -837,22 +879,23 @@ var self = {
       self.consoleLog(errMsg);
     };
 
-        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       this.get( "dataset_" + dataset_id, function (data){
-         if (data && data.val !== null) {
-            var dataset = data.val;
-            if(typeof dataset === "string"){
-              dataset = JSON.parse(dataset);
+        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       
+          this.get( "dataset_" + dataset_id, function (data){
+            if (data && data.val) {
+              var dataset = data.val;
+              if(typeof dataset === "string"){
+                dataset = JSON.parse(dataset);
+              }
+              // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
+              // the user wants sync
+              dataset.initialised = false;
+              self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
+              self.consoleLog('load from local storage success for dataset_id :' + dataset_id);
+              if(success) return success(dataset);
+            } else {
+              // no data yet, probably first time. failure calback should handle this
+              if(failure) return failure();
             }
-            // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
-            // the user wants sync
-            dataset.initialised = false;
-            self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
-            self.consoleLog('load from local storage success for dataset_id :' + dataset_id);
-            if(success) return success(dataset);
-          } else {
-            // no data yet, probably first time. failure calback should handle this
-            if(failure) return failure();
-          }
        });
     });
   },
@@ -1192,15 +1235,6 @@ var self = {
               }
             }
           }
-          else if (!pendingRec.inFlight && pendingRec.crashed ) {
-            self.consoleLog('updateCrashedInFlightFromNewData - Trying to resolve issues with crashed non in flight record - uid = ' + pendingRec.uid);
-            // Stalled pending record because a previous pending update on the same record crashed
-            var crashedRef = resolvedCrashes[pendingRec.uid];
-            if( crashedRef ) {
-              self.consoleLog('updateCrashedInFlightFromNewData - Found a stalled pending record backed up behind a resolved crash uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash);
-              pendingRec.crashed = false;
-            }
-          }
         }
       }
     }
@@ -1230,6 +1264,50 @@ var self = {
     }
   },
 
+  updateMetaFromNewData: function(dataset_id, dataset, newData){
+    var meta = dataset.meta;
+    if(meta && newData && newData.updates && newData.updates.hashes){
+      for(var uid in meta){
+        if(meta.hasOwnProperty(uid)){
+          var metadata = meta[uid];
+          var pendingHash = metadata.pendingUid;
+          var previousPendingHash = metadata.previousPendingUid;
+          self.consoleLog("updateMetaFromNewData - Found metadata with uid = " + uid + " :: pendingHash = " + pendingHash + " :: previousPendingHash =" + previousPendingHash);
+          var previousPendingResolved = true;
+          var pendingResolved = true;
+          if(previousPendingHash){
+            //we have previous pending in meta data, see if it's resolved
+            previousPendingResolved = false;
+            var resolved = newData.updates.hashes[previousPendingHash];
+            if(resolved){
+              self.consoleLog("updateMetaFromNewData - Found previousPendingUid in meta data resolved - resolved = " + JSON.stringify(resolved));
+              //the previous pending is resolved in the cloud
+              metadata.previousPendingUid = undefined;
+              previousPendingResolved = true;
+            }
+          }
+          if(pendingHash){
+            //we have current pending in meta data, see if it's resolved
+            pendingResolved = false;
+            var resolved = newData.updates.hashes[pendingHash];
+            if(resolved){
+              self.consoleLog("updateMetaFromNewData - Found pendingUid in meta data resolved - resolved = " + JSON.stringify(resolved));
+              //the current pending is resolved in the cloud
+              metadata.pendingUid = undefined;
+              pendingResolved = true;
+            }
+          }
+
+          if(previousPendingResolved && pendingResolved){
+            self.consoleLog("updateMetaFromNewData - both previous and current pendings are resolved for meta data with uid " + uid + ". Delete it.");
+            //all pendings are resolved, the entry can be removed from meta data
+            delete meta[uid];
+          }
+        }
+      }
+    }
+  },
+
 
   markInFlightAsCrashed : function(dataset) {
     var pending = dataset.pending;
@@ -1249,21 +1327,6 @@ var self = {
           }
         }
       }
-
-      // Check for any pending updates that would be modifying a crashed record. These can not go out until the
-      // status of the crashed record is determined
-      for( pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          pendingRec = pending[pendingHash];
-
-          if( ! pendingRec.inFlight && ! pendingRec.delayed ) {
-            var crashedRef = crashedRecords[pendingRec.uid];
-            if( crashedRef ) {
-              pendingRec.crashed = true;
-            }
-          }
-        }
-      }
     }
   },
 
@@ -1277,7 +1340,7 @@ var self = {
 (function() {
   self.config = self.defaults;
   //Initialse the sync service with default config
-  self.init({});
+  //self.init({});
 })();
 
 module.exports = {
@@ -1303,5 +1366,8 @@ module.exports = {
   startSync: self.startSync,
   stopSync: self.stopSync,
   doSync: self.doSync,
-  forceSync: self.forceSync
+  forceSync: self.forceSync,
+  generateHash: self.generateHash,
+  loadDataSet: self.loadDataSet,
+  checkHasCustomSync: self.checkHasCustomSync
 };

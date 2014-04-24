@@ -3915,19 +3915,6 @@ Lawnchair.adapter('webkit-sqlite', (function() {
       return new Date()
     } // FIXME need to use better date fn
     // not entirely sure if this is needed...
-  if (!Function.prototype.bind) {
-    Function.prototype.bind = function(obj) {
-      var slice = [].slice,
-        args = slice.call(arguments, 1),
-        self = this,
-        nop = function() {}, bound = function() {
-          return self.apply(this instanceof nop ? this : (obj || {}), args.concat(slice.call(arguments)))
-        }
-      nop.prototype = self.prototype
-      bound.prototype = new nop()
-      return bound
-    }
-  }
 
   // public methods
   return {
@@ -4434,6 +4421,111 @@ Lawnchair.adapter('html5-filesystem', (function(global){
     }
   };
 }(this)));
+Lawnchair.adapter('memory', (function(){
+
+    var data = {}
+
+    return {
+        valid: function() { return true },
+
+        init: function (options, callback) {
+            data[this.name] = data[this.name] || {index:[],store:{}}
+            this.index = data[this.name].index
+            this.store = data[this.name].store
+            var cb = this.fn(this.name, callback)
+            if (cb) cb.call(this, this)
+            return this
+        },
+
+        keys: function (callback) {
+            this.fn('keys', callback).call(this, this.index)
+            return this
+        },
+
+        save: function(obj, cb) {
+            var key = obj.key || this.uuid()
+            
+            this.exists(key, function(exists) {
+                if (!exists) {
+                    if (obj.key) delete obj.key
+                    this.index.push(key)
+                }
+
+                this.store[key] = obj
+                
+                if (cb) {
+                    obj.key = key
+                    this.lambda(cb).call(this, obj)
+                }
+            })
+
+            return this
+        },
+
+        batch: function (objs, cb) {
+            var r = []
+            for (var i = 0, l = objs.length; i < l; i++) {
+                this.save(objs[i], function(record) {
+                    r.push(record)
+                })
+            }
+            if (cb) this.lambda(cb).call(this, r)
+            return this
+        },
+
+        get: function (keyOrArray, cb) {
+            var r;
+            if (this.isArray(keyOrArray)) {
+                r = []
+                for (var i = 0, l = keyOrArray.length; i < l; i++) {
+                    r.push(this.store[keyOrArray[i]])
+                }
+            } else {
+                r = this.store[keyOrArray]
+                if (r) r.key = keyOrArray
+            }
+            if (cb) this.lambda(cb).call(this, r)
+            return this 
+        },
+
+        exists: function (key, cb) {
+            this.lambda(cb).call(this, !!(this.store[key]))
+            return this
+        },
+
+        all: function (cb) {
+            var r = []
+            for (var i = 0, l = this.index.length; i < l; i++) {
+                var obj = this.store[this.index[i]]
+                obj.key = this.index[i]
+                r.push(obj)
+            }
+            this.fn(this.name, cb).call(this, r)
+            return this
+        },
+
+        remove: function (keyOrArray, cb) {
+            var del = this.isArray(keyOrArray) ? keyOrArray : [keyOrArray]
+            for (var i = 0, l = del.length; i < l; i++) {
+                var key = del[i].key ? del[i].key : del[i]
+                var where = this.indexOf(this.index, key)
+                if (where < 0) continue /* key not present */
+                delete this.store[key]
+                this.index.splice(where, 1)
+            }
+            if (cb) this.lambda(cb).call(this)
+            return this
+        },
+
+        nuke: function (cb) {
+            this.store = data[this.name].store = {}
+            this.index = data[this.name].index = []
+            if (cb) this.lambda(cb).call(this)
+            return this
+        }
+    }
+/////
+})());
 ; browserify_shim__define__module__export__(typeof Lawnchair != "undefined" ? Lawnchair : window.Lawnchair);
 
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
@@ -6685,8 +6777,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -7161,7 +7253,7 @@ process.chdir = function (dir) {
 module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/grunt-browserify/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -9384,6 +9476,8 @@ var self = {
   manage: function(dataset_id, options, query_params, meta_data, cb) {
     self.consoleLog('manage - START');
 
+    var options = options || {};
+
     var doManage = function(dataset) {
       self.consoleLog('doManage dataset :: initialised = ' + dataset.initialised + " :: " + dataset_id + ' :: ' + JSON.stringify(options));
 
@@ -9428,6 +9522,7 @@ var self = {
           // No dataset in memory or local storage - create a new one and put it in memory
           self.consoleLog('manage - Creating new dataset for id ' + dataset_id);
           var dataset = {};
+          dataset.data = {};
           dataset.pending = {};
           self.datasets[dataset_id] = dataset;
           doManage(dataset);
@@ -9997,7 +10092,7 @@ var self = {
       if( self.datasets.hasOwnProperty(dataset_id) ) {
         var dataset = self.datasets[dataset_id];
 
-        if( !dataset.syncRunning && dataset.config.sync_active) {
+        if( !dataset.syncRunning && (dataset.config.sync_active || dataset.syncForced)) {
           // Check to see if it is time for the sync loop to run again
           var lastSyncStart = dataset.syncLoopStart;
           var lastSyncCmp = dataset.syncLoopEnd;
@@ -10012,7 +10107,9 @@ var self = {
               // Time between sync loops has passed - do another sync
               dataset.syncPending = true;
             }
-          } else if( dataset.syncForced ) {
+          } 
+
+          if( dataset.syncForced ) {
             dataset.syncPending = true;
           }
 
@@ -10560,7 +10657,7 @@ var self = {
 (function() {
   self.config = self.defaults;
   //Initialse the sync service with default config
-  self.init({});
+  //self.init({});
 })();
 
 module.exports = {
@@ -10586,7 +10683,8 @@ module.exports = {
   startSync: self.startSync,
   stopSync: self.stopSync,
   doSync: self.doSync,
-  forceSync: self.forceSync
+  forceSync: self.forceSync,
+  generateHash: self.generateHash
 };
 },{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":19,"./api_cloud":21,"JSON":3}],47:[function(_dereq_,module,exports){
 module.exports = {

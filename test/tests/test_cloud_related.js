@@ -1,7 +1,17 @@
 var chai = require('chai');
 var expect = chai.expect;
 var sinonChai = require('sinon-chai');
-var ajax = require('../../src/modules/ajax');
+
+var process = require("process");
+if(document && document.location){
+  if(document.location.href.indexOf("coverage=1") > -1){
+    process.env.LIB_COV = 1;
+  }
+}
+
+var ajax = process.env.LIB_COV? require("../../src-cov/modules/ajax") : require("../../src/modules/ajax");
+var qs = process.env.LIB_COV? require("../../src-cov/modules/queryMap"): require("../../src/modules/queryMap");
+
 
 chai.use(sinonChai);
 
@@ -23,6 +33,17 @@ var apphost = {
     "trackId": "testtrackid"
   }
 }
+
+var expectedUrl = "http://localhost:8101";
+if(document && document.location){
+  var doc_url = document.location.href;
+  var url_params = qs(doc_url);
+  var local = (typeof url_params.url !== 'undefined');
+  if(local){
+    expectedUrl = url_params.url;
+  }
+}
+
 
 var buildFakeRes = function(data){
   return [200, {"Content-Type": "text/script"}, JSON.stringify(data)]; //we deliberately set the wrong content type here to make sure the response does get converted to JSON
@@ -48,7 +69,7 @@ describe("test all cloud related", function(){
       var cb2 = sinon.spy();
 
       initFakeServer(server);
-      var $fh = require("../../src/feedhenry");
+      var $fh = process.env.LIB_COV? require("../../src-cov/feedhenry") : require("../../src/feedhenry");
       //at this point, $fh is already initialised (and failed), it will not emit another fhinit event 
       //until another call to any $fh cloud APIs, so for testing, call reset which will force it to re-intialise again.
       $fh.reset();
@@ -58,22 +79,22 @@ describe("test all cloud related", function(){
 
       server.respond();
       server.respond();
-
+      //host url is overridden by the url in the request
       expect(callback).to.have.been.called;
       expect(callback).to.have.been.calledOnce;
-      expect(callback).to.have.been.calledWith(null, {host: "http://localhost:8101"});
+      expect(callback).to.have.been.calledWith(null, {host: expectedUrl});
 
       expect(cb2).to.have.been.called;
       expect(cb2).to.have.been.calledOnce;
 
       var hostUrl = $fh.getCloudURL();
-      expect(hostUrl).to.equal("http://localhost:8101");
+      expect(hostUrl).to.equal(expectedUrl);
 
       
       expect($fh).to.have.property("cloud_props");
       expect($fh.cloud_props).to.have.property("hosts");
       expect($fh.cloud_props.hosts).to.have.property("url");
-      expect($fh.cloud_props.hosts.url).to.equal("http://localhost:8101");
+      expect($fh.cloud_props.hosts.url).to.equal(expectedUrl);
 
       expect($fh).to.have.property("app_props");
     });
@@ -90,7 +111,7 @@ describe("test all cloud related", function(){
 
       server.respondWith('POST', /cloud\/echo/, buildFakeRes(data));
 
-      var $fh = require("../../src/feedhenry");
+      var $fh = process.env.LIB_COV? require("../../src-cov/feedhenry") : require("../../src/feedhenry");
       $fh.reset();
 
       $fh.fh_timeout = 30000;
@@ -123,7 +144,7 @@ describe("test all cloud related", function(){
 
       server.respondWith('POST', /test\/echo/, buildFakeRes(data));
 
-      var $fh = require("../../src/feedhenry");
+      var $fh = process.env.LIB_COV? require("../../src-cov/feedhenry") : require("../../src/feedhenry");
       $fh.reset();
 
       $fh.cloud({
@@ -146,7 +167,7 @@ describe("test all cloud related", function(){
       initFakeServer(server);
       server.respondWith('POST', /authpolicy/, buildFakeRes({status: "ok"}));
 
-      var $fh = require("../../src/feedhenry");
+      var $fh = process.env.LIB_COV? require("../../src-cov/feedhenry") : require("../../src/feedhenry");
       $fh.reset();
 
       var success = sinon.spy();
@@ -171,7 +192,7 @@ describe("test all cloud related", function(){
       initFakeServer(server);
       server.respondWith('POST', /mbaas\/forms/, buildFakeRes({"status": "ok"}));
 
-      var $fh = require("../../src/feedhenry");
+      var $fh = process.env.LIB_COV? require("../../src-cov/feedhenry") : require("../../src/feedhenry");
       $fh.reset();
 
       var success = sinon.spy();

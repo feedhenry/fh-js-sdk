@@ -1,4 +1,3 @@
-var findFHPath = require("./findFHPath");
 var loadScript = require("./loadScript");
 var Lawnchair = require('../../libs/generated/lawnchair');
 var lawnchairext = require('./lawnchair-ext');

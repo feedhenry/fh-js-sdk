@@ -3915,19 +3915,6 @@ Lawnchair.adapter('webkit-sqlite', (function() {
       return new Date()
     } // FIXME need to use better date fn
     // not entirely sure if this is needed...
-  if (!Function.prototype.bind) {
-    Function.prototype.bind = function(obj) {
-      var slice = [].slice,
-        args = slice.call(arguments, 1),
-        self = this,
-        nop = function() {}, bound = function() {
-          return self.apply(this instanceof nop ? this : (obj || {}), args.concat(slice.call(arguments)))
-        }
-      nop.prototype = self.prototype
-      bound.prototype = new nop()
-      return bound
-    }
-  }
 
   // public methods
   return {
@@ -4434,6 +4421,111 @@ Lawnchair.adapter('html5-filesystem', (function(global){
     }
   };
 }(this)));
+Lawnchair.adapter('memory', (function(){
+
+    var data = {}
+
+    return {
+        valid: function() { return true },
+
+        init: function (options, callback) {
+            data[this.name] = data[this.name] || {index:[],store:{}}
+            this.index = data[this.name].index
+            this.store = data[this.name].store
+            var cb = this.fn(this.name, callback)
+            if (cb) cb.call(this, this)
+            return this
+        },
+
+        keys: function (callback) {
+            this.fn('keys', callback).call(this, this.index)
+            return this
+        },
+
+        save: function(obj, cb) {
+            var key = obj.key || this.uuid()
+            
+            this.exists(key, function(exists) {
+                if (!exists) {
+                    if (obj.key) delete obj.key
+                    this.index.push(key)
+                }
+
+                this.store[key] = obj
+                
+                if (cb) {
+                    obj.key = key
+                    this.lambda(cb).call(this, obj)
+                }
+            })
+
+            return this
+        },
+
+        batch: function (objs, cb) {
+            var r = []
+            for (var i = 0, l = objs.length; i < l; i++) {
+                this.save(objs[i], function(record) {
+                    r.push(record)
+                })
+            }
+            if (cb) this.lambda(cb).call(this, r)
+            return this
+        },
+
+        get: function (keyOrArray, cb) {
+            var r;
+            if (this.isArray(keyOrArray)) {
+                r = []
+                for (var i = 0, l = keyOrArray.length; i < l; i++) {
+                    r.push(this.store[keyOrArray[i]])
+                }
+            } else {
+                r = this.store[keyOrArray]
+                if (r) r.key = keyOrArray
+            }
+            if (cb) this.lambda(cb).call(this, r)
+            return this 
+        },
+
+        exists: function (key, cb) {
+            this.lambda(cb).call(this, !!(this.store[key]))
+            return this
+        },
+
+        all: function (cb) {
+            var r = []
+            for (var i = 0, l = this.index.length; i < l; i++) {
+                var obj = this.store[this.index[i]]
+                obj.key = this.index[i]
+                r.push(obj)
+            }
+            this.fn(this.name, cb).call(this, r)
+            return this
+        },
+
+        remove: function (keyOrArray, cb) {
+            var del = this.isArray(keyOrArray) ? keyOrArray : [keyOrArray]
+            for (var i = 0, l = del.length; i < l; i++) {
+                var key = del[i].key ? del[i].key : del[i]
+                var where = this.indexOf(this.index, key)
+                if (where < 0) continue /* key not present */
+                delete this.store[key]
+                this.index.splice(where, 1)
+            }
+            if (cb) this.lambda(cb).call(this)
+            return this
+        },
+
+        nuke: function (cb) {
+            this.store = data[this.name].store = {}
+            this.index = data[this.name].index = []
+            if (cb) this.lambda(cb).call(this)
+            return this
+        }
+    }
+/////
+})());
 ; browserify_shim__define__module__export__(typeof Lawnchair != "undefined" ? Lawnchair : window.Lawnchair);
 
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
@@ -6685,8 +6777,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,require("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(require,module,exports){
+}).call(this,require("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(require,module,exports){
 (function (global){
 /*global window, global*/
 var util = require("util")
@@ -7161,7 +7253,7 @@ process.chdir = function (dir) {
 module.exports=require(6)
 },{}],13:[function(require,module,exports){
 module.exports=require(7)
-},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(require,module,exports){
+},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(require,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -7391,3313 +7483,6069 @@ module.exports = function(val){
   return typeof val
 }
 
-},{}],"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
-module.exports=require('il4jYc');
-},{}],"il4jYc":[function(require,module,exports){
-var constants = require("./modules/constants");
-var logger = require("./modules/logger");
-var ajax = require("./modules/ajax");
-var events = require("./modules/events");
-var cloud = require("./modules/waitForCloud");
-var api_act = require("./modules/api_act");
-var api_auth = require("./modules/api_auth");
-var api_sec = require("./modules/api_sec");
-var api_hash = require("./modules/api_hash");
-var api_sync = require("./modules/sync-cli");
-var api_mbaas = require("./modules/api_mbaas");
-var api_cloud = require("./modules/api_cloud");
-var fhparams = require("./modules/fhparams");
-var appProps = require("./modules/appProps");
-var device = require("./modules/device");
-
-var defaultFail = function(msg, error){
-  logger.error(msg + ":" + JSON.stringify(error));
-};
-
-var addListener = function(type, listener){
-  events.addListener(type, listener);
-  if(type === constants.INIT_EVENT){
-    //for fhinit event, need to check the status of cloud and may need to fire the listener immediately.
-    if(cloud.isReady()){
-      listener(null, {host: cloud.getCloudHostUrl()});
-    } else if(cloud.getInitError()){
-      listener(cloud.getInitError());
-    }
-  } 
-};
-
-var once = function(type, listener){
-  if(type === constants.INIT_EVENT && cloud.isReady()){
-    listener(null, {host: cloud.getCloudHostUrl()});
-  } else if(type === constants.INIT_EVENT && cloud.getInitError()){
-    listener(cloud.getInitError());
-  } else {
-    events.once(type, listener);
-  }
-};
-
-//Legacy shim. Init hapens based on fhconfig.json or, for v2, global var called fh_app_props which is injected as part of the index.html wrapper
-var init = function(opts, success, fail){
-  logger.warn("$fh.init will be deprecated soon");
-  cloud.ready(function(err, host){
-    if(err){
-      if(typeof fail === "function"){
-        return fail(err);
-      }
-    } else {
-      if(typeof success === "function"){
-        success(host.host);
-      }
-    }
-  });
-};
-
-var fh = window.$fh || {};
-fh.init = init;
-fh.act = api_act;
-fh.auth = api_auth;
-fh.cloud = api_cloud;
-fh.sec = api_sec;
-fh.hash = api_hash;
-fh.sync = api_sync;
-fh.ajax = fh.__ajax = ajax;
-fh.mbaas = api_mbaas;
-fh._getDeviceId = device.getDeviceId;
-fh.fh_timeout = 60000; //keep backward compatible
-
-fh.getCloudURL = function(){
-  return cloud.getCloudHostUrl();
-};
-
-fh.getFHParams = function(){
-  return fhparams.buildFHParams();
-};
-
-//events
-fh.addListener = addListener;
-fh.on = addListener;
-fh.once = once;
-var methods = ["removeListener", "removeAllListeners", "setMaxListeners", "listeners", "emit"];
-for(var i=0;i<methods.length;i++){
-  fh[methods[i]] = events[methods[i]];
+},{}],"/Users/weili/work/fh-sdks/fh-js-sdk/src-cov/feedhenry.js":[function(require,module,exports){
+module.exports=require('f312fA');
+},{}],"f312fA":[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['feedhenry.js']) {
+  _$jscoverage['feedhenry.js'] = [];
+  _$jscoverage['feedhenry.js'][1] = 0;
+  _$jscoverage['feedhenry.js'][2] = 0;
+  _$jscoverage['feedhenry.js'][3] = 0;
+  _$jscoverage['feedhenry.js'][4] = 0;
+  _$jscoverage['feedhenry.js'][5] = 0;
+  _$jscoverage['feedhenry.js'][6] = 0;
+  _$jscoverage['feedhenry.js'][7] = 0;
+  _$jscoverage['feedhenry.js'][8] = 0;
+  _$jscoverage['feedhenry.js'][9] = 0;
+  _$jscoverage['feedhenry.js'][10] = 0;
+  _$jscoverage['feedhenry.js'][11] = 0;
+  _$jscoverage['feedhenry.js'][12] = 0;
+  _$jscoverage['feedhenry.js'][13] = 0;
+  _$jscoverage['feedhenry.js'][14] = 0;
+  _$jscoverage['feedhenry.js'][15] = 0;
+  _$jscoverage['feedhenry.js'][17] = 0;
+  _$jscoverage['feedhenry.js'][18] = 0;
+  _$jscoverage['feedhenry.js'][21] = 0;
+  _$jscoverage['feedhenry.js'][22] = 0;
+  _$jscoverage['feedhenry.js'][23] = 0;
+  _$jscoverage['feedhenry.js'][25] = 0;
+  _$jscoverage['feedhenry.js'][26] = 0;
+  _$jscoverage['feedhenry.js'][27] = 0;
+  _$jscoverage['feedhenry.js'][28] = 0;
+  _$jscoverage['feedhenry.js'][33] = 0;
+  _$jscoverage['feedhenry.js'][34] = 0;
+  _$jscoverage['feedhenry.js'][35] = 0;
+  _$jscoverage['feedhenry.js'][36] = 0;
+  _$jscoverage['feedhenry.js'][37] = 0;
+  _$jscoverage['feedhenry.js'][39] = 0;
+  _$jscoverage['feedhenry.js'][44] = 0;
+  _$jscoverage['feedhenry.js'][45] = 0;
+  _$jscoverage['feedhenry.js'][46] = 0;
+  _$jscoverage['feedhenry.js'][47] = 0;
+  _$jscoverage['feedhenry.js'][48] = 0;
+  _$jscoverage['feedhenry.js'][49] = 0;
+  _$jscoverage['feedhenry.js'][52] = 0;
+  _$jscoverage['feedhenry.js'][53] = 0;
+  _$jscoverage['feedhenry.js'][59] = 0;
+  _$jscoverage['feedhenry.js'][60] = 0;
+  _$jscoverage['feedhenry.js'][61] = 0;
+  _$jscoverage['feedhenry.js'][62] = 0;
+  _$jscoverage['feedhenry.js'][63] = 0;
+  _$jscoverage['feedhenry.js'][64] = 0;
+  _$jscoverage['feedhenry.js'][65] = 0;
+  _$jscoverage['feedhenry.js'][66] = 0;
+  _$jscoverage['feedhenry.js'][67] = 0;
+  _$jscoverage['feedhenry.js'][68] = 0;
+  _$jscoverage['feedhenry.js'][69] = 0;
+  _$jscoverage['feedhenry.js'][70] = 0;
+  _$jscoverage['feedhenry.js'][72] = 0;
+  _$jscoverage['feedhenry.js'][73] = 0;
+  _$jscoverage['feedhenry.js'][76] = 0;
+  _$jscoverage['feedhenry.js'][77] = 0;
+  _$jscoverage['feedhenry.js'][81] = 0;
+  _$jscoverage['feedhenry.js'][82] = 0;
+  _$jscoverage['feedhenry.js'][83] = 0;
+  _$jscoverage['feedhenry.js'][84] = 0;
+  _$jscoverage['feedhenry.js'][85] = 0;
+  _$jscoverage['feedhenry.js'][86] = 0;
+  _$jscoverage['feedhenry.js'][90] = 0;
+  _$jscoverage['feedhenry.js'][91] = 0;
+  _$jscoverage['feedhenry.js'][92] = 0;
+  _$jscoverage['feedhenry.js'][93] = 0;
+  _$jscoverage['feedhenry.js'][95] = 0;
+  _$jscoverage['feedhenry.js'][96] = 0;
+  _$jscoverage['feedhenry.js'][101] = 0;
+  _$jscoverage['feedhenry.js'][104] = 0;
+  _$jscoverage['feedhenry.js'][105] = 0;
 }
-
-//keep backward compatibility
-fh.on(constants.INIT_EVENT, function(err, host){
-  if(err){
-    fh.cloud_props = {};
-    fh.app_props = {};
-  } else {
-    fh.cloud_props = {hosts: {url: host.host}};
-    fh.app_props = appProps.getAppProps();
+_$jscoverage['feedhenry.js'][1]++;
+var constants = require("./modules/constants");
+_$jscoverage['feedhenry.js'][2]++;
+var logger = require("./modules/logger");
+_$jscoverage['feedhenry.js'][3]++;
+var ajax = require("./modules/ajax");
+_$jscoverage['feedhenry.js'][4]++;
+var events = require("./modules/events");
+_$jscoverage['feedhenry.js'][5]++;
+var cloud = require("./modules/waitForCloud");
+_$jscoverage['feedhenry.js'][6]++;
+var api_act = require("./modules/api_act");
+_$jscoverage['feedhenry.js'][7]++;
+var api_auth = require("./modules/api_auth");
+_$jscoverage['feedhenry.js'][8]++;
+var api_sec = require("./modules/api_sec");
+_$jscoverage['feedhenry.js'][9]++;
+var api_hash = require("./modules/api_hash");
+_$jscoverage['feedhenry.js'][10]++;
+var api_sync = require("./modules/sync-cli");
+_$jscoverage['feedhenry.js'][11]++;
+var api_mbaas = require("./modules/api_mbaas");
+_$jscoverage['feedhenry.js'][12]++;
+var api_cloud = require("./modules/api_cloud");
+_$jscoverage['feedhenry.js'][13]++;
+var fhparams = require("./modules/fhparams");
+_$jscoverage['feedhenry.js'][14]++;
+var appProps = require("./modules/appProps");
+_$jscoverage['feedhenry.js'][15]++;
+var device = require("./modules/device");
+_$jscoverage['feedhenry.js'][17]++;
+var defaultFail = (function (msg, error) {
+  _$jscoverage['feedhenry.js'][18]++;
+  logger.error(msg + ":" + JSON.stringify(error));
+});
+_$jscoverage['feedhenry.js'][21]++;
+var addListener = (function (type, listener) {
+  _$jscoverage['feedhenry.js'][22]++;
+  events.addListener(type, listener);
+  _$jscoverage['feedhenry.js'][23]++;
+  if (type === constants.INIT_EVENT) {
+    _$jscoverage['feedhenry.js'][25]++;
+    if (cloud.isReady()) {
+      _$jscoverage['feedhenry.js'][26]++;
+      listener(null, {host: cloud.getCloudHostUrl()});
+    }
+    else {
+      _$jscoverage['feedhenry.js'][27]++;
+      if (cloud.getInitError()) {
+        _$jscoverage['feedhenry.js'][28]++;
+        listener(cloud.getInitError());
+      }
+    }
   }
 });
-
-//for test
+_$jscoverage['feedhenry.js'][33]++;
+var once = (function (type, listener) {
+  _$jscoverage['feedhenry.js'][34]++;
+  if (type === constants.INIT_EVENT && cloud.isReady()) {
+    _$jscoverage['feedhenry.js'][35]++;
+    listener(null, {host: cloud.getCloudHostUrl()});
+  }
+  else {
+    _$jscoverage['feedhenry.js'][36]++;
+    if (type === constants.INIT_EVENT && cloud.getInitError()) {
+      _$jscoverage['feedhenry.js'][37]++;
+      listener(cloud.getInitError());
+    }
+    else {
+      _$jscoverage['feedhenry.js'][39]++;
+      events.once(type, listener);
+    }
+  }
+});
+_$jscoverage['feedhenry.js'][44]++;
+var init = (function (opts, success, fail) {
+  _$jscoverage['feedhenry.js'][45]++;
+  logger.warn("$fh.init will be deprecated soon");
+  _$jscoverage['feedhenry.js'][46]++;
+  cloud.ready((function (err, host) {
+  _$jscoverage['feedhenry.js'][47]++;
+  if (err) {
+    _$jscoverage['feedhenry.js'][48]++;
+    if (typeof fail === "function") {
+      _$jscoverage['feedhenry.js'][49]++;
+      return fail(err);
+    }
+  }
+  else {
+    _$jscoverage['feedhenry.js'][52]++;
+    if (typeof success === "function") {
+      _$jscoverage['feedhenry.js'][53]++;
+      success(host.host);
+    }
+  }
+}));
+});
+_$jscoverage['feedhenry.js'][59]++;
+var fh = window.$fh || {};
+_$jscoverage['feedhenry.js'][60]++;
+fh.init = init;
+_$jscoverage['feedhenry.js'][61]++;
+fh.act = api_act;
+_$jscoverage['feedhenry.js'][62]++;
+fh.auth = api_auth;
+_$jscoverage['feedhenry.js'][63]++;
+fh.cloud = api_cloud;
+_$jscoverage['feedhenry.js'][64]++;
+fh.sec = api_sec;
+_$jscoverage['feedhenry.js'][65]++;
+fh.hash = api_hash;
+_$jscoverage['feedhenry.js'][66]++;
+fh.sync = api_sync;
+_$jscoverage['feedhenry.js'][67]++;
+fh.ajax = fh.__ajax = ajax;
+_$jscoverage['feedhenry.js'][68]++;
+fh.mbaas = api_mbaas;
+_$jscoverage['feedhenry.js'][69]++;
+fh._getDeviceId = device.getDeviceId;
+_$jscoverage['feedhenry.js'][70]++;
+fh.fh_timeout = 60000;
+_$jscoverage['feedhenry.js'][72]++;
+fh.getCloudURL = (function () {
+  _$jscoverage['feedhenry.js'][73]++;
+  return cloud.getCloudHostUrl();
+});
+_$jscoverage['feedhenry.js'][76]++;
+fh.getFHParams = (function () {
+  _$jscoverage['feedhenry.js'][77]++;
+  return fhparams.buildFHParams();
+});
+_$jscoverage['feedhenry.js'][81]++;
+fh.addListener = addListener;
+_$jscoverage['feedhenry.js'][82]++;
+fh.on = addListener;
+_$jscoverage['feedhenry.js'][83]++;
+fh.once = once;
+_$jscoverage['feedhenry.js'][84]++;
+var methods = ["removeListener", "removeAllListeners", "setMaxListeners", "listeners", "emit"];
+_$jscoverage['feedhenry.js'][85]++;
+for (var i = 0; i < methods.length; i++) {
+  _$jscoverage['feedhenry.js'][86]++;
+  fh[methods[i]] = events[methods[i]];
+}
+_$jscoverage['feedhenry.js'][90]++;
+fh.on(constants.INIT_EVENT, (function (err, host) {
+  _$jscoverage['feedhenry.js'][91]++;
+  if (err) {
+    _$jscoverage['feedhenry.js'][92]++;
+    fh.cloud_props = {};
+    _$jscoverage['feedhenry.js'][93]++;
+    fh.app_props = {};
+  }
+  else {
+    _$jscoverage['feedhenry.js'][95]++;
+    fh.cloud_props = {hosts: {url: host.host}};
+    _$jscoverage['feedhenry.js'][96]++;
+    fh.app_props = appProps.getAppProps();
+  }
+}));
+_$jscoverage['feedhenry.js'][101]++;
 fh.reset = cloud.reset;
-//we should really stop polluting global name space. Ideally we should ask browserify to use "$fh" when umd-fy the module. However, "$" is not allowed as the standard module name.
-//So, we assign $fh to the window name space directly here. (otherwise, we have to fork the grunt browserify plugin, then fork browerify and the dependent umd module, really not worthing the effort).
+_$jscoverage['feedhenry.js'][104]++;
 window.$fh = fh;
+_$jscoverage['feedhenry.js'][105]++;
 module.exports = fh;
+_$jscoverage['feedhenry.js'].source = ["var constants = require(\"./modules/constants\");","var logger = require(\"./modules/logger\");","var ajax = require(\"./modules/ajax\");","var events = require(\"./modules/events\");","var cloud = require(\"./modules/waitForCloud\");","var api_act = require(\"./modules/api_act\");","var api_auth = require(\"./modules/api_auth\");","var api_sec = require(\"./modules/api_sec\");","var api_hash = require(\"./modules/api_hash\");","var api_sync = require(\"./modules/sync-cli\");","var api_mbaas = require(\"./modules/api_mbaas\");","var api_cloud = require(\"./modules/api_cloud\");","var fhparams = require(\"./modules/fhparams\");","var appProps = require(\"./modules/appProps\");","var device = require(\"./modules/device\");","","var defaultFail = function(msg, error){","  logger.error(msg + \":\" + JSON.stringify(error));","};","","var addListener = function(type, listener){","  events.addListener(type, listener);","  if(type === constants.INIT_EVENT){","    //for fhinit event, need to check the status of cloud and may need to fire the listener immediately.","    if(cloud.isReady()){","      listener(null, {host: cloud.getCloudHostUrl()});","    } else if(cloud.getInitError()){","      listener(cloud.getInitError());","    }","  } ","};","","var once = function(type, listener){","  if(type === constants.INIT_EVENT &amp;&amp; cloud.isReady()){","    listener(null, {host: cloud.getCloudHostUrl()});","  } else if(type === constants.INIT_EVENT &amp;&amp; cloud.getInitError()){","    listener(cloud.getInitError());","  } else {","    events.once(type, listener);","  }","};","","//Legacy shim. Init hapens based on fhconfig.json or, for v2, global var called fh_app_props which is injected as part of the index.html wrapper","var init = function(opts, success, fail){","  logger.warn(\"$fh.init will be deprecated soon\");","  cloud.ready(function(err, host){","    if(err){","      if(typeof fail === \"function\"){","        return fail(err);","      }","    } else {","      if(typeof success === \"function\"){","        success(host.host);","      }","    }","  });","};","","var fh = window.$fh || {};","fh.init = init;","fh.act = api_act;","fh.auth = api_auth;","fh.cloud = api_cloud;","fh.sec = api_sec;","fh.hash = api_hash;","fh.sync = api_sync;","fh.ajax = fh.__ajax = ajax;","fh.mbaas = api_mbaas;","fh._getDeviceId = device.getDeviceId;","fh.fh_timeout = 60000; //keep backward compatible","","fh.getCloudURL = function(){","  return cloud.getCloudHostUrl();","};","","fh.getFHParams = function(){","  return fhparams.buildFHParams();","};","","//events","fh.addListener = addListener;","fh.on = addListener;","fh.once = once;","var methods = [\"removeListener\", \"removeAllListeners\", \"setMaxListeners\", \"listeners\", \"emit\"];","for(var i=0;i&lt;methods.length;i++){","  fh[methods[i]] = events[methods[i]];","}","","//keep backward compatibility","fh.on(constants.INIT_EVENT, function(err, host){","  if(err){","    fh.cloud_props = {};","    fh.app_props = {};","  } else {","    fh.cloud_props = {hosts: {url: host.host}};","    fh.app_props = appProps.getAppProps();","  }","});","","//for test","fh.reset = cloud.reset;","//we should really stop polluting global name space. Ideally we should ask browserify to use \"$fh\" when umd-fy the module. However, \"$\" is not allowed as the standard module name.","//So, we assign $fh to the window name space directly here. (otherwise, we have to fork the grunt browserify plugin, then fork browerify and the dependent umd module, really not worthing the effort).","window.$fh = fh;","module.exports = fh;","","","","",""];
 
-
-
-
-
-
-},{"./modules/ajax":19,"./modules/api_act":20,"./modules/api_auth":21,"./modules/api_cloud":22,"./modules/api_hash":23,"./modules/api_mbaas":24,"./modules/api_sec":25,"./modules/appProps":26,"./modules/constants":28,"./modules/device":30,"./modules/events":31,"./modules/fhparams":32,"./modules/logger":39,"./modules/sync-cli":47,"./modules/waitForCloud":49}],18:[function(require,module,exports){
-var XDomainRequestWrapper = function(xdr){
+},{"./modules/ajax":19,"./modules/api_act":20,"./modules/api_auth":21,"./modules/api_cloud":22,"./modules/api_hash":23,"./modules/api_mbaas":24,"./modules/api_sec":25,"./modules/appProps":26,"./modules/constants":28,"./modules/device":30,"./modules/events":31,"./modules/fhparams":32,"./modules/logger":38,"./modules/sync-cli":46,"./modules/waitForCloud":48}],18:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/XDomainRequestWrapper.js']) {
+  _$jscoverage['modules/XDomainRequestWrapper.js'] = [];
+  _$jscoverage['modules/XDomainRequestWrapper.js'][1] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][2] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][3] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][4] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][5] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][6] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][7] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][8] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][9] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][10] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][11] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][12] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][13] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][14] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][15] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][16] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][19] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][20] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][21] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][23] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][24] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][25] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][26] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][27] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][30] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][31] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][32] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][33] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][34] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][35] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][40] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][41] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][44] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][45] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][48] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][49] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][52] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][59] = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][63] = 0;
+}
+_$jscoverage['modules/XDomainRequestWrapper.js'][1]++;
+var XDomainRequestWrapper = (function (xdr) {
+  _$jscoverage['modules/XDomainRequestWrapper.js'][2]++;
   this.xdr = xdr;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][3]++;
   this.isWrapper = true;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][4]++;
   this.readyState = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][5]++;
   this.onreadystatechange = null;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][6]++;
   this.status = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][7]++;
   this.statusText = "";
+  _$jscoverage['modules/XDomainRequestWrapper.js'][8]++;
   this.responseText = "";
+  _$jscoverage['modules/XDomainRequestWrapper.js'][9]++;
   var self = this;
-  this.xdr.onload = function(){
-      self.readyState = 4;
-      self.status = 200;
-      self.statusText = "";
-      self.responseText = self.xdr.responseText;
-      if(self.onreadystatechange){
-          self.onreadystatechange();
-      }
-  };
-  this.xdr.onerror = function(){
-      if(self.onerror){
-          self.onerror();
-      }
-      self.readyState = 4;
-      self.status = 0;
-      self.statusText = "";
-      if(self.onreadystatechange){
-          self.onreadystatechange();
-      }
-  };
-  this.xdr.ontimeout = function(){
-      self.readyState = 4;
-      self.status = 408;
-      self.statusText = "timeout";
-      if(self.onreadystatechange){
-          self.onreadystatechange();
-      }
-  };
-};
-
-XDomainRequestWrapper.prototype.open = function(method, url, asyn){
+  _$jscoverage['modules/XDomainRequestWrapper.js'][10]++;
+  this.xdr.onload = (function () {
+  _$jscoverage['modules/XDomainRequestWrapper.js'][11]++;
+  self.readyState = 4;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][12]++;
+  self.status = 200;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][13]++;
+  self.statusText = "";
+  _$jscoverage['modules/XDomainRequestWrapper.js'][14]++;
+  self.responseText = self.xdr.responseText;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][15]++;
+  if (self.onreadystatechange) {
+    _$jscoverage['modules/XDomainRequestWrapper.js'][16]++;
+    self.onreadystatechange();
+  }
+});
+  _$jscoverage['modules/XDomainRequestWrapper.js'][19]++;
+  this.xdr.onerror = (function () {
+  _$jscoverage['modules/XDomainRequestWrapper.js'][20]++;
+  if (self.onerror) {
+    _$jscoverage['modules/XDomainRequestWrapper.js'][21]++;
+    self.onerror();
+  }
+  _$jscoverage['modules/XDomainRequestWrapper.js'][23]++;
+  self.readyState = 4;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][24]++;
+  self.status = 0;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][25]++;
+  self.statusText = "";
+  _$jscoverage['modules/XDomainRequestWrapper.js'][26]++;
+  if (self.onreadystatechange) {
+    _$jscoverage['modules/XDomainRequestWrapper.js'][27]++;
+    self.onreadystatechange();
+  }
+});
+  _$jscoverage['modules/XDomainRequestWrapper.js'][30]++;
+  this.xdr.ontimeout = (function () {
+  _$jscoverage['modules/XDomainRequestWrapper.js'][31]++;
+  self.readyState = 4;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][32]++;
+  self.status = 408;
+  _$jscoverage['modules/XDomainRequestWrapper.js'][33]++;
+  self.statusText = "timeout";
+  _$jscoverage['modules/XDomainRequestWrapper.js'][34]++;
+  if (self.onreadystatechange) {
+    _$jscoverage['modules/XDomainRequestWrapper.js'][35]++;
+    self.onreadystatechange();
+  }
+});
+});
+_$jscoverage['modules/XDomainRequestWrapper.js'][40]++;
+XDomainRequestWrapper.prototype.open = (function (method, url, asyn) {
+  _$jscoverage['modules/XDomainRequestWrapper.js'][41]++;
   this.xdr.open(method, url);
-};
-
-XDomainRequestWrapper.prototype.send = function(data){
+});
+_$jscoverage['modules/XDomainRequestWrapper.js'][44]++;
+XDomainRequestWrapper.prototype.send = (function (data) {
+  _$jscoverage['modules/XDomainRequestWrapper.js'][45]++;
   this.xdr.send(data);
-};
-
-XDomainRequestWrapper.prototype.abort = function(){
+});
+_$jscoverage['modules/XDomainRequestWrapper.js'][48]++;
+XDomainRequestWrapper.prototype.abort = (function () {
+  _$jscoverage['modules/XDomainRequestWrapper.js'][49]++;
   this.xdr.abort();
-};
-
-XDomainRequestWrapper.prototype.setRequestHeader = function(n, v){
-  //not supported by xdr
-  //Good doc on limitations of XDomainRequest http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx
-  //XDomainRequest doesn't allow setting custom request headers. But it is the only available option to do CORS requests in IE8 & 9. In IE10, they finally start to use standard XMLHttpRequest.
-  //To support FH auth tokens in IE8&9, we have to find a different way of doing it.
-};
-
-XDomainRequestWrapper.prototype.getResponseHeader = function(n){
-  //not supported by xdr
-};
-
+});
+_$jscoverage['modules/XDomainRequestWrapper.js'][52]++;
+XDomainRequestWrapper.prototype.setRequestHeader = (function (n, v) {
+});
+_$jscoverage['modules/XDomainRequestWrapper.js'][59]++;
+XDomainRequestWrapper.prototype.getResponseHeader = (function (n) {
+});
+_$jscoverage['modules/XDomainRequestWrapper.js'][63]++;
 module.exports = XDomainRequestWrapper;
+_$jscoverage['modules/XDomainRequestWrapper.js'].source = ["var XDomainRequestWrapper = function(xdr){","  this.xdr = xdr;","  this.isWrapper = true;","  this.readyState = 0;","  this.onreadystatechange = null;","  this.status = 0;","  this.statusText = \"\";","  this.responseText = \"\";","  var self = this;","  this.xdr.onload = function(){","      self.readyState = 4;","      self.status = 200;","      self.statusText = \"\";","      self.responseText = self.xdr.responseText;","      if(self.onreadystatechange){","          self.onreadystatechange();","      }","  };","  this.xdr.onerror = function(){","      if(self.onerror){","          self.onerror();","      }","      self.readyState = 4;","      self.status = 0;","      self.statusText = \"\";","      if(self.onreadystatechange){","          self.onreadystatechange();","      }","  };","  this.xdr.ontimeout = function(){","      self.readyState = 4;","      self.status = 408;","      self.statusText = \"timeout\";","      if(self.onreadystatechange){","          self.onreadystatechange();","      }","  };","};","","XDomainRequestWrapper.prototype.open = function(method, url, asyn){","  this.xdr.open(method, url);","};","","XDomainRequestWrapper.prototype.send = function(data){","  this.xdr.send(data);","};","","XDomainRequestWrapper.prototype.abort = function(){","  this.xdr.abort();","};","","XDomainRequestWrapper.prototype.setRequestHeader = function(n, v){","  //not supported by xdr","  //Good doc on limitations of XDomainRequest http://blogs.msdn.com/b/ieinternals/archive/2010/05/13/xdomainrequest-restrictions-limitations-and-workarounds.aspx","  //XDomainRequest doesn't allow setting custom request headers. But it is the only available option to do CORS requests in IE8 &amp; 9. In IE10, they finally start to use standard XMLHttpRequest.","  //To support FH auth tokens in IE8&amp;9, we have to find a different way of doing it.","};","","XDomainRequestWrapper.prototype.getResponseHeader = function(n){","  //not supported by xdr","};","","module.exports = XDomainRequestWrapper;"];
 
 },{}],19:[function(require,module,exports){
-//a shameless copy from https://github.com/ForbesLindesay/ajax/blob/master/index.js. 
-//it has the same methods and config options as jQuery/zeptojs but very light weight. see http://api.jquery.com/jQuery.ajax/
-//a few small changes are made for supporting IE 8 and other features:
-//1. use getXhr function to replace the default XMLHttpRequest implementation for supporting IE8
-//2. Integrate with events emitter. So to subscribe ajax events, you can do $fh.on("ajaxStart", handler). See http://api.jquery.com/Ajax_Events/ for full list of events
-//3. allow passing xhr factory method through options: e.g. $fh.ajax({xhr: function(){/*own implementation of xhr*/}}); 
-//4. Use fh_timeout value as the default timeout
-//5. an extra option called "tryJSONP" to allow try the same call with JSONP if normal CORS failed - should only be used internally
-//6. for jsonp, allow to specify the callback query param name using the "jsonp" option
-
-var eventsHandler = require("./events");
-var XDomainRequestWrapper = require("./XDomainRequestWrapper");
-var logger = require("./logger");
-
-var type
-try {
-  type = require('type-of')
-} catch (ex) {
-  //hide from browserify
-  var r = require
-  type = r('type')
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/ajax.js']) {
+  _$jscoverage['modules/ajax.js'] = [];
+  _$jscoverage['modules/ajax.js'][11] = 0;
+  _$jscoverage['modules/ajax.js'][12] = 0;
+  _$jscoverage['modules/ajax.js'][13] = 0;
+  _$jscoverage['modules/ajax.js'][15] = 0;
+  _$jscoverage['modules/ajax.js'][16] = 0;
+  _$jscoverage['modules/ajax.js'][17] = 0;
+  _$jscoverage['modules/ajax.js'][20] = 0;
+  _$jscoverage['modules/ajax.js'][21] = 0;
+  _$jscoverage['modules/ajax.js'][24] = 0;
+  _$jscoverage['modules/ajax.js'][35] = 0;
+  _$jscoverage['modules/ajax.js'][36] = 0;
+  _$jscoverage['modules/ajax.js'][38] = 0;
+  _$jscoverage['modules/ajax.js'][39] = 0;
+  _$jscoverage['modules/ajax.js'][42] = 0;
+  _$jscoverage['modules/ajax.js'][43] = 0;
+  _$jscoverage['modules/ajax.js'][45] = 0;
+  _$jscoverage['modules/ajax.js'][47] = 0;
+  _$jscoverage['modules/ajax.js'][50] = 0;
+  _$jscoverage['modules/ajax.js'][52] = 0;
+  _$jscoverage['modules/ajax.js'][53] = 0;
+  _$jscoverage['modules/ajax.js'][54] = 0;
+  _$jscoverage['modules/ajax.js'][56] = 0;
+  _$jscoverage['modules/ajax.js'][59] = 0;
+  _$jscoverage['modules/ajax.js'][60] = 0;
+  _$jscoverage['modules/ajax.js'][62] = 0;
+  _$jscoverage['modules/ajax.js'][68] = 0;
+  _$jscoverage['modules/ajax.js'][69] = 0;
+  _$jscoverage['modules/ajax.js'][70] = 0;
+  _$jscoverage['modules/ajax.js'][71] = 0;
+  _$jscoverage['modules/ajax.js'][72] = 0;
+  _$jscoverage['modules/ajax.js'][74] = 0;
+  _$jscoverage['modules/ajax.js'][75] = 0;
+  _$jscoverage['modules/ajax.js'][76] = 0;
+  _$jscoverage['modules/ajax.js'][78] = 0;
+  _$jscoverage['modules/ajax.js'][79] = 0;
+  _$jscoverage['modules/ajax.js'][80] = 0;
+  _$jscoverage['modules/ajax.js'][81] = 0;
+  _$jscoverage['modules/ajax.js'][82] = 0;
+  _$jscoverage['modules/ajax.js'][84] = 0;
+  _$jscoverage['modules/ajax.js'][85] = 0;
+  _$jscoverage['modules/ajax.js'][86] = 0;
+  _$jscoverage['modules/ajax.js'][87] = 0;
+  _$jscoverage['modules/ajax.js'][88] = 0;
+  _$jscoverage['modules/ajax.js'][89] = 0;
+  _$jscoverage['modules/ajax.js'][92] = 0;
+  _$jscoverage['modules/ajax.js'][93] = 0;
+  _$jscoverage['modules/ajax.js'][94] = 0;
+  _$jscoverage['modules/ajax.js'][95] = 0;
+  _$jscoverage['modules/ajax.js'][97] = 0;
+  _$jscoverage['modules/ajax.js'][98] = 0;
+  _$jscoverage['modules/ajax.js'][99] = 0;
+  _$jscoverage['modules/ajax.js'][100] = 0;
+  _$jscoverage['modules/ajax.js'][102] = 0;
+  _$jscoverage['modules/ajax.js'][105] = 0;
+  _$jscoverage['modules/ajax.js'][106] = 0;
+  _$jscoverage['modules/ajax.js'][107] = 0;
+  _$jscoverage['modules/ajax.js'][109] = 0;
+  _$jscoverage['modules/ajax.js'][111] = 0;
+  _$jscoverage['modules/ajax.js'][116] = 0;
+  _$jscoverage['modules/ajax.js'][117] = 0;
+  _$jscoverage['modules/ajax.js'][118] = 0;
+  _$jscoverage['modules/ajax.js'][120] = 0;
+  _$jscoverage['modules/ajax.js'][122] = 0;
+  _$jscoverage['modules/ajax.js'][123] = 0;
+  _$jscoverage['modules/ajax.js'][124] = 0;
+  _$jscoverage['modules/ajax.js'][125] = 0;
+  _$jscoverage['modules/ajax.js'][128] = 0;
+  _$jscoverage['modules/ajax.js'][129] = 0;
+  _$jscoverage['modules/ajax.js'][130] = 0;
+  _$jscoverage['modules/ajax.js'][131] = 0;
+  _$jscoverage['modules/ajax.js'][132] = 0;
+  _$jscoverage['modules/ajax.js'][133] = 0;
+  _$jscoverage['modules/ajax.js'][137] = 0;
+  _$jscoverage['modules/ajax.js'][138] = 0;
+  _$jscoverage['modules/ajax.js'][143] = 0;
+  _$jscoverage['modules/ajax.js'][144] = 0;
+  _$jscoverage['modules/ajax.js'][145] = 0;
+  _$jscoverage['modules/ajax.js'][149] = 0;
+  _$jscoverage['modules/ajax.js'][150] = 0;
+  _$jscoverage['modules/ajax.js'][154] = 0;
+  _$jscoverage['modules/ajax.js'][156] = 0;
+  _$jscoverage['modules/ajax.js'][157] = 0;
+  _$jscoverage['modules/ajax.js'][160] = 0;
+  _$jscoverage['modules/ajax.js'][161] = 0;
+  _$jscoverage['modules/ajax.js'][165] = 0;
+  _$jscoverage['modules/ajax.js'][166] = 0;
+  _$jscoverage['modules/ajax.js'][167] = 0;
+  _$jscoverage['modules/ajax.js'][168] = 0;
+  _$jscoverage['modules/ajax.js'][170] = 0;
+  _$jscoverage['modules/ajax.js'][173] = 0;
+  _$jscoverage['modules/ajax.js'][174] = 0;
+  _$jscoverage['modules/ajax.js'][176] = 0;
+  _$jscoverage['modules/ajax.js'][177] = 0;
+  _$jscoverage['modules/ajax.js'][178] = 0;
+  _$jscoverage['modules/ajax.js'][181] = 0;
+  _$jscoverage['modules/ajax.js'][182] = 0;
+  _$jscoverage['modules/ajax.js'][183] = 0;
+  _$jscoverage['modules/ajax.js'][184] = 0;
+  _$jscoverage['modules/ajax.js'][185] = 0;
+  _$jscoverage['modules/ajax.js'][188] = 0;
+  _$jscoverage['modules/ajax.js'][189] = 0;
+  _$jscoverage['modules/ajax.js'][190] = 0;
+  _$jscoverage['modules/ajax.js'][191] = 0;
+  _$jscoverage['modules/ajax.js'][192] = 0;
+  _$jscoverage['modules/ajax.js'][196] = 0;
+  _$jscoverage['modules/ajax.js'][198] = 0;
+  _$jscoverage['modules/ajax.js'][199] = 0;
+  _$jscoverage['modules/ajax.js'][201] = 0;
+  _$jscoverage['modules/ajax.js'][206] = 0;
+  _$jscoverage['modules/ajax.js'][207] = 0;
+  _$jscoverage['modules/ajax.js'][214] = 0;
+  _$jscoverage['modules/ajax.js'][215] = 0;
+  _$jscoverage['modules/ajax.js'][216] = 0;
+  _$jscoverage['modules/ajax.js'][219] = 0;
+  _$jscoverage['modules/ajax.js'][220] = 0;
+  _$jscoverage['modules/ajax.js'][223] = 0;
+  _$jscoverage['modules/ajax.js'][224] = 0;
+  _$jscoverage['modules/ajax.js'][227] = 0;
+  _$jscoverage['modules/ajax.js'][228] = 0;
+  _$jscoverage['modules/ajax.js'][232] = 0;
+  _$jscoverage['modules/ajax.js'][234] = 0;
+  _$jscoverage['modules/ajax.js'][235] = 0;
+  _$jscoverage['modules/ajax.js'][236] = 0;
+  _$jscoverage['modules/ajax.js'][239] = 0;
+  _$jscoverage['modules/ajax.js'][242] = 0;
+  _$jscoverage['modules/ajax.js'][243] = 0;
+  _$jscoverage['modules/ajax.js'][244] = 0;
+  _$jscoverage['modules/ajax.js'][245] = 0;
+  _$jscoverage['modules/ajax.js'][247] = 0;
+  _$jscoverage['modules/ajax.js'][250] = 0;
+  _$jscoverage['modules/ajax.js'][251] = 0;
+  _$jscoverage['modules/ajax.js'][253] = 0;
+  _$jscoverage['modules/ajax.js'][254] = 0;
+  _$jscoverage['modules/ajax.js'][257] = 0;
+  _$jscoverage['modules/ajax.js'][258] = 0;
+  _$jscoverage['modules/ajax.js'][260] = 0;
+  _$jscoverage['modules/ajax.js'][263] = 0;
+  _$jscoverage['modules/ajax.js'][292] = 0;
+  _$jscoverage['modules/ajax.js'][293] = 0;
+  _$jscoverage['modules/ajax.js'][299] = 0;
+  _$jscoverage['modules/ajax.js'][300] = 0;
+  _$jscoverage['modules/ajax.js'][304] = 0;
+  _$jscoverage['modules/ajax.js'][305] = 0;
+  _$jscoverage['modules/ajax.js'][306] = 0;
+  _$jscoverage['modules/ajax.js'][308] = 0;
+  _$jscoverage['modules/ajax.js'][310] = 0;
+  _$jscoverage['modules/ajax.js'][313] = 0;
+  _$jscoverage['modules/ajax.js'][314] = 0;
+  _$jscoverage['modules/ajax.js'][317] = 0;
+  _$jscoverage['modules/ajax.js'][318] = 0;
+  _$jscoverage['modules/ajax.js'][324] = 0;
+  _$jscoverage['modules/ajax.js'][325] = 0;
+  _$jscoverage['modules/ajax.js'][326] = 0;
+  _$jscoverage['modules/ajax.js'][335] = 0;
+  _$jscoverage['modules/ajax.js'][336] = 0;
+  _$jscoverage['modules/ajax.js'][343] = 0;
+  _$jscoverage['modules/ajax.js'][345] = 0;
+  _$jscoverage['modules/ajax.js'][346] = 0;
+  _$jscoverage['modules/ajax.js'][347] = 0;
+  _$jscoverage['modules/ajax.js'][348] = 0;
+  _$jscoverage['modules/ajax.js'][350] = 0;
+  _$jscoverage['modules/ajax.js'][352] = 0;
+  _$jscoverage['modules/ajax.js'][354] = 0;
+  _$jscoverage['modules/ajax.js'][355] = 0;
+  _$jscoverage['modules/ajax.js'][356] = 0;
+  _$jscoverage['modules/ajax.js'][360] = 0;
+  _$jscoverage['modules/ajax.js'][361] = 0;
+  _$jscoverage['modules/ajax.js'][362] = 0;
+  _$jscoverage['modules/ajax.js'][363] = 0;
+  _$jscoverage['modules/ajax.js'][365] = 0;
+  _$jscoverage['modules/ajax.js'][366] = 0;
+  _$jscoverage['modules/ajax.js'][369] = 0;
+  _$jscoverage['modules/ajax.js'][370] = 0;
+  _$jscoverage['modules/ajax.js'][371] = 0;
+  _$jscoverage['modules/ajax.js'][372] = 0;
+  _$jscoverage['modules/ajax.js'][373] = 0;
+  _$jscoverage['modules/ajax.js'][374] = 0;
+  _$jscoverage['modules/ajax.js'][376] = 0;
 }
-
-var jsonpID = 0,
-  document = window.document,
-  key,
-  name,
-  rscript = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi,
-  scriptTypeRE = /^(?:text|application)\/javascript/i,
-  xmlTypeRE = /^(?:text|application)\/xml/i,
-  jsonType = 'application/json',
-  htmlType = 'text/html',
-  blankRE = /^\s*$/;
-
-var ajax = module.exports = function (options) {
-  var settings = extend({}, options || {})
-  //keep backward compatibility
-  if(window && window.$fh && typeof window.$fh.fh_timeout === "number"){
+_$jscoverage['modules/ajax.js'][11]++;
+var eventsHandler = require("./events");
+_$jscoverage['modules/ajax.js'][12]++;
+var XDomainRequestWrapper = require("./XDomainRequestWrapper");
+_$jscoverage['modules/ajax.js'][13]++;
+var logger = require("./logger");
+_$jscoverage['modules/ajax.js'][15]++;
+var type;
+_$jscoverage['modules/ajax.js'][16]++;
+try {
+  _$jscoverage['modules/ajax.js'][17]++;
+  type = require("type-of");
+}
+catch (ex) {
+  _$jscoverage['modules/ajax.js'][20]++;
+  var r = require;
+  _$jscoverage['modules/ajax.js'][21]++;
+  type = r("type");
+}
+_$jscoverage['modules/ajax.js'][24]++;
+var jsonpID = 0, document = window.document, key, name, rscript = /<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, scriptTypeRE = /^(?:text|application)\/javascript/i, xmlTypeRE = /^(?:text|application)\/xml/i, jsonType = "application/json", htmlType = "text/html", blankRE = /^\s*$/;
+_$jscoverage['modules/ajax.js'][35]++;
+var ajax = module.exports = (function (options) {
+  _$jscoverage['modules/ajax.js'][36]++;
+  var settings = extend({}, options || {});
+  _$jscoverage['modules/ajax.js'][38]++;
+  if (window && window.$fh && typeof window.$fh.fh_timeout === "number") {
+    _$jscoverage['modules/ajax.js'][39]++;
     ajax.settings.timeout = window.$fh.fh_timeout;
   }
-
-  for (key in ajax.settings)
-    if (settings[key] === undefined) settings[key] = ajax.settings[key]
-
-  ajaxStart(settings)
-
-  if (!settings.crossDomain) settings.crossDomain = /^([\w-]+:)?\/\/([^\/]+)/.test(settings.url) &&
-    RegExp.$2 != window.location.host
-
-  var dataType = settings.dataType,
-    hasPlaceholder = /=\?/.test(settings.url)
-    if (dataType == 'jsonp' || hasPlaceholder) {
-      if (!hasPlaceholder) {
-        settings.url = appendQuery(settings.url, (settings.jsonp? settings.jsonp: '_callback') + '=?');
-      }
-      return ajax.JSONP(settings)
+  _$jscoverage['modules/ajax.js'][42]++;
+  for (key in ajax.settings) {
+    _$jscoverage['modules/ajax.js'][43]++;
+    if (settings[key] === undefined) {
+      _$jscoverage['modules/ajax.js'][43]++;
+      settings[key] = ajax.settings[key];
     }
-
-  if (!settings.url) settings.url = window.location.toString()
-  serializeData(settings)
-
-  var mime = settings.accepts[dataType],
-    baseHeaders = {},
-    protocol = /^([\w-]+:)\/\//.test(settings.url) ? RegExp.$1 : window.location.protocol,
-    xhr = settings.xhr(settings.crossDomain),
-    abortTimeout
-
-  if (!settings.crossDomain) baseHeaders['X-Requested-With'] = 'XMLHttpRequest'
-  if (mime) {
-    baseHeaders['Accept'] = mime
-    if (mime.indexOf(',') > -1) mime = mime.split(',', 2)[0]
-    xhr.overrideMimeType && xhr.overrideMimeType(mime)
-  }
-  if (settings.contentType || (settings.data && !settings.formdata && settings.type.toUpperCase() != 'GET'))
-    baseHeaders['Content-Type'] = (settings.contentType || 'application/x-www-form-urlencoded')
-  settings.headers = extend(baseHeaders, settings.headers || {})
-
-  xhr.onreadystatechange = function () {
-    if (xhr.readyState == 4) {
-      clearTimeout(abortTimeout)
-      var result, error = false
-      if(settings.tryJSONP){
-        //check if the request has fail. In some cases, we may want to try jsonp as well. Again, FH only...
-        if(xhr.status === 0 && settings.crossDomain && !xhr.isTimeout &&  protocol != 'file:'){
-          logger.debug("retry ajax call with jsonp")
-          settings.type = "GET";
-          settings.dataType = "jsonp";
-          settings.data = "_jsonpdata=" + settings.data;
-          return ajax(settings);
-        }
-      }
-      if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304 || (xhr.status == 0 && protocol == 'file:')) {
-        dataType = dataType || mimeToDataType(xhr.getResponseHeader('content-type'))
-        result = xhr.responseText
-        logger.debug("ajax response :: status = " + xhr.status + " :: body = " + result)
-
-        try {
-          if (dataType == 'script')(1, eval)(result)
-          else if (dataType == 'xml') result = xhr.responseXML
-          else if (dataType == 'json') result = blankRE.test(result) ? null : JSON.parse(result)
-        } catch (e) {
-          error = e
-        }
-
-        if (error) {
-          logger.debug("ajax error", error);
-          ajaxError(error, 'parsererror', xhr, settings)
-        }
-        else ajaxSuccess(result, xhr, settings)
-      } else {
-        ajaxError(null, 'error', xhr, settings)
-      }
-    }
-  }
-
-  var async = 'async' in settings ? settings.async : true
-  logger.debug("ajax call settings", settings)
-  xhr.open(settings.type, settings.url, async)
-
-  for (name in settings.headers) xhr.setRequestHeader(name, settings.headers[name])
-
-  if (ajaxBeforeSend(xhr, settings) === false) {
-    logger.debug("ajax call is aborted due to ajaxBeforeSend")
-    xhr.abort()
-    return false
-  }
-
-  if (settings.timeout > 0) abortTimeout = setTimeout(function () {
-    logger.debug("ajax call timed out")
-    xhr.onreadystatechange = empty
-    xhr.abort()
-    xhr.isTimeout = true
-    ajaxError(null, 'timeout', xhr, settings)
-  }, settings.timeout)
-
-  // avoid sending empty string (#319)
-  xhr.send(settings.data ? settings.data : null)
-  return xhr
 }
-
-
-// trigger a custom event and return true
+  _$jscoverage['modules/ajax.js'][45]++;
+  ajaxStart(settings);
+  _$jscoverage['modules/ajax.js'][47]++;
+  if (! settings.crossDomain) {
+    _$jscoverage['modules/ajax.js'][47]++;
+    settings.crossDomain = /^([\w-]+:)?\/\/([^\/]+)/.test(settings.url) && RegExp.$2 != window.location.host;
+  }
+  _$jscoverage['modules/ajax.js'][50]++;
+  var dataType = settings.dataType, hasPlaceholder = /=\?/.test(settings.url);
+  _$jscoverage['modules/ajax.js'][52]++;
+  if (dataType == "jsonp" || hasPlaceholder) {
+    _$jscoverage['modules/ajax.js'][53]++;
+    if (! hasPlaceholder) {
+      _$jscoverage['modules/ajax.js'][54]++;
+      settings.url = appendQuery(settings.url, (settings.jsonp? settings.jsonp: "_callback") + "=?");
+    }
+    _$jscoverage['modules/ajax.js'][56]++;
+    return ajax.JSONP(settings);
+  }
+  _$jscoverage['modules/ajax.js'][59]++;
+  if (! settings.url) {
+    _$jscoverage['modules/ajax.js'][59]++;
+    settings.url = window.location.toString();
+  }
+  _$jscoverage['modules/ajax.js'][60]++;
+  serializeData(settings);
+  _$jscoverage['modules/ajax.js'][62]++;
+  var mime = settings.accepts[dataType], baseHeaders = {}, protocol = /^([\w-]+:)\/\//.test(settings.url)? RegExp.$1: window.location.protocol, xhr = settings.xhr(settings.crossDomain), abortTimeout;
+  _$jscoverage['modules/ajax.js'][68]++;
+  if (! settings.crossDomain) {
+    _$jscoverage['modules/ajax.js'][68]++;
+    baseHeaders["X-Requested-With"] = "XMLHttpRequest";
+  }
+  _$jscoverage['modules/ajax.js'][69]++;
+  if (mime) {
+    _$jscoverage['modules/ajax.js'][70]++;
+    baseHeaders.Accept = mime;
+    _$jscoverage['modules/ajax.js'][71]++;
+    if (mime.indexOf(",") > -1) {
+      _$jscoverage['modules/ajax.js'][71]++;
+      mime = mime.split(",", 2)[0];
+    }
+    _$jscoverage['modules/ajax.js'][72]++;
+    xhr.overrideMimeType && xhr.overrideMimeType(mime);
+  }
+  _$jscoverage['modules/ajax.js'][74]++;
+  if (settings.contentType || (settings.data && ! settings.formdata && settings.type.toUpperCase() != "GET")) {
+    _$jscoverage['modules/ajax.js'][75]++;
+    baseHeaders["Content-Type"] = (settings.contentType || "application/x-www-form-urlencoded");
+  }
+  _$jscoverage['modules/ajax.js'][76]++;
+  settings.headers = extend(baseHeaders, settings.headers || {});
+  _$jscoverage['modules/ajax.js'][78]++;
+  xhr.onreadystatechange = (function () {
+  _$jscoverage['modules/ajax.js'][79]++;
+  if (xhr.readyState == 4) {
+    _$jscoverage['modules/ajax.js'][80]++;
+    clearTimeout(abortTimeout);
+    _$jscoverage['modules/ajax.js'][81]++;
+    var result, error = false;
+    _$jscoverage['modules/ajax.js'][82]++;
+    if (settings.tryJSONP) {
+      _$jscoverage['modules/ajax.js'][84]++;
+      if (xhr.status === 0 && settings.crossDomain && ! xhr.isTimeout && protocol != "file:") {
+        _$jscoverage['modules/ajax.js'][85]++;
+        logger.debug("retry ajax call with jsonp");
+        _$jscoverage['modules/ajax.js'][86]++;
+        settings.type = "GET";
+        _$jscoverage['modules/ajax.js'][87]++;
+        settings.dataType = "jsonp";
+        _$jscoverage['modules/ajax.js'][88]++;
+        settings.data = "_jsonpdata=" + settings.data;
+        _$jscoverage['modules/ajax.js'][89]++;
+        return ajax(settings);
+      }
+    }
+    _$jscoverage['modules/ajax.js'][92]++;
+    if ((xhr.status >= 200 && xhr.status < 300) || xhr.status == 304 || (xhr.status == 0 && protocol == "file:")) {
+      _$jscoverage['modules/ajax.js'][93]++;
+      dataType = dataType || mimeToDataType(xhr.getResponseHeader("content-type"));
+      _$jscoverage['modules/ajax.js'][94]++;
+      result = xhr.responseText;
+      _$jscoverage['modules/ajax.js'][95]++;
+      logger.debug("ajax response :: status = " + xhr.status + " :: body = " + result);
+      _$jscoverage['modules/ajax.js'][97]++;
+      try {
+        _$jscoverage['modules/ajax.js'][98]++;
+        if (dataType == "script") {
+          _$jscoverage['modules/ajax.js'][98]++;
+          (1, eval)(result);
+        }
+        else {
+          _$jscoverage['modules/ajax.js'][99]++;
+          if (dataType == "xml") {
+            _$jscoverage['modules/ajax.js'][99]++;
+            result = xhr.responseXML;
+          }
+          else {
+            _$jscoverage['modules/ajax.js'][100]++;
+            if (dataType == "json") {
+              _$jscoverage['modules/ajax.js'][100]++;
+              result = blankRE.test(result)? null: JSON.parse(result);
+            }
+          }
+        }
+      }
+      catch (e) {
+        _$jscoverage['modules/ajax.js'][102]++;
+        error = e;
+      }
+      _$jscoverage['modules/ajax.js'][105]++;
+      if (error) {
+        _$jscoverage['modules/ajax.js'][106]++;
+        logger.debug("ajax error", error);
+        _$jscoverage['modules/ajax.js'][107]++;
+        ajaxError(error, "parsererror", xhr, settings);
+      }
+      else {
+        _$jscoverage['modules/ajax.js'][109]++;
+        ajaxSuccess(result, xhr, settings);
+      }
+    }
+    else {
+      _$jscoverage['modules/ajax.js'][111]++;
+      ajaxError(null, "error", xhr, settings);
+    }
+  }
+});
+  _$jscoverage['modules/ajax.js'][116]++;
+  var async = "async" in settings? settings.async: true;
+  _$jscoverage['modules/ajax.js'][117]++;
+  logger.debug("ajax call settings", settings);
+  _$jscoverage['modules/ajax.js'][118]++;
+  xhr.open(settings.type, settings.url, async);
+  _$jscoverage['modules/ajax.js'][120]++;
+  for (name in settings.headers) {
+    _$jscoverage['modules/ajax.js'][120]++;
+    xhr.setRequestHeader(name, settings.headers[name]);
+}
+  _$jscoverage['modules/ajax.js'][122]++;
+  if (ajaxBeforeSend(xhr, settings) === false) {
+    _$jscoverage['modules/ajax.js'][123]++;
+    logger.debug("ajax call is aborted due to ajaxBeforeSend");
+    _$jscoverage['modules/ajax.js'][124]++;
+    xhr.abort();
+    _$jscoverage['modules/ajax.js'][125]++;
+    return false;
+  }
+  _$jscoverage['modules/ajax.js'][128]++;
+  if (settings.timeout > 0) {
+    _$jscoverage['modules/ajax.js'][128]++;
+    abortTimeout = setTimeout((function () {
+  _$jscoverage['modules/ajax.js'][129]++;
+  logger.debug("ajax call timed out");
+  _$jscoverage['modules/ajax.js'][130]++;
+  xhr.onreadystatechange = empty;
+  _$jscoverage['modules/ajax.js'][131]++;
+  xhr.abort();
+  _$jscoverage['modules/ajax.js'][132]++;
+  xhr.isTimeout = true;
+  _$jscoverage['modules/ajax.js'][133]++;
+  ajaxError(null, "timeout", xhr, settings);
+}), settings.timeout);
+  }
+  _$jscoverage['modules/ajax.js'][137]++;
+  xhr.send(settings.data? settings.data: null);
+  _$jscoverage['modules/ajax.js'][138]++;
+  return xhr;
+});
+_$jscoverage['modules/ajax.js'][143]++;
 function triggerAndReturn(context, eventName, data) {
+  _$jscoverage['modules/ajax.js'][144]++;
   eventsHandler.emit(eventName, data);
+  _$jscoverage['modules/ajax.js'][145]++;
   return true;
 }
-
-// trigger an Ajax "global" event
+_$jscoverage['modules/ajax.js'][149]++;
 function triggerGlobal(settings, context, eventName, data) {
-  if (settings.global) return triggerAndReturn(context || document, eventName, data)
+  _$jscoverage['modules/ajax.js'][150]++;
+  if (settings.global) {
+    _$jscoverage['modules/ajax.js'][150]++;
+    return triggerAndReturn(context || document, eventName, data);
+  }
 }
-
-// Number of active Ajax requests
-ajax.active = 0
-
+_$jscoverage['modules/ajax.js'][154]++;
+ajax.active = 0;
+_$jscoverage['modules/ajax.js'][156]++;
 function ajaxStart(settings) {
-  if (settings.global && ajax.active++ === 0) triggerGlobal(settings, null, 'ajaxStart')
+  _$jscoverage['modules/ajax.js'][157]++;
+  if (settings.global && ajax.active++ === 0) {
+    _$jscoverage['modules/ajax.js'][157]++;
+    triggerGlobal(settings, null, "ajaxStart");
+  }
 }
-
+_$jscoverage['modules/ajax.js'][160]++;
 function ajaxStop(settings) {
-  if (settings.global && !(--ajax.active)) triggerGlobal(settings, null, 'ajaxStop')
+  _$jscoverage['modules/ajax.js'][161]++;
+  if (settings.global && ! (--ajax.active)) {
+    _$jscoverage['modules/ajax.js'][161]++;
+    triggerGlobal(settings, null, "ajaxStop");
+  }
 }
-
-// triggers an extra global event "ajaxBeforeSend" that's like "ajaxSend" but cancelable
+_$jscoverage['modules/ajax.js'][165]++;
 function ajaxBeforeSend(xhr, settings) {
-  var context = settings.context
-  if (settings.beforeSend.call(context, xhr, settings) === false)
-    return false
-
-  triggerGlobal(settings, context, 'ajaxSend', [xhr, settings])
+  _$jscoverage['modules/ajax.js'][166]++;
+  var context = settings.context;
+  _$jscoverage['modules/ajax.js'][167]++;
+  if (settings.beforeSend.call(context, xhr, settings) === false) {
+    _$jscoverage['modules/ajax.js'][168]++;
+    return false;
+  }
+  _$jscoverage['modules/ajax.js'][170]++;
+  triggerGlobal(settings, context, "ajaxSend", [xhr, settings]);
 }
-
+_$jscoverage['modules/ajax.js'][173]++;
 function ajaxSuccess(data, xhr, settings) {
-  var context = settings.context,
-    status = 'success'
-  settings.success.call(context, data, status, xhr)
-  triggerGlobal(settings, context, 'ajaxSuccess', [xhr, settings, data])
-  ajaxComplete(status, xhr, settings)
+  _$jscoverage['modules/ajax.js'][174]++;
+  var context = settings.context, status = "success";
+  _$jscoverage['modules/ajax.js'][176]++;
+  settings.success.call(context, data, status, xhr);
+  _$jscoverage['modules/ajax.js'][177]++;
+  triggerGlobal(settings, context, "ajaxSuccess", [xhr, settings, data]);
+  _$jscoverage['modules/ajax.js'][178]++;
+  ajaxComplete(status, xhr, settings);
 }
-// type: "timeout", "error", "abort", "parsererror"
+_$jscoverage['modules/ajax.js'][181]++;
 function ajaxError(error, type, xhr, settings) {
-  var context = settings.context
-  settings.error.call(context, xhr, type, error)
-  triggerGlobal(settings, context, 'ajaxError', [xhr, settings, error])
-  ajaxComplete(type, xhr, settings)
+  _$jscoverage['modules/ajax.js'][182]++;
+  var context = settings.context;
+  _$jscoverage['modules/ajax.js'][183]++;
+  settings.error.call(context, xhr, type, error);
+  _$jscoverage['modules/ajax.js'][184]++;
+  triggerGlobal(settings, context, "ajaxError", [xhr, settings, error]);
+  _$jscoverage['modules/ajax.js'][185]++;
+  ajaxComplete(type, xhr, settings);
 }
-// status: "success", "notmodified", "error", "timeout", "abort", "parsererror"
+_$jscoverage['modules/ajax.js'][188]++;
 function ajaxComplete(status, xhr, settings) {
-  var context = settings.context
-  settings.complete.call(context, xhr, status)
-  triggerGlobal(settings, context, 'ajaxComplete', [xhr, settings])
-  ajaxStop(settings)
+  _$jscoverage['modules/ajax.js'][189]++;
+  var context = settings.context;
+  _$jscoverage['modules/ajax.js'][190]++;
+  settings.complete.call(context, xhr, status);
+  _$jscoverage['modules/ajax.js'][191]++;
+  triggerGlobal(settings, context, "ajaxComplete", [xhr, settings]);
+  _$jscoverage['modules/ajax.js'][192]++;
+  ajaxStop(settings);
 }
-
-// Empty function, used as default callback
-function empty() {}
-
-ajax.JSONP = function (options) {
-  if (!('type' in options)) return ajax(options)
-
-  var callbackName = 'jsonp' + (++jsonpID),
-    script = document.createElement('script'),
-    abort = function () {
-      //todo: remove script
-      //$(script).remove()
-      if (callbackName in window) window[callbackName] = empty
-      ajaxComplete('abort', xhr, options)
-    },
-    xhr = {
-      abort: abort
-    }, abortTimeout,
-    head = document.getElementsByTagName("head")[0] || document.documentElement
-
-  if (options.error) script.onerror = function () {
-    xhr.abort()
-    options.error()
+_$jscoverage['modules/ajax.js'][196]++;
+function empty() {
+}
+_$jscoverage['modules/ajax.js'][198]++;
+ajax.JSONP = (function (options) {
+  _$jscoverage['modules/ajax.js'][199]++;
+  if (! ("type" in options)) {
+    _$jscoverage['modules/ajax.js'][199]++;
+    return ajax(options);
   }
-
-  window[callbackName] = function (data) {
-    clearTimeout(abortTimeout)
-    //todo: remove script
-    //$(script).remove()
-    delete window[callbackName]
-    ajaxSuccess(data, xhr, options)
+  _$jscoverage['modules/ajax.js'][201]++;
+  var callbackName = "jsonp" + (++jsonpID), script = document.createElement("script"), abort = (function () {
+  _$jscoverage['modules/ajax.js'][206]++;
+  if (callbackName in window) {
+    _$jscoverage['modules/ajax.js'][206]++;
+    window[callbackName] = empty;
   }
-
-  serializeData(options)
-  script.src = options.url.replace(/=\?/, '=' + callbackName)
-
-  // Use insertBefore instead of appendChild to circumvent an IE6 bug.
-  // This arises when a base node is used (see jQuery bugs #2709 and #4378).
+  _$jscoverage['modules/ajax.js'][207]++;
+  ajaxComplete("abort", xhr, options);
+}), xhr = {abort: abort}, abortTimeout, head = document.getElementsByTagName("head")[0] || document.documentElement;
+  _$jscoverage['modules/ajax.js'][214]++;
+  if (options.error) {
+    _$jscoverage['modules/ajax.js'][214]++;
+    script.onerror = (function () {
+  _$jscoverage['modules/ajax.js'][215]++;
+  xhr.abort();
+  _$jscoverage['modules/ajax.js'][216]++;
+  options.error();
+});
+  }
+  _$jscoverage['modules/ajax.js'][219]++;
+  window[callbackName] = (function (data) {
+  _$jscoverage['modules/ajax.js'][220]++;
+  clearTimeout(abortTimeout);
+  _$jscoverage['modules/ajax.js'][223]++;
+  delete window[callbackName];
+  _$jscoverage['modules/ajax.js'][224]++;
+  ajaxSuccess(data, xhr, options);
+});
+  _$jscoverage['modules/ajax.js'][227]++;
+  serializeData(options);
+  _$jscoverage['modules/ajax.js'][228]++;
+  script.src = options.url.replace(/=\?/, "=" + callbackName);
+  _$jscoverage['modules/ajax.js'][232]++;
   head.insertBefore(script, head.firstChild);
-
-  if (options.timeout > 0) abortTimeout = setTimeout(function () {
-    xhr.abort()
-    ajaxComplete('timeout', xhr, options)
-  }, options.timeout)
-
-  return xhr
-}
-
-function isIE(){
+  _$jscoverage['modules/ajax.js'][234]++;
+  if (options.timeout > 0) {
+    _$jscoverage['modules/ajax.js'][234]++;
+    abortTimeout = setTimeout((function () {
+  _$jscoverage['modules/ajax.js'][235]++;
+  xhr.abort();
+  _$jscoverage['modules/ajax.js'][236]++;
+  ajaxComplete("timeout", xhr, options);
+}), options.timeout);
+  }
+  _$jscoverage['modules/ajax.js'][239]++;
+  return xhr;
+});
+_$jscoverage['modules/ajax.js'][242]++;
+function isIE() {
+  _$jscoverage['modules/ajax.js'][243]++;
   var ie = false;
-  if(navigator.userAgent && navigator.userAgent.indexOf("MSIE") >=0 ){
+  _$jscoverage['modules/ajax.js'][244]++;
+  if (navigator.userAgent && navigator.userAgent.indexOf("MSIE") >= 0) {
+    _$jscoverage['modules/ajax.js'][245]++;
     ie = true;
   }
+  _$jscoverage['modules/ajax.js'][247]++;
   return ie;
 }
-
-function getXhr(crossDomain){
+_$jscoverage['modules/ajax.js'][250]++;
+function getXhr(crossDomain) {
+  _$jscoverage['modules/ajax.js'][251]++;
   var xhr = null;
-  //always use XMLHttpRequest if available
-  if(window.XMLHttpRequest){
+  _$jscoverage['modules/ajax.js'][253]++;
+  if (window.XMLHttpRequest) {
+    _$jscoverage['modules/ajax.js'][254]++;
     xhr = new XMLHttpRequest();
   }
-  //for IE8
-  if(isIE() && (crossDomain === true) && typeof window.XDomainRequest !== "undefined"){
+  _$jscoverage['modules/ajax.js'][257]++;
+  if (isIE() && (crossDomain === true) && typeof window.XDomainRequest !== "undefined") {
+    _$jscoverage['modules/ajax.js'][258]++;
     xhr = new XDomainRequestWrapper(new XDomainRequest());
   }
+  _$jscoverage['modules/ajax.js'][260]++;
   return xhr;
 }
-
-ajax.settings = {
-  // Default type of request
-  type: 'GET',
-  // Callback that is executed before request
-  beforeSend: empty,
-  // Callback that is executed if the request succeeds
-  success: empty,
-  // Callback that is executed the the server drops error
-  error: empty,
-  // Callback that is executed on request complete (both: error and success)
-  complete: empty,
-  // The context for the callbacks
-  context: null,
-  // Whether to trigger "global" Ajax events
-  global: true,
-  // Transport
-  xhr: getXhr,
-  // MIME types mapping
-  accepts: {
-    script: 'text/javascript, application/javascript',
-    json: jsonType,
-    xml: 'application/xml, text/xml',
-    html: htmlType,
-    text: 'text/plain'
-  },
-  // Whether the request is to another domain
-  crossDomain: false
-}
-
+_$jscoverage['modules/ajax.js'][263]++;
+ajax.settings = {type: "GET", beforeSend: empty, success: empty, error: empty, complete: empty, context: null, global: true, xhr: getXhr, accepts: {script: "text/javascript, application/javascript", json: jsonType, xml: "application/xml, text/xml", html: htmlType, text: "text/plain"}, crossDomain: false};
+_$jscoverage['modules/ajax.js'][292]++;
 function mimeToDataType(mime) {
-  return mime && (mime == htmlType ? 'html' :
-    mime == jsonType ? 'json' :
-    scriptTypeRE.test(mime) ? 'script' :
-    xmlTypeRE.test(mime) && 'xml') || 'text'
+  _$jscoverage['modules/ajax.js'][293]++;
+  return mime && (mime == htmlType? "html": mime == jsonType? "json": scriptTypeRE.test(mime)? "script": xmlTypeRE.test(mime) && "xml") || "text";
 }
-
+_$jscoverage['modules/ajax.js'][299]++;
 function appendQuery(url, query) {
-  return (url + '&' + query).replace(/[&?]{1,2}/, '?')
+  _$jscoverage['modules/ajax.js'][300]++;
+  return (url + "&" + query).replace(/[&?]{1,2}/, "?");
 }
-
-// serialize payload and append it to the URL for GET requests
+_$jscoverage['modules/ajax.js'][304]++;
 function serializeData(options) {
-  if (type(options.data) === 'object') {
-    if(typeof options.data.append === "function"){
-      //we are dealing with FormData, do not serialize
+  _$jscoverage['modules/ajax.js'][305]++;
+  if (type(options.data) === "object") {
+    _$jscoverage['modules/ajax.js'][306]++;
+    if (typeof options.data.append === "function") {
+      _$jscoverage['modules/ajax.js'][308]++;
       options.formdata = true;
-    } else {
-      options.data = param(options.data)
+    }
+    else {
+      _$jscoverage['modules/ajax.js'][310]++;
+      options.data = param(options.data);
     }
   }
-  if (options.data && (!options.type || options.type.toUpperCase() == 'GET'))
-    options.url = appendQuery(options.url, options.data)
+  _$jscoverage['modules/ajax.js'][313]++;
+  if (options.data && (! options.type || options.type.toUpperCase() == "GET")) {
+    _$jscoverage['modules/ajax.js'][314]++;
+    options.url = appendQuery(options.url, options.data);
+  }
 }
-
-ajax.get = function (url, success) {
-  return ajax({
-    url: url,
-    success: success
-  })
-}
-
-ajax.post = function (url, data, success, dataType) {
-  if (type(data) === 'function') dataType = dataType || success, success = data, data = null
-  return ajax({
-    type: 'POST',
-    url: url,
-    data: data,
-    success: success,
-    dataType: dataType
-  })
-}
-
-ajax.getJSON = function (url, success) {
-  return ajax({
-    url: url,
-    success: success,
-    dataType: 'json'
-  })
-}
-
+_$jscoverage['modules/ajax.js'][317]++;
+ajax.get = (function (url, success) {
+  _$jscoverage['modules/ajax.js'][318]++;
+  return ajax({url: url, success: success});
+});
+_$jscoverage['modules/ajax.js'][324]++;
+ajax.post = (function (url, data, success, dataType) {
+  _$jscoverage['modules/ajax.js'][325]++;
+  if (type(data) === "function") {
+    _$jscoverage['modules/ajax.js'][325]++;
+    dataType = dataType || success, success = data, data = null;
+  }
+  _$jscoverage['modules/ajax.js'][326]++;
+  return ajax({type: "POST", url: url, data: data, success: success, dataType: dataType});
+});
+_$jscoverage['modules/ajax.js'][335]++;
+ajax.getJSON = (function (url, success) {
+  _$jscoverage['modules/ajax.js'][336]++;
+  return ajax({url: url, success: success, dataType: "json"});
+});
+_$jscoverage['modules/ajax.js'][343]++;
 var escape = encodeURIComponent;
-
+_$jscoverage['modules/ajax.js'][345]++;
 function serialize(params, obj, traditional, scope) {
-  var array = type(obj) === 'array';
+  _$jscoverage['modules/ajax.js'][346]++;
+  var array = type(obj) === "array";
+  _$jscoverage['modules/ajax.js'][347]++;
   for (var key in obj) {
+    _$jscoverage['modules/ajax.js'][348]++;
     var value = obj[key];
-
-    if (scope) key = traditional ? scope : scope + '[' + (array ? '' : key) + ']'
-    // handle data in serializeArray() format
-    if (!scope && array) params.add(value.name, value.value)
-    // recurse into nested objects
-    else if (traditional ? (type(value) === 'array') : (type(value) === 'object'))
-      serialize(params, value, traditional, key)
-    else params.add(key, value)
-  }
+    _$jscoverage['modules/ajax.js'][350]++;
+    if (scope) {
+      _$jscoverage['modules/ajax.js'][350]++;
+      key = traditional? scope: scope + "[" + (array? "": key) + "]";
+    }
+    _$jscoverage['modules/ajax.js'][352]++;
+    if (! scope && array) {
+      _$jscoverage['modules/ajax.js'][352]++;
+      params.add(value.name, value.value);
+    }
+    else {
+      _$jscoverage['modules/ajax.js'][354]++;
+      if (traditional? (type(value) === "array"): (type(value) === "object")) {
+        _$jscoverage['modules/ajax.js'][355]++;
+        serialize(params, value, traditional, key);
+      }
+      else {
+        _$jscoverage['modules/ajax.js'][356]++;
+        params.add(key, value);
+      }
+    }
 }
-
+}
+_$jscoverage['modules/ajax.js'][360]++;
 function param(obj, traditional) {
-  var params = []
-  params.add = function (k, v) {
-    this.push(escape(k) + '=' + escape(v))
-  }
-  serialize(params, obj, traditional)
-  return params.join('&').replace('%20', '+')
+  _$jscoverage['modules/ajax.js'][361]++;
+  var params = [];
+  _$jscoverage['modules/ajax.js'][362]++;
+  params.add = (function (k, v) {
+  _$jscoverage['modules/ajax.js'][363]++;
+  this.push(escape(k) + "=" + escape(v));
+});
+  _$jscoverage['modules/ajax.js'][365]++;
+  serialize(params, obj, traditional);
+  _$jscoverage['modules/ajax.js'][366]++;
+  return params.join("&").replace("%20", "+");
 }
-
+_$jscoverage['modules/ajax.js'][369]++;
 function extend(target) {
+  _$jscoverage['modules/ajax.js'][370]++;
   var slice = Array.prototype.slice;
-  slice.call(arguments, 1).forEach(function (source) {
-    for (key in source)
-      if (source[key] !== undefined)
-        target[key] = source[key]
-  })
-  return target
+  _$jscoverage['modules/ajax.js'][371]++;
+  slice.call(arguments, 1).forEach((function (source) {
+  _$jscoverage['modules/ajax.js'][372]++;
+  for (key in source) {
+    _$jscoverage['modules/ajax.js'][373]++;
+    if (source[key] !== undefined) {
+      _$jscoverage['modules/ajax.js'][374]++;
+      target[key] = source[key];
+    }
 }
-},{"./XDomainRequestWrapper":18,"./events":31,"./logger":39,"type-of":15}],20:[function(require,module,exports){
-var logger =require("./logger");
-var cloud = require("./waitForCloud");
-var fhparams = require("./fhparams");
-var ajax = require("./ajax");
-var JSON = require("JSON");
-var handleError = require("./handleError");
-var appProps = require("./appProps");
+}));
+  _$jscoverage['modules/ajax.js'][376]++;
+  return target;
+}
+_$jscoverage['modules/ajax.js'].source = ["//a shameless copy from https://github.com/ForbesLindesay/ajax/blob/master/index.js. ","//it has the same methods and config options as jQuery/zeptojs but very light weight. see http://api.jquery.com/jQuery.ajax/","//a few small changes are made for supporting IE 8 and other features:","//1. use getXhr function to replace the default XMLHttpRequest implementation for supporting IE8","//2. Integrate with events emitter. So to subscribe ajax events, you can do $fh.on(\"ajaxStart\", handler). See http://api.jquery.com/Ajax_Events/ for full list of events","//3. allow passing xhr factory method through options: e.g. $fh.ajax({xhr: function(){/*own implementation of xhr*/}}); ","//4. Use fh_timeout value as the default timeout","//5. an extra option called \"tryJSONP\" to allow try the same call with JSONP if normal CORS failed - should only be used internally","//6. for jsonp, allow to specify the callback query param name using the \"jsonp\" option","","var eventsHandler = require(\"./events\");","var XDomainRequestWrapper = require(\"./XDomainRequestWrapper\");","var logger = require(\"./logger\");","","var type","try {","  type = require('type-of')","} catch (ex) {","  //hide from browserify","  var r = require","  type = r('type')","}","","var jsonpID = 0,","  document = window.document,","  key,","  name,","  rscript = /&lt;script\\b[^&lt;]*(?:(?!&lt;\\/script&gt;)&lt;[^&lt;]*)*&lt;\\/script&gt;/gi,","  scriptTypeRE = /^(?:text|application)\\/javascript/i,","  xmlTypeRE = /^(?:text|application)\\/xml/i,","  jsonType = 'application/json',","  htmlType = 'text/html',","  blankRE = /^\\s*$/;","","var ajax = module.exports = function (options) {","  var settings = extend({}, options || {})","  //keep backward compatibility","  if(window &amp;&amp; window.$fh &amp;&amp; typeof window.$fh.fh_timeout === \"number\"){","    ajax.settings.timeout = window.$fh.fh_timeout;","  }","","  for (key in ajax.settings)","    if (settings[key] === undefined) settings[key] = ajax.settings[key]","","  ajaxStart(settings)","","  if (!settings.crossDomain) settings.crossDomain = /^([\\w-]+:)?\\/\\/([^\\/]+)/.test(settings.url) &amp;&amp;","    RegExp.$2 != window.location.host","","  var dataType = settings.dataType,","    hasPlaceholder = /=\\?/.test(settings.url)","    if (dataType == 'jsonp' || hasPlaceholder) {","      if (!hasPlaceholder) {","        settings.url = appendQuery(settings.url, (settings.jsonp? settings.jsonp: '_callback') + '=?');","      }","      return ajax.JSONP(settings)","    }","","  if (!settings.url) settings.url = window.location.toString()","  serializeData(settings)","","  var mime = settings.accepts[dataType],","    baseHeaders = {},","    protocol = /^([\\w-]+:)\\/\\//.test(settings.url) ? RegExp.$1 : window.location.protocol,","    xhr = settings.xhr(settings.crossDomain),","    abortTimeout","","  if (!settings.crossDomain) baseHeaders['X-Requested-With'] = 'XMLHttpRequest'","  if (mime) {","    baseHeaders['Accept'] = mime","    if (mime.indexOf(',') &gt; -1) mime = mime.split(',', 2)[0]","    xhr.overrideMimeType &amp;&amp; xhr.overrideMimeType(mime)","  }","  if (settings.contentType || (settings.data &amp;&amp; !settings.formdata &amp;&amp; settings.type.toUpperCase() != 'GET'))","    baseHeaders['Content-Type'] = (settings.contentType || 'application/x-www-form-urlencoded')","  settings.headers = extend(baseHeaders, settings.headers || {})","","  xhr.onreadystatechange = function () {","    if (xhr.readyState == 4) {","      clearTimeout(abortTimeout)","      var result, error = false","      if(settings.tryJSONP){","        //check if the request has fail. In some cases, we may want to try jsonp as well. Again, FH only...","        if(xhr.status === 0 &amp;&amp; settings.crossDomain &amp;&amp; !xhr.isTimeout &amp;&amp;  protocol != 'file:'){","          logger.debug(\"retry ajax call with jsonp\")","          settings.type = \"GET\";","          settings.dataType = \"jsonp\";","          settings.data = \"_jsonpdata=\" + settings.data;","          return ajax(settings);","        }","      }","      if ((xhr.status &gt;= 200 &amp;&amp; xhr.status &lt; 300) || xhr.status == 304 || (xhr.status == 0 &amp;&amp; protocol == 'file:')) {","        dataType = dataType || mimeToDataType(xhr.getResponseHeader('content-type'))","        result = xhr.responseText","        logger.debug(\"ajax response :: status = \" + xhr.status + \" :: body = \" + result)","","        try {","          if (dataType == 'script')(1, eval)(result)","          else if (dataType == 'xml') result = xhr.responseXML","          else if (dataType == 'json') result = blankRE.test(result) ? null : JSON.parse(result)","        } catch (e) {","          error = e","        }","","        if (error) {","          logger.debug(\"ajax error\", error);","          ajaxError(error, 'parsererror', xhr, settings)","        }","        else ajaxSuccess(result, xhr, settings)","      } else {","        ajaxError(null, 'error', xhr, settings)","      }","    }","  }","","  var async = 'async' in settings ? settings.async : true","  logger.debug(\"ajax call settings\", settings)","  xhr.open(settings.type, settings.url, async)","","  for (name in settings.headers) xhr.setRequestHeader(name, settings.headers[name])","","  if (ajaxBeforeSend(xhr, settings) === false) {","    logger.debug(\"ajax call is aborted due to ajaxBeforeSend\")","    xhr.abort()","    return false","  }","","  if (settings.timeout &gt; 0) abortTimeout = setTimeout(function () {","    logger.debug(\"ajax call timed out\")","    xhr.onreadystatechange = empty","    xhr.abort()","    xhr.isTimeout = true","    ajaxError(null, 'timeout', xhr, settings)","  }, settings.timeout)","","  // avoid sending empty string (#319)","  xhr.send(settings.data ? settings.data : null)","  return xhr","}","","","// trigger a custom event and return true","function triggerAndReturn(context, eventName, data) {","  eventsHandler.emit(eventName, data);","  return true;","}","","// trigger an Ajax \"global\" event","function triggerGlobal(settings, context, eventName, data) {","  if (settings.global) return triggerAndReturn(context || document, eventName, data)","}","","// Number of active Ajax requests","ajax.active = 0","","function ajaxStart(settings) {","  if (settings.global &amp;&amp; ajax.active++ === 0) triggerGlobal(settings, null, 'ajaxStart')","}","","function ajaxStop(settings) {","  if (settings.global &amp;&amp; !(--ajax.active)) triggerGlobal(settings, null, 'ajaxStop')","}","","// triggers an extra global event \"ajaxBeforeSend\" that's like \"ajaxSend\" but cancelable","function ajaxBeforeSend(xhr, settings) {","  var context = settings.context","  if (settings.beforeSend.call(context, xhr, settings) === false)","    return false","","  triggerGlobal(settings, context, 'ajaxSend', [xhr, settings])","}","","function ajaxSuccess(data, xhr, settings) {","  var context = settings.context,","    status = 'success'","  settings.success.call(context, data, status, xhr)","  triggerGlobal(settings, context, 'ajaxSuccess', [xhr, settings, data])","  ajaxComplete(status, xhr, settings)","}","// type: \"timeout\", \"error\", \"abort\", \"parsererror\"","function ajaxError(error, type, xhr, settings) {","  var context = settings.context","  settings.error.call(context, xhr, type, error)","  triggerGlobal(settings, context, 'ajaxError', [xhr, settings, error])","  ajaxComplete(type, xhr, settings)","}","// status: \"success\", \"notmodified\", \"error\", \"timeout\", \"abort\", \"parsererror\"","function ajaxComplete(status, xhr, settings) {","  var context = settings.context","  settings.complete.call(context, xhr, status)","  triggerGlobal(settings, context, 'ajaxComplete', [xhr, settings])","  ajaxStop(settings)","}","","// Empty function, used as default callback","function empty() {}","","ajax.JSONP = function (options) {","  if (!('type' in options)) return ajax(options)","","  var callbackName = 'jsonp' + (++jsonpID),","    script = document.createElement('script'),","    abort = function () {","      //todo: remove script","      //$(script).remove()","      if (callbackName in window) window[callbackName] = empty","      ajaxComplete('abort', xhr, options)","    },","    xhr = {","      abort: abort","    }, abortTimeout,","    head = document.getElementsByTagName(\"head\")[0] || document.documentElement","","  if (options.error) script.onerror = function () {","    xhr.abort()","    options.error()","  }","","  window[callbackName] = function (data) {","    clearTimeout(abortTimeout)","    //todo: remove script","    //$(script).remove()","    delete window[callbackName]","    ajaxSuccess(data, xhr, options)","  }","","  serializeData(options)","  script.src = options.url.replace(/=\\?/, '=' + callbackName)","","  // Use insertBefore instead of appendChild to circumvent an IE6 bug.","  // This arises when a base node is used (see jQuery bugs #2709 and #4378).","  head.insertBefore(script, head.firstChild);","","  if (options.timeout &gt; 0) abortTimeout = setTimeout(function () {","    xhr.abort()","    ajaxComplete('timeout', xhr, options)","  }, options.timeout)","","  return xhr","}","","function isIE(){","  var ie = false;","  if(navigator.userAgent &amp;&amp; navigator.userAgent.indexOf(\"MSIE\") &gt;=0 ){","    ie = true;","  }","  return ie;","}","","function getXhr(crossDomain){","  var xhr = null;","  //always use XMLHttpRequest if available","  if(window.XMLHttpRequest){","    xhr = new XMLHttpRequest();","  }","  //for IE8","  if(isIE() &amp;&amp; (crossDomain === true) &amp;&amp; typeof window.XDomainRequest !== \"undefined\"){","    xhr = new XDomainRequestWrapper(new XDomainRequest());","  }","  return xhr;","}","","ajax.settings = {","  // Default type of request","  type: 'GET',","  // Callback that is executed before request","  beforeSend: empty,","  // Callback that is executed if the request succeeds","  success: empty,","  // Callback that is executed the the server drops error","  error: empty,","  // Callback that is executed on request complete (both: error and success)","  complete: empty,","  // The context for the callbacks","  context: null,","  // Whether to trigger \"global\" Ajax events","  global: true,","  // Transport","  xhr: getXhr,","  // MIME types mapping","  accepts: {","    script: 'text/javascript, application/javascript',","    json: jsonType,","    xml: 'application/xml, text/xml',","    html: htmlType,","    text: 'text/plain'","  },","  // Whether the request is to another domain","  crossDomain: false","}","","function mimeToDataType(mime) {","  return mime &amp;&amp; (mime == htmlType ? 'html' :","    mime == jsonType ? 'json' :","    scriptTypeRE.test(mime) ? 'script' :","    xmlTypeRE.test(mime) &amp;&amp; 'xml') || 'text'","}","","function appendQuery(url, query) {","  return (url + '&amp;' + query).replace(/[&amp;?]{1,2}/, '?')","}","","// serialize payload and append it to the URL for GET requests","function serializeData(options) {","  if (type(options.data) === 'object') {","    if(typeof options.data.append === \"function\"){","      //we are dealing with FormData, do not serialize","      options.formdata = true;","    } else {","      options.data = param(options.data)","    }","  }","  if (options.data &amp;&amp; (!options.type || options.type.toUpperCase() == 'GET'))","    options.url = appendQuery(options.url, options.data)","}","","ajax.get = function (url, success) {","  return ajax({","    url: url,","    success: success","  })","}","","ajax.post = function (url, data, success, dataType) {","  if (type(data) === 'function') dataType = dataType || success, success = data, data = null","  return ajax({","    type: 'POST',","    url: url,","    data: data,","    success: success,","    dataType: dataType","  })","}","","ajax.getJSON = function (url, success) {","  return ajax({","    url: url,","    success: success,","    dataType: 'json'","  })","}","","var escape = encodeURIComponent;","","function serialize(params, obj, traditional, scope) {","  var array = type(obj) === 'array';","  for (var key in obj) {","    var value = obj[key];","","    if (scope) key = traditional ? scope : scope + '[' + (array ? '' : key) + ']'","    // handle data in serializeArray() format","    if (!scope &amp;&amp; array) params.add(value.name, value.value)","    // recurse into nested objects","    else if (traditional ? (type(value) === 'array') : (type(value) === 'object'))","      serialize(params, value, traditional, key)","    else params.add(key, value)","  }","}","","function param(obj, traditional) {","  var params = []","  params.add = function (k, v) {","    this.push(escape(k) + '=' + escape(v))","  }","  serialize(params, obj, traditional)","  return params.join('&amp;').replace('%20', '+')","}","","function extend(target) {","  var slice = Array.prototype.slice;","  slice.call(arguments, 1).forEach(function (source) {","    for (key in source)","      if (source[key] !== undefined)","        target[key] = source[key]","  })","  return target","}"];
 
-function doActCall(opts, success, fail){
+},{"./XDomainRequestWrapper":18,"./events":31,"./logger":38,"type-of":15}],20:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/api_act.js']) {
+  _$jscoverage['modules/api_act.js'] = [];
+  _$jscoverage['modules/api_act.js'][1] = 0;
+  _$jscoverage['modules/api_act.js'][2] = 0;
+  _$jscoverage['modules/api_act.js'][3] = 0;
+  _$jscoverage['modules/api_act.js'][4] = 0;
+  _$jscoverage['modules/api_act.js'][5] = 0;
+  _$jscoverage['modules/api_act.js'][6] = 0;
+  _$jscoverage['modules/api_act.js'][7] = 0;
+  _$jscoverage['modules/api_act.js'][9] = 0;
+  _$jscoverage['modules/api_act.js'][10] = 0;
+  _$jscoverage['modules/api_act.js'][11] = 0;
+  _$jscoverage['modules/api_act.js'][12] = 0;
+  _$jscoverage['modules/api_act.js'][13] = 0;
+  _$jscoverage['modules/api_act.js'][14] = 0;
+  _$jscoverage['modules/api_act.js'][24] = 0;
+  _$jscoverage['modules/api_act.js'][29] = 0;
+  _$jscoverage['modules/api_act.js'][30] = 0;
+  _$jscoverage['modules/api_act.js'][31] = 0;
+  _$jscoverage['modules/api_act.js'][32] = 0;
+  _$jscoverage['modules/api_act.js'][33] = 0;
+  _$jscoverage['modules/api_act.js'][37] = 0;
+  _$jscoverage['modules/api_act.js'][38] = 0;
+  _$jscoverage['modules/api_act.js'][41] = 0;
+  _$jscoverage['modules/api_act.js'][42] = 0;
+  _$jscoverage['modules/api_act.js'][43] = 0;
+  _$jscoverage['modules/api_act.js'][44] = 0;
+  _$jscoverage['modules/api_act.js'][46] = 0;
+}
+_$jscoverage['modules/api_act.js'][1]++;
+var logger = require("./logger");
+_$jscoverage['modules/api_act.js'][2]++;
+var cloud = require("./waitForCloud");
+_$jscoverage['modules/api_act.js'][3]++;
+var fhparams = require("./fhparams");
+_$jscoverage['modules/api_act.js'][4]++;
+var ajax = require("./ajax");
+_$jscoverage['modules/api_act.js'][5]++;
+var JSON = require("JSON");
+_$jscoverage['modules/api_act.js'][6]++;
+var handleError = require("./handleError");
+_$jscoverage['modules/api_act.js'][7]++;
+var appProps = require("./appProps");
+_$jscoverage['modules/api_act.js'][9]++;
+function doActCall(opts, success, fail) {
+  _$jscoverage['modules/api_act.js'][10]++;
   var cloud_host = cloud.getCloudHost();
+  _$jscoverage['modules/api_act.js'][11]++;
   var url = cloud_host.getActUrl(opts.act);
+  _$jscoverage['modules/api_act.js'][12]++;
   var params = opts.req || {};
+  _$jscoverage['modules/api_act.js'][13]++;
   params = fhparams.addFHParams(params);
-  return ajax({
-    "url": url,
-    "tryJSONP": true,
-    "type": "POST",
-    "dataType": "json",
-    "data": JSON.stringify(params),
-    "contentType": "application/json",
-    "timeout": opts.timeout || appProps.timeout,
-    "success": success,
-    "error": function(req, statusText, error){
-      return handleError(fail, req, statusText, error);
-    }
-  })
+  _$jscoverage['modules/api_act.js'][14]++;
+  return ajax({"url": url, "tryJSONP": true, "type": "POST", "dataType": "json", "data": JSON.stringify(params), "contentType": "application/json", "timeout": opts.timeout || appProps.timeout, "success": success, "error": (function (req, statusText, error) {
+  _$jscoverage['modules/api_act.js'][24]++;
+  return handleError(fail, req, statusText, error);
+})});
 }
-
-module.exports = function(opts, success, fail){
+_$jscoverage['modules/api_act.js'][29]++;
+module.exports = (function (opts, success, fail) {
+  _$jscoverage['modules/api_act.js'][30]++;
   logger.debug("act is called");
-  if(!fail){
-    fail = function(msg, error){
-      logger.debug(msg + ":" + JSON.stringify(error));
-    };
+  _$jscoverage['modules/api_act.js'][31]++;
+  if (! fail) {
+    _$jscoverage['modules/api_act.js'][32]++;
+    fail = (function (msg, error) {
+  _$jscoverage['modules/api_act.js'][33]++;
+  logger.debug(msg + ":" + JSON.stringify(error));
+});
   }
-
-  if(!opts.act){
-    return fail('act_no_action', {});
+  _$jscoverage['modules/api_act.js'][37]++;
+  if (! opts.act) {
+    _$jscoverage['modules/api_act.js'][38]++;
+    return fail("act_no_action", {});
   }
+  _$jscoverage['modules/api_act.js'][41]++;
+  cloud.ready((function (err, cloudHost) {
+  _$jscoverage['modules/api_act.js'][42]++;
+  logger.debug("Calling fhact now");
+  _$jscoverage['modules/api_act.js'][43]++;
+  if (err) {
+    _$jscoverage['modules/api_act.js'][44]++;
+    return fail(err.message, err);
+  }
+  else {
+    _$jscoverage['modules/api_act.js'][46]++;
+    doActCall(opts, success, fail);
+  }
+}));
+});
+_$jscoverage['modules/api_act.js'].source = ["var logger =require(\"./logger\");","var cloud = require(\"./waitForCloud\");","var fhparams = require(\"./fhparams\");","var ajax = require(\"./ajax\");","var JSON = require(\"JSON\");","var handleError = require(\"./handleError\");","var appProps = require(\"./appProps\");","","function doActCall(opts, success, fail){","  var cloud_host = cloud.getCloudHost();","  var url = cloud_host.getActUrl(opts.act);","  var params = opts.req || {};","  params = fhparams.addFHParams(params);","  return ajax({","    \"url\": url,","    \"tryJSONP\": true,","    \"type\": \"POST\",","    \"dataType\": \"json\",","    \"data\": JSON.stringify(params),","    \"contentType\": \"application/json\",","    \"timeout\": opts.timeout || appProps.timeout,","    \"success\": success,","    \"error\": function(req, statusText, error){","      return handleError(fail, req, statusText, error);","    }","  })","}","","module.exports = function(opts, success, fail){","  logger.debug(\"act is called\");","  if(!fail){","    fail = function(msg, error){","      logger.debug(msg + \":\" + JSON.stringify(error));","    };","  }","","  if(!opts.act){","    return fail('act_no_action', {});","  }","","  cloud.ready(function(err, cloudHost){","    logger.debug(\"Calling fhact now\");","    if(err){","      return fail(err.message, err);","    } else {","      doActCall(opts, success, fail);","    }","  })","}"];
 
-  cloud.ready(function(err, cloudHost){
-    logger.debug("Calling fhact now");
-    if(err){
-      return fail(err.message, err);
-    } else {
-      doActCall(opts, success, fail);
-    }
-  })
+},{"./ajax":19,"./appProps":26,"./fhparams":32,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],21:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/api_auth.js']) {
+  _$jscoverage['modules/api_auth.js'] = [];
+  _$jscoverage['modules/api_auth.js'][1] = 0;
+  _$jscoverage['modules/api_auth.js'][2] = 0;
+  _$jscoverage['modules/api_auth.js'][3] = 0;
+  _$jscoverage['modules/api_auth.js'][4] = 0;
+  _$jscoverage['modules/api_auth.js'][5] = 0;
+  _$jscoverage['modules/api_auth.js'][6] = 0;
+  _$jscoverage['modules/api_auth.js'][7] = 0;
+  _$jscoverage['modules/api_auth.js'][8] = 0;
+  _$jscoverage['modules/api_auth.js'][9] = 0;
+  _$jscoverage['modules/api_auth.js'][10] = 0;
+  _$jscoverage['modules/api_auth.js'][12] = 0;
+  _$jscoverage['modules/api_auth.js'][13] = 0;
+  _$jscoverage['modules/api_auth.js'][14] = 0;
+  _$jscoverage['modules/api_auth.js'][15] = 0;
+  _$jscoverage['modules/api_auth.js'][18] = 0;
+  _$jscoverage['modules/api_auth.js'][19] = 0;
+  _$jscoverage['modules/api_auth.js'][21] = 0;
+  _$jscoverage['modules/api_auth.js'][22] = 0;
+  _$jscoverage['modules/api_auth.js'][25] = 0;
+  _$jscoverage['modules/api_auth.js'][26] = 0;
+  _$jscoverage['modules/api_auth.js'][27] = 0;
+  _$jscoverage['modules/api_auth.js'][29] = 0;
+  _$jscoverage['modules/api_auth.js'][30] = 0;
+  _$jscoverage['modules/api_auth.js'][31] = 0;
+  _$jscoverage['modules/api_auth.js'][32] = 0;
+  _$jscoverage['modules/api_auth.js'][33] = 0;
+  _$jscoverage['modules/api_auth.js'][34] = 0;
+  _$jscoverage['modules/api_auth.js'][35] = 0;
+  _$jscoverage['modules/api_auth.js'][38] = 0;
+  _$jscoverage['modules/api_auth.js'][39] = 0;
+  _$jscoverage['modules/api_auth.js'][40] = 0;
+  _$jscoverage['modules/api_auth.js'][42] = 0;
+  _$jscoverage['modules/api_auth.js'][43] = 0;
+  _$jscoverage['modules/api_auth.js'][44] = 0;
+  _$jscoverage['modules/api_auth.js'][45] = 0;
+  _$jscoverage['modules/api_auth.js'][46] = 0;
+  _$jscoverage['modules/api_auth.js'][48] = 0;
+  _$jscoverage['modules/api_auth.js'][57] = 0;
+  _$jscoverage['modules/api_auth.js'][60] = 0;
 }
-},{"./ajax":19,"./appProps":26,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],21:[function(require,module,exports){
-var logger =require("./logger");
+_$jscoverage['modules/api_auth.js'][1]++;
+var logger = require("./logger");
+_$jscoverage['modules/api_auth.js'][2]++;
 var cloud = require("./waitForCloud");
+_$jscoverage['modules/api_auth.js'][3]++;
 var fhparams = require("./fhparams");
+_$jscoverage['modules/api_auth.js'][4]++;
 var ajax = require("./ajax");
+_$jscoverage['modules/api_auth.js'][5]++;
 var JSON = require("JSON");
+_$jscoverage['modules/api_auth.js'][6]++;
 var handleError = require("./handleError");
+_$jscoverage['modules/api_auth.js'][7]++;
 var device = require("./device");
+_$jscoverage['modules/api_auth.js'][8]++;
 var constants = require("./constants");
+_$jscoverage['modules/api_auth.js'][9]++;
 var checkAuth = require("./checkAuth");
+_$jscoverage['modules/api_auth.js'][10]++;
 var appProps = require("./appProps");
-
-module.exports = function(opts, success, fail){
-  if(!fail){
-    fail = function(msg, error){
-      logger.debug(msg + ":" + JSON.stringify(error));
-    };
+_$jscoverage['modules/api_auth.js'][12]++;
+module.exports = (function (opts, success, fail) {
+  _$jscoverage['modules/api_auth.js'][13]++;
+  if (! fail) {
+    _$jscoverage['modules/api_auth.js'][14]++;
+    fail = (function (msg, error) {
+  _$jscoverage['modules/api_auth.js'][15]++;
+  logger.debug(msg + ":" + JSON.stringify(error));
+});
   }
-  if (!opts.policyId) {
-    return fail('auth_no_policyId', {});
+  _$jscoverage['modules/api_auth.js'][18]++;
+  if (! opts.policyId) {
+    _$jscoverage['modules/api_auth.js'][19]++;
+    return fail("auth_no_policyId", {});
   }
-  if (!opts.clientToken) {
-    return fail('auth_no_clientToken', {});
+  _$jscoverage['modules/api_auth.js'][21]++;
+  if (! opts.clientToken) {
+    _$jscoverage['modules/api_auth.js'][22]++;
+    return fail("auth_no_clientToken", {});
   }
-
-  cloud.ready(function(err, data){
-    if(err){
-      return fail(err.message, err);
-    } else {
-      var req = {};
-      req.policyId = opts.policyId;
-      req.clientToken = opts.clientToken;
-      if (opts.endRedirectUrl) {
-        req.endRedirectUrl = opts.endRedirectUrl;
-        if (opts.authCallback) {
-          req.endRedirectUrl += (/\?/.test(req.endRedirectUrl) ? "&" : "?") + "_fhAuthCallback=" + opts.authCallback;
-        }
+  _$jscoverage['modules/api_auth.js'][25]++;
+  cloud.ready((function (err, data) {
+  _$jscoverage['modules/api_auth.js'][26]++;
+  if (err) {
+    _$jscoverage['modules/api_auth.js'][27]++;
+    return fail(err.message, err);
+  }
+  else {
+    _$jscoverage['modules/api_auth.js'][29]++;
+    var req = {};
+    _$jscoverage['modules/api_auth.js'][30]++;
+    req.policyId = opts.policyId;
+    _$jscoverage['modules/api_auth.js'][31]++;
+    req.clientToken = opts.clientToken;
+    _$jscoverage['modules/api_auth.js'][32]++;
+    if (opts.endRedirectUrl) {
+      _$jscoverage['modules/api_auth.js'][33]++;
+      req.endRedirectUrl = opts.endRedirectUrl;
+      _$jscoverage['modules/api_auth.js'][34]++;
+      if (opts.authCallback) {
+        _$jscoverage['modules/api_auth.js'][35]++;
+        req.endRedirectUrl += (/\?/.test(req.endRedirectUrl)? "&": "?") + "_fhAuthCallback=" + opts.authCallback;
       }
-      req.params = {};
-      if (opts.params) {
-        req.params = opts.params;
-      }
-      var endurl = opts.endRedirectUrl || "status=complete";
-      req.device = device.getDeviceId();
-      var app_props = appProps.getAppProps();
-      var path = app_props.host + constants.boxprefix + "admin/authpolicy/auth";
-      req = fhparams.addFHParams(req);
-
-      ajax({
-        "url": path,
-        "type": "POST",
-        "tryJSONP": true,
-        "data": JSON.stringify(req),
-        "dataType": "json",
-        "contentType": "application/json",
-        "timeout" : opts.timeout || app_props.timeout,
-        success: function(res) {
-          checkAuth.handleAuthResponse(endurl, res, success, fail);
-        },
-        error: function(req, statusText, error) {
-          handleError(fail, req, statusText, error);
-        }
-      });
     }
-  });
+    _$jscoverage['modules/api_auth.js'][38]++;
+    req.params = {};
+    _$jscoverage['modules/api_auth.js'][39]++;
+    if (opts.params) {
+      _$jscoverage['modules/api_auth.js'][40]++;
+      req.params = opts.params;
+    }
+    _$jscoverage['modules/api_auth.js'][42]++;
+    var endurl = opts.endRedirectUrl || "status=complete";
+    _$jscoverage['modules/api_auth.js'][43]++;
+    req.device = device.getDeviceId();
+    _$jscoverage['modules/api_auth.js'][44]++;
+    var app_props = appProps.getAppProps();
+    _$jscoverage['modules/api_auth.js'][45]++;
+    var path = app_props.host + constants.boxprefix + "admin/authpolicy/auth";
+    _$jscoverage['modules/api_auth.js'][46]++;
+    req = fhparams.addFHParams(req);
+    _$jscoverage['modules/api_auth.js'][48]++;
+    ajax({"url": path, "type": "POST", "tryJSONP": true, "data": JSON.stringify(req), "dataType": "json", "contentType": "application/json", "timeout": opts.timeout || app_props.timeout, success: (function (res) {
+  _$jscoverage['modules/api_auth.js'][57]++;
+  checkAuth.handleAuthResponse(endurl, res, success, fail);
+}), error: (function (req, statusText, error) {
+  _$jscoverage['modules/api_auth.js'][60]++;
+  handleError(fail, req, statusText, error);
+})});
+  }
+}));
+});
+_$jscoverage['modules/api_auth.js'].source = ["var logger =require(\"./logger\");","var cloud = require(\"./waitForCloud\");","var fhparams = require(\"./fhparams\");","var ajax = require(\"./ajax\");","var JSON = require(\"JSON\");","var handleError = require(\"./handleError\");","var device = require(\"./device\");","var constants = require(\"./constants\");","var checkAuth = require(\"./checkAuth\");","var appProps = require(\"./appProps\");","","module.exports = function(opts, success, fail){","  if(!fail){","    fail = function(msg, error){","      logger.debug(msg + \":\" + JSON.stringify(error));","    };","  }","  if (!opts.policyId) {","    return fail('auth_no_policyId', {});","  }","  if (!opts.clientToken) {","    return fail('auth_no_clientToken', {});","  }","","  cloud.ready(function(err, data){","    if(err){","      return fail(err.message, err);","    } else {","      var req = {};","      req.policyId = opts.policyId;","      req.clientToken = opts.clientToken;","      if (opts.endRedirectUrl) {","        req.endRedirectUrl = opts.endRedirectUrl;","        if (opts.authCallback) {","          req.endRedirectUrl += (/\\?/.test(req.endRedirectUrl) ? \"&amp;\" : \"?\") + \"_fhAuthCallback=\" + opts.authCallback;","        }","      }","      req.params = {};","      if (opts.params) {","        req.params = opts.params;","      }","      var endurl = opts.endRedirectUrl || \"status=complete\";","      req.device = device.getDeviceId();","      var app_props = appProps.getAppProps();","      var path = app_props.host + constants.boxprefix + \"admin/authpolicy/auth\";","      req = fhparams.addFHParams(req);","","      ajax({","        \"url\": path,","        \"type\": \"POST\",","        \"tryJSONP\": true,","        \"data\": JSON.stringify(req),","        \"dataType\": \"json\",","        \"contentType\": \"application/json\",","        \"timeout\" : opts.timeout || app_props.timeout,","        success: function(res) {","          checkAuth.handleAuthResponse(endurl, res, success, fail);","        },","        error: function(req, statusText, error) {","          handleError(fail, req, statusText, error);","        }","      });","    }","  });","}"];
+
+},{"./ajax":19,"./appProps":26,"./checkAuth":27,"./constants":28,"./device":30,"./fhparams":32,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],22:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/api_cloud.js']) {
+  _$jscoverage['modules/api_cloud.js'] = [];
+  _$jscoverage['modules/api_cloud.js'][1] = 0;
+  _$jscoverage['modules/api_cloud.js'][2] = 0;
+  _$jscoverage['modules/api_cloud.js'][3] = 0;
+  _$jscoverage['modules/api_cloud.js'][4] = 0;
+  _$jscoverage['modules/api_cloud.js'][5] = 0;
+  _$jscoverage['modules/api_cloud.js'][6] = 0;
+  _$jscoverage['modules/api_cloud.js'][7] = 0;
+  _$jscoverage['modules/api_cloud.js'][9] = 0;
+  _$jscoverage['modules/api_cloud.js'][10] = 0;
+  _$jscoverage['modules/api_cloud.js'][11] = 0;
+  _$jscoverage['modules/api_cloud.js'][12] = 0;
+  _$jscoverage['modules/api_cloud.js'][13] = 0;
+  _$jscoverage['modules/api_cloud.js'][14] = 0;
+  _$jscoverage['modules/api_cloud.js'][23] = 0;
+  _$jscoverage['modules/api_cloud.js'][28] = 0;
+  _$jscoverage['modules/api_cloud.js'][29] = 0;
+  _$jscoverage['modules/api_cloud.js'][30] = 0;
+  _$jscoverage['modules/api_cloud.js'][31] = 0;
+  _$jscoverage['modules/api_cloud.js'][32] = 0;
+  _$jscoverage['modules/api_cloud.js'][36] = 0;
+  _$jscoverage['modules/api_cloud.js'][37] = 0;
+  _$jscoverage['modules/api_cloud.js'][38] = 0;
+  _$jscoverage['modules/api_cloud.js'][39] = 0;
+  _$jscoverage['modules/api_cloud.js'][41] = 0;
 }
-},{"./ajax":19,"./appProps":26,"./checkAuth":27,"./constants":28,"./device":30,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],22:[function(require,module,exports){
-var logger =require("./logger");
+_$jscoverage['modules/api_cloud.js'][1]++;
+var logger = require("./logger");
+_$jscoverage['modules/api_cloud.js'][2]++;
 var cloud = require("./waitForCloud");
+_$jscoverage['modules/api_cloud.js'][3]++;
 var fhparams = require("./fhparams");
+_$jscoverage['modules/api_cloud.js'][4]++;
 var ajax = require("./ajax");
+_$jscoverage['modules/api_cloud.js'][5]++;
 var JSON = require("JSON");
+_$jscoverage['modules/api_cloud.js'][6]++;
 var handleError = require("./handleError");
+_$jscoverage['modules/api_cloud.js'][7]++;
 var appProps = require("./appProps");
-
-function doCloudCall(opts, success, fail){
+_$jscoverage['modules/api_cloud.js'][9]++;
+function doCloudCall(opts, success, fail) {
+  _$jscoverage['modules/api_cloud.js'][10]++;
   var cloud_host = cloud.getCloudHost();
+  _$jscoverage['modules/api_cloud.js'][11]++;
   var url = cloud_host.getCloudUrl(opts.path);
+  _$jscoverage['modules/api_cloud.js'][12]++;
   var params = opts.data || {};
+  _$jscoverage['modules/api_cloud.js'][13]++;
   params = fhparams.addFHParams(params);
-  return ajax({
-    "url": url,
-    "type": opts.method || "POST",
-    "dataType": opts.dataType || "json",
-    "data": JSON.stringify(params),
-    "contentType": opts.contentType || "application/json",
-    "timeout": opts.timeout || appProps.timeout,
-    "success": success,
-    "error": function(req, statusText, error){
-      return handleError(fail, req, statusText, error);
-    }
-  })
+  _$jscoverage['modules/api_cloud.js'][14]++;
+  return ajax({"url": url, "type": opts.method || "POST", "dataType": opts.dataType || "json", "data": JSON.stringify(params), "contentType": opts.contentType || "application/json", "timeout": opts.timeout || appProps.timeout, "success": success, "error": (function (req, statusText, error) {
+  _$jscoverage['modules/api_cloud.js'][23]++;
+  return handleError(fail, req, statusText, error);
+})});
 }
-
-module.exports = function(opts, success, fail){
+_$jscoverage['modules/api_cloud.js'][28]++;
+module.exports = (function (opts, success, fail) {
+  _$jscoverage['modules/api_cloud.js'][29]++;
   logger.debug("cloud is called");
-  if(!fail){
-    fail = function(msg, error){
-      logger.debug(msg + ":" + JSON.stringify(error));
-    };
+  _$jscoverage['modules/api_cloud.js'][30]++;
+  if (! fail) {
+    _$jscoverage['modules/api_cloud.js'][31]++;
+    fail = (function (msg, error) {
+  _$jscoverage['modules/api_cloud.js'][32]++;
+  logger.debug(msg + ":" + JSON.stringify(error));
+});
   }
+  _$jscoverage['modules/api_cloud.js'][36]++;
+  cloud.ready((function (err, cloudHost) {
+  _$jscoverage['modules/api_cloud.js'][37]++;
+  logger.debug("Calling fhact now");
+  _$jscoverage['modules/api_cloud.js'][38]++;
+  if (err) {
+    _$jscoverage['modules/api_cloud.js'][39]++;
+    return fail(err.message, err);
+  }
+  else {
+    _$jscoverage['modules/api_cloud.js'][41]++;
+    doCloudCall(opts, success, fail);
+  }
+}));
+});
+_$jscoverage['modules/api_cloud.js'].source = ["var logger =require(\"./logger\");","var cloud = require(\"./waitForCloud\");","var fhparams = require(\"./fhparams\");","var ajax = require(\"./ajax\");","var JSON = require(\"JSON\");","var handleError = require(\"./handleError\");","var appProps = require(\"./appProps\");","","function doCloudCall(opts, success, fail){","  var cloud_host = cloud.getCloudHost();","  var url = cloud_host.getCloudUrl(opts.path);","  var params = opts.data || {};","  params = fhparams.addFHParams(params);","  return ajax({","    \"url\": url,","    \"type\": opts.method || \"POST\",","    \"dataType\": opts.dataType || \"json\",","    \"data\": JSON.stringify(params),","    \"contentType\": opts.contentType || \"application/json\",","    \"timeout\": opts.timeout || appProps.timeout,","    \"success\": success,","    \"error\": function(req, statusText, error){","      return handleError(fail, req, statusText, error);","    }","  })","}","","module.exports = function(opts, success, fail){","  logger.debug(\"cloud is called\");","  if(!fail){","    fail = function(msg, error){","      logger.debug(msg + \":\" + JSON.stringify(error));","    };","  }","","  cloud.ready(function(err, cloudHost){","    logger.debug(\"Calling fhact now\");","    if(err){","      return fail(err.message, err);","    } else {","      doCloudCall(opts, success, fail);","    }","  })","}"];
 
-  cloud.ready(function(err, cloudHost){
-    logger.debug("Calling fhact now");
-    if(err){
-      return fail(err.message, err);
-    } else {
-      doCloudCall(opts, success, fail);
-    }
-  })
+},{"./ajax":19,"./appProps":26,"./fhparams":32,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],23:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/api_hash.js']) {
+  _$jscoverage['modules/api_hash.js'] = [];
+  _$jscoverage['modules/api_hash.js'][1] = 0;
+  _$jscoverage['modules/api_hash.js'][3] = 0;
+  _$jscoverage['modules/api_hash.js'][4] = 0;
+  _$jscoverage['modules/api_hash.js'][5] = 0;
+  _$jscoverage['modules/api_hash.js'][6] = 0;
+  _$jscoverage['modules/api_hash.js'][8] = 0;
+  _$jscoverage['modules/api_hash.js'][9] = 0;
+  _$jscoverage['modules/api_hash.js'][10] = 0;
 }
-},{"./ajax":19,"./appProps":26,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],23:[function(require,module,exports){
+_$jscoverage['modules/api_hash.js'][1]++;
 var hashImpl = require("./security/hash");
-
-module.exports = function(p, s, f){
+_$jscoverage['modules/api_hash.js'][3]++;
+module.exports = (function (p, s, f) {
+  _$jscoverage['modules/api_hash.js'][4]++;
   var params = {};
-  if(typeof p.algorithm === "undefined"){
+  _$jscoverage['modules/api_hash.js'][5]++;
+  if (typeof p.algorithm === "undefined") {
+    _$jscoverage['modules/api_hash.js'][6]++;
     p.algorithm = "MD5";
   }
+  _$jscoverage['modules/api_hash.js'][8]++;
   params.act = "hash";
+  _$jscoverage['modules/api_hash.js'][9]++;
   params.params = p;
+  _$jscoverage['modules/api_hash.js'][10]++;
   hashImpl(params, s, f);
-};
-},{"./security/hash":45}],24:[function(require,module,exports){
-var logger =require("./logger");
-var cloud = require("./waitForCloud");
-var fhparams = require("./fhparams");
-var ajax = require("./ajax");
-var JSON = require("JSON");
-var handleError = require("./handleError");
-var consts = require("./constants");
-var appProps = require("./appProps");
+});
+_$jscoverage['modules/api_hash.js'].source = ["var hashImpl = require(\"./security/hash\");","","module.exports = function(p, s, f){","  var params = {};","  if(typeof p.algorithm === \"undefined\"){","    p.algorithm = \"MD5\";","  }","  params.act = \"hash\";","  params.params = p;","  hashImpl(params, s, f);","};"];
 
-module.exports = function(opts, success, fail){
-  logger.debug("mbaas is called.");
-  if(!fail){
-    fail = function(msg, error){
-      console.debug(msg + ":" + JSON.stringify(error));
-    };
-  }
-
-  var mbaas = opts.service;
-  var params = opts.params;
-
-  cloud.ready(function(err, cloudHost){
-    logger.debug("Calling mbaas now");
-    if(err){
-      return fail(err.message, err);
-    } else {
-      var cloud_host = cloud.getCloudHost();
-      var url = cloud_host.getMBAASUrl(mbaas);
-      params = fhparams.addFHParams(params);
-      return ajax({
-        "url": url,
-        "tryJSONP": true,
-        "type": "POST",
-        "dataType": "json",
-        "data": JSON.stringify(params),
-        "contentType": "application/json",
-        "timeout": opts.timeout || appProps.timeout,
-        "success": success,
-        "error": function(req, statusText, error){
-          return handleError(fail, req, statusText, error);
-        }
-      });
-    }
-  });
-} 
-
-},{"./ajax":19,"./appProps":26,"./constants":28,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],25:[function(require,module,exports){
-var keygen = require("./security/aes-keygen");
-var aes = require("./security/aes-node");
-var rsa = require("./security/rsa-node");
-var hash = require("./security/hash");
-
-module.exports = function(p, s, f){
-  if (!p.act) {
-    f('bad_act', {}, p);
-    return;
-  }
-  if (!p.params) {
-    f('no_params', {}, p);
-    return;
-  }
-  if (!p.params.algorithm) {
-    f('no_params_algorithm', {}, p);
-    return;
-  }
-  p.params.algorithm = p.params.algorithm.toLowerCase();
-  if(p.act === "hash"){
-    return hash(p, s, f);
-  } else if(p.act === "encrypt"){
-    if(p.params.algorithm === "aes"){
-      return aes.encrypt(p, s, f);
-    } else if(p.params.algorithm === "rsa"){
-      return rsa.encrypt(p, s, f);
-    } else {
-      return f('encrypt_bad_algorithm:' + p.params.algorithm, {}, p);
-    }
-  } else if(p.act === "decrypt"){
-    if(p.params.algorithm === "aes"){
-      return aes.decrypt(p, s, f);
-    } else {
-      return f('decrypt_bad_algorithm:' + p.params.algorithm, {}, p);
-    }
-  } else if(p.act === "keygen"){
-    if(p.params.algorithm === "aes"){
-      return keygen(p, s, f);
-    } else {
-      return f('keygen_bad_algorithm:' + p.params.algorithm, {}, p);
-    }
-  }
+},{"./security/hash":44}],24:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/api_mbaas.js']) {
+  _$jscoverage['modules/api_mbaas.js'] = [];
+  _$jscoverage['modules/api_mbaas.js'][1] = 0;
+  _$jscoverage['modules/api_mbaas.js'][2] = 0;
+  _$jscoverage['modules/api_mbaas.js'][3] = 0;
+  _$jscoverage['modules/api_mbaas.js'][4] = 0;
+  _$jscoverage['modules/api_mbaas.js'][5] = 0;
+  _$jscoverage['modules/api_mbaas.js'][6] = 0;
+  _$jscoverage['modules/api_mbaas.js'][7] = 0;
+  _$jscoverage['modules/api_mbaas.js'][8] = 0;
+  _$jscoverage['modules/api_mbaas.js'][10] = 0;
+  _$jscoverage['modules/api_mbaas.js'][11] = 0;
+  _$jscoverage['modules/api_mbaas.js'][12] = 0;
+  _$jscoverage['modules/api_mbaas.js'][13] = 0;
+  _$jscoverage['modules/api_mbaas.js'][14] = 0;
+  _$jscoverage['modules/api_mbaas.js'][18] = 0;
+  _$jscoverage['modules/api_mbaas.js'][19] = 0;
+  _$jscoverage['modules/api_mbaas.js'][21] = 0;
+  _$jscoverage['modules/api_mbaas.js'][22] = 0;
+  _$jscoverage['modules/api_mbaas.js'][23] = 0;
+  _$jscoverage['modules/api_mbaas.js'][24] = 0;
+  _$jscoverage['modules/api_mbaas.js'][26] = 0;
+  _$jscoverage['modules/api_mbaas.js'][27] = 0;
+  _$jscoverage['modules/api_mbaas.js'][28] = 0;
+  _$jscoverage['modules/api_mbaas.js'][29] = 0;
+  _$jscoverage['modules/api_mbaas.js'][39] = 0;
 }
-},{"./security/aes-keygen":43,"./security/aes-node":44,"./security/hash":45,"./security/rsa-node":46}],26:[function(require,module,exports){
-var consts = require("./constants");
-var ajax = require("./ajax");
+_$jscoverage['modules/api_mbaas.js'][1]++;
 var logger = require("./logger");
+_$jscoverage['modules/api_mbaas.js'][2]++;
+var cloud = require("./waitForCloud");
+_$jscoverage['modules/api_mbaas.js'][3]++;
+var fhparams = require("./fhparams");
+_$jscoverage['modules/api_mbaas.js'][4]++;
+var ajax = require("./ajax");
+_$jscoverage['modules/api_mbaas.js'][5]++;
+var JSON = require("JSON");
+_$jscoverage['modules/api_mbaas.js'][6]++;
+var handleError = require("./handleError");
+_$jscoverage['modules/api_mbaas.js'][7]++;
+var consts = require("./constants");
+_$jscoverage['modules/api_mbaas.js'][8]++;
+var appProps = require("./appProps");
+_$jscoverage['modules/api_mbaas.js'][10]++;
+module.exports = (function (opts, success, fail) {
+  _$jscoverage['modules/api_mbaas.js'][11]++;
+  logger.debug("mbaas is called.");
+  _$jscoverage['modules/api_mbaas.js'][12]++;
+  if (! fail) {
+    _$jscoverage['modules/api_mbaas.js'][13]++;
+    fail = (function (msg, error) {
+  _$jscoverage['modules/api_mbaas.js'][14]++;
+  console.debug(msg + ":" + JSON.stringify(error));
+});
+  }
+  _$jscoverage['modules/api_mbaas.js'][18]++;
+  var mbaas = opts.service;
+  _$jscoverage['modules/api_mbaas.js'][19]++;
+  var params = opts.params;
+  _$jscoverage['modules/api_mbaas.js'][21]++;
+  cloud.ready((function (err, cloudHost) {
+  _$jscoverage['modules/api_mbaas.js'][22]++;
+  logger.debug("Calling mbaas now");
+  _$jscoverage['modules/api_mbaas.js'][23]++;
+  if (err) {
+    _$jscoverage['modules/api_mbaas.js'][24]++;
+    return fail(err.message, err);
+  }
+  else {
+    _$jscoverage['modules/api_mbaas.js'][26]++;
+    var cloud_host = cloud.getCloudHost();
+    _$jscoverage['modules/api_mbaas.js'][27]++;
+    var url = cloud_host.getMBAASUrl(mbaas);
+    _$jscoverage['modules/api_mbaas.js'][28]++;
+    params = fhparams.addFHParams(params);
+    _$jscoverage['modules/api_mbaas.js'][29]++;
+    return ajax({"url": url, "tryJSONP": true, "type": "POST", "dataType": "json", "data": JSON.stringify(params), "contentType": "application/json", "timeout": opts.timeout || appProps.timeout, "success": success, "error": (function (req, statusText, error) {
+  _$jscoverage['modules/api_mbaas.js'][39]++;
+  return handleError(fail, req, statusText, error);
+})});
+  }
+}));
+});
+_$jscoverage['modules/api_mbaas.js'].source = ["var logger =require(\"./logger\");","var cloud = require(\"./waitForCloud\");","var fhparams = require(\"./fhparams\");","var ajax = require(\"./ajax\");","var JSON = require(\"JSON\");","var handleError = require(\"./handleError\");","var consts = require(\"./constants\");","var appProps = require(\"./appProps\");","","module.exports = function(opts, success, fail){","  logger.debug(\"mbaas is called.\");","  if(!fail){","    fail = function(msg, error){","      console.debug(msg + \":\" + JSON.stringify(error));","    };","  }","","  var mbaas = opts.service;","  var params = opts.params;","","  cloud.ready(function(err, cloudHost){","    logger.debug(\"Calling mbaas now\");","    if(err){","      return fail(err.message, err);","    } else {","      var cloud_host = cloud.getCloudHost();","      var url = cloud_host.getMBAASUrl(mbaas);","      params = fhparams.addFHParams(params);","      return ajax({","        \"url\": url,","        \"tryJSONP\": true,","        \"type\": \"POST\",","        \"dataType\": \"json\",","        \"data\": JSON.stringify(params),","        \"contentType\": \"application/json\",","        \"timeout\": opts.timeout || appProps.timeout,","        \"success\": success,","        \"error\": function(req, statusText, error){","          return handleError(fail, req, statusText, error);","        }","      });","    }","  });","} "];
+
+},{"./ajax":19,"./appProps":26,"./constants":28,"./fhparams":32,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],25:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/api_sec.js']) {
+  _$jscoverage['modules/api_sec.js'] = [];
+  _$jscoverage['modules/api_sec.js'][1] = 0;
+  _$jscoverage['modules/api_sec.js'][2] = 0;
+  _$jscoverage['modules/api_sec.js'][3] = 0;
+  _$jscoverage['modules/api_sec.js'][4] = 0;
+  _$jscoverage['modules/api_sec.js'][6] = 0;
+  _$jscoverage['modules/api_sec.js'][7] = 0;
+  _$jscoverage['modules/api_sec.js'][8] = 0;
+  _$jscoverage['modules/api_sec.js'][9] = 0;
+  _$jscoverage['modules/api_sec.js'][11] = 0;
+  _$jscoverage['modules/api_sec.js'][12] = 0;
+  _$jscoverage['modules/api_sec.js'][13] = 0;
+  _$jscoverage['modules/api_sec.js'][15] = 0;
+  _$jscoverage['modules/api_sec.js'][16] = 0;
+  _$jscoverage['modules/api_sec.js'][17] = 0;
+  _$jscoverage['modules/api_sec.js'][19] = 0;
+  _$jscoverage['modules/api_sec.js'][20] = 0;
+  _$jscoverage['modules/api_sec.js'][21] = 0;
+  _$jscoverage['modules/api_sec.js'][22] = 0;
+  _$jscoverage['modules/api_sec.js'][23] = 0;
+  _$jscoverage['modules/api_sec.js'][24] = 0;
+  _$jscoverage['modules/api_sec.js'][25] = 0;
+  _$jscoverage['modules/api_sec.js'][26] = 0;
+  _$jscoverage['modules/api_sec.js'][28] = 0;
+  _$jscoverage['modules/api_sec.js'][30] = 0;
+  _$jscoverage['modules/api_sec.js'][31] = 0;
+  _$jscoverage['modules/api_sec.js'][32] = 0;
+  _$jscoverage['modules/api_sec.js'][34] = 0;
+  _$jscoverage['modules/api_sec.js'][36] = 0;
+  _$jscoverage['modules/api_sec.js'][37] = 0;
+  _$jscoverage['modules/api_sec.js'][38] = 0;
+  _$jscoverage['modules/api_sec.js'][40] = 0;
+}
+_$jscoverage['modules/api_sec.js'][1]++;
+var keygen = require("./security/aes-keygen");
+_$jscoverage['modules/api_sec.js'][2]++;
+var aes = require("./security/aes-node");
+_$jscoverage['modules/api_sec.js'][3]++;
+var rsa = require("./security/rsa-node");
+_$jscoverage['modules/api_sec.js'][4]++;
+var hash = require("./security/hash");
+_$jscoverage['modules/api_sec.js'][6]++;
+module.exports = (function (p, s, f) {
+  _$jscoverage['modules/api_sec.js'][7]++;
+  if (! p.act) {
+    _$jscoverage['modules/api_sec.js'][8]++;
+    f("bad_act", {}, p);
+    _$jscoverage['modules/api_sec.js'][9]++;
+    return;
+  }
+  _$jscoverage['modules/api_sec.js'][11]++;
+  if (! p.params) {
+    _$jscoverage['modules/api_sec.js'][12]++;
+    f("no_params", {}, p);
+    _$jscoverage['modules/api_sec.js'][13]++;
+    return;
+  }
+  _$jscoverage['modules/api_sec.js'][15]++;
+  if (! p.params.algorithm) {
+    _$jscoverage['modules/api_sec.js'][16]++;
+    f("no_params_algorithm", {}, p);
+    _$jscoverage['modules/api_sec.js'][17]++;
+    return;
+  }
+  _$jscoverage['modules/api_sec.js'][19]++;
+  p.params.algorithm = p.params.algorithm.toLowerCase();
+  _$jscoverage['modules/api_sec.js'][20]++;
+  if (p.act === "hash") {
+    _$jscoverage['modules/api_sec.js'][21]++;
+    return hash(p, s, f);
+  }
+  else {
+    _$jscoverage['modules/api_sec.js'][22]++;
+    if (p.act === "encrypt") {
+      _$jscoverage['modules/api_sec.js'][23]++;
+      if (p.params.algorithm === "aes") {
+        _$jscoverage['modules/api_sec.js'][24]++;
+        return aes.encrypt(p, s, f);
+      }
+      else {
+        _$jscoverage['modules/api_sec.js'][25]++;
+        if (p.params.algorithm === "rsa") {
+          _$jscoverage['modules/api_sec.js'][26]++;
+          return rsa.encrypt(p, s, f);
+        }
+        else {
+          _$jscoverage['modules/api_sec.js'][28]++;
+          return f("encrypt_bad_algorithm:" + p.params.algorithm, {}, p);
+        }
+      }
+    }
+    else {
+      _$jscoverage['modules/api_sec.js'][30]++;
+      if (p.act === "decrypt") {
+        _$jscoverage['modules/api_sec.js'][31]++;
+        if (p.params.algorithm === "aes") {
+          _$jscoverage['modules/api_sec.js'][32]++;
+          return aes.decrypt(p, s, f);
+        }
+        else {
+          _$jscoverage['modules/api_sec.js'][34]++;
+          return f("decrypt_bad_algorithm:" + p.params.algorithm, {}, p);
+        }
+      }
+      else {
+        _$jscoverage['modules/api_sec.js'][36]++;
+        if (p.act === "keygen") {
+          _$jscoverage['modules/api_sec.js'][37]++;
+          if (p.params.algorithm === "aes") {
+            _$jscoverage['modules/api_sec.js'][38]++;
+            return keygen(p, s, f);
+          }
+          else {
+            _$jscoverage['modules/api_sec.js'][40]++;
+            return f("keygen_bad_algorithm:" + p.params.algorithm, {}, p);
+          }
+        }
+      }
+    }
+  }
+});
+_$jscoverage['modules/api_sec.js'].source = ["var keygen = require(\"./security/aes-keygen\");","var aes = require(\"./security/aes-node\");","var rsa = require(\"./security/rsa-node\");","var hash = require(\"./security/hash\");","","module.exports = function(p, s, f){","  if (!p.act) {","    f('bad_act', {}, p);","    return;","  }","  if (!p.params) {","    f('no_params', {}, p);","    return;","  }","  if (!p.params.algorithm) {","    f('no_params_algorithm', {}, p);","    return;","  }","  p.params.algorithm = p.params.algorithm.toLowerCase();","  if(p.act === \"hash\"){","    return hash(p, s, f);","  } else if(p.act === \"encrypt\"){","    if(p.params.algorithm === \"aes\"){","      return aes.encrypt(p, s, f);","    } else if(p.params.algorithm === \"rsa\"){","      return rsa.encrypt(p, s, f);","    } else {","      return f('encrypt_bad_algorithm:' + p.params.algorithm, {}, p);","    }","  } else if(p.act === \"decrypt\"){","    if(p.params.algorithm === \"aes\"){","      return aes.decrypt(p, s, f);","    } else {","      return f('decrypt_bad_algorithm:' + p.params.algorithm, {}, p);","    }","  } else if(p.act === \"keygen\"){","    if(p.params.algorithm === \"aes\"){","      return keygen(p, s, f);","    } else {","      return f('keygen_bad_algorithm:' + p.params.algorithm, {}, p);","    }","  }","}"];
+
+},{"./security/aes-keygen":42,"./security/aes-node":43,"./security/hash":44,"./security/rsa-node":45}],26:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/appProps.js']) {
+  _$jscoverage['modules/appProps.js'] = [];
+  _$jscoverage['modules/appProps.js'][1] = 0;
+  _$jscoverage['modules/appProps.js'][2] = 0;
+  _$jscoverage['modules/appProps.js'][3] = 0;
+  _$jscoverage['modules/appProps.js'][4] = 0;
+  _$jscoverage['modules/appProps.js'][6] = 0;
+  _$jscoverage['modules/appProps.js'][8] = 0;
+  _$jscoverage['modules/appProps.js'][9] = 0;
+  _$jscoverage['modules/appProps.js'][10] = 0;
+  _$jscoverage['modules/appProps.js'][11] = 0;
+  _$jscoverage['modules/appProps.js'][14] = 0;
+  _$jscoverage['modules/appProps.js'][15] = 0;
+  _$jscoverage['modules/appProps.js'][16] = 0;
+  _$jscoverage['modules/appProps.js'][17] = 0;
+  _$jscoverage['modules/appProps.js'][18] = 0;
+  _$jscoverage['modules/appProps.js'][19] = 0;
+  _$jscoverage['modules/appProps.js'][20] = 0;
+  _$jscoverage['modules/appProps.js'][21] = 0;
+  _$jscoverage['modules/appProps.js'][22] = 0;
+  _$jscoverage['modules/appProps.js'][23] = 0;
+  _$jscoverage['modules/appProps.js'][26] = 0;
+  _$jscoverage['modules/appProps.js'][27] = 0;
+  _$jscoverage['modules/appProps.js'][31] = 0;
+  _$jscoverage['modules/appProps.js'][33] = 0;
+  _$jscoverage['modules/appProps.js'][35] = 0;
+  _$jscoverage['modules/appProps.js'][36] = 0;
+  _$jscoverage['modules/appProps.js'][37] = 0;
+  _$jscoverage['modules/appProps.js'][39] = 0;
+  _$jscoverage['modules/appProps.js'][41] = 0;
+  _$jscoverage['modules/appProps.js'][43] = 0;
+  _$jscoverage['modules/appProps.js'][48] = 0;
+  _$jscoverage['modules/appProps.js'][49] = 0;
+  _$jscoverage['modules/appProps.js'][50] = 0;
+  _$jscoverage['modules/appProps.js'][52] = 0;
+  _$jscoverage['modules/appProps.js'][53] = 0;
+  _$jscoverage['modules/appProps.js'][58] = 0;
+  _$jscoverage['modules/appProps.js'][59] = 0;
+  _$jscoverage['modules/appProps.js'][62] = 0;
+  _$jscoverage['modules/appProps.js'][63] = 0;
+  _$jscoverage['modules/appProps.js'][66] = 0;
+}
+_$jscoverage['modules/appProps.js'][1]++;
+var consts = require("./constants");
+_$jscoverage['modules/appProps.js'][2]++;
+var ajax = require("./ajax");
+_$jscoverage['modules/appProps.js'][3]++;
+var logger = require("./logger");
+_$jscoverage['modules/appProps.js'][4]++;
 var qs = require("./queryMap");
-
+_$jscoverage['modules/appProps.js'][6]++;
 var app_props = null;
-
-var load = function(cb) {
+_$jscoverage['modules/appProps.js'][8]++;
+var load = (function (cb) {
+  _$jscoverage['modules/appProps.js'][9]++;
   var doc_url = document.location.href;
+  _$jscoverage['modules/appProps.js'][10]++;
   var url_params = qs(doc_url);
-  var local = (typeof url_params.url !== 'undefined');
-
-  // For local environments, no init needed
+  _$jscoverage['modules/appProps.js'][11]++;
+  var local = (typeof url_params.url !== "undefined");
+  _$jscoverage['modules/appProps.js'][14]++;
   if (local) {
+    _$jscoverage['modules/appProps.js'][15]++;
     app_props = {};
+    _$jscoverage['modules/appProps.js'][16]++;
     app_props.local = true;
+    _$jscoverage['modules/appProps.js'][17]++;
     app_props.host = url_params.url;
+    _$jscoverage['modules/appProps.js'][18]++;
     app_props.appid = "000000000000000000000000";
+    _$jscoverage['modules/appProps.js'][19]++;
     app_props.appkey = "0000000000000000000000000000000000000000";
+    _$jscoverage['modules/appProps.js'][20]++;
     app_props.projectid = "000000000000000000000000";
+    _$jscoverage['modules/appProps.js'][21]++;
     app_props.connectiontag = "0.0.1";
+    _$jscoverage['modules/appProps.js'][22]++;
     app_props.loglevel = url_params.loglevel;
+    _$jscoverage['modules/appProps.js'][23]++;
     return cb(null, app_props);
   }
-
+  _$jscoverage['modules/appProps.js'][26]++;
   var config_url = url_params.fhconfig || consts.config_js;
-  ajax({
-    url: config_url,
-    dataType: "json",
-    success: function(data) {
-      logger.debug("fhconfig = " + JSON.stringify(data));
-      //when load the config file on device, because file:// protocol is used, it will never call fail call back. The success callback will be called but the data value will be null.
-      if (null == data) {
-        //fh v2 only
-        if(window.fh_app_props){
-          app_props = window.fh_app_props;
-          return cb(null, window.fh_app_props);
-        }
-        return cb(new Error("app_config_missing"));
-      } else {
-        app_props = data;
-
-        cb(null, app_props);
-      }
-    },
-    error: function(req, statusText, error) {
-      //fh v2 only
-      if(window.fh_app_props){
-        app_props = window.fh_app_props;
-        return cb(null, window.fh_app_props);
-      }
-      logger.error(consts.config_js + " Not Found");
-      cb(new Error("app_config_missing"));
+  _$jscoverage['modules/appProps.js'][27]++;
+  ajax({url: config_url, dataType: "json", success: (function (data) {
+  _$jscoverage['modules/appProps.js'][31]++;
+  logger.debug("fhconfig = " + JSON.stringify(data));
+  _$jscoverage['modules/appProps.js'][33]++;
+  if (null == data) {
+    _$jscoverage['modules/appProps.js'][35]++;
+    if (window.fh_app_props) {
+      _$jscoverage['modules/appProps.js'][36]++;
+      app_props = window.fh_app_props;
+      _$jscoverage['modules/appProps.js'][37]++;
+      return cb(null, window.fh_app_props);
     }
-  });
-};
-
-var setAppProps = function(props) {
+    _$jscoverage['modules/appProps.js'][39]++;
+    return cb(new Error("app_config_missing"));
+  }
+  else {
+    _$jscoverage['modules/appProps.js'][41]++;
+    app_props = data;
+    _$jscoverage['modules/appProps.js'][43]++;
+    cb(null, app_props);
+  }
+}), error: (function (req, statusText, error) {
+  _$jscoverage['modules/appProps.js'][48]++;
+  if (window.fh_app_props) {
+    _$jscoverage['modules/appProps.js'][49]++;
+    app_props = window.fh_app_props;
+    _$jscoverage['modules/appProps.js'][50]++;
+    return cb(null, window.fh_app_props);
+  }
+  _$jscoverage['modules/appProps.js'][52]++;
+  logger.error(consts.config_js + " Not Found");
+  _$jscoverage['modules/appProps.js'][53]++;
+  cb(new Error("app_config_missing"));
+})});
+});
+_$jscoverage['modules/appProps.js'][58]++;
+var setAppProps = (function (props) {
+  _$jscoverage['modules/appProps.js'][59]++;
   app_props = props;
-};
-
-var getAppProps = function() {
+});
+_$jscoverage['modules/appProps.js'][62]++;
+var getAppProps = (function () {
+  _$jscoverage['modules/appProps.js'][63]++;
   return app_props;
-};
+});
+_$jscoverage['modules/appProps.js'][66]++;
+module.exports = {load: load, getAppProps: getAppProps, setAppProps: setAppProps};
+_$jscoverage['modules/appProps.js'].source = ["var consts = require(\"./constants\");","var ajax = require(\"./ajax\");","var logger = require(\"./logger\");","var qs = require(\"./queryMap\");","","var app_props = null;","","var load = function(cb) {","  var doc_url = document.location.href;","  var url_params = qs(doc_url);","  var local = (typeof url_params.url !== 'undefined');","","  // For local environments, no init needed","  if (local) {","    app_props = {};","    app_props.local = true;","    app_props.host = url_params.url;","    app_props.appid = \"000000000000000000000000\";","    app_props.appkey = \"0000000000000000000000000000000000000000\";","    app_props.projectid = \"000000000000000000000000\";","    app_props.connectiontag = \"0.0.1\";","    app_props.loglevel = url_params.loglevel;","    return cb(null, app_props);","  }","","  var config_url = url_params.fhconfig || consts.config_js;","  ajax({","    url: config_url,","    dataType: \"json\",","    success: function(data) {","      logger.debug(\"fhconfig = \" + JSON.stringify(data));","      //when load the config file on device, because file:// protocol is used, it will never call fail call back. The success callback will be called but the data value will be null.","      if (null == data) {","        //fh v2 only","        if(window.fh_app_props){","          app_props = window.fh_app_props;","          return cb(null, window.fh_app_props);","        }","        return cb(new Error(\"app_config_missing\"));","      } else {","        app_props = data;","","        cb(null, app_props);","      }","    },","    error: function(req, statusText, error) {","      //fh v2 only","      if(window.fh_app_props){","        app_props = window.fh_app_props;","        return cb(null, window.fh_app_props);","      }","      logger.error(consts.config_js + \" Not Found\");","      cb(new Error(\"app_config_missing\"));","    }","  });","};","","var setAppProps = function(props) {","  app_props = props;","};","","var getAppProps = function() {","  return app_props;","};","","module.exports = {","  load: load,","  getAppProps: getAppProps,","  setAppProps: setAppProps","};"];
 
-module.exports = {
-  load: load,
-  getAppProps: getAppProps,
-  setAppProps: setAppProps
-};
-},{"./ajax":19,"./constants":28,"./logger":39,"./queryMap":41}],27:[function(require,module,exports){
+},{"./ajax":19,"./constants":28,"./logger":38,"./queryMap":40}],27:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/checkAuth.js']) {
+  _$jscoverage['modules/checkAuth.js'] = [];
+  _$jscoverage['modules/checkAuth.js'][1] = 0;
+  _$jscoverage['modules/checkAuth.js'][2] = 0;
+  _$jscoverage['modules/checkAuth.js'][3] = 0;
+  _$jscoverage['modules/checkAuth.js'][4] = 0;
+  _$jscoverage['modules/checkAuth.js'][6] = 0;
+  _$jscoverage['modules/checkAuth.js'][7] = 0;
+  _$jscoverage['modules/checkAuth.js'][8] = 0;
+  _$jscoverage['modules/checkAuth.js'][9] = 0;
+  _$jscoverage['modules/checkAuth.js'][10] = 0;
+  _$jscoverage['modules/checkAuth.js'][11] = 0;
+  _$jscoverage['modules/checkAuth.js'][12] = 0;
+  _$jscoverage['modules/checkAuth.js'][13] = 0;
+  _$jscoverage['modules/checkAuth.js'][14] = 0;
+  _$jscoverage['modules/checkAuth.js'][15] = 0;
+  _$jscoverage['modules/checkAuth.js'][17] = 0;
+  _$jscoverage['modules/checkAuth.js'][24] = 0;
+  _$jscoverage['modules/checkAuth.js'][25] = 0;
+  _$jscoverage['modules/checkAuth.js'][27] = 0;
+  _$jscoverage['modules/checkAuth.js'][28] = 0;
+  _$jscoverage['modules/checkAuth.js'][29] = 0;
+  _$jscoverage['modules/checkAuth.js'][31] = 0;
+  _$jscoverage['modules/checkAuth.js'][35] = 0;
+  _$jscoverage['modules/checkAuth.js'][36] = 0;
+  _$jscoverage['modules/checkAuth.js'][37] = 0;
+  _$jscoverage['modules/checkAuth.js'][38] = 0;
+  _$jscoverage['modules/checkAuth.js'][39] = 0;
+  _$jscoverage['modules/checkAuth.js'][40] = 0;
+  _$jscoverage['modules/checkAuth.js'][42] = 0;
+  _$jscoverage['modules/checkAuth.js'][43] = 0;
+  _$jscoverage['modules/checkAuth.js'][44] = 0;
+  _$jscoverage['modules/checkAuth.js'][45] = 0;
+  _$jscoverage['modules/checkAuth.js'][46] = 0;
+  _$jscoverage['modules/checkAuth.js'][48] = 0;
+  _$jscoverage['modules/checkAuth.js'][49] = 0;
+  _$jscoverage['modules/checkAuth.js'][53] = 0;
+  _$jscoverage['modules/checkAuth.js'][54] = 0;
+  _$jscoverage['modules/checkAuth.js'][59] = 0;
+  _$jscoverage['modules/checkAuth.js'][60] = 0;
+  _$jscoverage['modules/checkAuth.js'][63] = 0;
+  _$jscoverage['modules/checkAuth.js'][64] = 0;
+  _$jscoverage['modules/checkAuth.js'][65] = 0;
+  _$jscoverage['modules/checkAuth.js'][66] = 0;
+  _$jscoverage['modules/checkAuth.js'][69] = 0;
+  _$jscoverage['modules/checkAuth.js'][70] = 0;
+  _$jscoverage['modules/checkAuth.js'][71] = 0;
+  _$jscoverage['modules/checkAuth.js'][72] = 0;
+  _$jscoverage['modules/checkAuth.js'][75] = 0;
+  _$jscoverage['modules/checkAuth.js'][76] = 0;
+  _$jscoverage['modules/checkAuth.js'][80] = 0;
+  _$jscoverage['modules/checkAuth.js'][83] = 0;
+  _$jscoverage['modules/checkAuth.js'][86] = 0;
+  _$jscoverage['modules/checkAuth.js'][87] = 0;
+  _$jscoverage['modules/checkAuth.js'][94] = 0;
+  _$jscoverage['modules/checkAuth.js'][95] = 0;
+  _$jscoverage['modules/checkAuth.js'][96] = 0;
+  _$jscoverage['modules/checkAuth.js'][99] = 0;
+  _$jscoverage['modules/checkAuth.js'][100] = 0;
+  _$jscoverage['modules/checkAuth.js'][104] = 0;
+}
+_$jscoverage['modules/checkAuth.js'][1]++;
 var logger = require("./logger");
+_$jscoverage['modules/checkAuth.js'][2]++;
 var queryMap = require("./queryMap");
+_$jscoverage['modules/checkAuth.js'][3]++;
 var JSON = require("JSON");
+_$jscoverage['modules/checkAuth.js'][4]++;
 var fhparams = require("./fhparams");
-
-var checkAuth = function(url) {
+_$jscoverage['modules/checkAuth.js'][6]++;
+var checkAuth = (function (url) {
+  _$jscoverage['modules/checkAuth.js'][7]++;
   if (/\_fhAuthCallback/.test(url)) {
+    _$jscoverage['modules/checkAuth.js'][8]++;
     var qmap = queryMap(url);
+    _$jscoverage['modules/checkAuth.js'][9]++;
     if (qmap) {
-      var fhCallback = qmap["_fhAuthCallback"];
+      _$jscoverage['modules/checkAuth.js'][10]++;
+      var fhCallback = qmap._fhAuthCallback;
+      _$jscoverage['modules/checkAuth.js'][11]++;
       if (fhCallback) {
-        if (qmap['result'] && qmap['result'] === 'success') {
-          var sucRes = {'sessionToken': qmap['fh_auth_session'], 'authResponse' : JSON.parse(decodeURIComponent(decodeURIComponent(qmap['authResponse'])))};
-          fhparams.setAuthSessionToken(qmap['fh_auth_session']);
+        _$jscoverage['modules/checkAuth.js'][12]++;
+        if (qmap.result && qmap.result === "success") {
+          _$jscoverage['modules/checkAuth.js'][13]++;
+          var sucRes = {"sessionToken": qmap.fh_auth_session, "authResponse": JSON.parse(decodeURIComponent(decodeURIComponent(qmap.authResponse)))};
+          _$jscoverage['modules/checkAuth.js'][14]++;
+          fhparams.setAuthSessionToken(qmap.fh_auth_session);
+          _$jscoverage['modules/checkAuth.js'][15]++;
           window[fhCallback](null, sucRes);
-        } else {
-          window[fhCallback]({'message':qmap['message']});
+        }
+        else {
+          _$jscoverage['modules/checkAuth.js'][17]++;
+          window[fhCallback]({"message": qmap.message});
         }
       }
     }
   }
-};
-
-var handleAuthResponse = function(endurl, res, success, fail){
-  if(res.status && res.status === "ok"){
-
-    var onComplete = function(res){
-      if(res.sessionToken){
-        fhparams.setAuthSessionToken(res.sessionToken);
-      }
-      success(res);
-    };
-    //for OAuth, a url will be returned which means the user should be directed to that url to authenticate.
-    //we try to use the ChildBrower plugin if it can be found. Otherwise send the url to the success function to allow developer to handle it.
-    if(res.url){
+});
+_$jscoverage['modules/checkAuth.js'][24]++;
+var handleAuthResponse = (function (endurl, res, success, fail) {
+  _$jscoverage['modules/checkAuth.js'][25]++;
+  if (res.status && res.status === "ok") {
+    _$jscoverage['modules/checkAuth.js'][27]++;
+    var onComplete = (function (res) {
+  _$jscoverage['modules/checkAuth.js'][28]++;
+  if (res.sessionToken) {
+    _$jscoverage['modules/checkAuth.js'][29]++;
+    fhparams.setAuthSessionToken(res.sessionToken);
+  }
+  _$jscoverage['modules/checkAuth.js'][31]++;
+  success(res);
+});
+    _$jscoverage['modules/checkAuth.js'][35]++;
+    if (res.url) {
+      _$jscoverage['modules/checkAuth.js'][36]++;
       var inappBrowserWindow = null;
-      var locationChange = function(new_url){
-        if(new_url.indexOf(endurl) > -1){
-          if(inappBrowserWindow){
-            inappBrowserWindow.close();
-          }
-          var qmap = queryMap(new_url);
-          if(qmap) {
-            if(qmap['result'] && qmap['result'] === 'success'){
-              var sucRes = {'sessionToken': qmap['fh_auth_session'], 'authResponse' : JSON.parse(decodeURIComponent(decodeURIComponent(qmap['authResponse'])))};
-              onComplete(sucRes);
-            } else {
-              if(fail){
-                fail("auth_failed", {'message':qmap['message']});
-              }
-            }
-          } else {
-            if(fail){
-                fail("auth_failed", {'message':qmap['message']});
-            }
-          }
+      _$jscoverage['modules/checkAuth.js'][37]++;
+      var locationChange = (function (new_url) {
+  _$jscoverage['modules/checkAuth.js'][38]++;
+  if (new_url.indexOf(endurl) > -1) {
+    _$jscoverage['modules/checkAuth.js'][39]++;
+    if (inappBrowserWindow) {
+      _$jscoverage['modules/checkAuth.js'][40]++;
+      inappBrowserWindow.close();
+    }
+    _$jscoverage['modules/checkAuth.js'][42]++;
+    var qmap = queryMap(new_url);
+    _$jscoverage['modules/checkAuth.js'][43]++;
+    if (qmap) {
+      _$jscoverage['modules/checkAuth.js'][44]++;
+      if (qmap.result && qmap.result === "success") {
+        _$jscoverage['modules/checkAuth.js'][45]++;
+        var sucRes = {"sessionToken": qmap.fh_auth_session, "authResponse": JSON.parse(decodeURIComponent(decodeURIComponent(qmap.authResponse)))};
+        _$jscoverage['modules/checkAuth.js'][46]++;
+        onComplete(sucRes);
+      }
+      else {
+        _$jscoverage['modules/checkAuth.js'][48]++;
+        if (fail) {
+          _$jscoverage['modules/checkAuth.js'][49]++;
+          fail("auth_failed", {"message": qmap.message});
         }
-      };
-      if(window.PhoneGap || window.cordova){
-        if(window.plugins && window.plugins.childBrowser){
-          //found childbrowser plugin,add the event listener and load it
-          //we need to know when the OAuth process is finished by checking for the presence of endurl. If the endurl is found, it means the authentication finished and we should find if it's successful.
-          if(typeof window.plugins.childBrowser.showWebPage === "function"){
+      }
+    }
+    else {
+      _$jscoverage['modules/checkAuth.js'][53]++;
+      if (fail) {
+        _$jscoverage['modules/checkAuth.js'][54]++;
+        fail("auth_failed", {"message": qmap.message});
+      }
+    }
+  }
+});
+      _$jscoverage['modules/checkAuth.js'][59]++;
+      if (window.PhoneGap || window.cordova) {
+        _$jscoverage['modules/checkAuth.js'][60]++;
+        if (window.plugins && window.plugins.childBrowser) {
+          _$jscoverage['modules/checkAuth.js'][63]++;
+          if (typeof window.plugins.childBrowser.showWebPage === "function") {
+            _$jscoverage['modules/checkAuth.js'][64]++;
             window.plugins.childBrowser.onLocationChange = locationChange;
+            _$jscoverage['modules/checkAuth.js'][65]++;
             window.plugins.childBrowser.showWebPage(res.url);
+            _$jscoverage['modules/checkAuth.js'][66]++;
             inappBrowserWindow = window.plugins.childBrowser;
           }
-        } else {
+        }
+        else {
+          _$jscoverage['modules/checkAuth.js'][69]++;
           try {
-            inappBrowserWindow = window.open(res.url, "_blank", 'location=yes');
-            inappBrowserWindow.addEventListener("loadstart", function(ev){
-              locationChange(ev.url);
-            });
-          } catch(e){
+            _$jscoverage['modules/checkAuth.js'][70]++;
+            inappBrowserWindow = window.open(res.url, "_blank", "location=yes");
+            _$jscoverage['modules/checkAuth.js'][71]++;
+            inappBrowserWindow.addEventListener("loadstart", (function (ev) {
+  _$jscoverage['modules/checkAuth.js'][72]++;
+  locationChange(ev.url);
+}));
+          }
+          catch (e) {
+            _$jscoverage['modules/checkAuth.js'][75]++;
             logger.info("InAppBrowser plugin is not intalled.");
+            _$jscoverage['modules/checkAuth.js'][76]++;
             onComplete(res);
           }
         }
-      } else {
-       document.location.href = res.url;
       }
-    } else {
+      else {
+        _$jscoverage['modules/checkAuth.js'][80]++;
+        document.location.href = res.url;
+      }
+    }
+    else {
+      _$jscoverage['modules/checkAuth.js'][83]++;
       onComplete(res);
     }
-  } else {
-    if(fail){
+  }
+  else {
+    _$jscoverage['modules/checkAuth.js'][86]++;
+    if (fail) {
+      _$jscoverage['modules/checkAuth.js'][87]++;
       fail("auth_failed", res);
     }
   }
-};
-
-//This is mainly for using $fh.auth inside browsers. If the authentication method is OAuth, at the end of the process, the user will be re-directed to
-//a url that we specified for checking if the auth is successful. So we always check the url to see if we are on the re-directed page.
+});
+_$jscoverage['modules/checkAuth.js'][94]++;
 if (window.addEventListener) {
-  window.addEventListener('load', function(){
-    checkAuth(window.location.href);
-  }, false); //W3C
-} else {
-  window.attachEvent('onload', function(){
-    checkAuth(window.location.href);
-  }); //IE
+  _$jscoverage['modules/checkAuth.js'][95]++;
+  window.addEventListener("load", (function () {
+  _$jscoverage['modules/checkAuth.js'][96]++;
+  checkAuth(window.location.href);
+}), false);
 }
+else {
+  _$jscoverage['modules/checkAuth.js'][99]++;
+  window.attachEvent("onload", (function () {
+  _$jscoverage['modules/checkAuth.js'][100]++;
+  checkAuth(window.location.href);
+}));
+}
+_$jscoverage['modules/checkAuth.js'][104]++;
+module.exports = {"handleAuthResponse": handleAuthResponse};
+_$jscoverage['modules/checkAuth.js'].source = ["var logger = require(\"./logger\");","var queryMap = require(\"./queryMap\");","var JSON = require(\"JSON\");","var fhparams = require(\"./fhparams\");","","var checkAuth = function(url) {","  if (/\\_fhAuthCallback/.test(url)) {","    var qmap = queryMap(url);","    if (qmap) {","      var fhCallback = qmap[\"_fhAuthCallback\"];","      if (fhCallback) {","        if (qmap['result'] &amp;&amp; qmap['result'] === 'success') {","          var sucRes = {'sessionToken': qmap['fh_auth_session'], 'authResponse' : JSON.parse(decodeURIComponent(decodeURIComponent(qmap['authResponse'])))};","          fhparams.setAuthSessionToken(qmap['fh_auth_session']);","          window[fhCallback](null, sucRes);","        } else {","          window[fhCallback]({'message':qmap['message']});","        }","      }","    }","  }","};","","var handleAuthResponse = function(endurl, res, success, fail){","  if(res.status &amp;&amp; res.status === \"ok\"){","","    var onComplete = function(res){","      if(res.sessionToken){","        fhparams.setAuthSessionToken(res.sessionToken);","      }","      success(res);","    };","    //for OAuth, a url will be returned which means the user should be directed to that url to authenticate.","    //we try to use the ChildBrower plugin if it can be found. Otherwise send the url to the success function to allow developer to handle it.","    if(res.url){","      var inappBrowserWindow = null;","      var locationChange = function(new_url){","        if(new_url.indexOf(endurl) &gt; -1){","          if(inappBrowserWindow){","            inappBrowserWindow.close();","          }","          var qmap = queryMap(new_url);","          if(qmap) {","            if(qmap['result'] &amp;&amp; qmap['result'] === 'success'){","              var sucRes = {'sessionToken': qmap['fh_auth_session'], 'authResponse' : JSON.parse(decodeURIComponent(decodeURIComponent(qmap['authResponse'])))};","              onComplete(sucRes);","            } else {","              if(fail){","                fail(\"auth_failed\", {'message':qmap['message']});","              }","            }","          } else {","            if(fail){","                fail(\"auth_failed\", {'message':qmap['message']});","            }","          }","        }","      };","      if(window.PhoneGap || window.cordova){","        if(window.plugins &amp;&amp; window.plugins.childBrowser){","          //found childbrowser plugin,add the event listener and load it","          //we need to know when the OAuth process is finished by checking for the presence of endurl. If the endurl is found, it means the authentication finished and we should find if it's successful.","          if(typeof window.plugins.childBrowser.showWebPage === \"function\"){","            window.plugins.childBrowser.onLocationChange = locationChange;","            window.plugins.childBrowser.showWebPage(res.url);","            inappBrowserWindow = window.plugins.childBrowser;","          }","        } else {","          try {","            inappBrowserWindow = window.open(res.url, \"_blank\", 'location=yes');","            inappBrowserWindow.addEventListener(\"loadstart\", function(ev){","              locationChange(ev.url);","            });","          } catch(e){","            logger.info(\"InAppBrowser plugin is not intalled.\");","            onComplete(res);","          }","        }","      } else {","       document.location.href = res.url;","      }","    } else {","      onComplete(res);","    }","  } else {","    if(fail){","      fail(\"auth_failed\", res);","    }","  }","};","","//This is mainly for using $fh.auth inside browsers. If the authentication method is OAuth, at the end of the process, the user will be re-directed to","//a url that we specified for checking if the auth is successful. So we always check the url to see if we are on the re-directed page.","if (window.addEventListener) {","  window.addEventListener('load', function(){","    checkAuth(window.location.href);","  }, false); //W3C","} else {","  window.attachEvent('onload', function(){","    checkAuth(window.location.href);","  }); //IE","}","","module.exports = {","  \"handleAuthResponse\": handleAuthResponse","};"];
 
-module.exports = {
-  "handleAuthResponse": handleAuthResponse
-};
+},{"./fhparams":32,"./logger":38,"./queryMap":40,"JSON":3}],28:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/constants.js']) {
+  _$jscoverage['modules/constants.js'] = [];
+  _$jscoverage['modules/constants.js'][1] = 0;
+}
+_$jscoverage['modules/constants.js'][1]++;
+module.exports = {"boxprefix": "/box/srv/1.1/", "sdk_version": "BUILD_VERSION", "config_js": "fhconfig.json", "INIT_EVENT": "fhinit"};
+_$jscoverage['modules/constants.js'].source = ["module.exports = {","  \"boxprefix\": \"/box/srv/1.1/\",","  \"sdk_version\": \"BUILD_VERSION\",","  \"config_js\": \"fhconfig.json\",","  \"INIT_EVENT\": \"fhinit\"","};"];
 
-},{"./fhparams":32,"./logger":39,"./queryMap":41,"JSON":3}],28:[function(require,module,exports){
-module.exports = {
-  "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "BUILD_VERSION",
-  "config_js": "fhconfig.json",
-  "INIT_EVENT": "fhinit"
-};
 },{}],29:[function(require,module,exports){
-module.exports = {
-  readCookieValue  : function (cookie_name) {
-    var name_str = cookie_name + "=";
-    var cookies = document.cookie.split(";");
-    for (var i = 0; i < cookies.length; i++) {
-      var c = cookies[i];
-      while (c.charAt(0) === ' ') {
-        c = c.substring(1, c.length);
-      }
-      if (c.indexOf(name_str) === 0) {
-        return c.substring(name_str.length, c.length);
-      }
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/cookies.js']) {
+  _$jscoverage['modules/cookies.js'] = [];
+  _$jscoverage['modules/cookies.js'][1] = 0;
+  _$jscoverage['modules/cookies.js'][3] = 0;
+  _$jscoverage['modules/cookies.js'][4] = 0;
+  _$jscoverage['modules/cookies.js'][5] = 0;
+  _$jscoverage['modules/cookies.js'][6] = 0;
+  _$jscoverage['modules/cookies.js'][7] = 0;
+  _$jscoverage['modules/cookies.js'][8] = 0;
+  _$jscoverage['modules/cookies.js'][10] = 0;
+  _$jscoverage['modules/cookies.js'][11] = 0;
+  _$jscoverage['modules/cookies.js'][14] = 0;
+  _$jscoverage['modules/cookies.js'][18] = 0;
+  _$jscoverage['modules/cookies.js'][19] = 0;
+  _$jscoverage['modules/cookies.js'][20] = 0;
+  _$jscoverage['modules/cookies.js'][21] = 0;
+}
+_$jscoverage['modules/cookies.js'][1]++;
+module.exports = {readCookieValue: (function (cookie_name) {
+  _$jscoverage['modules/cookies.js'][3]++;
+  var name_str = cookie_name + "=";
+  _$jscoverage['modules/cookies.js'][4]++;
+  var cookies = document.cookie.split(";");
+  _$jscoverage['modules/cookies.js'][5]++;
+  for (var i = 0; i < cookies.length; i++) {
+    _$jscoverage['modules/cookies.js'][6]++;
+    var c = cookies[i];
+    _$jscoverage['modules/cookies.js'][7]++;
+    while (c.charAt(0) === " ") {
+      _$jscoverage['modules/cookies.js'][8]++;
+      c = c.substring(1, c.length);
+}
+    _$jscoverage['modules/cookies.js'][10]++;
+    if (c.indexOf(name_str) === 0) {
+      _$jscoverage['modules/cookies.js'][11]++;
+      return c.substring(name_str.length, c.length);
     }
-    return null;
-  },
-
-  createCookie : function (cookie_name, cookie_value) {
-    var date = new Date();
-    date.setTime(date.getTime() + 36500 * 24 * 60 * 60 * 1000); //100 years
-    var expires = "; expires=" + date.toGMTString();
-    document.cookie = cookie_name + "=" + cookie_value + expires + "; path = /";
-  }
-};
+}
+  _$jscoverage['modules/cookies.js'][14]++;
+  return null;
+}), createCookie: (function (cookie_name, cookie_value) {
+  _$jscoverage['modules/cookies.js'][18]++;
+  var date = new Date();
+  _$jscoverage['modules/cookies.js'][19]++;
+  date.setTime(date.getTime() + 3153600000000);
+  _$jscoverage['modules/cookies.js'][20]++;
+  var expires = "; expires=" + date.toGMTString();
+  _$jscoverage['modules/cookies.js'][21]++;
+  document.cookie = cookie_name + "=" + cookie_value + expires + "; path = /";
+})};
+_$jscoverage['modules/cookies.js'].source = ["module.exports = {","  readCookieValue  : function (cookie_name) {","    var name_str = cookie_name + \"=\";","    var cookies = document.cookie.split(\";\");","    for (var i = 0; i &lt; cookies.length; i++) {","      var c = cookies[i];","      while (c.charAt(0) === ' ') {","        c = c.substring(1, c.length);","      }","      if (c.indexOf(name_str) === 0) {","        return c.substring(name_str.length, c.length);","      }","    }","    return null;","  },","","  createCookie : function (cookie_name, cookie_value) {","    var date = new Date();","    date.setTime(date.getTime() + 36500 * 24 * 60 * 60 * 1000); //100 years","    var expires = \"; expires=\" + date.toGMTString();","    document.cookie = cookie_name + \"=\" + cookie_value + expires + \"; path = /\";","  }","};"];
 
 },{}],30:[function(require,module,exports){
-var cookies = require("./cookies");
-var uuidModule = require("./uuid");
-var logger = require("./logger");
-
-module.exports = {
-  //try to get the unique device identifier
-  "getDeviceId": function(){
-    //check for cordova/phonegap first
-    if(typeof window.fhdevice !== "undefined" && typeof window.fhdevice.uuid !== "undefined"){
-      return window.fhdevice.uuid;
-    } else if(typeof window.device !== "undefined" && typeof window.device.uuid !== "undefined"){
-      return window.device.uuid;
-    }  else if(typeof navigator.device !== "undefined" && typeof navigator.device.uuid !== "undefined"){
-      return navigator.device.uuid;
-    } else {
-      var _mock_uuid_cookie_name = "mock_uuid";
-      var uuid = cookies.readCookieValue(_mock_uuid_cookie_name);
-      if(null == uuid){
-          uuid = uuidModule.createUUID();
-          cookies.createCookie(_mock_uuid_cookie_name, uuid);
-      }
-      return uuid;
-    }
-  },
-
-  //this is for fixing analytics issues when upgrading from io6 to ios7. Probably can be deprecated now
-  "getCuidMap": function(){
-    if(typeof window.fhdevice !== "undefined" && typeof window.fhdevice.cuidMap !== "undefined"){
-      return window.fhdevice.cuidMap;
-    } else if(typeof window.device !== "undefined" && typeof window.device.cuidMap !== "undefined"){
-      return window.device.cuidMap;
-    }  else if(typeof navigator.device !== "undefined" && typeof navigator.device.cuidMap !== "undefined"){
-      return navigator.device.cuidMap;
-    }
-
-    return null;
-  },
-
-  "getDestination": function(){
-    var destination = null;
-    var platformsToTest = require("./platformsMap");
-
-
-    var userAgent = navigator.userAgent;
-
-    var dest_override = document.location.search.split("fh_destination_code=");
-    if (dest_override.length > 1) {
-     destination = dest_override[1];
-    } else if (typeof window.fh_destination_code !== 'undefined') {
-      destination = window.fh_destination_code;
-    } else {
-      platformsToTest.forEach(function(testDestination){
-        testDestination.test.forEach(function(destinationTest){
-          if(userAgent.indexOf(destinationTest) > -1){
-            destination = testDestination.destination;
-          }
-        });
-      });
-    }
-
-    if(destination == null){ //No user agents were found, set to default web
-      destination = "web";
-    }
-
-    logger.debug("destination = " + destination);
-
-    return destination;
-  }
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/device.js']) {
+  _$jscoverage['modules/device.js'] = [];
+  _$jscoverage['modules/device.js'][1] = 0;
+  _$jscoverage['modules/device.js'][2] = 0;
+  _$jscoverage['modules/device.js'][3] = 0;
+  _$jscoverage['modules/device.js'][5] = 0;
+  _$jscoverage['modules/device.js'][9] = 0;
+  _$jscoverage['modules/device.js'][10] = 0;
+  _$jscoverage['modules/device.js'][11] = 0;
+  _$jscoverage['modules/device.js'][12] = 0;
+  _$jscoverage['modules/device.js'][13] = 0;
+  _$jscoverage['modules/device.js'][14] = 0;
+  _$jscoverage['modules/device.js'][16] = 0;
+  _$jscoverage['modules/device.js'][17] = 0;
+  _$jscoverage['modules/device.js'][18] = 0;
+  _$jscoverage['modules/device.js'][19] = 0;
+  _$jscoverage['modules/device.js'][20] = 0;
+  _$jscoverage['modules/device.js'][22] = 0;
+  _$jscoverage['modules/device.js'][28] = 0;
+  _$jscoverage['modules/device.js'][29] = 0;
+  _$jscoverage['modules/device.js'][30] = 0;
+  _$jscoverage['modules/device.js'][31] = 0;
+  _$jscoverage['modules/device.js'][32] = 0;
+  _$jscoverage['modules/device.js'][33] = 0;
+  _$jscoverage['modules/device.js'][36] = 0;
+  _$jscoverage['modules/device.js'][40] = 0;
+  _$jscoverage['modules/device.js'][41] = 0;
+  _$jscoverage['modules/device.js'][44] = 0;
+  _$jscoverage['modules/device.js'][46] = 0;
+  _$jscoverage['modules/device.js'][47] = 0;
+  _$jscoverage['modules/device.js'][48] = 0;
+  _$jscoverage['modules/device.js'][49] = 0;
+  _$jscoverage['modules/device.js'][50] = 0;
+  _$jscoverage['modules/device.js'][52] = 0;
+  _$jscoverage['modules/device.js'][53] = 0;
+  _$jscoverage['modules/device.js'][54] = 0;
+  _$jscoverage['modules/device.js'][55] = 0;
+  _$jscoverage['modules/device.js'][61] = 0;
+  _$jscoverage['modules/device.js'][62] = 0;
+  _$jscoverage['modules/device.js'][65] = 0;
+  _$jscoverage['modules/device.js'][67] = 0;
 }
-
-},{"./cookies":29,"./logger":39,"./platformsMap":40,"./uuid":48}],31:[function(require,module,exports){
-var EventEmitter = require('events').EventEmitter;
-
-var emitter = new EventEmitter();
-emitter.setMaxListeners(0);
-
-module.exports = emitter;
-},{"events":9}],32:[function(require,module,exports){
-var device = require("./device");
-var sdkversion = require("./sdkversion");
-var appProps = require("./appProps");
+_$jscoverage['modules/device.js'][1]++;
+var cookies = require("./cookies");
+_$jscoverage['modules/device.js'][2]++;
+var uuidModule = require("./uuid");
+_$jscoverage['modules/device.js'][3]++;
 var logger = require("./logger");
+_$jscoverage['modules/device.js'][5]++;
+module.exports = {"getDeviceId": (function () {
+  _$jscoverage['modules/device.js'][9]++;
+  if (typeof window.fhdevice !== "undefined" && typeof window.fhdevice.uuid !== "undefined") {
+    _$jscoverage['modules/device.js'][10]++;
+    return window.fhdevice.uuid;
+  }
+  else {
+    _$jscoverage['modules/device.js'][11]++;
+    if (typeof window.device !== "undefined" && typeof window.device.uuid !== "undefined") {
+      _$jscoverage['modules/device.js'][12]++;
+      return window.device.uuid;
+    }
+    else {
+      _$jscoverage['modules/device.js'][13]++;
+      if (typeof navigator.device !== "undefined" && typeof navigator.device.uuid !== "undefined") {
+        _$jscoverage['modules/device.js'][14]++;
+        return navigator.device.uuid;
+      }
+      else {
+        _$jscoverage['modules/device.js'][16]++;
+        var _mock_uuid_cookie_name = "mock_uuid";
+        _$jscoverage['modules/device.js'][17]++;
+        var uuid = cookies.readCookieValue(_mock_uuid_cookie_name);
+        _$jscoverage['modules/device.js'][18]++;
+        if (null == uuid) {
+          _$jscoverage['modules/device.js'][19]++;
+          uuid = uuidModule.createUUID();
+          _$jscoverage['modules/device.js'][20]++;
+          cookies.createCookie(_mock_uuid_cookie_name, uuid);
+        }
+        _$jscoverage['modules/device.js'][22]++;
+        return uuid;
+      }
+    }
+  }
+}), "getCuidMap": (function () {
+  _$jscoverage['modules/device.js'][28]++;
+  if (typeof window.fhdevice !== "undefined" && typeof window.fhdevice.cuidMap !== "undefined") {
+    _$jscoverage['modules/device.js'][29]++;
+    return window.fhdevice.cuidMap;
+  }
+  else {
+    _$jscoverage['modules/device.js'][30]++;
+    if (typeof window.device !== "undefined" && typeof window.device.cuidMap !== "undefined") {
+      _$jscoverage['modules/device.js'][31]++;
+      return window.device.cuidMap;
+    }
+    else {
+      _$jscoverage['modules/device.js'][32]++;
+      if (typeof navigator.device !== "undefined" && typeof navigator.device.cuidMap !== "undefined") {
+        _$jscoverage['modules/device.js'][33]++;
+        return navigator.device.cuidMap;
+      }
+    }
+  }
+  _$jscoverage['modules/device.js'][36]++;
+  return null;
+}), "getDestination": (function () {
+  _$jscoverage['modules/device.js'][40]++;
+  var destination = null;
+  _$jscoverage['modules/device.js'][41]++;
+  var platformsToTest = require("./platformsMap");
+  _$jscoverage['modules/device.js'][44]++;
+  var userAgent = navigator.userAgent;
+  _$jscoverage['modules/device.js'][46]++;
+  var dest_override = document.location.search.split("fh_destination_code=");
+  _$jscoverage['modules/device.js'][47]++;
+  if (dest_override.length > 1) {
+    _$jscoverage['modules/device.js'][48]++;
+    destination = dest_override[1];
+  }
+  else {
+    _$jscoverage['modules/device.js'][49]++;
+    if (typeof window.fh_destination_code !== "undefined") {
+      _$jscoverage['modules/device.js'][50]++;
+      destination = window.fh_destination_code;
+    }
+    else {
+      _$jscoverage['modules/device.js'][52]++;
+      platformsToTest.forEach((function (testDestination) {
+  _$jscoverage['modules/device.js'][53]++;
+  testDestination.test.forEach((function (destinationTest) {
+  _$jscoverage['modules/device.js'][54]++;
+  if (userAgent.indexOf(destinationTest) > -1) {
+    _$jscoverage['modules/device.js'][55]++;
+    destination = testDestination.destination;
+  }
+}));
+}));
+    }
+  }
+  _$jscoverage['modules/device.js'][61]++;
+  if (destination == null) {
+    _$jscoverage['modules/device.js'][62]++;
+    destination = "web";
+  }
+  _$jscoverage['modules/device.js'][65]++;
+  logger.debug("destination = " + destination);
+  _$jscoverage['modules/device.js'][67]++;
+  return destination;
+})};
+_$jscoverage['modules/device.js'].source = ["var cookies = require(\"./cookies\");","var uuidModule = require(\"./uuid\");","var logger = require(\"./logger\");","","module.exports = {","  //try to get the unique device identifier","  \"getDeviceId\": function(){","    //check for cordova/phonegap first","    if(typeof window.fhdevice !== \"undefined\" &amp;&amp; typeof window.fhdevice.uuid !== \"undefined\"){","      return window.fhdevice.uuid;","    } else if(typeof window.device !== \"undefined\" &amp;&amp; typeof window.device.uuid !== \"undefined\"){","      return window.device.uuid;","    }  else if(typeof navigator.device !== \"undefined\" &amp;&amp; typeof navigator.device.uuid !== \"undefined\"){","      return navigator.device.uuid;","    } else {","      var _mock_uuid_cookie_name = \"mock_uuid\";","      var uuid = cookies.readCookieValue(_mock_uuid_cookie_name);","      if(null == uuid){","          uuid = uuidModule.createUUID();","          cookies.createCookie(_mock_uuid_cookie_name, uuid);","      }","      return uuid;","    }","  },","","  //this is for fixing analytics issues when upgrading from io6 to ios7. Probably can be deprecated now","  \"getCuidMap\": function(){","    if(typeof window.fhdevice !== \"undefined\" &amp;&amp; typeof window.fhdevice.cuidMap !== \"undefined\"){","      return window.fhdevice.cuidMap;","    } else if(typeof window.device !== \"undefined\" &amp;&amp; typeof window.device.cuidMap !== \"undefined\"){","      return window.device.cuidMap;","    }  else if(typeof navigator.device !== \"undefined\" &amp;&amp; typeof navigator.device.cuidMap !== \"undefined\"){","      return navigator.device.cuidMap;","    }","","    return null;","  },","","  \"getDestination\": function(){","    var destination = null;","    var platformsToTest = require(\"./platformsMap\");","","","    var userAgent = navigator.userAgent;","","    var dest_override = document.location.search.split(\"fh_destination_code=\");","    if (dest_override.length &gt; 1) {","     destination = dest_override[1];","    } else if (typeof window.fh_destination_code !== 'undefined') {","      destination = window.fh_destination_code;","    } else {","      platformsToTest.forEach(function(testDestination){","        testDestination.test.forEach(function(destinationTest){","          if(userAgent.indexOf(destinationTest) &gt; -1){","            destination = testDestination.destination;","          }","        });","      });","    }","","    if(destination == null){ //No user agents were found, set to default web","      destination = \"web\";","    }","","    logger.debug(\"destination = \" + destination);","","    return destination;","  }","}"];
 
+},{"./cookies":29,"./logger":38,"./platformsMap":39,"./uuid":47}],31:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/events.js']) {
+  _$jscoverage['modules/events.js'] = [];
+  _$jscoverage['modules/events.js'][1] = 0;
+  _$jscoverage['modules/events.js'][3] = 0;
+  _$jscoverage['modules/events.js'][4] = 0;
+  _$jscoverage['modules/events.js'][6] = 0;
+}
+_$jscoverage['modules/events.js'][1]++;
+var EventEmitter = require("events").EventEmitter;
+_$jscoverage['modules/events.js'][3]++;
+var emitter = new EventEmitter();
+_$jscoverage['modules/events.js'][4]++;
+emitter.setMaxListeners(0);
+_$jscoverage['modules/events.js'][6]++;
+module.exports = emitter;
+_$jscoverage['modules/events.js'].source = ["var EventEmitter = require('events').EventEmitter;","","var emitter = new EventEmitter();","emitter.setMaxListeners(0);","","module.exports = emitter;"];
+
+},{"events":9}],32:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/fhparams.js']) {
+  _$jscoverage['modules/fhparams.js'] = [];
+  _$jscoverage['modules/fhparams.js'][1] = 0;
+  _$jscoverage['modules/fhparams.js'][2] = 0;
+  _$jscoverage['modules/fhparams.js'][3] = 0;
+  _$jscoverage['modules/fhparams.js'][4] = 0;
+  _$jscoverage['modules/fhparams.js'][6] = 0;
+  _$jscoverage['modules/fhparams.js'][7] = 0;
+  _$jscoverage['modules/fhparams.js'][9] = 0;
+  _$jscoverage['modules/fhparams.js'][10] = 0;
+  _$jscoverage['modules/fhparams.js'][11] = 0;
+  _$jscoverage['modules/fhparams.js'][13] = 0;
+  _$jscoverage['modules/fhparams.js'][14] = 0;
+  _$jscoverage['modules/fhparams.js'][15] = 0;
+  _$jscoverage['modules/fhparams.js'][16] = 0;
+  _$jscoverage['modules/fhparams.js'][18] = 0;
+  _$jscoverage['modules/fhparams.js'][19] = 0;
+  _$jscoverage['modules/fhparams.js'][23] = 0;
+  _$jscoverage['modules/fhparams.js'][24] = 0;
+  _$jscoverage['modules/fhparams.js'][26] = 0;
+  _$jscoverage['modules/fhparams.js'][27] = 0;
+  _$jscoverage['modules/fhparams.js'][29] = 0;
+  _$jscoverage['modules/fhparams.js'][30] = 0;
+  _$jscoverage['modules/fhparams.js'][32] = 0;
+  _$jscoverage['modules/fhparams.js'][33] = 0;
+  _$jscoverage['modules/fhparams.js'][34] = 0;
+  _$jscoverage['modules/fhparams.js'][37] = 0;
+  _$jscoverage['modules/fhparams.js'][38] = 0;
+  _$jscoverage['modules/fhparams.js'][39] = 0;
+  _$jscoverage['modules/fhparams.js'][40] = 0;
+  _$jscoverage['modules/fhparams.js'][41] = 0;
+  _$jscoverage['modules/fhparams.js'][42] = 0;
+  _$jscoverage['modules/fhparams.js'][43] = 0;
+  _$jscoverage['modules/fhparams.js'][44] = 0;
+  _$jscoverage['modules/fhparams.js'][45] = 0;
+  _$jscoverage['modules/fhparams.js'][49] = 0;
+  _$jscoverage['modules/fhparams.js'][50] = 0;
+  _$jscoverage['modules/fhparams.js'][51] = 0;
+  _$jscoverage['modules/fhparams.js'][54] = 0;
+  _$jscoverage['modules/fhparams.js'][55] = 0;
+  _$jscoverage['modules/fhparams.js'][56] = 0;
+  _$jscoverage['modules/fhparams.js'][57] = 0;
+  _$jscoverage['modules/fhparams.js'][60] = 0;
+  _$jscoverage['modules/fhparams.js'][61] = 0;
+  _$jscoverage['modules/fhparams.js'][64] = 0;
+}
+_$jscoverage['modules/fhparams.js'][1]++;
+var device = require("./device");
+_$jscoverage['modules/fhparams.js'][2]++;
+var sdkversion = require("./sdkversion");
+_$jscoverage['modules/fhparams.js'][3]++;
+var appProps = require("./appProps");
+_$jscoverage['modules/fhparams.js'][4]++;
+var logger = require("./logger");
+_$jscoverage['modules/fhparams.js'][6]++;
 var defaultParams = null;
+_$jscoverage['modules/fhparams.js'][7]++;
 var authSessionToken = null;
-//TODO: review these options, we probably only needs all of them for init calls, but we shouldn't need all of them for act calls
-var buildFHParams = function(){
-  if(defaultParams){
+_$jscoverage['modules/fhparams.js'][9]++;
+var buildFHParams = (function () {
+  _$jscoverage['modules/fhparams.js'][10]++;
+  if (defaultParams) {
+    _$jscoverage['modules/fhparams.js'][11]++;
     return defaultParams;
   }
+  _$jscoverage['modules/fhparams.js'][13]++;
   var fhparams = {};
+  _$jscoverage['modules/fhparams.js'][14]++;
   fhparams.cuid = device.getDeviceId();
+  _$jscoverage['modules/fhparams.js'][15]++;
   fhparams.cuidMap = device.getCuidMap();
+  _$jscoverage['modules/fhparams.js'][16]++;
   fhparams.destination = device.getDestination();
-  
-  if(window.device || navigator.device){
+  _$jscoverage['modules/fhparams.js'][18]++;
+  if (window.device || navigator.device) {
+    _$jscoverage['modules/fhparams.js'][19]++;
     fhparams.device = window.device || navigator.device;
   }
-
-  //backward compatible
-  if (typeof window.fh_app_version !== 'undefined'){
+  _$jscoverage['modules/fhparams.js'][23]++;
+  if (typeof window.fh_app_version !== "undefined") {
+    _$jscoverage['modules/fhparams.js'][24]++;
     fhparams.app_version = fh_app_version;
   }
-  if (typeof window.fh_project_version !== 'undefined'){
+  _$jscoverage['modules/fhparams.js'][26]++;
+  if (typeof window.fh_project_version !== "undefined") {
+    _$jscoverage['modules/fhparams.js'][27]++;
     fhparams.project_version = fh_project_version;
   }
-  if (typeof window.fh_project_app_version !== 'undefined'){
+  _$jscoverage['modules/fhparams.js'][29]++;
+  if (typeof window.fh_project_app_version !== "undefined") {
+    _$jscoverage['modules/fhparams.js'][30]++;
     fhparams.project_app_version = fh_project_app_version;
   }
+  _$jscoverage['modules/fhparams.js'][32]++;
   fhparams.sdk_version = sdkversion();
-  if(authSessionToken){
+  _$jscoverage['modules/fhparams.js'][33]++;
+  if (authSessionToken) {
+    _$jscoverage['modules/fhparams.js'][34]++;
     fhparams.sessionToken = authSessionToken;
   }
-
+  _$jscoverage['modules/fhparams.js'][37]++;
   var app_props = appProps.getAppProps();
-  if(app_props){
+  _$jscoverage['modules/fhparams.js'][38]++;
+  if (app_props) {
+    _$jscoverage['modules/fhparams.js'][39]++;
     fhparams.appid = app_props.appid;
+    _$jscoverage['modules/fhparams.js'][40]++;
     fhparams.appkey = app_props.appkey;
+    _$jscoverage['modules/fhparams.js'][41]++;
     fhparams.projectid = app_props.projectid;
-    fhparams.analyticsTag =  app_props.analyticsTag;
+    _$jscoverage['modules/fhparams.js'][42]++;
+    fhparams.analyticsTag = app_props.analyticsTag;
+    _$jscoverage['modules/fhparams.js'][43]++;
     fhparams.connectiontag = app_props.connectiontag;
-    if(app_props.init){
-      fhparams.init = typeof(app_props.init) === "string" ? JSON.parse(app_props.init) : app_props.init;
+    _$jscoverage['modules/fhparams.js'][44]++;
+    if (app_props.init) {
+      _$jscoverage['modules/fhparams.js'][45]++;
+      fhparams.init = typeof app_props.init === "string"? JSON.parse(app_props.init): app_props.init;
     }
   }
-  
+  _$jscoverage['modules/fhparams.js'][49]++;
   defaultParams = fhparams;
+  _$jscoverage['modules/fhparams.js'][50]++;
   logger.debug("fhparams = ", defaultParams);
+  _$jscoverage['modules/fhparams.js'][51]++;
   return fhparams;
-}
-
-var addFHParams = function(params){
+});
+_$jscoverage['modules/fhparams.js'][54]++;
+var addFHParams = (function (params) {
+  _$jscoverage['modules/fhparams.js'][55]++;
   var params = params || {};
+  _$jscoverage['modules/fhparams.js'][56]++;
   params.__fh = buildFHParams();
+  _$jscoverage['modules/fhparams.js'][57]++;
   return params;
-}
-
-var setAuthSessionToken = function(sessionToken){
+});
+_$jscoverage['modules/fhparams.js'][60]++;
+var setAuthSessionToken = (function (sessionToken) {
+  _$jscoverage['modules/fhparams.js'][61]++;
   authSessionToken = sessionToken;
+});
+_$jscoverage['modules/fhparams.js'][64]++;
+module.exports = {"buildFHParams": buildFHParams, "addFHParams": addFHParams, "setAuthSessionToken": setAuthSessionToken};
+_$jscoverage['modules/fhparams.js'].source = ["var device = require(\"./device\");","var sdkversion = require(\"./sdkversion\");","var appProps = require(\"./appProps\");","var logger = require(\"./logger\");","","var defaultParams = null;","var authSessionToken = null;","//TODO: review these options, we probably only needs all of them for init calls, but we shouldn't need all of them for act calls","var buildFHParams = function(){","  if(defaultParams){","    return defaultParams;","  }","  var fhparams = {};","  fhparams.cuid = device.getDeviceId();","  fhparams.cuidMap = device.getCuidMap();","  fhparams.destination = device.getDestination();","  ","  if(window.device || navigator.device){","    fhparams.device = window.device || navigator.device;","  }","","  //backward compatible","  if (typeof window.fh_app_version !== 'undefined'){","    fhparams.app_version = fh_app_version;","  }","  if (typeof window.fh_project_version !== 'undefined'){","    fhparams.project_version = fh_project_version;","  }","  if (typeof window.fh_project_app_version !== 'undefined'){","    fhparams.project_app_version = fh_project_app_version;","  }","  fhparams.sdk_version = sdkversion();","  if(authSessionToken){","    fhparams.sessionToken = authSessionToken;","  }","","  var app_props = appProps.getAppProps();","  if(app_props){","    fhparams.appid = app_props.appid;","    fhparams.appkey = app_props.appkey;","    fhparams.projectid = app_props.projectid;","    fhparams.analyticsTag =  app_props.analyticsTag;","    fhparams.connectiontag = app_props.connectiontag;","    if(app_props.init){","      fhparams.init = typeof(app_props.init) === \"string\" ? JSON.parse(app_props.init) : app_props.init;","    }","  }","  ","  defaultParams = fhparams;","  logger.debug(\"fhparams = \", defaultParams);","  return fhparams;","}","","var addFHParams = function(params){","  var params = params || {};","  params.__fh = buildFHParams();","  return params;","}","","var setAuthSessionToken = function(sessionToken){","  authSessionToken = sessionToken;","}","","module.exports = {","  \"buildFHParams\": buildFHParams,","  \"addFHParams\": addFHParams,","  \"setAuthSessionToken\":setAuthSessionToken","}"];
+
+},{"./appProps":26,"./device":30,"./logger":38,"./sdkversion":41}],33:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/handleError.js']) {
+  _$jscoverage['modules/handleError.js'] = [];
+  _$jscoverage['modules/handleError.js'][1] = 0;
+  _$jscoverage['modules/handleError.js'][3] = 0;
+  _$jscoverage['modules/handleError.js'][4] = 0;
+  _$jscoverage['modules/handleError.js'][5] = 0;
+  _$jscoverage['modules/handleError.js'][6] = 0;
+  _$jscoverage['modules/handleError.js'][7] = 0;
+  _$jscoverage['modules/handleError.js'][8] = 0;
+  _$jscoverage['modules/handleError.js'][9] = 0;
+  _$jscoverage['modules/handleError.js'][10] = 0;
+  _$jscoverage['modules/handleError.js'][11] = 0;
+  _$jscoverage['modules/handleError.js'][12] = 0;
+  _$jscoverage['modules/handleError.js'][15] = 0;
+  _$jscoverage['modules/handleError.js'][18] = 0;
+  _$jscoverage['modules/handleError.js'][19] = 0;
 }
-
-module.exports = {
-  "buildFHParams": buildFHParams,
-  "addFHParams": addFHParams,
-  "setAuthSessionToken":setAuthSessionToken
-}
-
-},{"./appProps":26,"./device":30,"./logger":39,"./sdkversion":42}],33:[function(require,module,exports){
-module.exports = function(){
-  var path = null;
-  var scripts = document.getElementsByTagName('script');
-  var term = /(feedhenry.*?\.js)/;
-  for (var n = scripts.length-1; n>-1; n--) {
-      //trim query parameters
-      var src = scripts[n].src.replace(/\?.*$/, '');
-      //find feedhenry*.js file
-      var matches = src.match(term);
-      if(matches && matches.length === 2){
-        var fhjs = matches[1];
-        if (src.indexOf(fhjs) === (src.length - fhjs.length)) {
-          path = src.substring(0, src.length - fhjs.length);
-          break;
-        }
-      }
-  }
-  return path;
-};
-
-},{}],34:[function(require,module,exports){
+_$jscoverage['modules/handleError.js'][1]++;
 var JSON = require("JSON");
-
-module.exports = function(fail, req, resStatus, error){
+_$jscoverage['modules/handleError.js'][3]++;
+module.exports = (function (fail, req, resStatus, error) {
+  _$jscoverage['modules/handleError.js'][4]++;
   var errraw;
+  _$jscoverage['modules/handleError.js'][5]++;
   var statusCode = 0;
-  if(req){
-    try{
+  _$jscoverage['modules/handleError.js'][6]++;
+  if (req) {
+    _$jscoverage['modules/handleError.js'][7]++;
+    try {
+      _$jscoverage['modules/handleError.js'][8]++;
       statusCode = req.status;
+      _$jscoverage['modules/handleError.js'][9]++;
       var res = JSON.parse(req.responseText);
+      _$jscoverage['modules/handleError.js'][10]++;
       errraw = res.error || res.msg;
+      _$jscoverage['modules/handleError.js'][11]++;
       if (errraw instanceof Array) {
-        errraw = errraw.join('\n');
+        _$jscoverage['modules/handleError.js'][12]++;
+        errraw = errraw.join("\n");
       }
-    } catch(e){
+    }
+    catch (e) {
+      _$jscoverage['modules/handleError.js'][15]++;
       errraw = req.responseText;
     }
   }
-  if(fail){
-    fail(errraw, {
-      status: statusCode,
-      message: resStatus,
-      error: error
-    });
+  _$jscoverage['modules/handleError.js'][18]++;
+  if (fail) {
+    _$jscoverage['modules/handleError.js'][19]++;
+    fail(errraw, {status: statusCode, message: resStatus, error: error});
   }
-};
+});
+_$jscoverage['modules/handleError.js'].source = ["var JSON = require(\"JSON\");","","module.exports = function(fail, req, resStatus, error){","  var errraw;","  var statusCode = 0;","  if(req){","    try{","      statusCode = req.status;","      var res = JSON.parse(req.responseText);","      errraw = res.error || res.msg;","      if (errraw instanceof Array) {","        errraw = errraw.join('\\n');","      }","    } catch(e){","      errraw = req.responseText;","    }","  }","  if(fail){","    fail(errraw, {","      status: statusCode,","      message: resStatus,","      error: error","    });","  }","};"];
 
-},{"JSON":3}],35:[function(require,module,exports){
+},{"JSON":3}],34:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/hosts.js']) {
+  _$jscoverage['modules/hosts.js'] = [];
+  _$jscoverage['modules/hosts.js'][1] = 0;
+  _$jscoverage['modules/hosts.js'][2] = 0;
+  _$jscoverage['modules/hosts.js'][4] = 0;
+  _$jscoverage['modules/hosts.js'][5] = 0;
+  _$jscoverage['modules/hosts.js'][6] = 0;
+  _$jscoverage['modules/hosts.js'][7] = 0;
+  _$jscoverage['modules/hosts.js'][9] = 0;
+  _$jscoverage['modules/hosts.js'][12] = 0;
+  _$jscoverage['modules/hosts.js'][13] = 0;
+  _$jscoverage['modules/hosts.js'][14] = 0;
+  _$jscoverage['modules/hosts.js'][15] = 0;
+  _$jscoverage['modules/hosts.js'][17] = 0;
+  _$jscoverage['modules/hosts.js'][20] = 0;
+  _$jscoverage['modules/hosts.js'][21] = 0;
+  _$jscoverage['modules/hosts.js'][22] = 0;
+  _$jscoverage['modules/hosts.js'][23] = 0;
+  _$jscoverage['modules/hosts.js'][26] = 0;
+  _$jscoverage['modules/hosts.js'][27] = 0;
+  _$jscoverage['modules/hosts.js'][28] = 0;
+  _$jscoverage['modules/hosts.js'][30] = 0;
+  _$jscoverage['modules/hosts.js'][31] = 0;
+  _$jscoverage['modules/hosts.js'][32] = 0;
+  _$jscoverage['modules/hosts.js'][33] = 0;
+  _$jscoverage['modules/hosts.js'][35] = 0;
+  _$jscoverage['modules/hosts.js'][40] = 0;
+  _$jscoverage['modules/hosts.js'][41] = 0;
+  _$jscoverage['modules/hosts.js'][43] = 0;
+  _$jscoverage['modules/hosts.js'][44] = 0;
+  _$jscoverage['modules/hosts.js'][45] = 0;
+  _$jscoverage['modules/hosts.js'][47] = 0;
+  _$jscoverage['modules/hosts.js'][50] = 0;
+  _$jscoverage['modules/hosts.js'][51] = 0;
+  _$jscoverage['modules/hosts.js'][52] = 0;
+  _$jscoverage['modules/hosts.js'][53] = 0;
+  _$jscoverage['modules/hosts.js'][55] = 0;
+  _$jscoverage['modules/hosts.js'][59] = 0;
+  _$jscoverage['modules/hosts.js'][60] = 0;
+  _$jscoverage['modules/hosts.js'][61] = 0;
+  _$jscoverage['modules/hosts.js'][62] = 0;
+  _$jscoverage['modules/hosts.js'][64] = 0;
+  _$jscoverage['modules/hosts.js'][65] = 0;
+  _$jscoverage['modules/hosts.js'][67] = 0;
+  _$jscoverage['modules/hosts.js'][71] = 0;
+  _$jscoverage['modules/hosts.js'][72] = 0;
+  _$jscoverage['modules/hosts.js'][73] = 0;
+  _$jscoverage['modules/hosts.js'][74] = 0;
+  _$jscoverage['modules/hosts.js'][76] = 0;
+  _$jscoverage['modules/hosts.js'][79] = 0;
+  _$jscoverage['modules/hosts.js'][80] = 0;
+  _$jscoverage['modules/hosts.js'][81] = 0;
+  _$jscoverage['modules/hosts.js'][82] = 0;
+  _$jscoverage['modules/hosts.js'][84] = 0;
+  _$jscoverage['modules/hosts.js'][89] = 0;
+}
+_$jscoverage['modules/hosts.js'][1]++;
 var constants = require("./constants");
+_$jscoverage['modules/hosts.js'][2]++;
 var appProps = require("./appProps");
-
-function removeEndSlash(input){
+_$jscoverage['modules/hosts.js'][4]++;
+function removeEndSlash(input) {
+  _$jscoverage['modules/hosts.js'][5]++;
   var ret = input;
-  if(ret.charAt(ret.length - 1) === "/"){
-    ret = ret.substring(0, ret.length-1);
+  _$jscoverage['modules/hosts.js'][6]++;
+  if (ret.charAt(ret.length - 1) === "/") {
+    _$jscoverage['modules/hosts.js'][7]++;
+    ret = ret.substring(0, ret.length - 1);
   }
+  _$jscoverage['modules/hosts.js'][9]++;
   return ret;
 }
-
-function removeStartSlash(input){
+_$jscoverage['modules/hosts.js'][12]++;
+function removeStartSlash(input) {
+  _$jscoverage['modules/hosts.js'][13]++;
   var ret = input;
-  if(ret.length > 1 && ret.charAt(0) === "/"){
+  _$jscoverage['modules/hosts.js'][14]++;
+  if (ret.length > 1 && ret.charAt(0) === "/") {
+    _$jscoverage['modules/hosts.js'][15]++;
     ret = ret.substring(1, ret.length);
   }
+  _$jscoverage['modules/hosts.js'][17]++;
   return ret;
 }
-
-function CloudHost(cloud_props){
+_$jscoverage['modules/hosts.js'][20]++;
+function CloudHost(cloud_props) {
+  _$jscoverage['modules/hosts.js'][21]++;
   this.cloud_props = cloud_props;
+  _$jscoverage['modules/hosts.js'][22]++;
   this.cloud_host = undefined;
+  _$jscoverage['modules/hosts.js'][23]++;
   this.isLegacy = false;
 }
-
-CloudHost.prototype.getHost = function(appType){
-  if(this.cloud_host){
+_$jscoverage['modules/hosts.js'][26]++;
+CloudHost.prototype.getHost = (function (appType) {
+  _$jscoverage['modules/hosts.js'][27]++;
+  if (this.cloud_host) {
+    _$jscoverage['modules/hosts.js'][28]++;
     return this.cloud_host;
-  } else {
+  }
+  else {
+    _$jscoverage['modules/hosts.js'][30]++;
     var url;
+    _$jscoverage['modules/hosts.js'][31]++;
     var app_type;
-    if(this.cloud_props && this.cloud_props.hosts){
+    _$jscoverage['modules/hosts.js'][32]++;
+    if (this.cloud_props && this.cloud_props.hosts) {
+      _$jscoverage['modules/hosts.js'][33]++;
       url = this.cloud_props.hosts.url;
-
-      if (typeof url === 'undefined') {
-        // resolve url the old way i.e. depending on
-        // -burnt in app mode
-        // -returned dev or live url
-        // -returned dev or live type (node or fh(rhino or proxying))
+      _$jscoverage['modules/hosts.js'][35]++;
+      if (typeof url === "undefined") {
+        _$jscoverage['modules/hosts.js'][40]++;
         var cloud_host = this.cloud_props.hosts.releaseCloudUrl;
+        _$jscoverage['modules/hosts.js'][41]++;
         app_type = this.cloud_props.hosts.releaseCloudType;
-
-        if(typeof appType !== "undefined" && appType.indexOf("dev") > -1){
+        _$jscoverage['modules/hosts.js'][43]++;
+        if (typeof appType !== "undefined" && appType.indexOf("dev") > -1) {
+          _$jscoverage['modules/hosts.js'][44]++;
           cloud_host = this.cloud_props.hosts.debugCloudUrl;
+          _$jscoverage['modules/hosts.js'][45]++;
           app_type = this.cloud_props.hosts.debugCloudType;
         }
+        _$jscoverage['modules/hosts.js'][47]++;
         url = cloud_host;
       }
     }
+    _$jscoverage['modules/hosts.js'][50]++;
     url = removeEndSlash(url);
+    _$jscoverage['modules/hosts.js'][51]++;
     this.cloud_host = url;
-    if(app_type === "fh"){
+    _$jscoverage['modules/hosts.js'][52]++;
+    if (app_type === "fh") {
+      _$jscoverage['modules/hosts.js'][53]++;
       this.isLegacy = true;
     }
+    _$jscoverage['modules/hosts.js'][55]++;
     return url;
   }
-}
-
-CloudHost.prototype.getActUrl = function(act){
+});
+_$jscoverage['modules/hosts.js'][59]++;
+CloudHost.prototype.getActUrl = (function (act) {
+  _$jscoverage['modules/hosts.js'][60]++;
   var app_props = appProps.getAppProps() || {};
-  if(typeof this.cloud_host === "undefined"){
+  _$jscoverage['modules/hosts.js'][61]++;
+  if (typeof this.cloud_host === "undefined") {
+    _$jscoverage['modules/hosts.js'][62]++;
     this.getHost(app_props.mode);
   }
-  if(this.isLegacy){
+  _$jscoverage['modules/hosts.js'][64]++;
+  if (this.isLegacy) {
+    _$jscoverage['modules/hosts.js'][65]++;
     return this.cloud_host + constants.boxprefix + "act/" + this.cloud_props.domain + "/" + app_props.appid + "/" + act + "/" + app_props.appid;
-  } else {
+  }
+  else {
+    _$jscoverage['modules/hosts.js'][67]++;
     return this.cloud_host + "/cloud/" + act;
   }
-}
-
-CloudHost.prototype.getMBAASUrl = function(service){
+});
+_$jscoverage['modules/hosts.js'][71]++;
+CloudHost.prototype.getMBAASUrl = (function (service) {
+  _$jscoverage['modules/hosts.js'][72]++;
   var app_props = appProps.getAppProps() || {};
-  if(typeof this.cloud_host === "undefined"){
+  _$jscoverage['modules/hosts.js'][73]++;
+  if (typeof this.cloud_host === "undefined") {
+    _$jscoverage['modules/hosts.js'][74]++;
     this.getHost(app_props.mode);
   }
+  _$jscoverage['modules/hosts.js'][76]++;
   return this.cloud_host + "/mbaas/" + service;
-}
-
-CloudHost.prototype.getCloudUrl = function(path){
+});
+_$jscoverage['modules/hosts.js'][79]++;
+CloudHost.prototype.getCloudUrl = (function (path) {
+  _$jscoverage['modules/hosts.js'][80]++;
   var app_props = appProps.getAppProps() || {};
-  if(typeof this.cloud_host === "undefined"){
+  _$jscoverage['modules/hosts.js'][81]++;
+  if (typeof this.cloud_host === "undefined") {
+    _$jscoverage['modules/hosts.js'][82]++;
     this.getHost(app_props.mode);
   }
+  _$jscoverage['modules/hosts.js'][84]++;
   return this.cloud_host + "/" + removeStartSlash(path);
-}
-
-
-
+});
+_$jscoverage['modules/hosts.js'][89]++;
 module.exports = CloudHost;
-},{"./appProps":26,"./constants":28}],36:[function(require,module,exports){
-var findFHPath = require("./findFHPath");
-var loadScript = require("./loadScript");
-var Lawnchair = require('../../libs/generated/lawnchair');
-var lawnchairext = require('./lawnchair-ext');
-var consts = require("./constants");
-var fhparams = require("./fhparams");
-var ajax = require("./ajax");
-var handleError = require("./handleError");
-var logger = require("./logger");
-var JSON = require("JSON");
-var hashFunc = require("./security/hash");
-var appProps = require("./appProps");
+_$jscoverage['modules/hosts.js'].source = ["var constants = require(\"./constants\");","var appProps = require(\"./appProps\");","","function removeEndSlash(input){","  var ret = input;","  if(ret.charAt(ret.length - 1) === \"/\"){","    ret = ret.substring(0, ret.length-1);","  }","  return ret;","}","","function removeStartSlash(input){","  var ret = input;","  if(ret.length &gt; 1 &amp;&amp; ret.charAt(0) === \"/\"){","    ret = ret.substring(1, ret.length);","  }","  return ret;","}","","function CloudHost(cloud_props){","  this.cloud_props = cloud_props;","  this.cloud_host = undefined;","  this.isLegacy = false;","}","","CloudHost.prototype.getHost = function(appType){","  if(this.cloud_host){","    return this.cloud_host;","  } else {","    var url;","    var app_type;","    if(this.cloud_props &amp;&amp; this.cloud_props.hosts){","      url = this.cloud_props.hosts.url;","","      if (typeof url === 'undefined') {","        // resolve url the old way i.e. depending on","        // -burnt in app mode","        // -returned dev or live url","        // -returned dev or live type (node or fh(rhino or proxying))","        var cloud_host = this.cloud_props.hosts.releaseCloudUrl;","        app_type = this.cloud_props.hosts.releaseCloudType;","","        if(typeof appType !== \"undefined\" &amp;&amp; appType.indexOf(\"dev\") &gt; -1){","          cloud_host = this.cloud_props.hosts.debugCloudUrl;","          app_type = this.cloud_props.hosts.debugCloudType;","        }","        url = cloud_host;","      }","    }","    url = removeEndSlash(url);","    this.cloud_host = url;","    if(app_type === \"fh\"){","      this.isLegacy = true;","    }","    return url;","  }","}","","CloudHost.prototype.getActUrl = function(act){","  var app_props = appProps.getAppProps() || {};","  if(typeof this.cloud_host === \"undefined\"){","    this.getHost(app_props.mode);","  }","  if(this.isLegacy){","    return this.cloud_host + constants.boxprefix + \"act/\" + this.cloud_props.domain + \"/\" + app_props.appid + \"/\" + act + \"/\" + app_props.appid;","  } else {","    return this.cloud_host + \"/cloud/\" + act;","  }","}","","CloudHost.prototype.getMBAASUrl = function(service){","  var app_props = appProps.getAppProps() || {};","  if(typeof this.cloud_host === \"undefined\"){","    this.getHost(app_props.mode);","  }","  return this.cloud_host + \"/mbaas/\" + service;","}","","CloudHost.prototype.getCloudUrl = function(path){","  var app_props = appProps.getAppProps() || {};","  if(typeof this.cloud_host === \"undefined\"){","    this.getHost(app_props.mode);","  }","  return this.cloud_host + \"/\" + removeStartSlash(path);","}","","","","module.exports = CloudHost;"];
 
-var init = function(cb) {
-  appProps.load(function(err, data) {
-    if (err) return cb(err);
-    return loadCloudProps(data, cb);
-  });
+},{"./appProps":26,"./constants":28}],35:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/initializer.js']) {
+  _$jscoverage['modules/initializer.js'] = [];
+  _$jscoverage['modules/initializer.js'][1] = 0;
+  _$jscoverage['modules/initializer.js'][2] = 0;
+  _$jscoverage['modules/initializer.js'][3] = 0;
+  _$jscoverage['modules/initializer.js'][4] = 0;
+  _$jscoverage['modules/initializer.js'][5] = 0;
+  _$jscoverage['modules/initializer.js'][6] = 0;
+  _$jscoverage['modules/initializer.js'][7] = 0;
+  _$jscoverage['modules/initializer.js'][8] = 0;
+  _$jscoverage['modules/initializer.js'][9] = 0;
+  _$jscoverage['modules/initializer.js'][10] = 0;
+  _$jscoverage['modules/initializer.js'][11] = 0;
+  _$jscoverage['modules/initializer.js'][13] = 0;
+  _$jscoverage['modules/initializer.js'][14] = 0;
+  _$jscoverage['modules/initializer.js'][15] = 0;
+  _$jscoverage['modules/initializer.js'][16] = 0;
+  _$jscoverage['modules/initializer.js'][20] = 0;
+  _$jscoverage['modules/initializer.js'][21] = 0;
+  _$jscoverage['modules/initializer.js'][22] = 0;
+  _$jscoverage['modules/initializer.js'][25] = 0;
+  _$jscoverage['modules/initializer.js'][26] = 0;
+  _$jscoverage['modules/initializer.js'][43] = 0;
+  _$jscoverage['modules/initializer.js'][50] = 0;
+  _$jscoverage['modules/initializer.js'][54] = 0;
+  _$jscoverage['modules/initializer.js'][58] = 0;
+  _$jscoverage['modules/initializer.js'][59] = 0;
+  _$jscoverage['modules/initializer.js'][63] = 0;
+  _$jscoverage['modules/initializer.js'][64] = 0;
+  _$jscoverage['modules/initializer.js'][66] = 0;
+  _$jscoverage['modules/initializer.js'][75] = 0;
+  _$jscoverage['modules/initializer.js'][76] = 0;
+  _$jscoverage['modules/initializer.js'][81] = 0;
+  _$jscoverage['modules/initializer.js'][82] = 0;
+  _$jscoverage['modules/initializer.js'][88] = 0;
+  _$jscoverage['modules/initializer.js'][89] = 0;
+  _$jscoverage['modules/initializer.js'][90] = 0;
+  _$jscoverage['modules/initializer.js'][92] = 0;
+  _$jscoverage['modules/initializer.js'][94] = 0;
+  _$jscoverage['modules/initializer.js'][95] = 0;
+  _$jscoverage['modules/initializer.js'][96] = 0;
+  _$jscoverage['modules/initializer.js'][97] = 0;
+  _$jscoverage['modules/initializer.js'][102] = 0;
+  _$jscoverage['modules/initializer.js'][103] = 0;
+  _$jscoverage['modules/initializer.js'][104] = 0;
+  _$jscoverage['modules/initializer.js'][105] = 0;
+  _$jscoverage['modules/initializer.js'][116] = 0;
+  _$jscoverage['modules/initializer.js'][117] = 0;
+  _$jscoverage['modules/initializer.js'][118] = 0;
+  _$jscoverage['modules/initializer.js'][119] = 0;
+  _$jscoverage['modules/initializer.js'][120] = 0;
+  _$jscoverage['modules/initializer.js'][121] = 0;
+  _$jscoverage['modules/initializer.js'][122] = 0;
+  _$jscoverage['modules/initializer.js'][123] = 0;
+  _$jscoverage['modules/initializer.js'][124] = 0;
+  _$jscoverage['modules/initializer.js'][125] = 0;
+  _$jscoverage['modules/initializer.js'][126] = 0;
+  _$jscoverage['modules/initializer.js'][129] = 0;
+  _$jscoverage['modules/initializer.js'][131] = 0;
+  _$jscoverage['modules/initializer.js'][132] = 0;
+  _$jscoverage['modules/initializer.js'][136] = 0;
+  _$jscoverage['modules/initializer.js'][140] = 0;
+  _$jscoverage['modules/initializer.js'][144] = 0;
 }
-
-var loadCloudProps = function(app_props, callback) {
-  if(app_props.loglevel){
+_$jscoverage['modules/initializer.js'][1]++;
+var loadScript = require("./loadScript");
+_$jscoverage['modules/initializer.js'][2]++;
+var Lawnchair = require("../../libs/generated/lawnchair");
+_$jscoverage['modules/initializer.js'][3]++;
+var lawnchairext = require("./lawnchair-ext");
+_$jscoverage['modules/initializer.js'][4]++;
+var consts = require("./constants");
+_$jscoverage['modules/initializer.js'][5]++;
+var fhparams = require("./fhparams");
+_$jscoverage['modules/initializer.js'][6]++;
+var ajax = require("./ajax");
+_$jscoverage['modules/initializer.js'][7]++;
+var handleError = require("./handleError");
+_$jscoverage['modules/initializer.js'][8]++;
+var logger = require("./logger");
+_$jscoverage['modules/initializer.js'][9]++;
+var JSON = require("JSON");
+_$jscoverage['modules/initializer.js'][10]++;
+var hashFunc = require("./security/hash");
+_$jscoverage['modules/initializer.js'][11]++;
+var appProps = require("./appProps");
+_$jscoverage['modules/initializer.js'][13]++;
+var init = (function (cb) {
+  _$jscoverage['modules/initializer.js'][14]++;
+  appProps.load((function (err, data) {
+  _$jscoverage['modules/initializer.js'][15]++;
+  if (err) {
+    _$jscoverage['modules/initializer.js'][15]++;
+    return cb(err);
+  }
+  _$jscoverage['modules/initializer.js'][16]++;
+  return loadCloudProps(data, cb);
+}));
+});
+_$jscoverage['modules/initializer.js'][20]++;
+var loadCloudProps = (function (app_props, callback) {
+  _$jscoverage['modules/initializer.js'][21]++;
+  if (app_props.loglevel) {
+    _$jscoverage['modules/initializer.js'][22]++;
     logger.setLevel(app_props.loglevel);
   }
-  // If local - shortcircuit the init - just return the host
+  _$jscoverage['modules/initializer.js'][25]++;
   if (app_props.local) {
-    var res = {
-      "domain": "local",
-      "firstTime": false,
-      "hosts": {
-        "debugCloudType": "node",
-        "debugCloudUrl": app_props.host,
-        "releaseCloudType": "node",
-        "releaseCloudUrl": app_props.host,
-        "type": "cloud_nodejs",
-        "url": app_props.host
-      },
-      "init": {
-        "trackId": "000000000000000000000000"
-      },
-      "status": "ok"
-    };
-
-    return callback(null, {
-      cloud: res
-    });
+    _$jscoverage['modules/initializer.js'][26]++;
+    var res = {"domain": "local", "firstTime": false, "hosts": {"debugCloudType": "node", "debugCloudUrl": app_props.host, "releaseCloudType": "node", "releaseCloudUrl": app_props.host, "type": "cloud_nodejs", "url": app_props.host}, "init": {"trackId": "000000000000000000000000"}, "status": "ok"};
+    _$jscoverage['modules/initializer.js'][43]++;
+    return callback(null, {cloud: res});
   }
-
-
-  //now we have app props, add the fileStorageAdapter
+  _$jscoverage['modules/initializer.js'][50]++;
   lawnchairext.addAdapter(app_props, hashFunc);
-  //dom adapter doens't work on windows phone, so don't specify the adapter if the dom one failed
-  //we specify the order of lawnchair adapters to use, lawnchair will find the right one to use, to keep backward compatibility, keep the order
-  //as dom, webkit-sqlite, localFileStorage, window-name
-  var lcConf = {
-    name: "fh_init_storage",
-    adapter: ["dom", "webkit-sqlite", "window-name"],
-    fail: function(msg, err) {
-      var error_message = 'read/save from/to local storage failed  msg:' + msg + ' err:' + err;
-      return fail(error_message, {});
-    }
-  };
-
-  var doInit = function(path, appProps, savedHost, storage){
-    var data = fhparams.buildFHParams();
-
-    ajax({
-      "url": path,
-      "type": "POST",
-      "tryJSONP": true,
-      "dataType": "json",
-      "contentType": "application/json",
-      "data": JSON.stringify(data),
-      "timeout": appProps.timeout,
-      "success": function(initRes){
-        if(storage){
-          storage.save({
-            key: "fh_init",
-            value: initRes
-          }, function() {});
-        }
-        if (callback) {
-          callback(null, {
-            cloud: initRes
-          });
-        }
-      },
-      "error": function(req, statusText, error) {
-        var errormsg = "unknown";
-        if(req){
-          errormsg = req.status + " - " + req.responseText;
-        }
-        logger.error("App init returned error : " + errormsg);
-        //use the cached host if we have a copy
-        if (savedHost) {
-          logger.info("Using cached host: " + JSON.stringify(savedHost));
-          if (callback) {
-            callback(null, {
-              cloud: savedHost
-            });
-          }
-        } else {
-          logger.error("No cached host found. Init failed.");
-          handleError(function(msg, err) {
-            if (callback) {
-              callback({
-                error: err,
-                message: msg
-              });
-            }
-          }, req, statusText, error);
-        }
-      }
-    });
+  _$jscoverage['modules/initializer.js'][54]++;
+  var lcConf = {name: "fh_init_storage", adapter: ["dom", "webkit-sqlite", "window-name"], fail: (function (msg, err) {
+  _$jscoverage['modules/initializer.js'][58]++;
+  var error_message = "read/save from/to local storage failed  msg:" + msg + " err:" + err;
+  _$jscoverage['modules/initializer.js'][59]++;
+  return fail(error_message, {});
+})};
+  _$jscoverage['modules/initializer.js'][63]++;
+  var doInit = (function (path, appProps, savedHost, storage) {
+  _$jscoverage['modules/initializer.js'][64]++;
+  var data = fhparams.buildFHParams();
+  _$jscoverage['modules/initializer.js'][66]++;
+  ajax({"url": path, "type": "POST", "tryJSONP": true, "dataType": "json", "contentType": "application/json", "data": JSON.stringify(data), "timeout": appProps.timeout, "success": (function (initRes) {
+  _$jscoverage['modules/initializer.js'][75]++;
+  if (storage) {
+    _$jscoverage['modules/initializer.js'][76]++;
+    storage.save({key: "fh_init", value: initRes}, (function () {
+}));
   }
-
+  _$jscoverage['modules/initializer.js'][81]++;
+  if (callback) {
+    _$jscoverage['modules/initializer.js'][82]++;
+    callback(null, {cloud: initRes});
+  }
+}), "error": (function (req, statusText, error) {
+  _$jscoverage['modules/initializer.js'][88]++;
+  var errormsg = "unknown";
+  _$jscoverage['modules/initializer.js'][89]++;
+  if (req) {
+    _$jscoverage['modules/initializer.js'][90]++;
+    errormsg = req.status + " - " + req.responseText;
+  }
+  _$jscoverage['modules/initializer.js'][92]++;
+  logger.error("App init returned error : " + errormsg);
+  _$jscoverage['modules/initializer.js'][94]++;
+  if (savedHost) {
+    _$jscoverage['modules/initializer.js'][95]++;
+    logger.info("Using cached host: " + JSON.stringify(savedHost));
+    _$jscoverage['modules/initializer.js'][96]++;
+    if (callback) {
+      _$jscoverage['modules/initializer.js'][97]++;
+      callback(null, {cloud: savedHost});
+    }
+  }
+  else {
+    _$jscoverage['modules/initializer.js'][102]++;
+    logger.error("No cached host found. Init failed.");
+    _$jscoverage['modules/initializer.js'][103]++;
+    handleError((function (msg, err) {
+  _$jscoverage['modules/initializer.js'][104]++;
+  if (callback) {
+    _$jscoverage['modules/initializer.js'][105]++;
+    callback({error: err, message: msg});
+  }
+}), req, statusText, error);
+  }
+})});
+});
+  _$jscoverage['modules/initializer.js'][116]++;
   var storage = null;
+  _$jscoverage['modules/initializer.js'][117]++;
   var path = app_props.host + consts.boxprefix + "app/init";
+  _$jscoverage['modules/initializer.js'][118]++;
   try {
-    storage = new Lawnchair(lcConf, function() {});
-    storage.get('fh_init', function(storage_res) {
-      var savedHost = null;
-      if (storage_res && storage_res.value !== null && typeof(storage_res.value) !== "undefined" && storage_res !== "") {
-        storage_res = typeof(storage_res) === "string" ? JSON.parse(storage_res) : storage_res;
-        storage_res.value = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value) : storage_res.value;
-        if (storage_res.value.init) {
-          app_props.init = storage_res.value.init;
-        } else {
-          //keep it backward compatible.
-          app_props.init = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value) : storage_res.value;
-        }
-        if (storage_res.value.hosts) {
-          savedHost = storage_res.value;
-        }
-      }
-
-      doInit(path, app_props, savedHost, storage);
-    });
-  } catch (e) {
-    //for whatever reason (e.g. localStorage is disabled) Lawnchair is failed to init, just do the init
+    _$jscoverage['modules/initializer.js'][119]++;
+    storage = new Lawnchair(lcConf, (function () {
+}));
+    _$jscoverage['modules/initializer.js'][120]++;
+    storage.get("fh_init", (function (storage_res) {
+  _$jscoverage['modules/initializer.js'][121]++;
+  var savedHost = null;
+  _$jscoverage['modules/initializer.js'][122]++;
+  if (storage_res && storage_res.value !== null && typeof storage_res.value !== "undefined" && storage_res !== "") {
+    _$jscoverage['modules/initializer.js'][123]++;
+    storage_res = typeof storage_res === "string"? JSON.parse(storage_res): storage_res;
+    _$jscoverage['modules/initializer.js'][124]++;
+    storage_res.value = typeof storage_res.value === "string"? JSON.parse(storage_res.value): storage_res.value;
+    _$jscoverage['modules/initializer.js'][125]++;
+    if (storage_res.value.init) {
+      _$jscoverage['modules/initializer.js'][126]++;
+      app_props.init = storage_res.value.init;
+    }
+    else {
+      _$jscoverage['modules/initializer.js'][129]++;
+      app_props.init = typeof storage_res.value === "string"? JSON.parse(storage_res.value): storage_res.value;
+    }
+    _$jscoverage['modules/initializer.js'][131]++;
+    if (storage_res.value.hosts) {
+      _$jscoverage['modules/initializer.js'][132]++;
+      savedHost = storage_res.value;
+    }
+  }
+  _$jscoverage['modules/initializer.js'][136]++;
+  doInit(path, app_props, savedHost, storage);
+}));
+  }
+  catch (e) {
+    _$jscoverage['modules/initializer.js'][140]++;
     doInit(path, app_props, null, null);
-  }  
-};
+  }
+});
+_$jscoverage['modules/initializer.js'][144]++;
+module.exports = {"init": init, "loadCloudProps": loadCloudProps};
+_$jscoverage['modules/initializer.js'].source = ["var loadScript = require(\"./loadScript\");","var Lawnchair = require('../../libs/generated/lawnchair');","var lawnchairext = require('./lawnchair-ext');","var consts = require(\"./constants\");","var fhparams = require(\"./fhparams\");","var ajax = require(\"./ajax\");","var handleError = require(\"./handleError\");","var logger = require(\"./logger\");","var JSON = require(\"JSON\");","var hashFunc = require(\"./security/hash\");","var appProps = require(\"./appProps\");","","var init = function(cb) {","  appProps.load(function(err, data) {","    if (err) return cb(err);","    return loadCloudProps(data, cb);","  });","}","","var loadCloudProps = function(app_props, callback) {","  if(app_props.loglevel){","    logger.setLevel(app_props.loglevel);","  }","  // If local - shortcircuit the init - just return the host","  if (app_props.local) {","    var res = {","      \"domain\": \"local\",","      \"firstTime\": false,","      \"hosts\": {","        \"debugCloudType\": \"node\",","        \"debugCloudUrl\": app_props.host,","        \"releaseCloudType\": \"node\",","        \"releaseCloudUrl\": app_props.host,","        \"type\": \"cloud_nodejs\",","        \"url\": app_props.host","      },","      \"init\": {","        \"trackId\": \"000000000000000000000000\"","      },","      \"status\": \"ok\"","    };","","    return callback(null, {","      cloud: res","    });","  }","","","  //now we have app props, add the fileStorageAdapter","  lawnchairext.addAdapter(app_props, hashFunc);","  //dom adapter doens't work on windows phone, so don't specify the adapter if the dom one failed","  //we specify the order of lawnchair adapters to use, lawnchair will find the right one to use, to keep backward compatibility, keep the order","  //as dom, webkit-sqlite, localFileStorage, window-name","  var lcConf = {","    name: \"fh_init_storage\",","    adapter: [\"dom\", \"webkit-sqlite\", \"window-name\"],","    fail: function(msg, err) {","      var error_message = 'read/save from/to local storage failed  msg:' + msg + ' err:' + err;","      return fail(error_message, {});","    }","  };","","  var doInit = function(path, appProps, savedHost, storage){","    var data = fhparams.buildFHParams();","","    ajax({","      \"url\": path,","      \"type\": \"POST\",","      \"tryJSONP\": true,","      \"dataType\": \"json\",","      \"contentType\": \"application/json\",","      \"data\": JSON.stringify(data),","      \"timeout\": appProps.timeout,","      \"success\": function(initRes){","        if(storage){","          storage.save({","            key: \"fh_init\",","            value: initRes","          }, function() {});","        }","        if (callback) {","          callback(null, {","            cloud: initRes","          });","        }","      },","      \"error\": function(req, statusText, error) {","        var errormsg = \"unknown\";","        if(req){","          errormsg = req.status + \" - \" + req.responseText;","        }","        logger.error(\"App init returned error : \" + errormsg);","        //use the cached host if we have a copy","        if (savedHost) {","          logger.info(\"Using cached host: \" + JSON.stringify(savedHost));","          if (callback) {","            callback(null, {","              cloud: savedHost","            });","          }","        } else {","          logger.error(\"No cached host found. Init failed.\");","          handleError(function(msg, err) {","            if (callback) {","              callback({","                error: err,","                message: msg","              });","            }","          }, req, statusText, error);","        }","      }","    });","  }","","  var storage = null;","  var path = app_props.host + consts.boxprefix + \"app/init\";","  try {","    storage = new Lawnchair(lcConf, function() {});","    storage.get('fh_init', function(storage_res) {","      var savedHost = null;","      if (storage_res &amp;&amp; storage_res.value !== null &amp;&amp; typeof(storage_res.value) !== \"undefined\" &amp;&amp; storage_res !== \"\") {","        storage_res = typeof(storage_res) === \"string\" ? JSON.parse(storage_res) : storage_res;","        storage_res.value = typeof(storage_res.value) === \"string\" ? JSON.parse(storage_res.value) : storage_res.value;","        if (storage_res.value.init) {","          app_props.init = storage_res.value.init;","        } else {","          //keep it backward compatible.","          app_props.init = typeof(storage_res.value) === \"string\" ? JSON.parse(storage_res.value) : storage_res.value;","        }","        if (storage_res.value.hosts) {","          savedHost = storage_res.value;","        }","      }","","      doInit(path, app_props, savedHost, storage);","    });","  } catch (e) {","    //for whatever reason (e.g. localStorage is disabled) Lawnchair is failed to init, just do the init","    doInit(path, app_props, null, null);","  }  ","};","","module.exports = {","  \"init\": init,","  \"loadCloudProps\": loadCloudProps","}"];
 
-module.exports = {
-  "init": init,
-  "loadCloudProps": loadCloudProps
+},{"../../libs/generated/lawnchair":2,"./ajax":19,"./appProps":26,"./constants":28,"./fhparams":32,"./handleError":33,"./lawnchair-ext":36,"./loadScript":37,"./logger":38,"./security/hash":44,"JSON":3}],36:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/lawnchair-ext.js']) {
+  _$jscoverage['modules/lawnchair-ext.js'] = [];
+  _$jscoverage['modules/lawnchair-ext.js'][1] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][3] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][6] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][7] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][8] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][12] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][13] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][14] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][18] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][19] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][21] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][25] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][26] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][27] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][28] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][29] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][30] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][31] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][32] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][34] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][36] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][37] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][39] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][42] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][43] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][48] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][50] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][54] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][55] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][59] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][63] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][64] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][65] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][66] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][68] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][71] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][72] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][73] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][78] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][80] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][83] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][86] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][92] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][96] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][97] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][98] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][99] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][100] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][101] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][102] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][105] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][106] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][111] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][116] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][118] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][122] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][128] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][134] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][135] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][136] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][138] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][140] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][147] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][151] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][153] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][154] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][156] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][157] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][162] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][165] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][168] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][174] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][181] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][182] = 0;
+  _$jscoverage['modules/lawnchair-ext.js'][185] = 0;
 }
-},{"../../libs/generated/lawnchair":2,"./ajax":19,"./appProps":26,"./constants":28,"./fhparams":32,"./findFHPath":33,"./handleError":34,"./lawnchair-ext":37,"./loadScript":38,"./logger":39,"./security/hash":45,"JSON":3}],37:[function(require,module,exports){
-var Lawnchair = require('../../libs/generated/lawnchair');
-
-var fileStorageAdapter = function (app_props, hashFunc) {
-  // private methods
-
-  function doLog(mess){
-    if(console){
+_$jscoverage['modules/lawnchair-ext.js'][1]++;
+var Lawnchair = require("../../libs/generated/lawnchair");
+_$jscoverage['modules/lawnchair-ext.js'][3]++;
+var fileStorageAdapter = (function (app_props, hashFunc) {
+  _$jscoverage['modules/lawnchair-ext.js'][6]++;
+  function doLog(mess) {
+    _$jscoverage['modules/lawnchair-ext.js'][7]++;
+    if (console) {
+      _$jscoverage['modules/lawnchair-ext.js'][8]++;
       console.log(mess);
     }
+}
+  _$jscoverage['modules/lawnchair-ext.js'][12]++;
+  var fail = (function (e, i) {
+  _$jscoverage['modules/lawnchair-ext.js'][13]++;
+  if (console) {
+    _$jscoverage['modules/lawnchair-ext.js'][13]++;
+    console.log("error in file system adapter !", e, i);
   }
-
-  var fail = function (e, i) {
-    if(console) console.log('error in file system adapter !', e, i);
-    else throw e;
-  };
-
-
+  else {
+    _$jscoverage['modules/lawnchair-ext.js'][14]++;
+    throw e;
+  }
+});
+  _$jscoverage['modules/lawnchair-ext.js'][18]++;
   function filenameForKey(key, cb) {
+    _$jscoverage['modules/lawnchair-ext.js'][19]++;
     key = app_props.appid + key;
-
-    hashFunc({
-      algorithm: "MD5",
-      text: key
-    }, function(result) {
-      var filename = result.hashvalue + '.txt';
-      if (typeof navigator.externalstorage !== "undefined") {
-        navigator.externalstorage.enable(function handleSuccess(res){
-          var path = filename;
-          if(res.path ) {
-            path = res.path;
-            if(!path.match(/\/$/)) {
-              path += '/';
-            }
-            path += filename;
-          }
-          filename = path;
-          return cb(filename);
-        },function handleError(err){
-          return cb(filename);
-        })
-      } else {
-        doLog('filenameForKey key=' + key+ ' , Filename: ' + filename);
-        return cb(filename);
-      }
-    });
-  }
-
-  return {
-
-    valid: function () { return !!(window.requestFileSystem) },
-
-    init : function (options, callback){
-      //calls the parent function fn and applies this scope
-      if(options && 'function' === typeof options.fail ) fail = options.fail;
-      if (callback) this.fn(this.name, callback).call(this, this);
-    },
-
-    keys: function (callback){
-      throw "Currently not supported";
-    },
-
-    save : function (obj, callback){
-      var key = obj.key;
-      var value = obj.val||obj.value;
-      filenameForKey(key, function(hash) {
-        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function gotFS(fileSystem) {
-
-          fileSystem.root.getFile(hash, {
-            create: true
-          }, function gotFileEntry(fileEntry) {
-            fileEntry.createWriter(function gotFileWriter(writer) {
-              writer.onwrite = function() {
-                return callback({
-                  key: key,
-                  val: value
-                });
-              };
-              writer.write(value);
-            }, function() {
-              fail('[save] Failed to create file writer');
-            });
-          }, function() {
-            fail('[save] Failed to getFile');
-          });
-        }, function() {
-          fail('[save] Failed to requestFileSystem');
-        });
-      });
-    },
-
-    batch : function (records, callback){
-      throw "Currently not supported";
-    },
-
-    get : function (key, callback){
-      filenameForKey(key, function(hash) {
-        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function gotFS(fileSystem) {
-          fileSystem.root.getFile(hash, {}, function gotFileEntry(fileEntry) {
-            fileEntry.file(function gotFile(file) {
-              var reader = new FileReader();
-              reader.onloadend = function (evt) {
-                var text = evt.target.result;
-                // Check for URLencoded
-                // PG 2.2 bug in readAsText()
-                try {
-                  text = decodeURIComponent(text);
-                } catch (e) {
-                  // Swallow exception if not URLencoded
-                  // Just use the result
-                }
-                return callback({
-                  key: key,
-                  val: text
-                });
-              };
-              reader.readAsText(file);
-            }, function() {
-              fail('[load] Failed to getFile');
-            });
-          }, function() {
-            // Success callback on key load failure
-            callback({
-              key: key,
-              val: null
-            });
-          });
-        }, function() {
-          fail('[load] Failed to get fileSystem');
-        });
-      });
-    },
-
-    exists : function (key, callback){
-      filenameForKey(key,function (hash){
-        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function gotFS(fileSystem) {
-          fileSystem.root.getFile(hash, {},
-            function gotFileEntry(fileEntry) {
-              return callback(true);
-            }, function (err){
-              return callback(false);
-            });
-        });
-      });
-    },
-
-    all : function (callback){
-      throw "Currently not supported";
-    },
-
-    remove : function (key, callback){
-      filenameForKey(key, function(hash) {
-
-        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function gotFS(fileSystem) {
-          fileSystem.root.getFile(hash, {}, function gotFileEntry(fileEntry) {
-
-            fileEntry.remove(function() {
-              return callback({
-                key: key,
-                val: null
-              });
-            }, function() {
-              fail('[remove] Failed to remove file');
-            });
-          }, function() {
-            fail('[remove] Failed to getFile');
-          });
-        }, function() {
-          fail('[remove] Failed to get fileSystem');
-        });
-      });
-    },
-
-    nuke : function (callback){
-      throw "Currently not supported";
+    _$jscoverage['modules/lawnchair-ext.js'][21]++;
+    hashFunc({algorithm: "MD5", text: key}, (function (result) {
+  _$jscoverage['modules/lawnchair-ext.js'][25]++;
+  var filename = result.hashvalue + ".txt";
+  _$jscoverage['modules/lawnchair-ext.js'][26]++;
+  if (typeof navigator.externalstorage !== "undefined") {
+    _$jscoverage['modules/lawnchair-ext.js'][27]++;
+    navigator.externalstorage.enable((function handleSuccess(res) {
+  _$jscoverage['modules/lawnchair-ext.js'][28]++;
+  var path = filename;
+  _$jscoverage['modules/lawnchair-ext.js'][29]++;
+  if (res.path) {
+    _$jscoverage['modules/lawnchair-ext.js'][30]++;
+    path = res.path;
+    _$jscoverage['modules/lawnchair-ext.js'][31]++;
+    if (! path.match(/\/$/)) {
+      _$jscoverage['modules/lawnchair-ext.js'][32]++;
+      path += "/";
     }
-
-
-  };
+    _$jscoverage['modules/lawnchair-ext.js'][34]++;
+    path += filename;
+  }
+  _$jscoverage['modules/lawnchair-ext.js'][36]++;
+  filename = path;
+  _$jscoverage['modules/lawnchair-ext.js'][37]++;
+  return cb(filename);
+}), (function handleError(err) {
+  _$jscoverage['modules/lawnchair-ext.js'][39]++;
+  return cb(filename);
+}));
+  }
+  else {
+    _$jscoverage['modules/lawnchair-ext.js'][42]++;
+    doLog("filenameForKey key=" + key + " , Filename: " + filename);
+    _$jscoverage['modules/lawnchair-ext.js'][43]++;
+    return cb(filename);
+  }
+}));
 }
+  _$jscoverage['modules/lawnchair-ext.js'][48]++;
+  return ({valid: (function () {
+  _$jscoverage['modules/lawnchair-ext.js'][50]++;
+  return ! ! window.requestFileSystem;
+}), init: (function (options, callback) {
+  _$jscoverage['modules/lawnchair-ext.js'][54]++;
+  if (options && "function" === typeof options.fail) {
+    _$jscoverage['modules/lawnchair-ext.js'][54]++;
+    fail = options.fail;
+  }
+  _$jscoverage['modules/lawnchair-ext.js'][55]++;
+  if (callback) {
+    _$jscoverage['modules/lawnchair-ext.js'][55]++;
+    this.fn(this.name, callback).call(this, this);
+  }
+}), keys: (function (callback) {
+  _$jscoverage['modules/lawnchair-ext.js'][59]++;
+  throw "Currently not supported";
+}), save: (function (obj, callback) {
+  _$jscoverage['modules/lawnchair-ext.js'][63]++;
+  var key = obj.key;
+  _$jscoverage['modules/lawnchair-ext.js'][64]++;
+  var value = obj.val || obj.value;
+  _$jscoverage['modules/lawnchair-ext.js'][65]++;
+  filenameForKey(key, (function (hash) {
+  _$jscoverage['modules/lawnchair-ext.js'][66]++;
+  window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, (function gotFS(fileSystem) {
+  _$jscoverage['modules/lawnchair-ext.js'][68]++;
+  fileSystem.root.getFile(hash, {create: true}, (function gotFileEntry(fileEntry) {
+  _$jscoverage['modules/lawnchair-ext.js'][71]++;
+  fileEntry.createWriter((function gotFileWriter(writer) {
+  _$jscoverage['modules/lawnchair-ext.js'][72]++;
+  writer.onwrite = (function () {
+  _$jscoverage['modules/lawnchair-ext.js'][73]++;
+  return callback({key: key, val: value});
+});
+  _$jscoverage['modules/lawnchair-ext.js'][78]++;
+  writer.write(value);
+}), (function () {
+  _$jscoverage['modules/lawnchair-ext.js'][80]++;
+  fail("[save] Failed to create file writer");
+}));
+}), (function () {
+  _$jscoverage['modules/lawnchair-ext.js'][83]++;
+  fail("[save] Failed to getFile");
+}));
+}), (function () {
+  _$jscoverage['modules/lawnchair-ext.js'][86]++;
+  fail("[save] Failed to requestFileSystem");
+}));
+}));
+}), batch: (function (records, callback) {
+  _$jscoverage['modules/lawnchair-ext.js'][92]++;
+  throw "Currently not supported";
+}), get: (function (key, callback) {
+  _$jscoverage['modules/lawnchair-ext.js'][96]++;
+  filenameForKey(key, (function (hash) {
+  _$jscoverage['modules/lawnchair-ext.js'][97]++;
+  window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, (function gotFS(fileSystem) {
+  _$jscoverage['modules/lawnchair-ext.js'][98]++;
+  fileSystem.root.getFile(hash, {}, (function gotFileEntry(fileEntry) {
+  _$jscoverage['modules/lawnchair-ext.js'][99]++;
+  fileEntry.file((function gotFile(file) {
+  _$jscoverage['modules/lawnchair-ext.js'][100]++;
+  var reader = new FileReader();
+  _$jscoverage['modules/lawnchair-ext.js'][101]++;
+  reader.onloadend = (function (evt) {
+  _$jscoverage['modules/lawnchair-ext.js'][102]++;
+  var text = evt.target.result;
+  _$jscoverage['modules/lawnchair-ext.js'][105]++;
+  try {
+    _$jscoverage['modules/lawnchair-ext.js'][106]++;
+    text = decodeURIComponent(text);
+  }
+  catch (e) {
+  }
+  _$jscoverage['modules/lawnchair-ext.js'][111]++;
+  return callback({key: key, val: text});
+});
+  _$jscoverage['modules/lawnchair-ext.js'][116]++;
+  reader.readAsText(file);
+}), (function () {
+  _$jscoverage['modules/lawnchair-ext.js'][118]++;
+  fail("[load] Failed to getFile");
+}));
+}), (function () {
+  _$jscoverage['modules/lawnchair-ext.js'][122]++;
+  callback({key: key, val: null});
+}));
+}), (function () {
+  _$jscoverage['modules/lawnchair-ext.js'][128]++;
+  fail("[load] Failed to get fileSystem");
+}));
+}));
+}), exists: (function (key, callback) {
+  _$jscoverage['modules/lawnchair-ext.js'][134]++;
+  filenameForKey(key, (function (hash) {
+  _$jscoverage['modules/lawnchair-ext.js'][135]++;
+  window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, (function gotFS(fileSystem) {
+  _$jscoverage['modules/lawnchair-ext.js'][136]++;
+  fileSystem.root.getFile(hash, {}, (function gotFileEntry(fileEntry) {
+  _$jscoverage['modules/lawnchair-ext.js'][138]++;
+  return callback(true);
+}), (function (err) {
+  _$jscoverage['modules/lawnchair-ext.js'][140]++;
+  return callback(false);
+}));
+}));
+}));
+}), all: (function (callback) {
+  _$jscoverage['modules/lawnchair-ext.js'][147]++;
+  throw "Currently not supported";
+}), remove: (function (key, callback) {
+  _$jscoverage['modules/lawnchair-ext.js'][151]++;
+  filenameForKey(key, (function (hash) {
+  _$jscoverage['modules/lawnchair-ext.js'][153]++;
+  window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, (function gotFS(fileSystem) {
+  _$jscoverage['modules/lawnchair-ext.js'][154]++;
+  fileSystem.root.getFile(hash, {}, (function gotFileEntry(fileEntry) {
+  _$jscoverage['modules/lawnchair-ext.js'][156]++;
+  fileEntry.remove((function () {
+  _$jscoverage['modules/lawnchair-ext.js'][157]++;
+  return callback({key: key, val: null});
+}), (function () {
+  _$jscoverage['modules/lawnchair-ext.js'][162]++;
+  fail("[remove] Failed to remove file");
+}));
+}), (function () {
+  _$jscoverage['modules/lawnchair-ext.js'][165]++;
+  fail("[remove] Failed to getFile");
+}));
+}), (function () {
+  _$jscoverage['modules/lawnchair-ext.js'][168]++;
+  fail("[remove] Failed to get fileSystem");
+}));
+}));
+}), nuke: (function (callback) {
+  _$jscoverage['modules/lawnchair-ext.js'][174]++;
+  throw "Currently not supported";
+})});
+});
+_$jscoverage['modules/lawnchair-ext.js'][181]++;
+var addAdapter = (function (app_props, hashFunc) {
+  _$jscoverage['modules/lawnchair-ext.js'][182]++;
+  Lawnchair.adapter("localFileStorage", fileStorageAdapter(app_props, hashFunc));
+});
+_$jscoverage['modules/lawnchair-ext.js'][185]++;
+module.exports = {addAdapter: addAdapter};
+_$jscoverage['modules/lawnchair-ext.js'].source = ["var Lawnchair = require('../../libs/generated/lawnchair');","","var fileStorageAdapter = function (app_props, hashFunc) {","  // private methods","","  function doLog(mess){","    if(console){","      console.log(mess);","    }","  }","","  var fail = function (e, i) {","    if(console) console.log('error in file system adapter !', e, i);","    else throw e;","  };","","","  function filenameForKey(key, cb) {","    key = app_props.appid + key;","","    hashFunc({","      algorithm: \"MD5\",","      text: key","    }, function(result) {","      var filename = result.hashvalue + '.txt';","      if (typeof navigator.externalstorage !== \"undefined\") {","        navigator.externalstorage.enable(function handleSuccess(res){","          var path = filename;","          if(res.path ) {","            path = res.path;","            if(!path.match(/\\/$/)) {","              path += '/';","            }","            path += filename;","          }","          filename = path;","          return cb(filename);","        },function handleError(err){","          return cb(filename);","        })","      } else {","        doLog('filenameForKey key=' + key+ ' , Filename: ' + filename);","        return cb(filename);","      }","    });","  }","","  return {","","    valid: function () { return !!(window.requestFileSystem) },","","    init : function (options, callback){","      //calls the parent function fn and applies this scope","      if(options &amp;&amp; 'function' === typeof options.fail ) fail = options.fail;","      if (callback) this.fn(this.name, callback).call(this, this);","    },","","    keys: function (callback){","      throw \"Currently not supported\";","    },","","    save : function (obj, callback){","      var key = obj.key;","      var value = obj.val||obj.value;","      filenameForKey(key, function(hash) {","        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function gotFS(fileSystem) {","","          fileSystem.root.getFile(hash, {","            create: true","          }, function gotFileEntry(fileEntry) {","            fileEntry.createWriter(function gotFileWriter(writer) {","              writer.onwrite = function() {","                return callback({","                  key: key,","                  val: value","                });","              };","              writer.write(value);","            }, function() {","              fail('[save] Failed to create file writer');","            });","          }, function() {","            fail('[save] Failed to getFile');","          });","        }, function() {","          fail('[save] Failed to requestFileSystem');","        });","      });","    },","","    batch : function (records, callback){","      throw \"Currently not supported\";","    },","","    get : function (key, callback){","      filenameForKey(key, function(hash) {","        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function gotFS(fileSystem) {","          fileSystem.root.getFile(hash, {}, function gotFileEntry(fileEntry) {","            fileEntry.file(function gotFile(file) {","              var reader = new FileReader();","              reader.onloadend = function (evt) {","                var text = evt.target.result;","                // Check for URLencoded","                // PG 2.2 bug in readAsText()","                try {","                  text = decodeURIComponent(text);","                } catch (e) {","                  // Swallow exception if not URLencoded","                  // Just use the result","                }","                return callback({","                  key: key,","                  val: text","                });","              };","              reader.readAsText(file);","            }, function() {","              fail('[load] Failed to getFile');","            });","          }, function() {","            // Success callback on key load failure","            callback({","              key: key,","              val: null","            });","          });","        }, function() {","          fail('[load] Failed to get fileSystem');","        });","      });","    },","","    exists : function (key, callback){","      filenameForKey(key,function (hash){","        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function gotFS(fileSystem) {","          fileSystem.root.getFile(hash, {},","            function gotFileEntry(fileEntry) {","              return callback(true);","            }, function (err){","              return callback(false);","            });","        });","      });","    },","","    all : function (callback){","      throw \"Currently not supported\";","    },","","    remove : function (key, callback){","      filenameForKey(key, function(hash) {","","        window.requestFileSystem(LocalFileSystem.PERSISTENT, 0, function gotFS(fileSystem) {","          fileSystem.root.getFile(hash, {}, function gotFileEntry(fileEntry) {","","            fileEntry.remove(function() {","              return callback({","                key: key,","                val: null","              });","            }, function() {","              fail('[remove] Failed to remove file');","            });","          }, function() {","            fail('[remove] Failed to getFile');","          });","        }, function() {","          fail('[remove] Failed to get fileSystem');","        });","      });","    },","","    nuke : function (callback){","      throw \"Currently not supported\";","    }","","","  };","}","","var addAdapter = function(app_props, hashFunc){","  Lawnchair.adapter('localFileStorage', fileStorageAdapter(app_props, hashFunc));","}","","module.exports = {","  addAdapter: addAdapter","}"];
 
-var addAdapter = function(app_props, hashFunc){
-  Lawnchair.adapter('localFileStorage', fileStorageAdapter(app_props, hashFunc));
+},{"../../libs/generated/lawnchair":2}],37:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/loadScript.js']) {
+  _$jscoverage['modules/loadScript.js'] = [];
+  _$jscoverage['modules/loadScript.js'][1] = 0;
+  _$jscoverage['modules/loadScript.js'][2] = 0;
+  _$jscoverage['modules/loadScript.js'][3] = 0;
+  _$jscoverage['modules/loadScript.js'][4] = 0;
+  _$jscoverage['modules/loadScript.js'][5] = 0;
+  _$jscoverage['modules/loadScript.js'][6] = 0;
+  _$jscoverage['modules/loadScript.js'][7] = 0;
+  _$jscoverage['modules/loadScript.js'][8] = 0;
+  _$jscoverage['modules/loadScript.js'][9] = 0;
+  _$jscoverage['modules/loadScript.js'][10] = 0;
+  _$jscoverage['modules/loadScript.js'][11] = 0;
+  _$jscoverage['modules/loadScript.js'][12] = 0;
+  _$jscoverage['modules/loadScript.js'][14] = 0;
+  _$jscoverage['modules/loadScript.js'][15] = 0;
+  _$jscoverage['modules/loadScript.js'][16] = 0;
+  _$jscoverage['modules/loadScript.js'][20] = 0;
 }
-
-module.exports = {
-  addAdapter: addAdapter
-}
-},{"../../libs/generated/lawnchair":2}],38:[function(require,module,exports){
-module.exports = function (url, callback) {
+_$jscoverage['modules/loadScript.js'][1]++;
+module.exports = (function (url, callback) {
+  _$jscoverage['modules/loadScript.js'][2]++;
   var script;
+  _$jscoverage['modules/loadScript.js'][3]++;
   var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
+  _$jscoverage['modules/loadScript.js'][4]++;
   script = document.createElement("script");
+  _$jscoverage['modules/loadScript.js'][5]++;
   script.async = "async";
+  _$jscoverage['modules/loadScript.js'][6]++;
   script.src = url;
+  _$jscoverage['modules/loadScript.js'][7]++;
   script.type = "text/javascript";
-  script.onload = script.onreadystatechange = function () {
-    if (!script.readyState || /loaded|complete/.test(script.readyState)) {
-      script.onload = script.onreadystatechange = null;
-      if (head && script.parentNode) {
-        head.removeChild(script);
-      }
-      script = undefined;
-      if (callback && typeof callback === "function") {
-        callback();
-      }
+  _$jscoverage['modules/loadScript.js'][8]++;
+  script.onload = script.onreadystatechange = (function () {
+  _$jscoverage['modules/loadScript.js'][9]++;
+  if (! script.readyState || /loaded|complete/.test(script.readyState)) {
+    _$jscoverage['modules/loadScript.js'][10]++;
+    script.onload = script.onreadystatechange = null;
+    _$jscoverage['modules/loadScript.js'][11]++;
+    if (head && script.parentNode) {
+      _$jscoverage['modules/loadScript.js'][12]++;
+      head.removeChild(script);
     }
-  };
-  head.insertBefore(script, head.firstChild);
-};
-
-},{}],39:[function(require,module,exports){
-var console = require('console');
-var log = require('loglevel');
-
-log.setLevel('info');
-
-/**
- * APIs:
- * see https://github.com/pimterry/loglevel.
- * In short, you can use:
- * log.setLevel(loglevel) - default to info
- * log.enableAll() - enable all log messages
- * log.disableAll() - disable all log messages
- *
- * log.trace(msg)
- * log.debug(msg)
- * log.info(msg)
- * log.warn(msg)
- * log.error(msg)
- *
- * Available levels: { "TRACE": 0, "DEBUG": 1, "INFO": 2, "WARN": 3, "ERROR": 4, "SILENT": 5}
- * Use either string or integer value
- */
-module.exports = log;
-},{"console":8,"loglevel":14}],40:[function(require,module,exports){
-module.exports = [
-  {
-    "destination" :"ipad",
-    "test": ["iPad"]
-  },
-  {
-    "destination" :"iphone",
-    "test": ["iPhone"]
-  },
-  {
-    "destination" :"android",
-    "test": ["Android"]
-  },
-  {
-    "destination" :"blackberry",
-    "test": ["BlackBerry", "BB10", "RIM Tablet OS"]//Blackberry 10 does not contain "Blackberry"
-  },
-  {
-    "destination" :"windowsphone",
-    "test": ["Windows Phone 8"]
-  },
-  {
-    "destination" :"windowsphone7",
-    "test": ["Windows Phone OS 7"]
+    _$jscoverage['modules/loadScript.js'][14]++;
+    script = undefined;
+    _$jscoverage['modules/loadScript.js'][15]++;
+    if (callback && typeof callback === "function") {
+      _$jscoverage['modules/loadScript.js'][16]++;
+      callback();
+    }
   }
-];
+});
+  _$jscoverage['modules/loadScript.js'][20]++;
+  head.insertBefore(script, head.firstChild);
+});
+_$jscoverage['modules/loadScript.js'].source = ["module.exports = function (url, callback) {","  var script;","  var head = document.head || document.getElementsByTagName(\"head\")[0] || document.documentElement;","  script = document.createElement(\"script\");","  script.async = \"async\";","  script.src = url;","  script.type = \"text/javascript\";","  script.onload = script.onreadystatechange = function () {","    if (!script.readyState || /loaded|complete/.test(script.readyState)) {","      script.onload = script.onreadystatechange = null;","      if (head &amp;&amp; script.parentNode) {","        head.removeChild(script);","      }","      script = undefined;","      if (callback &amp;&amp; typeof callback === \"function\") {","        callback();","      }","    }","  };","  head.insertBefore(script, head.firstChild);","};"];
+
+},{}],38:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/logger.js']) {
+  _$jscoverage['modules/logger.js'] = [];
+  _$jscoverage['modules/logger.js'][1] = 0;
+  _$jscoverage['modules/logger.js'][2] = 0;
+  _$jscoverage['modules/logger.js'][4] = 0;
+  _$jscoverage['modules/logger.js'][23] = 0;
+}
+_$jscoverage['modules/logger.js'][1]++;
+var console = require("console");
+_$jscoverage['modules/logger.js'][2]++;
+var log = require("loglevel");
+_$jscoverage['modules/logger.js'][4]++;
+log.setLevel("info");
+_$jscoverage['modules/logger.js'][23]++;
+module.exports = log;
+_$jscoverage['modules/logger.js'].source = ["var console = require('console');","var log = require('loglevel');","","log.setLevel('info');","","/**"," * APIs:"," * see https://github.com/pimterry/loglevel."," * In short, you can use:"," * log.setLevel(loglevel) - default to info"," * log.enableAll() - enable all log messages"," * log.disableAll() - disable all log messages"," *"," * log.trace(msg)"," * log.debug(msg)"," * log.info(msg)"," * log.warn(msg)"," * log.error(msg)"," *"," * Available levels: { \"TRACE\": 0, \"DEBUG\": 1, \"INFO\": 2, \"WARN\": 3, \"ERROR\": 4, \"SILENT\": 5}"," * Use either string or integer value"," */","module.exports = log;"];
+
+},{"console":8,"loglevel":14}],39:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/platformsMap.js']) {
+  _$jscoverage['modules/platformsMap.js'] = [];
+  _$jscoverage['modules/platformsMap.js'][1] = 0;
+}
+_$jscoverage['modules/platformsMap.js'][1]++;
+module.exports = [{"destination": "ipad", "test": ["iPad"]}, {"destination": "iphone", "test": ["iPhone"]}, {"destination": "android", "test": ["Android"]}, {"destination": "blackberry", "test": ["BlackBerry", "BB10", "RIM Tablet OS"]}, {"destination": "windowsphone", "test": ["Windows Phone 8"]}, {"destination": "windowsphone7", "test": ["Windows Phone OS 7"]}];
+_$jscoverage['modules/platformsMap.js'].source = ["module.exports = [","  {","    \"destination\" :\"ipad\",","    \"test\": [\"iPad\"]","  },","  {","    \"destination\" :\"iphone\",","    \"test\": [\"iPhone\"]","  },","  {","    \"destination\" :\"android\",","    \"test\": [\"Android\"]","  },","  {","    \"destination\" :\"blackberry\",","    \"test\": [\"BlackBerry\", \"BB10\", \"RIM Tablet OS\"]//Blackberry 10 does not contain \"Blackberry\"","  },","  {","    \"destination\" :\"windowsphone\",","    \"test\": [\"Windows Phone 8\"]","  },","  {","    \"destination\" :\"windowsphone7\",","    \"test\": [\"Windows Phone OS 7\"]","  }","];"];
+
+},{}],40:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/queryMap.js']) {
+  _$jscoverage['modules/queryMap.js'] = [];
+  _$jscoverage['modules/queryMap.js'][1] = 0;
+  _$jscoverage['modules/queryMap.js'][2] = 0;
+  _$jscoverage['modules/queryMap.js'][3] = 0;
+  _$jscoverage['modules/queryMap.js'][4] = 0;
+  _$jscoverage['modules/queryMap.js'][5] = 0;
+  _$jscoverage['modules/queryMap.js'][6] = 0;
+  _$jscoverage['modules/queryMap.js'][7] = 0;
+  _$jscoverage['modules/queryMap.js'][8] = 0;
+  _$jscoverage['modules/queryMap.js'][9] = 0;
+  _$jscoverage['modules/queryMap.js'][10] = 0;
+  _$jscoverage['modules/queryMap.js'][11] = 0;
+  _$jscoverage['modules/queryMap.js'][14] = 0;
+}
+_$jscoverage['modules/queryMap.js'][1]++;
+module.exports = (function (url) {
+  _$jscoverage['modules/queryMap.js'][2]++;
+  var qmap = {};
+  _$jscoverage['modules/queryMap.js'][3]++;
+  var i = url.split("?");
+  _$jscoverage['modules/queryMap.js'][4]++;
+  if (i.length === 2) {
+    _$jscoverage['modules/queryMap.js'][5]++;
+    var queryString = i[1];
+    _$jscoverage['modules/queryMap.js'][6]++;
+    var pairs = queryString.split("&");
+    _$jscoverage['modules/queryMap.js'][7]++;
+    qmap = {};
+    _$jscoverage['modules/queryMap.js'][8]++;
+    for (var p = 0; p < pairs.length; p++) {
+      _$jscoverage['modules/queryMap.js'][9]++;
+      var q = pairs[p];
+      _$jscoverage['modules/queryMap.js'][10]++;
+      var qp = q.split("=");
+      _$jscoverage['modules/queryMap.js'][11]++;
+      qmap[qp[0]] = qp[1];
+}
+  }
+  _$jscoverage['modules/queryMap.js'][14]++;
+  return qmap;
+});
+_$jscoverage['modules/queryMap.js'].source = ["module.exports = function(url) {","  var qmap = {};","  var i = url.split(\"?\");","  if (i.length === 2) {","    var queryString = i[1];","    var pairs = queryString.split(\"&amp;\");","    qmap = {};","    for (var p = 0; p &lt; pairs.length; p++) {","      var q = pairs[p];","      var qp = q.split(\"=\");","      qmap[qp[0]] = qp[1];","    }","  }","  return qmap;","};"];
 
 },{}],41:[function(require,module,exports){
-module.exports = function(url) {
-  var qmap = {};
-  var i = url.split("?");
-  if (i.length === 2) {
-    var queryString = i[1];
-    var pairs = queryString.split("&");
-    qmap = {};
-    for (var p = 0; p < pairs.length; p++) {
-      var q = pairs[p];
-      var qp = q.split("=");
-      qmap[qp[0]] = qp[1];
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/sdkversion.js']) {
+  _$jscoverage['modules/sdkversion.js'] = [];
+  _$jscoverage['modules/sdkversion.js'][1] = 0;
+  _$jscoverage['modules/sdkversion.js'][3] = 0;
+  _$jscoverage['modules/sdkversion.js'][4] = 0;
+  _$jscoverage['modules/sdkversion.js'][5] = 0;
+  _$jscoverage['modules/sdkversion.js'][6] = 0;
+  _$jscoverage['modules/sdkversion.js'][7] = 0;
+  _$jscoverage['modules/sdkversion.js'][8] = 0;
+  _$jscoverage['modules/sdkversion.js'][10] = 0;
+}
+_$jscoverage['modules/sdkversion.js'][1]++;
+var constants = require("./constants");
+_$jscoverage['modules/sdkversion.js'][3]++;
+module.exports = (function () {
+  _$jscoverage['modules/sdkversion.js'][4]++;
+  var type = "FH_JS_SDK";
+  _$jscoverage['modules/sdkversion.js'][5]++;
+  if (typeof window.fh_destination_code !== "undefined") {
+    _$jscoverage['modules/sdkversion.js'][6]++;
+    type = "FH_HYBRID_SDK";
+  }
+  else {
+    _$jscoverage['modules/sdkversion.js'][7]++;
+    if (window.PhoneGap || window.cordova) {
+      _$jscoverage['modules/sdkversion.js'][8]++;
+      type = "FH_PHONEGAP_SDK";
     }
   }
-  return qmap;
-};
-},{}],42:[function(require,module,exports){
-var constants = require("./constants");
-
-module.exports = function() {
-  var type = "FH_JS_SDK";
-  if (typeof window.fh_destination_code !== 'undefined') {
-    type = "FH_HYBRID_SDK";
-  } else if(window.PhoneGap || window.cordova) {
-    type = "FH_PHONEGAP_SDK";
-  }
+  _$jscoverage['modules/sdkversion.js'][10]++;
   return type + "/" + constants.sdk_version;
-};
+});
+_$jscoverage['modules/sdkversion.js'].source = ["var constants = require(\"./constants\");","","module.exports = function() {","  var type = \"FH_JS_SDK\";","  if (typeof window.fh_destination_code !== 'undefined') {","    type = \"FH_HYBRID_SDK\";","  } else if(window.PhoneGap || window.cordova) {","    type = \"FH_PHONEGAP_SDK\";","  }","  return type + \"/\" + constants.sdk_version;","};"];
 
-},{"./constants":28}],43:[function(require,module,exports){
+},{"./constants":28}],42:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/security/aes-keygen.js']) {
+  _$jscoverage['modules/security/aes-keygen.js'] = [];
+  _$jscoverage['modules/security/aes-keygen.js'][1] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][2] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][3] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][5] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][6] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][7] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][8] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][9] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][10] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][11] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][13] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][16] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][17] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][18] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][19] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][21] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][22] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][23] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][25] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][28] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][29] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][31] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][32] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][34] = 0;
+  _$jscoverage['modules/security/aes-keygen.js'][41] = 0;
+}
+_$jscoverage['modules/security/aes-keygen.js'][1]++;
 var rsa = require("../../../libs/rsa");
+_$jscoverage['modules/security/aes-keygen.js'][2]++;
 var SecureRandom = rsa.SecureRandom;
+_$jscoverage['modules/security/aes-keygen.js'][3]++;
 var byte2Hex = rsa.byte2Hex;
-
-var generateRandomKey = function(keysize){
+_$jscoverage['modules/security/aes-keygen.js'][5]++;
+var generateRandomKey = (function (keysize) {
+  _$jscoverage['modules/security/aes-keygen.js'][6]++;
   var r = new SecureRandom();
+  _$jscoverage['modules/security/aes-keygen.js'][7]++;
   var key = new Array(keysize);
+  _$jscoverage['modules/security/aes-keygen.js'][8]++;
   r.nextBytes(key);
+  _$jscoverage['modules/security/aes-keygen.js'][9]++;
   var result = "";
-  for(var i=0;i<key.length;i++){
+  _$jscoverage['modules/security/aes-keygen.js'][10]++;
+  for (var i = 0; i < key.length; i++) {
+    _$jscoverage['modules/security/aes-keygen.js'][11]++;
     result += byte2Hex(key[i]);
-  }
+}
+  _$jscoverage['modules/security/aes-keygen.js'][13]++;
   return result;
-};
-
-var aes_keygen = function(p, s, f){
-  if (!p.params.keysize) {
-    f('no_params_keysize', {}, p);
+});
+_$jscoverage['modules/security/aes-keygen.js'][16]++;
+var aes_keygen = (function (p, s, f) {
+  _$jscoverage['modules/security/aes-keygen.js'][17]++;
+  if (! p.params.keysize) {
+    _$jscoverage['modules/security/aes-keygen.js'][18]++;
+    f("no_params_keysize", {}, p);
+    _$jscoverage['modules/security/aes-keygen.js'][19]++;
     return;
   }
+  _$jscoverage['modules/security/aes-keygen.js'][21]++;
   if (p.params.algorithm.toLowerCase() !== "aes") {
-    f('keygen_bad_algorithm', {}, p);
+    _$jscoverage['modules/security/aes-keygen.js'][22]++;
+    f("keygen_bad_algorithm", {}, p);
+    _$jscoverage['modules/security/aes-keygen.js'][23]++;
     return;
   }
+  _$jscoverage['modules/security/aes-keygen.js'][25]++;
   var keysize = parseInt(p.params.keysize, 10);
-  //keysize is in bit, need to convert to bytes to generate random key
-  //but the legacy code has a bug, it doesn't do the convert, so if the keysize is less than 100, don't convert
-  if(keysize > 100){
-    keysize = keysize/8;
+  _$jscoverage['modules/security/aes-keygen.js'][28]++;
+  if (keysize > 100) {
+    _$jscoverage['modules/security/aes-keygen.js'][29]++;
+    keysize = keysize / 8;
   }
-  if(typeof SecureRandom === "undefined"){
+  _$jscoverage['modules/security/aes-keygen.js'][31]++;
+  if (typeof SecureRandom === "undefined") {
+    _$jscoverage['modules/security/aes-keygen.js'][32]++;
     return f("security library is not loaded.");
   }
-  return s({
-    'algorithm': 'AES',
-    'secretkey': generateRandomKey(keysize),
-    'iv': generateRandomKey(keysize)
-  });
-}
-
+  _$jscoverage['modules/security/aes-keygen.js'][34]++;
+  return s({"algorithm": "AES", "secretkey": generateRandomKey(keysize), "iv": generateRandomKey(keysize)});
+});
+_$jscoverage['modules/security/aes-keygen.js'][41]++;
 module.exports = aes_keygen;
-},{"../../../libs/rsa":4}],44:[function(require,module,exports){
-var CryptoJS = require("../../../libs/generated/crypto");
+_$jscoverage['modules/security/aes-keygen.js'].source = ["var rsa = require(\"../../../libs/rsa\");","var SecureRandom = rsa.SecureRandom;","var byte2Hex = rsa.byte2Hex;","","var generateRandomKey = function(keysize){","  var r = new SecureRandom();","  var key = new Array(keysize);","  r.nextBytes(key);","  var result = \"\";","  for(var i=0;i&lt;key.length;i++){","    result += byte2Hex(key[i]);","  }","  return result;","};","","var aes_keygen = function(p, s, f){","  if (!p.params.keysize) {","    f('no_params_keysize', {}, p);","    return;","  }","  if (p.params.algorithm.toLowerCase() !== \"aes\") {","    f('keygen_bad_algorithm', {}, p);","    return;","  }","  var keysize = parseInt(p.params.keysize, 10);","  //keysize is in bit, need to convert to bytes to generate random key","  //but the legacy code has a bug, it doesn't do the convert, so if the keysize is less than 100, don't convert","  if(keysize &gt; 100){","    keysize = keysize/8;","  }","  if(typeof SecureRandom === \"undefined\"){","    return f(\"security library is not loaded.\");","  }","  return s({","    'algorithm': 'AES',","    'secretkey': generateRandomKey(keysize),","    'iv': generateRandomKey(keysize)","  });","}","","module.exports = aes_keygen;"];
 
-var encrypt = function(p, s, f){
-  var fields = ['key', 'plaintext', 'iv'];
-  if(p.params.algorithm.toLowerCase() !== "aes"){
-    return f('encrypt_bad_algorithm', {}, p);
+},{"../../../libs/rsa":4}],43:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/security/aes-node.js']) {
+  _$jscoverage['modules/security/aes-node.js'] = [];
+  _$jscoverage['modules/security/aes-node.js'][1] = 0;
+  _$jscoverage['modules/security/aes-node.js'][3] = 0;
+  _$jscoverage['modules/security/aes-node.js'][4] = 0;
+  _$jscoverage['modules/security/aes-node.js'][5] = 0;
+  _$jscoverage['modules/security/aes-node.js'][6] = 0;
+  _$jscoverage['modules/security/aes-node.js'][8] = 0;
+  _$jscoverage['modules/security/aes-node.js'][9] = 0;
+  _$jscoverage['modules/security/aes-node.js'][10] = 0;
+  _$jscoverage['modules/security/aes-node.js'][11] = 0;
+  _$jscoverage['modules/security/aes-node.js'][14] = 0;
+  _$jscoverage['modules/security/aes-node.js'][15] = 0;
+  _$jscoverage['modules/security/aes-node.js'][16] = 0;
+  _$jscoverage['modules/security/aes-node.js'][19] = 0;
+  _$jscoverage['modules/security/aes-node.js'][20] = 0;
+  _$jscoverage['modules/security/aes-node.js'][21] = 0;
+  _$jscoverage['modules/security/aes-node.js'][22] = 0;
+  _$jscoverage['modules/security/aes-node.js'][24] = 0;
+  _$jscoverage['modules/security/aes-node.js'][25] = 0;
+  _$jscoverage['modules/security/aes-node.js'][26] = 0;
+  _$jscoverage['modules/security/aes-node.js'][27] = 0;
+  _$jscoverage['modules/security/aes-node.js'][30] = 0;
+  _$jscoverage['modules/security/aes-node.js'][31] = 0;
+  _$jscoverage['modules/security/aes-node.js'][32] = 0;
+  _$jscoverage['modules/security/aes-node.js'][33] = 0;
+  _$jscoverage['modules/security/aes-node.js'][34] = 0;
+  _$jscoverage['modules/security/aes-node.js'][37] = 0;
+}
+_$jscoverage['modules/security/aes-node.js'][1]++;
+var CryptoJS = require("../../../libs/generated/crypto");
+_$jscoverage['modules/security/aes-node.js'][3]++;
+var encrypt = (function (p, s, f) {
+  _$jscoverage['modules/security/aes-node.js'][4]++;
+  var fields = ["key", "plaintext", "iv"];
+  _$jscoverage['modules/security/aes-node.js'][5]++;
+  if (p.params.algorithm.toLowerCase() !== "aes") {
+    _$jscoverage['modules/security/aes-node.js'][6]++;
+    return f("encrypt_bad_algorithm", {}, p);
   }
+  _$jscoverage['modules/security/aes-node.js'][8]++;
   for (var i = 0; i < fields; i++) {
+    _$jscoverage['modules/security/aes-node.js'][9]++;
     var field = fields[i];
-    if (!p.params[field]) {
-      return f('no_params_' + field, {}, p);
+    _$jscoverage['modules/security/aes-node.js'][10]++;
+    if (! p.params[field]) {
+      _$jscoverage['modules/security/aes-node.js'][11]++;
+      return f("no_params_" + field, {}, p);
     }
-  }
+}
+  _$jscoverage['modules/security/aes-node.js'][14]++;
   var encrypted = CryptoJS.AES.encrypt(p.params.plaintext, CryptoJS.enc.Hex.parse(p.params.key), {iv: CryptoJS.enc.Hex.parse(p.params.iv)});
+  _$jscoverage['modules/security/aes-node.js'][15]++;
   cipher_text = CryptoJS.enc.Hex.stringify(encrypted.ciphertext);
+  _$jscoverage['modules/security/aes-node.js'][16]++;
   return s({ciphertext: cipher_text});
-}
-
-var decrypt = function(p, s, f){
-  var fields = ['key', 'ciphertext', 'iv'];
-  if(p.params.algorithm.toLowerCase() !== "aes"){
-    return f('decrypt_bad_algorithm', {}, p);
+});
+_$jscoverage['modules/security/aes-node.js'][19]++;
+var decrypt = (function (p, s, f) {
+  _$jscoverage['modules/security/aes-node.js'][20]++;
+  var fields = ["key", "ciphertext", "iv"];
+  _$jscoverage['modules/security/aes-node.js'][21]++;
+  if (p.params.algorithm.toLowerCase() !== "aes") {
+    _$jscoverage['modules/security/aes-node.js'][22]++;
+    return f("decrypt_bad_algorithm", {}, p);
   }
+  _$jscoverage['modules/security/aes-node.js'][24]++;
   for (var i = 0; i < fields; i++) {
+    _$jscoverage['modules/security/aes-node.js'][25]++;
     var field = fields[i];
-    if (!p.params[field]) {
-      return f('no_params_' + field, {}, p);
+    _$jscoverage['modules/security/aes-node.js'][26]++;
+    if (! p.params[field]) {
+      _$jscoverage['modules/security/aes-node.js'][27]++;
+      return f("no_params_" + field, {}, p);
     }
-  }
+}
+  _$jscoverage['modules/security/aes-node.js'][30]++;
   var data = CryptoJS.enc.Hex.parse(p.params.ciphertext);
+  _$jscoverage['modules/security/aes-node.js'][31]++;
   var encodeData = CryptoJS.enc.Base64.stringify(data);
+  _$jscoverage['modules/security/aes-node.js'][32]++;
   var decrypted = CryptoJS.AES.decrypt(encodeData, CryptoJS.enc.Hex.parse(p.params.key), {iv: CryptoJS.enc.Hex.parse(p.params.iv)});
+  _$jscoverage['modules/security/aes-node.js'][33]++;
   plain_text = decrypted.toString(CryptoJS.enc.Utf8);
-  return s({plaintext:plain_text});
-}
+  _$jscoverage['modules/security/aes-node.js'][34]++;
+  return s({plaintext: plain_text});
+});
+_$jscoverage['modules/security/aes-node.js'][37]++;
+module.exports = {encrypt: encrypt, decrypt: decrypt};
+_$jscoverage['modules/security/aes-node.js'].source = ["var CryptoJS = require(\"../../../libs/generated/crypto\");","","var encrypt = function(p, s, f){","  var fields = ['key', 'plaintext', 'iv'];","  if(p.params.algorithm.toLowerCase() !== \"aes\"){","    return f('encrypt_bad_algorithm', {}, p);","  }","  for (var i = 0; i &lt; fields; i++) {","    var field = fields[i];","    if (!p.params[field]) {","      return f('no_params_' + field, {}, p);","    }","  }","  var encrypted = CryptoJS.AES.encrypt(p.params.plaintext, CryptoJS.enc.Hex.parse(p.params.key), {iv: CryptoJS.enc.Hex.parse(p.params.iv)});","  cipher_text = CryptoJS.enc.Hex.stringify(encrypted.ciphertext);","  return s({ciphertext: cipher_text});","}","","var decrypt = function(p, s, f){","  var fields = ['key', 'ciphertext', 'iv'];","  if(p.params.algorithm.toLowerCase() !== \"aes\"){","    return f('decrypt_bad_algorithm', {}, p);","  }","  for (var i = 0; i &lt; fields; i++) {","    var field = fields[i];","    if (!p.params[field]) {","      return f('no_params_' + field, {}, p);","    }","  }","  var data = CryptoJS.enc.Hex.parse(p.params.ciphertext);","  var encodeData = CryptoJS.enc.Base64.stringify(data);","  var decrypted = CryptoJS.AES.decrypt(encodeData, CryptoJS.enc.Hex.parse(p.params.key), {iv: CryptoJS.enc.Hex.parse(p.params.iv)});","  plain_text = decrypted.toString(CryptoJS.enc.Utf8);","  return s({plaintext:plain_text});","}","","module.exports = {","  encrypt: encrypt,","  decrypt: decrypt","}"];
 
-module.exports = {
-  encrypt: encrypt,
-  decrypt: decrypt
+},{"../../../libs/generated/crypto":1}],44:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/security/hash.js']) {
+  _$jscoverage['modules/security/hash.js'] = [];
+  _$jscoverage['modules/security/hash.js'][1] = 0;
+  _$jscoverage['modules/security/hash.js'][4] = 0;
+  _$jscoverage['modules/security/hash.js'][5] = 0;
+  _$jscoverage['modules/security/hash.js'][6] = 0;
+  _$jscoverage['modules/security/hash.js'][7] = 0;
+  _$jscoverage['modules/security/hash.js'][9] = 0;
+  _$jscoverage['modules/security/hash.js'][10] = 0;
+  _$jscoverage['modules/security/hash.js'][11] = 0;
+  _$jscoverage['modules/security/hash.js'][12] = 0;
+  _$jscoverage['modules/security/hash.js'][13] = 0;
+  _$jscoverage['modules/security/hash.js'][14] = 0;
+  _$jscoverage['modules/security/hash.js'][15] = 0;
+  _$jscoverage['modules/security/hash.js'][16] = 0;
+  _$jscoverage['modules/security/hash.js'][17] = 0;
+  _$jscoverage['modules/security/hash.js'][19] = 0;
+  _$jscoverage['modules/security/hash.js'][21] = 0;
+  _$jscoverage['modules/security/hash.js'][24] = 0;
 }
-},{"../../../libs/generated/crypto":1}],45:[function(require,module,exports){
+_$jscoverage['modules/security/hash.js'][1]++;
 var CryptoJS = require("../../../libs/generated/crypto");
-
-
-var hash = function(p, s, f){
-  if (!p.params.text) {
-    f('hash_no_text', {}, p);
+_$jscoverage['modules/security/hash.js'][4]++;
+var hash = (function (p, s, f) {
+  _$jscoverage['modules/security/hash.js'][5]++;
+  if (! p.params.text) {
+    _$jscoverage['modules/security/hash.js'][6]++;
+    f("hash_no_text", {}, p);
+    _$jscoverage['modules/security/hash.js'][7]++;
     return;
   }
+  _$jscoverage['modules/security/hash.js'][9]++;
   var hashValue;
+  _$jscoverage['modules/security/hash.js'][10]++;
   if (p.params.algorithm.toLowerCase() === "md5") {
+    _$jscoverage['modules/security/hash.js'][11]++;
     hashValue = CryptoJS.MD5(p.params.text).toString(CryptoJS.enc.Hex);
-  } else if(p.params.algorithm.toLowerCase() === "sha1"){
-    hashValue = CryptoJS.SHA1(p.params.text).toString(CryptoJS.enc.Hex);
-  } else if(p.params.algorithm.toLowerCase() === "sha256"){
-    hashValue = CryptoJS.SHA256(p.params.text).toString(CryptoJS.enc.Hex);
-  } else if(p.params.algorithm.toLowerCase() === "sha512"){
-    hashValue = CryptoJS.SHA512(p.params.text).toString(CryptoJS.enc.Hex);
-  } else {
-    return f("hash_unsupported_algorithm: " + p.params.algorithm);
   }
+  else {
+    _$jscoverage['modules/security/hash.js'][12]++;
+    if (p.params.algorithm.toLowerCase() === "sha1") {
+      _$jscoverage['modules/security/hash.js'][13]++;
+      hashValue = CryptoJS.SHA1(p.params.text).toString(CryptoJS.enc.Hex);
+    }
+    else {
+      _$jscoverage['modules/security/hash.js'][14]++;
+      if (p.params.algorithm.toLowerCase() === "sha256") {
+        _$jscoverage['modules/security/hash.js'][15]++;
+        hashValue = CryptoJS.SHA256(p.params.text).toString(CryptoJS.enc.Hex);
+      }
+      else {
+        _$jscoverage['modules/security/hash.js'][16]++;
+        if (p.params.algorithm.toLowerCase() === "sha512") {
+          _$jscoverage['modules/security/hash.js'][17]++;
+          hashValue = CryptoJS.SHA512(p.params.text).toString(CryptoJS.enc.Hex);
+        }
+        else {
+          _$jscoverage['modules/security/hash.js'][19]++;
+          return f("hash_unsupported_algorithm: " + p.params.algorithm);
+        }
+      }
+    }
+  }
+  _$jscoverage['modules/security/hash.js'][21]++;
   return s({"hashvalue": hashValue});
-}
-
+});
+_$jscoverage['modules/security/hash.js'][24]++;
 module.exports = hash;
-},{"../../../libs/generated/crypto":1}],46:[function(require,module,exports){
+_$jscoverage['modules/security/hash.js'].source = ["var CryptoJS = require(\"../../../libs/generated/crypto\");","","","var hash = function(p, s, f){","  if (!p.params.text) {","    f('hash_no_text', {}, p);","    return;","  }","  var hashValue;","  if (p.params.algorithm.toLowerCase() === \"md5\") {","    hashValue = CryptoJS.MD5(p.params.text).toString(CryptoJS.enc.Hex);","  } else if(p.params.algorithm.toLowerCase() === \"sha1\"){","    hashValue = CryptoJS.SHA1(p.params.text).toString(CryptoJS.enc.Hex);","  } else if(p.params.algorithm.toLowerCase() === \"sha256\"){","    hashValue = CryptoJS.SHA256(p.params.text).toString(CryptoJS.enc.Hex);","  } else if(p.params.algorithm.toLowerCase() === \"sha512\"){","    hashValue = CryptoJS.SHA512(p.params.text).toString(CryptoJS.enc.Hex);","  } else {","    return f(\"hash_unsupported_algorithm: \" + p.params.algorithm);","  }","  return s({\"hashvalue\": hashValue});","}","","module.exports = hash;"];
+
+},{"../../../libs/generated/crypto":1}],45:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/security/rsa-node.js']) {
+  _$jscoverage['modules/security/rsa-node.js'] = [];
+  _$jscoverage['modules/security/rsa-node.js'][1] = 0;
+  _$jscoverage['modules/security/rsa-node.js'][2] = 0;
+  _$jscoverage['modules/security/rsa-node.js'][4] = 0;
+  _$jscoverage['modules/security/rsa-node.js'][5] = 0;
+  _$jscoverage['modules/security/rsa-node.js'][6] = 0;
+  _$jscoverage['modules/security/rsa-node.js'][7] = 0;
+  _$jscoverage['modules/security/rsa-node.js'][9] = 0;
+  _$jscoverage['modules/security/rsa-node.js'][10] = 0;
+  _$jscoverage['modules/security/rsa-node.js'][11] = 0;
+  _$jscoverage['modules/security/rsa-node.js'][12] = 0;
+  _$jscoverage['modules/security/rsa-node.js'][15] = 0;
+  _$jscoverage['modules/security/rsa-node.js'][16] = 0;
+  _$jscoverage['modules/security/rsa-node.js'][17] = 0;
+  _$jscoverage['modules/security/rsa-node.js'][18] = 0;
+  _$jscoverage['modules/security/rsa-node.js'][19] = 0;
+  _$jscoverage['modules/security/rsa-node.js'][22] = 0;
+}
+_$jscoverage['modules/security/rsa-node.js'][1]++;
 var rsa = require("../../../libs/rsa");
+_$jscoverage['modules/security/rsa-node.js'][2]++;
 var RSAKey = rsa.RSAKey;
-
-var encrypt = function(p, s, f){
-  var fields = ['modulu', 'plaintext'];
-  if(p.params.algorithm.toLowerCase() !== "rsa"){
-    return f('encrypt_bad_algorithm', {}, p);
+_$jscoverage['modules/security/rsa-node.js'][4]++;
+var encrypt = (function (p, s, f) {
+  _$jscoverage['modules/security/rsa-node.js'][5]++;
+  var fields = ["modulu", "plaintext"];
+  _$jscoverage['modules/security/rsa-node.js'][6]++;
+  if (p.params.algorithm.toLowerCase() !== "rsa") {
+    _$jscoverage['modules/security/rsa-node.js'][7]++;
+    return f("encrypt_bad_algorithm", {}, p);
   }
+  _$jscoverage['modules/security/rsa-node.js'][9]++;
   for (var i = 0; i < fields; i++) {
+    _$jscoverage['modules/security/rsa-node.js'][10]++;
     var field = fields[i];
-    if (!p.params[field]) {
-      return f('no_params_' + field, {}, p);
+    _$jscoverage['modules/security/rsa-node.js'][11]++;
+    if (! p.params[field]) {
+      _$jscoverage['modules/security/rsa-node.js'][12]++;
+      return f("no_params_" + field, {}, p);
+    }
+}
+  _$jscoverage['modules/security/rsa-node.js'][15]++;
+  var key = new RSAKey();
+  _$jscoverage['modules/security/rsa-node.js'][16]++;
+  key.setPublic(p.params.modulu, "10001");
+  _$jscoverage['modules/security/rsa-node.js'][17]++;
+  var ori_text = p.params.plaintext;
+  _$jscoverage['modules/security/rsa-node.js'][18]++;
+  cipher_text = key.encrypt(ori_text);
+  _$jscoverage['modules/security/rsa-node.js'][19]++;
+  return s({ciphertext: cipher_text});
+});
+_$jscoverage['modules/security/rsa-node.js'][22]++;
+module.exports = {encrypt: encrypt};
+_$jscoverage['modules/security/rsa-node.js'].source = ["var rsa = require(\"../../../libs/rsa\");","var RSAKey = rsa.RSAKey;","","var encrypt = function(p, s, f){","  var fields = ['modulu', 'plaintext'];","  if(p.params.algorithm.toLowerCase() !== \"rsa\"){","    return f('encrypt_bad_algorithm', {}, p);","  }","  for (var i = 0; i &lt; fields; i++) {","    var field = fields[i];","    if (!p.params[field]) {","      return f('no_params_' + field, {}, p);","    }","  }","  var key = new RSAKey();","  key.setPublic(p.params.modulu, \"10001\");","  var ori_text = p.params.plaintext;","  cipher_text = key.encrypt(ori_text);","  return s({ciphertext:cipher_text});","}","","module.exports = {","  encrypt: encrypt","}"];
+
+},{"../../../libs/rsa":4}],46:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/sync-cli.js']) {
+  _$jscoverage['modules/sync-cli.js'] = [];
+  _$jscoverage['modules/sync-cli.js'][1] = 0;
+  _$jscoverage['modules/sync-cli.js'][2] = 0;
+  _$jscoverage['modules/sync-cli.js'][3] = 0;
+  _$jscoverage['modules/sync-cli.js'][4] = 0;
+  _$jscoverage['modules/sync-cli.js'][5] = 0;
+  _$jscoverage['modules/sync-cli.js'][7] = 0;
+  _$jscoverage['modules/sync-cli.js'][90] = 0;
+  _$jscoverage['modules/sync-cli.js'][92] = 0;
+  _$jscoverage['modules/sync-cli.js'][93] = 0;
+  _$jscoverage['modules/sync-cli.js'][94] = 0;
+  _$jscoverage['modules/sync-cli.js'][98] = 0;
+  _$jscoverage['modules/sync-cli.js'][99] = 0;
+  _$jscoverage['modules/sync-cli.js'][100] = 0;
+  _$jscoverage['modules/sync-cli.js'][105] = 0;
+  _$jscoverage['modules/sync-cli.js'][109] = 0;
+  _$jscoverage['modules/sync-cli.js'][111] = 0;
+  _$jscoverage['modules/sync-cli.js'][113] = 0;
+  _$jscoverage['modules/sync-cli.js'][114] = 0;
+  _$jscoverage['modules/sync-cli.js'][116] = 0;
+  _$jscoverage['modules/sync-cli.js'][118] = 0;
+  _$jscoverage['modules/sync-cli.js'][119] = 0;
+  _$jscoverage['modules/sync-cli.js'][120] = 0;
+  _$jscoverage['modules/sync-cli.js'][121] = 0;
+  _$jscoverage['modules/sync-cli.js'][122] = 0;
+  _$jscoverage['modules/sync-cli.js'][123] = 0;
+  _$jscoverage['modules/sync-cli.js'][124] = 0;
+  _$jscoverage['modules/sync-cli.js'][125] = 0;
+  _$jscoverage['modules/sync-cli.js'][128] = 0;
+  _$jscoverage['modules/sync-cli.js'][130] = 0;
+  _$jscoverage['modules/sync-cli.js'][131] = 0;
+  _$jscoverage['modules/sync-cli.js'][137] = 0;
+  _$jscoverage['modules/sync-cli.js'][138] = 0;
+  _$jscoverage['modules/sync-cli.js'][139] = 0;
+  _$jscoverage['modules/sync-cli.js'][141] = 0;
+  _$jscoverage['modules/sync-cli.js'][144] = 0;
+  _$jscoverage['modules/sync-cli.js'][145] = 0;
+  _$jscoverage['modules/sync-cli.js'][150] = 0;
+  _$jscoverage['modules/sync-cli.js'][153] = 0;
+  _$jscoverage['modules/sync-cli.js'][157] = 0;
+  _$jscoverage['modules/sync-cli.js'][158] = 0;
+  _$jscoverage['modules/sync-cli.js'][159] = 0;
+  _$jscoverage['modules/sync-cli.js'][160] = 0;
+  _$jscoverage['modules/sync-cli.js'][161] = 0;
+  _$jscoverage['modules/sync-cli.js'][162] = 0;
+  _$jscoverage['modules/sync-cli.js'][163] = 0;
+  _$jscoverage['modules/sync-cli.js'][170] = 0;
+  _$jscoverage['modules/sync-cli.js'][171] = 0;
+  _$jscoverage['modules/sync-cli.js'][174] = 0;
+  _$jscoverage['modules/sync-cli.js'][175] = 0;
+  _$jscoverage['modules/sync-cli.js'][176] = 0;
+  _$jscoverage['modules/sync-cli.js'][177] = 0;
+  _$jscoverage['modules/sync-cli.js'][180] = 0;
+  _$jscoverage['modules/sync-cli.js'][184] = 0;
+  _$jscoverage['modules/sync-cli.js'][185] = 0;
+  _$jscoverage['modules/sync-cli.js'][187] = 0;
+  _$jscoverage['modules/sync-cli.js'][188] = 0;
+  _$jscoverage['modules/sync-cli.js'][190] = 0;
+  _$jscoverage['modules/sync-cli.js'][193] = 0;
+  _$jscoverage['modules/sync-cli.js'][198] = 0;
+  _$jscoverage['modules/sync-cli.js'][199] = 0;
+  _$jscoverage['modules/sync-cli.js'][200] = 0;
+  _$jscoverage['modules/sync-cli.js'][203] = 0;
+  _$jscoverage['modules/sync-cli.js'][207] = 0;
+  _$jscoverage['modules/sync-cli.js'][208] = 0;
+  _$jscoverage['modules/sync-cli.js'][209] = 0;
+  _$jscoverage['modules/sync-cli.js'][210] = 0;
+  _$jscoverage['modules/sync-cli.js'][213] = 0;
+  _$jscoverage['modules/sync-cli.js'][214] = 0;
+  _$jscoverage['modules/sync-cli.js'][217] = 0;
+  _$jscoverage['modules/sync-cli.js'][222] = 0;
+  _$jscoverage['modules/sync-cli.js'][226] = 0;
+  _$jscoverage['modules/sync-cli.js'][230] = 0;
+  _$jscoverage['modules/sync-cli.js'][231] = 0;
+  _$jscoverage['modules/sync-cli.js'][232] = 0;
+  _$jscoverage['modules/sync-cli.js'][233] = 0;
+  _$jscoverage['modules/sync-cli.js'][235] = 0;
+  _$jscoverage['modules/sync-cli.js'][237] = 0;
+  _$jscoverage['modules/sync-cli.js'][242] = 0;
+  _$jscoverage['modules/sync-cli.js'][243] = 0;
+  _$jscoverage['modules/sync-cli.js'][244] = 0;
+  _$jscoverage['modules/sync-cli.js'][249] = 0;
+  _$jscoverage['modules/sync-cli.js'][250] = 0;
+  _$jscoverage['modules/sync-cli.js'][261] = 0;
+  _$jscoverage['modules/sync-cli.js'][262] = 0;
+  _$jscoverage['modules/sync-cli.js'][276] = 0;
+  _$jscoverage['modules/sync-cli.js'][279] = 0;
+  _$jscoverage['modules/sync-cli.js'][280] = 0;
+  _$jscoverage['modules/sync-cli.js'][284] = 0;
+  _$jscoverage['modules/sync-cli.js'][286] = 0;
+  _$jscoverage['modules/sync-cli.js'][287] = 0;
+  _$jscoverage['modules/sync-cli.js'][288] = 0;
+  _$jscoverage['modules/sync-cli.js'][289] = 0;
+  _$jscoverage['modules/sync-cli.js'][294] = 0;
+  _$jscoverage['modules/sync-cli.js'][299] = 0;
+  _$jscoverage['modules/sync-cli.js'][300] = 0;
+  _$jscoverage['modules/sync-cli.js'][301] = 0;
+  _$jscoverage['modules/sync-cli.js'][308] = 0;
+  _$jscoverage['modules/sync-cli.js'][309] = 0;
+  _$jscoverage['modules/sync-cli.js'][316] = 0;
+  _$jscoverage['modules/sync-cli.js'][318] = 0;
+  _$jscoverage['modules/sync-cli.js'][319] = 0;
+  _$jscoverage['modules/sync-cli.js'][321] = 0;
+  _$jscoverage['modules/sync-cli.js'][322] = 0;
+  _$jscoverage['modules/sync-cli.js'][328] = 0;
+  _$jscoverage['modules/sync-cli.js'][330] = 0;
+  _$jscoverage['modules/sync-cli.js'][331] = 0;
+  _$jscoverage['modules/sync-cli.js'][333] = 0;
+  _$jscoverage['modules/sync-cli.js'][334] = 0;
+  _$jscoverage['modules/sync-cli.js'][340] = 0;
+  _$jscoverage['modules/sync-cli.js'][342] = 0;
+  _$jscoverage['modules/sync-cli.js'][343] = 0;
+  _$jscoverage['modules/sync-cli.js'][344] = 0;
+  _$jscoverage['modules/sync-cli.js'][345] = 0;
+  _$jscoverage['modules/sync-cli.js'][346] = 0;
+  _$jscoverage['modules/sync-cli.js'][349] = 0;
+  _$jscoverage['modules/sync-cli.js'][350] = 0;
+  _$jscoverage['modules/sync-cli.js'][356] = 0;
+  _$jscoverage['modules/sync-cli.js'][358] = 0;
+  _$jscoverage['modules/sync-cli.js'][359] = 0;
+  _$jscoverage['modules/sync-cli.js'][361] = 0;
+  _$jscoverage['modules/sync-cli.js'][362] = 0;
+  _$jscoverage['modules/sync-cli.js'][368] = 0;
+  _$jscoverage['modules/sync-cli.js'][370] = 0;
+  _$jscoverage['modules/sync-cli.js'][371] = 0;
+  _$jscoverage['modules/sync-cli.js'][372] = 0;
+  _$jscoverage['modules/sync-cli.js'][373] = 0;
+  _$jscoverage['modules/sync-cli.js'][374] = 0;
+  _$jscoverage['modules/sync-cli.js'][377] = 0;
+  _$jscoverage['modules/sync-cli.js'][378] = 0;
+  _$jscoverage['modules/sync-cli.js'][384] = 0;
+  _$jscoverage['modules/sync-cli.js'][386] = 0;
+  _$jscoverage['modules/sync-cli.js'][387] = 0;
+  _$jscoverage['modules/sync-cli.js'][389] = 0;
+  _$jscoverage['modules/sync-cli.js'][390] = 0;
+  _$jscoverage['modules/sync-cli.js'][396] = 0;
+  _$jscoverage['modules/sync-cli.js'][398] = 0;
+  _$jscoverage['modules/sync-cli.js'][399] = 0;
+  _$jscoverage['modules/sync-cli.js'][400] = 0;
+  _$jscoverage['modules/sync-cli.js'][401] = 0;
+  _$jscoverage['modules/sync-cli.js'][402] = 0;
+  _$jscoverage['modules/sync-cli.js'][403] = 0;
+  _$jscoverage['modules/sync-cli.js'][406] = 0;
+  _$jscoverage['modules/sync-cli.js'][407] = 0;
+  _$jscoverage['modules/sync-cli.js'][413] = 0;
+  _$jscoverage['modules/sync-cli.js'][414] = 0;
+  _$jscoverage['modules/sync-cli.js'][415] = 0;
+  _$jscoverage['modules/sync-cli.js'][421] = 0;
+  _$jscoverage['modules/sync-cli.js'][422] = 0;
+  _$jscoverage['modules/sync-cli.js'][423] = 0;
+  _$jscoverage['modules/sync-cli.js'][429] = 0;
+  _$jscoverage['modules/sync-cli.js'][431] = 0;
+  _$jscoverage['modules/sync-cli.js'][432] = 0;
+  _$jscoverage['modules/sync-cli.js'][433] = 0;
+  _$jscoverage['modules/sync-cli.js'][434] = 0;
+  _$jscoverage['modules/sync-cli.js'][435] = 0;
+  _$jscoverage['modules/sync-cli.js'][438] = 0;
+  _$jscoverage['modules/sync-cli.js'][439] = 0;
+  _$jscoverage['modules/sync-cli.js'][445] = 0;
+  _$jscoverage['modules/sync-cli.js'][447] = 0;
+  _$jscoverage['modules/sync-cli.js'][448] = 0;
+  _$jscoverage['modules/sync-cli.js'][449] = 0;
+  _$jscoverage['modules/sync-cli.js'][450] = 0;
+  _$jscoverage['modules/sync-cli.js'][451] = 0;
+  _$jscoverage['modules/sync-cli.js'][454] = 0;
+  _$jscoverage['modules/sync-cli.js'][455] = 0;
+  _$jscoverage['modules/sync-cli.js'][461] = 0;
+  _$jscoverage['modules/sync-cli.js'][462] = 0;
+  _$jscoverage['modules/sync-cli.js'][465] = 0;
+  _$jscoverage['modules/sync-cli.js'][467] = 0;
+  _$jscoverage['modules/sync-cli.js'][468] = 0;
+  _$jscoverage['modules/sync-cli.js'][474] = 0;
+  _$jscoverage['modules/sync-cli.js'][479] = 0;
+  _$jscoverage['modules/sync-cli.js'][481] = 0;
+  _$jscoverage['modules/sync-cli.js'][482] = 0;
+  _$jscoverage['modules/sync-cli.js'][484] = 0;
+  _$jscoverage['modules/sync-cli.js'][487] = 0;
+  _$jscoverage['modules/sync-cli.js'][491] = 0;
+  _$jscoverage['modules/sync-cli.js'][492] = 0;
+  _$jscoverage['modules/sync-cli.js'][496] = 0;
+  _$jscoverage['modules/sync-cli.js'][497] = 0;
+  _$jscoverage['modules/sync-cli.js'][498] = 0;
+  _$jscoverage['modules/sync-cli.js'][502] = 0;
+  _$jscoverage['modules/sync-cli.js'][503] = 0;
+  _$jscoverage['modules/sync-cli.js'][505] = 0;
+  _$jscoverage['modules/sync-cli.js'][507] = 0;
+  _$jscoverage['modules/sync-cli.js'][509] = 0;
+  _$jscoverage['modules/sync-cli.js'][511] = 0;
+  _$jscoverage['modules/sync-cli.js'][512] = 0;
+  _$jscoverage['modules/sync-cli.js'][514] = 0;
+  _$jscoverage['modules/sync-cli.js'][515] = 0;
+  _$jscoverage['modules/sync-cli.js'][517] = 0;
+  _$jscoverage['modules/sync-cli.js'][519] = 0;
+  _$jscoverage['modules/sync-cli.js'][523] = 0;
+  _$jscoverage['modules/sync-cli.js'][524] = 0;
+  _$jscoverage['modules/sync-cli.js'][525] = 0;
+  _$jscoverage['modules/sync-cli.js'][526] = 0;
+  _$jscoverage['modules/sync-cli.js'][527] = 0;
+  _$jscoverage['modules/sync-cli.js'][528] = 0;
+  _$jscoverage['modules/sync-cli.js'][529] = 0;
+  _$jscoverage['modules/sync-cli.js'][530] = 0;
+  _$jscoverage['modules/sync-cli.js'][531] = 0;
+  _$jscoverage['modules/sync-cli.js'][533] = 0;
+  _$jscoverage['modules/sync-cli.js'][534] = 0;
+  _$jscoverage['modules/sync-cli.js'][535] = 0;
+  _$jscoverage['modules/sync-cli.js'][536] = 0;
+  _$jscoverage['modules/sync-cli.js'][537] = 0;
+  _$jscoverage['modules/sync-cli.js'][539] = 0;
+  _$jscoverage['modules/sync-cli.js'][540] = 0;
+  _$jscoverage['modules/sync-cli.js'][547] = 0;
+  _$jscoverage['modules/sync-cli.js'][550] = 0;
+  _$jscoverage['modules/sync-cli.js'][551] = 0;
+  _$jscoverage['modules/sync-cli.js'][552] = 0;
+  _$jscoverage['modules/sync-cli.js'][553] = 0;
+  _$jscoverage['modules/sync-cli.js'][555] = 0;
+  _$jscoverage['modules/sync-cli.js'][556] = 0;
+  _$jscoverage['modules/sync-cli.js'][557] = 0;
+  _$jscoverage['modules/sync-cli.js'][559] = 0;
+  _$jscoverage['modules/sync-cli.js'][561] = 0;
+  _$jscoverage['modules/sync-cli.js'][562] = 0;
+  _$jscoverage['modules/sync-cli.js'][563] = 0;
+  _$jscoverage['modules/sync-cli.js'][564] = 0;
+  _$jscoverage['modules/sync-cli.js'][565] = 0;
+  _$jscoverage['modules/sync-cli.js'][566] = 0;
+  _$jscoverage['modules/sync-cli.js'][568] = 0;
+  _$jscoverage['modules/sync-cli.js'][569] = 0;
+  _$jscoverage['modules/sync-cli.js'][571] = 0;
+  _$jscoverage['modules/sync-cli.js'][572] = 0;
+  _$jscoverage['modules/sync-cli.js'][573] = 0;
+  _$jscoverage['modules/sync-cli.js'][577] = 0;
+  _$jscoverage['modules/sync-cli.js'][578] = 0;
+  _$jscoverage['modules/sync-cli.js'][579] = 0;
+  _$jscoverage['modules/sync-cli.js'][580] = 0;
+  _$jscoverage['modules/sync-cli.js'][583] = 0;
+  _$jscoverage['modules/sync-cli.js'][585] = 0;
+  _$jscoverage['modules/sync-cli.js'][586] = 0;
+  _$jscoverage['modules/sync-cli.js'][588] = 0;
+  _$jscoverage['modules/sync-cli.js'][589] = 0;
+  _$jscoverage['modules/sync-cli.js'][593] = 0;
+  _$jscoverage['modules/sync-cli.js'][595] = 0;
+  _$jscoverage['modules/sync-cli.js'][596] = 0;
+  _$jscoverage['modules/sync-cli.js'][597] = 0;
+  _$jscoverage['modules/sync-cli.js'][598] = 0;
+  _$jscoverage['modules/sync-cli.js'][599] = 0;
+  _$jscoverage['modules/sync-cli.js'][600] = 0;
+  _$jscoverage['modules/sync-cli.js'][601] = 0;
+  _$jscoverage['modules/sync-cli.js'][602] = 0;
+  _$jscoverage['modules/sync-cli.js'][609] = 0;
+  _$jscoverage['modules/sync-cli.js'][612] = 0;
+  _$jscoverage['modules/sync-cli.js'][615] = 0;
+  _$jscoverage['modules/sync-cli.js'][618] = 0;
+  _$jscoverage['modules/sync-cli.js'][621] = 0;
+  _$jscoverage['modules/sync-cli.js'][624] = 0;
+  _$jscoverage['modules/sync-cli.js'][628] = 0;
+  _$jscoverage['modules/sync-cli.js'][630] = 0;
+  _$jscoverage['modules/sync-cli.js'][631] = 0;
+  _$jscoverage['modules/sync-cli.js'][633] = 0;
+  _$jscoverage['modules/sync-cli.js'][636] = 0;
+  _$jscoverage['modules/sync-cli.js'][637] = 0;
+  _$jscoverage['modules/sync-cli.js'][638] = 0;
+  _$jscoverage['modules/sync-cli.js'][639] = 0;
+  _$jscoverage['modules/sync-cli.js'][640] = 0;
+  _$jscoverage['modules/sync-cli.js'][641] = 0;
+  _$jscoverage['modules/sync-cli.js'][644] = 0;
+  _$jscoverage['modules/sync-cli.js'][645] = 0;
+  _$jscoverage['modules/sync-cli.js'][647] = 0;
+  _$jscoverage['modules/sync-cli.js'][649] = 0;
+  _$jscoverage['modules/sync-cli.js'][650] = 0;
+  _$jscoverage['modules/sync-cli.js'][656] = 0;
+  _$jscoverage['modules/sync-cli.js'][657] = 0;
+  _$jscoverage['modules/sync-cli.js'][658] = 0;
+  _$jscoverage['modules/sync-cli.js'][662] = 0;
+  _$jscoverage['modules/sync-cli.js'][663] = 0;
+  _$jscoverage['modules/sync-cli.js'][673] = 0;
+  _$jscoverage['modules/sync-cli.js'][675] = 0;
+  _$jscoverage['modules/sync-cli.js'][677] = 0;
+  _$jscoverage['modules/sync-cli.js'][678] = 0;
+  _$jscoverage['modules/sync-cli.js'][679] = 0;
+  _$jscoverage['modules/sync-cli.js'][680] = 0;
+  _$jscoverage['modules/sync-cli.js'][681] = 0;
+  _$jscoverage['modules/sync-cli.js'][684] = 0;
+  _$jscoverage['modules/sync-cli.js'][686] = 0;
+  _$jscoverage['modules/sync-cli.js'][687] = 0;
+  _$jscoverage['modules/sync-cli.js'][688] = 0;
+  _$jscoverage['modules/sync-cli.js'][689] = 0;
+  _$jscoverage['modules/sync-cli.js'][691] = 0;
+  _$jscoverage['modules/sync-cli.js'][693] = 0;
+  _$jscoverage['modules/sync-cli.js'][697] = 0;
+  _$jscoverage['modules/sync-cli.js'][699] = 0;
+  _$jscoverage['modules/sync-cli.js'][700] = 0;
+  _$jscoverage['modules/sync-cli.js'][701] = 0;
+  _$jscoverage['modules/sync-cli.js'][702] = 0;
+  _$jscoverage['modules/sync-cli.js'][705] = 0;
+  _$jscoverage['modules/sync-cli.js'][706] = 0;
+  _$jscoverage['modules/sync-cli.js'][707] = 0;
+  _$jscoverage['modules/sync-cli.js'][708] = 0;
+  _$jscoverage['modules/sync-cli.js'][709] = 0;
+  _$jscoverage['modules/sync-cli.js'][712] = 0;
+  _$jscoverage['modules/sync-cli.js'][713] = 0;
+  _$jscoverage['modules/sync-cli.js'][714] = 0;
+  _$jscoverage['modules/sync-cli.js'][715] = 0;
+  _$jscoverage['modules/sync-cli.js'][719] = 0;
+  _$jscoverage['modules/sync-cli.js'][721] = 0;
+  _$jscoverage['modules/sync-cli.js'][722] = 0;
+  _$jscoverage['modules/sync-cli.js'][723] = 0;
+  _$jscoverage['modules/sync-cli.js'][725] = 0;
+  _$jscoverage['modules/sync-cli.js'][727] = 0;
+  _$jscoverage['modules/sync-cli.js'][728] = 0;
+  _$jscoverage['modules/sync-cli.js'][735] = 0;
+  _$jscoverage['modules/sync-cli.js'][736] = 0;
+  _$jscoverage['modules/sync-cli.js'][737] = 0;
+  _$jscoverage['modules/sync-cli.js'][738] = 0;
+  _$jscoverage['modules/sync-cli.js'][739] = 0;
+  _$jscoverage['modules/sync-cli.js'][744] = 0;
+  _$jscoverage['modules/sync-cli.js'][745] = 0;
+  _$jscoverage['modules/sync-cli.js'][746] = 0;
+  _$jscoverage['modules/sync-cli.js'][748] = 0;
+  _$jscoverage['modules/sync-cli.js'][750] = 0;
+  _$jscoverage['modules/sync-cli.js'][751] = 0;
+  _$jscoverage['modules/sync-cli.js'][752] = 0;
+  _$jscoverage['modules/sync-cli.js'][753] = 0;
+  _$jscoverage['modules/sync-cli.js'][754] = 0;
+  _$jscoverage['modules/sync-cli.js'][755] = 0;
+  _$jscoverage['modules/sync-cli.js'][757] = 0;
+  _$jscoverage['modules/sync-cli.js'][758] = 0;
+  _$jscoverage['modules/sync-cli.js'][759] = 0;
+  _$jscoverage['modules/sync-cli.js'][760] = 0;
+  _$jscoverage['modules/sync-cli.js'][761] = 0;
+  _$jscoverage['modules/sync-cli.js'][763] = 0;
+  _$jscoverage['modules/sync-cli.js'][767] = 0;
+  _$jscoverage['modules/sync-cli.js'][769] = 0;
+  _$jscoverage['modules/sync-cli.js'][774] = 0;
+  _$jscoverage['modules/sync-cli.js'][782] = 0;
+  _$jscoverage['modules/sync-cli.js'][783] = 0;
+  _$jscoverage['modules/sync-cli.js'][784] = 0;
+  _$jscoverage['modules/sync-cli.js'][785] = 0;
+  _$jscoverage['modules/sync-cli.js'][786] = 0;
+  _$jscoverage['modules/sync-cli.js'][788] = 0;
+  _$jscoverage['modules/sync-cli.js'][790] = 0;
+  _$jscoverage['modules/sync-cli.js'][798] = 0;
+  _$jscoverage['modules/sync-cli.js'][799] = 0;
+  _$jscoverage['modules/sync-cli.js'][800] = 0;
+  _$jscoverage['modules/sync-cli.js'][802] = 0;
+  _$jscoverage['modules/sync-cli.js'][803] = 0;
+  _$jscoverage['modules/sync-cli.js'][806] = 0;
+  _$jscoverage['modules/sync-cli.js'][807] = 0;
+  _$jscoverage['modules/sync-cli.js'][809] = 0;
+  _$jscoverage['modules/sync-cli.js'][811] = 0;
+  _$jscoverage['modules/sync-cli.js'][814] = 0;
+  _$jscoverage['modules/sync-cli.js'][819] = 0;
+  _$jscoverage['modules/sync-cli.js'][820] = 0;
+  _$jscoverage['modules/sync-cli.js'][821] = 0;
+  _$jscoverage['modules/sync-cli.js'][822] = 0;
+  _$jscoverage['modules/sync-cli.js'][824] = 0;
+  _$jscoverage['modules/sync-cli.js'][825] = 0;
+  _$jscoverage['modules/sync-cli.js'][829] = 0;
+  _$jscoverage['modules/sync-cli.js'][831] = 0;
+  _$jscoverage['modules/sync-cli.js'][834] = 0;
+  _$jscoverage['modules/sync-cli.js'][839] = 0;
+  _$jscoverage['modules/sync-cli.js'][841] = 0;
+  _$jscoverage['modules/sync-cli.js'][847] = 0;
+  _$jscoverage['modules/sync-cli.js'][850] = 0;
+  _$jscoverage['modules/sync-cli.js'][851] = 0;
+  _$jscoverage['modules/sync-cli.js'][856] = 0;
+  _$jscoverage['modules/sync-cli.js'][858] = 0;
+  _$jscoverage['modules/sync-cli.js'][859] = 0;
+  _$jscoverage['modules/sync-cli.js'][860] = 0;
+  _$jscoverage['modules/sync-cli.js'][862] = 0;
+  _$jscoverage['modules/sync-cli.js'][864] = 0;
+  _$jscoverage['modules/sync-cli.js'][865] = 0;
+  _$jscoverage['modules/sync-cli.js'][867] = 0;
+  _$jscoverage['modules/sync-cli.js'][875] = 0;
+  _$jscoverage['modules/sync-cli.js'][877] = 0;
+  _$jscoverage['modules/sync-cli.js'][878] = 0;
+  _$jscoverage['modules/sync-cli.js'][879] = 0;
+  _$jscoverage['modules/sync-cli.js'][882] = 0;
+  _$jscoverage['modules/sync-cli.js'][883] = 0;
+  _$jscoverage['modules/sync-cli.js'][884] = 0;
+  _$jscoverage['modules/sync-cli.js'][885] = 0;
+  _$jscoverage['modules/sync-cli.js'][886] = 0;
+  _$jscoverage['modules/sync-cli.js'][887] = 0;
+  _$jscoverage['modules/sync-cli.js'][891] = 0;
+  _$jscoverage['modules/sync-cli.js'][892] = 0;
+  _$jscoverage['modules/sync-cli.js'][893] = 0;
+  _$jscoverage['modules/sync-cli.js'][894] = 0;
+  _$jscoverage['modules/sync-cli.js'][897] = 0;
+  _$jscoverage['modules/sync-cli.js'][905] = 0;
+  _$jscoverage['modules/sync-cli.js'][906] = 0;
+  _$jscoverage['modules/sync-cli.js'][907] = 0;
+  _$jscoverage['modules/sync-cli.js'][909] = 0;
+  _$jscoverage['modules/sync-cli.js'][910] = 0;
+  _$jscoverage['modules/sync-cli.js'][912] = 0;
+  _$jscoverage['modules/sync-cli.js'][915] = 0;
+  _$jscoverage['modules/sync-cli.js'][916] = 0;
+  _$jscoverage['modules/sync-cli.js'][917] = 0;
+  _$jscoverage['modules/sync-cli.js'][920] = 0;
+  _$jscoverage['modules/sync-cli.js'][923] = 0;
+  _$jscoverage['modules/sync-cli.js'][924] = 0;
+  _$jscoverage['modules/sync-cli.js'][927] = 0;
+  _$jscoverage['modules/sync-cli.js'][930] = 0;
+  _$jscoverage['modules/sync-cli.js'][931] = 0;
+  _$jscoverage['modules/sync-cli.js'][932] = 0;
+  _$jscoverage['modules/sync-cli.js'][933] = 0;
+  _$jscoverage['modules/sync-cli.js'][935] = 0;
+  _$jscoverage['modules/sync-cli.js'][936] = 0;
+  _$jscoverage['modules/sync-cli.js'][937] = 0;
+  _$jscoverage['modules/sync-cli.js'][938] = 0;
+  _$jscoverage['modules/sync-cli.js'][939] = 0;
+  _$jscoverage['modules/sync-cli.js'][940] = 0;
+  _$jscoverage['modules/sync-cli.js'][943] = 0;
+  _$jscoverage['modules/sync-cli.js'][944] = 0;
+  _$jscoverage['modules/sync-cli.js'][945] = 0;
+  _$jscoverage['modules/sync-cli.js'][948] = 0;
+  _$jscoverage['modules/sync-cli.js'][952] = 0;
+  _$jscoverage['modules/sync-cli.js'][953] = 0;
+  _$jscoverage['modules/sync-cli.js'][954] = 0;
+  _$jscoverage['modules/sync-cli.js'][961] = 0;
+  _$jscoverage['modules/sync-cli.js'][962] = 0;
+  _$jscoverage['modules/sync-cli.js'][963] = 0;
+  _$jscoverage['modules/sync-cli.js'][964] = 0;
+  _$jscoverage['modules/sync-cli.js'][966] = 0;
+  _$jscoverage['modules/sync-cli.js'][967] = 0;
+  _$jscoverage['modules/sync-cli.js'][968] = 0;
+  _$jscoverage['modules/sync-cli.js'][969] = 0;
+  _$jscoverage['modules/sync-cli.js'][970] = 0;
+  _$jscoverage['modules/sync-cli.js'][971] = 0;
+  _$jscoverage['modules/sync-cli.js'][972] = 0;
+  _$jscoverage['modules/sync-cli.js'][975] = 0;
+  _$jscoverage['modules/sync-cli.js'][976] = 0;
+  _$jscoverage['modules/sync-cli.js'][978] = 0;
+  _$jscoverage['modules/sync-cli.js'][982] = 0;
+  _$jscoverage['modules/sync-cli.js'][983] = 0;
+  _$jscoverage['modules/sync-cli.js'][984] = 0;
+  _$jscoverage['modules/sync-cli.js'][985] = 0;
+  _$jscoverage['modules/sync-cli.js'][988] = 0;
+  _$jscoverage['modules/sync-cli.js'][989] = 0;
+  _$jscoverage['modules/sync-cli.js'][990] = 0;
+  _$jscoverage['modules/sync-cli.js'][994] = 0;
+  _$jscoverage['modules/sync-cli.js'][998] = 0;
+  _$jscoverage['modules/sync-cli.js'][999] = 0;
+  _$jscoverage['modules/sync-cli.js'][1000] = 0;
+  _$jscoverage['modules/sync-cli.js'][1001] = 0;
+  _$jscoverage['modules/sync-cli.js'][1002] = 0;
+  _$jscoverage['modules/sync-cli.js'][1007] = 0;
+  _$jscoverage['modules/sync-cli.js'][1008] = 0;
+  _$jscoverage['modules/sync-cli.js'][1010] = 0;
+  _$jscoverage['modules/sync-cli.js'][1011] = 0;
+  _$jscoverage['modules/sync-cli.js'][1012] = 0;
+  _$jscoverage['modules/sync-cli.js'][1013] = 0;
+  _$jscoverage['modules/sync-cli.js'][1015] = 0;
+  _$jscoverage['modules/sync-cli.js'][1017] = 0;
+  _$jscoverage['modules/sync-cli.js'][1019] = 0;
+  _$jscoverage['modules/sync-cli.js'][1020] = 0;
+  _$jscoverage['modules/sync-cli.js'][1023] = 0;
+  _$jscoverage['modules/sync-cli.js'][1024] = 0;
+  _$jscoverage['modules/sync-cli.js'][1025] = 0;
+  _$jscoverage['modules/sync-cli.js'][1026] = 0;
+  _$jscoverage['modules/sync-cli.js'][1027] = 0;
+  _$jscoverage['modules/sync-cli.js'][1031] = 0;
+  _$jscoverage['modules/sync-cli.js'][1032] = 0;
+  _$jscoverage['modules/sync-cli.js'][1033] = 0;
+  _$jscoverage['modules/sync-cli.js'][1034] = 0;
+  _$jscoverage['modules/sync-cli.js'][1036] = 0;
+  _$jscoverage['modules/sync-cli.js'][1037] = 0;
+  _$jscoverage['modules/sync-cli.js'][1038] = 0;
+  _$jscoverage['modules/sync-cli.js'][1039] = 0;
+  _$jscoverage['modules/sync-cli.js'][1040] = 0;
+  _$jscoverage['modules/sync-cli.js'][1041] = 0;
+  _$jscoverage['modules/sync-cli.js'][1042] = 0;
+  _$jscoverage['modules/sync-cli.js'][1049] = 0;
+  _$jscoverage['modules/sync-cli.js'][1050] = 0;
+  _$jscoverage['modules/sync-cli.js'][1051] = 0;
+  _$jscoverage['modules/sync-cli.js'][1052] = 0;
+  _$jscoverage['modules/sync-cli.js'][1053] = 0;
+  _$jscoverage['modules/sync-cli.js'][1054] = 0;
+  _$jscoverage['modules/sync-cli.js'][1057] = 0;
+  _$jscoverage['modules/sync-cli.js'][1058] = 0;
+  _$jscoverage['modules/sync-cli.js'][1059] = 0;
+  _$jscoverage['modules/sync-cli.js'][1060] = 0;
+  _$jscoverage['modules/sync-cli.js'][1071] = 0;
+  _$jscoverage['modules/sync-cli.js'][1073] = 0;
+  _$jscoverage['modules/sync-cli.js'][1074] = 0;
+  _$jscoverage['modules/sync-cli.js'][1075] = 0;
+  _$jscoverage['modules/sync-cli.js'][1076] = 0;
+  _$jscoverage['modules/sync-cli.js'][1078] = 0;
+  _$jscoverage['modules/sync-cli.js'][1079] = 0;
+  _$jscoverage['modules/sync-cli.js'][1081] = 0;
+  _$jscoverage['modules/sync-cli.js'][1083] = 0;
+  _$jscoverage['modules/sync-cli.js'][1084] = 0;
+  _$jscoverage['modules/sync-cli.js'][1086] = 0;
+  _$jscoverage['modules/sync-cli.js'][1088] = 0;
+  _$jscoverage['modules/sync-cli.js'][1089] = 0;
+  _$jscoverage['modules/sync-cli.js'][1091] = 0;
+  _$jscoverage['modules/sync-cli.js'][1093] = 0;
+  _$jscoverage['modules/sync-cli.js'][1095] = 0;
+  _$jscoverage['modules/sync-cli.js'][1097] = 0;
+  _$jscoverage['modules/sync-cli.js'][1098] = 0;
+  _$jscoverage['modules/sync-cli.js'][1102] = 0;
+  _$jscoverage['modules/sync-cli.js'][1112] = 0;
+  _$jscoverage['modules/sync-cli.js'][1114] = 0;
+  _$jscoverage['modules/sync-cli.js'][1115] = 0;
+  _$jscoverage['modules/sync-cli.js'][1116] = 0;
+  _$jscoverage['modules/sync-cli.js'][1117] = 0;
+  _$jscoverage['modules/sync-cli.js'][1119] = 0;
+  _$jscoverage['modules/sync-cli.js'][1120] = 0;
+  _$jscoverage['modules/sync-cli.js'][1121] = 0;
+  _$jscoverage['modules/sync-cli.js'][1122] = 0;
+  _$jscoverage['modules/sync-cli.js'][1124] = 0;
+  _$jscoverage['modules/sync-cli.js'][1125] = 0;
+  _$jscoverage['modules/sync-cli.js'][1127] = 0;
+  _$jscoverage['modules/sync-cli.js'][1129] = 0;
+  _$jscoverage['modules/sync-cli.js'][1131] = 0;
+  _$jscoverage['modules/sync-cli.js'][1133] = 0;
+  _$jscoverage['modules/sync-cli.js'][1134] = 0;
+  _$jscoverage['modules/sync-cli.js'][1138] = 0;
+  _$jscoverage['modules/sync-cli.js'][1147] = 0;
+  _$jscoverage['modules/sync-cli.js'][1153] = 0;
+  _$jscoverage['modules/sync-cli.js'][1154] = 0;
+  _$jscoverage['modules/sync-cli.js'][1155] = 0;
+  _$jscoverage['modules/sync-cli.js'][1156] = 0;
+  _$jscoverage['modules/sync-cli.js'][1159] = 0;
+  _$jscoverage['modules/sync-cli.js'][1160] = 0;
+  _$jscoverage['modules/sync-cli.js'][1161] = 0;
+  _$jscoverage['modules/sync-cli.js'][1162] = 0;
+  _$jscoverage['modules/sync-cli.js'][1164] = 0;
+  _$jscoverage['modules/sync-cli.js'][1165] = 0;
+  _$jscoverage['modules/sync-cli.js'][1166] = 0;
+  _$jscoverage['modules/sync-cli.js'][1169] = 0;
+  _$jscoverage['modules/sync-cli.js'][1170] = 0;
+  _$jscoverage['modules/sync-cli.js'][1173] = 0;
+  _$jscoverage['modules/sync-cli.js'][1175] = 0;
+  _$jscoverage['modules/sync-cli.js'][1177] = 0;
+  _$jscoverage['modules/sync-cli.js'][1179] = 0;
+  _$jscoverage['modules/sync-cli.js'][1180] = 0;
+  _$jscoverage['modules/sync-cli.js'][1181] = 0;
+  _$jscoverage['modules/sync-cli.js'][1183] = 0;
+  _$jscoverage['modules/sync-cli.js'][1184] = 0;
+  _$jscoverage['modules/sync-cli.js'][1185] = 0;
+  _$jscoverage['modules/sync-cli.js'][1192] = 0;
+  _$jscoverage['modules/sync-cli.js'][1193] = 0;
+  _$jscoverage['modules/sync-cli.js'][1198] = 0;
+  _$jscoverage['modules/sync-cli.js'][1199] = 0;
+  _$jscoverage['modules/sync-cli.js'][1202] = 0;
+  _$jscoverage['modules/sync-cli.js'][1209] = 0;
+  _$jscoverage['modules/sync-cli.js'][1210] = 0;
+  _$jscoverage['modules/sync-cli.js'][1213] = 0;
+  _$jscoverage['modules/sync-cli.js'][1220] = 0;
+  _$jscoverage['modules/sync-cli.js'][1221] = 0;
+  _$jscoverage['modules/sync-cli.js'][1222] = 0;
+  _$jscoverage['modules/sync-cli.js'][1224] = 0;
+  _$jscoverage['modules/sync-cli.js'][1225] = 0;
+  _$jscoverage['modules/sync-cli.js'][1226] = 0;
+  _$jscoverage['modules/sync-cli.js'][1227] = 0;
+  _$jscoverage['modules/sync-cli.js'][1228] = 0;
+  _$jscoverage['modules/sync-cli.js'][1229] = 0;
+  _$jscoverage['modules/sync-cli.js'][1230] = 0;
+  _$jscoverage['modules/sync-cli.js'][1233] = 0;
+  _$jscoverage['modules/sync-cli.js'][1234] = 0;
+  _$jscoverage['modules/sync-cli.js'][1244] = 0;
+  _$jscoverage['modules/sync-cli.js'][1245] = 0;
+  _$jscoverage['modules/sync-cli.js'][1246] = 0;
+  _$jscoverage['modules/sync-cli.js'][1247] = 0;
+  _$jscoverage['modules/sync-cli.js'][1248] = 0;
+  _$jscoverage['modules/sync-cli.js'][1249] = 0;
+  _$jscoverage['modules/sync-cli.js'][1250] = 0;
+  _$jscoverage['modules/sync-cli.js'][1251] = 0;
+  _$jscoverage['modules/sync-cli.js'][1252] = 0;
+  _$jscoverage['modules/sync-cli.js'][1253] = 0;
+  _$jscoverage['modules/sync-cli.js'][1254] = 0;
+  _$jscoverage['modules/sync-cli.js'][1255] = 0;
+  _$jscoverage['modules/sync-cli.js'][1256] = 0;
+  _$jscoverage['modules/sync-cli.js'][1257] = 0;
+  _$jscoverage['modules/sync-cli.js'][1258] = 0;
+  _$jscoverage['modules/sync-cli.js'][1268] = 0;
+  _$jscoverage['modules/sync-cli.js'][1269] = 0;
+  _$jscoverage['modules/sync-cli.js'][1270] = 0;
+  _$jscoverage['modules/sync-cli.js'][1271] = 0;
+  _$jscoverage['modules/sync-cli.js'][1272] = 0;
+  _$jscoverage['modules/sync-cli.js'][1273] = 0;
+  _$jscoverage['modules/sync-cli.js'][1274] = 0;
+  _$jscoverage['modules/sync-cli.js'][1275] = 0;
+  _$jscoverage['modules/sync-cli.js'][1276] = 0;
+  _$jscoverage['modules/sync-cli.js'][1277] = 0;
+  _$jscoverage['modules/sync-cli.js'][1278] = 0;
+  _$jscoverage['modules/sync-cli.js'][1280] = 0;
+  _$jscoverage['modules/sync-cli.js'][1281] = 0;
+  _$jscoverage['modules/sync-cli.js'][1282] = 0;
+  _$jscoverage['modules/sync-cli.js'][1283] = 0;
+  _$jscoverage['modules/sync-cli.js'][1285] = 0;
+  _$jscoverage['modules/sync-cli.js'][1286] = 0;
+  _$jscoverage['modules/sync-cli.js'][1289] = 0;
+  _$jscoverage['modules/sync-cli.js'][1291] = 0;
+  _$jscoverage['modules/sync-cli.js'][1292] = 0;
+  _$jscoverage['modules/sync-cli.js'][1293] = 0;
+  _$jscoverage['modules/sync-cli.js'][1294] = 0;
+  _$jscoverage['modules/sync-cli.js'][1296] = 0;
+  _$jscoverage['modules/sync-cli.js'][1297] = 0;
+  _$jscoverage['modules/sync-cli.js'][1301] = 0;
+  _$jscoverage['modules/sync-cli.js'][1302] = 0;
+  _$jscoverage['modules/sync-cli.js'][1304] = 0;
+  _$jscoverage['modules/sync-cli.js'][1313] = 0;
+  _$jscoverage['modules/sync-cli.js'][1314] = 0;
+  _$jscoverage['modules/sync-cli.js'][1315] = 0;
+  _$jscoverage['modules/sync-cli.js'][1317] = 0;
+  _$jscoverage['modules/sync-cli.js'][1318] = 0;
+  _$jscoverage['modules/sync-cli.js'][1319] = 0;
+  _$jscoverage['modules/sync-cli.js'][1320] = 0;
+  _$jscoverage['modules/sync-cli.js'][1321] = 0;
+  _$jscoverage['modules/sync-cli.js'][1323] = 0;
+  _$jscoverage['modules/sync-cli.js'][1324] = 0;
+  _$jscoverage['modules/sync-cli.js'][1325] = 0;
+  _$jscoverage['modules/sync-cli.js'][1326] = 0;
+  _$jscoverage['modules/sync-cli.js'][1334] = 0;
+  _$jscoverage['modules/sync-cli.js'][1335] = 0;
+  _$jscoverage['modules/sync-cli.js'][1340] = 0;
+  _$jscoverage['modules/sync-cli.js'][1341] = 0;
+  _$jscoverage['modules/sync-cli.js'][1346] = 0;
+}
+_$jscoverage['modules/sync-cli.js'][1]++;
+var JSON = require("JSON");
+_$jscoverage['modules/sync-cli.js'][2]++;
+var actAPI = require("./api_act");
+_$jscoverage['modules/sync-cli.js'][3]++;
+var cloudAPI = require("./api_cloud");
+_$jscoverage['modules/sync-cli.js'][4]++;
+var CryptoJS = require("../../libs/generated/crypto");
+_$jscoverage['modules/sync-cli.js'][5]++;
+var Lawnchair = require("../../libs/generated/lawnchair");
+_$jscoverage['modules/sync-cli.js'][7]++;
+var self = {defaults: {"sync_frequency": 10, "auto_sync_local_updates": true, "notify_client_storage_failed": true, "notify_sync_started": true, "notify_sync_complete": true, "notify_offline_update": true, "notify_collision_detected": true, "notify_remote_update_failed": true, "notify_local_update_applied": true, "notify_remote_update_applied": true, "notify_delta_received": true, "notify_record_delta_received": true, "notify_sync_failed": true, "do_console_log": false, "crashed_count_wait": 10, "resend_crashed_updates": true, "sync_active": true, "storage_strategy": "html5-filesystem", "file_system_quota": 61644800, "has_custom_sync": null}, notifications: {"CLIENT_STORAGE_FAILED": "client_storage_failed", "SYNC_STARTED": "sync_started", "SYNC_COMPLETE": "sync_complete", "OFFLINE_UPDATE": "offline_update", "COLLISION_DETECTED": "collision_detected", "REMOTE_UPDATE_FAILED": "remote_update_failed", "REMOTE_UPDATE_APPLIED": "remote_update_applied", "LOCAL_UPDATE_APPLIED": "local_update_applied", "DELTA_RECEIVED": "delta_received", "RECORD_DELTA_RECEIVED": "record_delta_received", "SYNC_FAILED": "sync_failed"}, datasets: {}, config: undefined, notify_callback: undefined, init_is_called: false, init: (function (options) {
+  _$jscoverage['modules/sync-cli.js'][90]++;
+  self.consoleLog("sync - init called");
+  _$jscoverage['modules/sync-cli.js'][92]++;
+  self.config = JSON.parse(JSON.stringify(self.defaults));
+  _$jscoverage['modules/sync-cli.js'][93]++;
+  for (var i in options) {
+    _$jscoverage['modules/sync-cli.js'][94]++;
+    self.config[i] = options[i];
+}
+  _$jscoverage['modules/sync-cli.js'][98]++;
+  if (! self.init_is_called) {
+    _$jscoverage['modules/sync-cli.js'][99]++;
+    self.init_is_called = true;
+    _$jscoverage['modules/sync-cli.js'][100]++;
+    self.datasetMonitor();
+  }
+}), notify: (function (callback) {
+  _$jscoverage['modules/sync-cli.js'][105]++;
+  self.notify_callback = callback;
+}), manage: (function (dataset_id, options, query_params, meta_data, cb) {
+  _$jscoverage['modules/sync-cli.js'][109]++;
+  self.consoleLog("manage - START");
+  _$jscoverage['modules/sync-cli.js'][111]++;
+  var options = options || {};
+  _$jscoverage['modules/sync-cli.js'][113]++;
+  var doManage = (function (dataset) {
+  _$jscoverage['modules/sync-cli.js'][114]++;
+  self.consoleLog("doManage dataset :: initialised = " + dataset.initialised + " :: " + dataset_id + " :: " + JSON.stringify(options));
+  _$jscoverage['modules/sync-cli.js'][116]++;
+  var datasetConfig = self.setOptions(options);
+  _$jscoverage['modules/sync-cli.js'][118]++;
+  dataset.query_params = query_params || dataset.query_params || {};
+  _$jscoverage['modules/sync-cli.js'][119]++;
+  dataset.meta_data = meta_data || dataset.meta_data || {};
+  _$jscoverage['modules/sync-cli.js'][120]++;
+  dataset.config = datasetConfig;
+  _$jscoverage['modules/sync-cli.js'][121]++;
+  dataset.syncRunning = false;
+  _$jscoverage['modules/sync-cli.js'][122]++;
+  dataset.syncPending = true;
+  _$jscoverage['modules/sync-cli.js'][123]++;
+  dataset.initialised = true;
+  _$jscoverage['modules/sync-cli.js'][124]++;
+  if (typeof dataset.meta === "undefined") {
+    _$jscoverage['modules/sync-cli.js'][125]++;
+    dataset.meta = {};
+  }
+  _$jscoverage['modules/sync-cli.js'][128]++;
+  self.saveDataSet(dataset_id, (function () {
+  _$jscoverage['modules/sync-cli.js'][130]++;
+  if (cb) {
+    _$jscoverage['modules/sync-cli.js'][131]++;
+    cb();
+  }
+}));
+});
+  _$jscoverage['modules/sync-cli.js'][137]++;
+  self.getDataSet(dataset_id, (function (dataset) {
+  _$jscoverage['modules/sync-cli.js'][138]++;
+  self.consoleLog("manage - dataset already loaded");
+  _$jscoverage['modules/sync-cli.js'][139]++;
+  doManage(dataset);
+}), (function (err) {
+  _$jscoverage['modules/sync-cli.js'][141]++;
+  self.consoleLog("manage - dataset not loaded... trying to load");
+  _$jscoverage['modules/sync-cli.js'][144]++;
+  self.loadDataSet(dataset_id, (function (dataset) {
+  _$jscoverage['modules/sync-cli.js'][145]++;
+  self.consoleLog("manage - dataset loaded from local storage");
+  _$jscoverage['modules/sync-cli.js'][150]++;
+  self.doNotify(dataset_id, null, self.notifications.LOCAL_UPDATE_APPLIED, "load");
+  _$jscoverage['modules/sync-cli.js'][153]++;
+  doManage(dataset);
+}), (function (err) {
+  _$jscoverage['modules/sync-cli.js'][157]++;
+  self.consoleLog("manage - Creating new dataset for id " + dataset_id);
+  _$jscoverage['modules/sync-cli.js'][158]++;
+  var dataset = {};
+  _$jscoverage['modules/sync-cli.js'][159]++;
+  dataset.data = {};
+  _$jscoverage['modules/sync-cli.js'][160]++;
+  dataset.pending = {};
+  _$jscoverage['modules/sync-cli.js'][161]++;
+  dataset.meta = {};
+  _$jscoverage['modules/sync-cli.js'][162]++;
+  self.datasets[dataset_id] = dataset;
+  _$jscoverage['modules/sync-cli.js'][163]++;
+  doManage(dataset);
+}));
+}));
+}), setOptions: (function (options) {
+  _$jscoverage['modules/sync-cli.js'][170]++;
+  if (! self.config) {
+    _$jscoverage['modules/sync-cli.js'][171]++;
+    self.config = JSON.parse(JSON.stringify(self.defaults));
+  }
+  _$jscoverage['modules/sync-cli.js'][174]++;
+  var datasetConfig = JSON.parse(JSON.stringify(self.config));
+  _$jscoverage['modules/sync-cli.js'][175]++;
+  var optionsIn = JSON.parse(JSON.stringify(options));
+  _$jscoverage['modules/sync-cli.js'][176]++;
+  for (var k in optionsIn) {
+    _$jscoverage['modules/sync-cli.js'][177]++;
+    datasetConfig[k] = optionsIn[k];
+}
+  _$jscoverage['modules/sync-cli.js'][180]++;
+  return datasetConfig;
+}), list: (function (dataset_id, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][184]++;
+  self.getDataSet(dataset_id, (function (dataset) {
+  _$jscoverage['modules/sync-cli.js'][185]++;
+  if (dataset && dataset.data) {
+    _$jscoverage['modules/sync-cli.js'][187]++;
+    var res = JSON.parse(JSON.stringify(dataset.data));
+    _$jscoverage['modules/sync-cli.js'][188]++;
+    success(res);
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][190]++;
+    if (failure) {
+      _$jscoverage['modules/sync-cli.js'][190]++;
+      failure("no_data");
     }
   }
-  var key = new RSAKey();
-  key.setPublic(p.params.modulu, "10001");
-  var ori_text = p.params.plaintext;
-  cipher_text = key.encrypt(ori_text);
-  return s({ciphertext:cipher_text});
-}
-
-module.exports = {
-  encrypt: encrypt
-}
-},{"../../../libs/rsa":4}],47:[function(require,module,exports){
-var JSON = require("JSON");
-var actAPI = require("./api_act");
-var cloudAPI = require("./api_cloud");
-var CryptoJS = require("../../libs/generated/crypto");
-var Lawnchair = require('../../libs/generated/lawnchair');
-
-var self = {
-
-  // CONFIG
-  defaults: {
-    "sync_frequency": 10,
-    // How often to synchronise data with the cloud in seconds.
-    "auto_sync_local_updates": true,
-    // Should local chages be syned to the cloud immediately, or should they wait for the next sync interval
-    "notify_client_storage_failed": true,
-    // Should a notification event be triggered when loading/saving to client storage fails
-    "notify_sync_started": true,
-    // Should a notification event be triggered when a sync cycle with the server has been started
-    "notify_sync_complete": true,
-    // Should a notification event be triggered when a sync cycle with the server has been completed
-    "notify_offline_update": true,
-    // Should a notification event be triggered when an attempt was made to update a record while offline
-    "notify_collision_detected": true,
-    // Should a notification event be triggered when an update failed due to data collision
-    "notify_remote_update_failed": true,
-    // Should a notification event be triggered when an update failed for a reason other than data collision
-    "notify_local_update_applied": true,
-    // Should a notification event be triggered when an update was applied to the local data store
-    "notify_remote_update_applied": true,
-    // Should a notification event be triggered when an update was applied to the remote data store
-    "notify_delta_received": true,
-    // Should a notification event be triggered when a delta was received from the remote data store for the dataset 
-    "notify_record_delta_received": true,
-    // Should a notification event be triggered when a delta was received from the remote data store for a record
-    "notify_sync_failed": true,
-    // Should a notification event be triggered when the sync loop failed to complete
-    "do_console_log": false,
-    // Should log statements be written to console.log
-    "crashed_count_wait" : 10,
-    // How many syncs should we check for updates on crashed in flight updates before we give up searching
-    "resend_crashed_updates" : true,
-    // If we have reached the crashed_count_wait limit, should we re-try sending the crashed in flight pending record
-    "sync_active" : true,
-    // Is the background sync with the cloud currently active
-    "storage_strategy" : "html5-filesystem",
-    // Storage strategy to use for Lawnchair - supported strategies are 'html5-filesystem' and 'dom'
-    "file_system_quota" : 50 * 1024 * 1204
-    // Amount of space to request from the HTML5 filesystem API when running in browser
-  },
-
-  notifications: {
-    "CLIENT_STORAGE_FAILED": "client_storage_failed",
-    // loading/saving to client storage failed
-    "SYNC_STARTED": "sync_started",
-    // A sync cycle with the server has been started
-    "SYNC_COMPLETE": "sync_complete",
-    // A sync cycle with the server has been completed
-    "OFFLINE_UPDATE": "offline_update",
-    // An attempt was made to update a record while offline
-    "COLLISION_DETECTED": "collision_detected",
-    //Update Failed due to data collision
-    "REMOTE_UPDATE_FAILED": "remote_update_failed",
-    // Update Failed for a reason other than data collision
-    "REMOTE_UPDATE_APPLIED": "remote_update_applied",
-    // An update was applied to the remote data store
-    "LOCAL_UPDATE_APPLIED": "local_update_applied",
-    // An update was applied to the local data store
-    "DELTA_RECEIVED": "delta_received",
-    // A delta was received from the remote data store for the dataset 
-    "RECORD_DELTA_RECEIVED": "record_delta_received",
-    // A delta was received from the remote data store for the record 
-    "SYNC_FAILED": "sync_failed"
-    // Sync loop failed to complete
-  },
-
-  datasets: {},
-
-  // Initialise config to default values;
-  config: undefined,
-
-  notify_callback: undefined,
-
-  hasCustomSync : undefined,
-
-  // PUBLIC FUNCTION IMPLEMENTATIONS
-  init: function(options) {
-    self.consoleLog('sync - init called');
-
-    self.config = JSON.parse(JSON.stringify(self.defaults));
-    for (var i in options) {
-      self.config[i] = options[i];
+}), (function (code, msg) {
+  _$jscoverage['modules/sync-cli.js'][193]++;
+  if (failure) {
+    _$jscoverage['modules/sync-cli.js'][193]++;
+    failure(code, msg);
+  }
+}));
+}), create: (function (dataset_id, data, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][198]++;
+  if (data == null) {
+    _$jscoverage['modules/sync-cli.js'][199]++;
+    if (failure) {
+      _$jscoverage['modules/sync-cli.js'][200]++;
+      return failure("null_data");
     }
-
-    self.datasetMonitor();
-  },
-
-  notify: function(callback) {
-    self.notify_callback = callback;
-  },
-
-  manage: function(dataset_id, options, query_params, meta_data, cb) {
-    self.consoleLog('manage - START');
-
-    var doManage = function(dataset) {
-      self.consoleLog('doManage dataset :: initialised = ' + dataset.initialised + " :: " + dataset_id + ' :: ' + JSON.stringify(options));
-
-      var datasetConfig = self.setOptions(options);
-
-      dataset.query_params = query_params || dataset.query_params || {};
-      dataset.meta_data = meta_data || dataset.meta_data || {};
-      dataset.config = datasetConfig;
-      dataset.syncRunning = false;
-      dataset.syncPending = true;
-      dataset.initialised = true;
-      dataset.meta = {};
-
-      self.saveDataSet(dataset_id, function() {
-
-        if( cb ) {
-          cb();
-        }
-      });
-    };
-
-    // Check if the dataset is already loaded
-    self.getDataSet(dataset_id, function(dataset) {
-      self.consoleLog('manage - dataset already loaded');
-      doManage(dataset);
-    }, function(err) {
-      self.consoleLog('manage - dataset not loaded... trying to load');
-
-      // Not already loaded, try to load from local storage
-      self.loadDataSet(dataset_id, function(dataset) {
-          self.consoleLog('manage - dataset loaded from local storage');
-
-          // Loading from local storage worked
-
-          // Fire the local update event to indicate that dataset was loaded from local storage
-          self.doNotify(dataset_id, null, self.notifications.LOCAL_UPDATE_APPLIED, "load");
-
-          // Put the dataet under the management of the sync service
-          doManage(dataset);
-        },
-        function(err) {
-          // No dataset in memory or local storage - create a new one and put it in memory
-          self.consoleLog('manage - Creating new dataset for id ' + dataset_id);
-          var dataset = {};
-          dataset.pending = {};
-          self.datasets[dataset_id] = dataset;
-          doManage(dataset);
-        });
-    });
-  },
-
-  setOptions: function(options) {
-    // Make sure config is initialised
-    if( ! self.config ) {
-      self.config = JSON.parse(JSON.stringify(self.defaults));
-    }
-
-    var datasetConfig = JSON.parse(JSON.stringify(self.config));
-    var optionsIn = JSON.parse(JSON.stringify(options));
-    for (var k in optionsIn) {
-      datasetConfig[k] = optionsIn[k];
-    }
-
-    return datasetConfig;
-  },
-
-  list: function(dataset_id, success, failure) {
-    self.getDataSet(dataset_id, function(dataset) {
-      if (dataset && dataset.data) {
-        // Return a copy of the dataset so updates will not automatically make it back into the dataset
-        var res = JSON.parse(JSON.stringify(dataset.data));
-        success(res);
-      } else {
-        if(failure) failure('no_data');
-      }
-    }, function(code, msg) {
-      if(failure) failure(code, msg);
-    });
-  },
-
-  create: function(dataset_id, data, success, failure) {
-    self.addPendingObj(dataset_id, null, data, "create", success, failure);
-  },
-
-  read: function(dataset_id, uid, success, failure) {
-      self.getDataSet(dataset_id, function(dataset) {
-      var rec = dataset.data[uid];
-      if (!rec) {
-        failure("unknown_uid");
-      } else {
-        // Return a copy of the record so updates will not automatically make it back into the dataset
-        var res = JSON.parse(JSON.stringify(rec));
-        success(res);
-      }
-    }, function(code, msg) {
-      if(failure) failure(code, msg);
-    });
-  },
-
-  update: function(dataset_id, uid, data, success, failure) {
-    self.addPendingObj(dataset_id, uid, data, "update", success, failure);
-  },
-
-  'delete': function(dataset_id, uid, success, failure) {
-    self.addPendingObj(dataset_id, uid, null, "delete", success, failure);
-  },
-
-  getPending: function(dataset_id, cb) {
-    self.getDataSet(dataset_id, function(dataset) {
-      var res;
-      if( dataset ) {
-        res = dataset.pending;
-      }
-      cb(res);
-    }, function(err, datatset_id) {
-        self.consoleLog(err);
-    });
-  },
-
-  clearPending: function(dataset_id, cb) {
-    self.getDataSet(dataset_id, function(dataset) {
-      dataset.pending = {};
-      self.saveDataSet(dataset_id, cb);
-    });
-  },
-
-  listCollisions : function(dataset_id, success, failure){
-    self.getDataSet(dataset_id, function(dataset) {
-      self.doCloudCall({
-        "dataset_id": dataset_id,
-        "req": {
-          "fn": "listCollisions",
-          "meta_data" : dataset.meta_data
-        }
-      }, success, failure);
-    }, failure);
-  },
-
-  removeCollision: function(dataset_id, colissionHash, success, failure) {
-    self.getDataSet(dataset_id, function(dataset) {
-      self.doCloudCall({
-        "dataset_id" : dataset_id,
-        "req": {
-          "fn": "removeCollision",
-          "hash": colissionHash,
-          meta_data: dataset.meta_data
-        }
-      }, success, failure);
-    });
-  },
-
-
-  // PRIVATE FUNCTIONS
-  isOnline: function(callback) {
-    var online = true;
-
-    // first, check if navigator.online is available
-    if(typeof navigator.onLine !== "undefined"){
-      online = navigator.onLine;
-    }
-
-    // second, check if Phonegap is available and has online info
-    if(online){
-      //use phonegap to determin if the network is available
-      if(typeof navigator.network !== "undefined" && typeof navigator.network.connection !== "undefined"){
-        var networkType = navigator.network.connection.type;
-        if(networkType === "none" || networkType === null) {
-          online = false;
-        }
+  }
+  _$jscoverage['modules/sync-cli.js'][203]++;
+  self.addPendingObj(dataset_id, null, data, "create", success, failure);
+}), read: (function (dataset_id, uid, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][207]++;
+  self.getDataSet(dataset_id, (function (dataset) {
+  _$jscoverage['modules/sync-cli.js'][208]++;
+  var rec = dataset.data[uid];
+  _$jscoverage['modules/sync-cli.js'][209]++;
+  if (! rec) {
+    _$jscoverage['modules/sync-cli.js'][210]++;
+    failure("unknown_uid");
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][213]++;
+    var res = JSON.parse(JSON.stringify(rec));
+    _$jscoverage['modules/sync-cli.js'][214]++;
+    success(res);
+  }
+}), (function (code, msg) {
+  _$jscoverage['modules/sync-cli.js'][217]++;
+  if (failure) {
+    _$jscoverage['modules/sync-cli.js'][217]++;
+    failure(code, msg);
+  }
+}));
+}), update: (function (dataset_id, uid, data, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][222]++;
+  self.addPendingObj(dataset_id, uid, data, "update", success, failure);
+}), "delete": (function (dataset_id, uid, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][226]++;
+  self.addPendingObj(dataset_id, uid, null, "delete", success, failure);
+}), getPending: (function (dataset_id, cb) {
+  _$jscoverage['modules/sync-cli.js'][230]++;
+  self.getDataSet(dataset_id, (function (dataset) {
+  _$jscoverage['modules/sync-cli.js'][231]++;
+  var res;
+  _$jscoverage['modules/sync-cli.js'][232]++;
+  if (dataset) {
+    _$jscoverage['modules/sync-cli.js'][233]++;
+    res = dataset.pending;
+  }
+  _$jscoverage['modules/sync-cli.js'][235]++;
+  cb(res);
+}), (function (err, datatset_id) {
+  _$jscoverage['modules/sync-cli.js'][237]++;
+  self.consoleLog(err);
+}));
+}), clearPending: (function (dataset_id, cb) {
+  _$jscoverage['modules/sync-cli.js'][242]++;
+  self.getDataSet(dataset_id, (function (dataset) {
+  _$jscoverage['modules/sync-cli.js'][243]++;
+  dataset.pending = {};
+  _$jscoverage['modules/sync-cli.js'][244]++;
+  self.saveDataSet(dataset_id, cb);
+}));
+}), listCollisions: (function (dataset_id, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][249]++;
+  self.getDataSet(dataset_id, (function (dataset) {
+  _$jscoverage['modules/sync-cli.js'][250]++;
+  self.doCloudCall({"dataset_id": dataset_id, "req": {"fn": "listCollisions", "meta_data": dataset.meta_data}}, success, failure);
+}), failure);
+}), removeCollision: (function (dataset_id, colissionHash, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][261]++;
+  self.getDataSet(dataset_id, (function (dataset) {
+  _$jscoverage['modules/sync-cli.js'][262]++;
+  self.doCloudCall({"dataset_id": dataset_id, "req": {"fn": "removeCollision", "hash": colissionHash, meta_data: dataset.meta_data}}, success, failure);
+}));
+}), isOnline: (function (callback) {
+  _$jscoverage['modules/sync-cli.js'][276]++;
+  var online = true;
+  _$jscoverage['modules/sync-cli.js'][279]++;
+  if (typeof navigator.onLine !== "undefined") {
+    _$jscoverage['modules/sync-cli.js'][280]++;
+    online = navigator.onLine;
+  }
+  _$jscoverage['modules/sync-cli.js'][284]++;
+  if (online) {
+    _$jscoverage['modules/sync-cli.js'][286]++;
+    if (typeof navigator.network !== "undefined" && typeof navigator.network.connection !== "undefined") {
+      _$jscoverage['modules/sync-cli.js'][287]++;
+      var networkType = navigator.network.connection.type;
+      _$jscoverage['modules/sync-cli.js'][288]++;
+      if (networkType === "none" || networkType === null) {
+        _$jscoverage['modules/sync-cli.js'][289]++;
+        online = false;
       }
     }
-
-    return callback(online);
-  },
-
-  doNotify: function(dataset_id, uid, code, message) {
-
-    if( self.notify_callback ) {
-      if ( self.config['notify_' + code] ) {
-        var notification = {
-          "dataset_id" : dataset_id,
-          "uid" : uid,
-          "code" : code,
-          "message" : message
-        };
-        // make sure user doesn't block
-        setTimeout(function () {
-          self.notify_callback(notification);
-        }, 0);
-      }
+  }
+  _$jscoverage['modules/sync-cli.js'][294]++;
+  return callback(online);
+}), doNotify: (function (dataset_id, uid, code, message) {
+  _$jscoverage['modules/sync-cli.js'][299]++;
+  if (self.notify_callback) {
+    _$jscoverage['modules/sync-cli.js'][300]++;
+    if (self.config["notify_" + code]) {
+      _$jscoverage['modules/sync-cli.js'][301]++;
+      var notification = {"dataset_id": dataset_id, "uid": uid, "code": code, "message": message};
+      _$jscoverage['modules/sync-cli.js'][308]++;
+      setTimeout((function () {
+  _$jscoverage['modules/sync-cli.js'][309]++;
+  self.notify_callback(notification);
+}), 0);
     }
-  },
-
-  getDataSet: function(dataset_id, success, failure) {
-    var dataset = self.datasets[dataset_id];
-
-    if (dataset) {
-      success(dataset);
-    } else {
-      failure('unknown_dataset ' + dataset_id, dataset_id);
+  }
+}), getDataSet: (function (dataset_id, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][316]++;
+  var dataset = self.datasets[dataset_id];
+  _$jscoverage['modules/sync-cli.js'][318]++;
+  if (dataset) {
+    _$jscoverage['modules/sync-cli.js'][319]++;
+    success(dataset);
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][321]++;
+    if (failure) {
+      _$jscoverage['modules/sync-cli.js'][322]++;
+      failure("unknown_dataset " + dataset_id, dataset_id);
     }
-  },
-
-  getQueryParams: function(dataset_id, success, failure) {
-    var dataset = self.datasets[dataset_id];
-
-    if (dataset) {
+  }
+}), getQueryParams: (function (dataset_id, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][328]++;
+  var dataset = self.datasets[dataset_id];
+  _$jscoverage['modules/sync-cli.js'][330]++;
+  if (dataset) {
+    _$jscoverage['modules/sync-cli.js'][331]++;
+    success(dataset.query_params);
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][333]++;
+    if (failure) {
+      _$jscoverage['modules/sync-cli.js'][334]++;
+      failure("unknown_dataset " + dataset_id, dataset_id);
+    }
+  }
+}), setQueryParams: (function (dataset_id, queryParams, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][340]++;
+  var dataset = self.datasets[dataset_id];
+  _$jscoverage['modules/sync-cli.js'][342]++;
+  if (dataset) {
+    _$jscoverage['modules/sync-cli.js'][343]++;
+    dataset.query_params = queryParams;
+    _$jscoverage['modules/sync-cli.js'][344]++;
+    self.saveDataSet(dataset_id);
+    _$jscoverage['modules/sync-cli.js'][345]++;
+    if (success) {
+      _$jscoverage['modules/sync-cli.js'][346]++;
       success(dataset.query_params);
-    } else {
-      failure('unknown_dataset ' + dataset_id, dataset_id);
     }
-  },
-
-  setQueryParams: function(dataset_id, queryParams, success, failure) {
-    var dataset = self.datasets[dataset_id];
-
-    if (dataset) {
-      dataset.query_params = queryParams;
-      self.saveDataSet(dataset_id);
-      if( success ) {
-        success(dataset.query_params);
-      }
-    } else {
-      if ( failure ) {
-        failure('unknown_dataset ' + dataset_id, dataset_id);
-      }
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][349]++;
+    if (failure) {
+      _$jscoverage['modules/sync-cli.js'][350]++;
+      failure("unknown_dataset " + dataset_id, dataset_id);
     }
-  },
-
-  getMetaData: function(dataset_id, success, failure) {
-    var dataset = self.datasets[dataset_id];
-
-    if (dataset) {
+  }
+}), getMetaData: (function (dataset_id, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][356]++;
+  var dataset = self.datasets[dataset_id];
+  _$jscoverage['modules/sync-cli.js'][358]++;
+  if (dataset) {
+    _$jscoverage['modules/sync-cli.js'][359]++;
+    success(dataset.meta_data);
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][361]++;
+    if (failure) {
+      _$jscoverage['modules/sync-cli.js'][362]++;
+      failure("unknown_dataset " + dataset_id, dataset_id);
+    }
+  }
+}), setMetaData: (function (dataset_id, metaData, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][368]++;
+  var dataset = self.datasets[dataset_id];
+  _$jscoverage['modules/sync-cli.js'][370]++;
+  if (dataset) {
+    _$jscoverage['modules/sync-cli.js'][371]++;
+    dataset.meta_data = metaData;
+    _$jscoverage['modules/sync-cli.js'][372]++;
+    self.saveDataSet(dataset_id);
+    _$jscoverage['modules/sync-cli.js'][373]++;
+    if (success) {
+      _$jscoverage['modules/sync-cli.js'][374]++;
       success(dataset.meta_data);
-    } else {
-      failure('unknown_dataset ' + dataset_id, dataset_id);
     }
-  },
-
-  setMetaData: function(dataset_id, metaData, success, failure) {
-    var dataset = self.datasets[dataset_id];
-
-    if (dataset) {
-      dataset.meta_data = metaData;
-      self.saveDataSet(dataset_id);
-      if( success ) {
-        success(dataset.meta_data);
-      }
-    } else {
-      if( failure ) {
-        failure('unknown_dataset ' + dataset_id, dataset_id);
-      }
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][377]++;
+    if (failure) {
+      _$jscoverage['modules/sync-cli.js'][378]++;
+      failure("unknown_dataset " + dataset_id, dataset_id);
     }
-  },
-
-  getConfig: function(dataset_id, success, failure) {
-    var dataset = self.datasets[dataset_id];
-
-    if (dataset) {
+  }
+}), getConfig: (function (dataset_id, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][384]++;
+  var dataset = self.datasets[dataset_id];
+  _$jscoverage['modules/sync-cli.js'][386]++;
+  if (dataset) {
+    _$jscoverage['modules/sync-cli.js'][387]++;
+    success(dataset.config);
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][389]++;
+    if (failure) {
+      _$jscoverage['modules/sync-cli.js'][390]++;
+      failure("unknown_dataset " + dataset_id, dataset_id);
+    }
+  }
+}), setConfig: (function (dataset_id, config, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][396]++;
+  var dataset = self.datasets[dataset_id];
+  _$jscoverage['modules/sync-cli.js'][398]++;
+  if (dataset) {
+    _$jscoverage['modules/sync-cli.js'][399]++;
+    var fullConfig = self.setOptions(config);
+    _$jscoverage['modules/sync-cli.js'][400]++;
+    dataset.config = fullConfig;
+    _$jscoverage['modules/sync-cli.js'][401]++;
+    self.saveDataSet(dataset_id);
+    _$jscoverage['modules/sync-cli.js'][402]++;
+    if (success) {
+      _$jscoverage['modules/sync-cli.js'][403]++;
       success(dataset.config);
-    } else {
-      failure('unknown_dataset ' + dataset_id, dataset_id);
     }
-  },
-
-  setConfig: function(dataset_id, config, success, failure) {
-    var dataset = self.datasets[dataset_id];
-
-    if (dataset) {
-      var fullConfig = self.setOptions(config);
-      dataset.config = fullConfig;
-      self.saveDataSet(dataset_id);
-      if( success ) {
-        success(dataset.config);
-      }
-    } else {
-      if( failure ) {
-        failure('unknown_dataset ' + dataset_id, dataset_id);
-      }
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][406]++;
+    if (failure) {
+      _$jscoverage['modules/sync-cli.js'][407]++;
+      failure("unknown_dataset " + dataset_id, dataset_id);
     }
-  },
-
-  stopSync: function(dataset_id, success, failure) {
-    self.setConfig(dataset_id, {"sync_active" : false}, function() {
-      if( success ) {
-        success();
-      }
-    }, failure);
-  },
-
-  startSync: function(dataset_id, success, failure) {
-    self.setConfig(dataset_id, {"sync_active" : true}, function() {
-      if( success ) {
-        success();
-      }
-    }, failure);
-  },
-
-  doSync: function(dataset_id, success, failure) {
-    var dataset = self.datasets[dataset_id];
-
-    if (dataset) {
-      dataset.syncPending = true;
-      self.saveDataSet(dataset_id);
-      if( success ) {
-        success();
-      }
-    } else {
-      if( failure ) {
-        failure('unknown_dataset ' + dataset_id, dataset_id);
-      }
+  }
+}), stopSync: (function (dataset_id, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][413]++;
+  self.setConfig(dataset_id, {"sync_active": false}, (function () {
+  _$jscoverage['modules/sync-cli.js'][414]++;
+  if (success) {
+    _$jscoverage['modules/sync-cli.js'][415]++;
+    success();
+  }
+}), failure);
+}), startSync: (function (dataset_id, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][421]++;
+  self.setConfig(dataset_id, {"sync_active": true}, (function () {
+  _$jscoverage['modules/sync-cli.js'][422]++;
+  if (success) {
+    _$jscoverage['modules/sync-cli.js'][423]++;
+    success();
+  }
+}), failure);
+}), doSync: (function (dataset_id, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][429]++;
+  var dataset = self.datasets[dataset_id];
+  _$jscoverage['modules/sync-cli.js'][431]++;
+  if (dataset) {
+    _$jscoverage['modules/sync-cli.js'][432]++;
+    dataset.syncPending = true;
+    _$jscoverage['modules/sync-cli.js'][433]++;
+    self.saveDataSet(dataset_id);
+    _$jscoverage['modules/sync-cli.js'][434]++;
+    if (success) {
+      _$jscoverage['modules/sync-cli.js'][435]++;
+      success();
     }
-  },
-
-  forceSync: function(dataset_id, success, failure) {
-    var dataset = self.datasets[dataset_id];
-
-    if (dataset) {
-      dataset.syncForced = true;
-      self.saveDataSet(dataset_id);
-      if( success ) {
-        success();
-      }
-    } else {
-      if( failure ) {
-        failure('unknown_dataset ' + dataset_id, dataset_id);
-      }
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][438]++;
+    if (failure) {
+      _$jscoverage['modules/sync-cli.js'][439]++;
+      failure("unknown_dataset " + dataset_id, dataset_id);
     }
-  },
-
-  sortObject : function(object) {
-    if (typeof object !== "object" || object === null) {
-      return object;
+  }
+}), forceSync: (function (dataset_id, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][445]++;
+  var dataset = self.datasets[dataset_id];
+  _$jscoverage['modules/sync-cli.js'][447]++;
+  if (dataset) {
+    _$jscoverage['modules/sync-cli.js'][448]++;
+    dataset.syncForced = true;
+    _$jscoverage['modules/sync-cli.js'][449]++;
+    self.saveDataSet(dataset_id);
+    _$jscoverage['modules/sync-cli.js'][450]++;
+    if (success) {
+      _$jscoverage['modules/sync-cli.js'][451]++;
+      success();
     }
-
-    var result = [];
-
-    Object.keys(object).sort().forEach(function(key) {
-      result.push({
-        key: key,
-        value: self.sortObject(object[key])
-      });
-    });
-
-    return result;
-  },
-
-  sortedStringify : function(obj) {
-
-    var str = '';
-
-    try {
-      str = JSON.stringify(self.sortObject(obj));
-    } catch (e) {
-      console.error('Error stringifying sorted object:' + e);
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][454]++;
+    if (failure) {
+      _$jscoverage['modules/sync-cli.js'][455]++;
+      failure("unknown_dataset " + dataset_id, dataset_id);
     }
-
-    return str;
-  },
-
-  generateHash: function(object) {
-    var hash = CryptoJS.SHA1(self.sortedStringify(object));
-    return hash.toString();
-  },
-
-  addPendingObj: function(dataset_id, uid, data, action, success, failure) {
-    self.isOnline(function (online) {
-      if (!online) {
-        self.doNotify(dataset_id, uid, self.notifications.OFFLINE_UPDATE, action);
-      }
-    });
-
-    function storePendingObject(obj) {
-      obj.hash = self.generateHash(obj);
-
-      self.getDataSet(dataset_id, function(dataset) {
-
-        dataset.pending[obj.hash] = obj;
-
-        self.updateDatasetFromLocal(dataset, obj);
-
-        if(self.config.auto_sync_local_updates) {
+  }
+}), sortObject: (function (object) {
+  _$jscoverage['modules/sync-cli.js'][461]++;
+  if (typeof object !== "object" || object === null) {
+    _$jscoverage['modules/sync-cli.js'][462]++;
+    return object;
+  }
+  _$jscoverage['modules/sync-cli.js'][465]++;
+  var result = [];
+  _$jscoverage['modules/sync-cli.js'][467]++;
+  Object.keys(object).sort().forEach((function (key) {
+  _$jscoverage['modules/sync-cli.js'][468]++;
+  result.push({key: key, value: self.sortObject(object[key])});
+}));
+  _$jscoverage['modules/sync-cli.js'][474]++;
+  return result;
+}), sortedStringify: (function (obj) {
+  _$jscoverage['modules/sync-cli.js'][479]++;
+  var str = "";
+  _$jscoverage['modules/sync-cli.js'][481]++;
+  try {
+    _$jscoverage['modules/sync-cli.js'][482]++;
+    str = JSON.stringify(self.sortObject(obj));
+  }
+  catch (e) {
+    _$jscoverage['modules/sync-cli.js'][484]++;
+    console.error("Error stringifying sorted object:" + e);
+  }
+  _$jscoverage['modules/sync-cli.js'][487]++;
+  return str;
+}), generateHash: (function (object) {
+  _$jscoverage['modules/sync-cli.js'][491]++;
+  var hash = CryptoJS.SHA1(self.sortedStringify(object));
+  _$jscoverage['modules/sync-cli.js'][492]++;
+  return hash.toString();
+}), addPendingObj: (function (dataset_id, uid, data, action, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][496]++;
+  self.isOnline((function (online) {
+  _$jscoverage['modules/sync-cli.js'][497]++;
+  if (! online) {
+    _$jscoverage['modules/sync-cli.js'][498]++;
+    self.doNotify(dataset_id, uid, self.notifications.OFFLINE_UPDATE, action);
+  }
+}));
+  _$jscoverage['modules/sync-cli.js'][502]++;
+  function storePendingObject(obj) {
+    _$jscoverage['modules/sync-cli.js'][503]++;
+    obj.hash = self.generateHash(obj);
+    _$jscoverage['modules/sync-cli.js'][505]++;
+    self.getDataSet(dataset_id, (function (dataset) {
+  _$jscoverage['modules/sync-cli.js'][507]++;
+  dataset.pending[obj.hash] = obj;
+  _$jscoverage['modules/sync-cli.js'][509]++;
+  self.updateDatasetFromLocal(dataset, obj);
+  _$jscoverage['modules/sync-cli.js'][511]++;
+  if (self.config.auto_sync_local_updates) {
+    _$jscoverage['modules/sync-cli.js'][512]++;
+    dataset.syncPending = true;
+  }
+  _$jscoverage['modules/sync-cli.js'][514]++;
+  self.saveDataSet(dataset_id);
+  _$jscoverage['modules/sync-cli.js'][515]++;
+  self.doNotify(dataset_id, uid, self.notifications.LOCAL_UPDATE_APPLIED, action);
+  _$jscoverage['modules/sync-cli.js'][517]++;
+  success(obj);
+}), (function (code, msg) {
+  _$jscoverage['modules/sync-cli.js'][519]++;
+  if (failure) {
+    _$jscoverage['modules/sync-cli.js'][519]++;
+    failure(code, msg);
+  }
+}));
+}
+  _$jscoverage['modules/sync-cli.js'][523]++;
+  var pendingObj = {};
+  _$jscoverage['modules/sync-cli.js'][524]++;
+  pendingObj.inFlight = false;
+  _$jscoverage['modules/sync-cli.js'][525]++;
+  pendingObj.action = action;
+  _$jscoverage['modules/sync-cli.js'][526]++;
+  pendingObj.post = JSON.parse(JSON.stringify(data));
+  _$jscoverage['modules/sync-cli.js'][527]++;
+  pendingObj.postHash = self.generateHash(pendingObj.post);
+  _$jscoverage['modules/sync-cli.js'][528]++;
+  pendingObj.timestamp = new Date().getTime();
+  _$jscoverage['modules/sync-cli.js'][529]++;
+  if ("create" === action) {
+    _$jscoverage['modules/sync-cli.js'][530]++;
+    pendingObj.uid = pendingObj.postHash;
+    _$jscoverage['modules/sync-cli.js'][531]++;
+    storePendingObject(pendingObj);
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][533]++;
+    self.read(dataset_id, uid, (function (rec) {
+  _$jscoverage['modules/sync-cli.js'][534]++;
+  pendingObj.uid = uid;
+  _$jscoverage['modules/sync-cli.js'][535]++;
+  pendingObj.pre = rec.data;
+  _$jscoverage['modules/sync-cli.js'][536]++;
+  pendingObj.preHash = self.generateHash(rec.data);
+  _$jscoverage['modules/sync-cli.js'][537]++;
+  storePendingObject(pendingObj);
+}), (function (code, msg) {
+  _$jscoverage['modules/sync-cli.js'][539]++;
+  if (failure) {
+    _$jscoverage['modules/sync-cli.js'][540]++;
+    failure(code, msg);
+  }
+}));
+  }
+}), syncLoop: (function (dataset_id) {
+  _$jscoverage['modules/sync-cli.js'][547]++;
+  self.getDataSet(dataset_id, (function (dataSet) {
+  _$jscoverage['modules/sync-cli.js'][550]++;
+  dataSet.syncPending = false;
+  _$jscoverage['modules/sync-cli.js'][551]++;
+  dataSet.syncRunning = true;
+  _$jscoverage['modules/sync-cli.js'][552]++;
+  dataSet.syncLoopStart = new Date().getTime();
+  _$jscoverage['modules/sync-cli.js'][553]++;
+  self.doNotify(dataset_id, null, self.notifications.SYNC_STARTED, null);
+  _$jscoverage['modules/sync-cli.js'][555]++;
+  self.isOnline((function (online) {
+  _$jscoverage['modules/sync-cli.js'][556]++;
+  if (! online) {
+    _$jscoverage['modules/sync-cli.js'][557]++;
+    self.syncComplete(dataset_id, "offline", self.notifications.SYNC_FAILED);
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][559]++;
+    self.checkHasCustomSync(dataset_id, (function () {
+  _$jscoverage['modules/sync-cli.js'][561]++;
+  var syncLoopParams = {};
+  _$jscoverage['modules/sync-cli.js'][562]++;
+  syncLoopParams.fn = "sync";
+  _$jscoverage['modules/sync-cli.js'][563]++;
+  syncLoopParams.dataset_id = dataset_id;
+  _$jscoverage['modules/sync-cli.js'][564]++;
+  syncLoopParams.query_params = dataSet.query_params;
+  _$jscoverage['modules/sync-cli.js'][565]++;
+  syncLoopParams.config = dataSet.config;
+  _$jscoverage['modules/sync-cli.js'][566]++;
+  syncLoopParams.meta_data = dataSet.meta_data;
+  _$jscoverage['modules/sync-cli.js'][568]++;
+  syncLoopParams.dataset_hash = dataSet.hash;
+  _$jscoverage['modules/sync-cli.js'][569]++;
+  syncLoopParams.acknowledgements = dataSet.acknowledgements || [];
+  _$jscoverage['modules/sync-cli.js'][571]++;
+  var pending = dataSet.pending;
+  _$jscoverage['modules/sync-cli.js'][572]++;
+  var pendingArray = [];
+  _$jscoverage['modules/sync-cli.js'][573]++;
+  for (var i in pending) {
+    _$jscoverage['modules/sync-cli.js'][577]++;
+    if (! pending[i].inFlight && ! pending[i].crashed && ! pending[i].delayed) {
+      _$jscoverage['modules/sync-cli.js'][578]++;
+      pending[i].inFlight = true;
+      _$jscoverage['modules/sync-cli.js'][579]++;
+      pending[i].inFlightDate = new Date().getTime();
+      _$jscoverage['modules/sync-cli.js'][580]++;
+      pendingArray.push(pending[i]);
+    }
+}
+  _$jscoverage['modules/sync-cli.js'][583]++;
+  syncLoopParams.pending = pendingArray;
+  _$jscoverage['modules/sync-cli.js'][585]++;
+  if (pendingArray.length > 0) {
+    _$jscoverage['modules/sync-cli.js'][586]++;
+    self.consoleLog("Starting sync loop - global hash = " + dataSet.hash + " :: params = " + JSON.stringify(syncLoopParams, null, 2));
+  }
+  _$jscoverage['modules/sync-cli.js'][588]++;
+  try {
+    _$jscoverage['modules/sync-cli.js'][589]++;
+    self.doCloudCall({"dataset_id": dataset_id, "req": syncLoopParams}, (function (res) {
+  _$jscoverage['modules/sync-cli.js'][593]++;
+  var rec;
+  _$jscoverage['modules/sync-cli.js'][595]++;
+  function processUpdates(updates, notification, acknowledgements) {
+    _$jscoverage['modules/sync-cli.js'][596]++;
+    if (updates) {
+      _$jscoverage['modules/sync-cli.js'][597]++;
+      for (var up in updates) {
+        _$jscoverage['modules/sync-cli.js'][598]++;
+        rec = updates[up];
+        _$jscoverage['modules/sync-cli.js'][599]++;
+        acknowledgements.push(rec);
+        _$jscoverage['modules/sync-cli.js'][600]++;
+        if (dataSet.pending[up] && dataSet.pending[up].inFlight && ! dataSet.pending[up].crashed) {
+          _$jscoverage['modules/sync-cli.js'][601]++;
+          delete dataSet.pending[up];
+          _$jscoverage['modules/sync-cli.js'][602]++;
+          self.doNotify(dataset_id, rec.uid, notification, rec);
+        }
+}
+    }
+}
+  _$jscoverage['modules/sync-cli.js'][609]++;
+  self.updatePendingFromNewData(dataset_id, dataSet, res);
+  _$jscoverage['modules/sync-cli.js'][612]++;
+  self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);
+  _$jscoverage['modules/sync-cli.js'][615]++;
+  self.updateDelayedFromNewData(dataset_id, dataSet, res);
+  _$jscoverage['modules/sync-cli.js'][618]++;
+  self.updateMetaFromNewData(dataset_id, dataSet, res);
+  _$jscoverage['modules/sync-cli.js'][621]++;
+  self.updateNewDataFromInFlight(dataset_id, dataSet, res);
+  _$jscoverage['modules/sync-cli.js'][624]++;
+  self.updateNewDataFromPending(dataset_id, dataSet, res);
+  _$jscoverage['modules/sync-cli.js'][628]++;
+  if (res.records) {
+    _$jscoverage['modules/sync-cli.js'][630]++;
+    dataSet.data = res.records;
+    _$jscoverage['modules/sync-cli.js'][631]++;
+    dataSet.hash = res.hash;
+    _$jscoverage['modules/sync-cli.js'][633]++;
+    self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, "full dataset");
+  }
+  _$jscoverage['modules/sync-cli.js'][636]++;
+  if (res.updates) {
+    _$jscoverage['modules/sync-cli.js'][637]++;
+    var acknowledgements = [];
+    _$jscoverage['modules/sync-cli.js'][638]++;
+    processUpdates(res.updates.applied, self.notifications.REMOTE_UPDATE_APPLIED, acknowledgements);
+    _$jscoverage['modules/sync-cli.js'][639]++;
+    processUpdates(res.updates.failed, self.notifications.REMOTE_UPDATE_FAILED, acknowledgements);
+    _$jscoverage['modules/sync-cli.js'][640]++;
+    processUpdates(res.updates.collisions, self.notifications.COLLISION_DETECTED, acknowledgements);
+    _$jscoverage['modules/sync-cli.js'][641]++;
+    dataSet.acknowledgements = acknowledgements;
+  }
+  _$jscoverage['modules/sync-cli.js'][644]++;
+  if (! res.records && res.hash && res.hash !== dataSet.hash) {
+    _$jscoverage['modules/sync-cli.js'][645]++;
+    self.consoleLog("Local dataset stale - syncing records :: local hash= " + dataSet.hash + " - remoteHash=" + res.hash);
+    _$jscoverage['modules/sync-cli.js'][647]++;
+    self.syncRecords(dataset_id);
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][649]++;
+    self.consoleLog("Local dataset up to date");
+    _$jscoverage['modules/sync-cli.js'][650]++;
+    self.syncComplete(dataset_id, "online", self.notifications.SYNC_COMPLETE);
+  }
+}), (function (msg, err) {
+  _$jscoverage['modules/sync-cli.js'][656]++;
+  self.markInFlightAsCrashed(dataSet);
+  _$jscoverage['modules/sync-cli.js'][657]++;
+  self.consoleLog("syncLoop failed : msg=" + msg + " :: err = " + err);
+  _$jscoverage['modules/sync-cli.js'][658]++;
+  self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);
+}));
+  }
+  catch (e) {
+    _$jscoverage['modules/sync-cli.js'][662]++;
+    self.consoleLog("Error performing sync - " + e);
+    _$jscoverage['modules/sync-cli.js'][663]++;
+    self.syncComplete(dataset_id, e, self.notifications.SYNC_FAILED);
+  }
+}));
+  }
+}));
+}));
+}), syncRecords: (function (dataset_id) {
+  _$jscoverage['modules/sync-cli.js'][673]++;
+  self.getDataSet(dataset_id, (function (dataSet) {
+  _$jscoverage['modules/sync-cli.js'][675]++;
+  var localDataSet = dataSet.data || {};
+  _$jscoverage['modules/sync-cli.js'][677]++;
+  var clientRecs = {};
+  _$jscoverage['modules/sync-cli.js'][678]++;
+  for (var i in localDataSet) {
+    _$jscoverage['modules/sync-cli.js'][679]++;
+    var uid = i;
+    _$jscoverage['modules/sync-cli.js'][680]++;
+    var hash = localDataSet[i].hash;
+    _$jscoverage['modules/sync-cli.js'][681]++;
+    clientRecs[uid] = hash;
+}
+  _$jscoverage['modules/sync-cli.js'][684]++;
+  var syncRecParams = {};
+  _$jscoverage['modules/sync-cli.js'][686]++;
+  syncRecParams.fn = "syncRecords";
+  _$jscoverage['modules/sync-cli.js'][687]++;
+  syncRecParams.dataset_id = dataset_id;
+  _$jscoverage['modules/sync-cli.js'][688]++;
+  syncRecParams.query_params = dataSet.query_params;
+  _$jscoverage['modules/sync-cli.js'][689]++;
+  syncRecParams.clientRecs = clientRecs;
+  _$jscoverage['modules/sync-cli.js'][691]++;
+  self.consoleLog("syncRecParams :: " + JSON.stringify(syncRecParams));
+  _$jscoverage['modules/sync-cli.js'][693]++;
+  self.doCloudCall({"dataset_id": dataset_id, "req": syncRecParams}, (function (res) {
+  _$jscoverage['modules/sync-cli.js'][697]++;
+  var i;
+  _$jscoverage['modules/sync-cli.js'][699]++;
+  if (res.create) {
+    _$jscoverage['modules/sync-cli.js'][700]++;
+    for (i in res.create) {
+      _$jscoverage['modules/sync-cli.js'][701]++;
+      localDataSet[i] = {"hash": res.create[i].hash, "data": res.create[i].data};
+      _$jscoverage['modules/sync-cli.js'][702]++;
+      self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "create");
+}
+  }
+  _$jscoverage['modules/sync-cli.js'][705]++;
+  if (res.update) {
+    _$jscoverage['modules/sync-cli.js'][706]++;
+    for (i in res.update) {
+      _$jscoverage['modules/sync-cli.js'][707]++;
+      localDataSet[i].hash = res.update[i].hash;
+      _$jscoverage['modules/sync-cli.js'][708]++;
+      localDataSet[i].data = res.update[i].data;
+      _$jscoverage['modules/sync-cli.js'][709]++;
+      self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
+}
+  }
+  _$jscoverage['modules/sync-cli.js'][712]++;
+  if (res["delete"]) {
+    _$jscoverage['modules/sync-cli.js'][713]++;
+    for (i in res["delete"]) {
+      _$jscoverage['modules/sync-cli.js'][714]++;
+      delete localDataSet[i];
+      _$jscoverage['modules/sync-cli.js'][715]++;
+      self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "delete");
+}
+  }
+  _$jscoverage['modules/sync-cli.js'][719]++;
+  self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, "partial dataset");
+  _$jscoverage['modules/sync-cli.js'][721]++;
+  dataSet.data = localDataSet;
+  _$jscoverage['modules/sync-cli.js'][722]++;
+  if (res.hash) {
+    _$jscoverage['modules/sync-cli.js'][723]++;
+    dataSet.hash = res.hash;
+  }
+  _$jscoverage['modules/sync-cli.js'][725]++;
+  self.syncComplete(dataset_id, "online", self.notifications.SYNC_COMPLETE);
+}), (function (msg, err) {
+  _$jscoverage['modules/sync-cli.js'][727]++;
+  self.consoleLog("syncRecords failed : msg=" + msg + " :: err=" + err);
+  _$jscoverage['modules/sync-cli.js'][728]++;
+  self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);
+}));
+}));
+}), syncComplete: (function (dataset_id, status, notification) {
+  _$jscoverage['modules/sync-cli.js'][735]++;
+  self.getDataSet(dataset_id, (function (dataset) {
+  _$jscoverage['modules/sync-cli.js'][736]++;
+  dataset.syncRunning = false;
+  _$jscoverage['modules/sync-cli.js'][737]++;
+  dataset.syncLoopEnd = new Date().getTime();
+  _$jscoverage['modules/sync-cli.js'][738]++;
+  self.saveDataSet(dataset_id);
+  _$jscoverage['modules/sync-cli.js'][739]++;
+  self.doNotify(dataset_id, dataset.hash, notification, status);
+}));
+}), checkDatasets: (function () {
+  _$jscoverage['modules/sync-cli.js'][744]++;
+  for (var dataset_id in self.datasets) {
+    _$jscoverage['modules/sync-cli.js'][745]++;
+    if (self.datasets.hasOwnProperty(dataset_id)) {
+      _$jscoverage['modules/sync-cli.js'][746]++;
+      var dataset = self.datasets[dataset_id];
+      _$jscoverage['modules/sync-cli.js'][748]++;
+      if (! dataset.syncRunning && (dataset.config.sync_active || dataset.syncForced)) {
+        _$jscoverage['modules/sync-cli.js'][750]++;
+        var lastSyncStart = dataset.syncLoopStart;
+        _$jscoverage['modules/sync-cli.js'][751]++;
+        var lastSyncCmp = dataset.syncLoopEnd;
+        _$jscoverage['modules/sync-cli.js'][752]++;
+        if (dataset.syncForced) {
+          _$jscoverage['modules/sync-cli.js'][753]++;
           dataset.syncPending = true;
         }
-        self.saveDataSet(dataset_id);
-        self.doNotify(dataset_id, uid, self.notifications.LOCAL_UPDATE_APPLIED, action);
-
-        success(obj);
-      }, function(code, msg) {
-        if(failure) failure(code, msg);
-      });
-    }
-
-    var pendingObj = {};
-    pendingObj.inFlight = false;
-    pendingObj.action = action;
-    pendingObj.post = JSON.parse(JSON.stringify(data));
-    pendingObj.postHash = self.generateHash(pendingObj.post);
-    pendingObj.timestamp = new Date().getTime();
-    if( "create" === action ) {
-      pendingObj.uid = pendingObj.postHash;
-      storePendingObject(pendingObj);
-    } else {
-      self.read(dataset_id, uid, function(rec) {
-        pendingObj.uid = uid;
-        pendingObj.pre = rec.data;
-        pendingObj.preHash = self.generateHash(rec.data);
-        storePendingObject(pendingObj);
-      }, function(code, msg) {
-        failure(code, msg);
-      });
-    }
-  },
-
-  syncLoop: function(dataset_id) {
-    self.getDataSet(dataset_id, function(dataSet) {
-    
-      // The sync loop is currently active
-      dataSet.syncPending = false;
-      dataSet.syncRunning = true;
-      dataSet.syncLoopStart = new Date().getTime();
-      self.doNotify(dataset_id, null, self.notifications.SYNC_STARTED, null);
-
-      self.isOnline(function(online) {
-        if (!online) {
-          self.syncComplete(dataset_id, "offline", self.notifications.SYNC_FAILED);
-        } else {
-          self.checkHasCustomSync(dataset_id, function() {
-
-            var syncLoopParams = {};
-            syncLoopParams.fn = 'sync';
-            syncLoopParams.dataset_id = dataset_id;
-            syncLoopParams.query_params = dataSet.query_params;
-            syncLoopParams.config = dataSet.config;
-            syncLoopParams.meta_data = dataSet.meta_data;
-            //var datasetHash = self.generateLocalDatasetHash(dataSet);
-            syncLoopParams.dataset_hash = dataSet.hash;
-            syncLoopParams.acknowledgements = dataSet.acknowledgements || [];
-
-            var pending = dataSet.pending;
-            var pendingArray = [];
-            for(var i in pending ) {
-              // Mark the pending records we are about to submit as inflight and add them to the array for submission
-              // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
-              // Don't add delayed records
-              if( !pending[i].inFlight && !pending[i].crashed && !pending[i].delayed) {
-                pending[i].inFlight = true;
-                pending[i].inFlightDate = new Date().getTime();
-                pendingArray.push(pending[i]);
+        else {
+          _$jscoverage['modules/sync-cli.js'][754]++;
+          if (lastSyncStart == null) {
+            _$jscoverage['modules/sync-cli.js'][755]++;
+            self.consoleLog(dataset_id + " - Performing initial sync");
+            _$jscoverage['modules/sync-cli.js'][757]++;
+            dataset.syncPending = true;
+          }
+          else {
+            _$jscoverage['modules/sync-cli.js'][758]++;
+            if (lastSyncCmp != null) {
+              _$jscoverage['modules/sync-cli.js'][759]++;
+              var timeSinceLastSync = new Date().getTime() - lastSyncCmp;
+              _$jscoverage['modules/sync-cli.js'][760]++;
+              var syncFrequency = dataset.config.sync_frequency * 1000;
+              _$jscoverage['modules/sync-cli.js'][761]++;
+              if (timeSinceLastSync > syncFrequency) {
+                _$jscoverage['modules/sync-cli.js'][763]++;
+                dataset.syncPending = true;
               }
             }
-            syncLoopParams.pending = pendingArray;
-
-            if( pendingArray.length > 0 ) {
-              self.consoleLog('Starting sync loop - global hash = ' + dataSet.hash + ' :: params = ' + JSON.stringify(syncLoopParams, null, 2));
-            }
-            try {
-              self.doCloudCall({
-                'dataset_id': dataset_id,
-                'req': syncLoopParams
-              }, function(res) {
-                var rec;
-
-                function processUpdates(updates, notification, acknowledgements) {
-                  if( updates ) {
-                    for (var up in updates) {
-                      rec = updates[up];
-                      acknowledgements.push(rec);
-                      if( dataSet.pending[up] && dataSet.pending[up].inFlight && !dataSet.pending[up].crashed ) {
-                        delete dataSet.pending[up];
-                        self.doNotify(dataset_id, rec.uid, notification, rec);
-                      }
-                    }
-                  }
-                }
-
-                // Check to see if any new pending records need to be updated to reflect the current state of play.
-                self.updatePendingFromNewData(dataset_id, dataSet, res);
-
-                // Check to see if any previously crashed inflight records can now be resolved
-                self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);
-
-                //Check to see if any delayed pending records can now be set to ready
-                self.updateDelayedFromNewData(dataset_id, dataSet, res);
-
-                // Update the new dataset with details of any inflight updates which we have not received a response on
-                self.updateNewDataFromInFlight(dataset_id, dataSet, res);
-
-                // Update the new dataset with details of any pending updates
-                self.updateNewDataFromPending(dataset_id, dataSet, res);
-
-
-
-                if (res.records) {
-                  // Full Dataset returned
-                  dataSet.data = res.records;
-                  dataSet.hash = res.hash;
-
-                  self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'full dataset');
-                }
-
-                if (res.updates) {
-                  var acknowledgements = [];
-                  processUpdates(res.updates.applied, self.notifications.REMOTE_UPDATE_APPLIED, acknowledgements);
-                  processUpdates(res.updates.failed, self.notifications.REMOTE_UPDATE_FAILED, acknowledgements);
-                  processUpdates(res.updates.collisions, self.notifications.COLLISION_DETECTED, acknowledgements);
-                  dataSet.acknowledgements = acknowledgements;
-                }
-
-                if (!res.records && res.hash && res.hash !== dataSet.hash) {
-                  self.consoleLog("Local dataset stale - syncing records :: local hash= " + dataSet.hash + " - remoteHash=" + res.hash);
-                  // Different hash value returned - Sync individual records
-                  self.syncRecords(dataset_id);
-                } else {
-                  self.consoleLog("Local dataset up to date");
-                  self.syncComplete(dataset_id,  "online", self.notifications.SYNC_COMPLETE);
-                }
-              }, function(msg, err) {
-                // The AJAX call failed to complete succesfully, so the state of the current pending updates is unknown
-                // Mark them as "crashed". The next time a syncLoop completets successfully, we will review the crashed
-                // records to see if we can determine their current state.
-                self.markInFlightAsCrashed(dataSet);
-                self.consoleLog("syncLoop failed : msg=" + msg + " :: err = " + err);
-                self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);
-              });
-            }
-            catch (e) {
-              self.consoleLog('Error performing sync - ' + e);
-              self.syncComplete(dataset_id, e, self.notifications.SYNC_FAILED);
-            }
-          });
-        }
-      });
-    });
-  },
-
-  syncRecords: function(dataset_id) {
-
-    self.getDataSet(dataset_id, function(dataSet) {
-
-      var localDataSet = dataSet.data || {};
-
-      var clientRecs = {};
-      for (var i in localDataSet) {
-        var uid = i;
-        var hash = localDataSet[i].hash;
-        clientRecs[uid] = hash;
-      }
-
-      var syncRecParams = {};
-
-      syncRecParams.fn = 'syncRecords';
-      syncRecParams.dataset_id = dataset_id;
-      syncRecParams.query_params = dataSet.query_params;
-      syncRecParams.clientRecs = clientRecs;
-
-      self.consoleLog("syncRecParams :: " + JSON.stringify(syncRecParams));
-
-      self.doCloudCall({
-        'dataset_id': dataset_id,
-        'req': syncRecParams
-      }, function(res) {
-        var i;
-
-        if (res.create) {
-          for (i in res.create) {
-            localDataSet[i] = {"hash" : res.create[i].hash, "data" : res.create[i].data};
-            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "create");
           }
         }
-        if (res.update) {
-          for (i in res.update) {
-            localDataSet[i].hash = res.update[i].hash;
-            localDataSet[i].data = res.update[i].data;
-            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
-          }
-        }
-        if (res['delete']) {
-          for (i in res['delete']) {
-            delete localDataSet[i];
-            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "delete");
-          }
-        }
-
-        self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'partial dataset');
-
-        dataSet.data = localDataSet;
-        if(res.hash) {
-          dataSet.hash = res.hash;
-        }
-        self.syncComplete(dataset_id, "online", self.notifications.SYNC_COMPLETE);
-      }, function(msg, err) {
-        self.consoleLog("syncRecords failed : msg=" + msg + " :: err=" + err);
-        self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);
-      });
-    });
-  },
-
-  syncComplete: function(dataset_id, status, notification) {
-
-    self.getDataSet(dataset_id, function(dataset) {
-      dataset.syncRunning = false;
-      dataset.syncLoopEnd = new Date().getTime();
-      self.saveDataSet(dataset_id);
-      self.doNotify(dataset_id, dataset.hash, notification, status);
-    });
-  },
-
-  checkDatasets: function() {
-    for( var dataset_id in self.datasets ) {
-      if( self.datasets.hasOwnProperty(dataset_id) ) {
-        var dataset = self.datasets[dataset_id];
-
-        if( !dataset.syncRunning && dataset.config.sync_active) {
-          // Check to see if it is time for the sync loop to run again
-          var lastSyncStart = dataset.syncLoopStart;
-          var lastSyncCmp = dataset.syncLoopEnd;
-          if( lastSyncStart == null ) {
-            self.consoleLog(dataset_id +' - Performing initial sync');
-            // Dataset has never been synced before - do initial sync
-            dataset.syncPending = true;
-          } else if (lastSyncCmp != null) {
-            var timeSinceLastSync = new Date().getTime() - lastSyncCmp;
-            var syncFrequency = dataset.config.sync_frequency * 1000;
-            if( timeSinceLastSync > syncFrequency ) {
-              // Time between sync loops has passed - do another sync
-              dataset.syncPending = true;
-            }
-          } else if( dataset.syncForced ) {
-            dataset.syncPending = true;
-          }
-
-          if( dataset.syncPending ) {
-            // Reset syncForced in case it was what caused the sync cycle to run.
-            dataset.syncForced = false;
-
-            // If the dataset requres syncing, run the sync loop. This may be because the sync interval has passed
-            // or because the sync_frequency has been changed or because a change was made to the dataset and the
-            // immediate_sync flag set to true
-            self.syncLoop(dataset_id);
-          }
+        _$jscoverage['modules/sync-cli.js'][767]++;
+        if (dataset.syncPending) {
+          _$jscoverage['modules/sync-cli.js'][769]++;
+          dataset.syncForced = false;
+          _$jscoverage['modules/sync-cli.js'][774]++;
+          self.syncLoop(dataset_id);
         }
       }
     }
-  },
-
-  checkHasCustomSync : function(dataset_id, cb) {
-    if(self.hasCustomSync != null) {
+}
+}), checkHasCustomSync: (function (dataset_id, cb) {
+  _$jscoverage['modules/sync-cli.js'][782]++;
+  var dataset = self.datasets[dataset_id];
+  _$jscoverage['modules/sync-cli.js'][783]++;
+  if (dataset && dataset.config) {
+    _$jscoverage['modules/sync-cli.js'][784]++;
+    self.consoleLog("dataset.config.has_custom_sync = " + dataset.config.has_custom_sync);
+    _$jscoverage['modules/sync-cli.js'][785]++;
+    if (dataset.config.has_custom_sync != null) {
+      _$jscoverage['modules/sync-cli.js'][786]++;
       return cb();
     }
-    self.consoleLog('starting check has custom sync');
-
-    actAPI({
-      'act' : dataset_id,
-      'req': {
-        'fn': 'sync'
-      }
-    }, function(res) {
-      //if the custom sync is defined in the cloud, this call should success.
-      //if failed, we think this the custom sync is not defined
-      self.consoleLog('checkHasCustomSync - success - ', res);
-      self.hasCustomSync = true;
-      return cb();
-    }, function(msg,err) {
-      self.consoleLog('checkHasCustomSync - failure - ', err);
-      if(err.status && err.status === 500){
-        //if we receive 500, it could be that there is an error occured due to missing parameters or similar,
-        //but the endpoint is defined.
-        self.consoleLog('checkHasCustomSync - failed with 500, endpoint does exists');
-        self.hasCustomSync = true;
-      } else {
-        self.hasCustomSync = false;
-      }
-      return cb();
-    });
-  },
-
-  doCloudCall: function(params, success, failure) {
-    if( self.hasCustomSync ) {
-      actAPI({
-        'act' : params.dataset_id,
-        'req' : params.req
-      }, function(res) {
-        success(res);
-      }, function(msg, err) {
-        failure(msg, err);
-      });      
-    } else {
-      cloudAPI({
-        'path' : '/mbaas/sync/' + params.dataset_id,
-        'method' : 'post',
-        'data' : params.req
-      }, function(res) {
-        success(res);
-      }, function(msg, err) {
-        failure(msg, err);
-      })
+    _$jscoverage['modules/sync-cli.js'][788]++;
+    self.consoleLog("starting check has custom sync");
+    _$jscoverage['modules/sync-cli.js'][790]++;
+    actAPI({"act": dataset_id, "req": {"fn": "sync"}}, (function (res) {
+  _$jscoverage['modules/sync-cli.js'][798]++;
+  self.consoleLog("check has_custom_sync - success - ", res);
+  _$jscoverage['modules/sync-cli.js'][799]++;
+  dataset.config.has_custom_sync = true;
+  _$jscoverage['modules/sync-cli.js'][800]++;
+  return cb();
+}), (function (msg, err) {
+  _$jscoverage['modules/sync-cli.js'][802]++;
+  self.consoleLog("check has_custom_sync - failure - ", err);
+  _$jscoverage['modules/sync-cli.js'][803]++;
+  if (err.status && err.status === 500) {
+    _$jscoverage['modules/sync-cli.js'][806]++;
+    self.consoleLog("check has_custom_sync - failed with 500, endpoint does exists");
+    _$jscoverage['modules/sync-cli.js'][807]++;
+    dataset.config.has_custom_sync = true;
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][809]++;
+    dataset.config.has_custom_sync = false;
+  }
+  _$jscoverage['modules/sync-cli.js'][811]++;
+  return cb();
+}));
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][814]++;
+    return cb();
+  }
+}), doCloudCall: (function (params, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][819]++;
+  var hasCustomSync = false;
+  _$jscoverage['modules/sync-cli.js'][820]++;
+  var dataset = self.datasets[params.dataset_id];
+  _$jscoverage['modules/sync-cli.js'][821]++;
+  if (dataset && dataset.config) {
+    _$jscoverage['modules/sync-cli.js'][822]++;
+    hasCustomSync = dataset.config.has_custom_sync;
+  }
+  _$jscoverage['modules/sync-cli.js'][824]++;
+  if (hasCustomSync == true) {
+    _$jscoverage['modules/sync-cli.js'][825]++;
+    actAPI({"act": params.dataset_id, "req": params.req}, (function (res) {
+  _$jscoverage['modules/sync-cli.js'][829]++;
+  success(res);
+}), (function (msg, err) {
+  _$jscoverage['modules/sync-cli.js'][831]++;
+  failure(msg, err);
+}));
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][834]++;
+    cloudAPI({"path": "/mbaas/sync/" + params.dataset_id, "method": "post", "data": params.req}, (function (res) {
+  _$jscoverage['modules/sync-cli.js'][839]++;
+  success(res);
+}), (function (msg, err) {
+  _$jscoverage['modules/sync-cli.js'][841]++;
+  failure(msg, err);
+}));
+  }
+}), datasetMonitor: (function () {
+  _$jscoverage['modules/sync-cli.js'][847]++;
+  self.checkDatasets();
+  _$jscoverage['modules/sync-cli.js'][850]++;
+  setTimeout((function () {
+  _$jscoverage['modules/sync-cli.js'][851]++;
+  self.datasetMonitor();
+}), 500);
+}), saveDataSet: (function (dataset_id, cb) {
+  _$jscoverage['modules/sync-cli.js'][856]++;
+  var onFail = (function (msg, err) {
+  _$jscoverage['modules/sync-cli.js'][858]++;
+  var errMsg = "save to local storage failed  msg:" + msg + " err:" + err;
+  _$jscoverage['modules/sync-cli.js'][859]++;
+  self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);
+  _$jscoverage['modules/sync-cli.js'][860]++;
+  self.consoleLog(errMsg);
+});
+  _$jscoverage['modules/sync-cli.js'][862]++;
+  self.getDataSet(dataset_id, (function (dataset) {
+  _$jscoverage['modules/sync-cli.js'][864]++;
+  Lawnchair({fail: onFail, adapter: self.config.storage_strategy, size: self.config.file_system_quota}, (function () {
+  _$jscoverage['modules/sync-cli.js'][865]++;
+  this.save({key: "dataset_" + dataset_id, val: dataset}, (function () {
+  _$jscoverage['modules/sync-cli.js'][867]++;
+  if (cb) {
+    _$jscoverage['modules/sync-cli.js'][867]++;
+    return cb();
+  }
+}));
+}));
+}));
+}), loadDataSet: (function (dataset_id, success, failure) {
+  _$jscoverage['modules/sync-cli.js'][875]++;
+  var onFail = (function (msg, err) {
+  _$jscoverage['modules/sync-cli.js'][877]++;
+  var errMsg = "load from local storage failed  msg:" + msg;
+  _$jscoverage['modules/sync-cli.js'][878]++;
+  self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);
+  _$jscoverage['modules/sync-cli.js'][879]++;
+  self.consoleLog(errMsg);
+});
+  _$jscoverage['modules/sync-cli.js'][882]++;
+  Lawnchair({fail: onFail, adapter: self.config.storage_strategy, size: self.config.file_system_quota}, (function () {
+  _$jscoverage['modules/sync-cli.js'][883]++;
+  this.get("dataset_" + dataset_id, (function (data) {
+  _$jscoverage['modules/sync-cli.js'][884]++;
+  if (data && data.val) {
+    _$jscoverage['modules/sync-cli.js'][885]++;
+    var dataset = data.val;
+    _$jscoverage['modules/sync-cli.js'][886]++;
+    if (typeof dataset === "string") {
+      _$jscoverage['modules/sync-cli.js'][887]++;
+      dataset = JSON.parse(dataset);
     }
-  },
-
-  datasetMonitor: function() {
-    self.checkDatasets();
-
-    // Re-execute datasetMonitor every 500ms so we keep invoking checkDatasets();
-    setTimeout(function() {
-      self.datasetMonitor();
-    }, 500);
-  },
-
-  saveDataSet: function (dataset_id, cb) {
-    var onFail =  function(msg, err) {
-      // save failed
-      var errMsg = 'save to local storage failed  msg:' + msg + ' err:' + err;
-      self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);
-      self.consoleLog(errMsg);
-    };
-    self.getDataSet(dataset_id, function(dataset) {
-      // save dataset to local storage
-      Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota}, function (){
-        this.save({key:"dataset_" + dataset_id, val:dataset}, function(){
-          //save success
-          if(cb) return cb();
-        });
-      });
-    });
-  },
-
-  loadDataSet: function (dataset_id, success, failure) {
-    // load dataset from local storage
-    var onFail = function(msg, err) {
-      // load failed
-      var errMsg = 'load from local storage failed  msg:' + msg;
-      self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);
-      self.consoleLog(errMsg);
-    };
-
-        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       this.get( "dataset_" + dataset_id, function (data){
-         if (data && data.val !== null) {
-            var dataset = data.val;
-            if(typeof dataset === "string"){
-              dataset = JSON.parse(dataset);
-            }
-            // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
-            // the user wants sync
-            dataset.initialised = false;
-            self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
-            self.consoleLog('load from local storage success for dataset_id :' + dataset_id);
-            if(success) return success(dataset);
-          } else {
-            // no data yet, probably first time. failure calback should handle this
-            if(failure) return failure();
+    _$jscoverage['modules/sync-cli.js'][891]++;
+    dataset.initialised = false;
+    _$jscoverage['modules/sync-cli.js'][892]++;
+    self.datasets[dataset_id] = dataset;
+    _$jscoverage['modules/sync-cli.js'][893]++;
+    self.consoleLog("load from local storage success for dataset_id :" + dataset_id);
+    _$jscoverage['modules/sync-cli.js'][894]++;
+    if (success) {
+      _$jscoverage['modules/sync-cli.js'][894]++;
+      return success(dataset);
+    }
+  }
+  else {
+    _$jscoverage['modules/sync-cli.js'][897]++;
+    if (failure) {
+      _$jscoverage['modules/sync-cli.js'][897]++;
+      return failure();
+    }
+  }
+}));
+}));
+}), updateDatasetFromLocal: (function (dataset, pendingRec) {
+  _$jscoverage['modules/sync-cli.js'][905]++;
+  var pending = dataset.pending;
+  _$jscoverage['modules/sync-cli.js'][906]++;
+  var previousPendingUid;
+  _$jscoverage['modules/sync-cli.js'][907]++;
+  var previousPending;
+  _$jscoverage['modules/sync-cli.js'][909]++;
+  var uid = pendingRec.uid;
+  _$jscoverage['modules/sync-cli.js'][910]++;
+  self.consoleLog("updating local dataset for uid " + uid + " - action = " + pendingRec.action);
+  _$jscoverage['modules/sync-cli.js'][912]++;
+  dataset.meta[uid] = dataset.meta[uid] || {};
+  _$jscoverage['modules/sync-cli.js'][915]++;
+  if (pendingRec.action === "create") {
+    _$jscoverage['modules/sync-cli.js'][916]++;
+    if (dataset.data[uid]) {
+      _$jscoverage['modules/sync-cli.js'][917]++;
+      self.consoleLog("dataset already exists for uid in create :: " + JSON.stringify(dataset.data[uid]));
+      _$jscoverage['modules/sync-cli.js'][920]++;
+      if (dataset.meta[uid].fromPending) {
+        _$jscoverage['modules/sync-cli.js'][923]++;
+        previousPendingUid = dataset.meta[uid].pendingUid;
+        _$jscoverage['modules/sync-cli.js'][924]++;
+        delete pending[previousPendingUid];
+      }
+    }
+    _$jscoverage['modules/sync-cli.js'][927]++;
+    dataset.data[uid] = {};
+  }
+  _$jscoverage['modules/sync-cli.js'][930]++;
+  if (pendingRec.action === "update") {
+    _$jscoverage['modules/sync-cli.js'][931]++;
+    if (dataset.data[uid]) {
+      _$jscoverage['modules/sync-cli.js'][932]++;
+      if (dataset.meta[uid].fromPending) {
+        _$jscoverage['modules/sync-cli.js'][933]++;
+        self.consoleLog("updating an existing pending record for dataset :: " + JSON.stringify(dataset.data[uid]));
+        _$jscoverage['modules/sync-cli.js'][935]++;
+        previousPendingUid = dataset.meta[uid].pendingUid;
+        _$jscoverage['modules/sync-cli.js'][936]++;
+        dataset.meta[uid].previousPendingUid = previousPendingUid;
+        _$jscoverage['modules/sync-cli.js'][937]++;
+        previousPending = pending[previousPendingUid];
+        _$jscoverage['modules/sync-cli.js'][938]++;
+        if (previousPending) {
+          _$jscoverage['modules/sync-cli.js'][939]++;
+          if (! previousPending.inFlight) {
+            _$jscoverage['modules/sync-cli.js'][940]++;
+            self.consoleLog("existing pre-flight pending record = " + JSON.stringify(previousPending));
+            _$jscoverage['modules/sync-cli.js'][943]++;
+            previousPending.post = pendingRec.post;
+            _$jscoverage['modules/sync-cli.js'][944]++;
+            previousPending.postHash = pendingRec.postHash;
+            _$jscoverage['modules/sync-cli.js'][945]++;
+            delete pending[pendingRec.hash];
+            _$jscoverage['modules/sync-cli.js'][948]++;
+            pendingRec.hash = previousPendingUid;
           }
-       });
-    });
-  },
-
-
-  updateDatasetFromLocal: function(dataset, pendingRec) {
-    var pending = dataset.pending;
-    var previousPendingUid;
-    var previousPending;
-
-    var uid = pendingRec.uid;
-    self.consoleLog('updating local dataset for uid ' + uid + ' - action = ' + pendingRec.action);
-
-    dataset.meta[uid] = dataset.meta[uid] || {};
-
-    // Creating a new record
-    if( pendingRec.action === "create" ) {
-      if( dataset.data[uid] ) {
-        self.consoleLog('dataset already exists for uid in create :: ' + JSON.stringify(dataset.data[uid]));
-
-        // We are trying to do a create using a uid which already exists
-        if (dataset.meta[uid].fromPending) {
-          // We are trying to create on top of an existing pending record
-          // Remove the previous pending record and use this one instead
-          previousPendingUid = dataset.meta[uid].pendingUid;
-          delete pending[previousPendingUid];
+          else {
+            _$jscoverage['modules/sync-cli.js'][952]++;
+            self.consoleLog("existing in-inflight pending record = " + JSON.stringify(previousPending));
+            _$jscoverage['modules/sync-cli.js'][953]++;
+            pendingRec.delayed = true;
+            _$jscoverage['modules/sync-cli.js'][954]++;
+            pendingRec.waiting = previousPending.hash;
+          }
         }
       }
-      dataset.data[uid] = {};
     }
-
-    if( pendingRec.action === "update" ) {
-      if( dataset.data[uid] ) {
-        if (dataset.meta[uid].fromPending) {
-          self.consoleLog('updating an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));
-          // We are trying to update an existing pending record
-          previousPendingUid = dataset.meta[uid].pendingUid;
-          dataset.meta[uid].previousPendingUid = previousPendingUid;
-          previousPending = pending[previousPendingUid];
-          if(previousPending) {
-            if(!previousPending.inFlight){
-              self.consoleLog('existing pre-flight pending record = ' + JSON.stringify(previousPending));
-              // We are trying to perform an update on an existing pending record
-              // modify the original record to have the latest value and delete the pending update
-              previousPending.post = pendingRec.post;
-              previousPending.postHash = pendingRec.postHash;
+  }
+  _$jscoverage['modules/sync-cli.js'][961]++;
+  if (pendingRec.action === "delete") {
+    _$jscoverage['modules/sync-cli.js'][962]++;
+    if (dataset.data[uid]) {
+      _$jscoverage['modules/sync-cli.js'][963]++;
+      if (dataset.meta[uid].fromPending) {
+        _$jscoverage['modules/sync-cli.js'][964]++;
+        self.consoleLog("Deleting an existing pending record for dataset :: " + JSON.stringify(dataset.data[uid]));
+        _$jscoverage['modules/sync-cli.js'][966]++;
+        previousPendingUid = dataset.meta[uid].pendingUid;
+        _$jscoverage['modules/sync-cli.js'][967]++;
+        dataset.meta[uid].previousPendingUid = previousPendingUid;
+        _$jscoverage['modules/sync-cli.js'][968]++;
+        previousPending = pending[previousPendingUid];
+        _$jscoverage['modules/sync-cli.js'][969]++;
+        if (previousPending) {
+          _$jscoverage['modules/sync-cli.js'][970]++;
+          if (! previousPending.inFlight) {
+            _$jscoverage['modules/sync-cli.js'][971]++;
+            self.consoleLog("existing pending record = " + JSON.stringify(previousPending));
+            _$jscoverage['modules/sync-cli.js'][972]++;
+            if (previousPending.action === "create") {
+              _$jscoverage['modules/sync-cli.js'][975]++;
               delete pending[pendingRec.hash];
-              // Update the pending record to have the hash of the previous record as this is what is now being
-              // maintained in the pending array & is what we want in the meta record
-              pendingRec.hash = previousPendingUid;
-            } else {
-              //we are performing changes to a pending record which is inFlight. Until the status of this pending record is resolved,
-              //we should not submit this pending record to the cloud. Mark it as delayed.
-              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));
-              pendingRec.delayed = true;
-              pendingRec.waiting = previousPending.hash;
+              _$jscoverage['modules/sync-cli.js'][976]++;
+              delete pending[previousPendingUid];
             }
+            _$jscoverage['modules/sync-cli.js'][978]++;
+            if (previousPending.action === "update") {
+              _$jscoverage['modules/sync-cli.js'][982]++;
+              pendingRec.pre = previousPending.pre;
+              _$jscoverage['modules/sync-cli.js'][983]++;
+              pendingRec.preHash = previousPending.preHash;
+              _$jscoverage['modules/sync-cli.js'][984]++;
+              pendingRec.inFlight = false;
+              _$jscoverage['modules/sync-cli.js'][985]++;
+              delete pending[previousPendingUid];
+            }
+          }
+          else {
+            _$jscoverage['modules/sync-cli.js'][988]++;
+            self.consoleLog("existing in-inflight pending record = " + JSON.stringify(previousPending));
+            _$jscoverage['modules/sync-cli.js'][989]++;
+            pendingRec.delayed = true;
+            _$jscoverage['modules/sync-cli.js'][990]++;
+            pendingRec.waiting = previousPending.hash;
           }
         }
       }
+      _$jscoverage['modules/sync-cli.js'][994]++;
+      delete dataset.data[uid];
     }
-
-    if( pendingRec.action === "delete" ) {
-      if( dataset.data[uid] ) {
-        if (dataset.meta[uid].fromPending) {
-          self.consoleLog('Deleting an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));
-          // We are trying to delete an existing pending record
-          previousPendingUid = dataset.meta[uid].pendingUid;
-          dataset.meta[uid].previousPendingUid = previousPendingUid;
-          previousPending = pending[previousPendingUid];
-          if( previousPending ) {
-            if(!previousPending.inFlight){
-              self.consoleLog('existing pending record = ' + JSON.stringify(previousPending));
-              if( previousPending.action === "create" ) {
-                // We are trying to perform a delete on an existing pending create
-                // These cancel each other out so remove them both
-                delete pending[pendingRec.hash];
-                delete pending[previousPendingUid];
-              }
-              if( previousPending.action === "update" ) {
-                // We are trying to perform a delete on an existing pending update
-                // Use the pre value from the pending update for the delete and
-                // get rid of the pending update
-                pendingRec.pre = previousPending.pre;
-                pendingRec.preHash = previousPending.preHash;
-                pendingRec.inFlight = false;
-                delete pending[previousPendingUid];
-              }
-            } else {
-              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));
-              pendingRec.delayed = true;
-              pendingRec.waiting = previousPending.hash;
+  }
+  _$jscoverage['modules/sync-cli.js'][998]++;
+  if (dataset.data[uid]) {
+    _$jscoverage['modules/sync-cli.js'][999]++;
+    dataset.data[uid].data = pendingRec.post;
+    _$jscoverage['modules/sync-cli.js'][1000]++;
+    dataset.data[uid].hash = pendingRec.postHash;
+    _$jscoverage['modules/sync-cli.js'][1001]++;
+    dataset.meta[uid].fromPending = true;
+    _$jscoverage['modules/sync-cli.js'][1002]++;
+    dataset.meta[uid].pendingUid = pendingRec.hash;
+  }
+}), updatePendingFromNewData: (function (dataset_id, dataset, newData) {
+  _$jscoverage['modules/sync-cli.js'][1007]++;
+  var pending = dataset.pending;
+  _$jscoverage['modules/sync-cli.js'][1008]++;
+  var newRec;
+  _$jscoverage['modules/sync-cli.js'][1010]++;
+  if (pending && newData.records) {
+    _$jscoverage['modules/sync-cli.js'][1011]++;
+    for (var pendingHash in pending) {
+      _$jscoverage['modules/sync-cli.js'][1012]++;
+      if (pending.hasOwnProperty(pendingHash)) {
+        _$jscoverage['modules/sync-cli.js'][1013]++;
+        var pendingRec = pending[pendingHash];
+        _$jscoverage['modules/sync-cli.js'][1015]++;
+        dataset.meta[pendingRec.uid] = dataset.meta[pendingRec.uid] || {};
+        _$jscoverage['modules/sync-cli.js'][1017]++;
+        if (pendingRec.inFlight === false) {
+          _$jscoverage['modules/sync-cli.js'][1019]++;
+          self.consoleLog("updatePendingFromNewData - Found Non inFlight record -> action=" + pendingRec.action + " :: uid=" + pendingRec.uid + " :: hash=" + pendingRec.hash);
+          _$jscoverage['modules/sync-cli.js'][1020]++;
+          if (pendingRec.action === "update" || pendingRec.action === "delete") {
+            _$jscoverage['modules/sync-cli.js'][1023]++;
+            newRec = newData.records[pendingRec.uid];
+            _$jscoverage['modules/sync-cli.js'][1024]++;
+            if (newRec) {
+              _$jscoverage['modules/sync-cli.js'][1025]++;
+              self.consoleLog("updatePendingFromNewData - Updating pre values for existing pending record " + pendingRec.uid);
+              _$jscoverage['modules/sync-cli.js'][1026]++;
+              pendingRec.pre = newRec.data;
+              _$jscoverage['modules/sync-cli.js'][1027]++;
+              pendingRec.preHash = newRec.hash;
             }
-          }
-        }
-        delete dataset.data[uid];
-      }
-    }
-
-    if( dataset.data[uid] ) {
-      dataset.data[uid].data = pendingRec.post;
-      dataset.data[uid].hash = pendingRec.postHash;
-      dataset.meta[uid].fromPending = true;
-      dataset.meta[uid].pendingUid = pendingRec.hash;
-    }
-  },
-
-  updatePendingFromNewData: function(dataset_id, dataset, newData) {
-    var pending = dataset.pending;
-    var newRec;
-
-    if( pending && newData.records) {
-      for( var pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          var pendingRec = pending[pendingHash];
-
-          dataset.meta[pendingRec.uid] = dataset.meta[pendingRec.uid] || {};
-
-          if( pendingRec.inFlight === false ) {
-            // Pending record that has not been submitted
-            self.consoleLog('updatePendingFromNewData - Found Non inFlight record -> action=' + pendingRec.action +' :: uid=' + pendingRec.uid  + ' :: hash=' + pendingRec.hash);
-            if( pendingRec.action === "update" || pendingRec.action === "delete") {
-              // Update the pre value of pending record to reflect the latest data returned from sync.
-              // This will prevent a collision being reported when the pending record is sent.
-              newRec = newData.records[pendingRec.uid];
-              if( newRec ) {
-                self.consoleLog('updatePendingFromNewData - Updating pre values for existing pending record ' + pendingRec.uid);
-                pendingRec.pre = newRec.data;
-                pendingRec.preHash = newRec.hash;
-              }
-              else {
-                // The update/delete may be for a newly created record in which case the uid will have changed.
-                var previousPendingUid = dataset.meta[pendingRec.uid].previousPendingUid;
-                var previousPending = pending[previousPendingUid];
-                if( previousPending ) {
-                  if( newData && newData.updates &&  newData.updates.applied && newData.updates.applied[previousPending.hash] ) {
-                    // There is an update in from a previous pending action
-                    var newUid = newData.updates.applied[previousPending.hash].uid;
-                    newRec = newData.records[newUid];
-                    if( newRec ) {
-                      self.consoleLog('updatePendingFromNewData - Updating pre values for existing pending record which was previously a create ' + pendingRec.uid + ' ==> ' + newUid);
-                      pendingRec.pre = newRec.data;
-                      pendingRec.preHash = newRec.hash;
-                      pendingRec.uid = newUid;
-                    }
+            else {
+              _$jscoverage['modules/sync-cli.js'][1031]++;
+              var previousPendingUid = dataset.meta[pendingRec.uid].previousPendingUid;
+              _$jscoverage['modules/sync-cli.js'][1032]++;
+              var previousPending = pending[previousPendingUid];
+              _$jscoverage['modules/sync-cli.js'][1033]++;
+              if (previousPending) {
+                _$jscoverage['modules/sync-cli.js'][1034]++;
+                if (newData && newData.updates && newData.updates.applied && newData.updates.applied[previousPending.hash]) {
+                  _$jscoverage['modules/sync-cli.js'][1036]++;
+                  var newUid = newData.updates.applied[previousPending.hash].uid;
+                  _$jscoverage['modules/sync-cli.js'][1037]++;
+                  newRec = newData.records[newUid];
+                  _$jscoverage['modules/sync-cli.js'][1038]++;
+                  if (newRec) {
+                    _$jscoverage['modules/sync-cli.js'][1039]++;
+                    self.consoleLog("updatePendingFromNewData - Updating pre values for existing pending record which was previously a create " + pendingRec.uid + " ==> " + newUid);
+                    _$jscoverage['modules/sync-cli.js'][1040]++;
+                    pendingRec.pre = newRec.data;
+                    _$jscoverage['modules/sync-cli.js'][1041]++;
+                    pendingRec.preHash = newRec.hash;
+                    _$jscoverage['modules/sync-cli.js'][1042]++;
+                    pendingRec.uid = newUid;
                   }
                 }
               }
             }
-
-            if( pendingRec.action === "create" ) {
-              if( newData && newData.updates &&  newData.updates.applied && newData.updates.applied[pendingHash] ) {
-                self.consoleLog('updatePendingFromNewData - Found an update for a pending create ' + JSON.stringify(newData.updates.applied[pendingHash]));
-                newRec = newData.records[newData.updates.applied[pendingHash].uid];
-                if( newRec ) {
-                  self.consoleLog('updatePendingFromNewData - Changing pending create to an update based on new record  ' + JSON.stringify(newRec));
-
-                  // Set up the pending create as an update
-                  pendingRec.action = "update";
-                  pendingRec.pre = newRec.data;
-                  pendingRec.preHash = newRec.hash;
-                  pendingRec.uid = newData.updates.applied[pendingHash].uid;
-                }
+          }
+          _$jscoverage['modules/sync-cli.js'][1049]++;
+          if (pendingRec.action === "create") {
+            _$jscoverage['modules/sync-cli.js'][1050]++;
+            if (newData && newData.updates && newData.updates.applied && newData.updates.applied[pendingHash]) {
+              _$jscoverage['modules/sync-cli.js'][1051]++;
+              self.consoleLog("updatePendingFromNewData - Found an update for a pending create " + JSON.stringify(newData.updates.applied[pendingHash]));
+              _$jscoverage['modules/sync-cli.js'][1052]++;
+              newRec = newData.records[newData.updates.applied[pendingHash].uid];
+              _$jscoverage['modules/sync-cli.js'][1053]++;
+              if (newRec) {
+                _$jscoverage['modules/sync-cli.js'][1054]++;
+                self.consoleLog("updatePendingFromNewData - Changing pending create to an update based on new record  " + JSON.stringify(newRec));
+                _$jscoverage['modules/sync-cli.js'][1057]++;
+                pendingRec.action = "update";
+                _$jscoverage['modules/sync-cli.js'][1058]++;
+                pendingRec.pre = newRec.data;
+                _$jscoverage['modules/sync-cli.js'][1059]++;
+                pendingRec.preHash = newRec.hash;
+                _$jscoverage['modules/sync-cli.js'][1060]++;
+                pendingRec.uid = newData.updates.applied[pendingHash].uid;
               }
             }
           }
         }
       }
-    }
-  },
-
-  updateNewDataFromInFlight: function(dataset_id, dataset, newData) {
-    var pending = dataset.pending;
-
-    if( pending && newData.records) {
-      for( var pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          var pendingRec = pending[pendingHash];
-
-          if( pendingRec.inFlight ) {
-            var updateReceivedForPending = (newData && newData.updates &&  newData.updates.hashes && newData.updates.hashes[pendingHash]) ? true : false;
-
-            self.consoleLog('updateNewDataFromInFlight - Found inflight pending Record - action = ' + pendingRec.action + ' :: hash = ' + pendingHash + ' :: updateReceivedForPending=' + updateReceivedForPending);
-
-            if( ! updateReceivedForPending ) {
-              var newRec = newData.records[pendingRec.uid];
-
-              if( pendingRec.action === "update" && newRec) {
-                // Modify the new Record to have the updates from the pending record so the local dataset is consistent
-                newRec.data = pendingRec.post;
-                newRec.hash = pendingRec.postHash;
-              }
-              else if( pendingRec.action === "delete" && newRec) {
-                // Remove the record from the new dataset so the local dataset is consistent
+}
+  }
+}), updateNewDataFromInFlight: (function (dataset_id, dataset, newData) {
+  _$jscoverage['modules/sync-cli.js'][1071]++;
+  var pending = dataset.pending;
+  _$jscoverage['modules/sync-cli.js'][1073]++;
+  if (pending && newData.records) {
+    _$jscoverage['modules/sync-cli.js'][1074]++;
+    for (var pendingHash in pending) {
+      _$jscoverage['modules/sync-cli.js'][1075]++;
+      if (pending.hasOwnProperty(pendingHash)) {
+        _$jscoverage['modules/sync-cli.js'][1076]++;
+        var pendingRec = pending[pendingHash];
+        _$jscoverage['modules/sync-cli.js'][1078]++;
+        if (pendingRec.inFlight) {
+          _$jscoverage['modules/sync-cli.js'][1079]++;
+          var updateReceivedForPending = (newData && newData.updates && newData.updates.hashes && newData.updates.hashes[pendingHash])? true: false;
+          _$jscoverage['modules/sync-cli.js'][1081]++;
+          self.consoleLog("updateNewDataFromInFlight - Found inflight pending Record - action = " + pendingRec.action + " :: hash = " + pendingHash + " :: updateReceivedForPending=" + updateReceivedForPending);
+          _$jscoverage['modules/sync-cli.js'][1083]++;
+          if (! updateReceivedForPending) {
+            _$jscoverage['modules/sync-cli.js'][1084]++;
+            var newRec = newData.records[pendingRec.uid];
+            _$jscoverage['modules/sync-cli.js'][1086]++;
+            if (pendingRec.action === "update" && newRec) {
+              _$jscoverage['modules/sync-cli.js'][1088]++;
+              newRec.data = pendingRec.post;
+              _$jscoverage['modules/sync-cli.js'][1089]++;
+              newRec.hash = pendingRec.postHash;
+            }
+            else {
+              _$jscoverage['modules/sync-cli.js'][1091]++;
+              if (pendingRec.action === "delete" && newRec) {
+                _$jscoverage['modules/sync-cli.js'][1093]++;
                 delete newData.records[pendingRec.uid];
               }
-              else if( pendingRec.action === "create" ) {
-                // Add the pending create into the new dataset so it is not lost from the UI
-                self.consoleLog('updateNewDataFromInFlight - re adding pending create to incomming dataset');
-                var newPendingCreate = {
-                  data: pendingRec.post,
-                  hash: pendingRec.postHash
-                };
+              else {
+                _$jscoverage['modules/sync-cli.js'][1095]++;
+                if (pendingRec.action === "create") {
+                  _$jscoverage['modules/sync-cli.js'][1097]++;
+                  self.consoleLog("updateNewDataFromInFlight - re adding pending create to incomming dataset");
+                  _$jscoverage['modules/sync-cli.js'][1098]++;
+                  var newPendingCreate = {data: pendingRec.post, hash: pendingRec.postHash};
+                  _$jscoverage['modules/sync-cli.js'][1102]++;
+                  newData.records[pendingRec.uid] = newPendingCreate;
+                }
+              }
+            }
+          }
+        }
+      }
+}
+  }
+}), updateNewDataFromPending: (function (dataset_id, dataset, newData) {
+  _$jscoverage['modules/sync-cli.js'][1112]++;
+  var pending = dataset.pending;
+  _$jscoverage['modules/sync-cli.js'][1114]++;
+  if (pending && newData.records) {
+    _$jscoverage['modules/sync-cli.js'][1115]++;
+    for (var pendingHash in pending) {
+      _$jscoverage['modules/sync-cli.js'][1116]++;
+      if (pending.hasOwnProperty(pendingHash)) {
+        _$jscoverage['modules/sync-cli.js'][1117]++;
+        var pendingRec = pending[pendingHash];
+        _$jscoverage['modules/sync-cli.js'][1119]++;
+        if (pendingRec.inFlight === false) {
+          _$jscoverage['modules/sync-cli.js'][1120]++;
+          self.consoleLog("updateNewDataFromPending - Found Non inFlight record -> action=" + pendingRec.action + " :: uid=" + pendingRec.uid + " :: hash=" + pendingRec.hash);
+          _$jscoverage['modules/sync-cli.js'][1121]++;
+          var newRec = newData.records[pendingRec.uid];
+          _$jscoverage['modules/sync-cli.js'][1122]++;
+          if (pendingRec.action === "update" && newRec) {
+            _$jscoverage['modules/sync-cli.js'][1124]++;
+            newRec.data = pendingRec.post;
+            _$jscoverage['modules/sync-cli.js'][1125]++;
+            newRec.hash = pendingRec.postHash;
+          }
+          else {
+            _$jscoverage['modules/sync-cli.js'][1127]++;
+            if (pendingRec.action === "delete" && newRec) {
+              _$jscoverage['modules/sync-cli.js'][1129]++;
+              delete newData.records[pendingRec.uid];
+            }
+            else {
+              _$jscoverage['modules/sync-cli.js'][1131]++;
+              if (pendingRec.action === "create") {
+                _$jscoverage['modules/sync-cli.js'][1133]++;
+                self.consoleLog("updateNewDataFromPending - re adding pending create to incomming dataset");
+                _$jscoverage['modules/sync-cli.js'][1134]++;
+                var newPendingCreate = {data: pendingRec.post, hash: pendingRec.postHash};
+                _$jscoverage['modules/sync-cli.js'][1138]++;
                 newData.records[pendingRec.uid] = newPendingCreate;
               }
             }
           }
         }
       }
-    }
-  },
-
-  updateNewDataFromPending: function(dataset_id, dataset, newData) {
-    var pending = dataset.pending;
-
-    if( pending && newData.records) {
-      for( var pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          var pendingRec = pending[pendingHash];
-
-          if( pendingRec.inFlight === false ) {
-            self.consoleLog('updateNewDataFromPending - Found Non inFlight record -> action=' + pendingRec.action +' :: uid=' + pendingRec.uid  + ' :: hash=' + pendingRec.hash);
-            var newRec = newData.records[pendingRec.uid];
-            if( pendingRec.action === "update" && newRec) {
-              // Modify the new Record to have the updates from the pending record so the local dataset is consistent
-              newRec.data = pendingRec.post;
-              newRec.hash = pendingRec.postHash;
-            }
-            else if( pendingRec.action === "delete" && newRec) {
-              // Remove the record from the new dataset so the local dataset is consistent
-              delete newData.records[pendingRec.uid];
-            }
-            else if( pendingRec.action === "create" ) {
-              // Add the pending create into the new dataset so it is not lost from the UI
-              self.consoleLog('updateNewDataFromPending - re adding pending create to incomming dataset');
-              var newPendingCreate = {
-                data: pendingRec.post,
-                hash: pendingRec.postHash
-              };
-              newData.records[pendingRec.uid] = newPendingCreate;
-            }
-          }
-        }
-      }
-    }
-  },
-
-  updateCrashedInFlightFromNewData: function(dataset_id, dataset, newData) {
-    var updateNotifications = {
-      applied: self.notifications.REMOTE_UPDATE_APPLIED,
-      failed: self.notifications.REMOTE_UPDATE_FAILED,
-      collisions: self.notifications.COLLISION_DETECTED
-    };
-
-    var pending = dataset.pending;
-    var resolvedCrashes = {};
-    var pendingHash;
-    var pendingRec;
-
-
-    if( pending ) {
-      for( pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          pendingRec = pending[pendingHash];
-
-          if( pendingRec.inFlight && pendingRec.crashed) {
-            self.consoleLog('updateCrashedInFlightFromNewData - Found crashed inFlight pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash );
-            if( newData && newData.updates && newData.updates.hashes) {
-
-              // Check if the updates received contain any info about the crashed in flight update
-              var crashedUpdate = newData.updates.hashes[pendingHash];
-              if( crashedUpdate ) {
-                // We have found an update on one of our in flight crashed records
-
-                resolvedCrashes[crashedUpdate.uid] = crashedUpdate;
-
-                self.consoleLog('updateCrashedInFlightFromNewData - Resolving status for crashed inflight pending record ' + JSON.stringify(crashedUpdate));
-
-                if( crashedUpdate.type === 'failed' ) {
-                  // Crashed update failed - revert local dataset
-                  if( crashedUpdate.action === 'create' ) {
-                    self.consoleLog('updateCrashedInFlightFromNewData - Deleting failed create from dataset');
-                    delete dataset.data[crashedUpdate.uid];
-                  }
-                  else if ( crashedUpdate.action === 'update' || crashedUpdate.action === 'delete' ) {
-                    self.consoleLog('updateCrashedInFlightFromNewData - Reverting failed ' + crashedUpdate.action + ' in dataset');
-                    dataset.data[crashedUpdate.uid] = {
-                      data : pendingRec.pre,
-                      hash : pendingRec.preHash
-                    };
-                  }
-                }
-
-                delete pending[pendingHash];
-                self.doNotify(dataset_id, crashedUpdate.uid, updateNotifications[crashedUpdate.type], crashedUpdate);
-              }
-              else {
-                // No word on our crashed update - increment a counter to reflect another sync that did not give us
-                // any update on our crashed record.
-                if( pendingRec.crashedCount ) {
-                  pendingRec.crashedCount++;
+}
+  }
+}), updateCrashedInFlightFromNewData: (function (dataset_id, dataset, newData) {
+  _$jscoverage['modules/sync-cli.js'][1147]++;
+  var updateNotifications = {applied: self.notifications.REMOTE_UPDATE_APPLIED, failed: self.notifications.REMOTE_UPDATE_FAILED, collisions: self.notifications.COLLISION_DETECTED};
+  _$jscoverage['modules/sync-cli.js'][1153]++;
+  var pending = dataset.pending;
+  _$jscoverage['modules/sync-cli.js'][1154]++;
+  var resolvedCrashes = {};
+  _$jscoverage['modules/sync-cli.js'][1155]++;
+  var pendingHash;
+  _$jscoverage['modules/sync-cli.js'][1156]++;
+  var pendingRec;
+  _$jscoverage['modules/sync-cli.js'][1159]++;
+  if (pending) {
+    _$jscoverage['modules/sync-cli.js'][1160]++;
+    for (pendingHash in pending) {
+      _$jscoverage['modules/sync-cli.js'][1161]++;
+      if (pending.hasOwnProperty(pendingHash)) {
+        _$jscoverage['modules/sync-cli.js'][1162]++;
+        pendingRec = pending[pendingHash];
+        _$jscoverage['modules/sync-cli.js'][1164]++;
+        if (pendingRec.inFlight && pendingRec.crashed) {
+          _$jscoverage['modules/sync-cli.js'][1165]++;
+          self.consoleLog("updateCrashedInFlightFromNewData - Found crashed inFlight pending record uid=" + pendingRec.uid + " :: hash=" + pendingRec.hash);
+          _$jscoverage['modules/sync-cli.js'][1166]++;
+          if (newData && newData.updates && newData.updates.hashes) {
+            _$jscoverage['modules/sync-cli.js'][1169]++;
+            var crashedUpdate = newData.updates.hashes[pendingHash];
+            _$jscoverage['modules/sync-cli.js'][1170]++;
+            if (crashedUpdate) {
+              _$jscoverage['modules/sync-cli.js'][1173]++;
+              resolvedCrashes[crashedUpdate.uid] = crashedUpdate;
+              _$jscoverage['modules/sync-cli.js'][1175]++;
+              self.consoleLog("updateCrashedInFlightFromNewData - Resolving status for crashed inflight pending record " + JSON.stringify(crashedUpdate));
+              _$jscoverage['modules/sync-cli.js'][1177]++;
+              if (crashedUpdate.type === "failed") {
+                _$jscoverage['modules/sync-cli.js'][1179]++;
+                if (crashedUpdate.action === "create") {
+                  _$jscoverage['modules/sync-cli.js'][1180]++;
+                  self.consoleLog("updateCrashedInFlightFromNewData - Deleting failed create from dataset");
+                  _$jscoverage['modules/sync-cli.js'][1181]++;
+                  delete dataset.data[crashedUpdate.uid];
                 }
                 else {
-                  pendingRec.crashedCount = 1;
+                  _$jscoverage['modules/sync-cli.js'][1183]++;
+                  if (crashedUpdate.action === "update" || crashedUpdate.action === "delete") {
+                    _$jscoverage['modules/sync-cli.js'][1184]++;
+                    self.consoleLog("updateCrashedInFlightFromNewData - Reverting failed " + crashedUpdate.action + " in dataset");
+                    _$jscoverage['modules/sync-cli.js'][1185]++;
+                    dataset.data[crashedUpdate.uid] = {data: pendingRec.pre, hash: pendingRec.preHash};
+                  }
                 }
               }
+              _$jscoverage['modules/sync-cli.js'][1192]++;
+              delete pending[pendingHash];
+              _$jscoverage['modules/sync-cli.js'][1193]++;
+              self.doNotify(dataset_id, crashedUpdate.uid, updateNotifications[crashedUpdate.type], crashedUpdate);
             }
             else {
-              // No word on our crashed update - increment a counter to reflect another sync that did not give us
-              // any update on our crashed record.
-              if( pendingRec.crashedCount ) {
+              _$jscoverage['modules/sync-cli.js'][1198]++;
+              if (pendingRec.crashedCount) {
+                _$jscoverage['modules/sync-cli.js'][1199]++;
                 pendingRec.crashedCount++;
               }
               else {
+                _$jscoverage['modules/sync-cli.js'][1202]++;
                 pendingRec.crashedCount = 1;
               }
             }
           }
-        }
-      }
-
-      for( pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          pendingRec = pending[pendingHash];
-
-          if( pendingRec.inFlight && pendingRec.crashed) {
-            if( pendingRec.crashedCount > dataset.config.crashed_count_wait ) {
-              self.consoleLog('updateCrashedInFlightFromNewData - Crashed inflight pending record has reached crashed_count_wait limit : ' + JSON.stringify(pendingRec));
-              if( dataset.config.resend_crashed_updates ) {
-                self.consoleLog('updateCrashedInFlightFromNewData - Retryig crashed inflight pending record');
-                pendingRec.crashed = false;
-                pendingRec.inFlight = false;
-              }
-              else {
-                self.consoleLog('updateCrashedInFlightFromNewData - Deleting crashed inflight pending record');
-                delete pending[pendingHash];
-              }
+          else {
+            _$jscoverage['modules/sync-cli.js'][1209]++;
+            if (pendingRec.crashedCount) {
+              _$jscoverage['modules/sync-cli.js'][1210]++;
+              pendingRec.crashedCount++;
+            }
+            else {
+              _$jscoverage['modules/sync-cli.js'][1213]++;
+              pendingRec.crashedCount = 1;
             }
           }
-          else if (!pendingRec.inFlight && pendingRec.crashed ) {
-            self.consoleLog('updateCrashedInFlightFromNewData - Trying to resolve issues with crashed non in flight record - uid = ' + pendingRec.uid);
-            // Stalled pending record because a previous pending update on the same record crashed
-            var crashedRef = resolvedCrashes[pendingRec.uid];
-            if( crashedRef ) {
-              self.consoleLog('updateCrashedInFlightFromNewData - Found a stalled pending record backed up behind a resolved crash uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash);
+        }
+      }
+}
+    _$jscoverage['modules/sync-cli.js'][1220]++;
+    for (pendingHash in pending) {
+      _$jscoverage['modules/sync-cli.js'][1221]++;
+      if (pending.hasOwnProperty(pendingHash)) {
+        _$jscoverage['modules/sync-cli.js'][1222]++;
+        pendingRec = pending[pendingHash];
+        _$jscoverage['modules/sync-cli.js'][1224]++;
+        if (pendingRec.inFlight && pendingRec.crashed) {
+          _$jscoverage['modules/sync-cli.js'][1225]++;
+          if (pendingRec.crashedCount > dataset.config.crashed_count_wait) {
+            _$jscoverage['modules/sync-cli.js'][1226]++;
+            self.consoleLog("updateCrashedInFlightFromNewData - Crashed inflight pending record has reached crashed_count_wait limit : " + JSON.stringify(pendingRec));
+            _$jscoverage['modules/sync-cli.js'][1227]++;
+            if (dataset.config.resend_crashed_updates) {
+              _$jscoverage['modules/sync-cli.js'][1228]++;
+              self.consoleLog("updateCrashedInFlightFromNewData - Retryig crashed inflight pending record");
+              _$jscoverage['modules/sync-cli.js'][1229]++;
               pendingRec.crashed = false;
+              _$jscoverage['modules/sync-cli.js'][1230]++;
+              pendingRec.inFlight = false;
+            }
+            else {
+              _$jscoverage['modules/sync-cli.js'][1233]++;
+              self.consoleLog("updateCrashedInFlightFromNewData - Deleting crashed inflight pending record");
+              _$jscoverage['modules/sync-cli.js'][1234]++;
+              delete pending[pendingHash];
             }
           }
         }
       }
-    }
-  },
-
-  updateDelayedFromNewData: function(dataset_id, dataset, newData){
-    var pending = dataset.pending;
-    var pendingHash;
-    var pendingRec;
-    if(pending){
-      for( pendingHash in pending ){
-        if( pending.hasOwnProperty(pendingHash) ){
-          pendingRec = pending[pendingHash];
-          if( pendingRec.delayed && pendingRec.waiting ){
-            self.consoleLog('updateDelayedFromNewData - Found delayed pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash + ' :: waiting=' + pendingRec.waiting);
-            if( newData && newData.updates && newData.updates.hashes ){
-              var waitingRec = newData.updates.hashes[pendingRec.waiting];
-              if(waitingRec){
-                self.consoleLog('updateDelayedFromNewData - Waiting pending record is resolved rec=' + JSON.stringify(waitingRec));
-                pendingRec.delayed = false;
-                pendingRec.waiting = undefined;
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-
-
-  markInFlightAsCrashed : function(dataset) {
-    var pending = dataset.pending;
-    var pendingHash;
-    var pendingRec;
-
-    if( pending ) {
-      var crashedRecords = {};
-      for( pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          pendingRec = pending[pendingHash];
-
-          if( pendingRec.inFlight ) {
-            self.consoleLog('Marking in flight pending record as crashed : ' + pendingHash);
-            pendingRec.crashed = true;
-            crashedRecords[pendingRec.uid] = pendingRec;
-          }
-        }
-      }
-
-      // Check for any pending updates that would be modifying a crashed record. These can not go out until the
-      // status of the crashed record is determined
-      for( pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          pendingRec = pending[pendingHash];
-
-          if( ! pendingRec.inFlight && ! pendingRec.delayed ) {
-            var crashedRef = crashedRecords[pendingRec.uid];
-            if( crashedRef ) {
-              pendingRec.crashed = true;
-            }
-          }
-        }
-      }
-    }
-  },
-
-  consoleLog: function(msg) {
-    if( self.config.do_console_log ) {
-      console.log(msg);
-    }
+}
   }
-};
-
-(function() {
+}), updateDelayedFromNewData: (function (dataset_id, dataset, newData) {
+  _$jscoverage['modules/sync-cli.js'][1244]++;
+  var pending = dataset.pending;
+  _$jscoverage['modules/sync-cli.js'][1245]++;
+  var pendingHash;
+  _$jscoverage['modules/sync-cli.js'][1246]++;
+  var pendingRec;
+  _$jscoverage['modules/sync-cli.js'][1247]++;
+  if (pending) {
+    _$jscoverage['modules/sync-cli.js'][1248]++;
+    for (pendingHash in pending) {
+      _$jscoverage['modules/sync-cli.js'][1249]++;
+      if (pending.hasOwnProperty(pendingHash)) {
+        _$jscoverage['modules/sync-cli.js'][1250]++;
+        pendingRec = pending[pendingHash];
+        _$jscoverage['modules/sync-cli.js'][1251]++;
+        if (pendingRec.delayed && pendingRec.waiting) {
+          _$jscoverage['modules/sync-cli.js'][1252]++;
+          self.consoleLog("updateDelayedFromNewData - Found delayed pending record uid=" + pendingRec.uid + " :: hash=" + pendingRec.hash + " :: waiting=" + pendingRec.waiting);
+          _$jscoverage['modules/sync-cli.js'][1253]++;
+          if (newData && newData.updates && newData.updates.hashes) {
+            _$jscoverage['modules/sync-cli.js'][1254]++;
+            var waitingRec = newData.updates.hashes[pendingRec.waiting];
+            _$jscoverage['modules/sync-cli.js'][1255]++;
+            if (waitingRec) {
+              _$jscoverage['modules/sync-cli.js'][1256]++;
+              self.consoleLog("updateDelayedFromNewData - Waiting pending record is resolved rec=" + JSON.stringify(waitingRec));
+              _$jscoverage['modules/sync-cli.js'][1257]++;
+              pendingRec.delayed = false;
+              _$jscoverage['modules/sync-cli.js'][1258]++;
+              pendingRec.waiting = undefined;
+            }
+          }
+        }
+      }
+}
+  }
+}), updateMetaFromNewData: (function (dataset_id, dataset, newData) {
+  _$jscoverage['modules/sync-cli.js'][1268]++;
+  var meta = dataset.meta;
+  _$jscoverage['modules/sync-cli.js'][1269]++;
+  if (meta && newData && newData.updates && newData.updates.hashes) {
+    _$jscoverage['modules/sync-cli.js'][1270]++;
+    for (var uid in meta) {
+      _$jscoverage['modules/sync-cli.js'][1271]++;
+      if (meta.hasOwnProperty(uid)) {
+        _$jscoverage['modules/sync-cli.js'][1272]++;
+        var metadata = meta[uid];
+        _$jscoverage['modules/sync-cli.js'][1273]++;
+        var pendingHash = metadata.pendingUid;
+        _$jscoverage['modules/sync-cli.js'][1274]++;
+        var previousPendingHash = metadata.previousPendingUid;
+        _$jscoverage['modules/sync-cli.js'][1275]++;
+        self.consoleLog("updateMetaFromNewData - Found metadata with uid = " + uid + " :: pendingHash = " + pendingHash + " :: previousPendingHash =" + previousPendingHash);
+        _$jscoverage['modules/sync-cli.js'][1276]++;
+        var previousPendingResolved = true;
+        _$jscoverage['modules/sync-cli.js'][1277]++;
+        var pendingResolved = true;
+        _$jscoverage['modules/sync-cli.js'][1278]++;
+        if (previousPendingHash) {
+          _$jscoverage['modules/sync-cli.js'][1280]++;
+          previousPendingResolved = false;
+          _$jscoverage['modules/sync-cli.js'][1281]++;
+          var resolved = newData.updates.hashes[previousPendingHash];
+          _$jscoverage['modules/sync-cli.js'][1282]++;
+          if (resolved) {
+            _$jscoverage['modules/sync-cli.js'][1283]++;
+            self.consoleLog("updateMetaFromNewData - Found previousPendingUid in meta data resolved - resolved = " + JSON.stringify(resolved));
+            _$jscoverage['modules/sync-cli.js'][1285]++;
+            metadata.previousPendingUid = undefined;
+            _$jscoverage['modules/sync-cli.js'][1286]++;
+            previousPendingResolved = true;
+          }
+        }
+        _$jscoverage['modules/sync-cli.js'][1289]++;
+        if (pendingHash) {
+          _$jscoverage['modules/sync-cli.js'][1291]++;
+          pendingResolved = false;
+          _$jscoverage['modules/sync-cli.js'][1292]++;
+          var resolved = newData.updates.hashes[pendingHash];
+          _$jscoverage['modules/sync-cli.js'][1293]++;
+          if (resolved) {
+            _$jscoverage['modules/sync-cli.js'][1294]++;
+            self.consoleLog("updateMetaFromNewData - Found pendingUid in meta data resolved - resolved = " + JSON.stringify(resolved));
+            _$jscoverage['modules/sync-cli.js'][1296]++;
+            metadata.pendingUid = undefined;
+            _$jscoverage['modules/sync-cli.js'][1297]++;
+            pendingResolved = true;
+          }
+        }
+        _$jscoverage['modules/sync-cli.js'][1301]++;
+        if (previousPendingResolved && pendingResolved) {
+          _$jscoverage['modules/sync-cli.js'][1302]++;
+          self.consoleLog("updateMetaFromNewData - both previous and current pendings are resolved for meta data with uid " + uid + ". Delete it.");
+          _$jscoverage['modules/sync-cli.js'][1304]++;
+          delete meta[uid];
+        }
+      }
+}
+  }
+}), markInFlightAsCrashed: (function (dataset) {
+  _$jscoverage['modules/sync-cli.js'][1313]++;
+  var pending = dataset.pending;
+  _$jscoverage['modules/sync-cli.js'][1314]++;
+  var pendingHash;
+  _$jscoverage['modules/sync-cli.js'][1315]++;
+  var pendingRec;
+  _$jscoverage['modules/sync-cli.js'][1317]++;
+  if (pending) {
+    _$jscoverage['modules/sync-cli.js'][1318]++;
+    var crashedRecords = {};
+    _$jscoverage['modules/sync-cli.js'][1319]++;
+    for (pendingHash in pending) {
+      _$jscoverage['modules/sync-cli.js'][1320]++;
+      if (pending.hasOwnProperty(pendingHash)) {
+        _$jscoverage['modules/sync-cli.js'][1321]++;
+        pendingRec = pending[pendingHash];
+        _$jscoverage['modules/sync-cli.js'][1323]++;
+        if (pendingRec.inFlight) {
+          _$jscoverage['modules/sync-cli.js'][1324]++;
+          self.consoleLog("Marking in flight pending record as crashed : " + pendingHash);
+          _$jscoverage['modules/sync-cli.js'][1325]++;
+          pendingRec.crashed = true;
+          _$jscoverage['modules/sync-cli.js'][1326]++;
+          crashedRecords[pendingRec.uid] = pendingRec;
+        }
+      }
+}
+  }
+}), consoleLog: (function (msg) {
+  _$jscoverage['modules/sync-cli.js'][1334]++;
+  if (self.config.do_console_log) {
+    _$jscoverage['modules/sync-cli.js'][1335]++;
+    console.log(msg);
+  }
+})};
+_$jscoverage['modules/sync-cli.js'][1340]++;
+(function () {
+  _$jscoverage['modules/sync-cli.js'][1341]++;
   self.config = self.defaults;
-  //Initialse the sync service with default config
-  self.init({});
 })();
+_$jscoverage['modules/sync-cli.js'][1346]++;
+module.exports = {init: self.init, manage: self.manage, notify: self.notify, doList: self.list, doCreate: self.create, doRead: self.read, doUpdate: self.update, doDelete: self["delete"], listCollisions: self.listCollisions, removeCollision: self.removeCollision, getPending: self.getPending, clearPending: self.clearPending, getDataset: self.getDataSet, getQueryParams: self.getQueryParams, setQueryParams: self.setQueryParams, getMetaData: self.getMetaData, setMetaData: self.setMetaData, getConfig: self.getConfig, setConfig: self.setConfig, startSync: self.startSync, stopSync: self.stopSync, doSync: self.doSync, forceSync: self.forceSync, generateHash: self.generateHash, loadDataSet: self.loadDataSet, checkHasCustomSync: self.checkHasCustomSync};
+_$jscoverage['modules/sync-cli.js'].source = ["var JSON = require(\"JSON\");","var actAPI = require(\"./api_act\");","var cloudAPI = require(\"./api_cloud\");","var CryptoJS = require(\"../../libs/generated/crypto\");","var Lawnchair = require('../../libs/generated/lawnchair');","","var self = {","","  // CONFIG","  defaults: {","    \"sync_frequency\": 10,","    // How often to synchronise data with the cloud in seconds.","    \"auto_sync_local_updates\": true,","    // Should local chages be syned to the cloud immediately, or should they wait for the next sync interval","    \"notify_client_storage_failed\": true,","    // Should a notification event be triggered when loading/saving to client storage fails","    \"notify_sync_started\": true,","    // Should a notification event be triggered when a sync cycle with the server has been started","    \"notify_sync_complete\": true,","    // Should a notification event be triggered when a sync cycle with the server has been completed","    \"notify_offline_update\": true,","    // Should a notification event be triggered when an attempt was made to update a record while offline","    \"notify_collision_detected\": true,","    // Should a notification event be triggered when an update failed due to data collision","    \"notify_remote_update_failed\": true,","    // Should a notification event be triggered when an update failed for a reason other than data collision","    \"notify_local_update_applied\": true,","    // Should a notification event be triggered when an update was applied to the local data store","    \"notify_remote_update_applied\": true,","    // Should a notification event be triggered when an update was applied to the remote data store","    \"notify_delta_received\": true,","    // Should a notification event be triggered when a delta was received from the remote data store for the dataset ","    \"notify_record_delta_received\": true,","    // Should a notification event be triggered when a delta was received from the remote data store for a record","    \"notify_sync_failed\": true,","    // Should a notification event be triggered when the sync loop failed to complete","    \"do_console_log\": false,","    // Should log statements be written to console.log","    \"crashed_count_wait\" : 10,","    // How many syncs should we check for updates on crashed in flight updates before we give up searching","    \"resend_crashed_updates\" : true,","    // If we have reached the crashed_count_wait limit, should we re-try sending the crashed in flight pending record","    \"sync_active\" : true,","    // Is the background sync with the cloud currently active","    \"storage_strategy\" : \"html5-filesystem\",","    // Storage strategy to use for Lawnchair - supported strategies are 'html5-filesystem' and 'dom'","    \"file_system_quota\" : 50 * 1024 * 1204,","    // Amount of space to request from the HTML5 filesystem API when running in browser","    \"has_custom_sync\" : null","    //If the app has custom cloud sync function, it should be set to true. If set to false, the default mbaas sync implementation will be used. When set to null or undefined, ","    //a check will be performed to determine which implementation to use","  },","","  notifications: {","    \"CLIENT_STORAGE_FAILED\": \"client_storage_failed\",","    // loading/saving to client storage failed","    \"SYNC_STARTED\": \"sync_started\",","    // A sync cycle with the server has been started","    \"SYNC_COMPLETE\": \"sync_complete\",","    // A sync cycle with the server has been completed","    \"OFFLINE_UPDATE\": \"offline_update\",","    // An attempt was made to update a record while offline","    \"COLLISION_DETECTED\": \"collision_detected\",","    //Update Failed due to data collision","    \"REMOTE_UPDATE_FAILED\": \"remote_update_failed\",","    // Update Failed for a reason other than data collision","    \"REMOTE_UPDATE_APPLIED\": \"remote_update_applied\",","    // An update was applied to the remote data store","    \"LOCAL_UPDATE_APPLIED\": \"local_update_applied\",","    // An update was applied to the local data store","    \"DELTA_RECEIVED\": \"delta_received\",","    // A delta was received from the remote data store for the dataset ","    \"RECORD_DELTA_RECEIVED\": \"record_delta_received\",","    // A delta was received from the remote data store for the record ","    \"SYNC_FAILED\": \"sync_failed\"","    // Sync loop failed to complete","  },","","  datasets: {},","","  // Initialise config to default values;","  config: undefined,","","  notify_callback: undefined,","","  init_is_called: false,","","  // PUBLIC FUNCTION IMPLEMENTATIONS","  init: function(options) {","    self.consoleLog('sync - init called');","","    self.config = JSON.parse(JSON.stringify(self.defaults));","    for (var i in options) {","      self.config[i] = options[i];","    }","","    //prevent multiple monitors from created if init is called multiple times","    if(!self.init_is_called){","      self.init_is_called = true;","      self.datasetMonitor();","    }","  },","","  notify: function(callback) {","    self.notify_callback = callback;","  },","","  manage: function(dataset_id, options, query_params, meta_data, cb) {","    self.consoleLog('manage - START');","","    var options = options || {};","","    var doManage = function(dataset) {","      self.consoleLog('doManage dataset :: initialised = ' + dataset.initialised + \" :: \" + dataset_id + ' :: ' + JSON.stringify(options));","","      var datasetConfig = self.setOptions(options);","","      dataset.query_params = query_params || dataset.query_params || {};","      dataset.meta_data = meta_data || dataset.meta_data || {};","      dataset.config = datasetConfig;","      dataset.syncRunning = false;","      dataset.syncPending = true;","      dataset.initialised = true;","      if(typeof dataset.meta === \"undefined\"){","        dataset.meta = {};","      }","","      self.saveDataSet(dataset_id, function() {","","        if( cb ) {","          cb();","        }","      });","    };","","    // Check if the dataset is already loaded","    self.getDataSet(dataset_id, function(dataset) {","      self.consoleLog('manage - dataset already loaded');","      doManage(dataset);","    }, function(err) {","      self.consoleLog('manage - dataset not loaded... trying to load');","","      // Not already loaded, try to load from local storage","      self.loadDataSet(dataset_id, function(dataset) {","          self.consoleLog('manage - dataset loaded from local storage');","","          // Loading from local storage worked","","          // Fire the local update event to indicate that dataset was loaded from local storage","          self.doNotify(dataset_id, null, self.notifications.LOCAL_UPDATE_APPLIED, \"load\");","","          // Put the dataet under the management of the sync service","          doManage(dataset);","        },","        function(err) {","          // No dataset in memory or local storage - create a new one and put it in memory","          self.consoleLog('manage - Creating new dataset for id ' + dataset_id);","          var dataset = {};","          dataset.data = {};","          dataset.pending = {};","          dataset.meta = {};","          self.datasets[dataset_id] = dataset;","          doManage(dataset);","        });","    });","  },","","  setOptions: function(options) {","    // Make sure config is initialised","    if( ! self.config ) {","      self.config = JSON.parse(JSON.stringify(self.defaults));","    }","","    var datasetConfig = JSON.parse(JSON.stringify(self.config));","    var optionsIn = JSON.parse(JSON.stringify(options));","    for (var k in optionsIn) {","      datasetConfig[k] = optionsIn[k];","    }","","    return datasetConfig;","  },","","  list: function(dataset_id, success, failure) {","    self.getDataSet(dataset_id, function(dataset) {","      if (dataset &amp;&amp; dataset.data) {","        // Return a copy of the dataset so updates will not automatically make it back into the dataset","        var res = JSON.parse(JSON.stringify(dataset.data));","        success(res);","      } else {","        if(failure) failure('no_data');","      }","    }, function(code, msg) {","      if(failure) failure(code, msg);","    });","  },","","  create: function(dataset_id, data, success, failure) {","    if(data == null){","      if(failure){","        return failure(\"null_data\");","      }","    }","    self.addPendingObj(dataset_id, null, data, \"create\", success, failure);","  },","","  read: function(dataset_id, uid, success, failure) {","    self.getDataSet(dataset_id, function(dataset) {","      var rec = dataset.data[uid];","      if (!rec) {","        failure(\"unknown_uid\");","      } else {","        // Return a copy of the record so updates will not automatically make it back into the dataset","        var res = JSON.parse(JSON.stringify(rec));","        success(res);","      }","    }, function(code, msg) {","      if(failure) failure(code, msg);","    });","  },","","  update: function(dataset_id, uid, data, success, failure) {","    self.addPendingObj(dataset_id, uid, data, \"update\", success, failure);","  },","","  'delete': function(dataset_id, uid, success, failure) {","    self.addPendingObj(dataset_id, uid, null, \"delete\", success, failure);","  },","","  getPending: function(dataset_id, cb) {","    self.getDataSet(dataset_id, function(dataset) {","      var res;","      if( dataset ) {","        res = dataset.pending;","      }","      cb(res);","    }, function(err, datatset_id) {","        self.consoleLog(err);","    });","  },","","  clearPending: function(dataset_id, cb) {","    self.getDataSet(dataset_id, function(dataset) {","      dataset.pending = {};","      self.saveDataSet(dataset_id, cb);","    });","  },","","  listCollisions : function(dataset_id, success, failure){","    self.getDataSet(dataset_id, function(dataset) {","      self.doCloudCall({","        \"dataset_id\": dataset_id,","        \"req\": {","          \"fn\": \"listCollisions\",","          \"meta_data\" : dataset.meta_data","        }","      }, success, failure);","    }, failure);","  },","","  removeCollision: function(dataset_id, colissionHash, success, failure) {","    self.getDataSet(dataset_id, function(dataset) {","      self.doCloudCall({","        \"dataset_id\" : dataset_id,","        \"req\": {","          \"fn\": \"removeCollision\",","          \"hash\": colissionHash,","          meta_data: dataset.meta_data","        }","      }, success, failure);","    });","  },","","","  // PRIVATE FUNCTIONS","  isOnline: function(callback) {","    var online = true;","","    // first, check if navigator.online is available","    if(typeof navigator.onLine !== \"undefined\"){","      online = navigator.onLine;","    }","","    // second, check if Phonegap is available and has online info","    if(online){","      //use phonegap to determin if the network is available","      if(typeof navigator.network !== \"undefined\" &amp;&amp; typeof navigator.network.connection !== \"undefined\"){","        var networkType = navigator.network.connection.type;","        if(networkType === \"none\" || networkType === null) {","          online = false;","        }","      }","    }","","    return callback(online);","  },","","  doNotify: function(dataset_id, uid, code, message) {","","    if( self.notify_callback ) {","      if ( self.config['notify_' + code] ) {","        var notification = {","          \"dataset_id\" : dataset_id,","          \"uid\" : uid,","          \"code\" : code,","          \"message\" : message","        };","        // make sure user doesn't block","        setTimeout(function () {","          self.notify_callback(notification);","        }, 0);","      }","    }","  },","","  getDataSet: function(dataset_id, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      success(dataset);","    } else {","      if(failure){","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  getQueryParams: function(dataset_id, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      success(dataset.query_params);","    } else {","      if(failure){","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  setQueryParams: function(dataset_id, queryParams, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      dataset.query_params = queryParams;","      self.saveDataSet(dataset_id);","      if( success ) {","        success(dataset.query_params);","      }","    } else {","      if ( failure ) {","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  getMetaData: function(dataset_id, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      success(dataset.meta_data);","    } else {","      if(failure){","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  setMetaData: function(dataset_id, metaData, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      dataset.meta_data = metaData;","      self.saveDataSet(dataset_id);","      if( success ) {","        success(dataset.meta_data);","      }","    } else {","      if( failure ) {","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  getConfig: function(dataset_id, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      success(dataset.config);","    } else {","      if(failure){","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  setConfig: function(dataset_id, config, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      var fullConfig = self.setOptions(config);","      dataset.config = fullConfig;","      self.saveDataSet(dataset_id);","      if( success ) {","        success(dataset.config);","      }","    } else {","      if( failure ) {","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  stopSync: function(dataset_id, success, failure) {","    self.setConfig(dataset_id, {\"sync_active\" : false}, function() {","      if( success ) {","        success();","      }","    }, failure);","  },","","  startSync: function(dataset_id, success, failure) {","    self.setConfig(dataset_id, {\"sync_active\" : true}, function() {","      if( success ) {","        success();","      }","    }, failure);","  },","","  doSync: function(dataset_id, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      dataset.syncPending = true;","      self.saveDataSet(dataset_id);","      if( success ) {","        success();","      }","    } else {","      if( failure ) {","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  forceSync: function(dataset_id, success, failure) {","    var dataset = self.datasets[dataset_id];","","    if (dataset) {","      dataset.syncForced = true;","      self.saveDataSet(dataset_id);","      if( success ) {","        success();","      }","    } else {","      if( failure ) {","        failure('unknown_dataset ' + dataset_id, dataset_id);","      }","    }","  },","","  sortObject : function(object) {","    if (typeof object !== \"object\" || object === null) {","      return object;","    }","","    var result = [];","","    Object.keys(object).sort().forEach(function(key) {","      result.push({","        key: key,","        value: self.sortObject(object[key])","      });","    });","","    return result;","  },","","  sortedStringify : function(obj) {","","    var str = '';","","    try {","      str = JSON.stringify(self.sortObject(obj));","    } catch (e) {","      console.error('Error stringifying sorted object:' + e);","    }","","    return str;","  },","","  generateHash: function(object) {","    var hash = CryptoJS.SHA1(self.sortedStringify(object));","    return hash.toString();","  },","","  addPendingObj: function(dataset_id, uid, data, action, success, failure) {","    self.isOnline(function (online) {","      if (!online) {","        self.doNotify(dataset_id, uid, self.notifications.OFFLINE_UPDATE, action);","      }","    });","","    function storePendingObject(obj) {","      obj.hash = self.generateHash(obj);","","      self.getDataSet(dataset_id, function(dataset) {","","        dataset.pending[obj.hash] = obj;","","        self.updateDatasetFromLocal(dataset, obj);","","        if(self.config.auto_sync_local_updates) {","          dataset.syncPending = true;","        }","        self.saveDataSet(dataset_id);","        self.doNotify(dataset_id, uid, self.notifications.LOCAL_UPDATE_APPLIED, action);","","        success(obj);","      }, function(code, msg) {","        if(failure) failure(code, msg);","      });","    }","","    var pendingObj = {};","    pendingObj.inFlight = false;","    pendingObj.action = action;","    pendingObj.post = JSON.parse(JSON.stringify(data));","    pendingObj.postHash = self.generateHash(pendingObj.post);","    pendingObj.timestamp = new Date().getTime();","    if( \"create\" === action ) {","      pendingObj.uid = pendingObj.postHash;","      storePendingObject(pendingObj);","    } else {","      self.read(dataset_id, uid, function(rec) {","        pendingObj.uid = uid;","        pendingObj.pre = rec.data;","        pendingObj.preHash = self.generateHash(rec.data);","        storePendingObject(pendingObj);","      }, function(code, msg) {","        if(failure){","          failure(code, msg);","        }","      });","    }","  },","","  syncLoop: function(dataset_id) {","    self.getDataSet(dataset_id, function(dataSet) {","    ","      // The sync loop is currently active","      dataSet.syncPending = false;","      dataSet.syncRunning = true;","      dataSet.syncLoopStart = new Date().getTime();","      self.doNotify(dataset_id, null, self.notifications.SYNC_STARTED, null);","","      self.isOnline(function(online) {","        if (!online) {","          self.syncComplete(dataset_id, \"offline\", self.notifications.SYNC_FAILED);","        } else {","          self.checkHasCustomSync(dataset_id, function() {","","            var syncLoopParams = {};","            syncLoopParams.fn = 'sync';","            syncLoopParams.dataset_id = dataset_id;","            syncLoopParams.query_params = dataSet.query_params;","            syncLoopParams.config = dataSet.config;","            syncLoopParams.meta_data = dataSet.meta_data;","            //var datasetHash = self.generateLocalDatasetHash(dataSet);","            syncLoopParams.dataset_hash = dataSet.hash;","            syncLoopParams.acknowledgements = dataSet.acknowledgements || [];","","            var pending = dataSet.pending;","            var pendingArray = [];","            for(var i in pending ) {","              // Mark the pending records we are about to submit as inflight and add them to the array for submission","              // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown","              // Don't add delayed records","              if( !pending[i].inFlight &amp;&amp; !pending[i].crashed &amp;&amp; !pending[i].delayed) {","                pending[i].inFlight = true;","                pending[i].inFlightDate = new Date().getTime();","                pendingArray.push(pending[i]);","              }","            }","            syncLoopParams.pending = pendingArray;","","            if( pendingArray.length &gt; 0 ) {","              self.consoleLog('Starting sync loop - global hash = ' + dataSet.hash + ' :: params = ' + JSON.stringify(syncLoopParams, null, 2));","            }","            try {","              self.doCloudCall({","                'dataset_id': dataset_id,","                'req': syncLoopParams","              }, function(res) {","                var rec;","","                function processUpdates(updates, notification, acknowledgements) {","                  if( updates ) {","                    for (var up in updates) {","                      rec = updates[up];","                      acknowledgements.push(rec);","                      if( dataSet.pending[up] &amp;&amp; dataSet.pending[up].inFlight &amp;&amp; !dataSet.pending[up].crashed ) {","                        delete dataSet.pending[up];","                        self.doNotify(dataset_id, rec.uid, notification, rec);","                      }","                    }","                  }","                }","","                // Check to see if any new pending records need to be updated to reflect the current state of play.","                self.updatePendingFromNewData(dataset_id, dataSet, res);","","                // Check to see if any previously crashed inflight records can now be resolved","                self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);","","                //Check to see if any delayed pending records can now be set to ready","                self.updateDelayedFromNewData(dataset_id, dataSet, res);","","                //Check meta data as well to make sure it contains the correct info","                self.updateMetaFromNewData(dataset_id, dataSet, res);","","                // Update the new dataset with details of any inflight updates which we have not received a response on","                self.updateNewDataFromInFlight(dataset_id, dataSet, res);","","                // Update the new dataset with details of any pending updates","                self.updateNewDataFromPending(dataset_id, dataSet, res);","","","","                if (res.records) {","                  // Full Dataset returned","                  dataSet.data = res.records;","                  dataSet.hash = res.hash;","","                  self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'full dataset');","                }","","                if (res.updates) {","                  var acknowledgements = [];","                  processUpdates(res.updates.applied, self.notifications.REMOTE_UPDATE_APPLIED, acknowledgements);","                  processUpdates(res.updates.failed, self.notifications.REMOTE_UPDATE_FAILED, acknowledgements);","                  processUpdates(res.updates.collisions, self.notifications.COLLISION_DETECTED, acknowledgements);","                  dataSet.acknowledgements = acknowledgements;","                }","","                if (!res.records &amp;&amp; res.hash &amp;&amp; res.hash !== dataSet.hash) {","                  self.consoleLog(\"Local dataset stale - syncing records :: local hash= \" + dataSet.hash + \" - remoteHash=\" + res.hash);","                  // Different hash value returned - Sync individual records","                  self.syncRecords(dataset_id);","                } else {","                  self.consoleLog(\"Local dataset up to date\");","                  self.syncComplete(dataset_id,  \"online\", self.notifications.SYNC_COMPLETE);","                }","              }, function(msg, err) {","                // The AJAX call failed to complete succesfully, so the state of the current pending updates is unknown","                // Mark them as \"crashed\". The next time a syncLoop completets successfully, we will review the crashed","                // records to see if we can determine their current state.","                self.markInFlightAsCrashed(dataSet);","                self.consoleLog(\"syncLoop failed : msg=\" + msg + \" :: err = \" + err);","                self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);","              });","            }","            catch (e) {","              self.consoleLog('Error performing sync - ' + e);","              self.syncComplete(dataset_id, e, self.notifications.SYNC_FAILED);","            }","          });","        }","      });","    });","  },","","  syncRecords: function(dataset_id) {","","    self.getDataSet(dataset_id, function(dataSet) {","","      var localDataSet = dataSet.data || {};","","      var clientRecs = {};","      for (var i in localDataSet) {","        var uid = i;","        var hash = localDataSet[i].hash;","        clientRecs[uid] = hash;","      }","","      var syncRecParams = {};","","      syncRecParams.fn = 'syncRecords';","      syncRecParams.dataset_id = dataset_id;","      syncRecParams.query_params = dataSet.query_params;","      syncRecParams.clientRecs = clientRecs;","","      self.consoleLog(\"syncRecParams :: \" + JSON.stringify(syncRecParams));","","      self.doCloudCall({","        'dataset_id': dataset_id,","        'req': syncRecParams","      }, function(res) {","        var i;","","        if (res.create) {","          for (i in res.create) {","            localDataSet[i] = {\"hash\" : res.create[i].hash, \"data\" : res.create[i].data};","            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, \"create\");","          }","        }","        if (res.update) {","          for (i in res.update) {","            localDataSet[i].hash = res.update[i].hash;","            localDataSet[i].data = res.update[i].data;","            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, \"update\");","          }","        }","        if (res['delete']) {","          for (i in res['delete']) {","            delete localDataSet[i];","            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, \"delete\");","          }","        }","","        self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'partial dataset');","","        dataSet.data = localDataSet;","        if(res.hash) {","          dataSet.hash = res.hash;","        }","        self.syncComplete(dataset_id, \"online\", self.notifications.SYNC_COMPLETE);","      }, function(msg, err) {","        self.consoleLog(\"syncRecords failed : msg=\" + msg + \" :: err=\" + err);","        self.syncComplete(dataset_id, msg, self.notifications.SYNC_FAILED);","      });","    });","  },","","  syncComplete: function(dataset_id, status, notification) {","","    self.getDataSet(dataset_id, function(dataset) {","      dataset.syncRunning = false;","      dataset.syncLoopEnd = new Date().getTime();","      self.saveDataSet(dataset_id);","      self.doNotify(dataset_id, dataset.hash, notification, status);","    });","  },","","  checkDatasets: function() {","    for( var dataset_id in self.datasets ) {","      if( self.datasets.hasOwnProperty(dataset_id) ) {","        var dataset = self.datasets[dataset_id];","","        if( !dataset.syncRunning &amp;&amp; (dataset.config.sync_active || dataset.syncForced)) {","          // Check to see if it is time for the sync loop to run again","          var lastSyncStart = dataset.syncLoopStart;","          var lastSyncCmp = dataset.syncLoopEnd;","          if(dataset.syncForced){","            dataset.syncPending = true;","          } else if( lastSyncStart == null ) {","            self.consoleLog(dataset_id +' - Performing initial sync');","            // Dataset has never been synced before - do initial sync","            dataset.syncPending = true;","          } else if (lastSyncCmp != null) {","            var timeSinceLastSync = new Date().getTime() - lastSyncCmp;","            var syncFrequency = dataset.config.sync_frequency * 1000;","            if( timeSinceLastSync &gt; syncFrequency ) {","              // Time between sync loops has passed - do another sync","              dataset.syncPending = true;","            }","          }","","          if( dataset.syncPending ) {","            // Reset syncForced in case it was what caused the sync cycle to run.","            dataset.syncForced = false;","","            // If the dataset requres syncing, run the sync loop. This may be because the sync interval has passed","            // or because the sync_frequency has been changed or because a change was made to the dataset and the","            // immediate_sync flag set to true","            self.syncLoop(dataset_id);","          }","        }","      }","    }","  },","","  checkHasCustomSync : function(dataset_id, cb) {","    var dataset = self.datasets[dataset_id];","    if(dataset &amp;&amp; dataset.config){","      self.consoleLog(\"dataset.config.has_custom_sync = \" + dataset.config.has_custom_sync);","      if(dataset.config.has_custom_sync != null) {","        return cb();","      }","      self.consoleLog('starting check has custom sync');","","      actAPI({","        'act' : dataset_id,","        'req': {","          'fn': 'sync'","        }","      }, function(res) {","        //if the custom sync is defined in the cloud, this call should success.","        //if failed, we think this the custom sync is not defined","        self.consoleLog('check has_custom_sync - success - ', res);","        dataset.config.has_custom_sync = true;","        return cb();","      }, function(msg,err) {","        self.consoleLog('check has_custom_sync - failure - ', err);","        if(err.status &amp;&amp; err.status === 500){","          //if we receive 500, it could be that there is an error occured due to missing parameters or similar,","          //but the endpoint is defined.","          self.consoleLog('check has_custom_sync - failed with 500, endpoint does exists');","          dataset.config.has_custom_sync = true;","        } else {","          dataset.config.has_custom_sync = false;","        }","        return cb();","      });","    } else {","      return cb();","    }","  },","","  doCloudCall: function(params, success, failure) {","    var hasCustomSync = false;","    var dataset = self.datasets[params.dataset_id];","    if(dataset &amp;&amp; dataset.config){","      hasCustomSync = dataset.config.has_custom_sync;","    }","    if( hasCustomSync == true ) {","      actAPI({","        'act' : params.dataset_id,","        'req' : params.req","      }, function(res) {","        success(res);","      }, function(msg, err) {","        failure(msg, err);","      });      ","    } else {","      cloudAPI({","        'path' : '/mbaas/sync/' + params.dataset_id,","        'method' : 'post',","        'data' : params.req","      }, function(res) {","        success(res);","      }, function(msg, err) {","        failure(msg, err);","      })","    }","  },","","  datasetMonitor: function() {","    self.checkDatasets();","","    // Re-execute datasetMonitor every 500ms so we keep invoking checkDatasets();","    setTimeout(function() {","      self.datasetMonitor();","    }, 500);","  },","","  saveDataSet: function (dataset_id, cb) {","    var onFail =  function(msg, err) {","      // save failed","      var errMsg = 'save to local storage failed  msg:' + msg + ' err:' + err;","      self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);","      self.consoleLog(errMsg);","    };","    self.getDataSet(dataset_id, function(dataset) {","      // save dataset to local storage","      Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota}, function (){","        this.save({key:\"dataset_\" + dataset_id, val:dataset}, function(){","          //save success","          if(cb) return cb();","        });","      });","    });","  },","","  loadDataSet: function (dataset_id, success, failure) {","    // load dataset from local storage","    var onFail = function(msg, err) {","      // load failed","      var errMsg = 'load from local storage failed  msg:' + msg;","      self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);","      self.consoleLog(errMsg);","    };","","        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       ","          this.get( \"dataset_\" + dataset_id, function (data){","            if (data &amp;&amp; data.val) {","              var dataset = data.val;","              if(typeof dataset === \"string\"){","                dataset = JSON.parse(dataset);","              }","              // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset","              // the user wants sync","              dataset.initialised = false;","              self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?","              self.consoleLog('load from local storage success for dataset_id :' + dataset_id);","              if(success) return success(dataset);","            } else {","              // no data yet, probably first time. failure calback should handle this","              if(failure) return failure();","            }","       });","    });","  },","","","  updateDatasetFromLocal: function(dataset, pendingRec) {","    var pending = dataset.pending;","    var previousPendingUid;","    var previousPending;","","    var uid = pendingRec.uid;","    self.consoleLog('updating local dataset for uid ' + uid + ' - action = ' + pendingRec.action);","","    dataset.meta[uid] = dataset.meta[uid] || {};","","    // Creating a new record","    if( pendingRec.action === \"create\" ) {","      if( dataset.data[uid] ) {","        self.consoleLog('dataset already exists for uid in create :: ' + JSON.stringify(dataset.data[uid]));","","        // We are trying to do a create using a uid which already exists","        if (dataset.meta[uid].fromPending) {","          // We are trying to create on top of an existing pending record","          // Remove the previous pending record and use this one instead","          previousPendingUid = dataset.meta[uid].pendingUid;","          delete pending[previousPendingUid];","        }","      }","      dataset.data[uid] = {};","    }","","    if( pendingRec.action === \"update\" ) {","      if( dataset.data[uid] ) {","        if (dataset.meta[uid].fromPending) {","          self.consoleLog('updating an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));","          // We are trying to update an existing pending record","          previousPendingUid = dataset.meta[uid].pendingUid;","          dataset.meta[uid].previousPendingUid = previousPendingUid;","          previousPending = pending[previousPendingUid];","          if(previousPending) {","            if(!previousPending.inFlight){","              self.consoleLog('existing pre-flight pending record = ' + JSON.stringify(previousPending));","              // We are trying to perform an update on an existing pending record","              // modify the original record to have the latest value and delete the pending update","              previousPending.post = pendingRec.post;","              previousPending.postHash = pendingRec.postHash;","              delete pending[pendingRec.hash];","              // Update the pending record to have the hash of the previous record as this is what is now being","              // maintained in the pending array &amp; is what we want in the meta record","              pendingRec.hash = previousPendingUid;","            } else {","              //we are performing changes to a pending record which is inFlight. Until the status of this pending record is resolved,","              //we should not submit this pending record to the cloud. Mark it as delayed.","              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));","              pendingRec.delayed = true;","              pendingRec.waiting = previousPending.hash;","            }","          }","        }","      }","    }","","    if( pendingRec.action === \"delete\" ) {","      if( dataset.data[uid] ) {","        if (dataset.meta[uid].fromPending) {","          self.consoleLog('Deleting an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));","          // We are trying to delete an existing pending record","          previousPendingUid = dataset.meta[uid].pendingUid;","          dataset.meta[uid].previousPendingUid = previousPendingUid;","          previousPending = pending[previousPendingUid];","          if( previousPending ) {","            if(!previousPending.inFlight){","              self.consoleLog('existing pending record = ' + JSON.stringify(previousPending));","              if( previousPending.action === \"create\" ) {","                // We are trying to perform a delete on an existing pending create","                // These cancel each other out so remove them both","                delete pending[pendingRec.hash];","                delete pending[previousPendingUid];","              }","              if( previousPending.action === \"update\" ) {","                // We are trying to perform a delete on an existing pending update","                // Use the pre value from the pending update for the delete and","                // get rid of the pending update","                pendingRec.pre = previousPending.pre;","                pendingRec.preHash = previousPending.preHash;","                pendingRec.inFlight = false;","                delete pending[previousPendingUid];","              }","            } else {","              self.consoleLog('existing in-inflight pending record = ' + JSON.stringify(previousPending));","              pendingRec.delayed = true;","              pendingRec.waiting = previousPending.hash;","            }","          }","        }","        delete dataset.data[uid];","      }","    }","","    if( dataset.data[uid] ) {","      dataset.data[uid].data = pendingRec.post;","      dataset.data[uid].hash = pendingRec.postHash;","      dataset.meta[uid].fromPending = true;","      dataset.meta[uid].pendingUid = pendingRec.hash;","    }","  },","","  updatePendingFromNewData: function(dataset_id, dataset, newData) {","    var pending = dataset.pending;","    var newRec;","","    if( pending &amp;&amp; newData.records) {","      for( var pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          var pendingRec = pending[pendingHash];","","          dataset.meta[pendingRec.uid] = dataset.meta[pendingRec.uid] || {};","","          if( pendingRec.inFlight === false ) {","            // Pending record that has not been submitted","            self.consoleLog('updatePendingFromNewData - Found Non inFlight record -&gt; action=' + pendingRec.action +' :: uid=' + pendingRec.uid  + ' :: hash=' + pendingRec.hash);","            if( pendingRec.action === \"update\" || pendingRec.action === \"delete\") {","              // Update the pre value of pending record to reflect the latest data returned from sync.","              // This will prevent a collision being reported when the pending record is sent.","              newRec = newData.records[pendingRec.uid];","              if( newRec ) {","                self.consoleLog('updatePendingFromNewData - Updating pre values for existing pending record ' + pendingRec.uid);","                pendingRec.pre = newRec.data;","                pendingRec.preHash = newRec.hash;","              }","              else {","                // The update/delete may be for a newly created record in which case the uid will have changed.","                var previousPendingUid = dataset.meta[pendingRec.uid].previousPendingUid;","                var previousPending = pending[previousPendingUid];","                if( previousPending ) {","                  if( newData &amp;&amp; newData.updates &amp;&amp;  newData.updates.applied &amp;&amp; newData.updates.applied[previousPending.hash] ) {","                    // There is an update in from a previous pending action","                    var newUid = newData.updates.applied[previousPending.hash].uid;","                    newRec = newData.records[newUid];","                    if( newRec ) {","                      self.consoleLog('updatePendingFromNewData - Updating pre values for existing pending record which was previously a create ' + pendingRec.uid + ' ==&gt; ' + newUid);","                      pendingRec.pre = newRec.data;","                      pendingRec.preHash = newRec.hash;","                      pendingRec.uid = newUid;","                    }","                  }","                }","              }","            }","","            if( pendingRec.action === \"create\" ) {","              if( newData &amp;&amp; newData.updates &amp;&amp;  newData.updates.applied &amp;&amp; newData.updates.applied[pendingHash] ) {","                self.consoleLog('updatePendingFromNewData - Found an update for a pending create ' + JSON.stringify(newData.updates.applied[pendingHash]));","                newRec = newData.records[newData.updates.applied[pendingHash].uid];","                if( newRec ) {","                  self.consoleLog('updatePendingFromNewData - Changing pending create to an update based on new record  ' + JSON.stringify(newRec));","","                  // Set up the pending create as an update","                  pendingRec.action = \"update\";","                  pendingRec.pre = newRec.data;","                  pendingRec.preHash = newRec.hash;","                  pendingRec.uid = newData.updates.applied[pendingHash].uid;","                }","              }","            }","          }","        }","      }","    }","  },","","  updateNewDataFromInFlight: function(dataset_id, dataset, newData) {","    var pending = dataset.pending;","","    if( pending &amp;&amp; newData.records) {","      for( var pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          var pendingRec = pending[pendingHash];","","          if( pendingRec.inFlight ) {","            var updateReceivedForPending = (newData &amp;&amp; newData.updates &amp;&amp;  newData.updates.hashes &amp;&amp; newData.updates.hashes[pendingHash]) ? true : false;","","            self.consoleLog('updateNewDataFromInFlight - Found inflight pending Record - action = ' + pendingRec.action + ' :: hash = ' + pendingHash + ' :: updateReceivedForPending=' + updateReceivedForPending);","","            if( ! updateReceivedForPending ) {","              var newRec = newData.records[pendingRec.uid];","","              if( pendingRec.action === \"update\" &amp;&amp; newRec) {","                // Modify the new Record to have the updates from the pending record so the local dataset is consistent","                newRec.data = pendingRec.post;","                newRec.hash = pendingRec.postHash;","              }","              else if( pendingRec.action === \"delete\" &amp;&amp; newRec) {","                // Remove the record from the new dataset so the local dataset is consistent","                delete newData.records[pendingRec.uid];","              }","              else if( pendingRec.action === \"create\" ) {","                // Add the pending create into the new dataset so it is not lost from the UI","                self.consoleLog('updateNewDataFromInFlight - re adding pending create to incomming dataset');","                var newPendingCreate = {","                  data: pendingRec.post,","                  hash: pendingRec.postHash","                };","                newData.records[pendingRec.uid] = newPendingCreate;","              }","            }","          }","        }","      }","    }","  },","","  updateNewDataFromPending: function(dataset_id, dataset, newData) {","    var pending = dataset.pending;","","    if( pending &amp;&amp; newData.records) {","      for( var pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          var pendingRec = pending[pendingHash];","","          if( pendingRec.inFlight === false ) {","            self.consoleLog('updateNewDataFromPending - Found Non inFlight record -&gt; action=' + pendingRec.action +' :: uid=' + pendingRec.uid  + ' :: hash=' + pendingRec.hash);","            var newRec = newData.records[pendingRec.uid];","            if( pendingRec.action === \"update\" &amp;&amp; newRec) {","              // Modify the new Record to have the updates from the pending record so the local dataset is consistent","              newRec.data = pendingRec.post;","              newRec.hash = pendingRec.postHash;","            }","            else if( pendingRec.action === \"delete\" &amp;&amp; newRec) {","              // Remove the record from the new dataset so the local dataset is consistent","              delete newData.records[pendingRec.uid];","            }","            else if( pendingRec.action === \"create\" ) {","              // Add the pending create into the new dataset so it is not lost from the UI","              self.consoleLog('updateNewDataFromPending - re adding pending create to incomming dataset');","              var newPendingCreate = {","                data: pendingRec.post,","                hash: pendingRec.postHash","              };","              newData.records[pendingRec.uid] = newPendingCreate;","            }","          }","        }","      }","    }","  },","","  updateCrashedInFlightFromNewData: function(dataset_id, dataset, newData) {","    var updateNotifications = {","      applied: self.notifications.REMOTE_UPDATE_APPLIED,","      failed: self.notifications.REMOTE_UPDATE_FAILED,","      collisions: self.notifications.COLLISION_DETECTED","    };","","    var pending = dataset.pending;","    var resolvedCrashes = {};","    var pendingHash;","    var pendingRec;","","","    if( pending ) {","      for( pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          pendingRec = pending[pendingHash];","","          if( pendingRec.inFlight &amp;&amp; pendingRec.crashed) {","            self.consoleLog('updateCrashedInFlightFromNewData - Found crashed inFlight pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash );","            if( newData &amp;&amp; newData.updates &amp;&amp; newData.updates.hashes) {","","              // Check if the updates received contain any info about the crashed in flight update","              var crashedUpdate = newData.updates.hashes[pendingHash];","              if( crashedUpdate ) {","                // We have found an update on one of our in flight crashed records","","                resolvedCrashes[crashedUpdate.uid] = crashedUpdate;","","                self.consoleLog('updateCrashedInFlightFromNewData - Resolving status for crashed inflight pending record ' + JSON.stringify(crashedUpdate));","","                if( crashedUpdate.type === 'failed' ) {","                  // Crashed update failed - revert local dataset","                  if( crashedUpdate.action === 'create' ) {","                    self.consoleLog('updateCrashedInFlightFromNewData - Deleting failed create from dataset');","                    delete dataset.data[crashedUpdate.uid];","                  }","                  else if ( crashedUpdate.action === 'update' || crashedUpdate.action === 'delete' ) {","                    self.consoleLog('updateCrashedInFlightFromNewData - Reverting failed ' + crashedUpdate.action + ' in dataset');","                    dataset.data[crashedUpdate.uid] = {","                      data : pendingRec.pre,","                      hash : pendingRec.preHash","                    };","                  }","                }","","                delete pending[pendingHash];","                self.doNotify(dataset_id, crashedUpdate.uid, updateNotifications[crashedUpdate.type], crashedUpdate);","              }","              else {","                // No word on our crashed update - increment a counter to reflect another sync that did not give us","                // any update on our crashed record.","                if( pendingRec.crashedCount ) {","                  pendingRec.crashedCount++;","                }","                else {","                  pendingRec.crashedCount = 1;","                }","              }","            }","            else {","              // No word on our crashed update - increment a counter to reflect another sync that did not give us","              // any update on our crashed record.","              if( pendingRec.crashedCount ) {","                pendingRec.crashedCount++;","              }","              else {","                pendingRec.crashedCount = 1;","              }","            }","          }","        }","      }","","      for( pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          pendingRec = pending[pendingHash];","","          if( pendingRec.inFlight &amp;&amp; pendingRec.crashed) {","            if( pendingRec.crashedCount &gt; dataset.config.crashed_count_wait ) {","              self.consoleLog('updateCrashedInFlightFromNewData - Crashed inflight pending record has reached crashed_count_wait limit : ' + JSON.stringify(pendingRec));","              if( dataset.config.resend_crashed_updates ) {","                self.consoleLog('updateCrashedInFlightFromNewData - Retryig crashed inflight pending record');","                pendingRec.crashed = false;","                pendingRec.inFlight = false;","              }","              else {","                self.consoleLog('updateCrashedInFlightFromNewData - Deleting crashed inflight pending record');","                delete pending[pendingHash];","              }","            }","          }","        }","      }","    }","  },","","  updateDelayedFromNewData: function(dataset_id, dataset, newData){","    var pending = dataset.pending;","    var pendingHash;","    var pendingRec;","    if(pending){","      for( pendingHash in pending ){","        if( pending.hasOwnProperty(pendingHash) ){","          pendingRec = pending[pendingHash];","          if( pendingRec.delayed &amp;&amp; pendingRec.waiting ){","            self.consoleLog('updateDelayedFromNewData - Found delayed pending record uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash + ' :: waiting=' + pendingRec.waiting);","            if( newData &amp;&amp; newData.updates &amp;&amp; newData.updates.hashes ){","              var waitingRec = newData.updates.hashes[pendingRec.waiting];","              if(waitingRec){","                self.consoleLog('updateDelayedFromNewData - Waiting pending record is resolved rec=' + JSON.stringify(waitingRec));","                pendingRec.delayed = false;","                pendingRec.waiting = undefined;","              }","            }","          }","        }","      }","    }","  },","","  updateMetaFromNewData: function(dataset_id, dataset, newData){","    var meta = dataset.meta;","    if(meta &amp;&amp; newData &amp;&amp; newData.updates &amp;&amp; newData.updates.hashes){","      for(var uid in meta){","        if(meta.hasOwnProperty(uid)){","          var metadata = meta[uid];","          var pendingHash = metadata.pendingUid;","          var previousPendingHash = metadata.previousPendingUid;","          self.consoleLog(\"updateMetaFromNewData - Found metadata with uid = \" + uid + \" :: pendingHash = \" + pendingHash + \" :: previousPendingHash =\" + previousPendingHash);","          var previousPendingResolved = true;","          var pendingResolved = true;","          if(previousPendingHash){","            //we have previous pending in meta data, see if it's resolved","            previousPendingResolved = false;","            var resolved = newData.updates.hashes[previousPendingHash];","            if(resolved){","              self.consoleLog(\"updateMetaFromNewData - Found previousPendingUid in meta data resolved - resolved = \" + JSON.stringify(resolved));","              //the previous pending is resolved in the cloud","              metadata.previousPendingUid = undefined;","              previousPendingResolved = true;","            }","          }","          if(pendingHash){","            //we have current pending in meta data, see if it's resolved","            pendingResolved = false;","            var resolved = newData.updates.hashes[pendingHash];","            if(resolved){","              self.consoleLog(\"updateMetaFromNewData - Found pendingUid in meta data resolved - resolved = \" + JSON.stringify(resolved));","              //the current pending is resolved in the cloud","              metadata.pendingUid = undefined;","              pendingResolved = true;","            }","          }","","          if(previousPendingResolved &amp;&amp; pendingResolved){","            self.consoleLog(\"updateMetaFromNewData - both previous and current pendings are resolved for meta data with uid \" + uid + \". Delete it.\");","            //all pendings are resolved, the entry can be removed from meta data","            delete meta[uid];","          }","        }","      }","    }","  },","","","  markInFlightAsCrashed : function(dataset) {","    var pending = dataset.pending;","    var pendingHash;","    var pendingRec;","","    if( pending ) {","      var crashedRecords = {};","      for( pendingHash in pending ) {","        if( pending.hasOwnProperty(pendingHash) ) {","          pendingRec = pending[pendingHash];","","          if( pendingRec.inFlight ) {","            self.consoleLog('Marking in flight pending record as crashed : ' + pendingHash);","            pendingRec.crashed = true;","            crashedRecords[pendingRec.uid] = pendingRec;","          }","        }","      }","    }","  },","","  consoleLog: function(msg) {","    if( self.config.do_console_log ) {","      console.log(msg);","    }","  }","};","","(function() {","  self.config = self.defaults;","  //Initialse the sync service with default config","  //self.init({});","})();","","module.exports = {","  init: self.init,","  manage: self.manage,","  notify: self.notify,","  doList: self.list,","  doCreate: self.create,","  doRead: self.read,","  doUpdate: self.update,","  doDelete: self['delete'],","  listCollisions: self.listCollisions,","  removeCollision: self.removeCollision,","  getPending : self.getPending,","  clearPending : self.clearPending,","  getDataset : self.getDataSet,","  getQueryParams: self.getQueryParams,","  setQueryParams: self.setQueryParams,","  getMetaData: self.getMetaData,","  setMetaData: self.setMetaData,","  getConfig: self.getConfig,","  setConfig: self.setConfig,","  startSync: self.startSync,","  stopSync: self.stopSync,","  doSync: self.doSync,","  forceSync: self.forceSync,","  generateHash: self.generateHash,","  loadDataSet: self.loadDataSet,","  checkHasCustomSync: self.checkHasCustomSync","};"];
 
-module.exports = {
-  init: self.init,
-  manage: self.manage,
-  notify: self.notify,
-  doList: self.list,
-  doCreate: self.create,
-  doRead: self.read,
-  doUpdate: self.update,
-  doDelete: self['delete'],
-  listCollisions: self.listCollisions,
-  removeCollision: self.removeCollision,
-  getPending : self.getPending,
-  clearPending : self.clearPending,
-  getDataset : self.getDataSet,
-  getQueryParams: self.getQueryParams,
-  setQueryParams: self.setQueryParams,
-  getMetaData: self.getMetaData,
-  setMetaData: self.setMetaData,
-  getConfig: self.getConfig,
-  setConfig: self.setConfig,
-  startSync: self.startSync,
-  stopSync: self.stopSync,
-  doSync: self.doSync,
-  forceSync: self.forceSync
-};
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":20,"./api_cloud":22,"JSON":3}],48:[function(require,module,exports){
-module.exports = {
-  createUUID : function () {
-    //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
-    //based on RFC 4122, section 4.4 (Algorithms for creating UUID from truely random pr pseudo-random number)
-    var s = [];
-    var hexDigitals = "0123456789ABCDEF";
-    for (var i = 0; i < 32; i++) {
-      s[i] = hexDigitals.substr(Math.floor(Math.random() * 0x10), 1);
-    }
-    s[12] = "4";
-    s[16] = hexDigitals.substr((s[16] & 0x3) | 0x8, 1);
-    var uuid = s.join("");
-    return uuid;
-  }
-};
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":20,"./api_cloud":22,"JSON":3}],47:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/uuid.js']) {
+  _$jscoverage['modules/uuid.js'] = [];
+  _$jscoverage['modules/uuid.js'][1] = 0;
+  _$jscoverage['modules/uuid.js'][5] = 0;
+  _$jscoverage['modules/uuid.js'][6] = 0;
+  _$jscoverage['modules/uuid.js'][7] = 0;
+  _$jscoverage['modules/uuid.js'][8] = 0;
+  _$jscoverage['modules/uuid.js'][10] = 0;
+  _$jscoverage['modules/uuid.js'][11] = 0;
+  _$jscoverage['modules/uuid.js'][12] = 0;
+  _$jscoverage['modules/uuid.js'][13] = 0;
+}
+_$jscoverage['modules/uuid.js'][1]++;
+module.exports = {createUUID: (function () {
+  _$jscoverage['modules/uuid.js'][5]++;
+  var s = [];
+  _$jscoverage['modules/uuid.js'][6]++;
+  var hexDigitals = "0123456789ABCDEF";
+  _$jscoverage['modules/uuid.js'][7]++;
+  for (var i = 0; i < 32; i++) {
+    _$jscoverage['modules/uuid.js'][8]++;
+    s[i] = hexDigitals.substr(Math.floor(Math.random() * 16), 1);
+}
+  _$jscoverage['modules/uuid.js'][10]++;
+  s[12] = "4";
+  _$jscoverage['modules/uuid.js'][11]++;
+  s[16] = hexDigitals.substr((s[16] & 3) | 8, 1);
+  _$jscoverage['modules/uuid.js'][12]++;
+  var uuid = s.join("");
+  _$jscoverage['modules/uuid.js'][13]++;
+  return uuid;
+})};
+_$jscoverage['modules/uuid.js'].source = ["module.exports = {","  createUUID : function () {","    //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript","    //based on RFC 4122, section 4.4 (Algorithms for creating UUID from truely random pr pseudo-random number)","    var s = [];","    var hexDigitals = \"0123456789ABCDEF\";","    for (var i = 0; i &lt; 32; i++) {","      s[i] = hexDigitals.substr(Math.floor(Math.random() * 0x10), 1);","    }","    s[12] = \"4\";","    s[16] = hexDigitals.substr((s[16] &amp; 0x3) | 0x8, 1);","    var uuid = s.join(\"\");","    return uuid;","  }","};"];
 
-},{}],49:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
+/* automatically generated by JSCoverage - do not edit */
+if (typeof _$jscoverage === 'undefined') _$jscoverage = {};
+if (! _$jscoverage['modules/waitForCloud.js']) {
+  _$jscoverage['modules/waitForCloud.js'] = [];
+  _$jscoverage['modules/waitForCloud.js'][1] = 0;
+  _$jscoverage['modules/waitForCloud.js'][2] = 0;
+  _$jscoverage['modules/waitForCloud.js'][3] = 0;
+  _$jscoverage['modules/waitForCloud.js'][4] = 0;
+  _$jscoverage['modules/waitForCloud.js'][5] = 0;
+  _$jscoverage['modules/waitForCloud.js'][9] = 0;
+  _$jscoverage['modules/waitForCloud.js'][11] = 0;
+  _$jscoverage['modules/waitForCloud.js'][12] = 0;
+  _$jscoverage['modules/waitForCloud.js'][13] = 0;
+  _$jscoverage['modules/waitForCloud.js'][16] = 0;
+  _$jscoverage['modules/waitForCloud.js'][17] = 0;
+  _$jscoverage['modules/waitForCloud.js'][18] = 0;
+  _$jscoverage['modules/waitForCloud.js'][20] = 0;
+  _$jscoverage['modules/waitForCloud.js'][21] = 0;
+  _$jscoverage['modules/waitForCloud.js'][23] = 0;
+  _$jscoverage['modules/waitForCloud.js'][24] = 0;
+  _$jscoverage['modules/waitForCloud.js'][25] = 0;
+  _$jscoverage['modules/waitForCloud.js'][26] = 0;
+  _$jscoverage['modules/waitForCloud.js'][27] = 0;
+  _$jscoverage['modules/waitForCloud.js'][28] = 0;
+  _$jscoverage['modules/waitForCloud.js'][29] = 0;
+  _$jscoverage['modules/waitForCloud.js'][31] = 0;
+  _$jscoverage['modules/waitForCloud.js'][32] = 0;
+  _$jscoverage['modules/waitForCloud.js'][33] = 0;
+  _$jscoverage['modules/waitForCloud.js'][34] = 0;
+  _$jscoverage['modules/waitForCloud.js'][41] = 0;
+  _$jscoverage['modules/waitForCloud.js'][42] = 0;
+  _$jscoverage['modules/waitForCloud.js'][45] = 0;
+  _$jscoverage['modules/waitForCloud.js'][46] = 0;
+  _$jscoverage['modules/waitForCloud.js'][47] = 0;
+  _$jscoverage['modules/waitForCloud.js'][48] = 0;
+  _$jscoverage['modules/waitForCloud.js'][50] = 0;
+  _$jscoverage['modules/waitForCloud.js'][54] = 0;
+  _$jscoverage['modules/waitForCloud.js'][55] = 0;
+  _$jscoverage['modules/waitForCloud.js'][58] = 0;
+  _$jscoverage['modules/waitForCloud.js'][59] = 0;
+  _$jscoverage['modules/waitForCloud.js'][63] = 0;
+  _$jscoverage['modules/waitForCloud.js'][64] = 0;
+  _$jscoverage['modules/waitForCloud.js'][65] = 0;
+  _$jscoverage['modules/waitForCloud.js'][66] = 0;
+  _$jscoverage['modules/waitForCloud.js'][67] = 0;
+  _$jscoverage['modules/waitForCloud.js'][68] = 0;
+  _$jscoverage['modules/waitForCloud.js'][73] = 0;
+  _$jscoverage['modules/waitForCloud.js'][74] = 0;
+  _$jscoverage['modules/waitForCloud.js'][75] = 0;
+  _$jscoverage['modules/waitForCloud.js'][76] = 0;
+  _$jscoverage['modules/waitForCloud.js'][78] = 0;
+  _$jscoverage['modules/waitForCloud.js'][81] = 0;
+  _$jscoverage['modules/waitForCloud.js'][85] = 0;
+}
+_$jscoverage['modules/waitForCloud.js'][1]++;
 var initializer = require("./initializer");
+_$jscoverage['modules/waitForCloud.js'][2]++;
 var events = require("./events");
+_$jscoverage['modules/waitForCloud.js'][3]++;
 var CloudHost = require("./hosts");
+_$jscoverage['modules/waitForCloud.js'][4]++;
 var constants = require("./constants");
+_$jscoverage['modules/waitForCloud.js'][5]++;
 var logger = require("./logger");
-
-
-//the cloud configurations
+_$jscoverage['modules/waitForCloud.js'][9]++;
 var cloud_host;
-
+_$jscoverage['modules/waitForCloud.js'][11]++;
 var is_initialising = false;
+_$jscoverage['modules/waitForCloud.js'][12]++;
 var is_cloud_ready = false;
+_$jscoverage['modules/waitForCloud.js'][13]++;
 var init_error = null;
-
-
-var ready = function(cb){
-  if(is_cloud_ready){
+_$jscoverage['modules/waitForCloud.js'][16]++;
+var ready = (function (cb) {
+  _$jscoverage['modules/waitForCloud.js'][17]++;
+  if (is_cloud_ready) {
+    _$jscoverage['modules/waitForCloud.js'][18]++;
     return cb(null, {host: getCloudHostUrl()});
-  } else {
-    events.once(constants.INIT_EVENT, function(err, host){
-      return cb(err, host);
-    });
-    if(!is_initialising){
+  }
+  else {
+    _$jscoverage['modules/waitForCloud.js'][20]++;
+    events.once(constants.INIT_EVENT, (function (err, host) {
+  _$jscoverage['modules/waitForCloud.js'][21]++;
+  return cb(err, host);
+}));
+    _$jscoverage['modules/waitForCloud.js'][23]++;
+    if (! is_initialising) {
+      _$jscoverage['modules/waitForCloud.js'][24]++;
       is_initialising = true;
-      initializer.init(function(err, initRes){
-        is_initialising = false;
-        if(err){
-          init_error = err;
-          return events.emit(constants.INIT_EVENT, err);
-        } else {
-          init_error = null;
-          is_cloud_ready = true;
-          cloud_host = new CloudHost(initRes.cloud);
-          return events.emit(constants.INIT_EVENT, null, {host: getCloudHostUrl()});
-        }
-      });
-    }
-  }
-}
-
-var getCloudHost = function(){
-  return cloud_host;
-}
-
-var getCloudHostUrl = function(){
-  if(typeof cloud_host !== "undefined"){
-    var appProps = require("./appProps").getAppProps();
-    return cloud_host.getHost(appProps.mode);
-  } else {
-    return undefined;
-  }
-}
-
-var isReady = function(){
-  return is_cloud_ready;
-}
-
-var getInitError = function(){
-  return init_error;
-}
-
-//for test
-var reset = function(){
-  is_cloud_ready = false;
+      _$jscoverage['modules/waitForCloud.js'][25]++;
+      initializer.init((function (err, initRes) {
+  _$jscoverage['modules/waitForCloud.js'][26]++;
   is_initialising = false;
-  cloud_host = undefined;
-  init_error = undefined;
-  ready(function(){
-    
-  });
-}
-
-ready(function(error, host){
-  if(error){
-    if(error.message !== "app_config_missing"){
-      logger.error("Failed to initialise fh.");
-    } else {
-      logger.info("No fh config file");
+  _$jscoverage['modules/waitForCloud.js'][27]++;
+  if (err) {
+    _$jscoverage['modules/waitForCloud.js'][28]++;
+    init_error = err;
+    _$jscoverage['modules/waitForCloud.js'][29]++;
+    return events.emit(constants.INIT_EVENT, err);
+  }
+  else {
+    _$jscoverage['modules/waitForCloud.js'][31]++;
+    init_error = null;
+    _$jscoverage['modules/waitForCloud.js'][32]++;
+    is_cloud_ready = true;
+    _$jscoverage['modules/waitForCloud.js'][33]++;
+    cloud_host = new CloudHost(initRes.cloud);
+    _$jscoverage['modules/waitForCloud.js'][34]++;
+    return events.emit(constants.INIT_EVENT, null, {host: getCloudHostUrl()});
+  }
+}));
     }
-  } else {
-    logger.info("fh cloud is ready");
   }
 });
+_$jscoverage['modules/waitForCloud.js'][41]++;
+var getCloudHost = (function () {
+  _$jscoverage['modules/waitForCloud.js'][42]++;
+  return cloud_host;
+});
+_$jscoverage['modules/waitForCloud.js'][45]++;
+var getCloudHostUrl = (function () {
+  _$jscoverage['modules/waitForCloud.js'][46]++;
+  if (typeof cloud_host !== "undefined") {
+    _$jscoverage['modules/waitForCloud.js'][47]++;
+    var appProps = require("./appProps").getAppProps();
+    _$jscoverage['modules/waitForCloud.js'][48]++;
+    return cloud_host.getHost(appProps.mode);
+  }
+  else {
+    _$jscoverage['modules/waitForCloud.js'][50]++;
+    return undefined;
+  }
+});
+_$jscoverage['modules/waitForCloud.js'][54]++;
+var isReady = (function () {
+  _$jscoverage['modules/waitForCloud.js'][55]++;
+  return is_cloud_ready;
+});
+_$jscoverage['modules/waitForCloud.js'][58]++;
+var getInitError = (function () {
+  _$jscoverage['modules/waitForCloud.js'][59]++;
+  return init_error;
+});
+_$jscoverage['modules/waitForCloud.js'][63]++;
+var reset = (function () {
+  _$jscoverage['modules/waitForCloud.js'][64]++;
+  is_cloud_ready = false;
+  _$jscoverage['modules/waitForCloud.js'][65]++;
+  is_initialising = false;
+  _$jscoverage['modules/waitForCloud.js'][66]++;
+  cloud_host = undefined;
+  _$jscoverage['modules/waitForCloud.js'][67]++;
+  init_error = undefined;
+  _$jscoverage['modules/waitForCloud.js'][68]++;
+  ready((function () {
+}));
+});
+_$jscoverage['modules/waitForCloud.js'][73]++;
+ready((function (error, host) {
+  _$jscoverage['modules/waitForCloud.js'][74]++;
+  if (error) {
+    _$jscoverage['modules/waitForCloud.js'][75]++;
+    if (error.message !== "app_config_missing") {
+      _$jscoverage['modules/waitForCloud.js'][76]++;
+      logger.error("Failed to initialise fh.");
+    }
+    else {
+      _$jscoverage['modules/waitForCloud.js'][78]++;
+      logger.info("No fh config file");
+    }
+  }
+  else {
+    _$jscoverage['modules/waitForCloud.js'][81]++;
+    logger.info("fh cloud is ready");
+  }
+}));
+_$jscoverage['modules/waitForCloud.js'][85]++;
+module.exports = {ready: ready, isReady: isReady, getCloudHost: getCloudHost, getCloudHostUrl: getCloudHostUrl, getInitError: getInitError, reset: reset};
+_$jscoverage['modules/waitForCloud.js'].source = ["var initializer = require(\"./initializer\");","var events = require(\"./events\");","var CloudHost = require(\"./hosts\");","var constants = require(\"./constants\");","var logger = require(\"./logger\");","","","//the cloud configurations","var cloud_host;","","var is_initialising = false;","var is_cloud_ready = false;","var init_error = null;","","","var ready = function(cb){","  if(is_cloud_ready){","    return cb(null, {host: getCloudHostUrl()});","  } else {","    events.once(constants.INIT_EVENT, function(err, host){","      return cb(err, host);","    });","    if(!is_initialising){","      is_initialising = true;","      initializer.init(function(err, initRes){","        is_initialising = false;","        if(err){","          init_error = err;","          return events.emit(constants.INIT_EVENT, err);","        } else {","          init_error = null;","          is_cloud_ready = true;","          cloud_host = new CloudHost(initRes.cloud);","          return events.emit(constants.INIT_EVENT, null, {host: getCloudHostUrl()});","        }","      });","    }","  }","}","","var getCloudHost = function(){","  return cloud_host;","}","","var getCloudHostUrl = function(){","  if(typeof cloud_host !== \"undefined\"){","    var appProps = require(\"./appProps\").getAppProps();","    return cloud_host.getHost(appProps.mode);","  } else {","    return undefined;","  }","}","","var isReady = function(){","  return is_cloud_ready;","}","","var getInitError = function(){","  return init_error;","}","","//for test","var reset = function(){","  is_cloud_ready = false;","  is_initialising = false;","  cloud_host = undefined;","  init_error = undefined;","  ready(function(){","    ","  });","}","","ready(function(error, host){","  if(error){","    if(error.message !== \"app_config_missing\"){","      logger.error(\"Failed to initialise fh.\");","    } else {","      logger.info(\"No fh config file\");","    }","  } else {","    logger.info(\"fh cloud is ready\");","  }","});","","module.exports = {","  ready: ready,","  isReady: isReady,","  getCloudHost: getCloudHost,","  getCloudHostUrl: getCloudHostUrl,","  getInitError: getInitError,","  reset: reset","}"];
 
-module.exports = {
-  ready: ready,
-  isReady: isReady,
-  getCloudHost: getCloudHost,
-  getCloudHostUrl: getCloudHostUrl,
-  getInitError: getInitError,
-  reset: reset
-}
-},{"./appProps":26,"./constants":28,"./events":31,"./hosts":35,"./initializer":36,"./logger":39}]},{},["il4jYc"])
+},{"./appProps":26,"./constants":28,"./events":31,"./hosts":34,"./initializer":35,"./logger":38}]},{},["f312fA"])

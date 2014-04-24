@@ -1,6 +1,6 @@
 {
     "name": "fh-js-sdk",
-    "version": "2.0.5-alpha",
+    "version": "2.0.6-alpha",
     "description": "feedhenry js sdk",
     "main": "feedhenry.js",
     "browser": {
@@ -57,7 +57,9 @@
     "gitHead": "251a1f88a39f59f2652552ae245893a833faee71",
     "dependencies": {
         "type-of": "~2.0.1",
-        "loglevel": "~0.6.0"
+        "loglevel": "~0.6.0",
+        "underscore": "~1.6.0",
+        "process": "~0.6.0"
     },
     "devDependencies": {
         "grunt": "~0.4.2",
@@ -79,6 +81,8 @@
         "sinon-chai": "~2.5.0",
         "grunt-mocha-phantomjs": "~0.4.3",
         "grunt-contrib-watch": "~0.6.0",
-        "through": "~2.3.4"
+        "through": "~2.3.4",
+        "grunt-shell": "~0.6.4",
+        "grunt-env": "~0.4.1"
     }
 }
