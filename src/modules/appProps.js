@@ -23,15 +23,6 @@ var load = function(cb) {
     return cb(null, app_props);
   }
 
-  if (typeof Titanium !== 'undefined'){
-  	/*
-     We use eval here because Titanium also does require to include third party scripts.
-     It bypasses browserify's require, but still triggers when in a Titanium app
-     */
-    app_props = eval("require(\"fhconfig\")");
-  	return cb(null, app_props);
-  }
-
   var config_url = url_params.fhconfig || consts.config_js;
   ajax({
     url: config_url,

@@ -1,6 +1,6 @@
-require=(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+!function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.feedhenry=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 (function (global){
-;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
+;__browserify_shim_require__=_dereq_;(function browserifyShim(module, exports, _dereq_, define, browserify_shim__define__module__export__) {
 /*
  CryptoJS v3.1.2
  core.js
@@ -3397,9 +3397,9 @@ CryptoJS.lib.Cipher || (function (undefined) {
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],2:[function(require,module,exports){
+},{}],2:[function(_dereq_,module,exports){
 (function (global){
-;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
+;__browserify_shim_require__=_dereq_;(function browserifyShim(module, exports, _dereq_, define, browserify_shim__define__module__export__) {
 /**
  * Lawnchair!
  * ---
@@ -4429,14 +4429,121 @@ Lawnchair.adapter('html5-filesystem', (function(global){
     }
   };
 }(this)));
+Lawnchair.adapter('titanium', (function(global){
+
+    return {
+        // boolean; true if the adapter is valid for the current environment
+        valid: function() {
+            return typeof Titanium !== 'undefined';
+        },
+
+        // constructor call and callback. 'name' is the most common option
+        init: function( options, callback ) {
+          if (callback){
+            return callback(this);
+          }
+        },
+
+        // returns all the keys in the store
+        keys: function( callback ) {
+            return Titanium.App.Properties.listProperties();
+        },
+
+        // save an object
+        save: function( obj, callback ) {
+            Titanium.App.Properties.setObject(obj.key, obj);
+            return this;
+        },
+
+        // batch save array of objs
+        batch: function( objs, callback ) {
+            var me = this;
+            var saved = [];
+            for ( var i = 0, il = objs.length; i < il; i++ ) {
+                me.save( objs[i], function( obj ) {
+                    saved.push( obj );
+                    if ( saved.length === il && callback ) {
+                        me.lambda( callback ).call( me, saved );
+                    }
+                });
+            }
+            return this;
+        },
+
+        // retrieve obj (or array of objs) and apply callback to each
+        get: function( key /* or array */, callback ) {
+            var me = this;
+            if ( this.isArray( key ) ) {
+                var values = [];
+                for ( var i = 0, il = key.length; i < il; i++ ) {
+                    me.get( key[i], function( result ) {
+                        if ( result ) values.push( result );
+                        if ( values.length === il && callback ) {
+                            me.lambda( callback ).call( me, values );
+                        }
+                    });
+                }
+            } else {
+                return callback(this, Titanium.App.Properties.getObject(key));
+            }
+            return this;
+        },
+
+        // check if an obj exists in the collection
+        exists: function( key, callback ) {
+            if (callback){
+              if (Titanium.App.Properties.getObject(key)){
+                return cb(this, true);
+              }else{
+                return cb(this, false);
+              }
+            }
+
+            return this;
+        },
+
+        // returns all the objs to the callback as an array
+        all: function( callback ) {
+            var me = this;
+            if ( callback ) {
+                this.keys(function( keys ) {
+                    if ( !keys.length ) {
+                        me.fn( me.name, callback ).call( me, [] );
+                    } else {
+                        me.get( keys, function( values ) {
+                            me.fn( me.name, callback ).call( me, values );
+                        });
+                    }
+                });
+            }
+            return this;
+        },
+
+        // remove a doc or collection of em
+        remove: function( key /* or object */, callback ) {
+            var me = this;
+            Titanium.App.Properties.removeProperty(key);
+            if (callback) {
+              return callback(this);
+            }
+            return this;
+        },
+
+        // destroy everything
+        nuke: function( callback ) {
+            // nah, lets not do that
+        }
+    };
+}(this)));
+
 ; browserify_shim__define__module__export__(typeof Lawnchair != "undefined" ? Lawnchair : window.Lawnchair);
 
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],3:[function(require,module,exports){
+},{}],3:[function(_dereq_,module,exports){
 (function (global){
-;__browserify_shim_require__=require;(function browserifyShim(module, exports, require, define, browserify_shim__define__module__export__) {
+;__browserify_shim_require__=_dereq_;(function browserifyShim(module, exports, _dereq_, define, browserify_shim__define__module__export__) {
 /*
  json2.js
  2011-10-19
@@ -4929,7 +5036,7 @@ if (!JSON) {
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],4:[function(require,module,exports){
+},{}],4:[function(_dereq_,module,exports){
 // Copyright (c) 2005  Tom Wu
 // All Rights Reserved.
 // See "LICENSE" for details.
@@ -5722,7 +5829,7 @@ module.exports = {
   byte2Hex: byte2Hex,
   RSAKey: RSAKey
 }
-},{}],5:[function(require,module,exports){
+},{}],5:[function(_dereq_,module,exports){
 // http://wiki.commonjs.org/wiki/Unit_Testing/1.0
 //
 // THIS IS NOT TESTED NOR LIKELY TO WORK OUTSIDE V8!
@@ -5750,7 +5857,7 @@ module.exports = {
 // when used in node, this will actually load the util module we depend on
 // versus loading the builtin util module as happens otherwise
 // this is a bug in node module loading as far as I am concerned
-var util = require('util/');
+var util = _dereq_('util/');
 
 var pSlice = Array.prototype.slice;
 var hasOwn = Object.prototype.hasOwnProperty;
@@ -6084,14 +6191,14 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-},{"util/":7}],6:[function(require,module,exports){
+},{"util/":7}],6:[function(_dereq_,module,exports){
 module.exports = function isBuffer(arg) {
   return arg && typeof arg === 'object'
     && typeof arg.copy === 'function'
     && typeof arg.fill === 'function'
     && typeof arg.readUInt8 === 'function';
 }
-},{}],7:[function(require,module,exports){
+},{}],7:[function(_dereq_,module,exports){
 (function (process,global){
 // Copyright Joyent, Inc. and other Node contributors.
 //
@@ -6618,7 +6725,7 @@ function isPrimitive(arg) {
 }
 exports.isPrimitive = isPrimitive;
 
-exports.isBuffer = require('./support/isBuffer');
+exports.isBuffer = _dereq_('./support/isBuffer');
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -6662,7 +6769,7 @@ exports.log = function() {
  *     prototype.
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
-exports.inherits = require('inherits');
+exports.inherits = _dereq_('inherits');
 
 exports._extend = function(origin, add) {
   // Don't do anything if add isn't an object
@@ -6680,12 +6787,12 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,require("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(require,module,exports){
+}).call(this,_dereq_("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
-var util = require("util")
-var assert = require("assert")
+var util = _dereq_("util")
+var assert = _dereq_("assert")
 
 var slice = Array.prototype.slice
 var console
@@ -6770,7 +6877,7 @@ function assert(expression) {
 }
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"assert":5,"util":13}],9:[function(require,module,exports){
+},{"assert":5,"util":13}],9:[function(_dereq_,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7072,7 +7179,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],10:[function(require,module,exports){
+},{}],10:[function(_dereq_,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -7097,7 +7204,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],11:[function(require,module,exports){
+},{}],11:[function(_dereq_,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -7152,11 +7259,11 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],12:[function(require,module,exports){
-module.exports=require(6)
-},{}],13:[function(require,module,exports){
-module.exports=require(7)
-},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(require,module,exports){
+},{}],12:[function(_dereq_,module,exports){
+module.exports=_dereq_(6)
+},{}],13:[function(_dereq_,module,exports){
+module.exports=_dereq_(7)
+},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -7355,7 +7462,7 @@ module.exports=require(7)
     }));
 })();
 
-},{}],15:[function(require,module,exports){
+},{}],15:[function(_dereq_,module,exports){
 var toString = Object.prototype.toString
 
 module.exports = function(val){
@@ -7386,24 +7493,22 @@ module.exports = function(val){
   return typeof val
 }
 
-},{}],"/Users/weili/work/fh-sdks/fh-js-sdk/src/feedhenry.js":[function(require,module,exports){
-module.exports=require('il4jYc');
-},{}],"il4jYc":[function(require,module,exports){
-var constants = require("./modules/constants");
-var logger = require("./modules/logger");
-var ajax = require("./modules/ajax");
-var events = require("./modules/events");
-var cloud = require("./modules/waitForCloud");
-var api_act = require("./modules/api_act");
-var api_auth = require("./modules/api_auth");
-var api_sec = require("./modules/api_sec");
-var api_hash = require("./modules/api_hash");
-var api_sync = require("./modules/sync-cli");
-var api_mbaas = require("./modules/api_mbaas");
-var api_cloud = require("./modules/api_cloud");
-var fhparams = require("./modules/fhparams");
-var appProps = require("./modules/appProps");
-var device = require("./modules/device");
+},{}],16:[function(_dereq_,module,exports){
+var constants = _dereq_("./modules/constants");
+var logger = _dereq_("./modules/logger");
+var ajax = _dereq_("./modules/ajax");
+var events = _dereq_("./modules/events");
+var cloud = _dereq_("./modules/waitForCloud");
+var api_act = _dereq_("./modules/api_act");
+var api_auth = _dereq_("./modules/api_auth");
+var api_sec = _dereq_("./modules/api_sec");
+var api_hash = _dereq_("./modules/api_hash");
+var api_sync = _dereq_("./modules/sync-cli");
+var api_mbaas = _dereq_("./modules/api_mbaas");
+var api_cloud = _dereq_("./modules/api_cloud");
+var fhparams = _dereq_("./modules/fhparams");
+var appProps = _dereq_("./modules/appProps");
+var device = _dereq_("./modules/device");
 
 var defaultFail = function(msg, error){
   logger.error(msg + ":" + JSON.stringify(error));
@@ -7500,7 +7605,7 @@ module.exports = fh;
 
 
 
-},{"./modules/ajax":19,"./modules/api_act":20,"./modules/api_auth":21,"./modules/api_cloud":22,"./modules/api_hash":23,"./modules/api_mbaas":24,"./modules/api_sec":25,"./modules/appProps":26,"./modules/constants":28,"./modules/device":30,"./modules/events":31,"./modules/fhparams":32,"./modules/logger":39,"./modules/sync-cli":47,"./modules/waitForCloud":49}],18:[function(require,module,exports){
+},{"./modules/ajax":18,"./modules/api_act":19,"./modules/api_auth":20,"./modules/api_cloud":21,"./modules/api_hash":22,"./modules/api_mbaas":23,"./modules/api_sec":24,"./modules/appProps":"zDENqi","./modules/constants":26,"./modules/device":27,"./modules/events":28,"./modules/fhparams":29,"./modules/logger":36,"./modules/sync-cli":44,"./modules/waitForCloud":51}],17:[function(_dereq_,module,exports){
 var XDomainRequestWrapper = function(xdr){
   this.xdr = xdr;
   this.isWrapper = true;
@@ -7565,7 +7670,7 @@ XDomainRequestWrapper.prototype.getResponseHeader = function(n){
 
 module.exports = XDomainRequestWrapper;
 
-},{}],19:[function(require,module,exports){
+},{}],18:[function(_dereq_,module,exports){
 //a shameless copy from https://github.com/ForbesLindesay/ajax/blob/master/index.js.
 //it has the same methods and config options as jQuery/zeptojs but very light weight. see http://api.jquery.com/jQuery.ajax/
 //a few small changes are made for supporting IE 8 and other features:
@@ -7576,16 +7681,16 @@ module.exports = XDomainRequestWrapper;
 //5. an extra option called "tryJSONP" to allow try the same call with JSONP if normal CORS failed - should only be used internally
 //6. for jsonp, allow to specify the callback query param name using the "jsonp" option
 
-var eventsHandler = require("./events");
-var XDomainRequestWrapper = require("./XDomainRequestWrapper");
-var logger = require("./logger");
+var eventsHandler = _dereq_("./events");
+var XDomainRequestWrapper = _dereq_("./XDomainRequestWrapper");
+var logger = _dereq_("./logger");
 
 var type
 try {
-  type = require('type-of')
+  type = _dereq_('type-of')
 } catch (ex) {
   //hide from browserify
-  var r = require
+  var r = _dereq_
   type = r('type')
 }
 
@@ -7964,14 +8069,14 @@ function extend(target) {
   return target
 }
 
-},{"./XDomainRequestWrapper":18,"./events":31,"./logger":39,"type-of":15}],20:[function(require,module,exports){
-var logger =require("./logger");
-var cloud = require("./waitForCloud");
-var fhparams = require("./fhparams");
-var ajax = require("./ajax");
-var JSON = require("JSON");
-var handleError = require("./handleError");
-var appProps = require("./appProps");
+},{"./XDomainRequestWrapper":17,"./events":28,"./logger":36,"type-of":15}],19:[function(_dereq_,module,exports){
+var logger =_dereq_("./logger");
+var cloud = _dereq_("./waitForCloud");
+var fhparams = _dereq_("./fhparams");
+var ajax = _dereq_("./ajax");
+var JSON = _dereq_("JSON");
+var handleError = _dereq_("./handleError");
+var appProps = _dereq_("./appProps");
 
 function doActCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
@@ -8015,17 +8120,17 @@ module.exports = function(opts, success, fail){
   })
 }
 
-},{"./ajax":19,"./appProps":26,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],21:[function(require,module,exports){
-var logger =require("./logger");
-var cloud = require("./waitForCloud");
-var fhparams = require("./fhparams");
-var ajax = require("./ajax");
-var JSON = require("JSON");
-var handleError = require("./handleError");
-var device = require("./device");
-var constants = require("./constants");
-var checkAuth = require("./checkAuth");
-var appProps = require("./appProps");
+},{"./ajax":18,"./appProps":"zDENqi","./fhparams":29,"./handleError":31,"./logger":36,"./waitForCloud":51,"JSON":3}],20:[function(_dereq_,module,exports){
+var logger =_dereq_("./logger");
+var cloud = _dereq_("./waitForCloud");
+var fhparams = _dereq_("./fhparams");
+var ajax = _dereq_("./ajax");
+var JSON = _dereq_("JSON");
+var handleError = _dereq_("./handleError");
+var device = _dereq_("./device");
+var constants = _dereq_("./constants");
+var checkAuth = _dereq_("./checkAuth");
+var appProps = _dereq_("./appProps");
 
 module.exports = function(opts, success, fail){
   if(!fail){
@@ -8081,14 +8186,14 @@ module.exports = function(opts, success, fail){
     }
   });
 }
-},{"./ajax":19,"./appProps":26,"./checkAuth":27,"./constants":28,"./device":30,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],22:[function(require,module,exports){
-var logger =require("./logger");
-var cloud = require("./waitForCloud");
-var fhparams = require("./fhparams");
-var ajax = require("./ajax");
-var JSON = require("JSON");
-var handleError = require("./handleError");
-var appProps = require("./appProps");
+},{"./ajax":18,"./appProps":"zDENqi","./checkAuth":25,"./constants":26,"./device":27,"./fhparams":29,"./handleError":31,"./logger":36,"./waitForCloud":51,"JSON":3}],21:[function(_dereq_,module,exports){
+var logger =_dereq_("./logger");
+var cloud = _dereq_("./waitForCloud");
+var fhparams = _dereq_("./fhparams");
+var ajax = _dereq_("./ajax");
+var JSON = _dereq_("JSON");
+var handleError = _dereq_("./handleError");
+var appProps = _dereq_("./appProps");
 
 function doCloudCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
@@ -8126,8 +8231,8 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":19,"./appProps":26,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],23:[function(require,module,exports){
-var hashImpl = require("./security/hash");
+},{"./ajax":18,"./appProps":"zDENqi","./fhparams":29,"./handleError":31,"./logger":36,"./waitForCloud":51,"JSON":3}],22:[function(_dereq_,module,exports){
+var hashImpl = _dereq_("./security/hash");
 
 module.exports = function(p, s, f){
   var params = {};
@@ -8138,15 +8243,15 @@ module.exports = function(p, s, f){
   params.params = p;
   hashImpl(params, s, f);
 };
-},{"./security/hash":45}],24:[function(require,module,exports){
-var logger =require("./logger");
-var cloud = require("./waitForCloud");
-var fhparams = require("./fhparams");
-var ajax = require("./ajax");
-var JSON = require("JSON");
-var handleError = require("./handleError");
-var consts = require("./constants");
-var appProps = require("./appProps");
+},{"./security/hash":42}],23:[function(_dereq_,module,exports){
+var logger =_dereq_("./logger");
+var cloud = _dereq_("./waitForCloud");
+var fhparams = _dereq_("./fhparams");
+var ajax = _dereq_("./ajax");
+var JSON = _dereq_("JSON");
+var handleError = _dereq_("./handleError");
+var consts = _dereq_("./constants");
+var appProps = _dereq_("./appProps");
 
 module.exports = function(opts, success, fail){
   logger.debug("mbaas is called.");
@@ -8184,11 +8289,11 @@ module.exports = function(opts, success, fail){
   });
 } 
 
-},{"./ajax":19,"./appProps":26,"./constants":28,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],25:[function(require,module,exports){
-var keygen = require("./security/aes-keygen");
-var aes = require("./security/aes-node");
-var rsa = require("./security/rsa-node");
-var hash = require("./security/hash");
+},{"./ajax":18,"./appProps":"zDENqi","./constants":26,"./fhparams":29,"./handleError":31,"./logger":36,"./waitForCloud":51,"JSON":3}],24:[function(_dereq_,module,exports){
+var keygen = _dereq_("./security/aes-keygen");
+var aes = _dereq_("./security/aes-node");
+var rsa = _dereq_("./security/rsa-node");
+var hash = _dereq_("./security/hash");
 
 module.exports = function(p, s, f){
   if (!p.act) {
@@ -8228,83 +8333,11 @@ module.exports = function(p, s, f){
     }
   }
 }
-},{"./security/aes-keygen":43,"./security/aes-node":44,"./security/hash":45,"./security/rsa-node":46}],26:[function(require,module,exports){
-var consts = require("./constants");
-var ajax = require("./ajax");
-var logger = require("./logger");
-var qs = require("./queryMap");
-
-var app_props = null;
-
-var load = function(cb) {
-  var doc_url = document.location.href;
-  var url_params = qs(doc_url);
-  var local = (typeof url_params.url !== 'undefined');
-
-  // For local environments, no init needed
-  if (local) {
-    app_props = {};
-    app_props.local = true;
-    app_props.host = url_params.url;
-    app_props.appid = "000000000000000000000000";
-    app_props.appkey = "0000000000000000000000000000000000000000";
-    app_props.projectid = "000000000000000000000000";
-    app_props.connectiontag = "0.0.1";
-    app_props.loglevel = url_params.loglevel;
-    return cb(null, app_props);
-  }
-
-  var config_url = url_params.fhconfig || consts.config_js;
-  ajax({
-    url: config_url,
-    dataType: "json",
-    success: function(data) {
-      logger.debug("fhconfig = " + JSON.stringify(data));
-      //when load the config file on device, because file:// protocol is used, it will never call fail call back. The success callback will be called but the data value will be null.
-      if (null == data) {
-        //fh v2 only
-        if(window.fh_app_props){
-          app_props = window.fh_app_props;
-          return cb(null, window.fh_app_props);
-        }
-        return cb(new Error("app_config_missing"));
-      } else {
-        app_props = data;
-
-        cb(null, app_props);
-      }
-    },
-    error: function(req, statusText, error) {
-      //fh v2 only
-      if(window.fh_app_props){
-        app_props = window.fh_app_props;
-        return cb(null, window.fh_app_props);
-      }
-      logger.error(consts.config_js + " Not Found");
-      cb(new Error("app_config_missing"));
-    }
-  });
-};
-
-var setAppProps = function(props) {
-  app_props = props;
-};
-
-var getAppProps = function() {
-  return app_props;
-};
-
-module.exports = {
-  load: load,
-  getAppProps: getAppProps,
-  setAppProps: setAppProps
-};
-
-},{"./ajax":19,"./constants":28,"./logger":39,"./queryMap":41}],27:[function(require,module,exports){
-var logger = require("./logger");
-var queryMap = require("./queryMap");
-var JSON = require("JSON");
-var fhparams = require("./fhparams");
+},{"./security/aes-keygen":40,"./security/aes-node":41,"./security/hash":42,"./security/rsa-node":43}],25:[function(_dereq_,module,exports){
+var logger = _dereq_("./logger");
+var queryMap = _dereq_("./queryMap");
+var JSON = _dereq_("JSON");
+var fhparams = _dereq_("./fhparams");
 
 var checkAuth = function(url) {
   if (/\_fhAuthCallback/.test(url)) {
@@ -8408,43 +8441,18 @@ module.exports = {
   "handleAuthResponse": handleAuthResponse
 };
 
-},{"./fhparams":32,"./logger":39,"./queryMap":41,"JSON":3}],28:[function(require,module,exports){
+},{"./fhparams":29,"./logger":36,"./queryMap":38,"JSON":3}],26:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "BUILD_VERSION",
+  "sdk_version": "2.0.3-alpha",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit"
 };
 
-},{}],29:[function(require,module,exports){
-module.exports = {
-  readCookieValue  : function (cookie_name) {
-    var name_str = cookie_name + "=";
-    var cookies = document.cookie.split(";");
-    for (var i = 0; i < cookies.length; i++) {
-      var c = cookies[i];
-      while (c.charAt(0) === ' ') {
-        c = c.substring(1, c.length);
-      }
-      if (c.indexOf(name_str) === 0) {
-        return c.substring(name_str.length, c.length);
-      }
-    }
-    return null;
-  },
-
-  createCookie : function (cookie_name, cookie_value) {
-    var date = new Date();
-    date.setTime(date.getTime() + 36500 * 24 * 60 * 60 * 1000); //100 years
-    var expires = "; expires=" + date.toGMTString();
-    document.cookie = cookie_name + "=" + cookie_value + expires + "; path = /";
-  }
-};
-
-},{}],30:[function(require,module,exports){
-var cookies = require("./cookies");
-var uuidModule = require("./uuid");
-var logger = require("./logger");
+},{}],27:[function(_dereq_,module,exports){
+var cookies = _dereq_("./cookies");
+var uuidModule = _dereq_("./uuid");
+var logger = _dereq_("./logger");
 
 module.exports = {
   //try to get the unique device identifier
@@ -8482,7 +8490,7 @@ module.exports = {
 
   "getDestination": function(){
     var destination = null;
-    var platformsToTest = require("./platformsMap");
+    var platformsToTest = _dereq_("./platformsMap");
 
 
     var userAgent = navigator.userAgent;
@@ -8512,18 +8520,18 @@ module.exports = {
   }
 }
 
-},{"./cookies":29,"./logger":39,"./platformsMap":40,"./uuid":48}],31:[function(require,module,exports){
-var EventEmitter = require('events').EventEmitter;
+},{"./cookies":"RdeKcl","./logger":36,"./platformsMap":37,"./uuid":50}],28:[function(_dereq_,module,exports){
+var EventEmitter = _dereq_('events').EventEmitter;
 
 var emitter = new EventEmitter();
 emitter.setMaxListeners(0);
 
 module.exports = emitter;
-},{"events":9}],32:[function(require,module,exports){
-var device = require("./device");
-var sdkversion = require("./sdkversion");
-var appProps = require("./appProps");
-var logger = require("./logger");
+},{"events":9}],29:[function(_dereq_,module,exports){
+var device = _dereq_("./device");
+var sdkversion = _dereq_("./sdkversion");
+var appProps = _dereq_("./appProps");
+var logger = _dereq_("./logger");
 
 var defaultParams = null;
 var authSessionToken = null;
@@ -8589,7 +8597,7 @@ module.exports = {
   "setAuthSessionToken":setAuthSessionToken
 }
 
-},{"./appProps":26,"./device":30,"./logger":39,"./sdkversion":42}],33:[function(require,module,exports){
+},{"./appProps":"zDENqi","./device":27,"./logger":36,"./sdkversion":39}],30:[function(_dereq_,module,exports){
 module.exports = function(){
   var path = null;
   var scripts = document.getElementsByTagName('script');
@@ -8610,8 +8618,8 @@ module.exports = function(){
   return path;
 };
 
-},{}],34:[function(require,module,exports){
-var JSON = require("JSON");
+},{}],31:[function(_dereq_,module,exports){
+var JSON = _dereq_("JSON");
 
 module.exports = function(fail, req, resStatus, error){
   var errraw;
@@ -8637,9 +8645,9 @@ module.exports = function(fail, req, resStatus, error){
   }
 };
 
-},{"JSON":3}],35:[function(require,module,exports){
-var constants = require("./constants");
-var appProps = require("./appProps");
+},{"JSON":3}],32:[function(_dereq_,module,exports){
+var constants = _dereq_("./constants");
+var appProps = _dereq_("./appProps");
 
 function removeEndSlash(input){
   var ret = input;
@@ -8727,19 +8735,19 @@ CloudHost.prototype.getCloudUrl = function(path){
 
 
 module.exports = CloudHost;
-},{"./appProps":26,"./constants":28}],36:[function(require,module,exports){
-var findFHPath = require("./findFHPath");
-var loadScript = require("./loadScript");
-var Lawnchair = require('../../libs/generated/lawnchair');
-var lawnchairext = require('./lawnchair-ext');
-var consts = require("./constants");
-var fhparams = require("./fhparams");
-var ajax = require("./ajax");
-var handleError = require("./handleError");
-var logger = require("./logger");
-var JSON = require("JSON");
-var hashFunc = require("./security/hash");
-var appProps = require("./appProps");
+},{"./appProps":"zDENqi","./constants":26}],33:[function(_dereq_,module,exports){
+var findFHPath = _dereq_("./findFHPath");
+var loadScript = _dereq_("./loadScript");
+var Lawnchair = _dereq_('../../libs/generated/lawnchair');
+var lawnchairext = _dereq_('./lawnchair-ext');
+var consts = _dereq_("./constants");
+var fhparams = _dereq_("./fhparams");
+var ajax = _dereq_("./ajax");
+var handleError = _dereq_("./handleError");
+var logger = _dereq_("./logger");
+var JSON = _dereq_("JSON");
+var hashFunc = _dereq_("./security/hash");
+var appProps = _dereq_("./appProps");
 
 var init = function(cb) {
   appProps.load(function(err, data) {
@@ -8878,8 +8886,8 @@ module.exports = {
   "loadCloudProps": loadCloudProps
 }
 
-},{"../../libs/generated/lawnchair":2,"./ajax":19,"./appProps":26,"./constants":28,"./fhparams":32,"./findFHPath":33,"./handleError":34,"./lawnchair-ext":37,"./loadScript":38,"./logger":39,"./security/hash":45,"JSON":3}],37:[function(require,module,exports){
-var Lawnchair = require('../../libs/generated/lawnchair');
+},{"../../libs/generated/lawnchair":2,"./ajax":18,"./appProps":"zDENqi","./constants":26,"./fhparams":29,"./findFHPath":30,"./handleError":31,"./lawnchair-ext":34,"./loadScript":35,"./logger":36,"./security/hash":42,"JSON":3}],34:[function(_dereq_,module,exports){
+var Lawnchair = _dereq_('../../libs/generated/lawnchair');
 
 var fileStorageAdapter = function (app_props, hashFunc) {
   // private methods
@@ -9066,7 +9074,7 @@ var addAdapter = function(app_props, hashFunc){
 module.exports = {
   addAdapter: addAdapter
 }
-},{"../../libs/generated/lawnchair":2}],38:[function(require,module,exports){
+},{"../../libs/generated/lawnchair":2}],35:[function(_dereq_,module,exports){
 module.exports = function (url, callback) {
   var script;
   var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
@@ -9089,9 +9097,9 @@ module.exports = function (url, callback) {
   head.insertBefore(script, head.firstChild);
 };
 
-},{}],39:[function(require,module,exports){
-var console = require('console');
-var log = require('loglevel');
+},{}],36:[function(_dereq_,module,exports){
+var console = _dereq_('console');
+var log = _dereq_('loglevel');
 
 log.setLevel('info');
 
@@ -9113,7 +9121,7 @@ log.setLevel('info');
  * Use either string or integer value
  */
 module.exports = log;
-},{"console":8,"loglevel":14}],40:[function(require,module,exports){
+},{"console":8,"loglevel":14}],37:[function(_dereq_,module,exports){
 module.exports = [
   {
     "destination" :"ipad",
@@ -9141,7 +9149,7 @@ module.exports = [
   }
 ];
 
-},{}],41:[function(require,module,exports){
+},{}],38:[function(_dereq_,module,exports){
 module.exports = function(url) {
   var qmap = {};
   var i = url.split("?");
@@ -9157,8 +9165,8 @@ module.exports = function(url) {
   }
   return qmap;
 };
-},{}],42:[function(require,module,exports){
-var constants = require("./constants");
+},{}],39:[function(_dereq_,module,exports){
+var constants = _dereq_("./constants");
 
 module.exports = function() {
   var type = "FH_JS_SDK";
@@ -9170,8 +9178,8 @@ module.exports = function() {
   return type + "/" + constants.sdk_version;
 };
 
-},{"./constants":28}],43:[function(require,module,exports){
-var rsa = require("../../../libs/rsa");
+},{"./constants":26}],40:[function(_dereq_,module,exports){
+var rsa = _dereq_("../../../libs/rsa");
 var SecureRandom = rsa.SecureRandom;
 var byte2Hex = rsa.byte2Hex;
 
@@ -9212,8 +9220,8 @@ var aes_keygen = function(p, s, f){
 }
 
 module.exports = aes_keygen;
-},{"../../../libs/rsa":4}],44:[function(require,module,exports){
-var CryptoJS = require("../../../libs/generated/crypto");
+},{"../../../libs/rsa":4}],41:[function(_dereq_,module,exports){
+var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 var encrypt = function(p, s, f){
   var fields = ['key', 'plaintext', 'iv'];
@@ -9253,8 +9261,8 @@ module.exports = {
   encrypt: encrypt,
   decrypt: decrypt
 }
-},{"../../../libs/generated/crypto":1}],45:[function(require,module,exports){
-var CryptoJS = require("../../../libs/generated/crypto");
+},{"../../../libs/generated/crypto":1}],42:[function(_dereq_,module,exports){
+var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 
 var hash = function(p, s, f){
@@ -9278,8 +9286,8 @@ var hash = function(p, s, f){
 }
 
 module.exports = hash;
-},{"../../../libs/generated/crypto":1}],46:[function(require,module,exports){
-var rsa = require("../../../libs/rsa");
+},{"../../../libs/generated/crypto":1}],43:[function(_dereq_,module,exports){
+var rsa = _dereq_("../../../libs/rsa");
 var RSAKey = rsa.RSAKey;
 
 var encrypt = function(p, s, f){
@@ -9303,12 +9311,12 @@ var encrypt = function(p, s, f){
 module.exports = {
   encrypt: encrypt
 }
-},{"../../../libs/rsa":4}],47:[function(require,module,exports){
-var JSON = require("JSON");
-var actAPI = require("./api_act");
-var cloudAPI = require("./api_cloud");
-var CryptoJS = require("../../libs/generated/crypto");
-var Lawnchair = require('../../libs/generated/lawnchair');
+},{"../../../libs/rsa":4}],44:[function(_dereq_,module,exports){
+var JSON = _dereq_("JSON");
+var actAPI = _dereq_("./api_act");
+var cloudAPI = _dereq_("./api_cloud");
+var CryptoJS = _dereq_("../../libs/generated/crypto");
+var Lawnchair = _dereq_('../../libs/generated/lawnchair');
 
 var self = {
 
@@ -10611,7 +10619,73 @@ module.exports = {
   doSync: self.doSync,
   forceSync: self.forceSync
 };
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":20,"./api_cloud":22,"JSON":3}],48:[function(require,module,exports){
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":19,"./api_cloud":21,"JSON":3}],"./modules/appProps":[function(_dereq_,module,exports){
+module.exports=_dereq_('zDENqi');
+},{}],"zDENqi":[function(_dereq_,module,exports){
+var ti = _dereq_("./ti");
+var consts = _dereq_("../constants");
+var ajax = _dereq_("../ajax");
+var logger = _dereq_("../logger");
+var qs = _dereq_("../queryMap");
+
+
+var app_props = null;
+
+var load = function(cb) {
+ /*
+   We use eval here because Titanium also does require to include third party scripts.
+   It bypasses browserify's require, but still triggers when in a Titanium app
+   */
+  app_props = eval("require(\"fhconfig\")");
+  return cb(null, app_props);
+};
+
+var setAppProps = function(props) {
+  app_props = props;
+};
+
+var getAppProps = function() {
+  return app_props;
+};
+
+module.exports = {
+  load: load,
+  getAppProps: getAppProps,
+  setAppProps: setAppProps
+};
+
+},{"../ajax":18,"../constants":26,"../logger":36,"../queryMap":38,"./ti":49}],"RdeKcl":[function(_dereq_,module,exports){
+module.exports = {
+  readCookieValue  : function (cookie_name) {
+    if (typeof Titanium !== 'undefined'){
+      return Titanium.App.Properties.getObject(cookie_name)
+    }
+    return null;
+  },
+
+  createCookie : function (cookie_name, cookie_value) {
+    if (typeof Titanium !== 'undefined'){
+      return Titanium.App.Properties.setObject(cookie_name, cookie_value)
+    }
+  }
+};
+},{}],"./cookies":[function(_dereq_,module,exports){
+module.exports=_dereq_('RdeKcl');
+},{}],49:[function(_dereq_,module,exports){
+if (typeof Titanium === 'undefined'){
+  if (typeof window === 'undefined'){
+    window = { top : {}, location : { protocol : '', href : '' } };
+  }
+  if (typeof document === 'undefined'){
+    document = { location : { href : '', search : '' } };
+  }
+  if (typeof navigator === 'undefined'){
+    navigator = { userAgent : 'Titanium' };
+  }
+}
+
+module.exports = {};
+},{}],50:[function(_dereq_,module,exports){
 module.exports = {
   createUUID : function () {
     //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
@@ -10628,12 +10702,12 @@ module.exports = {
   }
 };
 
-},{}],49:[function(require,module,exports){
-var initializer = require("./initializer");
-var events = require("./events");
-var CloudHost = require("./hosts");
-var constants = require("./constants");
-var logger = require("./logger");
+},{}],51:[function(_dereq_,module,exports){
+var initializer = _dereq_("./initializer");
+var events = _dereq_("./events");
+var CloudHost = _dereq_("./hosts");
+var constants = _dereq_("./constants");
+var logger = _dereq_("./logger");
 
 
 //the cloud configurations
@@ -10675,7 +10749,7 @@ var getCloudHost = function(){
 
 var getCloudHostUrl = function(){
   if(typeof cloud_host !== "undefined"){
-    var appProps = require("./appProps").getAppProps();
+    var appProps = _dereq_("./appProps").getAppProps();
     return cloud_host.getHost(appProps.mode);
   } else {
     return undefined;
@@ -10721,4 +10795,6 @@ module.exports = {
   getInitError: getInitError,
   reset: reset
 }
-},{"./appProps":26,"./constants":28,"./events":31,"./hosts":35,"./initializer":36,"./logger":39}]},{},["il4jYc"])
+},{"./appProps":"zDENqi","./constants":26,"./events":28,"./hosts":32,"./initializer":33,"./logger":36}]},{},[16])
+(16)
+});

@@ -54,12 +54,16 @@ var loadCloudProps = function(app_props, callback) {
   //as dom, webkit-sqlite, localFileStorage, window-name
   var lcConf = {
     name: "fh_init_storage",
-    adapter: ["dom", "webkit-sqlite", "localFileStorage", "window-name", "titanium"],
+    adapter: ["dom", "webkit-sqlite", "localFileStorage", "window-name"],
     fail: function(msg, err) {
       var error_message = 'read/save from/to local storage failed  msg:' + msg + ' err:' + err;
       return fail(error_message, {});
     }
   };
+
+  if(typeof Titanium !== "undefined"){
+    lcConf.adapter = ['titanium'];
+  }
 
   var storage = null;
   try {

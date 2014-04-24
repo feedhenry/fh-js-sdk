@@ -29,7 +29,13 @@ module.exports = function(grunt) {
           "libs/lawnchair/lawnchairWindowNameStorageAdapter.js",
           "libs/lawnchair/lawnchairLocalStorageAdapter.js",
           "libs/lawnchair/lawnchairWebkitSqlAdapter.js",
-          "libs/lawnchair/lawnchairHtml5FileSystem.js",
+          "libs/lawnchair/lawnchairHtml5FileSystem.js"
+        ],
+        dest: "libs/generated/lawnchair.js"
+      },
+      lawnchair_titanium: {
+        src: [
+          "libs/generated/lawnchair.js",
           "libs/lawnchair/lawnchairTitanium.js",
         ],
         dest: "libs/generated/lawnchair.js"
@@ -116,6 +122,32 @@ module.exports = function(grunt) {
           }]
         }
       },
+      dist_titanium:{
+        //shim is defined inside package.json
+        src:['src/feedhenry.js'],
+        dest: 'dist/feedhenry-titanium.js',
+        options: {
+          standalone: 'feedhenry',
+          transform: [function(file){
+            var data = '';
+
+            function write (buf) { data += buf }
+            function end () {
+              var t = data;
+              if(file.indexOf("constants.js") >= 0){
+                t = data.replace("BUILD_VERSION", pkg.version);
+              }
+              this.queue(t);
+              this.queue(null);
+            }
+            return through(write, end);
+          }],
+          alias: ['./src/modules/titanium/cookies.js:./cookies', 
+                  './src/modules/titanium/appProps.js:./appProps', 
+                  './src/modules/titanium/appProps.js:./modules/appProps'
+                 ]
+        }
+      },
       // This browserify build can be required by other browserify modules that
       // have been created with an --external parameter.
       require: {
@@ -153,7 +185,8 @@ module.exports = function(grunt) {
       dist: {
         "files": {
           'dist/feedhenry.min.js': ['dist/feedhenry.js'],
-          'dist/feedhenry-forms.min.js': ['dist/feedhenry-forms.js']
+          'dist/feedhenry-forms.min.js': ['dist/feedhenry-forms.js'],
+          'dist/feedhenry-titanium.min.js': ['dist/feedhenry-titanium.js']
         }
       }
     },
@@ -245,9 +278,13 @@ module.exports = function(grunt) {
   grunt.registerTask('local', ['start-local-servers', 'connect:server:keepalive']);
 
   //run tests in phatomjs
-  grunt.registerTask('test', ['jshint', 'browserify', 'connect:server', 'mocha_phantomjs']);
+  grunt.registerTask('test', ['jshint', 'browserify:dist', 'browserify:require', 'browserify:test', 'connect:server', 'mocha_phantomjs']);
 
   grunt.registerTask('concat-core-sdk', ['concat:lawnchair', 'concat:crypto', 'concat:forms_core', 'concat:forms_backbone', 'concat:forms_backboneRequireJS']);
 
-  grunt.registerTask('default', 'jshint concat-core-sdk test concat:forms_sdk concat:forms_appFormsTest uglify:dist zip');
+  grunt.registerTask('concat-titanium', ['concat:lawnchair', 'concat:lawnchair_titanium', 'concat:crypto']);
+
+  grunt.registerTask('titanium', 'concat-titanium browserify:dist_titanium');
+
+  grunt.registerTask('default', 'jshint concat-core-sdk test concat:forms_sdk concat:forms_appFormsTest titanium uglify:dist zip');
 };

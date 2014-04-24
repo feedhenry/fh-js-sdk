@@ -4429,113 +4429,6 @@ Lawnchair.adapter('html5-filesystem', (function(global){
     }
   };
 }(this)));
-Lawnchair.adapter('titanium', (function(global){
-
-    return {
-        // boolean; true if the adapter is valid for the current environment
-        valid: function() {
-            return typeof Titanium !== 'undefined';
-        },
-
-        // constructor call and callback. 'name' is the most common option
-        init: function( options, callback ) {
-          if (callback){
-            return callback(this);
-          }
-        },
-
-        // returns all the keys in the store
-        keys: function( callback ) {
-            return Titanium.App.Properties.listProperties();
-        },
-
-        // save an object
-        save: function( obj, callback ) {
-            Titanium.App.Properties.setObject(obj.key, obj);
-            return this;
-        },
-
-        // batch save array of objs
-        batch: function( objs, callback ) {
-            var me = this;
-            var saved = [];
-            for ( var i = 0, il = objs.length; i < il; i++ ) {
-                me.save( objs[i], function( obj ) {
-                    saved.push( obj );
-                    if ( saved.length === il && callback ) {
-                        me.lambda( callback ).call( me, saved );
-                    }
-                });
-            }
-            return this;
-        },
-
-        // retrieve obj (or array of objs) and apply callback to each
-        get: function( key /* or array */, callback ) {
-            var me = this;
-            if ( this.isArray( key ) ) {
-                var values = [];
-                for ( var i = 0, il = key.length; i < il; i++ ) {
-                    me.get( key[i], function( result ) {
-                        if ( result ) values.push( result );
-                        if ( values.length === il && callback ) {
-                            me.lambda( callback ).call( me, values );
-                        }
-                    });
-                }
-            } else {
-                return callback(this, Titanium.App.Properties.getObject(key));
-            }
-            return this;
-        },
-
-        // check if an obj exists in the collection
-        exists: function( key, callback ) {
-            if (callback){
-              if (Titanium.App.Properties.getObject(key)){
-                return cb(this, true);
-              }else{
-                return cb(this, false);
-              }
-            }
-
-            return this;
-        },
-
-        // returns all the objs to the callback as an array
-        all: function( callback ) {
-            var me = this;
-            if ( callback ) {
-                this.keys(function( keys ) {
-                    if ( !keys.length ) {
-                        me.fn( me.name, callback ).call( me, [] );
-                    } else {
-                        me.get( keys, function( values ) {
-                            me.fn( me.name, callback ).call( me, values );
-                        });
-                    }
-                });
-            }
-            return this;
-        },
-
-        // remove a doc or collection of em
-        remove: function( key /* or object */, callback ) {
-            var me = this;
-            Titanium.App.Properties.removeProperty(key);
-            if (callback) {
-              return callback(this);
-            }
-            return this;
-        },
-
-        // destroy everything
-        nuke: function( callback ) {
-            // nah, lets not do that
-        }
-    };
-}(this)));
-
 ; browserify_shim__define__module__export__(typeof Lawnchair != "undefined" ? Lawnchair : window.Lawnchair);
 
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
@@ -6787,8 +6680,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/Users/cianclarke/workspace/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/cianclarke/workspace/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -7263,7 +7156,7 @@ process.chdir = function (dir) {
 module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/Users/cianclarke/workspace/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -8359,15 +8252,6 @@ var load = function(cb) {
     return cb(null, app_props);
   }
 
-  if (typeof Titanium !== 'undefined'){
-  	/*
-     We use eval here because Titanium also does require to include third party scripts.
-     It bypasses browserify's require, but still triggers when in a Titanium app
-     */
-    app_props = eval("require(\"fhconfig\")");
-  	return cb(null, app_props);
-  }
-
   var config_url = url_params.fhconfig || consts.config_js;
   ajax({
     url: config_url,
@@ -8523,17 +8407,6 @@ module.exports = {
 };
 
 },{"./fhparams":31,"./logger":38,"./queryMap":40,"JSON":3}],27:[function(_dereq_,module,exports){
-if (typeof Titanium === 'undefined'){
-  if (typeof window === 'undefined'){
-    window = { top : {}, location : { protocol : '', href : '' } };
-  }
-  if (typeof document === 'undefined'){
-    document = { location : { href : '', search : '' } };
-  }
-  if (typeof navigator === 'undefined'){
-    navigator = { userAgent : 'Titanium' };
-  }
-}
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
   "sdk_version": "2.0.3-alpha",
@@ -8544,10 +8417,6 @@ module.exports = {
 },{}],28:[function(_dereq_,module,exports){
 module.exports = {
   readCookieValue  : function (cookie_name) {
-    if (typeof Titanium !== 'undefined'){
-  	  return Titanium.App.Properties.getObject(cookie_name)
-  	}
-
     var name_str = cookie_name + "=";
     var cookies = document.cookie.split(";");
     for (var i = 0; i < cookies.length; i++) {
@@ -8563,10 +8432,6 @@ module.exports = {
   },
 
   createCookie : function (cookie_name, cookie_value) {
-    if (typeof Titanium !== 'undefined'){
-  	  return Titanium.App.Properties.setObject(cookie_name, cookie_value)
-  	}
-    
     var date = new Date();
     date.setTime(date.getTime() + 36500 * 24 * 60 * 60 * 1000); //100 years
     var expires = "; expires=" + date.toGMTString();
@@ -8917,12 +8782,16 @@ var loadCloudProps = function(app_props, callback) {
   //as dom, webkit-sqlite, localFileStorage, window-name
   var lcConf = {
     name: "fh_init_storage",
-    adapter: ["dom", "webkit-sqlite", "localFileStorage", "window-name", "titanium"],
+    adapter: ["dom", "webkit-sqlite", "localFileStorage", "window-name"],
     fail: function(msg, err) {
       var error_message = 'read/save from/to local storage failed  msg:' + msg + ' err:' + err;
       return fail(error_message, {});
     }
   };
+
+  if(typeof Titanium !== "undefined"){
+    lcConf.adapter = ['titanium'];
+  }
 
   var storage = null;
   try {

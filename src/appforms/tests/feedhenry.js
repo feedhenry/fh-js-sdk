@@ -6680,8 +6680,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -7156,7 +7156,7 @@ process.chdir = function (dir) {
 module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+},{"./support/isBuffer":12,"/Users/weili/work/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -7564,12 +7564,12 @@ XDomainRequestWrapper.prototype.getResponseHeader = function(n){
 module.exports = XDomainRequestWrapper;
 
 },{}],18:[function(_dereq_,module,exports){
-//a shameless copy from https://github.com/ForbesLindesay/ajax/blob/master/index.js. 
+//a shameless copy from https://github.com/ForbesLindesay/ajax/blob/master/index.js.
 //it has the same methods and config options as jQuery/zeptojs but very light weight. see http://api.jquery.com/jQuery.ajax/
 //a few small changes are made for supporting IE 8 and other features:
 //1. use getXhr function to replace the default XMLHttpRequest implementation for supporting IE8
 //2. Integrate with events emitter. So to subscribe ajax events, you can do $fh.on("ajaxStart", handler). See http://api.jquery.com/Ajax_Events/ for full list of events
-//3. allow passing xhr factory method through options: e.g. $fh.ajax({xhr: function(){/*own implementation of xhr*/}}); 
+//3. allow passing xhr factory method through options: e.g. $fh.ajax({xhr: function(){/*own implementation of xhr*/}});
 //4. Use fh_timeout value as the default timeout
 //5. an extra option called "tryJSONP" to allow try the same call with JSONP if normal CORS failed - should only be used internally
 //6. for jsonp, allow to specify the callback query param name using the "jsonp" option
@@ -7641,9 +7641,21 @@ var ajax = module.exports = function (options) {
     baseHeaders['Content-Type'] = (settings.contentType || 'application/x-www-form-urlencoded')
   settings.headers = extend(baseHeaders, settings.headers || {})
 
+  if (typeof Titanium !== 'undefined') {
+    xhr.setOnerror(function(){
+      if (!abortTimeout){
+        return;
+      }
+      clearTimeout(abortTimeout);
+      ajaxError(null, 'error', xhr, settings);
+    });
+  }
+
   xhr.onreadystatechange = function () {
+
     if (xhr.readyState == 4) {
       clearTimeout(abortTimeout)
+      abortTimeout = undefined;
       var result, error = false
       if(settings.tryJSONP){
         //check if the request has fail. In some cases, we may want to try jsonp as well. Again, FH only...
@@ -7784,6 +7796,7 @@ ajax.JSONP = function (options) {
 
   window[callbackName] = function (data) {
     clearTimeout(abortTimeout)
+    abortTimeout = undefined;
     //todo: remove script
     //$(script).remove()
     delete window[callbackName]
@@ -7823,6 +7836,13 @@ function getXhr(crossDomain){
   if(isIE() && (crossDomain === true) && typeof window.XDomainRequest !== "undefined"){
     xhr = new XDomainRequestWrapper(new XDomainRequest());
   }
+  // For Titanium SDK
+  if (typeof Titanium !== 'undefined'){
+    xhr = Titanium.Network.createHTTPClient({
+      timeout: ajax.settings.timeout
+    });
+  }
+
   return xhr;
 }
 
@@ -7941,6 +7961,7 @@ function extend(target) {
   })
   return target
 }
+
 },{"./XDomainRequestWrapper":17,"./events":30,"./logger":38,"type-of":15}],19:[function(_dereq_,module,exports){
 var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
@@ -7991,6 +8012,7 @@ module.exports = function(opts, success, fail){
     }
   })
 }
+
 },{"./ajax":18,"./appProps":25,"./fhparams":31,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],20:[function(_dereq_,module,exports){
 var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
@@ -8275,6 +8297,7 @@ module.exports = {
   getAppProps: getAppProps,
   setAppProps: setAppProps
 };
+
 },{"./ajax":18,"./constants":27,"./logger":38,"./queryMap":40}],26:[function(_dereq_,module,exports){
 var logger = _dereq_("./logger");
 var queryMap = _dereq_("./queryMap");
@@ -8373,7 +8396,7 @@ if (window.addEventListener) {
   window.addEventListener('load', function(){
     checkAuth(window.location.href);
   }, false); //W3C
-} else {
+} else if (window.attachEvent) {
   window.attachEvent('onload', function(){
     checkAuth(window.location.href);
   }); //IE
@@ -8390,6 +8413,7 @@ module.exports = {
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit"
 };
+
 },{}],28:[function(_dereq_,module,exports){
 module.exports = {
   readCookieValue  : function (cookie_name) {
@@ -8765,6 +8789,10 @@ var loadCloudProps = function(app_props, callback) {
     }
   };
 
+  if(typeof Titanium !== "undefined"){
+    lcConf.adapter = ['titanium'];
+  }
+
   var storage = null;
   try {
     storage = new Lawnchair(lcConf, function() {});
@@ -8847,6 +8875,7 @@ module.exports = {
   "init": init,
   "loadCloudProps": loadCloudProps
 }
+
 },{"../../libs/generated/lawnchair":2,"./ajax":18,"./appProps":25,"./constants":27,"./fhparams":31,"./findFHPath":32,"./handleError":33,"./lawnchair-ext":36,"./loadScript":37,"./logger":38,"./security/hash":44,"JSON":3}],36:[function(_dereq_,module,exports){
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
 
