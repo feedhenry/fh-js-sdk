@@ -111,6 +111,7 @@ var PageView=BaseView.extend({
   },
 
   hide: function () {
+
     this.$el.addClass('fh_appform_hidden');
   },
 

@@ -250,7 +250,7 @@ module.exports = function(grunt) {
         stopLocalServers();
     });
 
-    //use this task for local development. Load example/index.html file in the browser after server started. 
+    //use this task for local development. Load example/index.html file in the browser after server started.
     //can run grunt watch as well in another terminal to auto generate the combined js file
     grunt.registerTask('local', ['start-local-servers', 'connect:server:keepalive']);
 
