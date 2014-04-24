@@ -1,4 +1,4 @@
-if (typeof Titanium === 'undefined'){
+if (typeof Titanium !== 'undefined'){
   if (typeof window === 'undefined'){
     window = { top : {}, location : { protocol : '', href : '' } };
   }
@@ -9,5 +9,3 @@ if (typeof Titanium === 'undefined'){
     navigator = { userAgent : 'Titanium' };
   }
 }
-
-module.exports = {};

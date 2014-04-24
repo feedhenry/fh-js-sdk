@@ -40,6 +40,10 @@ module.exports = function(grunt) {
         ],
         dest: "libs/generated/lawnchair.js"
       },
+      titanium_globals : {
+        src : ["src/modules/titanium/ti.js", "dist/feedhenry-titanium.js"],
+        dest : "dist/feedhenry-titanium.js"
+      },
       crypto: {
         src:[
           "libs/cryptojs/cryptojs-core.js",
@@ -142,8 +146,8 @@ module.exports = function(grunt) {
             }
             return through(write, end);
           }],
-          alias: ['./src/modules/titanium/cookies.js:./cookies', 
-                  './src/modules/titanium/appProps.js:./appProps', 
+          alias: ['./src/modules/titanium/cookies.js:./cookies',
+                  './src/modules/titanium/appProps.js:./appProps',
                   './src/modules/titanium/appProps.js:./modules/appProps'
                  ]
         }
@@ -284,7 +288,10 @@ module.exports = function(grunt) {
 
   grunt.registerTask('concat-titanium', ['concat:lawnchair', 'concat:lawnchair_titanium', 'concat:crypto']);
 
-  grunt.registerTask('titanium', 'concat-titanium browserify:dist_titanium');
+  // We need to ensure that the Titanium globals (definition of window, document, navigator) are at the very top of the file
+  grunt.registerTask('concat-titanium-globals', ['concat:titanium_globals']);
+
+  grunt.registerTask('titanium', 'concat-titanium browserify:dist_titanium concat-titanium-globals');
 
   grunt.registerTask('default', 'jshint concat-core-sdk test concat:forms_sdk concat:forms_appFormsTest titanium uglify:dist zip');
 };
