@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.0.8-alpha - 2014-04-25 - IR226 - Niall Donnelly
+
+* 6802 Fix validation on hidden page for forms
+
 ## 2.0.7-alpha - 2014-04-25 - IR226 - Wei Li
 
 * Add support for Titanium 
