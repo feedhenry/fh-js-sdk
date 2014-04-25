@@ -124,6 +124,18 @@ appForm.models = function (module) {
     var id = this.getFieldId();
     return this.form.getRulesByFieldId(id);
   };
+  /**
+   * return default value for a field
+   *
+   */
+  Field.prototype.getDefaultValue = function (){
+    var def =  this.getFieldDefinition();
+    if(def){
+      return def.defaultValue;
+    }
+  };
+
+
   Field.prototype.setVisible = function (isVisible) {
     this.set('visible', isVisible);
     if (isVisible) {
