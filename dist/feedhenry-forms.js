@@ -6777,8 +6777,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/Users/kelly/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/kelly/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -7253,7 +7253,7 @@ process.chdir = function (dir) {
 module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/Users/kelly/work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -8506,7 +8506,7 @@ module.exports = {
 },{"./fhparams":31,"./logger":37,"./queryMap":39,"JSON":3}],27:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.0.8-alpha",
+  "sdk_version": "2.0.9-alpha",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit"
 };
@@ -17670,46 +17670,48 @@ appForm.models = (function(module) {
   appForm.utils.extend(Log, Model);
 
   Log.prototype.info = function(logLevel, msgs) {
-    if ($fh.forms.config.get("logger") === "true") {
-      var levelString = "";
-      var curLevel = $fh.forms.config.get("log_level");
-      var log_levels = $fh.forms.config.get("log_levels");
-      var self = this;
-      if (typeof logLevel === "string") {
-        levelString = logLevel;
-        logLevel = log_levels.indexOf(logLevel.toLowerCase());
-      } else {
-        levelString = log_levels[logLevel];
-        if (logLevel >= log_levels.length) {
-          levelString = "Unknown";
+      if ($fh.forms.config.get("logger") === true) {
+        var levelString = "";
+        var curLevel = $fh.forms.config.get("log_level");
+        var log_levels = $fh.forms.config.get("log_levels");
+        var self = this;
+        if (typeof logLevel === "string") {
+          levelString = logLevel;
+          logLevel = log_levels.indexOf(logLevel.toLowerCase());
+        } else {
+          levelString = log_levels[logLevel];
+          if (logLevel >= log_levels.length) {
+            levelString = "Unknown";
+          }
         }
-      }
-      if (curLevel < logLevel) {
-        return;
-      } else {
-        var args = Array.prototype.splice.call(arguments, 0);
-        var logs = self.get("logs");
-        args.shift();
-        while (args.length > 0) {
-          logs.push(self.wrap(args.shift(), levelString));
+        if (curLevel < logLevel) {
+          return;
+        } else {
+          var args = Array.prototype.splice.call(arguments, 0);
+          var logs = self.get("logs");
+          args.shift();
+          var logStr = "";
+          while (args.length > 0) {
+            logStr += JSON.stringify(args.shift()) + " ";
+          }
+          logs.push(self.wrap(logStr, levelString));
           if (logs.length > $fh.forms.config.get("log_line_limit")) {
             logs.shift();
           }
-        }
-        if (self.isWriting) {
-          self.moreToWrite = true;
-        } else {
-          var _recursiveHandler = function() {
-            if (self.moreToWrite) {
-              self.moreToWrite = false;
-              self.write(_recursiveHandler);
-            }
-          };
-          self.write(_recursiveHandler);
+          if (self.isWriting) {
+            self.moreToWrite = true;
+          } else {
+            var _recursiveHandler = function() {
+              if (self.moreToWrite) {
+                self.moreToWrite = false;
+                self.write(_recursiveHandler);
+              }
+            };
+            self.write(_recursiveHandler);
+          }
         }
       }
-    }
-  };
+    };
   Log.prototype.wrap = function(msg, levelString) {
     var now = new Date();
     var dateStr = now.toISOString();

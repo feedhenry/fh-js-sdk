@@ -6802,46 +6802,48 @@ appForm.models = (function(module) {
   appForm.utils.extend(Log, Model);
 
   Log.prototype.info = function(logLevel, msgs) {
-    if ($fh.forms.config.get("logger") === "true") {
-      var levelString = "";
-      var curLevel = $fh.forms.config.get("log_level");
-      var log_levels = $fh.forms.config.get("log_levels");
-      var self = this;
-      if (typeof logLevel === "string") {
-        levelString = logLevel;
-        logLevel = log_levels.indexOf(logLevel.toLowerCase());
-      } else {
-        levelString = log_levels[logLevel];
-        if (logLevel >= log_levels.length) {
-          levelString = "Unknown";
+      if ($fh.forms.config.get("logger") === true) {
+        var levelString = "";
+        var curLevel = $fh.forms.config.get("log_level");
+        var log_levels = $fh.forms.config.get("log_levels");
+        var self = this;
+        if (typeof logLevel === "string") {
+          levelString = logLevel;
+          logLevel = log_levels.indexOf(logLevel.toLowerCase());
+        } else {
+          levelString = log_levels[logLevel];
+          if (logLevel >= log_levels.length) {
+            levelString = "Unknown";
+          }
         }
-      }
-      if (curLevel < logLevel) {
-        return;
-      } else {
-        var args = Array.prototype.splice.call(arguments, 0);
-        var logs = self.get("logs");
-        args.shift();
-        while (args.length > 0) {
-          logs.push(self.wrap(args.shift(), levelString));
+        if (curLevel < logLevel) {
+          return;
+        } else {
+          var args = Array.prototype.splice.call(arguments, 0);
+          var logs = self.get("logs");
+          args.shift();
+          var logStr = "";
+          while (args.length > 0) {
+            logStr += JSON.stringify(args.shift()) + " ";
+          }
+          logs.push(self.wrap(logStr, levelString));
           if (logs.length > $fh.forms.config.get("log_line_limit")) {
             logs.shift();
           }
-        }
-        if (self.isWriting) {
-          self.moreToWrite = true;
-        } else {
-          var _recursiveHandler = function() {
-            if (self.moreToWrite) {
-              self.moreToWrite = false;
-              self.write(_recursiveHandler);
-            }
-          };
-          self.write(_recursiveHandler);
+          if (self.isWriting) {
+            self.moreToWrite = true;
+          } else {
+            var _recursiveHandler = function() {
+              if (self.moreToWrite) {
+                self.moreToWrite = false;
+                self.write(_recursiveHandler);
+              }
+            };
+            self.write(_recursiveHandler);
+          }
         }
       }
-    }
-  };
+    };
   Log.prototype.wrap = function(msg, levelString) {
     var now = new Date();
     var dateStr = now.toISOString();

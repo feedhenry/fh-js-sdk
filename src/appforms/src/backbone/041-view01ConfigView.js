@@ -60,12 +60,12 @@ var ConfigView = Backbone.View.extend({
 '<div class="fh_appform_field_area config_debugging">'+
   '<fieldset>'+
     '<div class="fh_appform_field_title">Debugging</div>'+
-      '<div class="form-group" style="margin:5px 5px 5px 5px;">'+
+      '<div id="config_debugging_log_enabled" class="form-group" style="margin:5px 5px 5px 5px;">'+
         '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;margin-top:5px;">Log Enabled</label>'+
         '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" type="checkbox" data-key="logger"  <%= logger?"checked":"" %> value="true"/>'+
       '</div>'+
       '<br/>' +
-      '<div class="form-group" style="margin:5px 5px 5px 5px;">'+
+      '<div id="config_debugging_log_level" class="form-group" style="margin:5px 5px 5px 5px;">'+
         '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;margin-top:5px;">Log Level</label>'+
         '<select class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="log_level">'+
           '<%'+
@@ -78,14 +78,14 @@ var ConfigView = Backbone.View.extend({
               '}'+
             '%>'+
         '</select>'+
-      '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">'+
+      '</div><br/><div id="config_debugging_log_line_limit" class="form-group" style="margin:5px 5px 5px 5px;">'+
         '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Log Line Number</label>'+
         '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="log_line_limit" value="<%= log_line_limit%>"/>'+
-      '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">'+
+      '</div><br/><div id="config_debugging_log_email" class="form-group" style="margin:5px 5px 5px 5px;">'+
         '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Log Email Address</label>'+
         '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 98%;float: right;" data-key="log_email" value="<%= log_email%>"/>'+
       '</div>'+
-      '<div class="log_buttons" style="width:100%;margin: 20px 0px 20px 0px;padding:0px 0px 0px 0px;">'+
+      '<div class="log_buttons" style="width:100%;margin: 20px 0px 20px 0px;padding:0px 0px 0px 0px;text-align:center;">'+
         '<button class="fh_appform_button_default" style="width:30%;margin-right:10px" type="button" id="_viewLogsBtn">View Logs</button>'+
         '<button class="fh_appform_button_cancel" style="width:30%;margin-right:10px" type="button" id="_clearLogsBtn">Clear Logs</button>'+
         '<button class="fh_appform_button_action" style="width:30%;" type="button" id="_sendLogsBtn">Send Logs</button>'+
@@ -138,6 +138,17 @@ var ConfigView = Backbone.View.extend({
     var props = $fh.forms.config.getConfig();
     var html = _.template(this.templates.join(""), props);
     this.$el.append(html);
+
+    if($fh.forms.config.editAllowed() === false){
+      this.$el.find(".config_camera").hide();
+      this.$el.find(".config_submission").hide();
+
+      this.$el.find("#config_debugging_log_enabled").hide();
+      this.$el.find("#config_debugging_log_level").hide();
+      this.$el.find("#config_debugging_log_line_limit").hide();
+      this.$el.find("#config_debugging_log_email").hide();
+    }
+
     return this;
   },
   "save": function(cb) {
