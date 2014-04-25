@@ -9,18 +9,24 @@ Lawnchair.adapter('titanium', (function(global){
         // constructor call and callback. 'name' is the most common option
         init: function( options, callback ) {
           if (callback){
-            return callback(this);
+            return this.fn('init', callback).call(this)
           }
         },
 
         // returns all the keys in the store
         keys: function( callback ) {
-            return Titanium.App.Properties.listProperties();
+          if (callback) {
+            return this.fn('keys', callback).call(this, Titanium.App.Properties.listProperties());
+          }
+          return this;
         },
 
         // save an object
         save: function( obj, callback ) {
-            Titanium.App.Properties.setObject(obj.key, obj);
+            var saveRes = Titanium.App.Properties.setObject(obj.key, obj);
+            if (callback) {
+              return this.fn('save', callback).call(this, saveRes);
+            }
             return this;
         },
 
@@ -53,7 +59,7 @@ Lawnchair.adapter('titanium', (function(global){
                     });
                 }
             } else {
-                return callback(this, Titanium.App.Properties.getObject(key));
+                return this.fn('init', callback).call(this, Titanium.App.Properties.getObject(key));
             }
             return this;
         },
@@ -62,9 +68,9 @@ Lawnchair.adapter('titanium', (function(global){
         exists: function( key, callback ) {
             if (callback){
               if (Titanium.App.Properties.getObject(key)){
-                return cb(this, true);
+                return callback(this, true);
               }else{
-                return cb(this, false);
+                return callback(this, false);
               }
             }
 
@@ -93,7 +99,7 @@ Lawnchair.adapter('titanium', (function(global){
             var me = this;
             Titanium.App.Properties.removeProperty(key);
             if (callback) {
-              return callback(this);
+              return this.fn('remove', callback).call(this);
             }
             return this;
         },

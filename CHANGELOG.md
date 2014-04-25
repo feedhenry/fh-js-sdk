@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.0.7-alpha - 2014-04-25 - IR226 - Wei Li
+
+* Add support for Titanium 
+
 ## 2.0.6-alpha - 2014-04-4 - IR226 - Wei Li
 
 * 6635 - Bug fixes and tests for sync client.

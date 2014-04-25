@@ -1,4 +1,3 @@
-var ti = require("./ti");
 var consts = require("../constants");
 var ajax = require("../ajax");
 var logger = require("../logger");
