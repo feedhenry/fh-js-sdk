@@ -2,7 +2,7 @@ StepsView = Backbone.View.extend({
   className: 'fh_appform_steps',
 
   templates: {
-    table: '<div class="fh_appform_progress_wrapper"><table class="fh_appform_progress_steps" cellspacing="0"><tr></tr></table><span class="fh_appform_page_title"></span></div>',
+    table: '<div class="fh_appform_progress_wrapper"><table class="fh_appform_progress_steps" cellspacing="0"><tr></tr></table><span class="fh_appform_page_title"></span><span id="fh_appform_page_error" class="fh_appform_hidden fh_appform_page_title fh_appform_field_error" style="display:none;"></span></div>',
     step: '<td><span class="number_container" style=""><div class="number"><%= step_num %></div></span><br style="clear:both"/></td>'
   },
 

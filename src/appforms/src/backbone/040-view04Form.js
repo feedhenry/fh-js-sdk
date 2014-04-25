@@ -56,10 +56,18 @@ var FormView = BaseView.extend({
   },
   onValidateError: function(res) {
     var firstView = null;
+    var invalidFieldId = null;
+    var invalidPageNum = null;
+
     //Clear validate errors
 
     for (var fieldId in res) {
       if (res[fieldId]) {
+        if(invalidFieldId === null){
+          invalidFieldId = fieldId;
+          invalidPageNum = this.form.getPageNumberByFieldId(invalidFieldId);
+        }
+
         var fieldView = this.getFieldViewById(fieldId);
         if (firstView === null) {
           firstView = fieldView;
@@ -70,9 +78,16 @@ var FormView = BaseView.extend({
             fieldView.setErrorText(i, errorMsgs[i]);
           }
         }
+      } else {
+        $fh.forms.log.e("onValidateError: Expected an error object for fieldId " + fieldId + " res: " + JSON.stringify(res));
       }
     }
 
+    if(invalidFieldId !== null && invalidPageNum !== null){
+      var displayedIndex = this.getDisplayIndex(invalidPageNum) + 1;
+      this.$el.find("#fh_appform_page_error").html("Unable to submit form. Validation error on page " + displayedIndex);
+      this.$el.find("#fh_appform_page_error").show();
+    }
   },
   initWithForm: function(form, params) {
     var self = this;
@@ -315,9 +330,9 @@ var FormView = BaseView.extend({
       }
     }
   },
-  getDisplayIndex: function() {
+  getDisplayIndex: function(pageNum) {
     var self = this;
-    var currentIndex = this.pageNum;
+    var currentIndex = (pageNum === null || typeof(pageNum) === 'undefined') ? this.pageNum: pageNum;
 
     for (var pageIndex = this.pageNum; pageIndex > 0; pageIndex--) {
       var pageId = this.pageViews[pageIndex].model.getPageId();
@@ -372,11 +387,11 @@ var FormView = BaseView.extend({
     this.populateFieldViewsToSubmission(function() {
       self.submission.submit(function(err, res) {
         if (err) {
-          console.error(err);
+          $fh.forms.log.e("Error Submitting Form:", err);
         } else {
           self.submission.upload(function(err, uploadTask) {
             if (err) {
-              console.error(err);
+              $fh.forms.log.e("Error Uploading Form:", err);
             }
 
             self.$el.empty();

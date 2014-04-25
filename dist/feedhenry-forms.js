@@ -14663,6 +14663,13 @@ appForm.models = function (module) {
       this.pages.push(pageModel);
     }
   };
+  Form.prototype.getPageNumberByFieldId = function(fieldId){
+    if(fieldId){
+      return this.getFieldRef()[fieldId].page;
+    } else {
+      return null;
+    }
+  };
   Form.prototype.getPageModelList = function () {
     return this.pages;
   };
@@ -14708,7 +14715,7 @@ appForm.models = function (module) {
     $fh.forms.log.d("Form: getPageModelById: ", pageId);
     var index = this.getPageRef()[pageId];
     if (typeof index === 'undefined') {
-      throw 'page id is not found';
+      $fh.forms.log.e('page id is not found in pageRef: ' + pageId);
     } else {
       return this.pages[index];
     }
