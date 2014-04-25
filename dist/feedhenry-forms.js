@@ -8506,7 +8506,7 @@ module.exports = {
 },{"./fhparams":31,"./logger":37,"./queryMap":39,"JSON":3}],27:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.0.6-alpha",
+  "sdk_version": "2.0.7-alpha",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit"
 };
