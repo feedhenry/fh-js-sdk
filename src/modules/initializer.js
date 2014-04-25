@@ -60,6 +60,10 @@ var loadCloudProps = function(app_props, callback) {
     }
   };
 
+  if(typeof Titanium !== "undefined"){
+    lcConf.adapter = ['titanium'];
+  }
+
   var doInit = function(path, appProps, savedHost, storage){
     var data = fhparams.buildFHParams();
 
