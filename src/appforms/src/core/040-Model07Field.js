@@ -71,6 +71,21 @@ appForm.models = function (module) {
   Field.prototype.getHelpText = function () {
     return this.get('helpText', '');
   };
+
+
+/**
+   * return default value for a field
+   *
+*/
+Field.prototype.getDefaultValue = function () {
+  var def = this.getFieldDefinition();
+  if (def) {
+    return def.defaultValue;
+  }
+  return "";
+};
+
+
   /**
      * Process an input value. convert to submission format. run field.validate before this
      * @param  {[type]} params {"value", "isStore":optional}
