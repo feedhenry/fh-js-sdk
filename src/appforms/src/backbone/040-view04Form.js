@@ -11,12 +11,7 @@ var FormView = BaseView.extend({
     formContainer: '<div id="fh_appform_container" class="fh_appform_form_area fh_appform_container"></div>',
     buttons: '<div id="fh_appform_navigation_buttons" class="fh_appform_button_bar"><button class="fh_appform_button_saveDraft fh_appform_hidden fh_appform_button_main fh_appform_button_action">Save Draft</button><button class="fh_appform_button_previous fh_appform_hidden fh_appform_button_default">Previous</button><button class="fh_appform_button_next fh_appform_hidden fh_appform_button_default">Next</button><button class="fh_appform_button_submit fh_appform_hidden fh_appform_button_action">Submit</button></div>'
   },
-  events: {
-    "click button.fh_appform_button_next": "nextPage",
-    "click button.fh_appform_button_previous": "prevPage",
-    "click button.fh_appform_button_saveDraft": "saveToDraft",
-    "click button.fh_appform_button_submit": "submit"
-  },
+  events: {},
   elementNames: {
     formContainer: "#fh_appform_container"
   },
@@ -24,10 +19,10 @@ var FormView = BaseView.extend({
   initialize: function() {
     var self = this;
     _.bindAll(this, "checkRules", "onValidateError");
-    this.el = this.options.parentEl;
+    this.$el = this.options.parentEl;
     this.fieldModels = [];
     this.pageViewStatus = {};
-    this.el.empty();
+    this.$el.empty();
   },
   loadForm: function(params, cb) {
     var self = this;
@@ -52,20 +47,22 @@ var FormView = BaseView.extend({
   },
   readOnly: function() {
     this.readonly = true;
-    for (var i = 0; i<this.fieldViews.length; i++) {
-      var fieldView=this.fieldViews[i];
+    for (var i = 0; i < this.fieldViews.length; i++) {
+      var fieldView = this.fieldViews[i];
       fieldView.$el.find("button,input,textarea,select").attr("disabled", "disabled");
     }
-    this.el.find("button.fh_appform_button_saveDraft").hide();
-    this.el.find(" button.fh_appform_button_submit").hide();
+    this.$el.find("button.fh_appform_button_saveDraft").hide();
+    this.$el.find(" button.fh_appform_button_submit").hide();
   },
   onValidateError: function(res) {
-    var firstView=null;
+    var firstView = null;
+    //Clear validate errors
+
     for (var fieldId in res) {
       if (res[fieldId]) {
         var fieldView = this.getFieldViewById(fieldId);
-        if (firstView===null){
-          firstView=fieldView;
+        if (firstView === null) {
+          firstView = fieldView;
         }
         var errorMsgs = res[fieldId].fieldErrorMessage;
         for (var i = 0; i < errorMsgs.length; i++) {
@@ -75,21 +72,25 @@ var FormView = BaseView.extend({
         }
       }
     }
-    
+
   },
   initWithForm: function(form, params) {
     var self = this;
     var pageView;
     self.formId = form.getFormId();
 
-    self.el.empty();
+    self.$el.empty();
     self.model = form;
 
     //Page views are always added before anything else happens, need to render the form title first
-    this.el.append(this.templates.formContainer);
-    self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formLogo, {}));
-    self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formTitle, {title: this.model.getName()}));
-    self.el.find(this.elementNames.formContainer).append(_.template(this.templates.formDescription, {description: this.model.getDescription()}));
+    self.$el.append(this.templates.formContainer);
+    self.$el.find(this.elementNames.formContainer).append(_.template(this.templates.formLogo, {}));
+    self.$el.find(this.elementNames.formContainer).append(_.template(this.templates.formTitle, {
+      title: this.model.getName()
+    }));
+    self.$el.find(this.elementNames.formContainer).append(_.template(this.templates.formDescription, {
+      description: this.model.getDescription()
+    }));
 
     if (!params.submission) {
       params.submission = self.model.newSubmission();
@@ -102,16 +103,19 @@ var FormView = BaseView.extend({
     var pageViews = [];
 
     self.steps = new StepsView({
-      parentEl: self.el.find(this.elementNames.formContainer),
+      parentEl: self.$el.find(this.elementNames.formContainer),
       parentView: self,
       model: self.model
     });
 
-    for (var i = 0; i<pageModelList.length; i++) {
+    for (var i = 0; i < pageModelList.length; i++) {
       var pageModel = pageModelList[i];
       var pageId = pageModel.getPageId();
 
-      self.pageViewStatus[pageId] = {"targetId" : pageId, "action" : "show"};
+      self.pageViewStatus[pageId] = {
+        "targetId": pageId,
+        "action": "show"
+      };
 
       // get fieldModels
       var list = pageModel.getFieldModelList();
@@ -119,13 +123,13 @@ var FormView = BaseView.extend({
 
       pageView = new PageView({
         model: pageModel,
-        parentEl: self.el.find(this.elementNames.formContainer),
+        parentEl: self.$el.find(this.elementNames.formContainer),
         formView: self
       });
       pageViews.push(pageView);
     }
     var fieldViews = [];
-    for ( i = 0; i<pageViews.length; i++) {
+    for (i = 0; i < pageViews.length; i++) {
       pageView = pageViews[i];
       var pageFieldViews = pageView.fieldViews;
       for (var key in pageFieldViews) {
@@ -141,13 +145,13 @@ var FormView = BaseView.extend({
     self.fieldViews = fieldViews;
     self.pageViews = pageViews;
     self.pageCount = pageViews.length;
-
-    self.checkRules();
   },
-  checkRules: function() {
+  checkRules: function(params) {
     var self = this;
-    self.populateFieldViewsToSubmission(false, function() {
-      var submission = self.submission;
+    var submission = self.submission;
+    params = params || {};
+
+    function checkSubmissionRules() {
       submission.checkRules(function(err, res) {
         if (err) {
           console.error(err);
@@ -166,7 +170,15 @@ var FormView = BaseView.extend({
         }
         self.checkPages();
       });
-    });
+    }
+
+    if (params.initialising) {
+      checkSubmissionRules();
+    } else {
+      self.populateFieldViewsToSubmission(false, function() {
+        checkSubmissionRules();
+      });
+    }
   },
   performRuleAction: function(type, targetId, action) {
     var target = null;
@@ -190,18 +202,18 @@ var FormView = BaseView.extend({
   },
   rebindButtons: function() {
     var self = this;
-    this.el.find("button.fh_appform_button_next").unbind().bind("click", function() {
+    this.$el.find("button.fh_appform_button_next").unbind().bind("click", function() {
       self.nextPage();
     });
 
-    this.el.find("button.fh_appform_button_previous").unbind().bind("click", function() {
+    this.$el.find("button.fh_appform_button_previous").unbind().bind("click", function() {
       self.prevPage();
     });
 
-    this.el.find("button.fh_appform_button_saveDraft").unbind().bind("click", function() {
+    this.$el.find("button.fh_appform_button_saveDraft").unbind().bind("click", function() {
       self.saveToDraft();
     });
-    this.el.find("button.fh_appform_button_submit").unbind().bind("click", function() {
+    this.$el.find("button.fh_appform_button_submit").unbind().bind("click", function() {
       self.submit();
     });
   },
@@ -212,7 +224,7 @@ var FormView = BaseView.extend({
     return this.submission;
   },
   getPageViewById: function(pageId) {
-    for (var i = 0; i< this.pageViews.length ; i++) {
+    for (var i = 0; i < this.pageViews.length; i++) {
       var pageView = this.pageViews[i];
       var pId = pageView.model.getPageId();
       if (pId === pageId) {
@@ -222,7 +234,7 @@ var FormView = BaseView.extend({
     return null;
   },
   getFieldViewById: function(fieldId) {
-    for (var i = 0; i<this.fieldViews.length; i++) {
+    for (var i = 0; i < this.fieldViews.length; i++) {
       var fieldView = this.fieldViews[i];
       var pId = fieldView.model.getFieldId();
       if (pId === fieldId) {
@@ -237,96 +249,98 @@ var FormView = BaseView.extend({
     var displayedIndex = this.getDisplayIndex();
 
     if (displayedIndex === 0 && displayedIndex === displayedPages - 1) {
-      this.el.find(" button.fh_appform_button_previous").addClass("fh_appform_hidden");
-      this.el.find("button.fh_appform_button_next").addClass("fh_appform_hidden");
-      this.el.find("button.fh_appform_button_saveDraft").removeClass("fh_appform_hidden");
-      this.el.find(" button.fh_appform_button_submit").removeClass("fh_appform_hidden");
-      this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_three_button');
-      this.el.find(".fh_appform_button_bar button").addClass('fh_appform_two_button');
+      this.$el.find(" button.fh_appform_button_previous").addClass("fh_appform_hidden");
+      this.$el.find("button.fh_appform_button_next").addClass("fh_appform_hidden");
+      this.$el.find("button.fh_appform_button_saveDraft").removeClass("fh_appform_hidden");
+      this.$el.find(" button.fh_appform_button_submit").removeClass("fh_appform_hidden");
+      this.$el.find(".fh_appform_button_bar button").removeClass('fh_appform_three_button');
+      this.$el.find(".fh_appform_button_bar button").addClass('fh_appform_two_button');
     } else if (displayedIndex === 0) {
-      this.el.find(" button.fh_appform_button_previous").addClass("fh_appform_hidden");
-      this.el.find("button.fh_appform_button_next").removeClass("fh_appform_hidden");
-      this.el.find("button.fh_appform_button_saveDraft").removeClass("fh_appform_hidden");
-      this.el.find(" button.fh_appform_button_submit").addClass("fh_appform_hidden");
-      this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_three_button');
-      this.el.find(".fh_appform_button_bar button").addClass('fh_appform_two_button');
+      this.$el.find(" button.fh_appform_button_previous").addClass("fh_appform_hidden");
+      this.$el.find("button.fh_appform_button_next").removeClass("fh_appform_hidden");
+      this.$el.find("button.fh_appform_button_saveDraft").removeClass("fh_appform_hidden");
+      this.$el.find(" button.fh_appform_button_submit").addClass("fh_appform_hidden");
+      this.$el.find(".fh_appform_button_bar button").removeClass('fh_appform_three_button');
+      this.$el.find(".fh_appform_button_bar button").addClass('fh_appform_two_button');
     } else if (displayedIndex === displayedPages - 1) {
-      this.el.find(" button.fh_appform_button_previous").removeClass("fh_appform_hidden");
-      this.el.find(" button.fh_appform_button_next").addClass("fh_appform_hidden");
-      this.el.find(" button.fh_appform_button_saveDraft").removeClass("fh_appform_hidden");
-      this.el.find(" button.fh_appform_button_submit").removeClass("fh_appform_hidden");
-      this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_two_button');
-      this.el.find(".fh_appform_button_bar button").addClass('fh_appform_three_button');
+      this.$el.find(" button.fh_appform_button_previous").removeClass("fh_appform_hidden");
+      this.$el.find(" button.fh_appform_button_next").addClass("fh_appform_hidden");
+      this.$el.find(" button.fh_appform_button_saveDraft").removeClass("fh_appform_hidden");
+      this.$el.find(" button.fh_appform_button_submit").removeClass("fh_appform_hidden");
+      this.$el.find(".fh_appform_button_bar button").removeClass('fh_appform_two_button');
+      this.$el.find(".fh_appform_button_bar button").addClass('fh_appform_three_button');
     } else {
-      this.el.find(" button.fh_appform_button_previous").removeClass("fh_appform_hidden");
-      this.el.find(" button.fh_appform_button_next").removeClass("fh_appform_hidden");
-      this.el.find(" button.fh_appform_button_saveDraft").removeClass("fh_appform_hidden");
-      this.el.find(" button.fh_appform_button_submit").addClass("fh_appform_hidden");
-      this.el.find(".fh_appform_button_bar button").removeClass('fh_appform_two_button');
-      this.el.find(".fh_appform_button_bar button").addClass('fh_appform_three_button');
+      this.$el.find(" button.fh_appform_button_previous").removeClass("fh_appform_hidden");
+      this.$el.find(" button.fh_appform_button_next").removeClass("fh_appform_hidden");
+      this.$el.find(" button.fh_appform_button_saveDraft").removeClass("fh_appform_hidden");
+      this.$el.find(" button.fh_appform_button_submit").addClass("fh_appform_hidden");
+      this.$el.find(".fh_appform_button_bar button").removeClass('fh_appform_two_button');
+      this.$el.find(".fh_appform_button_bar button").addClass('fh_appform_three_button');
     }
     if (this.readonly) {
-      this.el.find("button.fh_appform_button_saveDraft").addClass("fh_appform_hidden");
-      this.el.find(" button.fh_appform_button_submit").addClass("fh_appform_hidden");
+      this.$el.find("button.fh_appform_button_saveDraft").addClass("fh_appform_hidden");
+      this.$el.find(" button.fh_appform_button_submit").addClass("fh_appform_hidden");
     }
 
   },
   render: function() {
-    this.el.find("#fh_appform_container.fh_appform_form_area").append(this.templates.buttons);
+    this.$el.find("#fh_appform_container.fh_appform_form_area").append(this.templates.buttons);
     this.rebindButtons();
-    this.pageViews[0].removeClass("fh_appform_hidden");
+    this.pageViews[0].$el.removeClass("fh_appform_hidden");
     this.pageNum = 0;
     this.steps.activePageChange(this);
-    this.checkRules();
+    this.checkRules({
+      initialising: true
+    });
   },
-  getNextPageIndex: function(currentPageIndex){
+  getNextPageIndex: function(currentPageIndex) {
     var self = this;
-    for(var pageIndex = currentPageIndex + 1; pageIndex < this.pageViews.length; pageIndex += 1){
+    for (var pageIndex = currentPageIndex + 1; pageIndex < this.pageViews.length; pageIndex += 1) {
       var pageId = this.pageViews[pageIndex].model.getPageId();
       var pageAction = self.pageViewStatus[pageId].action;
 
-      if(pageAction === "show"){
+      if (pageAction === "show") {
         return pageIndex;
       }
     }
   },
-  getPrevPageIndex: function(currentPageIndex){
+  getPrevPageIndex: function(currentPageIndex) {
     var self = this;
-    for(var pageIndex = currentPageIndex - 1; pageIndex >= 0; pageIndex--){
+    for (var pageIndex = currentPageIndex - 1; pageIndex >= 0; pageIndex--) {
       var pageId = self.pageViews[pageIndex].model.getPageId();
       var pageAction = self.pageViewStatus[pageId].action;
 
-      if(pageAction === "show"){
+      if (pageAction === "show") {
         return pageIndex;
       }
     }
   },
-  getDisplayIndex: function(){
+  getDisplayIndex: function() {
     var self = this;
     var currentIndex = this.pageNum;
 
-    for(var pageIndex = this.pageNum; pageIndex > 0; pageIndex--){
+    for (var pageIndex = this.pageNum; pageIndex > 0; pageIndex--) {
       var pageId = this.pageViews[pageIndex].model.getPageId();
       var pageAction = self.pageViewStatus[pageId].action;
 
-      if(pageAction === "hide"){
+      if (pageAction === "hide") {
         currentIndex -= 1;
       }
     }
 
     return currentIndex;
   },
-  getNumDisplayedPages : function(){
-     return this.getDisplayedPages().length;
+  getNumDisplayedPages: function() {
+    return this.getDisplayedPages().length;
   },
-  getDisplayedPages : function(){
+  getDisplayedPages: function() {
     var self = this;
     var displayedPages = [];
-    for(var pageIndex = 0; pageIndex < self.pageViews.length; pageIndex++){
+    for (var pageIndex = 0; pageIndex < self.pageViews.length; pageIndex++) {
       var pageId = this.pageViews[pageIndex].model.getPageId();
       var pageAction = self.pageViewStatus[pageId].action;
 
-      if(pageAction === "show"){
+      if (pageAction === "show") {
         displayedPages.push(pageId);
       }
     }
@@ -336,20 +350,21 @@ var FormView = BaseView.extend({
   nextPage: function() {
     this.hideAllPages();
     this.pageNum = this.getNextPageIndex(this.pageNum);
-    this.pageViews[this.pageNum].removeClass("fh_appform_hidden");
+    this.pageViews[this.pageNum].$el.removeClass("fh_appform_hidden");
     this.steps.activePageChange(this);
     this.checkPages();
   },
   prevPage: function() {
     this.hideAllPages();
     this.pageNum = this.getPrevPageIndex(this.pageNum);
-    this.pageViews[this.pageNum].removeClass("fh_appform_hidden");
+    this.pageViews[this.pageNum].$el.removeClass("fh_appform_hidden");
     this.steps.activePageChange(this);
     this.checkPages();
   },
   hideAllPages: function() {
     this.pageViews.forEach(function(view) {
-      view.addClass("fh_appform_hidden");
+      //make sure to use $el when calling jquery func
+      view.$el.addClass("fh_appform_hidden");
     });
   },
   submit: function() {
@@ -360,11 +375,11 @@ var FormView = BaseView.extend({
           console.error(err);
         } else {
           self.submission.upload(function(err, uploadTask) {
-            if(err){
+            if (err) {
               console.error(err);
             }
 
-            self.el.empty();
+            self.$el.empty();
           });
         }
       });
@@ -374,53 +389,53 @@ var FormView = BaseView.extend({
     var self = this;
     this.populateFieldViewsToSubmission(function() {
       self.submission.saveDraft(function(err, res) {
-        if(err) {
+        if (err) {
           $fh.forms.log.e(err);
         }
-        self.el.empty();
+        self.$el.empty();
       });
     });
   },
   populateFieldViewsToSubmission: function(isStore, cb) {
-    if (typeof cb === "undefined"){
-      cb=isStore;
-      isStore=true;
+    if (typeof cb === "undefined") {
+      cb = isStore;
+      isStore = true;
     }
     var submission = this.submission;
     var fieldViews = this.fieldViews;
     var fieldId;
     var tmpObj = [];
-    for (var i = 0; i<fieldViews.length ; i++) {
+    for (var i = 0; i < fieldViews.length; i++) {
       var fieldView = fieldViews[i];
       var val = fieldView.value();
       fieldId = fieldView.model.getFieldId();
       var fieldType = fieldView.model.getType();
 
-      if(fieldType !== "sectionBreak"){
+      if (fieldType !== "sectionBreak") {
         for (var j = 0; j < val.length; j++) {
           var v = val[j];
           tmpObj.push({
             id: fieldId,
             value: v,
-            index:j
+            index: j
           });
         }
       }
     }
     var count = tmpObj.length;
     submission.reset();
-    for (i = 0; i<tmpObj.length ; i++) {
+    for (i = 0; i < tmpObj.length; i++) {
       var item = tmpObj[i];
       fieldId = item.id;
       var value = item.value;
-      var index=item.index;
+      var index = item.index;
 
-      if(value !== null || typeof(value) !== 'undefined'){
+      if (value !== null || typeof(value) !== 'undefined') {
         submission.addInputValue({
           fieldId: fieldId,
           value: value,
           index: index,
-          isStore:isStore
+          isStore: isStore
         }, function(err, res) {
           if (err) {
             console.error(err);
@@ -442,13 +457,13 @@ var FormView = BaseView.extend({
 
   setInputValue: function(fieldId, value) {
     var self = this;
-    for (var i = 0; i<this.fieldValue.length; i++) {
+    for (var i = 0; i < this.fieldValue.length; i++) {
       var item = this.fieldValue[i];
       if (item.id === fieldId) {
         this.fieldValue.splice(i, 1);
       }
     }
-    for (i = 0; i<value.length; i++) {
+    for (i = 0; i < value.length; i++) {
       var v = value[i];
       this.fieldValue.push({
         id: fieldId,

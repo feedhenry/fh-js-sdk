@@ -2,8 +2,17 @@ var chai = require('chai');
 var expect = chai.expect;
 var sinonChai = require('sinon-chai');
 chai.use(sinonChai);
-var ajax = require("../../src/modules/ajax");
-var events = require("../../src/modules/events");
+
+var process = require("process");
+if(document && document.location){
+  if(document.location.href.indexOf("coverage=1") > -1){
+    process.env.LIB_COV = 1;
+  }
+}
+
+var ajax = process.env.LIB_COV? require("../../src-cov/modules/ajax") : require("../../src/modules/ajax");
+var events = process.env.LIB_COV? require("../../src-cov/modules/events") : require("../../src/modules/events");
+
 
 describe("test ajax module", function(){
 

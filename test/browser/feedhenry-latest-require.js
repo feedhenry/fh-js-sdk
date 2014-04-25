@@ -3707,7 +3707,12 @@ Lawnchair.adapter('window-name', (function() {
 // not chainable: valid, keys
 //
 Lawnchair.adapter('dom', (function() {
-  var storage = window.localStorage
+  var storage = null;
+  try{
+    storage = window.localStorage;
+  }catch(e){
+
+  }
   // the indexer is an encapsulation of the helpers needed to keep an ordered index of the keys
   var indexer = function(name) {
     return {
@@ -3910,19 +3915,6 @@ Lawnchair.adapter('webkit-sqlite', (function() {
       return new Date()
     } // FIXME need to use better date fn
     // not entirely sure if this is needed...
-  if (!Function.prototype.bind) {
-    Function.prototype.bind = function(obj) {
-      var slice = [].slice,
-        args = slice.call(arguments, 1),
-        self = this,
-        nop = function() {}, bound = function() {
-          return self.apply(this instanceof nop ? this : (obj || {}), args.concat(slice.call(arguments)))
-        }
-      nop.prototype = self.prototype
-      bound.prototype = new nop()
-      return bound
-    }
-  }
 
   // public methods
   return {
@@ -4429,6 +4421,111 @@ Lawnchair.adapter('html5-filesystem', (function(global){
     }
   };
 }(this)));
+Lawnchair.adapter('memory', (function(){
+
+    var data = {}
+
+    return {
+        valid: function() { return true },
+
+        init: function (options, callback) {
+            data[this.name] = data[this.name] || {index:[],store:{}}
+            this.index = data[this.name].index
+            this.store = data[this.name].store
+            var cb = this.fn(this.name, callback)
+            if (cb) cb.call(this, this)
+            return this
+        },
+
+        keys: function (callback) {
+            this.fn('keys', callback).call(this, this.index)
+            return this
+        },
+
+        save: function(obj, cb) {
+            var key = obj.key || this.uuid()
+            
+            this.exists(key, function(exists) {
+                if (!exists) {
+                    if (obj.key) delete obj.key
+                    this.index.push(key)
+                }
+
+                this.store[key] = obj
+                
+                if (cb) {
+                    obj.key = key
+                    this.lambda(cb).call(this, obj)
+                }
+            })
+
+            return this
+        },
+
+        batch: function (objs, cb) {
+            var r = []
+            for (var i = 0, l = objs.length; i < l; i++) {
+                this.save(objs[i], function(record) {
+                    r.push(record)
+                })
+            }
+            if (cb) this.lambda(cb).call(this, r)
+            return this
+        },
+
+        get: function (keyOrArray, cb) {
+            var r;
+            if (this.isArray(keyOrArray)) {
+                r = []
+                for (var i = 0, l = keyOrArray.length; i < l; i++) {
+                    r.push(this.store[keyOrArray[i]])
+                }
+            } else {
+                r = this.store[keyOrArray]
+                if (r) r.key = keyOrArray
+            }
+            if (cb) this.lambda(cb).call(this, r)
+            return this 
+        },
+
+        exists: function (key, cb) {
+            this.lambda(cb).call(this, !!(this.store[key]))
+            return this
+        },
+
+        all: function (cb) {
+            var r = []
+            for (var i = 0, l = this.index.length; i < l; i++) {
+                var obj = this.store[this.index[i]]
+                obj.key = this.index[i]
+                r.push(obj)
+            }
+            this.fn(this.name, cb).call(this, r)
+            return this
+        },
+
+        remove: function (keyOrArray, cb) {
+            var del = this.isArray(keyOrArray) ? keyOrArray : [keyOrArray]
+            for (var i = 0, l = del.length; i < l; i++) {
+                var key = del[i].key ? del[i].key : del[i]
+                var where = this.indexOf(this.index, key)
+                if (where < 0) continue /* key not present */
+                delete this.store[key]
+                this.index.splice(where, 1)
+            }
+            if (cb) this.lambda(cb).call(this)
+            return this
+        },
+
+        nuke: function (cb) {
+            this.store = data[this.name].store = {}
+            this.index = data[this.name].index = []
+            if (cb) this.lambda(cb).call(this)
+            return this
+        }
+    }
+/////
+})());
 ; browserify_shim__define__module__export__(typeof Lawnchair != "undefined" ? Lawnchair : window.Lawnchair);
 
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
@@ -7500,7 +7597,7 @@ module.exports = fh;
 
 
 
-},{"./modules/ajax":19,"./modules/api_act":20,"./modules/api_auth":21,"./modules/api_cloud":22,"./modules/api_hash":23,"./modules/api_mbaas":24,"./modules/api_sec":25,"./modules/appProps":26,"./modules/constants":28,"./modules/device":30,"./modules/events":31,"./modules/fhparams":32,"./modules/logger":39,"./modules/sync-cli":47,"./modules/waitForCloud":49}],18:[function(require,module,exports){
+},{"./modules/ajax":19,"./modules/api_act":20,"./modules/api_auth":21,"./modules/api_cloud":22,"./modules/api_hash":23,"./modules/api_mbaas":24,"./modules/api_sec":25,"./modules/appProps":26,"./modules/constants":28,"./modules/device":30,"./modules/events":31,"./modules/fhparams":32,"./modules/logger":38,"./modules/sync-cli":46,"./modules/waitForCloud":48}],18:[function(require,module,exports){
 var XDomainRequestWrapper = function(xdr){
   this.xdr = xdr;
   this.isWrapper = true;
@@ -7964,7 +8061,7 @@ function extend(target) {
   return target
 }
 
-},{"./XDomainRequestWrapper":18,"./events":31,"./logger":39,"type-of":15}],20:[function(require,module,exports){
+},{"./XDomainRequestWrapper":18,"./events":31,"./logger":38,"type-of":15}],20:[function(require,module,exports){
 var logger =require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
@@ -8015,7 +8112,7 @@ module.exports = function(opts, success, fail){
   })
 }
 
-},{"./ajax":19,"./appProps":26,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],21:[function(require,module,exports){
+},{"./ajax":19,"./appProps":26,"./fhparams":32,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],21:[function(require,module,exports){
 var logger =require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
@@ -8081,7 +8178,7 @@ module.exports = function(opts, success, fail){
     }
   });
 }
-},{"./ajax":19,"./appProps":26,"./checkAuth":27,"./constants":28,"./device":30,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],22:[function(require,module,exports){
+},{"./ajax":19,"./appProps":26,"./checkAuth":27,"./constants":28,"./device":30,"./fhparams":32,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],22:[function(require,module,exports){
 var logger =require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
@@ -8126,7 +8223,7 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":19,"./appProps":26,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],23:[function(require,module,exports){
+},{"./ajax":19,"./appProps":26,"./fhparams":32,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],23:[function(require,module,exports){
 var hashImpl = require("./security/hash");
 
 module.exports = function(p, s, f){
@@ -8138,7 +8235,7 @@ module.exports = function(p, s, f){
   params.params = p;
   hashImpl(params, s, f);
 };
-},{"./security/hash":45}],24:[function(require,module,exports){
+},{"./security/hash":44}],24:[function(require,module,exports){
 var logger =require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
@@ -8184,7 +8281,7 @@ module.exports = function(opts, success, fail){
   });
 } 
 
-},{"./ajax":19,"./appProps":26,"./constants":28,"./fhparams":32,"./handleError":34,"./logger":39,"./waitForCloud":49,"JSON":3}],25:[function(require,module,exports){
+},{"./ajax":19,"./appProps":26,"./constants":28,"./fhparams":32,"./handleError":33,"./logger":38,"./waitForCloud":48,"JSON":3}],25:[function(require,module,exports){
 var keygen = require("./security/aes-keygen");
 var aes = require("./security/aes-node");
 var rsa = require("./security/rsa-node");
@@ -8228,7 +8325,7 @@ module.exports = function(p, s, f){
     }
   }
 }
-},{"./security/aes-keygen":43,"./security/aes-node":44,"./security/hash":45,"./security/rsa-node":46}],26:[function(require,module,exports){
+},{"./security/aes-keygen":42,"./security/aes-node":43,"./security/hash":44,"./security/rsa-node":45}],26:[function(require,module,exports){
 var consts = require("./constants");
 var ajax = require("./ajax");
 var logger = require("./logger");
@@ -8300,7 +8397,7 @@ module.exports = {
   setAppProps: setAppProps
 };
 
-},{"./ajax":19,"./constants":28,"./logger":39,"./queryMap":41}],27:[function(require,module,exports){
+},{"./ajax":19,"./constants":28,"./logger":38,"./queryMap":40}],27:[function(require,module,exports){
 var logger = require("./logger");
 var queryMap = require("./queryMap");
 var JSON = require("JSON");
@@ -8408,7 +8505,7 @@ module.exports = {
   "handleAuthResponse": handleAuthResponse
 };
 
-},{"./fhparams":32,"./logger":39,"./queryMap":41,"JSON":3}],28:[function(require,module,exports){
+},{"./fhparams":32,"./logger":38,"./queryMap":40,"JSON":3}],28:[function(require,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
   "sdk_version": "BUILD_VERSION",
@@ -8512,7 +8609,7 @@ module.exports = {
   }
 }
 
-},{"./cookies":29,"./logger":39,"./platformsMap":40,"./uuid":48}],31:[function(require,module,exports){
+},{"./cookies":29,"./logger":38,"./platformsMap":39,"./uuid":47}],31:[function(require,module,exports){
 var EventEmitter = require('events').EventEmitter;
 
 var emitter = new EventEmitter();
@@ -8589,28 +8686,7 @@ module.exports = {
   "setAuthSessionToken":setAuthSessionToken
 }
 
-},{"./appProps":26,"./device":30,"./logger":39,"./sdkversion":42}],33:[function(require,module,exports){
-module.exports = function(){
-  var path = null;
-  var scripts = document.getElementsByTagName('script');
-  var term = /(feedhenry.*?\.js)/;
-  for (var n = scripts.length-1; n>-1; n--) {
-      //trim query parameters
-      var src = scripts[n].src.replace(/\?.*$/, '');
-      //find feedhenry*.js file
-      var matches = src.match(term);
-      if(matches && matches.length === 2){
-        var fhjs = matches[1];
-        if (src.indexOf(fhjs) === (src.length - fhjs.length)) {
-          path = src.substring(0, src.length - fhjs.length);
-          break;
-        }
-      }
-  }
-  return path;
-};
-
-},{}],34:[function(require,module,exports){
+},{"./appProps":26,"./device":30,"./logger":38,"./sdkversion":41}],33:[function(require,module,exports){
 var JSON = require("JSON");
 
 module.exports = function(fail, req, resStatus, error){
@@ -8637,7 +8713,7 @@ module.exports = function(fail, req, resStatus, error){
   }
 };
 
-},{"JSON":3}],35:[function(require,module,exports){
+},{"JSON":3}],34:[function(require,module,exports){
 var constants = require("./constants");
 var appProps = require("./appProps");
 
@@ -8727,8 +8803,7 @@ CloudHost.prototype.getCloudUrl = function(path){
 
 
 module.exports = CloudHost;
-},{"./appProps":26,"./constants":28}],36:[function(require,module,exports){
-var findFHPath = require("./findFHPath");
+},{"./appProps":26,"./constants":28}],35:[function(require,module,exports){
 var loadScript = require("./loadScript");
 var Lawnchair = require('../../libs/generated/lawnchair');
 var lawnchairext = require('./lawnchair-ext');
@@ -8784,7 +8859,7 @@ var loadCloudProps = function(app_props, callback) {
   //as dom, webkit-sqlite, localFileStorage, window-name
   var lcConf = {
     name: "fh_init_storage",
-    adapter: ["dom", "webkit-sqlite", "localFileStorage", "window-name"],
+    adapter: ["dom", "webkit-sqlite", "window-name"],
     fail: function(msg, err) {
       var error_message = 'read/save from/to local storage failed  msg:' + msg + ' err:' + err;
       return fail(error_message, {});
@@ -8795,33 +8870,7 @@ var loadCloudProps = function(app_props, callback) {
     lcConf.adapter = ['titanium'];
   }
 
-  var storage = null;
-  try {
-    storage = new Lawnchair(lcConf, function() {});
-  } catch (e) {
-    //when dom adapter failed, Lawnchair throws an error
-    //shoudn't go in here anymore
-    lcConf.adapter = undefined;
-    storage = new Lawnchair(lcConf, function() {});
-  }
-
-  var path = app_props.host + consts.boxprefix + "app/init";
-
-  storage.get('fh_init', function(storage_res) {
-    var savedHost = null;
-    if (storage_res && storage_res.value !== null && typeof(storage_res.value) !== "undefined" && storage_res !== "") {
-      storage_res = typeof(storage_res) === "string" ? JSON.parse(storage_res) : storage_res;
-      storage_res.value = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value) : storage_res.value;
-      if (storage_res.value.init) {
-        app_props.init = storage_res.value.init;
-      } else {
-        //keep it backward compatible.
-        app_props.init = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value) : storage_res.value;
-      }
-      if (storage_res.value.hosts) {
-        savedHost = storage_res.value;
-      }
-    }
+  var doInit = function(path, appProps, savedHost, storage){
     var data = fhparams.buildFHParams();
 
     ajax({
@@ -8831,12 +8880,14 @@ var loadCloudProps = function(app_props, callback) {
       "dataType": "json",
       "contentType": "application/json",
       "data": JSON.stringify(data),
-      "timeout": app_props.timeout,
-      "success": function(initRes) {
-        storage.save({
-          key: "fh_init",
-          value: initRes
-        }, function() {});
+      "timeout": appProps.timeout,
+      "success": function(initRes){
+        if(storage){
+          storage.save({
+            key: "fh_init",
+            value: initRes
+          }, function() {});
+        }
         if (callback) {
           callback(null, {
             cloud: initRes
@@ -8870,7 +8921,34 @@ var loadCloudProps = function(app_props, callback) {
         }
       }
     });
-  });
+  }
+
+  var storage = null;
+  var path = app_props.host + consts.boxprefix + "app/init";
+  try {
+    storage = new Lawnchair(lcConf, function() {});
+    storage.get('fh_init', function(storage_res) {
+      var savedHost = null;
+      if (storage_res && storage_res.value !== null && typeof(storage_res.value) !== "undefined" && storage_res !== "") {
+        storage_res = typeof(storage_res) === "string" ? JSON.parse(storage_res) : storage_res;
+        storage_res.value = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value) : storage_res.value;
+        if (storage_res.value.init) {
+          app_props.init = storage_res.value.init;
+        } else {
+          //keep it backward compatible.
+          app_props.init = typeof(storage_res.value) === "string" ? JSON.parse(storage_res.value) : storage_res.value;
+        }
+        if (storage_res.value.hosts) {
+          savedHost = storage_res.value;
+        }
+      }
+
+      doInit(path, app_props, savedHost, storage);
+    });
+  } catch (e) {
+    //for whatever reason (e.g. localStorage is disabled) Lawnchair is failed to init, just do the init
+    doInit(path, app_props, null, null);
+  }  
 };
 
 module.exports = {
@@ -8878,7 +8956,7 @@ module.exports = {
   "loadCloudProps": loadCloudProps
 }
 
-},{"../../libs/generated/lawnchair":2,"./ajax":19,"./appProps":26,"./constants":28,"./fhparams":32,"./findFHPath":33,"./handleError":34,"./lawnchair-ext":37,"./loadScript":38,"./logger":39,"./security/hash":45,"JSON":3}],37:[function(require,module,exports){
+},{"../../libs/generated/lawnchair":2,"./ajax":19,"./appProps":26,"./constants":28,"./fhparams":32,"./handleError":33,"./lawnchair-ext":36,"./loadScript":37,"./logger":38,"./security/hash":44,"JSON":3}],36:[function(require,module,exports){
 var Lawnchair = require('../../libs/generated/lawnchair');
 
 var fileStorageAdapter = function (app_props, hashFunc) {
@@ -9066,7 +9144,7 @@ var addAdapter = function(app_props, hashFunc){
 module.exports = {
   addAdapter: addAdapter
 }
-},{"../../libs/generated/lawnchair":2}],38:[function(require,module,exports){
+},{"../../libs/generated/lawnchair":2}],37:[function(require,module,exports){
 module.exports = function (url, callback) {
   var script;
   var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
@@ -9089,7 +9167,7 @@ module.exports = function (url, callback) {
   head.insertBefore(script, head.firstChild);
 };
 
-},{}],39:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 var console = require('console');
 var log = require('loglevel');
 
@@ -9113,7 +9191,7 @@ log.setLevel('info');
  * Use either string or integer value
  */
 module.exports = log;
-},{"console":8,"loglevel":14}],40:[function(require,module,exports){
+},{"console":8,"loglevel":14}],39:[function(require,module,exports){
 module.exports = [
   {
     "destination" :"ipad",
@@ -9141,7 +9219,7 @@ module.exports = [
   }
 ];
 
-},{}],41:[function(require,module,exports){
+},{}],40:[function(require,module,exports){
 module.exports = function(url) {
   var qmap = {};
   var i = url.split("?");
@@ -9157,7 +9235,7 @@ module.exports = function(url) {
   }
   return qmap;
 };
-},{}],42:[function(require,module,exports){
+},{}],41:[function(require,module,exports){
 var constants = require("./constants");
 
 module.exports = function() {
@@ -9170,7 +9248,7 @@ module.exports = function() {
   return type + "/" + constants.sdk_version;
 };
 
-},{"./constants":28}],43:[function(require,module,exports){
+},{"./constants":28}],42:[function(require,module,exports){
 var rsa = require("../../../libs/rsa");
 var SecureRandom = rsa.SecureRandom;
 var byte2Hex = rsa.byte2Hex;
@@ -9212,7 +9290,7 @@ var aes_keygen = function(p, s, f){
 }
 
 module.exports = aes_keygen;
-},{"../../../libs/rsa":4}],44:[function(require,module,exports){
+},{"../../../libs/rsa":4}],43:[function(require,module,exports){
 var CryptoJS = require("../../../libs/generated/crypto");
 
 var encrypt = function(p, s, f){
@@ -9253,7 +9331,7 @@ module.exports = {
   encrypt: encrypt,
   decrypt: decrypt
 }
-},{"../../../libs/generated/crypto":1}],45:[function(require,module,exports){
+},{"../../../libs/generated/crypto":1}],44:[function(require,module,exports){
 var CryptoJS = require("../../../libs/generated/crypto");
 
 
@@ -9278,7 +9356,7 @@ var hash = function(p, s, f){
 }
 
 module.exports = hash;
-},{"../../../libs/generated/crypto":1}],46:[function(require,module,exports){
+},{"../../../libs/generated/crypto":1}],45:[function(require,module,exports){
 var rsa = require("../../../libs/rsa");
 var RSAKey = rsa.RSAKey;
 
@@ -9303,7 +9381,7 @@ var encrypt = function(p, s, f){
 module.exports = {
   encrypt: encrypt
 }
-},{"../../../libs/rsa":4}],47:[function(require,module,exports){
+},{"../../../libs/rsa":4}],46:[function(require,module,exports){
 var JSON = require("JSON");
 var actAPI = require("./api_act");
 var cloudAPI = require("./api_cloud");
@@ -9350,8 +9428,11 @@ var self = {
     // Is the background sync with the cloud currently active
     "storage_strategy" : "html5-filesystem",
     // Storage strategy to use for Lawnchair - supported strategies are 'html5-filesystem' and 'dom'
-    "file_system_quota" : 50 * 1024 * 1204
+    "file_system_quota" : 50 * 1024 * 1204,
     // Amount of space to request from the HTML5 filesystem API when running in browser
+    "has_custom_sync" : null
+    //If the app has custom cloud sync function, it should be set to true. If set to false, the default mbaas sync implementation will be used. When set to null or undefined, 
+    //a check will be performed to determine which implementation to use
   },
 
   notifications: {
@@ -9386,7 +9467,7 @@ var self = {
 
   notify_callback: undefined,
 
-  hasCustomSync : undefined,
+  init_is_called: false,
 
   // PUBLIC FUNCTION IMPLEMENTATIONS
   init: function(options) {
@@ -9397,7 +9478,11 @@ var self = {
       self.config[i] = options[i];
     }
 
-    self.datasetMonitor();
+    //prevent multiple monitors from created if init is called multiple times
+    if(!self.init_is_called){
+      self.init_is_called = true;
+      self.datasetMonitor();
+    }
   },
 
   notify: function(callback) {
@@ -9406,6 +9491,8 @@ var self = {
 
   manage: function(dataset_id, options, query_params, meta_data, cb) {
     self.consoleLog('manage - START');
+
+    var options = options || {};
 
     var doManage = function(dataset) {
       self.consoleLog('doManage dataset :: initialised = ' + dataset.initialised + " :: " + dataset_id + ' :: ' + JSON.stringify(options));
@@ -9418,7 +9505,9 @@ var self = {
       dataset.syncRunning = false;
       dataset.syncPending = true;
       dataset.initialised = true;
-      dataset.meta = {};
+      if(typeof dataset.meta === "undefined"){
+        dataset.meta = {};
+      }
 
       self.saveDataSet(dataset_id, function() {
 
@@ -9451,7 +9540,9 @@ var self = {
           // No dataset in memory or local storage - create a new one and put it in memory
           self.consoleLog('manage - Creating new dataset for id ' + dataset_id);
           var dataset = {};
+          dataset.data = {};
           dataset.pending = {};
+          dataset.meta = {};
           self.datasets[dataset_id] = dataset;
           doManage(dataset);
         });
@@ -9488,11 +9579,16 @@ var self = {
   },
 
   create: function(dataset_id, data, success, failure) {
+    if(data == null){
+      if(failure){
+        return failure("null_data");
+      }
+    }
     self.addPendingObj(dataset_id, null, data, "create", success, failure);
   },
 
   read: function(dataset_id, uid, success, failure) {
-      self.getDataSet(dataset_id, function(dataset) {
+    self.getDataSet(dataset_id, function(dataset) {
       var rec = dataset.data[uid];
       if (!rec) {
         failure("unknown_uid");
@@ -9606,7 +9702,9 @@ var self = {
     if (dataset) {
       success(dataset);
     } else {
-      failure('unknown_dataset ' + dataset_id, dataset_id);
+      if(failure){
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
     }
   },
 
@@ -9616,7 +9714,9 @@ var self = {
     if (dataset) {
       success(dataset.query_params);
     } else {
-      failure('unknown_dataset ' + dataset_id, dataset_id);
+      if(failure){
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
     }
   },
 
@@ -9642,7 +9742,9 @@ var self = {
     if (dataset) {
       success(dataset.meta_data);
     } else {
-      failure('unknown_dataset ' + dataset_id, dataset_id);
+      if(failure){
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
     }
   },
 
@@ -9668,7 +9770,9 @@ var self = {
     if (dataset) {
       success(dataset.config);
     } else {
-      failure('unknown_dataset ' + dataset_id, dataset_id);
+      if(failure){
+        failure('unknown_dataset ' + dataset_id, dataset_id);
+      }
     }
   },
 
@@ -9816,7 +9920,9 @@ var self = {
         pendingObj.preHash = self.generateHash(rec.data);
         storePendingObject(pendingObj);
       }, function(code, msg) {
-        failure(code, msg);
+        if(failure){
+          failure(code, msg);
+        }
       });
     }
   },
@@ -9891,6 +9997,9 @@ var self = {
 
                 //Check to see if any delayed pending records can now be set to ready
                 self.updateDelayedFromNewData(dataset_id, dataSet, res);
+
+                //Check meta data as well to make sure it contains the correct info
+                self.updateMetaFromNewData(dataset_id, dataSet, res);
 
                 // Update the new dataset with details of any inflight updates which we have not received a response on
                 self.updateNewDataFromInFlight(dataset_id, dataSet, res);
@@ -10020,11 +10129,13 @@ var self = {
       if( self.datasets.hasOwnProperty(dataset_id) ) {
         var dataset = self.datasets[dataset_id];
 
-        if( !dataset.syncRunning && dataset.config.sync_active) {
+        if( !dataset.syncRunning && (dataset.config.sync_active || dataset.syncForced)) {
           // Check to see if it is time for the sync loop to run again
           var lastSyncStart = dataset.syncLoopStart;
           var lastSyncCmp = dataset.syncLoopEnd;
-          if( lastSyncStart == null ) {
+          if(dataset.syncForced){
+            dataset.syncPending = true;
+          } else if( lastSyncStart == null ) {
             self.consoleLog(dataset_id +' - Performing initial sync');
             // Dataset has never been synced before - do initial sync
             dataset.syncPending = true;
@@ -10035,8 +10146,6 @@ var self = {
               // Time between sync loops has passed - do another sync
               dataset.syncPending = true;
             }
-          } else if( dataset.syncForced ) {
-            dataset.syncPending = true;
           }
 
           if( dataset.syncPending ) {
@@ -10054,38 +10163,49 @@ var self = {
   },
 
   checkHasCustomSync : function(dataset_id, cb) {
-    if(self.hasCustomSync != null) {
+    var dataset = self.datasets[dataset_id];
+    if(dataset && dataset.config){
+      self.consoleLog("dataset.config.has_custom_sync = " + dataset.config.has_custom_sync);
+      if(dataset.config.has_custom_sync != null) {
+        return cb();
+      }
+      self.consoleLog('starting check has custom sync');
+
+      actAPI({
+        'act' : dataset_id,
+        'req': {
+          'fn': 'sync'
+        }
+      }, function(res) {
+        //if the custom sync is defined in the cloud, this call should success.
+        //if failed, we think this the custom sync is not defined
+        self.consoleLog('check has_custom_sync - success - ', res);
+        dataset.config.has_custom_sync = true;
+        return cb();
+      }, function(msg,err) {
+        self.consoleLog('check has_custom_sync - failure - ', err);
+        if(err.status && err.status === 500){
+          //if we receive 500, it could be that there is an error occured due to missing parameters or similar,
+          //but the endpoint is defined.
+          self.consoleLog('check has_custom_sync - failed with 500, endpoint does exists');
+          dataset.config.has_custom_sync = true;
+        } else {
+          dataset.config.has_custom_sync = false;
+        }
+        return cb();
+      });
+    } else {
       return cb();
     }
-    self.consoleLog('starting check has custom sync');
-
-    actAPI({
-      'act' : dataset_id,
-      'req': {
-        'fn': 'sync'
-      }
-    }, function(res) {
-      //if the custom sync is defined in the cloud, this call should success.
-      //if failed, we think this the custom sync is not defined
-      self.consoleLog('checkHasCustomSync - success - ', res);
-      self.hasCustomSync = true;
-      return cb();
-    }, function(msg,err) {
-      self.consoleLog('checkHasCustomSync - failure - ', err);
-      if(err.status && err.status === 500){
-        //if we receive 500, it could be that there is an error occured due to missing parameters or similar,
-        //but the endpoint is defined.
-        self.consoleLog('checkHasCustomSync - failed with 500, endpoint does exists');
-        self.hasCustomSync = true;
-      } else {
-        self.hasCustomSync = false;
-      }
-      return cb();
-    });
   },
 
   doCloudCall: function(params, success, failure) {
-    if( self.hasCustomSync ) {
+    var hasCustomSync = false;
+    var dataset = self.datasets[params.dataset_id];
+    if(dataset && dataset.config){
+      hasCustomSync = dataset.config.has_custom_sync;
+    }
+    if( hasCustomSync == true ) {
       actAPI({
         'act' : params.dataset_id,
         'req' : params.req
@@ -10143,22 +10263,23 @@ var self = {
       self.consoleLog(errMsg);
     };
 
-        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       this.get( "dataset_" + dataset_id, function (data){
-         if (data && data.val !== null) {
-            var dataset = data.val;
-            if(typeof dataset === "string"){
-              dataset = JSON.parse(dataset);
+        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       
+          this.get( "dataset_" + dataset_id, function (data){
+            if (data && data.val) {
+              var dataset = data.val;
+              if(typeof dataset === "string"){
+                dataset = JSON.parse(dataset);
+              }
+              // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
+              // the user wants sync
+              dataset.initialised = false;
+              self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
+              self.consoleLog('load from local storage success for dataset_id :' + dataset_id);
+              if(success) return success(dataset);
+            } else {
+              // no data yet, probably first time. failure calback should handle this
+              if(failure) return failure();
             }
-            // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
-            // the user wants sync
-            dataset.initialised = false;
-            self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
-            self.consoleLog('load from local storage success for dataset_id :' + dataset_id);
-            if(success) return success(dataset);
-          } else {
-            // no data yet, probably first time. failure calback should handle this
-            if(failure) return failure();
-          }
        });
     });
   },
@@ -10498,15 +10619,6 @@ var self = {
               }
             }
           }
-          else if (!pendingRec.inFlight && pendingRec.crashed ) {
-            self.consoleLog('updateCrashedInFlightFromNewData - Trying to resolve issues with crashed non in flight record - uid = ' + pendingRec.uid);
-            // Stalled pending record because a previous pending update on the same record crashed
-            var crashedRef = resolvedCrashes[pendingRec.uid];
-            if( crashedRef ) {
-              self.consoleLog('updateCrashedInFlightFromNewData - Found a stalled pending record backed up behind a resolved crash uid=' + pendingRec.uid + ' :: hash=' + pendingRec.hash);
-              pendingRec.crashed = false;
-            }
-          }
         }
       }
     }
@@ -10536,6 +10648,50 @@ var self = {
     }
   },
 
+  updateMetaFromNewData: function(dataset_id, dataset, newData){
+    var meta = dataset.meta;
+    if(meta && newData && newData.updates && newData.updates.hashes){
+      for(var uid in meta){
+        if(meta.hasOwnProperty(uid)){
+          var metadata = meta[uid];
+          var pendingHash = metadata.pendingUid;
+          var previousPendingHash = metadata.previousPendingUid;
+          self.consoleLog("updateMetaFromNewData - Found metadata with uid = " + uid + " :: pendingHash = " + pendingHash + " :: previousPendingHash =" + previousPendingHash);
+          var previousPendingResolved = true;
+          var pendingResolved = true;
+          if(previousPendingHash){
+            //we have previous pending in meta data, see if it's resolved
+            previousPendingResolved = false;
+            var resolved = newData.updates.hashes[previousPendingHash];
+            if(resolved){
+              self.consoleLog("updateMetaFromNewData - Found previousPendingUid in meta data resolved - resolved = " + JSON.stringify(resolved));
+              //the previous pending is resolved in the cloud
+              metadata.previousPendingUid = undefined;
+              previousPendingResolved = true;
+            }
+          }
+          if(pendingHash){
+            //we have current pending in meta data, see if it's resolved
+            pendingResolved = false;
+            var resolved = newData.updates.hashes[pendingHash];
+            if(resolved){
+              self.consoleLog("updateMetaFromNewData - Found pendingUid in meta data resolved - resolved = " + JSON.stringify(resolved));
+              //the current pending is resolved in the cloud
+              metadata.pendingUid = undefined;
+              pendingResolved = true;
+            }
+          }
+
+          if(previousPendingResolved && pendingResolved){
+            self.consoleLog("updateMetaFromNewData - both previous and current pendings are resolved for meta data with uid " + uid + ". Delete it.");
+            //all pendings are resolved, the entry can be removed from meta data
+            delete meta[uid];
+          }
+        }
+      }
+    }
+  },
+
 
   markInFlightAsCrashed : function(dataset) {
     var pending = dataset.pending;
@@ -10555,21 +10711,6 @@ var self = {
           }
         }
       }
-
-      // Check for any pending updates that would be modifying a crashed record. These can not go out until the
-      // status of the crashed record is determined
-      for( pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          pendingRec = pending[pendingHash];
-
-          if( ! pendingRec.inFlight && ! pendingRec.delayed ) {
-            var crashedRef = crashedRecords[pendingRec.uid];
-            if( crashedRef ) {
-              pendingRec.crashed = true;
-            }
-          }
-        }
-      }
     }
   },
 
@@ -10583,7 +10724,7 @@ var self = {
 (function() {
   self.config = self.defaults;
   //Initialse the sync service with default config
-  self.init({});
+  //self.init({});
 })();
 
 module.exports = {
@@ -10609,9 +10750,12 @@ module.exports = {
   startSync: self.startSync,
   stopSync: self.stopSync,
   doSync: self.doSync,
-  forceSync: self.forceSync
+  forceSync: self.forceSync,
+  generateHash: self.generateHash,
+  loadDataSet: self.loadDataSet,
+  checkHasCustomSync: self.checkHasCustomSync
 };
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":20,"./api_cloud":22,"JSON":3}],48:[function(require,module,exports){
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":20,"./api_cloud":22,"JSON":3}],47:[function(require,module,exports){
 module.exports = {
   createUUID : function () {
     //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
@@ -10628,7 +10772,7 @@ module.exports = {
   }
 };
 
-},{}],49:[function(require,module,exports){
+},{}],48:[function(require,module,exports){
 var initializer = require("./initializer");
 var events = require("./events");
 var CloudHost = require("./hosts");
@@ -10721,4 +10865,4 @@ module.exports = {
   getInitError: getInitError,
   reset: reset
 }
-},{"./appProps":26,"./constants":28,"./events":31,"./hosts":35,"./initializer":36,"./logger":39}]},{},["il4jYc"])
+},{"./appProps":26,"./constants":28,"./events":31,"./hosts":34,"./initializer":35,"./logger":38}]},{},["il4jYc"])

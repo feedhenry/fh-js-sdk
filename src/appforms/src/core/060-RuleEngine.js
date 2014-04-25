@@ -1,6 +1,6 @@
-/*! fh-forms - v0.5.3 -  */
+/*! fh-forms - v0.5.7 -  */
 /*! async - v0.2.9 -  */
-/*! 2014-04-10 */
+/*! 2014-04-24 */
 /* This is the prefix file */
 if(appForm){
   appForm.RulesEngine=rulesEngine;
@@ -824,8 +824,8 @@ function rulesEngine (formDef) {
           var args = Array.prototype.slice.call(arguments, 1);
           if (typeof console !== 'undefined') {
             if (err) {
-              if ($fh.forms.log) {
-                $fh.forms.log.e(err);
+              if (console.error) {
+                console.error(err);
               }
             }
             else if (console[name]) {
@@ -979,7 +979,7 @@ function rulesEngine (formDef) {
 
   (function () {
 
-    var async=require('async');
+    var async = require('async');
 
     /*
      * Sample Usage
@@ -1045,7 +1045,7 @@ function rulesEngine (formDef) {
     var FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY = "time";
     var FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME = "datetime";
 
-    var formsRulesEngine = function(formDef) {
+    var formsRulesEngine = function (formDef) {
       var initialised;
 
       var definition = formDef;
@@ -1060,53 +1060,53 @@ function rulesEngine (formDef) {
       var pageRuleSubjectMap = {};
       var submissionFieldsMap = {};
       var validatorsMap = {
-        "text":         validatorString,
-        "textarea":     validatorString,
-        "number":       validatorNumericString,
+        "text": validatorString,
+        "textarea": validatorString,
+        "number": validatorNumericString,
         "emailAddress": validatorEmail,
-        "dropdown":     validatorDropDown,
-        "radio":        validatorDropDown,
-        "checkboxes":   validatorCheckboxes,
-        "location":     validatorLocation,
-        "locationMap":  validatorLocationMap,
-        "photo":        validatorFile,
-        "signature":    validatorFile,
-        "file":         validatorFile,
-        "dateTime":     validatorDateTime,
-        "url":          validatorString,
+        "dropdown": validatorDropDown,
+        "radio": validatorDropDown,
+        "checkboxes": validatorCheckboxes,
+        "location": validatorLocation,
+        "locationMap": validatorLocationMap,
+        "photo": validatorFile,
+        "signature": validatorFile,
+        "file": validatorFile,
+        "dateTime": validatorDateTime,
+        "url": validatorString,
         "sectionBreak": validatorSection
       };
 
       var validatorsClientMap = {
-        "text":         validatorString,
-        "textarea":     validatorString,
-        "number":       validatorNumericString,
+        "text": validatorString,
+        "textarea": validatorString,
+        "number": validatorNumericString,
         "emailAddress": validatorEmail,
-        "dropdown":     validatorDropDown,
-        "radio":        validatorDropDown,
-        "checkboxes":   validatorCheckboxes,
-        "location":     validatorLocation,
-        "locationMap":  validatorLocationMap,
-        "photo":        validatorAnyFile,
-        "signature":    validatorAnyFile,
-        "file":         validatorAnyFile,
-        "dateTime":     validatorDateTime,
-        "url":          validatorString,
+        "dropdown": validatorDropDown,
+        "radio": validatorDropDown,
+        "checkboxes": validatorCheckboxes,
+        "location": validatorLocation,
+        "locationMap": validatorLocationMap,
+        "photo": validatorAnyFile,
+        "signature": validatorAnyFile,
+        "file": validatorAnyFile,
+        "dateTime": validatorDateTime,
+        "url": validatorString,
         "sectionBreak": validatorSection
       };
 
-      var isFieldRuleSubject = function(fieldId) {
+      var isFieldRuleSubject = function (fieldId) {
         return !!fieldRuleSubjectMap[fieldId];
       };
 
-      var isPageRuleSubject = function(pageId) {
+      var isPageRuleSubject = function (pageId) {
         return !!pageRuleSubjectMap[pageId];
       };
 
       function buildFieldMap(cb) {
         // Iterate over all fields in form definition & build fieldMap
-        async.each(definition.pages, function(page, cbPages) {
-          async.each(page.fields, function(field, cbFields) {
+        async.each(definition.pages, function (page, cbPages) {
+          async.each(page.fields, function (field, cbFields) {
             field.pageId = page._id;
 
             field.fieldOptions = field.fieldOptions ? field.fieldOptions : {};
@@ -1115,7 +1115,11 @@ function rulesEngine (formDef) {
 
             fieldMap[field._id] = field;
             if (field.required) {
-              requiredFieldMap[field._id] = {field: field, submitted: false, validated: false};
+              requiredFieldMap[field._id] = {
+                field: field,
+                submitted: false,
+                validated: false
+              };
             }
             return cbFields();
           }, function (err) {
@@ -1126,8 +1130,8 @@ function rulesEngine (formDef) {
 
       function buildFieldRuleMaps(cb) {
         // Iterate over all rules in form definition & build ruleSubjectMap
-        async.each(definition.fieldRules, function(rule, cbRules) {
-          async.each(rule.ruleConditionalStatements, function(ruleConditionalStatement, cbRuleConditionalStatements) {
+        async.each(definition.fieldRules, function (rule, cbRules) {
+          async.each(rule.ruleConditionalStatements, function (ruleConditionalStatement, cbRuleConditionalStatements) {
             var fieldId = ruleConditionalStatement.sourceField;
             fieldRulePredicateMap[fieldId] = fieldRulePredicateMap[fieldId] || [];
             fieldRulePredicateMap[fieldId].push(rule);
@@ -1142,9 +1146,9 @@ function rulesEngine (formDef) {
 
       function buildPageRuleMap(cb) {
         // Iterate over all rules in form definition & build ruleSubjectMap
-        async.each(definition.pageRules, function(rule, cbRules) {
+        async.each(definition.pageRules, function (rule, cbRules) {
           var rulesId = rule._id;
-          async.each(rule.ruleConditionalStatements, function(ruleConditionalStatement, cbRulePredicates) {
+          async.each(rule.ruleConditionalStatements, function (ruleConditionalStatement, cbRulePredicates) {
             var fieldId = ruleConditionalStatement.sourceField;
             pageRulePredicateMap[fieldId] = pageRulePredicateMap[fieldId] || [];
             pageRulePredicateMap[fieldId].push(rule);
@@ -1162,7 +1166,7 @@ function rulesEngine (formDef) {
         submissionFieldsMap = {}; // start with empty map, rulesEngine can be called with multiple submissions
 
         // iterate over all the fields in the submissions and build a map for easier lookup
-        async.each(submission.formFields, function(formField, cb) {
+        async.each(submission.formFields, function (formField, cb) {
           if (!formField.fieldId) return cb(new Error("No fieldId in this submission entry: " + util.inspect(formField)));
 
           submissionFieldsMap[formField.fieldId] = formField;
@@ -1171,12 +1175,12 @@ function rulesEngine (formDef) {
       }
 
       function init(cb) {
-        if(initialised) return cb();
+        if (initialised) return cb();
         async.parallel([
           buildFieldMap,
           buildFieldRuleMaps,
           buildPageRuleMap
-        ], function(err) {
+        ], function (err) {
           if (err) return cb(err);
           initialised = true;
           return cb();
@@ -1184,7 +1188,7 @@ function rulesEngine (formDef) {
       }
 
       function initSubmission(formSubmission, cb) {
-        init(function(err){
+        init(function (err) {
           if (err) return cb(err);
 
           submission = formSubmission;
@@ -1193,7 +1197,7 @@ function rulesEngine (formDef) {
       }
 
       function getPreviousFieldValues(submittedField, previousSubmission, cb) {
-        if(previousSubmission && previousSubmission.formFields) {
+        if (previousSubmission && previousSubmission.formFields) {
           async.filter(previousSubmission.formFields, function (formField, cb) {
             return cb(formField.fieldId.toString() == submittedField.fieldId.toString());
           }, function (results) {
@@ -1213,15 +1217,20 @@ function rulesEngine (formDef) {
           cb = previousSubmission;
           previousSubmission = null;
         }
-        init(function(err){
+        init(function (err) {
           if (err) return cb(err);
 
           initSubmission(submission, function (err) {
             if (err) return cb(err);
 
             async.waterfall([
+
               function (cb) {
-                return cb(undefined, {validation:{valid: true}});  // any invalid fields will set this to false
+                return cb(undefined, {
+                  validation: {
+                    valid: true
+                  }
+                }); // any invalid fields will set this to false
               },
               function (res, cb) {
                 validateSubmittedFields(res, previousSubmission, cb);
@@ -1238,26 +1247,26 @@ function rulesEngine (formDef) {
 
       function validateSubmittedFields(res, previousSubmission, cb) {
         // for each field, call validateField
-        async.each(submission.formFields, function(submittedField, callback) {
+        async.each(submission.formFields, function (submittedField, callback) {
           var fieldID = submittedField.fieldId;
           var fieldDef = fieldMap[fieldID];
 
           getPreviousFieldValues(submittedField, previousSubmission, function (err, previousFieldValues) {
-            if(err) return callback(err);
-            getFieldValidationStatus(submittedField, fieldDef, previousFieldValues, function(err, fieldRes) {
-              if(err) return callback(err);
+            if (err) return callback(err);
+            getFieldValidationStatus(submittedField, fieldDef, previousFieldValues, function (err, fieldRes) {
+              if (err) return callback(err);
 
               if (!fieldRes.valid) {
-                res.validation.valid = false;        // indicate invalid form if any fields invalid
-                res.validation[fieldID] = fieldRes;  // add invalid field info to validate form result
+                res.validation.valid = false; // indicate invalid form if any fields invalid
+                res.validation[fieldID] = fieldRes; // add invalid field info to validate form result
               }
 
               return callback();
             });
 
           });
-        }, function(err) {
-          if( err ) {
+        }, function (err) {
+          if (err) {
             return cb(err);
           }
           return cb(undefined, res);
@@ -1270,7 +1279,7 @@ function rulesEngine (formDef) {
           if (!submissionRequiredFieldsMap[requiredFieldId].submitted) {
             isFieldVisible(requiredFieldId, true, function (err, visible) {
               if (err) return cb(err);
-              if (visible) {  // we only care about required fields if they are visible
+              if (visible) { // we only care about required fields if they are visible
                 resField.fieldId = requiredFieldId;
                 resField.valid = false;
                 resField.fieldErrorMessage = ["Required Field Not Submitted"];
@@ -1303,7 +1312,7 @@ function rulesEngine (formDef) {
        *         }
        */
       function validateField(fieldId, submission, cb) {
-        init(function(err){
+        init(function (err) {
           if (err) return cb(err);
 
           initSubmission(submission, function (err) {
@@ -1313,7 +1322,9 @@ function rulesEngine (formDef) {
             var fieldDef = fieldMap[fieldId];
             getFieldValidationStatus(submissionField, fieldDef, null, function (err, res) {
               if (err) return cb(err);
-              var ret = {validation: {}};
+              var ret = {
+                validation: {}
+              };
               ret.validation[fieldId] = res;
               return cb(undefined, ret);
             });
@@ -1342,12 +1353,12 @@ function rulesEngine (formDef) {
           valueIndex = 0;
         }
 
-        init(function(err){
+        init(function (err) {
           if (err) return cb(err);
           var fieldDefinition = fieldMap[fieldId];
 
           var required = false;
-          if(fieldDefinition.repeating &&
+          if (fieldDefinition.repeating &&
             fieldDefinition.fieldOptions &&
             fieldDefinition.fieldOptions.definition &&
             fieldDefinition.fieldOptions.definition.minRepeat) {
@@ -1358,17 +1369,21 @@ function rulesEngine (formDef) {
 
           var validation = (fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) ? fieldDefinition.fieldOptions.validation : undefined;
 
-          if( validation && false === validation.validateImmediately){
-            var ret = {validation: {}};
-            ret.validation[fieldId] = {"valid":true};
-            return cb(undefined, ret );
+          if (validation && false === validation.validateImmediately) {
+            var ret = {
+              validation: {}
+            };
+            ret.validation[fieldId] = {
+              "valid": true
+            };
+            return cb(undefined, ret);
           }
 
-          if(fieldEmpty(inputValue)) {
-            if(required) {
+          if (fieldEmpty(inputValue)) {
+            if (required) {
               return formatResponse("No value specified for required input", cb);
             } else {
-              return formatResponse(undefined, cb);  // optional field not supplied is valid
+              return formatResponse(undefined, cb); // optional field not supplied is valid
             }
           }
 
@@ -1378,8 +1393,8 @@ function rulesEngine (formDef) {
 
             validator(inputValue, fieldDefinition, undefined, function (err) {
               var message;
-              if(err) {
-                if(err.message) {
+              if (err) {
+                if (err.message) {
                   message = err.message;
                 } else {
                   message = "Unknown error message";
@@ -1391,13 +1406,17 @@ function rulesEngine (formDef) {
         });
 
         function formatResponse(msg, cb) {
-          var messages = {errorMessages: []};
-          if(msg) {
+          var messages = {
+            errorMessages: []
+          };
+          if (msg) {
             messages.errorMessages.push(msg);
           }
           return createValidatorResponse(fieldId, messages, function (err, res) {
             if (err) return cb(err);
-            var ret = {validation: {}};
+            var ret = {
+              validation: {}
+            };
             ret.validation[fieldId] = res;
             return cb(undefined, ret);
           });
@@ -1421,7 +1440,7 @@ function rulesEngine (formDef) {
 
       function getFieldValidationStatus(submittedField, fieldDef, previousFieldValues, cb) {
         validateFieldInternal(submittedField, fieldDef, previousFieldValues, function (err, messages) {
-          if(err) return cb(err);
+          if (err) return cb(err);
           createValidatorResponse(submittedField.fieldId, messages, cb);
         });
       }
@@ -1453,33 +1472,33 @@ function rulesEngine (formDef) {
           previousFieldValues = null;
         }
 
-        countSubmittedValues(submittedField, function(err, numSubmittedValues) {
-          if(err) return cb(err);
+        countSubmittedValues(submittedField, function (err, numSubmittedValues) {
+          if (err) return cb(err);
           async.series({
-            valuesSubmitted:
-              async.apply(checkValueSubmitted, submittedField, fieldDef),
-            repeats:
-              async.apply(checkRepeat, numSubmittedValues, fieldDef),
-            values:
-              async.apply(checkValues, submittedField, fieldDef, previousFieldValues)
+            valuesSubmitted: async.apply(checkValueSubmitted, submittedField, fieldDef),
+            repeats: async.apply(checkRepeat, numSubmittedValues, fieldDef),
+            values: async.apply(checkValues, submittedField, fieldDef, previousFieldValues)
           }, function (err, results) {
-            if(err) return cb(err);
+            if (err) return cb(err);
 
             var fieldErrorMessages = [];
-            if(results.valuesSubmitted) {
+            if (results.valuesSubmitted) {
               fieldErrorMessages.push(results.valuesSubmitted);
             }
-            if(results.repeats) {
+            if (results.repeats) {
               fieldErrorMessages.push(results.repeats);
             }
-            return cb(undefined, {fieldErrorMessage: fieldErrorMessages, errorMessages: results.values});
+            return cb(undefined, {
+              fieldErrorMessage: fieldErrorMessages,
+              errorMessages: results.values
+            });
           });
         });
 
-        return;  // just functions below this
+        return; // just functions below this
 
         function checkValueSubmitted(submittedField, fieldDefinition, cb) {
-          if(! fieldDefinition.required) return cb(undefined, null);
+          if (!fieldDefinition.required) return cb(undefined, null);
           var valueSubmitted = submittedField && submittedField.fieldValues && (submittedField.fieldValues.length > 0);
           if (!valueSubmitted) {
             return cb(undefined, "No value submitted for field " + fieldDefinition.name);
@@ -1489,9 +1508,9 @@ function rulesEngine (formDef) {
 
         function countSubmittedValues(submittedField, cb) {
           var numSubmittedValues = 0;
-          if(submittedField && submittedField.fieldValues && submittedField.fieldValues.length > 0) {
-            for(var i=0; i<submittedField.fieldValues.length; i += 1) {
-              if(submittedField.fieldValues[i]) {
+          if (submittedField && submittedField.fieldValues && submittedField.fieldValues.length > 0) {
+            for (var i = 0; i < submittedField.fieldValues.length; i += 1) {
+              if (submittedField.fieldValues[i]) {
                 numSubmittedValues += 1;
               }
             }
@@ -1501,20 +1520,20 @@ function rulesEngine (formDef) {
 
         function checkRepeat(numSubmittedValues, fieldDefinition, cb) {
 
-          if(fieldDefinition.repeating && fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.definition){
-            if(fieldDefinition.fieldOptions.definition.minRepeat){
-              if(numSubmittedValues < fieldDefinition.fieldOptions.definition.minRepeat){
+          if (fieldDefinition.repeating && fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.definition) {
+            if (fieldDefinition.fieldOptions.definition.minRepeat) {
+              if (numSubmittedValues < fieldDefinition.fieldOptions.definition.minRepeat) {
                 return cb(undefined, "Expected min of " + fieldDefinition.fieldOptions.definition.minRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues);
               }
             }
 
-            if (fieldDefinition.fieldOptions.definition.maxRepeat){
-              if(numSubmittedValues > fieldDefinition.fieldOptions.definition.maxRepeat){
+            if (fieldDefinition.fieldOptions.definition.maxRepeat) {
+              if (numSubmittedValues > fieldDefinition.fieldOptions.definition.maxRepeat) {
                 return cb(undefined, "Expected max of " + fieldDefinition.fieldOptions.definition.maxRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues);
               }
             }
           } else {
-            if(numSubmittedValues > 1) {
+            if (numSubmittedValues > 1) {
               return cb(undefined, "Should not have multiple values for non-repeating field");
             }
           }
@@ -1525,19 +1544,19 @@ function rulesEngine (formDef) {
         function checkValues(submittedField, fieldDefinition, previousFieldValues, cb) {
           getValidatorFunction(fieldDefinition.type, function (err, validator) {
             if (err) return cb(err);
-            async.map(submittedField.fieldValues, function(fieldValue, cb){
-              if(fieldEmpty(fieldValue)) {
+            async.map(submittedField.fieldValues, function (fieldValue, cb) {
+              if (fieldEmpty(fieldValue)) {
                 return cb(undefined, null);
               } else {
-                validator(fieldValue, fieldDefinition, previousFieldValues, function(validationError) {
+                validator(fieldValue, fieldDefinition, previousFieldValues, function (validationError) {
                   var errorMessage;
-                  if(validationError) {
+                  if (validationError) {
                     errorMessage = validationError.message || "Error during validation of field";
                   } else {
                     errorMessage = null;
                   }
 
-                  if (submissionRequiredFieldsMap[fieldDefinition._id]) {   // set to true if at least one value
+                  if (submissionRequiredFieldsMap[fieldDefinition._id]) { // set to true if at least one value
                     submissionRequiredFieldsMap[fieldDefinition._id].submitted = true;
                   }
 
@@ -1600,8 +1619,8 @@ function rulesEngine (formDef) {
         return validFormatRegex(fieldValue, regex);
       }
 
-      function validatorString (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(typeof fieldValue !== "string"){
+      function validatorString(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        if (typeof fieldValue !== "string") {
           return cb(new Error("Expected string but got " + typeof(fieldValue)));
         }
 
@@ -1616,19 +1635,19 @@ function rulesEngine (formDef) {
         field_format_string = field_format_string.trim();
 
         if (field_format_string && (field_format_string.length > 0) && field_format_mode && (field_format_mode.length > 0)) {
-          if(!validFormat(fieldValue, field_format_mode, field_format_string)) {
+          if (!validFormat(fieldValue, field_format_mode, field_format_string)) {
             return cb(new Error("field value in incorrect format, expected format: " + field_format_string + " but submission value is: " + fieldValue));
           }
         }
 
-        if(fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.min){
-          if(fieldValue.length < fieldDefinition.fieldOptions.validation.min){
+        if (fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.min) {
+          if (fieldValue.length < fieldDefinition.fieldOptions.validation.min) {
             return cb(new Error("Expected minimum string length of " + fieldDefinition.fieldOptions.validation.min + " but submission is " + fieldValue.length + ". Submitted val: " + fieldValue));
           }
         }
 
-        if(fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.max){
-          if(fieldValue.length > fieldDefinition.fieldOptions.validation.max){
+        if (fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.max) {
+          if (fieldValue.length > fieldDefinition.fieldOptions.validation.max) {
             return cb(new Error("Expected maximum string length of " + fieldDefinition.fieldOptions.validation.max + " but submission is " + fieldValue.length + ". Submitted val: " + fieldValue));
           }
         }
@@ -1636,29 +1655,29 @@ function rulesEngine (formDef) {
         return cb();
       }
 
-      function validatorNumericString (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        var testVal = (fieldValue - 0);  // coerce to number (or NaN)
+      function validatorNumericString(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        var testVal = (fieldValue - 0); // coerce to number (or NaN)
         var numeric = (testVal == fieldValue); // testVal co-erced to numeric above, so numeric comparison and NaN != NaN
-        if(!numeric) {
+        if (!numeric) {
           return cb(new Error("Expected numeric but got: " + fieldValue));
         }
 
         return validatorNumber(testVal, fieldDefinition, previousFieldValues, cb);
       }
 
-      function validatorNumber (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(typeof fieldValue !== "number"){
+      function validatorNumber(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        if (typeof fieldValue !== "number") {
           return cb(new Error("Expected number but got " + typeof(fieldValue)));
         }
 
-        if(fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.min){
-          if(fieldValue < fieldDefinition.fieldOptions.validation.min){
+        if (fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.min) {
+          if (fieldValue < fieldDefinition.fieldOptions.validation.min) {
             return cb(new Error("Expected minimum Number " + fieldDefinition.fieldOptions.validation.min + " but submission is " + fieldValue + ". Submitted number: " + fieldValue));
           }
         }
 
-        if (fieldDefinition.fieldOptions.validation.max){
-          if(fieldValue > fieldDefinition.fieldOptions.validation.max){
+        if (fieldDefinition.fieldOptions.validation.max) {
+          if (fieldValue > fieldDefinition.fieldOptions.validation.max) {
             return cb(new Error("Expected maximum Number " + fieldDefinition.fieldOptions.validation.max + " but submission is " + fieldValue + ". Submitted number: " + fieldValue));
           }
         }
@@ -1666,25 +1685,25 @@ function rulesEngine (formDef) {
         return cb();
       }
 
-      function validatorEmail (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(typeof(fieldValue) !== "string"){
+      function validatorEmail(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        if (typeof(fieldValue) !== "string") {
           return cb(new Error("Expected string but got " + typeof(fieldValue)));
         }
 
-        if(fieldValue.match(/[-0-9a-zA-Z.+_]+@[-0-9a-zA-Z.+_]+\.[a-zA-Z]{2,4}/g) === null){
+        if (fieldValue.match(/[-0-9a-zA-Z.+_]+@[-0-9a-zA-Z.+_]+\.[a-zA-Z]{2,4}/g) === null) {
           return cb(new Error("Invalid email address format: " + fieldValue));
         } else {
           return cb();
         }
       }
 
-      function validatorDropDown (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(typeof(fieldValue) !== "string"){
+      function validatorDropDown(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        if (typeof(fieldValue) !== "string") {
           return cb(new Error("Expected submission to be string but got " + typeof(fieldValue)));
         }
 
         //Check value exists in the field definition
-        if(!fieldDefinition.fieldOptions.definition.options){
+        if (!fieldDefinition.fieldOptions.definition.options) {
           return cb(new Error("No options exist for field " + fieldDefinition.name));
         }
 
@@ -1699,7 +1718,7 @@ function rulesEngine (formDef) {
         });
       }
 
-      function validatorCheckboxes (fieldValue, fieldDefinition, previousFieldValues, cb) {
+      function validatorCheckboxes(fieldValue, fieldDefinition, previousFieldValues, cb) {
         var minVal;
         if (fieldDefinition && fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) {
           minVal = fieldDefinition.fieldOptions.validation.min;
@@ -1710,18 +1729,18 @@ function rulesEngine (formDef) {
         }
 
         if (minVal) {
-          if(fieldValue.selections === null || fieldValue.selections === undefined || fieldValue.selections.length < minVal){
+          if (fieldValue.selections === null || fieldValue.selections === undefined || fieldValue.selections.length < minVal) {
             var len;
-            if(fieldValue.selections) {
+            if (fieldValue.selections) {
               len = fieldValue.selections.length;
             }
             return cb(new Error("Expected a minimum number of selections " + minVal + " but got " + len));
           }
         }
 
-        if(maxVal){
-          if(fieldValue.selections){
-            if(fieldValue.selections.length > maxVal){
+        if (maxVal) {
+          if (fieldValue.selections) {
+            if (fieldValue.selections.length > maxVal) {
               return cb(new Error("Expected a maximum number of selections " + maxVal + " but got " + fieldValue.selections.length));
             }
           }
@@ -1729,18 +1748,18 @@ function rulesEngine (formDef) {
 
         var optionsInCheckbox = [];
 
-        async.eachSeries(fieldDefinition.fieldOptions.definition.options, function(choice, cb){
-          for(var choiceName in choice){
+        async.eachSeries(fieldDefinition.fieldOptions.definition.options, function (choice, cb) {
+          for (var choiceName in choice) {
             optionsInCheckbox.push(choice[choiceName]);
           }
           return cb();
-        }, function(err){
-          async.eachSeries(fieldValue.selections, function(selection, cb){
-            if(typeof(selection) !== "string"){
+        }, function (err) {
+          async.eachSeries(fieldValue.selections, function (selection, cb) {
+            if (typeof(selection) !== "string") {
               return cb(new Error("Expected checkbox submission to be string but got " + typeof(selection)));
             }
 
-            if(optionsInCheckbox.indexOf(selection) === -1){
+            if (optionsInCheckbox.indexOf(selection) === -1) {
               return cb(new Error("Checkbox Option " + selection + " does not exist in the field."));
             }
 
@@ -1749,9 +1768,9 @@ function rulesEngine (formDef) {
         });
       }
 
-      function validatorLocationMap (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(fieldValue.lat && fieldValue["long"]) {
-          if(isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue["long"]))) {
+      function validatorLocationMap(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        if (fieldValue.lat && fieldValue["long"]) {
+          if (isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue["long"]))) {
             return cb(new Error("Invalid latitude and longitude values"));
           } else {
             return cb();
@@ -1762,10 +1781,10 @@ function rulesEngine (formDef) {
       }
 
 
-      function validatorLocation (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(fieldDefinition.fieldOptions.definition.locationUnit === "latlong") {
-          if(fieldValue.lat && fieldValue["long"]){
-            if(isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue["long"]))){
+      function validatorLocation(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        if (fieldDefinition.fieldOptions.definition.locationUnit === "latlong") {
+          if (fieldValue.lat && fieldValue["long"]) {
+            if (isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue["long"]))) {
               return cb(new Error("Invalid latitude and longitude values"));
             } else {
               return cb();
@@ -1774,7 +1793,7 @@ function rulesEngine (formDef) {
             return cb(new Error("Invalid object for latitude longitude submission"));
           }
         } else {
-          if(fieldValue.zone && fieldValue.eastings && fieldValue.northings){
+          if (fieldValue.zone && fieldValue.eastings && fieldValue.northings) {
             //Zone must be 3 characters, eastings 6 and northings 9
             return validateNorthingsEastings(fieldValue, cb);
           } else {
@@ -1782,18 +1801,18 @@ function rulesEngine (formDef) {
           }
         }
 
-        function validateNorthingsEastings(fieldValue, cb){
-          if(typeof(fieldValue.zone) !== "string" || fieldValue.zone.length === 0){
+        function validateNorthingsEastings(fieldValue, cb) {
+          if (typeof(fieldValue.zone) !== "string" || fieldValue.zone.length === 0) {
             return cb(new Error("Invalid zone definition for northings and eastings location. " + fieldValue.zone));
           }
 
-          var east = parseInt(fieldValue.eastings,10);
-          if(isNaN(east)){
+          var east = parseInt(fieldValue.eastings, 10);
+          if (isNaN(east)) {
             return cb(new Error("Invalid eastings definition for northings and eastings location. " + fieldValue.eastings));
           }
 
           var north = parseInt(fieldValue.northings, 10);
-          if(isNaN(north)){
+          if (isNaN(north)) {
             return cb(new Error("Invalid northings definition for northings and eastings location. " + fieldValue.northings));
           }
 
@@ -1804,15 +1823,15 @@ function rulesEngine (formDef) {
       function validatorAnyFile(fieldValue, fieldDefinition, previousFieldValues, cb) {
         // if any of the following validators return ok, then return ok.
         validatorBase64(fieldValue, fieldDefinition, previousFieldValues, function (err) {
-          if(!err) {
+          if (!err) {
             return cb();
           }
           validatorFile(fieldValue, fieldDefinition, previousFieldValues, function (err) {
-            if(!err) {
+            if (!err) {
               return cb();
             }
             validatorFileObj(fieldValue, fieldDefinition, previousFieldValues, function (err) {
-              if(!err) {
+              if (!err) {
                 return cb();
               }
               return cb(err);
@@ -1821,17 +1840,55 @@ function rulesEngine (formDef) {
         });
       }
 
-      function validatorFile (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(typeof fieldValue !== "object"){
+      function checkFileSize(fieldDefinition, fieldValue, sizeKey, cb) {
+        fieldDefinition = fieldDefinition || {};
+        var fieldOptions = fieldDefinition.fieldOptions || {};
+        var fieldOptionsDef = fieldOptions.definition || {};
+        var fileSizeMax = fieldOptionsDef.file_size || null; //FileSizeMax will be in KB. File size is in bytes
+
+        if (fileSizeMax !== null) {
+          var fieldValueSize = fieldValue[sizeKey];
+          var fieldValueSizeKB = 1;
+          if (fieldValueSize > 1000) {
+            fieldValueSizeKB = fieldValueSize / 1000;
+          }
+          console.log("Comparing File Size: ", fileSizeMax, fieldValueSize);
+          if (fieldValueSize > (fileSizeMax * 1000)) {
+            return cb(new Error("File size is too large. File can be a maximum of " + fileSizeMax + "KB. Size of file selected: " + fieldValueSizeKB + "KB"));
+          } else {
+            return cb();
+          }
+        } else {
+          return cb();
+        }
+      }
+
+      function validatorFile(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        if (typeof fieldValue !== "object") {
           return cb(new Error("Expected object but got " + typeof(fieldValue)));
         }
 
         var keyTypes = [
-          { keyName: "fileName", valueType: "string" },
-          { keyName: "fileSize", valueType: "number" },
-          { keyName: "fileType", valueType: "string" },
-          { keyName: "fileUpdateTime", valueType: "number" },
-          { keyName: "hashName", valueType: "string" }
+          {
+            keyName: "fileName",
+            valueType: "string"
+          },
+          {
+            keyName: "fileSize",
+            valueType: "number"
+          },
+          {
+            keyName: "fileType",
+            valueType: "string"
+          },
+          {
+            keyName: "fileUpdateTime",
+            valueType: "number"
+          },
+          {
+            keyName: "hashName",
+            valueType: "string"
+          }
         ];
 
         async.each(keyTypes, function (keyType, cb) {
@@ -1839,7 +1896,7 @@ function rulesEngine (formDef) {
           if (actualType !== keyType.valueType) {
             return cb(new Error("Expected " + keyType.valueType + " but got " + actualType));
           }
-          if (keyType.keyName === "fileName" && fieldValue[keyType.keyName].length <=0) {
+          if (keyType.keyName === "fileName" && fieldValue[keyType.keyName].length <= 0) {
             return cb(new Error("Expected value for " + keyType.keyName));
           }
 
@@ -1847,25 +1904,36 @@ function rulesEngine (formDef) {
         }, function (err) {
           if (err) return cb(err);
 
-          if(fieldValue.hashName.indexOf("filePlaceHolder") > -1){ //TODO abstract out to config
-            return cb();
-          } else if (previousFieldValues && previousFieldValues.hashName && previousFieldValues.hashName.indexOf(fieldValue.hashName) > -1){
-            return cb();
-          } else {
-            return cb(new Error("Invalid file placeholder text" + fieldValue.hashName));
-          }
+          checkFileSize(fieldDefinition, fieldValue, "fileSize", function (err) {
+            if (err) {
+              return cb(err);
+            }
 
+            if (fieldValue.hashName.indexOf("filePlaceHolder") > -1) { //TODO abstract out to config
+              return cb();
+            } else if (previousFieldValues && previousFieldValues.hashName && previousFieldValues.hashName.indexOf(fieldValue.hashName) > -1) {
+              return cb();
+            } else {
+              return cb(new Error("Invalid file placeholder text" + fieldValue.hashName));
+            }
+          });
         });
       }
 
-      function validatorFileObj (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if((typeof File !== "function") || !(fieldValue instanceof File)) {
+      function validatorFileObj(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        if ((typeof File !== "function") || !(fieldValue instanceof File)) {
           return cb(new Error("Expected File object but got " + typeof(fieldValue)));
         }
 
         var keyTypes = [
-          { keyName: "name", valueType: "string" },
-          { keyName: "size", valueType: "number" }
+          {
+            keyName: "name",
+            valueType: "string"
+          },
+          {
+            keyName: "size",
+            valueType: "number"
+          }
         ];
 
         async.each(keyTypes, function (keyType, cb) {
@@ -1873,47 +1941,52 @@ function rulesEngine (formDef) {
           if (actualType !== keyType.valueType) {
             return cb(new Error("Expected " + keyType.valueType + " but got " + actualType));
           }
-          if (actualType === "string" && fieldValue[keyType.keyName].length <=0) {
+          if (actualType === "string" && fieldValue[keyType.keyName].length <= 0) {
             return cb(new Error("Expected value for " + keyType.keyName));
           }
-          if (actualType === "number" && fieldValue[keyType.keyName] <=0) {
+          if (actualType === "number" && fieldValue[keyType.keyName] <= 0) {
             return cb(new Error("Expected > 0 value for " + keyType.keyName));
           }
 
           return cb();
         }, function (err) {
           if (err) return cb(err);
-          return cb();
-        });
 
+
+          checkFileSize(fieldDefinition, fieldValue, "size", function (err) {
+            if (err) {
+              return cb(err);
+            }
+            return cb();
+          });
+        });
       }
 
-      function validatorBase64 (fieldValue, fieldDefinition, previousFieldValues, cb) {
-        if(typeof fieldValue !== "string"){
+      function validatorBase64(fieldValue, fieldDefinition, previousFieldValues, cb) {
+        if (typeof fieldValue !== "string") {
           return cb(new Error("Expected base64 string but got " + typeof(fieldValue)));
         }
 
-        if(fieldValue.length <= 0){
+        if (fieldValue.length <= 0) {
           return cb(new Error("Expected base64 string but was empty"));
         }
 
         return cb();
       }
 
-      function validatorDateTime  (fieldValue, fieldDefinition, previousFieldValues, cb) {
+      function validatorDateTime(fieldValue, fieldDefinition, previousFieldValues, cb) {
         var testDate;
 
-        if(typeof(fieldValue) !== "string"){
+        if (typeof(fieldValue) !== "string") {
           return cb(new Error("Expected string but got " + typeof(fieldValue)));
         }
 
-        switch (fieldDefinition.fieldOptions.definition.datetimeUnit)
-        {
+        switch (fieldDefinition.fieldOptions.definition.datetimeUnit) {
           case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-            try{
+            try {
               testDate = new Date(fieldValue);
               valid = (testDate.toString() !== "Invalid Date");
-            }catch(e){
+            } catch (e) {
               valid = false;
             }
             if (valid) {
@@ -1941,15 +2014,15 @@ function rulesEngine (formDef) {
             }
             break;
           case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-            try{
+            try {
               testDate = new Date(fieldValue);
 
-              if(testDate.toString() === "Invalid Date"){
+              if (testDate.toString() === "Invalid Date") {
                 return cb(new Error("Invalid dateTime string " + fieldValue));
               } else {
                 return cb();
               }
-            }catch(e){
+            } catch (e) {
               return cb(new Error("Invalid dateTime string " + fieldValue));
             }
             break;
@@ -1958,7 +2031,7 @@ function rulesEngine (formDef) {
         }
       }
 
-      function validatorSection (value, fieldDefinition, previousFieldValues, cb) {
+      function validatorSection(value, fieldDefinition, previousFieldValues, cb) {
         return cb(new Error("Should not submit section field: " + fieldDefinition.name));
       }
 
@@ -1966,11 +2039,11 @@ function rulesEngine (formDef) {
         var visible = true;
 
         // Itterate over each rule that this field is a predicate of
-        async.each(rules, function(rule, cbRule) {
+        async.each(rules, function (rule, cbRule) {
           // For each rule, itterate over the predicate fields and evaluate the rule
           var predicateMapQueries = [];
           var predicateMapPassed = [];
-          async.each(rule.ruleConditionalStatements, function(ruleConditionalStatement, cbPredicates) {
+          async.each(rule.ruleConditionalStatements, function (ruleConditionalStatement, cbPredicates) {
             var field = fieldMap[ruleConditionalStatement.sourceField];
             var passed = false;
             var submissionValues = [];
@@ -1984,23 +2057,24 @@ function rulesEngine (formDef) {
               // Validate rule predictes on the first entry only.
               passed = isConditionActive(field, submissionValues[0], testValue, condition);
             }
-            predicateMapQueries.push({"field": field,
+            predicateMapQueries.push({
+              "field": field,
               "submissionValues": submissionValues,
               "condition": condition,
               "testValue": testValue,
-              "passed" : passed
+              "passed": passed
             });
 
-            if( passed ) {
+            if (passed) {
               predicateMapPassed.push(field);
             }
             return cbPredicates();
-          }, function(err) {
-            if(err) cbRule(err);
+          }, function (err) {
+            if (err) cbRule(err);
 
-            function rulesPassed (condition, passed, queries) {
-              return ( (condition === "and" ) && (( passed.length == queries.length ))) ||  // "and" condition - all rules must pass
-                ( (condition === "or" )  && (( passed.length > 0 )));                        // "or" condition - only one rule must pass
+            function rulesPassed(condition, passed, queries) {
+              return ((condition === "and") && ((passed.length == queries.length))) || // "and" condition - all rules must pass
+                ((condition === "or") && ((passed.length > 0))); // "or" condition - only one rule must pass
             }
 
             if (rulesPassed(rule.ruleConditionalOperator, predicateMapPassed, predicateMapQueries)) {
@@ -2010,7 +2084,7 @@ function rulesEngine (formDef) {
             }
             return cbRule();
           });
-        }, function(err) {
+        }, function (err) {
           if (err) return cb(err);
 
           return cb(undefined, visible);
@@ -2018,13 +2092,13 @@ function rulesEngine (formDef) {
       }
 
       function isPageVisible(pageId, cb) {
-        init(function(err){
+        init(function (err) {
           if (err) return cb(err);
 
-          if (isPageRuleSubject(pageId)) {  // if the page is the target of a rule
-            return rulesResult(pageRuleSubjectMap[pageId], cb);  // execute page rules
+          if (isPageRuleSubject(pageId)) { // if the page is the target of a rule
+            return rulesResult(pageRuleSubjectMap[pageId], cb); // execute page rules
           } else {
-            return cb(undefined, true);  // if page is not subject of any rule then must be visible
+            return cb(undefined, true); // if page is not subject of any rule then must be visible
           }
         });
       }
@@ -2034,7 +2108,7 @@ function rulesEngine (formDef) {
          * fieldId = Id of field to check for reule predeciate references
          * checkContainingPage = if true check page containing field, and return false if the page is hidden
          */
-        init(function(err){
+        init(function (err) {
           if (err) return cb(err);
 
           // Fields are visable by default
@@ -2044,6 +2118,7 @@ function rulesEngine (formDef) {
           if (!fieldId) return cb(new Error("Field does not exist in form"));
 
           async.waterfall([
+
             function testPage(cb) {
               if (checkContainingPage) {
                 isPageVisible(field.pageId, cb);
@@ -2052,12 +2127,12 @@ function rulesEngine (formDef) {
               }
             },
             function testField(pageVisible, cb) {
-              if (!pageVisible) {  // if page containing field is not visible then don't need to check field
+              if (!pageVisible) { // if page containing field is not visible then don't need to check field
                 return cb(undefined, false);
               }
 
-              if (isFieldRuleSubject(fieldId) ) { // If the field is the subject of a rule it may have been hidden
-                return rulesResult(fieldRuleSubjectMap[fieldId], cb);  // execute field rules
+              if (isFieldRuleSubject(fieldId)) { // If the field is the subject of a rule it may have been hidden
+                return rulesResult(fieldRuleSubjectMap[fieldId], cb); // execute field rules
               } else {
                 return cb(undefined, true); // if not subject of field rules then can't be hidden
               }
@@ -2083,20 +2158,24 @@ function rulesEngine (formDef) {
        *      }
        */
       function checkRules(submissionJSON, cb) {
-        init(function(err){
+        init(function (err) {
           if (err) return cb(err);
 
           initSubmission(submissionJSON, function (err) {
-            if(err) return cb(err);
+            if (err) return cb(err);
             var actions = {};
 
             async.parallel([
+
               function (cb) {
                 actions.fields = {};
                 async.eachSeries(Object.keys(fieldRuleSubjectMap), function (fieldId, cb) {
                   isFieldVisible(fieldId, false, function (err, fieldVisible) {
                     if (err) return cb(err);
-                    actions.fields[fieldId] = {targetId: fieldId, action: (fieldVisible?"show":"hide")};
+                    actions.fields[fieldId] = {
+                      targetId: fieldId,
+                      action: (fieldVisible ? "show" : "hide")
+                    };
                     return cb();
                   });
                 }, cb);
@@ -2106,15 +2185,20 @@ function rulesEngine (formDef) {
                 async.eachSeries(Object.keys(pageRuleSubjectMap), function (pageId, cb) {
                   isPageVisible(pageId, function (err, pageVisible) {
                     if (err) return cb(err);
-                    actions.pages[pageId] = {targetId: pageId, action: (pageVisible?"show":"hide")};
+                    actions.pages[pageId] = {
+                      targetId: pageId,
+                      action: (pageVisible ? "show" : "hide")
+                    };
                     return cb();
                   });
                 }, cb);
               }
             ], function (err) {
-              if(err) return cb(err);
+              if (err) return cb(err);
 
-              return cb(undefined, {actions: actions});
+              return cb(undefined, {
+                actions: actions
+              });
             });
           });
         });
@@ -2135,7 +2219,7 @@ function rulesEngine (formDef) {
     };
 
     function isNumberBetween(num, min, max) {
-      var numVal = parseInt(num,10);
+      var numVal = parseInt(num, 10);
       return (!isNaN(numVal) && (numVal >= min) && (numVal <= max));
     }
 
@@ -2166,26 +2250,22 @@ function rulesEngine (formDef) {
       var fieldOptions = field.fieldOptions ? field.fieldOptions : {};
 
       var valid = true;
-      if( "is equal to" === condition) {
+      if ("is equal to" === condition) {
         valid = fieldValue === testValue;
-      }
-      else if( "is greater than" === condition) {
+      } else if ("is greater than" === condition) {
         // TODO - do numeric checking
         valid = fieldValue > testValue;
-      }
-      else if( "is less than" === condition) {
+      } else if ("is less than" === condition) {
         // TODO - do numeric checking
         valid = fieldValue < testValue;
-      }
-      else if( "is at" === condition) {
+      } else if ("is at" === condition) {
         valid = false;
-        if( fieldType === FIELD_TYPE_DATETIME ) {
-          switch (fieldOptions.definition.datetimeUnit)
-          {
+        if (fieldType === FIELD_TYPE_DATETIME) {
+          switch (fieldOptions.definition.datetimeUnit) {
             case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-              try{
+              try {
                 valid = (new Date(new Date(fieldValue).toDateString()).getTime() == new Date(new Date(testValue).toDateString()).getTime());
-              }catch(e){
+              } catch (e) {
                 valid = false;
               }
               break;
@@ -2193,27 +2273,25 @@ function rulesEngine (formDef) {
               valid = cvtTimeToSeconds(fieldValue) === cvtTimeToSeconds(testValue);
               break;
             case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-              try{
+              try {
                 valid = (new Date(fieldValue).getTime() == new Date(testValue).getTime());
-              }catch(e){
+              } catch (e) {
                 valid = false;
               }
               break;
             default:
-              valid = false;  // TODO should raise error here?
+              valid = false; // TODO should raise error here?
               break;
           }
         }
-      }
-      else if( "is before" === condition) {
+      } else if ("is before" === condition) {
         valid = false;
-        if( fieldType === FIELD_TYPE_DATETIME ) {
-          switch (fieldOptions.definition.datetimeUnit)
-          {
+        if (fieldType === FIELD_TYPE_DATETIME) {
+          switch (fieldOptions.definition.datetimeUnit) {
             case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-              try{
+              try {
                 valid = (new Date(new Date(fieldValue).toDateString()).getTime() < new Date(new Date(testValue).toDateString()).getTime());
-              }catch(e){
+              } catch (e) {
                 valid = false;
               }
               break;
@@ -2221,27 +2299,25 @@ function rulesEngine (formDef) {
               valid = cvtTimeToSeconds(fieldValue) < cvtTimeToSeconds(testValue);
               break;
             case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-              try{
+              try {
                 valid = (new Date(fieldValue).getTime() < new Date(testValue).getTime());
-              }catch(e){
+              } catch (e) {
                 valid = false;
               }
               break;
             default:
-              valid = false;  // TODO should raise error here?
+              valid = false; // TODO should raise error here?
               break;
           }
         }
-      }
-      else if( "is after" === condition) {
+      } else if ("is after" === condition) {
         valid = false;
-        if( fieldType === FIELD_TYPE_DATETIME ) {
-          switch (fieldOptions.definition.datetimeUnit)
-          {
+        if (fieldType === FIELD_TYPE_DATETIME) {
+          switch (fieldOptions.definition.datetimeUnit) {
             case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-              try{
+              try {
                 valid = (new Date(new Date(fieldValue).toDateString()).getTime() > new Date(new Date(testValue).toDateString()).getTime());
-              }catch(e){
+              } catch (e) {
                 valid = false;
               }
               break;
@@ -2249,45 +2325,38 @@ function rulesEngine (formDef) {
               valid = cvtTimeToSeconds(fieldValue) > cvtTimeToSeconds(testValue);
               break;
             case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-              try{
+              try {
                 valid = (new Date(fieldValue).getTime() > new Date(testValue).getTime());
-              }catch(e){
+              } catch (e) {
                 valid = false;
               }
               break;
             default:
-              valid = false;  // TODO should raise error here?
+              valid = false; // TODO should raise error here?
               break;
           }
         }
-      }
-      else if( "is" === condition) {
+      } else if ("is" === condition) {
         if (fieldType === FIELD_TYPE_CHECKBOX) {
           valid = fieldValue && fieldValue.selections && fieldValue.selections.indexOf(testValue) !== -1;
         } else {
           valid = fieldValue === testValue;
         }
-      }
-      else if( "is not" === condition) {
+      } else if ("is not" === condition) {
         if (fieldType === FIELD_TYPE_CHECKBOX) {
           valid = fieldValue && fieldValue.selections && fieldValue.selections.indexOf(testValue) === -1;
         } else {
           valid = fieldValue !== testValue;
         }
-      }
-      else if( "contains" === condition) {
+      } else if ("contains" === condition) {
         valid = fieldValue.indexOf(testValue) !== -1;
-      }
-      else if( "does not contain" === condition) {
+      } else if ("does not contain" === condition) {
         valid = fieldValue.indexOf(testValue) === -1;
-      }
-      else if( "begins with" === condition) {
+      } else if ("begins with" === condition) {
         valid = fieldValue.substring(0, testValue.length) === testValue;
-      }
-      else if( "ends with" === condition) {
+      } else if ("ends with" === condition) {
         valid = fieldValue.substring(Math.max(0, (fieldValue.length - testValue.length)), fieldValue.length) === testValue;
-      }
-      else {
+      } else {
         valid = false;
       }
 
@@ -2299,7 +2368,6 @@ function rulesEngine (formDef) {
     }
 
   }());
-
   /* This is the suffix file */
   return module.exports(formDef);
 }

@@ -10,7 +10,7 @@ module.exports = function(grunt) {
     pkg: pkg,
     meta: {},
     jshint: {
-      all: ['src/*.js', 'src/appforms/src/core/*.js','src/appforms/src/backbone/*.js', '!src/appforms/src/core/000*.js', '!src/appforms/src/core/060*.js', '!src/appforms/src/core/999*.js', '!src/appforms/src/backbone/000*.js', '!src/appforms/src/backbone/001*.js', '!src/appforms/src/backbone/999*.js'],
+      all: ['src/*.js', 'src/appforms/src/core/*.js', 'src/appforms/src/backbone/*.js', '!src/appforms/src/core/000*.js', '!src/appforms/src/core/060*.js', '!src/appforms/src/core/999*.js', '!src/appforms/src/backbone/000*.js', '!src/appforms/src/backbone/001*.js', '!src/appforms/src/backbone/999*.js'],
       options: {
         curly: true,
         eqeqeq: true,
@@ -29,7 +29,8 @@ module.exports = function(grunt) {
           "libs/lawnchair/lawnchairWindowNameStorageAdapter.js",
           "libs/lawnchair/lawnchairLocalStorageAdapter.js",
           "libs/lawnchair/lawnchairWebkitSqlAdapter.js",
-          "libs/lawnchair/lawnchairHtml5FileSystem.js"
+          "libs/lawnchair/lawnchairHtml5FileSystem.js",
+          "libs/lawnchair/lawnchairMemoryAdapter.js"
         ],
         dest: "libs/generated/lawnchair.js"
       },
@@ -77,11 +78,20 @@ module.exports = function(grunt) {
       }
     },
     'mocha_phantomjs': {
-      all: {
+      test: {
         options: {
           urls: [
-            "http://127.0.0.1:8200/test/browser/index.html",
+            "http://127.0.0.1:8200/test/browser/index.html?url=http://localhost:9999",
             "http://127.0.0.1:8200/test/browser/index-require.html"
+          ]
+        }
+      },
+      test_coverage: {
+        options:{
+          reporter: "json-cov",
+          file: 'rep/coverage.json',
+          urls: [
+            "http://127.0.0.1:8200/test/browser/index.html?url=http://localhost:9999&coverage=1"
           ]
         }
       }
@@ -167,8 +177,28 @@ module.exports = function(grunt) {
         dest: './test/browser/browserified_tests.js',
         options: {
           external: [ './src/feedhenry.js' ],
+          ignore: ['../../src-cov/modules/ajax', '../../src-cov/modules/events', '../../src-cov/modules/queryMap', '../../src-cov/modules/sync-cli', '../../src-cov/feedhenry'],
           // Embed source map for tests
           debug: true
+        }
+      },
+      require_cov: {
+        src:['src-cov/feedhenry.js'],
+        dest: 'test/browser/feedhenry-latest-require.js',
+        options: {
+          alias:['./src-cov/feedhenry.js']
+        }
+      },
+      test_cov: {
+        src: [ './test/browser/suite.js' ],
+        dest: './test/browser/browserified_tests.js',
+        options: {
+          external: [ './src-cov/feedhenry.js' ],
+          // Embed source map for tests
+          debug: true,
+          add: {
+            "LIB_COV": 1
+          }
         }
       }
     },
@@ -200,6 +230,22 @@ module.exports = function(grunt) {
         dest: 'dist/fh-starter-project-latest.zip',
         src: ['src/index.html', 'src/fhconfig.json', 'dist/feedhenry.min.js']
       }
+    },
+    shell: {
+      jscov: {
+        //NOTE: install node-jscoverage first from here: https://github.com/visionmedia/node-jscoverage
+        command: 'jscoverage src/ src-cov/ --exclude=appforms',
+        options: { 
+          stdout: true
+        }
+      },
+      htmlcov: {
+        //NOTE: install jsoncov2htmlcov first from here: https://github.com/plasticine/json2htmlcov
+        command: 'json2htmlcov rep/coverage.json > rep/coverage.html',
+        options: {   
+          stdout: true
+        }
+      }
     }
   });
 
@@ -212,6 +258,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-browserify');
   grunt.loadNpmTasks('grunt-mocha-phantomjs');
   grunt.loadNpmTasks('grunt-contrib-watch');
+  grunt.loadNpmTasks('grunt-shell');
 
   var spawns = [];
   grunt.registerTask('start-local-servers', function () {
@@ -278,13 +325,15 @@ module.exports = function(grunt) {
   grunt.registerTask('local', ['start-local-servers', 'connect:server:keepalive']);
 
   //run tests in phatomjs
-  grunt.registerTask('test', ['jshint', 'browserify:dist', 'browserify:require', 'browserify:test', 'connect:server', 'mocha_phantomjs']);
+  grunt.registerTask('test', ['jshint', 'browserify:dist', 'browserify:require', 'browserify:test', 'connect:server', 'mocha_phantomjs:test']);
 
   grunt.registerTask('concat-core-sdk', ['concat:lawnchair', 'concat:crypto', 'concat:forms_core', 'concat:forms_backbone', 'concat:forms_backboneRequireJS']);
 
   grunt.registerTask('concat-titanium', ['concat:lawnchair', 'concat:lawnchair_titanium', 'concat:crypto']);
 
   grunt.registerTask('titanium', 'concat-titanium browserify:dist_titanium');
+
+  grunt.registerTask('coverage', ['shell:jscov', 'browserify:require_cov', 'browserify:test_cov', 'connect:server', 'mocha_phantomjs:test_coverage', 'shell:htmlcov']);
 
   grunt.registerTask('default', 'jshint concat-core-sdk test concat:forms_sdk concat:forms_appFormsTest titanium uglify:dist zip');
 };
