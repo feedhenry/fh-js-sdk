@@ -5895,7 +5895,10 @@ appForm.models = function (module) {
             } else {
               if($fh.forms.config.isOnline()){
                 task.uploadTick(function (err) {
-                  $fh.forms.log.e("Error on upload tick: ", err, task);
+                  if(err){
+                    $fh.forms.log.e("Error on upload tick: ", err, task);
+                  }
+
                   //callback when finished. ready for next upload command
                   that.sending = false;
                 });

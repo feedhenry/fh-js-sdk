@@ -4147,22 +4147,23 @@ var ConfigView = Backbone.View.extend({
     this.events = _.extend({}, this._myEvents, this.events);
   },
   "render": function() {
-    this.$el.html("");
+    var self = this;
+    self.$el.html("");
     var props = $fh.forms.config.getConfig();
-    var html = _.template(this.templates.join(""), props);
-    this.$el.append(html);
+    var html = _.template(self.templates.join(""), props);
+    self.$el.append(html);
 
     if($fh.forms.config.editAllowed() === false){
-      this.$el.find(".config_camera").hide();
-      this.$el.find(".config_submission").hide();
+      self.$el.find(".config_camera").hide();
+      self.$el.find(".config_submission").hide();
 
-      this.$el.find("#config_debugging_log_enabled").hide();
-      this.$el.find("#config_debugging_log_level").hide();
-      this.$el.find("#config_debugging_log_line_limit").hide();
-      this.$el.find("#config_debugging_log_email").hide();
+      self.$el.find("#config_debugging_log_enabled").hide();
+      self.$el.find("#config_debugging_log_level").hide();
+      self.$el.find("#config_debugging_log_line_limit").hide();
+      self.$el.find("#config_debugging_log_email").hide();
     }
 
-    return this;
+    return self;
   },
   "save": function(cb) {
     $fh.forms.log.l("Saving config");

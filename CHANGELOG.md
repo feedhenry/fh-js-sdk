@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.0.10-alpha - 2014-04-28 - IR226 - Niall Donnelly
+
+* 6742 fixed config visible by non admin users. Fixed offline functionality.
+
 ## 2.0.9-alpha - 2014-04-25 - IR226 - Cbrookes
 
 * 6440-default-values-set set default values if present
