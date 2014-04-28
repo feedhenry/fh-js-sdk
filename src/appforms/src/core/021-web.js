@@ -4,6 +4,11 @@ appForm.web = function (module) {
     $fh.forms.log.d("Phonegap uploadFile ", url, fileProps);
     var filePath = fileProps.fullPath;
 
+    if(!$fh.forms.config.isOnline()){
+      $fh.forms.log.e("Phonegap uploadFile. Not Online.", url, fileProps);
+      return cb("No Internet Connection Available.");
+    }
+
     var success = function (r) {
       $fh.forms.log.d("upload to url ", url, " sucessful");
       r.response = r.response || {};
@@ -40,6 +45,11 @@ appForm.web = function (module) {
   module.downloadFile = function(url, fileMetaData, cb){
     $fh.forms.log.d("Phonegap downloadFile ", url, fileMetaData);
     var ft = new FileTransfer();
+
+    if(!$fh.forms.config.isOnline()){
+      $fh.forms.log.e("Phonegap downloadFile. Not Online.", url, fileMetaData);
+      return cb("No Internet Connection Available.");
+    }
 
     appforms.utils.fileSystem.getBasePath(function(err, basePath){
       if(err){

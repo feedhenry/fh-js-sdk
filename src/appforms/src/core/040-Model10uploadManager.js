@@ -166,13 +166,21 @@ appForm.models = function (module) {
               //current task uploaded or aborted by error. shift it from queue
               that.shift();
               that.sending = false;
-              that.saveLocal(function () {
+              that.saveLocal(function (err) {
+                if(err){
+                  $fh.forms.log.e("Error saving upload manager: ", err);
+                }
               });
             } else {
-              task.uploadTick(function (err) {
-                //callback when finished. ready for next upload command
-                that.sending = false;
-              });
+              if($fh.forms.config.isOnline()){
+                task.uploadTick(function (err) {
+                  $fh.forms.log.e("Error on upload tick: ", err, task);
+                  //callback when finished. ready for next upload command
+                  that.sending = false;
+                });
+              } else {
+                $fh.forms.log.d("Upload Manager: Tick: Not online.");
+              }
             }
           }
         });
