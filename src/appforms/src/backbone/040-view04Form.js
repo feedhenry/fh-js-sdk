@@ -206,10 +206,10 @@ var FormView = BaseView.extend({
     }
     switch (action) {
       case "show":
-        target.removeClass("fh_appform_hidden");
+        target.$el.show();
         break;
       case "hide":
-        target.hide();
+        target.$el.hide();
         break;
       default:
         console.error("action not defined:" + action);
