@@ -2463,7 +2463,7 @@ FieldEmailView = FieldView.extend({
 FieldFileView = FieldView.extend({
     input: "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action select' data-index='<%= index %>' style='margin-top:0px;'  type='<%= inputType %>'>Select A File</button>" +
         "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action remove' data-index='<%= index %>' style='margin-top:0px;'  type='<%= inputType %>'><i class='fa fa-times-circle'></i>&nbsp;Remove File Entry</button>" +
-        "<input style='display:none;' class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/>",
+        "<input style='opacity: 0; filter:alpha(opacity: 0); width:2px;height:2px' class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/>",
     type: "file",
     initialize: function() {
         var self = this;
@@ -2511,7 +2511,6 @@ FieldFileView = FieldView.extend({
         var button = wrapperObj.find("button.select");
         var button_remove = wrapperObj.find("button.remove");
         var fileEle = wrapperObj.find(".fh_appform_field_input");
-        fileEle.hide();
         button.show();
 
         if (fileObj == null) {
@@ -3621,10 +3620,10 @@ var FormView = BaseView.extend({
     }
     switch (action) {
       case "show":
-        target.removeClass("fh_appform_hidden");
+        target.$el.show();
         break;
       case "hide":
-        target.hide();
+        target.$el.hide();
         break;
       default:
         console.error("action not defined:" + action);
