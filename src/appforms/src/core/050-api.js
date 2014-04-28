@@ -82,6 +82,15 @@ appForm.api = function (module) {
         }
 
       });
+    },
+    "offline": function(){
+      formConfig.setOffline();
+    },
+    "online": function(){
+      formConfig.setOnline();
+    },
+    "isOnline": function(){
+      return formConfig.isOnline();
     }
   };
 

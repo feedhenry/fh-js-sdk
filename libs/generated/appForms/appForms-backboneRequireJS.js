@@ -3929,7 +3929,7 @@ var FromJsonView = BaseView.extend({
         try {
             jsonData = JSON.parse(json);
         } catch (e) {
-            $fh.forms.log.d(e);
+            $fh.forms.log.d("Error parsing json: ", e);
             throw 'Invalid JSON object';
         }
         var params = {
@@ -4073,12 +4073,12 @@ var ConfigView = Backbone.View.extend({
 '<div class="fh_appform_field_area config_debugging">'+
   '<fieldset>'+
     '<div class="fh_appform_field_title">Debugging</div>'+
-      '<div class="form-group" style="margin:5px 5px 5px 5px;">'+
+      '<div id="config_debugging_log_enabled" class="form-group" style="margin:5px 5px 5px 5px;">'+
         '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;margin-top:5px;">Log Enabled</label>'+
         '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" type="checkbox" data-key="logger"  <%= logger?"checked":"" %> value="true"/>'+
       '</div>'+
       '<br/>' +
-      '<div class="form-group" style="margin:5px 5px 5px 5px;">'+
+      '<div id="config_debugging_log_level" class="form-group" style="margin:5px 5px 5px 5px;">'+
         '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;margin-top:5px;">Log Level</label>'+
         '<select class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="log_level">'+
           '<%'+
@@ -4091,14 +4091,14 @@ var ConfigView = Backbone.View.extend({
               '}'+
             '%>'+
         '</select>'+
-      '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">'+
+      '</div><br/><div id="config_debugging_log_line_limit" class="form-group" style="margin:5px 5px 5px 5px;">'+
         '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Log Line Number</label>'+
         '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="log_line_limit" value="<%= log_line_limit%>"/>'+
-      '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">'+
+      '</div><br/><div id="config_debugging_log_email" class="form-group" style="margin:5px 5px 5px 5px;">'+
         '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Log Email Address</label>'+
         '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 98%;float: right;" data-key="log_email" value="<%= log_email%>"/>'+
       '</div>'+
-      '<div class="log_buttons" style="width:100%;margin: 20px 0px 20px 0px;padding:0px 0px 0px 0px;">'+
+      '<div class="log_buttons" style="width:100%;margin: 20px 0px 20px 0px;padding:0px 0px 0px 0px;text-align:center;">'+
         '<button class="fh_appform_button_default" style="width:30%;margin-right:10px" type="button" id="_viewLogsBtn">View Logs</button>'+
         '<button class="fh_appform_button_cancel" style="width:30%;margin-right:10px" type="button" id="_clearLogsBtn">Clear Logs</button>'+
         '<button class="fh_appform_button_action" style="width:30%;" type="button" id="_sendLogsBtn">Send Logs</button>'+
@@ -4147,11 +4147,23 @@ var ConfigView = Backbone.View.extend({
     this.events = _.extend({}, this._myEvents, this.events);
   },
   "render": function() {
-    this.$el.html("");
+    var self = this;
+    self.$el.html("");
     var props = $fh.forms.config.getConfig();
-    var html = _.template(this.templates.join(""), props);
-    this.$el.append(html);
-    return this;
+    var html = _.template(self.templates.join(""), props);
+    self.$el.append(html);
+
+    if($fh.forms.config.editAllowed() === false){
+      self.$el.find(".config_camera").hide();
+      self.$el.find(".config_submission").hide();
+
+      self.$el.find("#config_debugging_log_enabled").hide();
+      self.$el.find("#config_debugging_log_level").hide();
+      self.$el.find("#config_debugging_log_line_limit").hide();
+      self.$el.find("#config_debugging_log_email").hide();
+    }
+
+    return self;
   },
   "save": function(cb) {
     $fh.forms.log.l("Saving config");

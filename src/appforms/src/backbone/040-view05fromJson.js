@@ -25,7 +25,7 @@ var FromJsonView = BaseView.extend({
         try {
             jsonData = JSON.parse(json);
         } catch (e) {
-            $fh.forms.log.d(e);
+            $fh.forms.log.d("Error parsing json: ", e);
             throw 'Invalid JSON object';
         }
         var params = {

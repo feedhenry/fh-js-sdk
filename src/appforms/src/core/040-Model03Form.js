@@ -29,10 +29,13 @@ appForm.models = function (module) {
       return cb('Cannot initialise a form object without an id. id:' + formId, null);
     }
 
-    Model.call(this, {
+
+    Model.call(that, {
       '_id': formId,
       '_type': 'form'
     });
+    that.set('_id', formId);
+    that.setLocalId(that.genLocalId(formId));
 
 
     function loadFromLocal(){
@@ -62,6 +65,9 @@ appForm.models = function (module) {
       function checkForUpdate(form){
         $fh.forms.log.d("Form: checkForUpdate", rawMode, rawData, formId, fromRemote);
         form.refresh(false, function (err, obj) {
+          if(err){
+             $fh.forms.log.e("Error refreshing form from local: ", err);
+          }
           if (appForm.models.forms.isFormUpdated(form)) {
             form.refresh(true, function (err, obj1) {
               if(err){
@@ -103,6 +109,10 @@ appForm.models = function (module) {
   Form.prototype.getLastUpdate = function () {
     $fh.forms.log.d("Form: getLastUpdate");
     return this.get('lastUpdatedTimestamp');
+  };
+  Form.prototype.genLocalId = function (formId) {
+    formId = typeof(formId) === 'string' ? formId : this.get("_id", "");
+    return "form_" + formId;
   };
   /**
      * Initiliase form json to objects

@@ -1,5 +1,6 @@
 appForm.models = function(module) {
   var Model = appForm.models.Model;
+  var online = true;
 
   function Config() {
     Model.call(this, {
@@ -145,6 +146,15 @@ appForm.models = function(module) {
       'completeSubmission': '/forms/:appId/:submissionId/completeSubmission',
       "config": '/forms/:appid/config/:deviceId'
     });
+  };
+  Config.prototype.setOnline = function(){
+    online = true;
+  };
+  Config.prototype.setOffline = function(){
+    online = false;
+  };
+  Config.prototype.isOnline = function(){
+    return online === true;
   };
 
   module.config = new Config();
