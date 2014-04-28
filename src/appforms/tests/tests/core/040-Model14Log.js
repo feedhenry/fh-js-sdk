@@ -1,14 +1,16 @@
 describe("Log model", function() {
   before(function(done){
-    $fh.forms.config.set("logger", "true");
+    $fh.forms.config.set("logger", true);
     appForm.models.log.clearLogs(done);
   });
   it ("how to log error",function(){
     appForm.models.log.e("Error happens");
+    assert.ok(appForm.models.log.getLogs()[0], "Expected an error log at position 0 but got nothing");
     assert(appForm.models.log.getLogs()[0].indexOf("Error happens")>-1, "Expected Error happens to be logged");
   });
   it ("how to log debug",function(){
     appForm.models.log.d("Debug happens");
+    assert.ok(appForm.models.log.getLogs()[0], "Expected an debug log at position 0 but got nothing");
     assert(appForm.models.log.getLogs()[0].indexOf("Debug happens")===-1);
   });
   it ("should solve asynchours IO issue",function(done){
