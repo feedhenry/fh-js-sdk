@@ -141,7 +141,6 @@ appForm.utils = function(module) {
     function remove(fileName, cb) {
         _getFileEntry(fileName, 0, {}, function(err, fileEntry) {
             if (err) {
-                console.error("file remove _getFileEntry finished err: " + err + " " + err.name);
                 if (!(err.name === 'NotFoundError' || err.code === 1)) {
                     return cb(err);
                 } else {
@@ -239,7 +238,6 @@ appForm.utils = function(module) {
     function _getFile(fileName, cb) {
         _getFileEntry(fileName, 0, {}, function(err, fe) {
             if (err) {
-                console.error("_getFile _getFileEntry failed: " + err);
                 return cb(err);
             }
             fe.file(function(file) {
@@ -257,7 +255,6 @@ appForm.utils = function(module) {
             fileSystem.root.getFile(fileName, params, function gotFileEntry(fileEntry) {
                 cb(null, fileEntry);
             }, function(err) {
-                console.error("_getFileEntry _requestFileSystem called fail: " + err + " " + err.name);
                 if (err.name === 'QuotaExceededError' || err.code === 10) {
                     //this happens only on browser. request for 1 gb storage
                     //TODO configurable from cloud

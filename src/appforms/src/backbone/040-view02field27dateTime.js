@@ -55,7 +55,7 @@ FieldDateTimeView = FieldView.extend({
     return "YYYY-MM-DD".replace("YYYY",d.getFullYear()).replace("MM",this.twoDigi(d.getMonth()+1)).replace("DD",this.twoDigi(d.getDate()));
   },
   getTime:function(d){
-    return "HH:mm:ss".replace("HH",this.twoDigi(d.getHours())).replace("mm",this.twoDigi(d.getMinutes())).replace("ss",this.twoDigi(d.getSeconds()));
+    return "HH:mm".replace("HH",this.twoDigi(d.getHours())).replace("mm",this.twoDigi(d.getMinutes()));
   },
   twoDigi:function(num){
     if (num<10){
