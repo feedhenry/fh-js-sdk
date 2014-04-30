@@ -111,7 +111,6 @@ appForm.utils = function(module) {
             create: true
         }, function(err, fileEntry) {
             if (err) {
-                console.error("_getFileEntry Error " + err);
                 cb(err);
             } else {
                 fileEntry.createWriter(function(writer) {
@@ -142,7 +141,6 @@ appForm.utils = function(module) {
     function remove(fileName, cb) {
         _getFileEntry(fileName, 0, {}, function(err, fileEntry) {
             if (err) {
-                console.error("file remove _getFileEntry finished err: " + err + " " + err.name);
                 if (!(err.name === 'NotFoundError' || err.code === 1)) {
                     return cb(err);
                 } else {
@@ -166,7 +164,6 @@ appForm.utils = function(module) {
     function readAsText(fileName, cb) {
         _getFile(fileName, function(err, file) {
             if (err) {
-                console.error("readAsText _getFile failed: " + err);
                 cb(err);
             } else {
                 var reader = new FileReader();
@@ -177,7 +174,7 @@ appForm.utils = function(module) {
                     try {
                         text = decodeURIComponent(text);
                     } catch (e) {
-                        console.error("readAsText trying decodeURIComponent exception: " + e);
+                        
                     }
                     return cb(null, text);
                 };
@@ -194,7 +191,6 @@ appForm.utils = function(module) {
     function readAsBase64Encoded(fileName, cb) {
         _getFile(fileName, function(err, file) {
             if (err) {
-                console.error("readAsBase64Encoded _getFile called err: " + err);
                 return cb(err);
             }
             var reader = new FileReader();
@@ -242,7 +238,6 @@ appForm.utils = function(module) {
     function _getFile(fileName, cb) {
         _getFileEntry(fileName, 0, {}, function(err, fe) {
             if (err) {
-                console.error("_getFile _getFileEntry failed: " + err);
                 return cb(err);
             }
             fe.file(function(file) {
@@ -260,7 +255,6 @@ appForm.utils = function(module) {
             fileSystem.root.getFile(fileName, params, function gotFileEntry(fileEntry) {
                 cb(null, fileEntry);
             }, function(err) {
-                console.error("_getFileEntry _requestFileSystem called fail: " + err + " " + err.name);
                 if (err.name === 'QuotaExceededError' || err.code === 10) {
                     //this happens only on browser. request for 1 gb storage
                     //TODO configurable from cloud
