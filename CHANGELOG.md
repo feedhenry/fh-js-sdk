@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.0.12-alpha - 2014-04-30 - IR226 - Niall Donnelly
+
+* 5824 - fixed date fields not populating across devices
+
 ## 2.0.11-alpha - 2014-04-28 - IR226 - Niall Donnelly
 
 * 7007 - fixed file fields not working on Android
