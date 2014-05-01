@@ -4078,6 +4078,7 @@ var ConfigView = Backbone.View.extend({
     '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Device Id</label>' +
     '<input class="fh_appform_field_input" disabled style="display: inline-block;text-align: center;text-overflow:ellipsis;width: 40%;float: right;" data-key="deviceId" value="<%= deviceId%>"/>' +
     '</div>' +
+    '<br/>' +
       '<div id="config_debugging_log_enabled" class="form-group" style="margin:5px 5px 5px 5px;">'+
         '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;margin-top:5px;">Log Enabled</label>'+
         '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" type="checkbox" data-key="logger"  <%= logger?"checked":"" %> value="true"/>'+
@@ -4089,7 +4090,7 @@ var ConfigView = Backbone.View.extend({
           '<%'+
               'for (var i=0;i<log_levels.length;i++){'+
                 'var val=log_levels[i];'+
-                'var selected=(i===log_level)?"selected":"";'+
+                'var selected=(i==log_level)?"selected":"";'+
                 '%>'+
                   '<option value="<%= i %>" <%= selected%>><%= val%></option>'+
                 '<%'+
