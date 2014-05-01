@@ -66,6 +66,8 @@ var FormView = BaseView.extend({
         var fieldId = v.model.getFieldId();
         if(res.hasOwnProperty(fieldId)){
           var result = res[fieldId];
+          result.errorMessages = result.errorMessages || [];
+          result.fieldErrorMessage = result.fieldErrorMessage || [];
           if (!result.valid) {
             if(invalidFieldId === null){
               invalidFieldId = fieldId;
@@ -74,6 +76,12 @@ var FormView = BaseView.extend({
             for (var i = 0; i < result.errorMessages.length; i++) {
               if (result.errorMessages[i]) {
                 v.setErrorText(i, result.errorMessages[i]);
+              }
+            }
+
+            for (var i = 0; i < result.fieldErrorMessage.length; i++) {
+              if (result.fieldErrorMessage[i]) {
+                v.setErrorText(i, result.fieldErrorMessage[i]);
               }
             }
           }

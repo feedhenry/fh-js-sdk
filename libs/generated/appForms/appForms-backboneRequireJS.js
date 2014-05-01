@@ -3486,9 +3486,9 @@ var FormView = BaseView.extend({
               invalidFieldId = fieldId;
               invalidPageNum = self.form.getPageNumberByFieldId(invalidFieldId);
             }
-            for (var i = 0; i < result.errorMessages.length; i++) {
-              if (result.errorMessages[i]) {
-                v.setErrorText(i, result.errorMessages[i]);
+            for (var i = 0; i < result.fieldErrorMessage.length; i++) {
+              if (result.fieldErrorMessage[i]) {
+                v.setErrorText(i, result.fieldErrorMessage[i]);
               }
             }
           }
