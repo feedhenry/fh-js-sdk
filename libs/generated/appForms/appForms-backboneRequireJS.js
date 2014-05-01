@@ -4073,6 +4073,8 @@ var ConfigView = Backbone.View.extend({
 '<div class="fh_appform_field_area config_debugging">'+
   '<fieldset>'+
     '<div class="fh_appform_field_title">Debugging</div>'+
+    '<br/>' +
+    '<div class="fh_appform_field_title">DeviceId: <%= deviceId%></div>'+
       '<div id="config_debugging_log_enabled" class="form-group" style="margin:5px 5px 5px 5px;">'+
         '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;margin-top:5px;">Log Enabled</label>'+
         '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" type="checkbox" data-key="logger"  <%= logger?"checked":"" %> value="true"/>'+
@@ -4150,6 +4152,7 @@ var ConfigView = Backbone.View.extend({
     var self = this;
     self.$el.html("");
     var props = $fh.forms.config.getConfig();
+    props.deviceId = $fh.forms.config.getDeviceId();
     var html = _.template(self.templates.join(""), props);
     self.$el.append(html);
 
