@@ -79,7 +79,7 @@ var FormView = BaseView.extend({
               }
             }
 
-            for (var i = 0; i < result.fieldErrorMessage.length; i++) {
+            for (i = 0; i < result.fieldErrorMessage.length; i++) {
               if (result.fieldErrorMessage[i]) {
                 v.setErrorText(i, result.fieldErrorMessage[i]);
               }

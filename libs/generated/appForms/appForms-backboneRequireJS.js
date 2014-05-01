@@ -1718,7 +1718,7 @@ var FieldView = Backbone.View.extend({
 
         return _.template(template, {
             "title": title,
-            "required": this.getFieldRequired(1)
+            "required": this.getFieldRequired(0)
         });
     },
     renderInput: function(index) {
@@ -1739,17 +1739,14 @@ var FieldView = Backbone.View.extend({
     },
     "getFieldRequired": function(index) {
         var required = "";
-        if (this.initialRepeat > 1) {
-            if (index < this.initialRepeat) {
+        if(this.model.isRequired()){
+            if(index < this.initialRepeat){
                 required = this.requiredClassName;
+            } else {
+
             }
         } else {
-            if (this.model.isRequired()) {
-                required = this.requiredClassName;
-            }
-        }
-        if (this.model.isRequired() && index < this.initialRepeat) {
-            required = this.requiredClassName;
+
         }
         return required;
     },
@@ -1873,7 +1870,7 @@ var FieldView = Backbone.View.extend({
     validateElement: function(index, element, cb) {
         var self = this;
         var fieldId = self.model.getFieldId();
-        self.model.validate(element, function(err, res) {
+        self.model.validate(element, index, function(err, res) {
             if (err) {
                 self.setErrorText(index, "Error validating field: " + err);
                 if (cb) {
@@ -3481,12 +3478,20 @@ var FormView = BaseView.extend({
         var fieldId = v.model.getFieldId();
         if(res.hasOwnProperty(fieldId)){
           var result = res[fieldId];
+          result.errorMessages = result.errorMessages || [];
+          result.fieldErrorMessage = result.fieldErrorMessage || [];
           if (!result.valid) {
             if(invalidFieldId === null){
               invalidFieldId = fieldId;
               invalidPageNum = self.form.getPageNumberByFieldId(invalidFieldId);
             }
-            for (var i = 0; i < result.fieldErrorMessage.length; i++) {
+            for (var i = 0; i < result.errorMessages.length; i++) {
+              if (result.errorMessages[i]) {
+                v.setErrorText(i, result.errorMessages[i]);
+              }
+            }
+
+            for (i = 0; i < result.fieldErrorMessage.length; i++) {
               if (result.fieldErrorMessage[i]) {
                 v.setErrorText(i, result.fieldErrorMessage[i]);
               }

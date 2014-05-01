@@ -5315,12 +5315,12 @@ Field.prototype.getDefaultValue = function () {
     }
   };
   /**
-     * validate a input with this field.
+     * validate an input with this field.
      * @param  {[type]} inputValue [description]
      * @return true / error message
      */
-  Field.prototype.validate = function (inputValue, cb) {
-    this.form.getRuleEngine().validateFieldValue(this.getFieldId(), inputValue, cb);
+  Field.prototype.validate = function (inputValue, inputValueIndex, cb) {
+    this.form.getRuleEngine().validateFieldValue(this.getFieldId(), inputValue,inputValueIndex, cb);
   };
   /**
      * return rule array attached to this field.
