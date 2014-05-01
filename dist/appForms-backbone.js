@@ -1745,6 +1745,9 @@ var FieldView = Backbone.View.extend({
     getHTMLInputType: function() {
         return this.type || "text";
     },
+    /**
+    * Repeating fields can have required and non-required repeating inputs depending on the minRepeat and maxRepeat values defined for the field
+    **/
     "getFieldRequired": function(index) {
         var required = "";
         if(this.model.isRequired()){
