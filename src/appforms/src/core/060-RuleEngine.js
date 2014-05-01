@@ -2072,7 +2072,7 @@ function rulesEngine (formDef) {
               testDate = new Date(fieldValue);
             }
 
-            valid = (testDate.toString() !== "Invalid Date")
+            valid = (testDate.toString() !== "Invalid Date");
           } catch (e) {
             valid = false;
           }
