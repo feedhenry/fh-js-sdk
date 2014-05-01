@@ -55,33 +55,30 @@ var FormView = BaseView.extend({
     this.$el.find(" button.fh_appform_button_submit").hide();
   },
   onValidateError: function(res) {
+    var self = this;
     var firstView = null;
     var invalidFieldId = null;
     var invalidPageNum = null;
 
     //Clear validate errors
 
-    for (var fieldId in res) {
-      if (res[fieldId]) {
-        if(invalidFieldId === null){
-          invalidFieldId = fieldId;
-          invalidPageNum = this.form.getPageNumberByFieldId(invalidFieldId);
-        }
-
-        var fieldView = this.getFieldViewById(fieldId);
-        if (firstView === null) {
-          firstView = fieldView;
-        }
-        var errorMsgs = res[fieldId].fieldErrorMessage;
-        for (var i = 0; i < errorMsgs.length; i++) {
-          if (errorMsgs[i]) {
-            fieldView.setErrorText(i, errorMsgs[i]);
+    self.fieldViews.forEach(function(v) {
+        var fieldId = v.model.getFieldId();
+        if(res.hasOwnProperty(fieldId)){
+          var result = res[fieldId];
+          if (!result.valid) {
+            if(invalidFieldId === null){
+              invalidFieldId = fieldId;
+              invalidPageNum = self.form.getPageNumberByFieldId(invalidFieldId);
+            }
+            for (var i = 0; i < result.errorMessages.length; i++) {
+              if (result.errorMessages[i]) {
+                v.setErrorText(i, result.errorMessages[i]);
+              }
+            }
           }
         }
-      } else {
-        $fh.forms.log.e("onValidateError: Expected an error object for fieldId " + fieldId + " res: " + JSON.stringify(res));
-      }
-    }
+    });
 
     if(invalidFieldId !== null && invalidPageNum !== null){
       var displayedIndex = this.getDisplayIndex(invalidPageNum) + 1;
