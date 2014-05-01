@@ -3495,28 +3495,6 @@ var FormView = BaseView.extend({
         }
     });
 
-    // for (var fieldId in res) {
-    //   if (res[fieldId]) {
-    //     if(invalidFieldId === null){
-    //       invalidFieldId = fieldId;
-    //       invalidPageNum = this.form.getPageNumberByFieldId(invalidFieldId);
-    //     }
-
-    //     var fieldView = this.getFieldViewById(fieldId);
-    //     if (firstView === null) {
-    //       firstView = fieldView;
-    //     }
-    //     var errorMsgs = res[fieldId].fieldErrorMessage;
-    //     for (var i = 0; i < errorMsgs.length; i++) {
-    //       if (errorMsgs[i]) {
-    //         fieldView.setErrorText(i, errorMsgs[i]);
-    //       }
-    //     }
-    //   } else {
-    //     $fh.forms.log.e("onValidateError: Expected an error object for fieldId " + fieldId + " res: " + JSON.stringify(res));
-    //   }
-    // }
-
     if(invalidFieldId !== null && invalidPageNum !== null){
       var displayedIndex = this.getDisplayIndex(invalidPageNum) + 1;
       this.$el.find("#fh_appform_page_error").html("Unable to submit form. Validation error on page " + displayedIndex);
