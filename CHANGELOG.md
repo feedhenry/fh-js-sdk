@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.0.14-alpha - 2014-05-01 - IR226 - Niall Donnelly
+
+* 7048 Added DeviceId to config view
+
 ## 2.0.13-alpha - 2014-05-01 - IR226 - Niall Donnelly
 
 * 7047 - Fixed invalid file saving in draft.
