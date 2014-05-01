@@ -7024,6 +7024,9 @@ appForm.api = function (module) {
 
       }
     },
+    "getDeviceId": function(){
+      return formConfig.get("deviceId", "Not Set");
+    },
     "set" : function(key, val){
       var self = this;
       if(!key || !val){
