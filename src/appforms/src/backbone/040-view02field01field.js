@@ -65,7 +65,7 @@ var FieldView = Backbone.View.extend({
 
         return _.template(template, {
             "title": title,
-            "required": this.getFieldRequired(1)
+            "required": this.getFieldRequired(0)
         });
     },
     renderInput: function(index) {
@@ -84,19 +84,19 @@ var FieldView = Backbone.View.extend({
     getHTMLInputType: function() {
         return this.type || "text";
     },
+    /**
+    * Repeating fields can have required and non-required repeating inputs depending on the minRepeat and maxRepeat values defined for the field
+    **/
     "getFieldRequired": function(index) {
         var required = "";
-        if (this.initialRepeat > 1) {
-            if (index < this.initialRepeat) {
+        if(this.model.isRequired()){
+            if(index < this.initialRepeat){
                 required = this.requiredClassName;
+            } else {
+
             }
         } else {
-            if (this.model.isRequired()) {
-                required = this.requiredClassName;
-            }
-        }
-        if (this.model.isRequired() && index < this.initialRepeat) {
-            required = this.requiredClassName;
+
         }
         return required;
     },
@@ -220,7 +220,7 @@ var FieldView = Backbone.View.extend({
     validateElement: function(index, element, cb) {
         var self = this;
         var fieldId = self.model.getFieldId();
-        self.model.validate(element, function(err, res) {
+        self.model.validate(element, index, function(err, res) {
             if (err) {
                 self.setErrorText(index, "Error validating field: " + err);
                 if (cb) {
