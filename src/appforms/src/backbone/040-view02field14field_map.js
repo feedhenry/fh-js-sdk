@@ -26,6 +26,10 @@ FieldMapView = FieldView.extend({
       'id':Math.random()
     });
   },
+  show: function() {
+    this.$el.show();
+    this.mapResize();
+  },
   onMapInit: function(index) {
     this.mapInited++;
     if (this.mapInited === this.curRepeat) {
@@ -34,10 +38,13 @@ FieldMapView = FieldView.extend({
     }
   },
   allMapInit: function() {
-    var func;
-    while ((func = this.allMapInitFunc.shift()) !== null) {
+    var func = this.allMapInitFunc.shift();
+    while (typeof(func) !== "undefined") {
       if(typeof(func) === "function"){
         func();
+        func = this.allMapInitFunc.shift();
+      } else {
+        func = this.allMapInitFunc.shift();
       }
     }
   },
@@ -55,9 +62,6 @@ FieldMapView = FieldView.extend({
     var self = this;
 
     var mapCanvas = wrapperObj.find('.fh_map_canvas')[0];
-    // var options = this.parseCssOptions();
-    // // Merge
-    // this.mapSettings = _.defaults(options, this.mapSettings);
 
     if($fh.geo){
       $fh.geo({
@@ -90,7 +94,7 @@ FieldMapView = FieldView.extend({
           };
           self.onMapInit(index);
         }, function(err) {
-          console.error(err);
+          $fh.forms.log.e("Error getting map: ", err);
           self.onMapInit(index);
         });
       });

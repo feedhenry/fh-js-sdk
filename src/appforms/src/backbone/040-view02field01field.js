@@ -135,7 +135,6 @@ var FieldView = Backbone.View.extend({
         this.$fieldWrapper.append(eleHtml);
         this.curRepeat++;
         this.onElementShow(index);
-
     },
     onElementShow: function(index) {
         $fh.forms.log.d("Show done for field " + index);
@@ -267,15 +266,10 @@ var FieldView = Backbone.View.extend({
     isRequired: function() {
         return this.model.isRequired();
     },
-    removeRules: function() {
-        this.$el.find('#' + this.model.get('ID')).rules('remove');
-    },
 
     // force a hide , defaults to false
     hide: function(force) {
-        if (force || this.$el.is(':visible')) {
-            this.$el.hide();
-        }
+        this.$el.hide();
     },
     renderButton: function(index, label, extension_type) {
         var button = $('<button>');
@@ -306,13 +300,7 @@ var FieldView = Backbone.View.extend({
     },
 
     show: function() {
-        if (!this.$el.is(':visible')) {
-            this.$el.show();
-            // add rules too
-            //this.addRules();
-            //set the form value from model
-            //this.value(this.model.serialize());
-        }
+        this.$el.show();
     },
 
     defaultValue: function() {

@@ -1796,7 +1796,6 @@ var FieldView = Backbone.View.extend({
         this.$fieldWrapper.append(eleHtml);
         this.curRepeat++;
         this.onElementShow(index);
-
     },
     onElementShow: function(index) {
         $fh.forms.log.d("Show done for field " + index);
@@ -1928,15 +1927,10 @@ var FieldView = Backbone.View.extend({
     isRequired: function() {
         return this.model.isRequired();
     },
-    removeRules: function() {
-        this.$el.find('#' + this.model.get('ID')).rules('remove');
-    },
 
     // force a hide , defaults to false
     hide: function(force) {
-        if (force || this.$el.is(':visible')) {
-            this.$el.hide();
-        }
+        this.$el.hide();
     },
     renderButton: function(index, label, extension_type) {
         var button = $('<button>');
@@ -1967,13 +1961,7 @@ var FieldView = Backbone.View.extend({
     },
 
     show: function() {
-        if (!this.$el.is(':visible')) {
-            this.$el.show();
-            // add rules too
-            //this.addRules();
-            //set the form value from model
-            //this.value(this.model.serialize());
-        }
+        this.$el.show();
     },
 
     defaultValue: function() {
@@ -2646,6 +2634,10 @@ FieldMapView = FieldView.extend({
       'id':Math.random()
     });
   },
+  show: function() {
+    this.$el.show();
+    this.mapResize();
+  },
   onMapInit: function(index) {
     this.mapInited++;
     if (this.mapInited === this.curRepeat) {
@@ -2654,10 +2646,13 @@ FieldMapView = FieldView.extend({
     }
   },
   allMapInit: function() {
-    var func;
-    while ((func = this.allMapInitFunc.shift()) !== null) {
+    var func = this.allMapInitFunc.shift();
+    while (typeof(func) !== "undefined") {
       if(typeof(func) === "function"){
         func();
+        func = this.allMapInitFunc.shift();
+      } else {
+        func = this.allMapInitFunc.shift();
       }
     }
   },
@@ -2675,9 +2670,6 @@ FieldMapView = FieldView.extend({
     var self = this;
 
     var mapCanvas = wrapperObj.find('.fh_map_canvas')[0];
-    // var options = this.parseCssOptions();
-    // // Merge
-    // this.mapSettings = _.defaults(options, this.mapSettings);
 
     if($fh.geo){
       $fh.geo({
@@ -3717,21 +3709,21 @@ var FormView = BaseView.extend({
   nextPage: function() {
     this.hideAllPages();
     this.pageNum = this.getNextPageIndex(this.pageNum);
-    this.pageViews[this.pageNum].$el.removeClass("fh_appform_hidden");
+    this.pageViews[this.pageNum].show();
     this.steps.activePageChange(this);
     this.checkPages();
   },
   prevPage: function() {
     this.hideAllPages();
     this.pageNum = this.getPrevPageIndex(this.pageNum);
-    this.pageViews[this.pageNum].$el.removeClass("fh_appform_hidden");
+    this.pageViews[this.pageNum].show();
     this.steps.activePageChange(this);
     this.checkPages();
   },
   hideAllPages: function() {
     this.pageViews.forEach(function(view) {
       //make sure to use $el when calling jquery func
-      view.$el.addClass("fh_appform_hidden");
+      view.hide();
     });
   },
   submit: function() {
