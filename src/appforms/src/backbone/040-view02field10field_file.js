@@ -26,7 +26,7 @@ FieldFileView = FieldView.extend({
                     };
                     self.showButton(index, fileObj);
                 } else {
-                    filejQ.value("");
+                    filejQ.val("");
                     self.showButton(index, null);
                 }
             });
