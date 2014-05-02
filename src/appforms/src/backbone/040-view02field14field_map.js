@@ -108,7 +108,6 @@ FieldMapView = FieldView.extend({
       }
     }
   },
-  addValidationRules: function() {},
   valueFromElement: function(index) {
     var map = this.maps[index];
     var marker = this.markers[index];
