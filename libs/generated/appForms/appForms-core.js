@@ -6854,11 +6854,12 @@ appForm.models = (function(module) {
           levelString = logLevel;
           logLevel = log_levels.indexOf(logLevel.toLowerCase());
         } else {
-          levelString = log_levels[logLevel];
-          if (logLevel >= log_levels.length) {
-            levelString = "Unknown";
-          }
+          logLevel = 0;
         }
+
+        curLevel = isNaN(parseInt(curLevel, 10)) ? curLevel : parseInt(curLevel, 10);
+        logLevel = isNaN(parseInt(logLevel, 10)) ? logLevel : parseInt(logLevel, 10);
+
         if (curLevel < logLevel) {
           return;
         } else {
@@ -7059,7 +7060,7 @@ appForm.api = function (module) {
         return defaultValues;
       }
     },
-    "saveConfig": function(){
+    "saveConfig": function(cb){
       var self = this;
       formConfig.saveLocal(function(err, configModel){
         if(err){
@@ -7068,6 +7069,9 @@ appForm.api = function (module) {
           $fh.forms.log.l("Form config saved sucessfully.");
         }
 
+        if(typeof(cb) ==='function'){
+          cb();
+        }
       });
     },
     "offline": function(){

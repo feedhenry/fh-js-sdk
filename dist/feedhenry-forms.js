@@ -8506,7 +8506,7 @@ module.exports = {
 },{"./fhparams":31,"./logger":37,"./queryMap":39,"JSON":3}],27:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.0.14-alpha",
+  "sdk_version": "2.0.15-alpha",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit"
 };
@@ -17722,11 +17722,12 @@ appForm.models = (function(module) {
           levelString = logLevel;
           logLevel = log_levels.indexOf(logLevel.toLowerCase());
         } else {
-          levelString = log_levels[logLevel];
-          if (logLevel >= log_levels.length) {
-            levelString = "Unknown";
-          }
+          logLevel = 0;
         }
+
+        curLevel = isNaN(parseInt(curLevel, 10)) ? curLevel : parseInt(curLevel, 10);
+        logLevel = isNaN(parseInt(logLevel, 10)) ? logLevel : parseInt(logLevel, 10);
+
         if (curLevel < logLevel) {
           return;
         } else {
@@ -17927,7 +17928,7 @@ appForm.api = function (module) {
         return defaultValues;
       }
     },
-    "saveConfig": function(){
+    "saveConfig": function(cb){
       var self = this;
       formConfig.saveLocal(function(err, configModel){
         if(err){
@@ -17936,6 +17937,9 @@ appForm.api = function (module) {
           $fh.forms.log.l("Form config saved sucessfully.");
         }
 
+        if(typeof(cb) ==='function'){
+          cb();
+        }
       });
     },
     "offline": function(){
