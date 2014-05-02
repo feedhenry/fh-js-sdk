@@ -10815,9 +10815,7 @@ module.exports = {
   setAppProps: setAppProps
 };
 
-},{"../ajax":18,"../constants":26,"../logger":35,"../queryMap":37}],"./cookies":[function(_dereq_,module,exports){
-module.exports=_dereq_('RdeKcl');
-},{}],"RdeKcl":[function(_dereq_,module,exports){
+},{"../ajax":18,"../constants":26,"../logger":35,"../queryMap":37}],"RdeKcl":[function(_dereq_,module,exports){
 module.exports = {
   readCookieValue  : function (cookie_name) {
     if (typeof Titanium !== 'undefined'){
@@ -10832,6 +10830,8 @@ module.exports = {
     }
   }
 };
+},{}],"./cookies":[function(_dereq_,module,exports){
+module.exports=_dereq_('RdeKcl');
 },{}],48:[function(_dereq_,module,exports){
 module.exports = {
   createUUID : function () {

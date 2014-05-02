@@ -2702,7 +2702,7 @@ FieldMapView = FieldView.extend({
           };
           self.onMapInit(index);
         }, function(err) {
-          console.error(err);
+          $fh.forms.log.e("Error getting map: ", err);
           self.onMapInit(index);
         });
       });
