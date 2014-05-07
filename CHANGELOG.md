@@ -1,8 +1,24 @@
 # Changelog - FeedHenry Javascript SDK
 
-## 2.0.10-alpha - 2014-04-28 - IR226 - Niall Donnelly
+## 2.0.15-alpha - 2014-05-01 - IR226 - Niall Donnelly
 
-* 6742 fixed config visible by non admin users. Fixed offline functionality.
+* 6844 Fixed validaton error for repeating fields.
+
+## 2.0.14-alpha - 2014-05-01 - IR226 - Niall Donnelly
+
+* 7048 Added DeviceId to config view
+
+## 2.0.13-alpha - 2014-05-01 - IR226 - Niall Donnelly
+
+* 7047 - Fixed invalid file saving in draft.
+
+## 2.0.12-alpha - 2014-04-30 - IR226 - Niall Donnelly
+
+* 5824 - fixed date fields not populating across devices
+
+## 2.0.11-alpha - 2014-04-28 - IR226 - Niall Donnelly
+
+* 7007 - fixed file fields not working on Android
 
 ## 2.0.10-alpha - 2014-04-28 - IR226 - Niall Donnelly
 

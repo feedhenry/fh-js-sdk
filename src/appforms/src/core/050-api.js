@@ -40,6 +40,9 @@ appForm.api = function (module) {
 
       }
     },
+    "getDeviceId": function(){
+      return formConfig.get("deviceId", "Not Set");
+    },
     "set" : function(key, val){
       var self = this;
       if(!key || !val){
@@ -72,7 +75,7 @@ appForm.api = function (module) {
         return defaultValues;
       }
     },
-    "saveConfig": function(){
+    "saveConfig": function(cb){
       var self = this;
       formConfig.saveLocal(function(err, configModel){
         if(err){
@@ -81,6 +84,9 @@ appForm.api = function (module) {
           $fh.forms.log.l("Form config saved sucessfully.");
         }
 
+        if(typeof(cb) ==='function'){
+          cb();
+        }
       });
     },
     "offline": function(){

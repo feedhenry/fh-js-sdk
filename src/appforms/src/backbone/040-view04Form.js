@@ -55,33 +55,38 @@ var FormView = BaseView.extend({
     this.$el.find(" button.fh_appform_button_submit").hide();
   },
   onValidateError: function(res) {
+    var self = this;
     var firstView = null;
     var invalidFieldId = null;
     var invalidPageNum = null;
 
     //Clear validate errors
 
-    for (var fieldId in res) {
-      if (res[fieldId]) {
-        if(invalidFieldId === null){
-          invalidFieldId = fieldId;
-          invalidPageNum = this.form.getPageNumberByFieldId(invalidFieldId);
-        }
+    self.fieldViews.forEach(function(v) {
+        var fieldId = v.model.getFieldId();
+        if(res.hasOwnProperty(fieldId)){
+          var result = res[fieldId];
+          result.errorMessages = result.errorMessages || [];
+          result.fieldErrorMessage = result.fieldErrorMessage || [];
+          if (!result.valid) {
+            if(invalidFieldId === null){
+              invalidFieldId = fieldId;
+              invalidPageNum = self.form.getPageNumberByFieldId(invalidFieldId);
+            }
+            for (var i = 0; i < result.errorMessages.length; i++) {
+              if (result.errorMessages[i]) {
+                v.setErrorText(i, result.errorMessages[i]);
+              }
+            }
 
-        var fieldView = this.getFieldViewById(fieldId);
-        if (firstView === null) {
-          firstView = fieldView;
-        }
-        var errorMsgs = res[fieldId].fieldErrorMessage;
-        for (var i = 0; i < errorMsgs.length; i++) {
-          if (errorMsgs[i]) {
-            fieldView.setErrorText(i, errorMsgs[i]);
+            for (i = 0; i < result.fieldErrorMessage.length; i++) {
+              if (result.fieldErrorMessage[i]) {
+                v.setErrorText(i, result.fieldErrorMessage[i]);
+              }
+            }
           }
         }
-      } else {
-        $fh.forms.log.e("onValidateError: Expected an error object for fieldId " + fieldId + " res: " + JSON.stringify(res));
-      }
-    }
+    });
 
     if(invalidFieldId !== null && invalidPageNum !== null){
       var displayedIndex = this.getDisplayIndex(invalidPageNum) + 1;
@@ -365,21 +370,21 @@ var FormView = BaseView.extend({
   nextPage: function() {
     this.hideAllPages();
     this.pageNum = this.getNextPageIndex(this.pageNum);
-    this.pageViews[this.pageNum].$el.removeClass("fh_appform_hidden");
+    this.pageViews[this.pageNum].show();
     this.steps.activePageChange(this);
     this.checkPages();
   },
   prevPage: function() {
     this.hideAllPages();
     this.pageNum = this.getPrevPageIndex(this.pageNum);
-    this.pageViews[this.pageNum].$el.removeClass("fh_appform_hidden");
+    this.pageViews[this.pageNum].show();
     this.steps.activePageChange(this);
     this.checkPages();
   },
   hideAllPages: function() {
     this.pageViews.forEach(function(view) {
       //make sure to use $el when calling jquery func
-      view.$el.addClass("fh_appform_hidden");
+      view.hide();
     });
   },
   submit: function() {

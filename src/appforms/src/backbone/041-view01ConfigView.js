@@ -60,6 +60,12 @@ var ConfigView = Backbone.View.extend({
 '<div class="fh_appform_field_area config_debugging">'+
   '<fieldset>'+
     '<div class="fh_appform_field_title">Debugging</div>'+
+    '<br/>' +
+    '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
+    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Device Id</label>' +
+    '<button class="fh_appform_button_action" id="fh_appform_show_deviceId">Show Device Id</button>' +
+    '</div>' +
+    '<br/>' +
       '<div id="config_debugging_log_enabled" class="form-group" style="margin:5px 5px 5px 5px;">'+
         '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;margin-top:5px;">Log Enabled</label>'+
         '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" type="checkbox" data-key="logger"  <%= logger?"checked":"" %> value="true"/>'+
@@ -71,7 +77,7 @@ var ConfigView = Backbone.View.extend({
           '<%'+
               'for (var i=0;i<log_levels.length;i++){'+
                 'var val=log_levels[i];'+
-                'var selected=(i===log_level)?"selected":"";'+
+                'var selected=(i==log_level)?"selected":"";'+
                 '%>'+
                   '<option value="<%= i %>" <%= selected%>><%= val%></option>'+
                 '<%'+
@@ -101,7 +107,11 @@ var ConfigView = Backbone.View.extend({
     "click #_viewLogsBtn": "viewLogs",
     "click #_clearLogsBtn": "clearLogs",
     "click #_sendLogsBtn": "sendLogs",
-    "click #_closeViewBtn": "closeViewLogs"
+    "click #_closeViewBtn": "closeViewLogs",
+    "click #fh_appform_show_deviceId": "showDeviceId"
+  },
+  showDeviceId: function(){
+    alert($fh.forms.config.getDeviceId());  
   },
   "viewLogs": function() {
     var logs = $fh.forms.log.getPolishedLogs();
@@ -137,6 +147,7 @@ var ConfigView = Backbone.View.extend({
     var self = this;
     self.$el.html("");
     var props = $fh.forms.config.getConfig();
+    props.deviceId = $fh.forms.config.getDeviceId();
     var html = _.template(self.templates.join(""), props);
     self.$el.append(html);
 
@@ -162,7 +173,9 @@ var ConfigView = Backbone.View.extend({
         var val = $(this).val();
 
         if ($(this).attr("type") && $(this).attr("type").toLowerCase() === "checkbox") {
-          if (!$(this).attr("checked")) {
+          if ($(this).attr("checked")) {
+            val = true;
+          } else {
             val = false;
           }
         }

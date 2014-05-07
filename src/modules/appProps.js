@@ -14,7 +14,7 @@ var load = function(cb) {
   if (local) {
     app_props = {};
     app_props.local = true;
-    app_props.host = url_params.url;
+    app_props.host = url_params.url.replace(/#.*?$/g, '');
     app_props.appid = "000000000000000000000000";
     app_props.appkey = "0000000000000000000000000000000000000000";
     app_props.projectid = "000000000000000000000000";
