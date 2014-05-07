@@ -12881,6 +12881,22 @@ module.exports = {
     }
   };
 
+  if (typeof(window.PhoneGap) !== 'undefined' || typeof(window.cordova) !== 'undefined') {
+    $fh._readyCallbacks = [];
+    $fh._readyState = false;
+    $fh.__dest__.ready = function(p, s, f) {
+      if ($fh._readyState) {
+        try {
+          s();
+        } catch (e) {
+          console.log("Error during $fh.ready. Skip. Error = " + e.message);
+        }
+      } else {
+        $fh._readyCallbacks.push(s);
+      }
+    };
+  }
+
   $fh.__dest__.geo = function(p, s, f) {
     if (typeof navigator.geolocation != 'undefined') {
       if (!p.act || p.act == "register") {
@@ -18143,9 +18159,9 @@ if (typeof $fh === 'undefined') {
 if ($fh.forms === undefined) {
   $fh.forms = appForm.api;
 }
-/*! fh-forms - v0.5.8 -  */
+/*! fh-forms - v0.5.10 -  */
 /*! async - v0.2.9 -  */
-/*! 2014-04-30 */
+/*! 2014-05-02 */
 /* This is the prefix file */
 if(appForm){
   appForm.RulesEngine=rulesEngine;
@@ -20217,7 +20233,7 @@ function rulesEngine (formDef) {
               testDate = new Date(fieldValue);
             }
 
-            valid = (testDate.toString() !== "Invalid Date");
+            valid = (testDate.toString() !== "Invalid Date")
           } catch (e) {
             valid = false;
           }
@@ -20451,15 +20467,32 @@ function rulesEngine (formDef) {
     var fieldType = field.type;
     var fieldOptions = field.fieldOptions ? field.fieldOptions : {};
 
+    function numericalComparison(condition, fieldValue, testValue){
+      var fieldValNum = parseInt(fieldValue, 10);
+      var testValNum = parseInt(testValue, 10);  
+
+      if(isNaN(fieldValNum) || isNaN(testValNum)){
+        return false;
+      }
+
+      if ("is equal to" === condition) {
+        return fieldValNum === testValNum;
+      } else if ("is less than" === condition) {
+        return fieldValNum < testValNum;
+      } else if ("is greater than" === condition) {
+        return fieldValNum > testValNum; 
+      } else {
+        return false;
+      }
+    }
+
     var valid = true;
     if ("is equal to" === condition) {
-      valid = fieldValue === testValue;
+      valid = numericalComparison("is equal to", fieldValue, testValue);
     } else if ("is greater than" === condition) {
-      // TODO - do numeric checking
-      valid = fieldValue > testValue;
+      valid = numericalComparison("is greater than", fieldValue, testValue);
     } else if ("is less than" === condition) {
-      // TODO - do numeric checking
-      valid = fieldValue < testValue;
+      valid = numericalComparison("is less than", fieldValue, testValue);
     } else if ("is at" === condition) {
       valid = false;
       if (fieldType === FIELD_TYPE_DATETIME) {
