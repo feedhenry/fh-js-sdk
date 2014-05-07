@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.0.16-alpha - 2014-05-07 - IR227 - Wei Li
+
+* 7120 - Fix an issue when checking if a request is cross domain call
+
 ## 2.0.15-alpha - 2014-05-01 - IR226 - Niall Donnelly
 
 * 6844 Fixed validaton error for repeating fields.
