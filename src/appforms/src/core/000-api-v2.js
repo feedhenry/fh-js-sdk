@@ -2013,6 +2013,22 @@
     }
   };
 
+  if (typeof(window.PhoneGap) !== 'undefined' || typeof(window.cordova) !== 'undefined') {
+    $fh._readyCallbacks = [];
+    $fh._readyState = false;
+    $fh.__dest__.ready = function(p, s, f) {
+      if ($fh._readyState) {
+        try {
+          s();
+        } catch (e) {
+          console.log("Error during $fh.ready. Skip. Error = " + e.message);
+        }
+      } else {
+        $fh._readyCallbacks.push(s);
+      }
+    };
+  }
+
   $fh.__dest__.geo = function(p, s, f) {
     if (typeof navigator.geolocation != 'undefined') {
       if (!p.act || p.act == "register") {
