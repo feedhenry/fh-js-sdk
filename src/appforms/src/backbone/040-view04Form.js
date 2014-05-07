@@ -370,21 +370,21 @@ var FormView = BaseView.extend({
   nextPage: function() {
     this.hideAllPages();
     this.pageNum = this.getNextPageIndex(this.pageNum);
-    this.pageViews[this.pageNum].$el.removeClass("fh_appform_hidden");
+    this.pageViews[this.pageNum].show();
     this.steps.activePageChange(this);
     this.checkPages();
   },
   prevPage: function() {
     this.hideAllPages();
     this.pageNum = this.getPrevPageIndex(this.pageNum);
-    this.pageViews[this.pageNum].$el.removeClass("fh_appform_hidden");
+    this.pageViews[this.pageNum].show();
     this.steps.activePageChange(this);
     this.checkPages();
   },
   hideAllPages: function() {
     this.pageViews.forEach(function(view) {
       //make sure to use $el when calling jquery func
-      view.$el.addClass("fh_appform_hidden");
+      view.hide();
     });
   },
   submit: function() {

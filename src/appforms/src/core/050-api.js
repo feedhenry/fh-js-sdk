@@ -75,7 +75,7 @@ appForm.api = function (module) {
         return defaultValues;
       }
     },
-    "saveConfig": function(){
+    "saveConfig": function(cb){
       var self = this;
       formConfig.saveLocal(function(err, configModel){
         if(err){
@@ -84,6 +84,9 @@ appForm.api = function (module) {
           $fh.forms.log.l("Form config saved sucessfully.");
         }
 
+        if(typeof(cb) ==='function'){
+          cb();
+        }
       });
     },
     "offline": function(){

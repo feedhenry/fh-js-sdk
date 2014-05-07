@@ -63,7 +63,7 @@ var ConfigView = Backbone.View.extend({
     '<br/>' +
     '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
     '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Device Id</label>' +
-    '<input class="fh_appform_field_input" disabled style="display: inline-block;text-align: center;text-overflow:ellipsis;width: 40%;float: right;" data-key="deviceId" value="<%= deviceId%>"/>' +
+    '<button class="fh_appform_button_action" id="fh_appform_show_deviceId">Show Device Id</button>' +
     '</div>' +
     '<br/>' +
       '<div id="config_debugging_log_enabled" class="form-group" style="margin:5px 5px 5px 5px;">'+
@@ -107,7 +107,11 @@ var ConfigView = Backbone.View.extend({
     "click #_viewLogsBtn": "viewLogs",
     "click #_clearLogsBtn": "clearLogs",
     "click #_sendLogsBtn": "sendLogs",
-    "click #_closeViewBtn": "closeViewLogs"
+    "click #_closeViewBtn": "closeViewLogs",
+    "click #fh_appform_show_deviceId": "showDeviceId"
+  },
+  showDeviceId: function(){
+    alert($fh.forms.config.getDeviceId());  
   },
   "viewLogs": function() {
     var logs = $fh.forms.log.getPolishedLogs();
@@ -169,7 +173,9 @@ var ConfigView = Backbone.View.extend({
         var val = $(this).val();
 
         if ($(this).attr("type") && $(this).attr("type").toLowerCase() === "checkbox") {
-          if (!$(this).attr("checked")) {
+          if ($(this).attr("checked")) {
+            val = true;
+          } else {
             val = false;
           }
         }

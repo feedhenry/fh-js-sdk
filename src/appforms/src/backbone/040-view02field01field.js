@@ -135,7 +135,6 @@ var FieldView = Backbone.View.extend({
         this.$fieldWrapper.append(eleHtml);
         this.curRepeat++;
         this.onElementShow(index);
-
     },
     onElementShow: function(index) {
         $fh.forms.log.d("Show done for field " + index);
@@ -264,64 +263,13 @@ var FieldView = Backbone.View.extend({
         this.validate(e);
     },
 
-
-    addRules: function() {
-        // this.addValidationRules();
-        // this.addSpecialRules();
-    },
-
     isRequired: function() {
         return this.model.isRequired();
     },
 
-    addValidationRules: function() {
-        if (this.model.get('IsRequired') === '1') {
-            this.$el.find('#' + this.model.get('ID')).rules('add', {
-                "required": true
-            });
-        }
-    },
-
-    addSpecialRules: function() {
-        var self = this;
-
-        var rules = {
-            'Show': function(rulePasses, params) {
-                var fieldId = 'Field' + params.Setting.FieldName;
-                if (rulePasses) {
-                    App.views.form.showField(fieldId);
-                } else {
-                    App.views.form.hideField(fieldId);
-                }
-            },
-            'Hide': function(rulePasses, params) {
-                var fieldId = 'Field' + params.Setting.FieldName;
-                if (rulePasses) {
-                    App.views.form.hideField(fieldId);
-                } else {
-                    App.views.form.showField(fieldId);
-                }
-            }
-        };
-
-        // also apply any special rules
-        _(this.model.get('Rules') || []).each(function(rule) {
-            var ruleConfig = _.clone(rule);
-            ruleConfig.pageView = self.options.parentView;
-            ruleConfig.fn = rules[rule.Type];
-            self.$el.find('#' + self.model.get('ID')).wufoo_rules('add', ruleConfig);
-        });
-    },
-
-    removeRules: function() {
-        this.$el.find('#' + this.model.get('ID')).rules('remove');
-    },
-
     // force a hide , defaults to false
     hide: function(force) {
-        if (force || this.$el.is(':visible')) {
-            this.$el.hide();
-        }
+        this.$el.hide();
     },
     renderButton: function(index, label, extension_type) {
         var button = $('<button>');
@@ -352,13 +300,7 @@ var FieldView = Backbone.View.extend({
     },
 
     show: function() {
-        if (!this.$el.is(':visible')) {
-            this.$el.show();
-            // add rules too
-            //this.addRules();
-            //set the form value from model
-            //this.value(this.model.serialize());
-        }
+        this.$el.show();
     },
 
     defaultValue: function() {
