@@ -19,8 +19,8 @@ appForm.models = function(module) {
     } else {
       //load hard coded static config first
       this.staticConfig(config);
-      //attempt load config from mbaas then local storage.
-      this.refresh(true, cb);
+      //attempt to load config from mbaas then local storage.
+      this.refresh(true, cb); 
     }
   };
   Config.prototype.refresh = function (fromRemote, cb) {
