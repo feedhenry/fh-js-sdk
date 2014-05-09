@@ -18,7 +18,7 @@ appForm.models = function(module) {
       cb();
     } else {
       //load hard coded static config first
-      this.staticConfig();
+      this.staticConfig(config);
       //attempt load config from mbaas then local storage.
       this.refresh(true, cb);
     }
@@ -82,7 +82,7 @@ appForm.models = function(module) {
     }
 
 
-    self._initMBaaS();
+    self._initMBaaS(config);
     //Setting default retry attempts if not set in the config
     if (!config) {
       config = {};
@@ -117,7 +117,8 @@ appForm.models = function(module) {
 
     self.fromJSON(defaultConfig);
   };
-  Config.prototype._initMBaaS = function() {
+  Config.prototype._initMBaaS = function(config) {
+    config = config || {};
     var cloud_props = $fh.cloud_props;
     var app_props = $fh.app_props;
     var cloudUrl;
@@ -129,6 +130,11 @@ appForm.models = function(module) {
     if (cloud_props && cloud_props.hosts) {
       cloudUrl = cloud_props.hosts.url;
     }
+
+    if(typeof(config.cloudHost) === 'string'){
+      cloudUrl = config.cloudHost;
+    }
+    
     this.set('cloudHost', cloudUrl);
     this.set('mbaasBaseUrl', '/mbaas');
     var appId = this.get('appId');

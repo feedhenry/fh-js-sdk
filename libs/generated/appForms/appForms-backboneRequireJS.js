@@ -3646,6 +3646,11 @@ var FormView = BaseView.extend({
   },
   getNextPageIndex: function(currentPageIndex) {
     var self = this;
+
+    if(pageIndex >= this.pageViews.length){
+      return this.pageViews.length -1;
+    }
+
     for (var pageIndex = currentPageIndex + 1; pageIndex < this.pageViews.length; pageIndex += 1) {
       var pageId = this.pageViews[pageIndex].model.getPageId();
       var pageAction = self.pageViewStatus[pageId].action;
@@ -3657,6 +3662,10 @@ var FormView = BaseView.extend({
   },
   getPrevPageIndex: function(currentPageIndex) {
     var self = this;
+    if(currentPageIndex <= 0){//Can't display pages before 0.
+      return 0;
+    }
+
     for (var pageIndex = currentPageIndex - 1; pageIndex >= 0; pageIndex--) {
       var pageId = self.pageViews[pageIndex].model.getPageId();
       var pageAction = self.pageViewStatus[pageId].action;
@@ -3711,6 +3720,14 @@ var FormView = BaseView.extend({
     this.pageViews[this.pageNum].show();
     this.steps.activePageChange(this);
     this.checkPages();
+  },
+  backEvent: function(){
+    var self = this;
+    if(this.pageNum <= 0){ // Already at the first page, exiting the form. Up to the client what to do with this result.
+      return false;
+    } 
+    self.prevPage();
+    return true;
   },
   hideAllPages: function() {
     this.pageViews.forEach(function(view) {
