@@ -7707,8 +7707,9 @@ var ajax = module.exports = function (options) {
 
   ajaxStart(settings)
 
-  if (!settings.crossDomain) settings.crossDomain = /^([\w-]+:)?\/\/([^\/]+)/.test(settings.url) &&
-    RegExp.$2 != window.location.host
+  if (!settings.crossDomain) {
+    settings.crossDomain = /^([\w-]+:)?\/\/([^\/]+)/.test(settings.url) && (RegExp.$1 != window.location.protocol || RegExp.$2 != window.location.host)
+  } 
 
   var dataType = settings.dataType,
     hasPlaceholder = /=\?/.test(settings.url)
@@ -8340,7 +8341,7 @@ var load = function(cb) {
   if (local) {
     app_props = {};
     app_props.local = true;
-    app_props.host = url_params.url;
+    app_props.host = url_params.url.replace(/#.*?$/g, '');
     app_props.appid = "000000000000000000000000";
     app_props.appkey = "0000000000000000000000000000000000000000";
     app_props.projectid = "000000000000000000000000";
@@ -8506,7 +8507,7 @@ module.exports = {
 },{"./fhparams":31,"./logger":37,"./queryMap":39,"JSON":3}],27:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.0.15-alpha",
+  "sdk_version": "2.0.16-alpha",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit"
 };
@@ -14350,7 +14351,7 @@ appForm.models = function(module) {
       cb();
     } else {
       //load hard coded static config first
-      this.staticConfig();
+      this.staticConfig(config);
       //attempt load config from mbaas then local storage.
       this.refresh(true, cb);
     }
@@ -14414,7 +14415,7 @@ appForm.models = function(module) {
     }
 
 
-    self._initMBaaS();
+    self._initMBaaS(config);
     //Setting default retry attempts if not set in the config
     if (!config) {
       config = {};
@@ -14449,7 +14450,8 @@ appForm.models = function(module) {
 
     self.fromJSON(defaultConfig);
   };
-  Config.prototype._initMBaaS = function() {
+  Config.prototype._initMBaaS = function(config) {
+    config = config || {};
     var cloud_props = $fh.cloud_props;
     var app_props = $fh.app_props;
     var cloudUrl;
@@ -14461,6 +14463,11 @@ appForm.models = function(module) {
     if (cloud_props && cloud_props.hosts) {
       cloudUrl = cloud_props.hosts.url;
     }
+
+    if(typeof(config.cloudHost) === 'string'){
+      cloudUrl = config.cloudHost;
+    }
+    
     this.set('cloudHost', cloudUrl);
     this.set('mbaasBaseUrl', '/mbaas');
     var appId = this.get('appId');
