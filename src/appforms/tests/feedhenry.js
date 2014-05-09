@@ -7707,8 +7707,9 @@ var ajax = module.exports = function (options) {
 
   ajaxStart(settings)
 
-  if (!settings.crossDomain) settings.crossDomain = /^([\w-]+:)?\/\/([^\/]+)/.test(settings.url) &&
-    RegExp.$2 != window.location.host
+  if (!settings.crossDomain) {
+    settings.crossDomain = /^([\w-]+:)?\/\/([^\/]+)/.test(settings.url) && (RegExp.$1 != window.location.protocol || RegExp.$2 != window.location.host)
+  } 
 
   var dataType = settings.dataType,
     hasPlaceholder = /=\?/.test(settings.url)
@@ -8340,7 +8341,7 @@ var load = function(cb) {
   if (local) {
     app_props = {};
     app_props.local = true;
-    app_props.host = url_params.url;
+    app_props.host = url_params.url.replace(/#.*?$/g, '');
     app_props.appid = "000000000000000000000000";
     app_props.appkey = "0000000000000000000000000000000000000000";
     app_props.projectid = "000000000000000000000000";
@@ -8506,7 +8507,7 @@ module.exports = {
 },{"./fhparams":31,"./logger":37,"./queryMap":39,"JSON":3}],27:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.0.15-alpha",
+  "sdk_version": "2.0.16-alpha",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit"
 };
