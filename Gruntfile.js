@@ -64,6 +64,10 @@ module.exports = function(grunt) {
         "src": "src/appforms/src/core/*.js",
         "dest": "libs/generated/appForms/appForms-core.js"
       },
+      forms_core_no_v2: {
+        "src": ["src/appforms/src/core/*.js", "!src/appforms/src/core/000-api-v2.js"],
+        "dest": "libs/generated/appForms/appForms-core-no-v2.js"
+      },
       forms_backbone: {
         "src": ["src/appforms/src/backbone/*.js", "!src/appforms/src/backbone/000-closureStartRequireJS.js", "!src/appforms/src/backbone/999-closureEndRequireJS.js"],
         "dest": "dist/appForms-backbone.js"
@@ -331,7 +335,7 @@ module.exports = function(grunt) {
   //run tests in phatomjs
   grunt.registerTask('test', ['jshint', 'browserify:dist', 'browserify:require', 'browserify:test', 'connect:server', 'mocha_phantomjs:test']);
 
-  grunt.registerTask('concat-core-sdk', ['jshint','concat:lawnchair', 'concat:crypto', 'concat:forms_core', 'concat:forms_backbone', 'concat:forms_backboneRequireJS']);
+  grunt.registerTask('concat-core-sdk', ['jshint','concat:lawnchair', 'concat:crypto', 'concat:forms_core', 'concat:forms_core_no_v2', 'concat:forms_backbone', 'concat:forms_backboneRequireJS']);
 
   grunt.registerTask('concat-titanium', ['concat:lawnchair', 'concat:lawnchair_titanium', 'concat:crypto']);
 
