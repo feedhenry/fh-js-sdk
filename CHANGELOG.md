@@ -1,5 +1,10 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.0.17-alpha - 2014-05-01 - IR227 - Niall Donnelly
+
+* 6693 Handle Back Button.
+* 6921 Fix Broken Html5 Camera.
+
 ## 2.0.16-alpha - 2014-05-07 - IR227 - Wei Li
 
 * 7120 - Fix an issue when checking if a request is cross domain call
