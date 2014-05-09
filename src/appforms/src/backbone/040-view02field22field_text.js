@@ -1,3 +1,0 @@
-FieldTextView = FieldView.extend({
-
-});

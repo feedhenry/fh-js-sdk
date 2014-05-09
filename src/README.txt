@@ -1,1 +1,0 @@
-This is for FeedHenry created src files to add a file to the dist/feedhenry-latest.js you will need to modify the grunt.js file in the root dir.

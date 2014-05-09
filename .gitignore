@@ -4,5 +4,12 @@
 #Except 
 
 !.gitignore
-!./dist
+!appForms-backbone.js
+!feedhenry-forms.js
+!feedhenry-forms.min.js
+!feedhenry-titanium.js
+!feedhenry-titanium.min.js
+!feedhenry.js
+!feedhenry.min.js
+!fh-starter-project-latest.zip
 !.README.md

@@ -1,6 +1,0 @@
-src/core/000-closureStart.js
-src/core/999-closureEnd.js
-src/backbone/000-closureStart.js
-src/backbone/000-closureStartRequireJS.js
-src/backbone/999-closureEnd.js
-src/backbone/999-closureEndRequireJS.js

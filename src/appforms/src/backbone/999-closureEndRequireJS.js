@@ -1,3 +1,0 @@
-return $fh.forms;
-
-});
