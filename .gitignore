@@ -1,8 +1,1 @@
-#Ignore everything
-*
-
-#Except 
-
-!.gitignore
-!./dist
-!.README.md
+**
