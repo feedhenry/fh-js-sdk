@@ -243,14 +243,12 @@ var FieldView = Backbone.View.extend({
         });
     },
     validate: function(e) {
-        if (!$fh.forms.config.get("studioMode")) {
-            var self = this;
-            var target = $(e.currentTarget);
-            var index = target.data().index;
-            var val = self.valueFromElement(index);
-            self.validateElement(index, val);
-            self.trigger("checkrules");
-        }
+        var self = this;
+        var target = $(e.currentTarget);
+        var index = target.data().index;
+        var val = self.valueFromElement(index);
+        self.validateElement(index, val);
+        self.trigger("checkrules");
     },
     setErrorText: function(index, text) {
         var wrapperObj = this.getWrapper(index);

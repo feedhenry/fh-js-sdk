@@ -162,6 +162,9 @@ appForm.models = function(module) {
   Config.prototype.isOnline = function(){
     return online === true;
   };
+  Config.prototype.isStudioMode = function(){
+    return this.get("studioMode", false);
+  };
 
   module.config = new Config();
   return module;

@@ -12,7 +12,7 @@ appForm.stores = function(module) {
   MBaaS.prototype.create = function(model, cb) {
     var self = this;
     if (self.checkStudio()) {
-      cb("Studio mode not supported");
+      cb("Studio mode mbaas not supported");
     } else {
       var url = _getUrl(model);
       if(self.isFileAndPhoneGap(model)){
@@ -35,7 +35,7 @@ appForm.stores = function(module) {
   MBaaS.prototype.read = function(model, cb) {
     var self = this;
     if (this.checkStudio()) {
-      cb("Studio mode not supported");
+      cb("Studio mode mbaas not supported");
     } else {
       if (model.get("_type") === "offlineTest") {
         cb("offlinetest. ignore");
@@ -58,10 +58,16 @@ appForm.stores = function(module) {
   MBaaS.prototype["delete"] = function(model, cb) {};
   //@Deprecated use create instead
   MBaaS.prototype.completeSubmission = function(submissionToComplete, cb) {
+    if (this.checkStudio()) {
+      return cb("Studio mode mbaas not supported");
+    }
     var url = _getUrl(submissionToComplete);
     appForm.web.ajax.post(url, {}, cb);
   };
   MBaaS.prototype.submissionStatus = function(submission, cb) {
+    if (this.checkStudio()) {
+      return cb("Studio mode mbaas not supported");
+    }
     var url = _getUrl(submission);
     appForm.web.ajax.get(url, cb);
   };
