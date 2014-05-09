@@ -8560,7 +8560,7 @@ module.exports = {
 },{"./fhparams":29,"./logger":35,"./queryMap":37,"JSON":3}],26:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.0.16-alpha",
+  "sdk_version": "2.0.17-alpha",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit"
 };
@@ -10782,7 +10782,7 @@ module.exports = {
   loadDataSet: self.loadDataSet,
   checkHasCustomSync: self.checkHasCustomSync
 };
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":19,"./api_cloud":21,"JSON":3}],"./appProps":[function(_dereq_,module,exports){
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":19,"./api_cloud":21,"JSON":3}],"./modules/appProps":[function(_dereq_,module,exports){
 module.exports=_dereq_('zDENqi');
 },{}],"zDENqi":[function(_dereq_,module,exports){
 var consts = _dereq_("../constants");
@@ -10816,9 +10816,7 @@ module.exports = {
   setAppProps: setAppProps
 };
 
-},{"../ajax":18,"../constants":26,"../logger":35,"../queryMap":37}],"./cookies":[function(_dereq_,module,exports){
-module.exports=_dereq_('RdeKcl');
-},{}],"RdeKcl":[function(_dereq_,module,exports){
+},{"../ajax":18,"../constants":26,"../logger":35,"../queryMap":37}],"RdeKcl":[function(_dereq_,module,exports){
 module.exports = {
   readCookieValue  : function (cookie_name) {
     if (typeof Titanium !== 'undefined'){
@@ -10833,6 +10831,8 @@ module.exports = {
     }
   }
 };
+},{}],"./cookies":[function(_dereq_,module,exports){
+module.exports=_dereq_('RdeKcl');
 },{}],48:[function(_dereq_,module,exports){
 module.exports = {
   createUUID : function () {
