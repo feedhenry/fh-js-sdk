@@ -1,11 +1,8 @@
-fhc-debug.log
-.DS_Store
-.idea/
-node_modules/
-tmp/*
-*~
-.fhclocal/
-src/appforms/dist/
-test/sync/testServer
-src/modules-cov/*
-src-cov/*
+#Ignore everything
+*
+
+#But 
+
+!.gitignore
+!./dist
+!.README.md
