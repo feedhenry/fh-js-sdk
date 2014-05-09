@@ -13469,13 +13469,18 @@ appForm.utils = function (module) {
     }
   }
   function takePhoto(params, cb) {
+    params = params || {};
     $fh.forms.log.d("Taking photo ", params, isPhoneGap);
     //use configuration
     var width =  params.targetWidth ? params.targetWidth : $fh.forms.config.get("targetWidth", 640);
     var height = params.targetHeight ? params.targetHeight : $fh.forms.config.get("targetHeight", 480);
     var quality= params.quality ? params.quality : $fh.forms.config.get("quality", 50);
 
-    if ("undefined" === typeof params.sourceType) {
+    params.targetWidth = width;
+    params.targetHeight = height;
+    params.quality = quality;
+
+    if ("undefined" === typeof(params.sourceType) && typeof(Camera) !== 'undefined') {
       params.sourceType = Camera.PictureSourceType.CAMERA;
     }
 
@@ -13516,7 +13521,7 @@ appForm.utils = function (module) {
         cb(null, video);
       }, cb);
     } else {
-      console.error('Media device was not released.');
+      $fh.forms.log.e('Media device was not released by browser.');
       cb('Media device occupied.');
     }
   }
@@ -13557,7 +13562,7 @@ appForm.utils = function (module) {
   function snapshot(params, cb) {
     $fh.forms.log.d("Snapshot ", params);
     if (localMediaStream) {
-      ctx.drawImage(video, 0, 0, params.width, params.height);
+      ctx.drawImage(video, 0, 0, params.targetWidth, params.targetHeight);
       // "image/webp" works in Chrome.
       // Other browsers will fall back to image/png.
       var base64 = canvas.toDataURL('image/png');
