@@ -399,7 +399,7 @@ var FormView = BaseView.extend({
       containerSize *= -1;
       window.scrollBy(0, containerSize);
     } else {
-      window.scrollTo(0, 0));
+      window.scrollTo(0, 0);
     }
   },
   backEvent: function(){
