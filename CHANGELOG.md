@@ -1,4 +1,10 @@
 # Changelog - FeedHenry Javascript SDK
+
+
+## 2.0.19-alpha - 2014-05-12 - IR227 - Niall Donnelly
+
+* 6966 Position screen at top of form when navigating between pages.
+
 ## 2.0.18-alpha - 2014-05-12 - IR227 - Wei Li
 
 * 7166 Fix AF3 crashing issue when running on WP8

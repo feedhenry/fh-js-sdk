@@ -386,6 +386,7 @@ var FormView = BaseView.extend({
     this.pageViews[this.pageNum].show();
     this.steps.activePageChange(this);
     this.checkPages();
+    this.scrollToTop();
   },
   prevPage: function() {
     this.hideAllPages();
@@ -393,6 +394,17 @@ var FormView = BaseView.extend({
     this.pageViews[this.pageNum].show();
     this.steps.activePageChange(this);
     this.checkPages();
+    this.scrollToTop();
+  },
+  scrollToTop: function(){
+    //Positioning the window to the top of the form container
+    var containerSize = $(this.elementNames.formContainer).outerHeight();
+    if(containerSize > 0){
+      containerSize *= -1;
+      window.scrollBy(0, containerSize);
+    } else {
+      window.scrollTo(0, 0);
+    }
   },
   backEvent: function(){
     var self = this;
