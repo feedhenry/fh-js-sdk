@@ -4,6 +4,7 @@
 ## 2.0.19-alpha - 2014-05-12 - IR227 - Niall Donnelly
 
 * 6966 Position screen at top of form when navigating between pages.
+* 6920 Add functionality to alert studio users when submitting forms in non-mbaas backed forms.
 
 ## 2.0.18-alpha - 2014-05-12 - IR227 - Wei Li
 
