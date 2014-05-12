@@ -13,4 +13,7 @@ dist/
 src/appforms/tests/feedhenry.js
 test/browser/browserified_tests.js
 test/browser/feedhenry-latest-require.js
+libs/generated/appForms/appForms-backbone.js
+libs/generated/appForms/appForms-backboneRequireJS.js
+libs/generated/appForms/appForms-core.js
 libs/generated/appForms/appForms-core-no-v2.js

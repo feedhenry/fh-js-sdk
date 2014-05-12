@@ -18,9 +18,7 @@ FieldSignatureView = FieldView.extend({
         });
     },
     validate: function(e) {
-        if (!$fh.forms.config.get("studioMode")) {
-            this.trigger("checkrules");
-        }
+        this.trigger("checkrules");
     },
     showSignatureCapture: function(index) {
         var self = this;

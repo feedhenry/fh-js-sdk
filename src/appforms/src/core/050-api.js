@@ -97,6 +97,9 @@ appForm.api = function (module) {
     },
     "isOnline": function(){
       return formConfig.isOnline();
+    },
+    "isStudioMode": function(){
+      return formConfig.isStudioMode();
     }
   };
 
