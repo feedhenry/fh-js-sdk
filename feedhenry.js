@@ -7930,8 +7930,8 @@ function getXhr(crossDomain){
   if(window.XMLHttpRequest){
     xhr = new XMLHttpRequest();
   }
-  //for IE8
-  if(isIE() && (crossDomain === true) && typeof window.XDomainRequest !== "undefined"){
+  //for IE8 only. Need to make sure it's not used when running inside Cordova.
+  if(isIE() && (crossDomain === true) && typeof window.XDomainRequest !== "undefined" && typeof window.cordova === "undefined"){
     xhr = new XDomainRequestWrapper(new XDomainRequest());
   }
   // For Titanium SDK
@@ -8507,7 +8507,7 @@ module.exports = {
 },{"./fhparams":31,"./logger":37,"./queryMap":39,"JSON":3}],27:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.0.17-alpha",
+  "sdk_version": "2.0.18-alpha",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit"
 };
