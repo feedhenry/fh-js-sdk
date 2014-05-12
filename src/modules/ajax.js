@@ -267,8 +267,8 @@ function getXhr(crossDomain){
   if(window.XMLHttpRequest){
     xhr = new XMLHttpRequest();
   }
-  //for IE8
-  if(isIE() && (crossDomain === true) && typeof window.XDomainRequest !== "undefined"){
+  //for IE8 only. Need to make sure it's not used when running inside Cordova.
+  if(isIE() && (crossDomain === true) && typeof window.XDomainRequest !== "undefined" && typeof window.cordova === "undefined"){
     xhr = new XDomainRequestWrapper(new XDomainRequest());
   }
   // For Titanium SDK
