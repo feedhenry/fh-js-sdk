@@ -1,4 +1,7 @@
 # Changelog - FeedHenry Javascript SDK
+## 2.0.18-alpha - 2014-05-12 - IR227 - Wei Li
+
+* 7166 Fix AF3 crashing issue when running on WP8
 
 ## 2.0.17-alpha - 2014-05-01 - IR227 - Niall Donnelly
 
