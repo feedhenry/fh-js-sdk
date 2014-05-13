@@ -7930,8 +7930,8 @@ function getXhr(crossDomain){
   if(window.XMLHttpRequest){
     xhr = new XMLHttpRequest();
   }
-  //for IE8
-  if(isIE() && (crossDomain === true) && typeof window.XDomainRequest !== "undefined"){
+  //for IE8 only. Need to make sure it's not used when running inside Cordova.
+  if(isIE() && (crossDomain === true) && typeof window.XDomainRequest !== "undefined" && typeof window.cordova === "undefined"){
     xhr = new XDomainRequestWrapper(new XDomainRequest());
   }
   // For Titanium SDK
@@ -8507,7 +8507,7 @@ module.exports = {
 },{"./fhparams":31,"./logger":37,"./queryMap":39,"JSON":3}],27:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.0.17-alpha",
+  "sdk_version": "2.0.18-alpha",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit"
 };
@@ -13965,7 +13965,7 @@ appForm.stores = function(module) {
   MBaaS.prototype.create = function(model, cb) {
     var self = this;
     if (self.checkStudio()) {
-      cb("Studio mode not supported");
+      cb("Studio mode mbaas not supported");
     } else {
       var url = _getUrl(model);
       if(self.isFileAndPhoneGap(model)){
@@ -13988,7 +13988,7 @@ appForm.stores = function(module) {
   MBaaS.prototype.read = function(model, cb) {
     var self = this;
     if (this.checkStudio()) {
-      cb("Studio mode not supported");
+      cb("Studio mode mbaas not supported");
     } else {
       if (model.get("_type") === "offlineTest") {
         cb("offlinetest. ignore");
@@ -14011,10 +14011,16 @@ appForm.stores = function(module) {
   MBaaS.prototype["delete"] = function(model, cb) {};
   //@Deprecated use create instead
   MBaaS.prototype.completeSubmission = function(submissionToComplete, cb) {
+    if (this.checkStudio()) {
+      return cb("Studio mode mbaas not supported");
+    }
     var url = _getUrl(submissionToComplete);
     appForm.web.ajax.post(url, {}, cb);
   };
   MBaaS.prototype.submissionStatus = function(submission, cb) {
+    if (this.checkStudio()) {
+      return cb("Studio mode mbaas not supported");
+    }
     var url = _getUrl(submission);
     appForm.web.ajax.get(url, cb);
   };
@@ -14357,8 +14363,8 @@ appForm.models = function(module) {
     } else {
       //load hard coded static config first
       this.staticConfig(config);
-      //attempt load config from mbaas then local storage.
-      this.refresh(true, cb);
+      //attempt to load config from mbaas then local storage.
+      this.refresh(true, cb); 
     }
   };
   Config.prototype.refresh = function (fromRemote, cb) {
@@ -14499,6 +14505,9 @@ appForm.models = function(module) {
   };
   Config.prototype.isOnline = function(){
     return online === true;
+  };
+  Config.prototype.isStudioMode = function(){
+    return this.get("studioMode", false);
   };
 
   module.config = new Config();
@@ -18000,6 +18009,9 @@ appForm.api = function (module) {
     },
     "isOnline": function(){
       return formConfig.isOnline();
+    },
+    "isStudioMode": function(){
+      return formConfig.isStudioMode();
     }
   };
 

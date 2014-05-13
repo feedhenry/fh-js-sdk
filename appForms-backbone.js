@@ -1904,14 +1904,12 @@ var FieldView = Backbone.View.extend({
         });
     },
     validate: function(e) {
-        if (!$fh.forms.config.get("studioMode")) {
-            var self = this;
-            var target = $(e.currentTarget);
-            var index = target.data().index;
-            var val = self.valueFromElement(index);
-            self.validateElement(index, val);
-            self.trigger("checkrules");
-        }
+        var self = this;
+        var target = $(e.currentTarget);
+        var index = target.data().index;
+        var val = self.valueFromElement(index);
+        self.validateElement(index, val);
+        self.trigger("checkrules");
     },
     setErrorText: function(index, text) {
         var wrapperObj = this.getWrapper(index);
@@ -2852,9 +2850,7 @@ FieldSignatureView = FieldView.extend({
         });
     },
     validate: function(e) {
-        if (!$fh.forms.config.get("studioMode")) {
-            this.trigger("checkrules");
-        }
+        this.trigger("checkrules");
     },
     showSignatureCapture: function(index) {
         var self = this;
@@ -3573,7 +3569,11 @@ var FormView = BaseView.extend({
       self.saveToDraft();
     });
     this.$el.find("button.fh_appform_button_submit").unbind().bind("click", function() {
-      self.submit();
+      if($fh.forms.config.isStudioMode()){//Studio mode does not submit.
+        alert("Please create a project and interact with the form there.");
+      } else {
+        self.submit();
+      }
     });
   },
   setSubmission: function(sub) {
@@ -3721,6 +3721,7 @@ var FormView = BaseView.extend({
     this.pageViews[this.pageNum].show();
     this.steps.activePageChange(this);
     this.checkPages();
+    this.scrollToTop();
   },
   prevPage: function() {
     this.hideAllPages();
@@ -3728,6 +3729,17 @@ var FormView = BaseView.extend({
     this.pageViews[this.pageNum].show();
     this.steps.activePageChange(this);
     this.checkPages();
+    this.scrollToTop();
+  },
+  scrollToTop: function(){
+    //Positioning the window to the top of the form container
+    var containerSize = $(this.elementNames.formContainer).outerHeight();
+    if(containerSize > 0){
+      containerSize *= -1;
+      window.scrollBy(0, containerSize);
+    } else {
+      window.scrollTo(0, 0);
+    }
   },
   backEvent: function(){
     var self = this;
