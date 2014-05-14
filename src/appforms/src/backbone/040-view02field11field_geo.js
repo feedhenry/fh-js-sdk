@@ -38,6 +38,8 @@ FieldGeoView = FieldView.extend({
       self.clearLocation(e, index);
       rmBtn.hide();
     });
+
+    rmBtn.hide();
   },
   clearLocation: function(e, index){
     var textInput = this.getWrapper(index).find(".fh_appform_field_input");
@@ -76,6 +78,8 @@ FieldGeoView = FieldView.extend({
         $fh.forms.log.e("FieldGeo: Invalid location unit: " + locStr);
       }
       textInput.val(locStr);
+    } else {
+      wrapper.find(".remove").hide();
     }
     textInput.blur();
   },
