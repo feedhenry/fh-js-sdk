@@ -21,15 +21,28 @@ FieldGeoView = FieldView.extend({
   },
   onElementShow: function(index){
     var self = this;
+    var rmBtn = $(this.renderButton(index, "<i class='fa fa-times-circle'></i>&nbsp;Remove Location", "remove"));
     var btnLabel = this.locationUnit === "latlong" ? 'Capture Location (Lat/Lon)' : 'Capture Location (East/North)';
     btnLabel = _.template(this.buttonHtml, {"buttonText": btnLabel});
     var geoButton = $(this.renderButton(index, btnLabel, "fhgeo"));
 
+
     this.getWrapper(index).append(geoButton);
+    this.getWrapper(index).append(rmBtn);
 
     geoButton.on("click", function(e){
       self.getLocation(e, index);
     });
+
+    rmBtn.on("click", function(e){
+      self.clearLocation(e, index);
+      rmBtn.hide();
+    });
+  },
+  clearLocation: function(e, index){
+    var textInput = this.getWrapper(index).find(".fh_appform_field_input");
+    textInput.val("");
+    this.geoValues.splice(index, 1);// Remove the geo value from the field
   },
   onRender: function() {
     var that = this;
@@ -50,12 +63,17 @@ FieldGeoView = FieldView.extend({
   renderElement: function(index) {
     var location = this.geoValues[index];
     var locStr = "";
-    var textInput = this.getWrapper(index).find(".fh_appform_field_input");
+    var wrapper = this.getWrapper(index);
+    var textInput = wrapper.find(".fh_appform_field_input");
     if (location) {
       if (this.locationUnit === "latlong") {
         locStr = '(' + location.lat + ', ' + location["long"] + ')';
+        wrapper.find(".remove").show();
       } else if (this.locationUnit === "eastnorth") {
         locStr = '(' + location.zone+' '+location.eastings + ', ' + location.northings + ')';
+        wrapper.find(".remove").show();
+      } else {
+        $fh.forms.log.e("FieldGeo: Invalid location unit: " + locStr);
       }
       textInput.val(locStr);
     }
@@ -92,7 +110,9 @@ FieldGeoView = FieldView.extend({
             "eastings":locArr[1],
             "northings":locArr[2]
           };
-        }
+        } else {
+          $fh.forms.log.e("FieldGeo: Invalid location unit: " + locStr);
+       }
         that.renderElement(index);
       }, function(msg, err) {
         textInput.attr('placeholder', 'Location could not be determined');
