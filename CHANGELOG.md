@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.0.20-alpha - 2014-05-12 - IR227 - Niall Donnelly
+
+* 6438 Add remove button to location fields for appforms.
 
 ## 2.0.19-alpha - 2014-05-12 - IR227 - Niall Donnelly
 

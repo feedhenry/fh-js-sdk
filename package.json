@@ -1,6 +1,6 @@
 {
     "name": "fh-js-sdk",
-    "version": "2.0.19-alpha",
+    "version": "2.0.20-alpha",
     "description": "feedhenry js sdk",
     "main": "feedhenry.js",
     "browser": {
