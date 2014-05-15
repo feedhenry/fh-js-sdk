@@ -118,7 +118,7 @@ appForm.stores = function(module) {
         if (err) {
           hash = key;
         }
-        var filename = hash + '.txt';
+        var filename = key.toString() + '.txt';
         if (typeof navigator.externalstorage !== 'undefined') {
           navigator.externalstorage.enable(function handleSuccess(res) {
             var path = filename;

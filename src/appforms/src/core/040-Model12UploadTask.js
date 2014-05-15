@@ -665,6 +665,12 @@ appForm.models = function (module) {
     } else {
       processUploadSuccess();
     }
+
+    self.clearLocal(function(err){
+      if(err){
+        $fh.forms.log.e("Error clearing upload task local storage: ", err);
+      }      
+    });
   };
   /**
    * the upload task is failed. It will not complete the task but will set error with error returned.
@@ -673,6 +679,7 @@ appForm.models = function (module) {
    * @return {[type]}       [description]
    */
   UploadTask.prototype.error = function (err, cb) {
+    var self = this;
     this.set('error', err);
     this.saveLocal(function (err) {
       if (err) {
@@ -683,7 +690,15 @@ appForm.models = function (module) {
       if (_err) {
         cb(_err);
       } else {
-        model.error(err, function () {
+        model.error(err, function (err) {
+          if(err){
+            $fh.forms.log.e("Error updating submission model to error status ", err);
+          }
+        });
+        self.clearLocal(function(err){
+          if(err){
+            $fh.forms.log.e("Error clearing upload task local storage: ", err);
+          }      
         });
         cb(err);
       }
@@ -726,6 +741,12 @@ appForm.models = function (module) {
       var curTask = self.getCurrentTask();
       if (curTask > self.get('fileTasks', []).length) {
         //change offset if completion bit is changed
+        self.set("mbaasCompleted", true);
+        self.saveLocal(function(err){
+          if(err){
+            $fh.forms.log.e("Error saving upload task: ", err);
+          }
+        });
         return true;
       } else {
         return false;

@@ -1852,7 +1852,7 @@ function rulesEngine (formDef) {
           if (fieldValueSize > 1000) {
             fieldValueSizeKB = fieldValueSize / 1000;
           }
-          console.log("Comparing File Size: ", fileSizeMax, fieldValueSize);
+
           if (fieldValueSize > (fileSizeMax * 1000)) {
             return cb(new Error("File size is too large. File can be a maximum of " + fileSizeMax + "KB. Size of file selected: " + fieldValueSizeKB + "KB"));
           } else {

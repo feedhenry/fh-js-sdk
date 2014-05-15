@@ -97,6 +97,7 @@ appForm.models = function(module) {
       this.set('uploadStartDate', null);
       this.set('submittedDate', null);
       this.set('userId', null);
+      this.set('filesInSubmission', []);
       this.set('deviceId', appForm.config.get('deviceId'));
       this.transactionMode = false;
     } else {
@@ -418,21 +419,21 @@ appForm.models = function(module) {
     }
   };
 
-  Submission.prototype.getSubmissionFiles = function(){
+  Submission.prototype.getSubmissionFiles = function() {
     var self = this;
     $fh.forms.log.d("In getSubmissionFiles: " + self.getLocalId());
     var submissionFiles = [];
 
     var formFields = self.get("formFields", []);
 
-    for(var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++){
-      var formFieldEntry = formFields[formFieldIndex].fieldId || {};
-      if(formFieldEntry.type === 'file' || formFieldEntry.type === 'photo'  || formFieldEntry.type === 'signature'){
-        var tmpFieldValues = formFields[formFieldIndex].fieldValues || [];
-        for(var fieldValIndex = 0; fieldValIndex < tmpFieldValues.length; tmpFieldValues++){
+    for (var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++) {
+      var tmpFieldValues = formFields[formFieldIndex].fieldValues || [];
+      for (var fieldValIndex = 0; fieldValIndex < tmpFieldValues.length; tmpFieldValues++) {
+        if(tmpFieldValues[fieldValIndex].hashName){
           submissionFiles.push(tmpFieldValues[fieldValIndex]);
         }
       }
+
     }
 
     return submissionFiles;
@@ -450,6 +451,7 @@ appForm.models = function(module) {
    * @return true / error message
    */
   Submission.prototype.addInputValue = function(params, cb) {
+    $fh.forms.log.d("Adding input value: ", JSON.stringify(params || {}));
     var that = this;
     var fieldId = params.fieldId;
     var inputValue = params.value;
@@ -462,6 +464,8 @@ appForm.models = function(module) {
           if (!that.tmpFields[fieldId]) {
             that.tmpFields[fieldId] = [];
           }
+
+          params.isStore = false;//Don't store the files until the transaction is complete
           fieldModel.processInput(params, function(err, result) {
             if (err) {
               return cb(err);
@@ -471,11 +475,21 @@ appForm.models = function(module) {
               } else {
                 that.tmpFields[fieldId].push(result);
               }
+
               return cb(null, result);
             }
           });
         } else {
           var target = that.getInputValueObjectById(fieldId);
+
+          //File already exists for this input, overwrite rather than create a new file
+          if(target.fieldValues[index]){
+            if(typeof(target.fieldValues[index].hashName) === "string"){
+              params.filePlaceholder = target.fieldValues[index].hashName;
+            }
+          }
+
+
           fieldModel.processInput(params, function(err, result) {
             if (err) {
               return cb(err);
@@ -486,6 +500,10 @@ appForm.models = function(module) {
                 target.fieldValues.push(result);
               }
 
+              if(typeof(result.hashName) === "string"){
+                that.pushFile(result.hashName);
+              }
+
               return cb(null, result);
             }
           });
@@ -494,6 +512,22 @@ appForm.models = function(module) {
     } else {
       $fh.forms.log.e("addInputValue: Input value was null. Params: " + fieldId);
       return cb(null, {});
+    }
+  };
+  Submission.prototype.pushFile = function(hashName){
+    var subFiles = this.get('filesInSubmission', []);
+    if(typeof(hashName) === "string"){
+      if(subFiles.indexOf(hashName) === -1){
+        subFiles.push(hashName);
+        this.set('filesInSubmission', subFiles);
+      }
+    }
+  };
+  Submission.prototype.removeFileValue = function(hashName){
+    var subFiles = this.get('filesInSubmission', []);
+    if(typeof(hashName) === "string" && subFiles.indexOf(hashName) > -1){
+      subFiles.splice(subFiles.indexOf(hashName),1);
+      this.set('filesInSubmission', subFiles);
     }
   };
   Submission.prototype.getInputValueByFieldId = function(fieldId, cb) {
@@ -519,17 +553,14 @@ appForm.models = function(module) {
   Submission.prototype.clearLocalSubmissionFiles = function(cb) {
     $fh.forms.log.d("In clearLocalSubmissionFiles");
     var self = this;
-    var filesInSubmission = this.getSubmissionFiles();
+    var filesInSubmission = self.get("filesInSubmission", []);
+    $fh.forms.log.d("Files to clear ", filesInSubmission);
     var localFileName = "";
-    if(self.isDownloadSubmission()){
-      localFileName = "fileName";
-    } else {
-      localFileName = "fileHash";
-    }
 
     for (var fileMetaObject in filesInSubmission) {
-      appForm.utils.fileSystem.remove(fileMetaObject[localFileName], function(err) {
-        if (err){
+      $fh.forms.log.d("Clearing file " + filesInSubmission[fileMetaObject]);
+      appForm.utils.fileSystem.remove(filesInSubmission[fileMetaObject], function(err) {
+        if (err) {
           $fh.forms.log.e("Error removing files from " + err);
         }
       });
@@ -542,20 +573,41 @@ appForm.models = function(module) {
   };
   Submission.prototype.endInputTransaction = function(succeed) {
     this.transactionMode = false;
+    var tmpFields = {};
+    var fieldId = "";
+    var valIndex = 0;
+    var valArr = [];
+    var val = "";
     if (succeed) {
-      var targetArr = this.get('formFields');
-      var tmpFields = this.tmpFields;
-      for (var fieldId in tmpFields) {
+      tmpFields = this.tmpFields;
+      for (fieldId in tmpFields) {
         var target = this.getInputValueObjectById(fieldId);
-        var valArr = tmpFields[fieldId];
-        for (var i = 0; i < valArr.length; i++) {
-          var val = valArr[i];
+        valArr = tmpFields[fieldId];
+        for (valIndex = 0; valIndex < valArr.length; valIndex++) {
+          val = valArr[valIndex];
           target.fieldValues.push(val);
+          if(typeof(val.hashName) === "string"){
+            this.pushFile(val.hashName);
+          }
         }
       }
       this.tmpFields = {};
     } else {
+      //clear any files set as part of the transaction
+      tmpFields = this.tmpFields;
       this.tmpFields = {};
+      for (fieldId in tmpFields) {
+        valArr = tmpFields[fieldId];
+        for (valIndex = 0; valIndex < valArr.length; valIndex++) {
+          val = valArr[valIndex];
+          if(typeof(val.hashName) === "string"){
+            //This is a file, needs to be removed
+            appForm.utils.fileSystem.remove(val.hashName, function(err){
+              $fh.forms.log.e("Error removing file from transaction ", err);
+            });
+          }
+        }
+      }
     }
   };
   /**
@@ -565,18 +617,30 @@ appForm.models = function(module) {
    * @return {[type]}         [description]
    */
   Submission.prototype.removeFieldValue = function(fieldId, index) {
+    var self = this;
     var targetArr = [];
+    var valRemoved = {};
     if (this.transactionMode) {
       targetArr = this.tmpFields.fieldId;
     } else {
       targetArr = this.getInputValueObjectById(fieldId).fieldId;
     }
     if (typeof index === 'undefined') {
-      targetArr.splice(0, targetArr.length);
+      valRemoved = targetArr.splice(0, targetArr.length);
     } else {
       if (targetArr.length > index) {
-        targetArr.splice(index, 1);
+        valRemoved = targetArr.splice(index, 1);
       }
+    }
+
+    if(typeof(valRemoved.hashName) === "string"){
+      appForm.utils.fileSystem.remove(valRemoved.hashName, function(err){
+        if(err){
+          $fh.forms.log.e("Error removing file: ", err);
+        } else {
+          self.removeFileValue(valRemoved.hashName);
+        }
+      });
     }
   };
   Submission.prototype.getInputValueObjectById = function(fieldId) {

@@ -8,8 +8,12 @@ appForm.models.Field = function (module) {
   function imageProcess(params, cb) {
     var inputValue = params.value;
     var isStore = params.isStore === undefined ? true : params.isStore;
-    if (inputValue === '') {
-      return cb(null, null);
+    if (typeof(inputValue) !== "string") {
+      return cb("Expected base64 string image, but parameter was not a string", null);
+    }
+
+    if(inputValue.length < 1 || inputValue.indexOf(";base64,") === -1){
+      return cb("Expected base64 string but got string " + inputValue, null);
     }
     var imgName = '';
     var dataArr = inputValue.split(';base64,');
@@ -17,7 +21,7 @@ appForm.models.Field = function (module) {
     var extension = imgType.split('/')[1];
     var size = inputValue.length;
     genImageName(function (err, n) {
-      imgName = 'filePlaceHolder' + n;
+      imgName = params.filePlaceholder ? params.filePlaceholder : 'filePlaceHolder' + n;
       //TODO Abstract this out
       var meta = {
           'fileName': imgName + '.' + extension,

@@ -476,7 +476,6 @@ var FormView = BaseView.extend({
       }
     }
     var count = tmpObj.length;
-    submission.reset();
     for (i = 0; i < tmpObj.length; i++) {
       var item = tmpObj[i];
       fieldId = item.id;
