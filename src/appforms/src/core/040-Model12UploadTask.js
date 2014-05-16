@@ -101,7 +101,7 @@ appForm.models = function (module) {
     }
   };
   UploadTask.prototype.getRemoteStore = function () {
-    return appForm.stores.mBaaS;
+    return appForm.stores.dataAgent.remoteStore;
   };
   UploadTask.prototype.addFileTasks = function(submissionModel, cb){
     var self = this;

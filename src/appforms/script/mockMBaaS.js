@@ -35,7 +35,13 @@ function applyServer(app) {
   app.post("/mbaas/forms/:appId/:submissionId/:fieldId/:hashName/submitFormFileBase64", _appFileSubmissionBase64);
   app.get("/mbaas/forms/:appId/:submissionId/status", _getSubmissionStatus);
   app.post("/mbaas/forms/:appId/:submissionId/completeSubmission", _completeSubmission);
+  app.get("/sys/info/ping", _ping);
 };
+
+function _ping(req, res){
+  console.log("In _ping, ", req.params);
+  res.end("OK");
+}
 
 function _getConfig(req, res){
   console.log("In _getConfig, ", req.params);

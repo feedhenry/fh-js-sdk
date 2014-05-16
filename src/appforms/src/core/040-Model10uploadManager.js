@@ -107,13 +107,13 @@ appForm.models = function (module) {
      */
   UploadManager.prototype.start = function () {
     var that = this;
-    this.stop();
-    this.timer = setInterval(function () {
+    that.stop();
+    that.timer = setInterval(function () {
       that.tick();
     }, this.timerInterval);
   };
   /**
-     * stop uploadgin
+     * stop uploading
      * @return {[type]} [description]
      */
   UploadManager.prototype.stop = function () {
@@ -143,53 +143,56 @@ appForm.models = function (module) {
     this.push(this.shift());
   };
   UploadManager.prototype.tick = function () {
-    if (this.sending) {
+    var self = this;
+    if (self.sending) {
       var now = appForm.utils.getTime();
-      var timePassed = now.getTime() - this.sendingStart.getTime();
+      var timePassed = now.getTime() - self.sendingStart.getTime();
       if (timePassed > $fh.forms.config.get("timeout") * 1000) {
         //time expired. roll current task to the end of queue
         $fh.forms.log.e('Uploading content timeout. it will try to reupload.');
-        this.sending = false;
-        this.rollTask();
+        self.sending = false;
+        self.rollTask();
       }
     } else {
-      if (this.hasTask()) {
-        this.sending = true;
-        this.sendingStart = appForm.utils.getTime();
-        var that = this;
-        this.getCurrentTask(function (err, task) {
+      if (self.hasTask()) {
+        self.sending = true;
+        self.sendingStart = appForm.utils.getTime();
+
+        self.getCurrentTask(function (err, task) {
           if (err || !task) {
             $fh.forms.log.e(err);
-            that.sending = false;
+            self.sending = false;
           } else {
             if (task.isCompleted() || task.isError()) {
               //current task uploaded or aborted by error. shift it from queue
-              that.shift();
-              that.sending = false;
-              that.saveLocal(function (err) {
+              self.shift();
+              self.sending = false;
+              self.saveLocal(function (err) {
                 if(err){
                   $fh.forms.log.e("Error saving upload manager: ", err);
                 }
               });
             } else {
-              if($fh.forms.config.isOnline()){
-                task.uploadTick(function (err) {
-                  if(err){
-                    $fh.forms.log.e("Error on upload tick: ", err, task);
-                  }
+              self.checkOnlineStatus(function(){
+                if($fh.forms.config.isOnline()){
+                  task.uploadTick(function (err) {
+                    if(err){
+                      $fh.forms.log.e("Error on upload tick: ", err, task);
+                    }
 
-                  //callback when finished. ready for next upload command
-                  that.sending = false;
-                });
-              } else {
-                $fh.forms.log.d("Upload Manager: Tick: Not online.");
-              }
+                    //callback when finished. ready for next upload command
+                    self.sending = false;
+                  });
+                } else {
+                  $fh.forms.log.d("Upload Manager: Tick: Not online.");
+                }
+              });
             }
           }
         });
       } else {
         //no task . stop timer.
-        this.stop();
+        self.stop();
       }
     }
   };
@@ -203,6 +206,9 @@ appForm.models = function (module) {
     } else {
       cb(null, null);
     }
+  };
+  UploadManager.prototype.checkOnlineStatus = function (cb) {
+    appForm.stores.dataAgent.checkOnlineStatus(cb);
   };
   UploadManager.prototype.getTaskById = function (taskId, cb) {
     appForm.models.uploadTask.fromLocal(taskId, cb);

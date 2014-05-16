@@ -68,12 +68,50 @@ appForm.stores = function (module) {
   DataAgent.prototype.attemptRead=function(model,cb){
     $fh.forms.log.d("DataAgent attemptRead ", model);
     var self=this;
-    self.refreshRead(model,function(err){
-      if (err){
+
+
+    self.checkOnlineStatus(function(online){
+      if($fh.forms.config.isOnline()){
+        self.refreshRead(model,function(err){
+          if (err){
+            self.read(model,cb);
+          }else{
+            cb.apply({},arguments);
+          }
+        });
+      } else {
         self.read(model,cb);
-      }else{
-        cb.apply({},arguments);
       }
+    });
+  };
+
+  /**
+   * Check online status of the remote store.
+   * @param  {Function} cb    [description]
+   * @return {[type]}         [description]
+   */
+  DataAgent.prototype.checkOnlineStatus=function(cb){
+    $fh.forms.log.d("DataAgent check online status ");
+    var self=this;
+
+    if(appForm.utils.isPhoneGap()){
+      if(navigator.connection.type){
+        if(navigator.connection.type === Connection.NONE){
+          //No connection availabile, no need to ping.
+          return cb(false);
+        }
+      }
+    }
+
+
+    self.remoteStore.isOnline(function(online){
+      if(online === false){
+        $fh.forms.config.offline();
+      } else {
+        $fh.forms.config.online();
+      }
+
+      cb(null, online);
     });
   };
   return module;
