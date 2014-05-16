@@ -1,5 +1,10 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.0.21-alpha - 2014-05-16 - IR227 - Niall Donnelly
+
+* 6878 no forms exist when adding form
+
+
 ## 2.0.20-alpha - 2014-05-12 - IR227 - Niall Donnelly
 
 * 6438 Add remove button to location fields for appforms.
