@@ -335,7 +335,7 @@ module.exports = function(grunt) {
   //run tests in phatomjs
   grunt.registerTask('test', ['jshint', 'browserify:dist', 'browserify:require', 'browserify:test', 'connect:server', 'mocha_phantomjs:test']);
 
-  grunt.registerTask('concat-core-sdk', ['jshint','concat:lawnchair', 'concat:crypto', 'concat:forms_core', 'concat:forms_core_no_v2', 'concat:forms_backbone', 'concat:forms_backboneRequireJS']);
+  grunt.registerTask('concat-core-sdk', ['jshint', 'browserify:dist', 'concat:forms_sdk', 'concat:lawnchair', 'concat:crypto', 'concat:forms_core', 'concat:forms_core_no_v2', 'concat:forms_backbone', 'concat:forms_backboneRequireJS']);
 
   grunt.registerTask('concat-titanium', ['concat:lawnchair', 'concat:lawnchair_titanium', 'concat:crypto']);
 
@@ -346,5 +346,5 @@ module.exports = function(grunt) {
 
   grunt.registerTask('coverage', ['shell:jscov', 'browserify:require_cov', 'browserify:test_cov', 'connect:server', 'mocha_phantomjs:test_coverage', 'shell:htmlcov']);
 
-  grunt.registerTask('default', 'jshint concat-core-sdk concat:forms_sdk concat:forms_appFormsTest test titanium uglify:dist zip');
+  grunt.registerTask('default', 'jshint concat-core-sdk concat:forms_appFormsTest test titanium uglify:dist zip');
 };

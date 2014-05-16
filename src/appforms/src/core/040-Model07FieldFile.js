@@ -21,11 +21,15 @@ appForm.models.Field = function (module) {
     if (inputValue instanceof HTMLInputElement) {
       file = inputValue.files[0];  // 1st file only, not support many files yet.
     }
+
+    if(typeof(file.lastModifiedDate) === 'undefined'){
+      file.lastModifiedDate = appForm.utils.getTime();
+    }
     var rtnJSON = {
         'fileName': file.name,
         'fileSize': file.size,
         'fileType': file.type,
-        'fileUpdateTime': file.lastModifiedDate.getTime(),
+        'fileUpdateTime': file.lastModifiedDate,
         'hashName': '',
         'contentType': 'binary'
       };

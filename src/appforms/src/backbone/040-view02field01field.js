@@ -314,9 +314,9 @@ var FieldView = Backbone.View.extend({
     value: function(value) {
         var self = this;
         if (value && !_.isEmpty(value)) {
-            this.valuePopulate(value);
+          self.valuePopulate(value);
         }
-        return this.getValue();
+        return self.getValue();
     },
     getValue: function() {
         var value = [];

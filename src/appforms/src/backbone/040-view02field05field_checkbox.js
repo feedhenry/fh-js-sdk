@@ -42,11 +42,11 @@ FieldCheckboxView = FieldView.extend({
   },
   valuePopulateToElement: function(index,value) {
     var wrapperObj=this.getWrapper(index);
-    if (!value || !value.selections || !(value.selections instanceof Array)){
+    if (!value || !(value instanceof Array)){
       return;
     }
-    for (var i=0; i < value.selections.length; i++){
-      var v=value.selections[i];
+    for (var i=0; i < value; i++){
+      var v=value[i];
       wrapperObj.find("input[value='"+v+"']").attr("checked","checked");
     }
   }

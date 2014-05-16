@@ -62,7 +62,7 @@ var PageView=BaseView.extend({
           var fieldType = field.getType();
           if (self.viewMap[fieldType]) {
 
-            console.log("*- "+fieldType);
+            $fh.forms.log.l("*- "+fieldType);
 
             self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
               parentEl: self.$el,
@@ -72,7 +72,7 @@ var PageView=BaseView.extend({
               sectionName: sectionKey
             });
           } else {
-            console.warn('FIELD NOT SUPPORTED:' + fieldType);
+            $fh.forms.log.w('FIELD NOT SUPPORTED:' + fieldType);
           }
         });
       }
@@ -84,7 +84,7 @@ var PageView=BaseView.extend({
         var fieldType = field.getType();
         if (self.viewMap[fieldType]) {
 
-          console.log("*- "+fieldType);
+          $fh.forms.log.l("*- "+fieldType);
 
           self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
             parentEl: self.$el,
