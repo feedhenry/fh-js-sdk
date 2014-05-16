@@ -419,6 +419,22 @@ appForm.models = function(module) {
     }
   };
 
+  Submission.prototype.populateFilesInSubmission = function() {
+    var self = this;
+    var tmpFileNames = [];
+
+    var submissionFiles = self.getSubmissionFiles();
+    for (var fieldValIndex = 0; fieldValIndex < submissionFiles.length; fieldValIndex++) {
+      if(submissionFiles[fieldValIndex].fileName){
+        tmpFileNames.push(submissionFiles[fieldValIndex].fileName);
+      } else if(submissionFiles[fieldValIndex].hashName){
+        tmpFileNames.push(submissionFiles[fieldValIndex].hashName);
+      }
+    }
+
+    self.set("filesInSubmission", submissionFiles);
+  };
+
   Submission.prototype.getSubmissionFiles = function() {
     var self = this;
     $fh.forms.log.d("In getSubmissionFiles: " + self.getLocalId());
@@ -428,8 +444,10 @@ appForm.models = function(module) {
 
     for (var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++) {
       var tmpFieldValues = formFields[formFieldIndex].fieldValues || [];
-      for (var fieldValIndex = 0; fieldValIndex < tmpFieldValues.length; tmpFieldValues++) {
-        if(tmpFieldValues[fieldValIndex].hashName){
+      for (var fieldValIndex = 0; fieldValIndex < tmpFieldValues.length; fieldValIndex++) {
+        if(tmpFieldValues[fieldValIndex].fileName){
+          submissionFiles.push(tmpFieldValues[fieldValIndex]);
+        } else if(tmpFieldValues[fieldValIndex].hashName){
           submissionFiles.push(tmpFieldValues[fieldValIndex]);
         }
       }

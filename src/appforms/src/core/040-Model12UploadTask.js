@@ -655,6 +655,7 @@ appForm.models = function (module) {
         if(_err){
           return cb(_err);
         } else {
+          model.populateFilesInSubmission();
           model.downloaded(cb);
         }
       });
