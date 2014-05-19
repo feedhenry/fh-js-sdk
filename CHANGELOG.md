@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.0.22-alpha - 2014-05-19- IR228 - Jason Madigan
+
+* 7168 - Emit event when SDK config loaded
+
 ## 2.0.21-alpha - 2014-05-16 - IR227 - Niall Donnelly
 
 * 6878 no forms exist when adding form
