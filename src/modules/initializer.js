@@ -9,16 +9,21 @@ var logger = require("./logger");
 var JSON = require("JSON");
 var hashFunc = require("./security/hash");
 var appProps = require("./appProps");
+var constants = require("./constants");
+var events = require("./events");
 
 var init = function(cb) {
   appProps.load(function(err, data) {
     if (err) return cb(err);
+
+    // Emit internal config loaded event - SDK will now set appprops
+    events.emit(constants.INTERNAL_CONFIG_LOADED_EVENT, null, data);
     return loadCloudProps(data, cb);
   });
-}
+};
 
 var loadCloudProps = function(app_props, callback) {
-  if(app_props.loglevel){
+  if (app_props.loglevel) {
     logger.setLevel(app_props.loglevel);
   }
   // If local - shortcircuit the init - just return the host
@@ -60,11 +65,11 @@ var loadCloudProps = function(app_props, callback) {
     }
   };
 
-  if(typeof Titanium !== "undefined"){
+  if (typeof Titanium !== "undefined") {
     lcConf.adapter = ['titanium'];
   }
 
-  var doInit = function(path, appProps, savedHost, storage){
+  var doInit = function(path, appProps, savedHost, storage) {
     var data = fhparams.buildFHParams();
 
     ajax({
@@ -75,8 +80,8 @@ var loadCloudProps = function(app_props, callback) {
       "contentType": "application/json",
       "data": JSON.stringify(data),
       "timeout": appProps.timeout,
-      "success": function(initRes){
-        if(storage){
+      "success": function(initRes) {
+        if (storage) {
           storage.save({
             key: "fh_init",
             value: initRes
@@ -90,7 +95,7 @@ var loadCloudProps = function(app_props, callback) {
       },
       "error": function(req, statusText, error) {
         var errormsg = "unknown";
-        if(req){
+        if (req) {
           errormsg = req.status + " - " + req.responseText;
         }
         logger.error("App init returned error : " + errormsg);
@@ -115,7 +120,7 @@ var loadCloudProps = function(app_props, callback) {
         }
       }
     });
-  }
+  };
 
   var storage = null;
   var path = app_props.host + consts.boxprefix + "app/init";
@@ -142,7 +147,7 @@ var loadCloudProps = function(app_props, callback) {
   } catch (e) {
     //for whatever reason (e.g. localStorage is disabled) Lawnchair is failed to init, just do the init
     doInit(path, app_props, null, null);
-  }  
+  }
 };
 
 module.exports = {
