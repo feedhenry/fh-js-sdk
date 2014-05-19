@@ -16,9 +16,8 @@ var init = function(cb) {
   appProps.load(function(err, data) {
     if (err) return cb(err);
 
-    // Emit config loaded event
-    events.emit(constants.CONFIG_LOADED_EVENT, null, data);
-
+    // Emit internal config loaded event - SDK will now set appprops
+    events.emit(constants.INTERNAL_CONFIG_LOADED_EVENT, null, data);
     return loadCloudProps(data, cb);
   });
 };
