@@ -1,5 +1,10 @@
 # Changelog - FeedHenry Javascript SDK
 
+
+## 2.0.23-alpha - 2014-05-20- IR228 - Niall Donnelly
+
+* 7113 - Poll mbaas to determine if it is available to upload submissions.
+
 ## 2.0.22-alpha - 2014-05-19- IR228 - Jason Madigan
 
 * 7168 - Emit event when SDK config loaded
