@@ -25,7 +25,7 @@ appForm.models = function (module) {
   };
   Forms.prototype.getFormMetaById = function (formId) {
     $fh.forms.log.d("Forms getFormMetaById ", formId);
-    var forms = this.get('forms');
+    var forms = this.getFormsList();
     for (var i = 0; i < forms.length; i++) {
       var form = forms[i];
       if (form._id === formId) {
@@ -39,7 +39,7 @@ appForm.models = function (module) {
     return this.get('forms').length;
   };
   Forms.prototype.getFormsList = function () {
-    return this.get('forms');
+    return this.get('forms', []);
   };
   Forms.prototype.getFormIdByIndex = function (index) {
     $fh.forms.log.d("Forms getFormIdByIndex: ", index);

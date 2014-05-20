@@ -59,6 +59,13 @@ appForm.models = function (module) {
   Model.prototype.getLocalId = function () {
     return this.get('_ludid');
   };
+  Model.prototype.toJSON = function () {
+    var retJSON = {};
+    for (var key in this.props) {
+      retJSON[key]= this.props[key];
+    }
+    return retJSON;
+  };
   Model.prototype.fromJSON = function (json) {
     if (typeof json === 'string') {
       this.fromJSONStr(json);

@@ -157,9 +157,11 @@ appForm.models = function(module) {
   };
   Config.prototype.setOnline = function(){
     online = true;
+    this.emit('online');
   };
   Config.prototype.setOffline = function(){
     online = false;
+    this.emit('offline');
   };
   Config.prototype.isOnline = function(){
     var self = this;
