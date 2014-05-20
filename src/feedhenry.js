@@ -1,4 +1,5 @@
 var constants = require("./modules/constants");
+var events = require("./modules/events");
 var logger = require("./modules/logger");
 var ajax = require("./modules/ajax");
 var events = require("./modules/events");
@@ -27,7 +28,7 @@ var addListener = function(type, listener){
     } else if(cloud.getInitError()){
       listener(cloud.getInitError());
     }
-  } 
+  }
 };
 
 var once = function(type, listener){
@@ -95,6 +96,19 @@ fh.on(constants.INIT_EVENT, function(err, host){
     fh.cloud_props = {hosts: {url: host.host}};
     fh.app_props = appProps.getAppProps();
   }
+});
+
+//keep backward compatibility
+fh.on(constants.INTERNAL_CONFIG_LOADED_EVENT, function(err, host){
+  if(err){
+    fh.app_props = {};
+  } else {
+    fh.app_props = appProps.getAppProps();
+  }
+
+  // Emit config loaded event - appprops set at this point
+  // V2 legacy SDK uses this to know when to fire $fh.ready (i.e. appprops is now set)
+  events.emit(constants.CONFIG_LOADED_EVENT, null);
 });
 
 //for test
