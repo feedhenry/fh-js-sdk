@@ -98,6 +98,7 @@ appForm.stores = function (module) {
       if(navigator.connection.type){
         if(navigator.connection.type === Connection.NONE){
           //No connection availabile, no need to ping.
+          $fh.forms.config.offline();
           return cb(false);
         }
       }
