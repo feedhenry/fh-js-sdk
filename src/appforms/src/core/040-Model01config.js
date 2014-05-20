@@ -151,9 +151,7 @@ appForm.models = function(module) {
       'completeSubmission': '/forms/:appId/:submissionId/completeSubmission',
       'config': '/forms/:appid/config/:deviceId'
     });
-    self.set('statusUrl', {
-      'onlineStatus': '/sys/info/ping'
-    });
+    self.set('statusUrl', '/sys/info/ping');
   };
   Config.prototype.setOnline = function(){
     online = true;
