@@ -7,14 +7,7 @@ appForm.utils = function(module) {
   module.isPhoneGap = isPhoneGap;
 
   function isPhoneGap() {
-    //http://stackoverflow.com/questions/10347539/detect-between-a-mobile-browser-or-a-phonegap-application
-    //may break.
-    var app = document.URL.indexOf('http://') === -1 && document.URL.indexOf('https://') === -1;
-    if (app) {
-      return true;
-    } else {
-      return false;
-    }
+    return (typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined");
   }
 
   function extend(child, parent) {

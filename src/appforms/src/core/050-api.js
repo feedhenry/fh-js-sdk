@@ -95,6 +95,16 @@ appForm.api = function (module) {
     "online": function(){
       formConfig.setOnline();
     },
+    "mbaasOnline": function(cb){
+      if(typeof(cb) === "function"){
+        formConfig.on('online', cb);
+      }
+    },
+    "mbaasOffline": function(cb){
+      if(typeof(cb) === "function"){
+        formConfig.on('offline', cb);
+      }
+    },
     "isOnline": function(){
       return formConfig.isOnline();
     },

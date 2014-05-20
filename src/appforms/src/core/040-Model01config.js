@@ -118,6 +118,7 @@ appForm.models = function(module) {
     self.fromJSON(defaultConfig);
   };
   Config.prototype._initMBaaS = function(config) {
+    var self = this;
     config = config || {};
     var cloud_props = $fh.cloud_props;
     var app_props = $fh.app_props;
@@ -125,7 +126,6 @@ appForm.models = function(module) {
     var mode = 'dev';
     if (app_props) {
       cloudUrl = app_props.host;
-      mode = app_props.mode ? app_props.mode : 'dev';
     }
     if (cloud_props && cloud_props.hosts) {
       cloudUrl = cloud_props.hosts.url;
@@ -134,12 +134,11 @@ appForm.models = function(module) {
     if(typeof(config.cloudHost) === 'string'){
       cloudUrl = config.cloudHost;
     }
-    
-    this.set('cloudHost', cloudUrl);
-    this.set('mbaasBaseUrl', '/mbaas');
-    var appId = this.get('appId');
-    //ebaas url definition https://docs.google.com/a/feedhenry.com/document/d/1_bd4kZMm7q6C1htNJBTSA2X4zi1EKx0hp_4aiJ-N5Zg/edit#
-    this.set('formUrls', {
+
+    self.set('cloudHost', cloudUrl);
+    self.set('mbaasBaseUrl', '/mbaas');
+    var appId = self.get('appId');
+    self.set('formUrls', {
       'forms': '/forms/:appId',
       'form': '/forms/:appId/:formId',
       'theme': '/forms/:appId/theme',
@@ -150,17 +149,30 @@ appForm.models = function(module) {
       'formSubmissionDownload': '/forms/:appId/submission/:submissionId',
       'fileSubmissionDownload': '/forms/:appId/submission/:submissionId/file/:fileId',
       'completeSubmission': '/forms/:appId/:submissionId/completeSubmission',
-      "config": '/forms/:appid/config/:deviceId'
+      'config': '/forms/:appid/config/:deviceId'
     });
+    self.set('statusUrl', '/sys/info/ping');
   };
   Config.prototype.setOnline = function(){
     online = true;
+    this.emit('online');
   };
   Config.prototype.setOffline = function(){
     online = false;
+    this.emit('offline');
   };
   Config.prototype.isOnline = function(){
-    return online === true;
+    var self = this;
+    if(appForm.utils.isPhoneGap()){
+      if(navigator.connection.type){
+        return online === true && navigator.connection.type !== Connection.NONE;
+      } else {
+        return online === true;
+      }
+    } else {
+      return online === true;
+    }
+
   };
   Config.prototype.isStudioMode = function(){
     return this.get("studioMode", false);

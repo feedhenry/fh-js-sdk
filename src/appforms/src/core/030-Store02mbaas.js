@@ -34,7 +34,7 @@ appForm.stores = function(module) {
   };
   MBaaS.prototype.read = function(model, cb) {
     var self = this;
-    if (this.checkStudio()) {
+    if (self.checkStudio()) {
       cb("Studio mode mbaas not supported");
     } else {
       if (model.get("_type") === "offlineTest") {
@@ -70,6 +70,20 @@ appForm.stores = function(module) {
     }
     var url = _getUrl(submission);
     appForm.web.ajax.get(url, cb);
+  };
+  MBaaS.prototype.isOnline = function(cb){
+    var host = appForm.config.get('cloudHost', "");
+    var url = host + appForm.config.get('statusUrl', "/sys/info/ping");
+
+    appForm.web.ajax.get(url, function(err){
+      if(err){
+        $fh.forms.log.e("Online status ajax ", err);
+        return cb(false);
+      } else {
+        $fh.forms.log.d("Online status ajax success");
+        return cb(true);
+      }
+    });
   };
 
   function _getUrl(model) {
