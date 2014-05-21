@@ -56,6 +56,17 @@ appForm.models = function (module) {
     return this.get('repeating', false);
   };
   /**
+   * return default value for a field
+   *
+   */
+  Field.prototype.getDefaultValue = function () {
+    var def = this.getFieldDefinition();
+    if (def) {
+      return def.defaultValue;
+    }
+    return "";
+  };
+  /**
      * retrieve field type.
      * @return {[type]} [description]
      */
@@ -113,8 +124,8 @@ appForm.models = function (module) {
      * @param  {[type]} inputValue [description]
      * @return true / error message
      */
-  Field.prototype.validate = function (inputValue, cb) {
-    this.form.getRuleEngine().validateFieldValue(this.getFieldId(), inputValue, cb);
+  Field.prototype.validate = function (inputValue, inputValueIndex, cb) {
+    this.form.getRuleEngine().validateFieldValue(this.getFieldId(), inputValue,inputValueIndex, cb);
   };
   /**
      * return rule array attached to this field.

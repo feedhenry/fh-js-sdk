@@ -77,6 +77,9 @@ appForm.api = function (module) {
         }
 
       });
+    },
+    "isStudioMode": function(){
+      return formConfig.isStudioMode();
     }
   };
 
