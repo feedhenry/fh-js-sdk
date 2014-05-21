@@ -60,16 +60,21 @@ appForm.models = function(module) {
           cb(err);
         } else {
           $fh.forms.log.d("Submission fromLocal. Load from local sucessfull: ", localId);
-          submission.reloadForm(function(err, res) {
-            if (err) {
-              $fh.forms.log.e("Submission fromLocal. reloadForm. Error re-loading form: ", localId, err);
-              cb(err);
-            } else {
-              $fh.forms.log.d("Submission fromLocal. reloadForm. Re-loading form successfull: ", localId);
-              _submissions[localId] = submission;
-              cb(null, submission);
-            }
-          });
+          if(submission.isDownloadSubmission()){
+            return cb(null, submission);
+          } else {
+            submission.reloadForm(function(err, res) {
+              if (err) {
+                $fh.forms.log.e("Submission fromLocal. reloadForm. Error re-loading form: ", localId, err);
+                cb(err);
+              } else {
+                $fh.forms.log.d("Submission fromLocal. reloadForm. Re-loading form successfull: ", localId);
+                _submissions[localId] = submission;
+                cb(null, submission);
+              }
+            });
+          }
+
         }
       });
     }
@@ -440,7 +445,7 @@ appForm.models = function(module) {
     $fh.forms.log.d("In getSubmissionFiles: " + self.getLocalId());
     var submissionFiles = [];
 
-    var formFields = self.get("formFields", []);
+    var formFields = self.getFormFields();
 
     for (var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++) {
       var tmpFieldValues = formFields[formFieldIndex].fieldValues || [];
@@ -662,7 +667,7 @@ appForm.models = function(module) {
     }
   };
   Submission.prototype.getInputValueObjectById = function(fieldId) {
-    var formFields = this.get('formFields', []);
+    var formFields = this.getFormFields();
     for (var i = 0; i < formFields.length; i++) {
       var formField = formFields[i];
 
@@ -703,6 +708,7 @@ appForm.models = function(module) {
     }
   };
   Submission.prototype.reloadForm = function(cb) {
+    $fh.forms.log.d("Submission reload form");
     var Form = appForm.models.Form;
     var formId = this.get('formId');
     var self = this;
@@ -736,13 +742,17 @@ appForm.models = function(module) {
     });
   };
 
+  Submission.prototype.getFormFields = function(){
+    return this.get("formFields", []);
+  };
+
   Submission.prototype.getFileFieldsId = function(cb){
     var self = this;
     var formFieldIds = [];
 
     if(self.isDownloadSubmission()){
       //For Submission downloads, there needs to be a scan through the formFields param
-      var formFields = self.get("formFields", []);
+      var formFields = self.getFormFields();
 
       for(var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++){
         var formFieldEntry = formFields[formFieldIndex].fieldId || {};
