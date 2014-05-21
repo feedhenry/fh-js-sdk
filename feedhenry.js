@@ -6777,8 +6777,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/mnt/ebs1/workspace/fh-js-sdk_beta/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/mnt/ebs1/workspace/fh-js-sdk_beta/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -7253,7 +7253,7 @@ process.chdir = function (dir) {
 module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/mnt/ebs1/workspace/fh-js-sdk_beta/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -7485,6 +7485,7 @@ module.exports = function(val){
 
 },{}],16:[function(_dereq_,module,exports){
 var constants = _dereq_("./modules/constants");
+var events = _dereq_("./modules/events");
 var logger = _dereq_("./modules/logger");
 var ajax = _dereq_("./modules/ajax");
 var events = _dereq_("./modules/events");
@@ -7513,7 +7514,7 @@ var addListener = function(type, listener){
     } else if(cloud.getInitError()){
       listener(cloud.getInitError());
     }
-  } 
+  }
 };
 
 var once = function(type, listener){
@@ -7581,6 +7582,19 @@ fh.on(constants.INIT_EVENT, function(err, host){
     fh.cloud_props = {hosts: {url: host.host}};
     fh.app_props = appProps.getAppProps();
   }
+});
+
+//keep backward compatibility
+fh.on(constants.INTERNAL_CONFIG_LOADED_EVENT, function(err, host){
+  if(err){
+    fh.app_props = {};
+  } else {
+    fh.app_props = appProps.getAppProps();
+  }
+
+  // Emit config loaded event - appprops set at this point
+  // V2 legacy SDK uses this to know when to fire $fh.ready (i.e. appprops is now set)
+  events.emit(constants.CONFIG_LOADED_EVENT, null);
 });
 
 //for test
@@ -8507,9 +8521,11 @@ module.exports = {
 },{"./fhparams":31,"./logger":37,"./queryMap":39,"JSON":3}],27:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.0.19-alpha",
+  "sdk_version": "2.0.23-alpha",
   "config_js": "fhconfig.json",
-  "INIT_EVENT": "fhinit"
+  "INIT_EVENT": "fhinit",
+  "INTERNAL_CONFIG_LOADED_EVENT": "internalfhconfigloaded",
+  "CONFIG_LOADED_EVENT": "fhconfigloaded"
 };
 
 },{}],28:[function(_dereq_,module,exports){
@@ -8814,16 +8830,21 @@ var logger = _dereq_("./logger");
 var JSON = _dereq_("JSON");
 var hashFunc = _dereq_("./security/hash");
 var appProps = _dereq_("./appProps");
+var constants = _dereq_("./constants");
+var events = _dereq_("./events");
 
 var init = function(cb) {
   appProps.load(function(err, data) {
     if (err) return cb(err);
+
+    // Emit internal config loaded event - SDK will now set appprops
+    events.emit(constants.INTERNAL_CONFIG_LOADED_EVENT, null, data);
     return loadCloudProps(data, cb);
   });
-}
+};
 
 var loadCloudProps = function(app_props, callback) {
-  if(app_props.loglevel){
+  if (app_props.loglevel) {
     logger.setLevel(app_props.loglevel);
   }
   // If local - shortcircuit the init - just return the host
@@ -8865,11 +8886,11 @@ var loadCloudProps = function(app_props, callback) {
     }
   };
 
-  if(typeof Titanium !== "undefined"){
+  if (typeof Titanium !== "undefined") {
     lcConf.adapter = ['titanium'];
   }
 
-  var doInit = function(path, appProps, savedHost, storage){
+  var doInit = function(path, appProps, savedHost, storage) {
     var data = fhparams.buildFHParams();
 
     ajax({
@@ -8880,8 +8901,8 @@ var loadCloudProps = function(app_props, callback) {
       "contentType": "application/json",
       "data": JSON.stringify(data),
       "timeout": appProps.timeout,
-      "success": function(initRes){
-        if(storage){
+      "success": function(initRes) {
+        if (storage) {
           storage.save({
             key: "fh_init",
             value: initRes
@@ -8895,7 +8916,7 @@ var loadCloudProps = function(app_props, callback) {
       },
       "error": function(req, statusText, error) {
         var errormsg = "unknown";
-        if(req){
+        if (req) {
           errormsg = req.status + " - " + req.responseText;
         }
         logger.error("App init returned error : " + errormsg);
@@ -8920,7 +8941,7 @@ var loadCloudProps = function(app_props, callback) {
         }
       }
     });
-  }
+  };
 
   var storage = null;
   var path = app_props.host + consts.boxprefix + "app/init";
@@ -8947,15 +8968,14 @@ var loadCloudProps = function(app_props, callback) {
   } catch (e) {
     //for whatever reason (e.g. localStorage is disabled) Lawnchair is failed to init, just do the init
     doInit(path, app_props, null, null);
-  }  
+  }
 };
 
 module.exports = {
   "init": init,
   "loadCloudProps": loadCloudProps
 }
-
-},{"../../libs/generated/lawnchair":2,"./ajax":18,"./appProps":25,"./constants":27,"./fhparams":31,"./handleError":32,"./lawnchair-ext":35,"./loadScript":36,"./logger":37,"./security/hash":43,"JSON":3}],35:[function(_dereq_,module,exports){
+},{"../../libs/generated/lawnchair":2,"./ajax":18,"./appProps":25,"./constants":27,"./events":30,"./fhparams":31,"./handleError":32,"./lawnchair-ext":35,"./loadScript":36,"./logger":37,"./security/hash":43,"JSON":3}],35:[function(_dereq_,module,exports){
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
 
 var fileStorageAdapter = function (app_props, hashFunc) {
