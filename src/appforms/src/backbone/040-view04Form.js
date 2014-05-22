@@ -5,7 +5,7 @@ var FormView = BaseView.extend({
   "submission": null,
   "fieldValue": [],
   templates: {
-    formLogo: '<div class="fh_appform_logo_container"><div class="fh_appform_logo"></div></div>',
+    formLogo: '<div class="fh_appform_logo_container" style="text-align:center;"><div class="fh_appform_logo"></div></div>',
     formTitle: '<div class="fh_appform_form_title"><%= title %></div>',
     formDescription: '<div class="fh_appform_form_description"><%= description %></div>',
     formContainer: '<div id="fh_appform_container" class="fh_appform_form_area fh_appform_container"></div>',
