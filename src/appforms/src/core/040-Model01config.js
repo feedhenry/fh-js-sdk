@@ -17,11 +17,15 @@ appForm.models = function(module) {
       this.fromJSON(config);
       cb();
     } else {
+      this.set("studioMode", false);
       //load hard coded static config first
       this.staticConfig(config);
       //attempt to load config from mbaas then local storage.
       this.refresh(true, cb); 
     }
+  };
+  Config.prototype.isStudioMode = function(){
+    return this.get("studioMode");
   };
   Config.prototype.refresh = function (fromRemote, cb) {
     var dataAgent = this.getDataAgent();

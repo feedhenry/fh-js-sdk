@@ -129,6 +129,10 @@ Field.prototype.getDefaultValue = function () {
      * @return true / error message
      */
   Field.prototype.validate = function (inputValue, inputValueIndex, cb) {
+    if(typeof(inputValueIndex) === 'function'){
+      cb =inputValueIndex;
+      inputValueIndex = 0;
+    } 
     this.form.getRuleEngine().validateFieldValue(this.getFieldId(), inputValue,inputValueIndex, cb);
   };
   /**
