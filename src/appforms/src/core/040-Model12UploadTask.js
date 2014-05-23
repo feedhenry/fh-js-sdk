@@ -453,6 +453,7 @@ appForm.models = function (module) {
     function processDownloadFile(){
       $fh.forms.log.d("processDownloadFile called");
       fileSubmissionModel = new appForm.models.FileSubmissionDownload(fileTask);
+      fileSubmissionModel.setSubmissionId(submissionId);
       self.getRemoteStore().read(fileSubmissionModel, function (err, localFilePath) {
         if(err){
           $fh.forms.log.e("Error downloading a file from remote: " + err);

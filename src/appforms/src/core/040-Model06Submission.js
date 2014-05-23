@@ -39,8 +39,12 @@ appForm.models = function(module) {
 
   function newInstance(form, params) {
     params = params ? params : {};
+    var sub = new Submission(form, params);
 
-    return new Submission(form, params);
+    if(params.submissionId){
+      appForm.models.submissions.updateSubmissionWithoutSaving(sub);
+    }
+    return sub;
   }
 
   function fromLocal(localId, cb) {
@@ -244,6 +248,12 @@ appForm.models = function(module) {
   };
   Submission.prototype.setUploadTaskId = function(utId) {
     this.set('uploadTaskId', utId);
+  };
+  Submission.prototype.isDownloaded = function(){
+    return this.get("status") === "downloaded";
+  };
+  Submission.prototype.isSubmitted = function(){
+    return this.get("status") === "submitted";
   };
   Submission.prototype.submitted = function(cb) {
     var self = this;

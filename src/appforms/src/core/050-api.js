@@ -238,34 +238,57 @@ appForm.api = function (module) {
     params = params ? params : {};
     cb = cb ? cb : defaultFunction;
 
-    if(params.submissionId){
+    $fh.forms.log.d("downloadSubmission called", params);
 
+    if(params.submissionId){
+      $fh.forms.log.d("downloadSubmission SubmissionId exists" + params.submissionId);
       var submissionAlreadySaved = appForm.models.submissions.findMetaByRemoteId(params.submissionId);
 
       if(submissionAlreadySaved === null){
+
+        $fh.forms.log.d("downloadSubmission submission does not exist, downloading", params);
         var submissionToDownload = new appForm.models.submission.newInstance(null, {submissionId: params.submissionId});
 
         submissionToDownload.on('error', function(err){
           $fh.forms.log.e("Error downloading submission with id " + params.submissionId);
-          submissionToDownload.clearEvents();
           return cb(err);
         });
 
         submissionToDownload.on('downloaded', function(){
           $fh.forms.log.l("Download of submission with id " + params.submissionId + " completed successfully");
-          submissionToDownload.clearEvents();
           return cb(null, submissionToDownload);
         });
 
         submissionToDownload.download(function(err){
           if(err){
             $fh.forms.log.e("Error queueing submission for download " + err);
-            submissionToDownload.clearEvents();
             return cb(err);
           }
         });
       } else {
-        appForm.models.submissions.getSubmissionByMeta(submissionAlreadySaved, cb);
+        $fh.forms.log.d("downloadSubmission submission exists", params);
+
+        //Submission was created, but not finished downloading
+        if(submissionAlreadySaved.status !== "downloaded"){
+          appForm.models.submissions.getSubmissionByMeta(submissionAlreadySaved, function(err, submission){
+            if(err){
+              return cb(err);
+            }
+            submission.on('error', function(err){
+              $fh.forms.log.e("Error downloading submission with id " + params.submissionId);
+              return cb(err);
+            });
+
+            submission.on('downloaded', function(){
+              $fh.forms.log.l("Download of submission with id " + params.submissionId + " completed successfully after");
+              return cb(null, submission);
+            });
+
+          });
+        } else {
+          appForm.models.submissions.getSubmissionByMeta(submissionAlreadySaved, cb);
+        }
+
       }
     } else {
       $fh.forms.log.e("No submissionId passed to download a submission");
