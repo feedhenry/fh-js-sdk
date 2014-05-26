@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.0.24-alpha - 2014-05-26 - IR228 - Wei Li
+
+* 7313 - Fix file upload issue on WP8
 
 ## 2.0.23-alpha - 2014-05-20- IR228 - Niall Donnelly
 
