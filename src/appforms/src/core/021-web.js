@@ -26,6 +26,7 @@ appForm.web = function (module) {
     };
 
     var options = new FileUploadOptions();
+    //important - empty fileName will cause file upload fail on WP!!
     options.fileName = (null == fileProps.name || "" === fileProps.name) ? "image.png" : fileProps.name;
     options.mimeType = fileProps.contentType ? fileProps.contentType : "application/octet-stream";
     options.httpMethod = "https";
