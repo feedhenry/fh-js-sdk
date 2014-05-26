@@ -26,7 +26,7 @@ appForm.web = function (module) {
     };
 
     var options = new FileUploadOptions();
-    options.fileName = fileProps.name;
+    options.fileName = (null == fileProps.name || "" === fileProps.name) ? "image.png" : fileProps.name;
     options.mimeType = fileProps.contentType ? fileProps.contentType : "application/octet-stream";
     options.httpMethod = "https";
     options.chunkedMode = true;
