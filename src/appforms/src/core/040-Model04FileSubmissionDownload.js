@@ -52,7 +52,7 @@ appForm.models = function (module) {
         urlTemplate = urlTemplate.replace(":submissionId", submissionId);
         urlTemplate = urlTemplate.replace(":fileGroupId", fileGroupId);
         urlTemplate = urlTemplate.replace(":appId", appForm.config.get('appId', "notSet"));
-        return urlTemplate;
+        return appForm.models.config.get("cloudHost", "notset") + urlTemplate;
       } else {
         return  "notset";
       }

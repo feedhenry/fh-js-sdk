@@ -11,6 +11,7 @@ appForm.api = function (module) {
   module.init = appForm.init;
   module.log=appForm.models.log;
   var _submissions = null;
+  var waitOnSubmission = {};
   var formConfig = appForm.models.config;
   var defaultFunction = function(err){
     err = err ? err : "";
@@ -237,6 +238,31 @@ appForm.api = function (module) {
   function downloadSubmission(params, cb){
     params = params ? params : {};
     cb = cb ? cb : defaultFunction;
+    var submissionToDownload = null;
+
+
+
+    function finishSubmissionDownload(err){
+      err = typeof(err) === "string" && err.length === 24 ? null : err;
+      console.log("finishSubmissionDownload: ", err, submissionToDownload);
+      $fh.forms.log.d("finishSubmissionDownload ", err, submissionToDownload);
+      var subCBId = submissionToDownload.getRemoteSubmissionId();
+      var subsCbsWatiting = waitOnSubmission[subCBId];
+      if(subsCbsWatiting){
+        var subCB = subsCbsWatiting.pop();
+        while(typeof(subCB) === 'function'){
+          subCB(err, submissionToDownload);
+          subCB = subsCbsWatiting.pop();
+        }
+
+        if(submissionToDownload.clearEvents){
+          submissionToDownload.clearEvents();
+        }
+      } else {
+        submissionToDownload.clearEvents();
+        return cb(err, submissionToDownload);
+      }
+    }
 
     $fh.forms.log.d("downloadSubmission called", params);
 
@@ -247,17 +273,17 @@ appForm.api = function (module) {
       if(submissionAlreadySaved === null){
 
         $fh.forms.log.d("downloadSubmission submission does not exist, downloading", params);
-        var submissionToDownload = new appForm.models.submission.newInstance(null, {submissionId: params.submissionId});
+        submissionToDownload = new appForm.models.submission.newInstance(null, {submissionId: params.submissionId});
 
-        submissionToDownload.on('error', function(err){
-          $fh.forms.log.e("Error downloading submission with id " + params.submissionId);
-          return cb(err);
-        });
+        submissionToDownload.on('error', finishSubmissionDownload);
 
-        submissionToDownload.on('downloaded', function(){
-          $fh.forms.log.l("Download of submission with id " + params.submissionId + " completed successfully");
-          return cb(null, submissionToDownload);
-        });
+        submissionToDownload.on('downloaded', finishSubmissionDownload);
+
+        if(typeof(params.updateFunction) === 'function'){
+          submissionToDownload.on('progress', params.updateFunction);
+        }
+
+        waitOnSubmission[params.submissionId] = typeof(waitOnSubmission[params.submissionId])  === 'number'? waitOnSubmission[params.submissionId] + 1 : 0;
 
         submissionToDownload.download(function(err){
           if(err){
@@ -269,22 +295,9 @@ appForm.api = function (module) {
         $fh.forms.log.d("downloadSubmission submission exists", params);
 
         //Submission was created, but not finished downloading
+        console.log("STATUS: ",submissionAlreadySaved.status);
         if(submissionAlreadySaved.status !== "downloaded"){
-          appForm.models.submissions.getSubmissionByMeta(submissionAlreadySaved, function(err, submission){
-            if(err){
-              return cb(err);
-            }
-            submission.on('error', function(err){
-              $fh.forms.log.e("Error downloading submission with id " + params.submissionId);
-              return cb(err);
-            });
-
-            submission.on('downloaded', function(){
-              $fh.forms.log.l("Download of submission with id " + params.submissionId + " completed successfully after");
-              return cb(null, submission);
-            });
-
-          });
+          waitOnSubmission[params.submissionId] = waitOnSubmission[params.submissionId] ? waitOnSubmission[params.submissionId].push(cb) : [cb];
         } else {
           appForm.models.submissions.getSubmissionByMeta(submissionAlreadySaved, cb);
         }

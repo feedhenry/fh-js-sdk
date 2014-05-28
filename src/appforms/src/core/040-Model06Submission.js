@@ -249,6 +249,9 @@ appForm.models = function(module) {
   Submission.prototype.setUploadTaskId = function(utId) {
     this.set('uploadTaskId', utId);
   };
+  Submission.prototype.isInProgress = function(){
+    return this.get("status") === "inprogress";
+  };
   Submission.prototype.isDownloaded = function(){
     return this.get("status") === "downloaded";
   };
