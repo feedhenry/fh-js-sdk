@@ -8,6 +8,7 @@ appForm.models.Field = function (module) {
   module.prototype.process_file = function (params, cb) {
     var inputValue = params.value;
     var isStore = params.isStore === undefined ? true : params.isStore;
+    var lastModDate = new Date().getTime();
     if (typeof inputValue === 'undefined' || inputValue === null) {
       return cb(null, null);
     }
@@ -23,13 +24,17 @@ appForm.models.Field = function (module) {
     }
 
     if(typeof(file.lastModifiedDate) === 'undefined'){
-      file.lastModifiedDate = appForm.utils.getTime();
+      lastModDate = appForm.utils.getTime().getTime();
+    }
+
+    if(file.lastModifiedDate instanceof Date){
+      lastModDate = file.lastModifiedDate.getTime();  
     }
     var rtnJSON = {
         'fileName': file.name,
         'fileSize': file.size,
         'fileType': file.type,
-        'fileUpdateTime': file.lastModifiedDate,
+        'fileUpdateTime': lastModDate,
         'hashName': '',
         'contentType': 'binary'
       };

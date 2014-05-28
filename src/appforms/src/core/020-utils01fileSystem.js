@@ -169,6 +169,9 @@ appForm.utils = function(module) {
                 var reader = new FileReader();
                 reader.onloadend = function(evt) {
                     var text = evt.target.result;
+                    if (typeof text === "object") {
+                      text = JSON.stringify(text);
+                    }
                     // Check for URLencoded
                     // PG 2.2 bug in readAsText()
                     try {
