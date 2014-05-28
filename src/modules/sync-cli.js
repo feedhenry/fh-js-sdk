@@ -42,7 +42,7 @@ var self = {
     // If we have reached the crashed_count_wait limit, should we re-try sending the crashed in flight pending record
     "sync_active" : true,
     // Is the background sync with the cloud currently active
-    "storage_strategy" : "html5-filesystem",
+    "storage_strategy" : ["html5-filesystem", "dom"],
     // Storage strategy to use for Lawnchair - supported strategies are 'html5-filesystem' and 'dom'
     "file_system_quota" : 50 * 1024 * 1204,
     // Amount of space to request from the HTML5 filesystem API when running in browser
