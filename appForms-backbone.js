@@ -3406,6 +3406,7 @@ var FormView = BaseView.extend({
           }
         }
         self.checkPages();
+        self.steps.activePageChange(self);
       });
     }
 
@@ -3531,8 +3532,9 @@ var FormView = BaseView.extend({
     this.pageNum = 0;
     this.steps.activePageChange(this);
     this.checkRules({
-      initialising: true
+      initialising: false
     });
+    return this;
   },
   getNextPageIndex: function(currentPageIndex) {
     var self = this;
