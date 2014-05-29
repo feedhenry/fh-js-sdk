@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.0.25-alpha - 2014-05-29 - IR228 - Wei Li
+
+* 7301 - Fixed forms rules engine and preview rendering
+
 ## 2.0.24-alpha - 2014-05-26 - IR228 - Wei Li
 
 * 7313 - Fix file upload issue on WP8
