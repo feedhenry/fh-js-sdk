@@ -3,6 +3,7 @@
 ## 2.0.26-alpha - 2014-05-29 - IR228 - Niall Donnelly
 
 * 7324 - Fixed map rendering and checkboxed from drafts.
+* 7093 - Removed for description from the form display.
 
 ## 2.0.25-alpha - 2014-05-29 - IR228 - Niall Donnelly
 
