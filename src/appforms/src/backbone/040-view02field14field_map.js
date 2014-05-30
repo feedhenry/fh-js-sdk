@@ -47,10 +47,12 @@ FieldMapView = FieldView.extend({
         func = this.allMapInitFunc.shift();
       }
     }
+    this.mapResize();
   },
   onAllMapInit: function(func) {
     if (this.mapInited === this.curRepeat) {
       func();
+      this.mapResize();
     } else {
       if (this.allMapInitFunc.indexOf(func) === -1) {
         this.allMapInitFunc.push(func);
@@ -112,6 +114,9 @@ FieldMapView = FieldView.extend({
       }
     }
   },
+  onRender: function(){
+    this.mapResize();
+  },
   valueFromElement: function(index) {
     var map = this.maps[index];
     var marker = this.markers[index];
@@ -130,6 +135,8 @@ FieldMapView = FieldView.extend({
     function _handler() {
       var map = that.maps[index];
       var pt = new google.maps.LatLng(value.lat, value["long"]);
+      that.mapData[index].lat = value.lat;
+      that.mapData[index]["long"] = value["long"];
       map.setCenter(pt);
       map.setZoom(value.zoom);
       that.markers[index].setPosition(pt);

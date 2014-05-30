@@ -45,7 +45,7 @@ FieldCheckboxView = FieldView.extend({
     if (!value || !(value instanceof Array)){
       return;
     }
-    for (var i=0; i < value; i++){
+    for (var i=0; i < value.length; i++){
       var v=value[i];
       wrapperObj.find("input[value='"+v+"']").attr("checked","checked");
     }

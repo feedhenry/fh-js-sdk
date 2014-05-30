@@ -311,7 +311,7 @@ var FormView = BaseView.extend({
   render: function() {
     this.$el.find("#fh_appform_container.fh_appform_form_area").append(this.templates.buttons);
     this.rebindButtons();
-    this.pageViews[0].$el.removeClass("fh_appform_hidden");
+    this.pageViews[0].show();
     this.pageNum = 0;
     this.steps.activePageChange(this);
     this.checkRules({
