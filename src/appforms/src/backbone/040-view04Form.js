@@ -7,7 +7,6 @@ var FormView = BaseView.extend({
   templates: {
     formLogo: '<div class="fh_appform_logo_container" style="text-align:center;"><div class="fh_appform_logo"></div></div>',
     formTitle: '<div class="fh_appform_form_title"><%= title %></div>',
-    formDescription: '<div class="fh_appform_form_description"><%= description %></div>',
     formContainer: '<div id="fh_appform_container" class="fh_appform_form_area fh_appform_container"></div>',
     buttons: '<div id="fh_appform_navigation_buttons" class="fh_appform_button_bar"><button class="fh_appform_button_saveDraft fh_appform_hidden fh_appform_button_main fh_appform_button_action">Save Draft</button><button class="fh_appform_button_previous fh_appform_hidden fh_appform_button_default">Previous</button><button class="fh_appform_button_next fh_appform_hidden fh_appform_button_default">Next</button><button class="fh_appform_button_submit fh_appform_hidden fh_appform_button_action">Submit</button></div>'
   },
@@ -107,9 +106,6 @@ var FormView = BaseView.extend({
     self.$el.find(this.elementNames.formContainer).append(_.template(this.templates.formLogo, {}));
     self.$el.find(this.elementNames.formContainer).append(_.template(this.templates.formTitle, {
       title: this.model.getName()
-    }));
-    self.$el.find(this.elementNames.formContainer).append(_.template(this.templates.formDescription, {
-      description: this.model.getDescription()
     }));
 
     if (!params.submission) {
@@ -311,7 +307,7 @@ var FormView = BaseView.extend({
   render: function() {
     this.$el.find("#fh_appform_container.fh_appform_form_area").append(this.templates.buttons);
     this.rebindButtons();
-    this.pageViews[0].$el.removeClass("fh_appform_hidden");
+    this.pageViews[0].show();
     this.pageNum = 0;
     this.steps.activePageChange(this);
     this.checkRules({

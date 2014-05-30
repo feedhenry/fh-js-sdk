@@ -168,7 +168,7 @@ var FieldView = Backbone.View.extend({
             this.options.parentEl.append(this.$el);
         }
 
-        this.show();
+
 
         // force the element to be initially hidden
         if (this.$el.hasClass("hide")) {
@@ -182,6 +182,7 @@ var FieldView = Backbone.View.extend({
                 self.value(res);
             });
         }
+        this.show();
         this.checkActionBar();
         this.onRender();
     },
