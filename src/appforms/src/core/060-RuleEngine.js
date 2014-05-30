@@ -2306,6 +2306,10 @@ function rulesEngine (formDef) {
     var fieldType = field.type;
     var fieldOptions = field.fieldOptions ? field.fieldOptions : {};
 
+    if(typeof(fieldValue) === 'undefined' || fieldValue === null){
+      return false;
+    }
+
     function numericalComparison(condition, fieldValue, testValue){
       var fieldValNum = parseInt(fieldValue, 10);
       var testValNum = parseInt(testValue, 10);  
