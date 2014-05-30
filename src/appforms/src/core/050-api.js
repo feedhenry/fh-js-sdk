@@ -244,7 +244,6 @@ appForm.api = function (module) {
 
     function finishSubmissionDownload(err){
       err = typeof(err) === "string" && err.length === 24 ? null : err;
-      console.log("finishSubmissionDownload: ", err, submissionToDownload);
       $fh.forms.log.d("finishSubmissionDownload ", err, submissionToDownload);
       var subCBId = submissionToDownload.getRemoteSubmissionId();
       var subsCbsWatiting = waitOnSubmission[subCBId];
@@ -295,7 +294,6 @@ appForm.api = function (module) {
         $fh.forms.log.d("downloadSubmission submission exists", params);
 
         //Submission was created, but not finished downloading
-        console.log("STATUS: ",submissionAlreadySaved.status);
         if(submissionAlreadySaved.status !== "downloaded"){
           waitOnSubmission[params.submissionId] = waitOnSubmission[params.submissionId] ? waitOnSubmission[params.submissionId].push(cb) : [cb];
         } else {
