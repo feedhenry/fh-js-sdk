@@ -282,7 +282,7 @@ appForm.api = function (module) {
           submissionToDownload.on('progress', params.updateFunction);
         }
 
-        waitOnSubmission[params.submissionId] = typeof(waitOnSubmission[params.submissionId])  === 'number'? waitOnSubmission[params.submissionId] + 1 : 0;
+        waitOnSubmission[params.submissionId] = waitOnSubmission[params.submissionId] ? waitOnSubmission[params.submissionId].push(cb) : [cb];
 
         submissionToDownload.download(function(err){
           if(err){
