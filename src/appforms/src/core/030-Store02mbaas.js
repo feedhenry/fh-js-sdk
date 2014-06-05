@@ -42,7 +42,8 @@ appForm.stores = function(module) {
       } else {
         var url = _getUrl(model);
 
-        if(self.isFileTransfer(model) && self.isPhoneGap()){
+        // if(self.isFileTransfer(model) && self.isPhoneGap()){ //TODO Niall Investigate Error in device download
+        if(false){
           appForm.web.downloadFile(url, model.getFileMetaData(), cb);
         }
         else if(self.isFileTransfer(model)) {//Trying to download a file without phone. No need as the direct web urls can be used

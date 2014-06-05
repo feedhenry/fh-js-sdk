@@ -7,7 +7,8 @@ appForm.utils = function(module) {
         readAsBlob: readAsBlob,
         readAsBase64Encoded: readAsBase64Encoded,
         readAsFile: readAsFile,
-        fileToBase64: fileToBase64
+        fileToBase64: fileToBase64,
+        getBasePath: getBasePath
     };
     var fileSystemAvailable = false;
     var _requestFileSystem = function() {
@@ -64,17 +65,16 @@ appForm.utils = function(module) {
 
 
     function getBasePath(cb) {
-        _getFileEntry("dummy.html", size, {
-            create: true,
-            exclusive: false
-        }, function(err, fileEntry) {
+        save("dummy.txt", "TestContnet", function(err, fileEntry) {
             if (err) {
                 return cb(err);
             }
 
-            var sPath = fileEntry.fullPath.replace("dummy.html", "");
-            fileEntry.remove();
-            return cb(null, sPath);
+            _getFileEntry("dummy.txt",0, {}, function(err, fileEntry){
+              var sPath = fileEntry.fullPath.replace("dummy.txt", "");
+              fileEntry.remove();
+              return cb(null, sPath);
+            });
         });
     }
 

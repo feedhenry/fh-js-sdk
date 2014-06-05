@@ -52,7 +52,7 @@ appForm.web = function (module) {
       return cb("No Internet Connection Available.");
     }
 
-    appforms.utils.fileSystem.getBasePath(function(err, basePath){
+    appForm.utils.fileSystem.getBasePath(function(err, basePath){
       if(err){
         $fh.forms.log.e("Error getting base path for file download: " + url);
         return cb(err);

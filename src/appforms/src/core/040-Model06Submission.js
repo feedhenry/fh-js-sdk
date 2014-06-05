@@ -586,6 +586,10 @@ appForm.models = function(module) {
   Submission.prototype.isDownloadSubmission = function(){
     return this.get("downloadSubmission") === true;
   };
+
+  Submission.prototype.getSubmissionFile = function(fileName, cb){
+    appForm.utils.fileSystem.readAsFile(fileName, cb);
+  };
   Submission.prototype.clearLocalSubmissionFiles = function(cb) {
     $fh.forms.log.d("In clearLocalSubmissionFiles");
     var self = this;
