@@ -60,7 +60,7 @@ appForm.web = function (module) {
 
       function success(fileEntry){
         $fh.forms.log.d("File Download Completed Successfully. FilePath: " + fileEntry.fullPath);
-        return cb(null, fileEntry.fullPath);
+        return cb(null, fileEntry.toURL());
       }
 
       function fail(error){
@@ -71,7 +71,7 @@ appForm.web = function (module) {
       if(fileMetaData.fileName){
         $fh.forms.log.d("File name for file " + fileMetaData.fileName + " found. Starting download");
         var fullPath = basePath + fileMetaData.fileName;
-        ft.download(encodeURI(url), fullPath, success, fail, {headers: {
+        ft.download(encodeURI(url), fullPath, success, fail, false, {headers: {
           "Connection": "close"
         }});
       } else {

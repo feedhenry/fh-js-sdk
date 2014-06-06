@@ -230,82 +230,101 @@ appForm.api = function (module) {
   }
 
   /*
-  * Function for downloading a submission stored on the remote server.
-  *
-  * @param params {}
-  * @param {function} cb (err, downloadTask)
-  * */
-  function downloadSubmission(params, cb){
-    params = params ? params : {};
-    cb = cb ? cb : defaultFunction;
-    var submissionToDownload = null;
+     * Function for downloading a submission stored on the remote server.
+     *
+     * @param params {}
+     * @param {function} cb (err, downloadTask)
+     * */
+    function downloadSubmission(params, cb) {
+      params = params ? params : {};
+      //cb = cb ? cb : defaultFunction;
+      var submissionToDownload = null;
 
-
-
-    function finishSubmissionDownload(err){
-      err = typeof(err) === "string" && err.length === 24 ? null : err;
-      $fh.forms.log.d("finishSubmissionDownload ", err, submissionToDownload);
-      var subCBId = submissionToDownload.getRemoteSubmissionId();
-      var subsCbsWatiting = waitOnSubmission[subCBId];
-      if(subsCbsWatiting){
-        var subCB = subsCbsWatiting.pop();
-        while(typeof(subCB) === 'function'){
-          subCB(err, submissionToDownload);
-          subCB = subsCbsWatiting.pop();
-        }
-
-        if(submissionToDownload.clearEvents){
-          submissionToDownload.clearEvents();
-        }
-      } else {
-        submissionToDownload.clearEvents();
-        return cb(err, submissionToDownload);
+      if(typeof(cb) !== 'function'){
+        return null;
       }
-    }
 
-    $fh.forms.log.d("downloadSubmission called", params);
-
-    if(params.submissionId){
-      $fh.forms.log.d("downloadSubmission SubmissionId exists" + params.submissionId);
-      var submissionAlreadySaved = appForm.models.submissions.findMetaByRemoteId(params.submissionId);
-
-      if(submissionAlreadySaved === null){
-
-        $fh.forms.log.d("downloadSubmission submission does not exist, downloading", params);
-        submissionToDownload = new appForm.models.submission.newInstance(null, {submissionId: params.submissionId});
-
-        submissionToDownload.on('error', finishSubmissionDownload);
-
-        submissionToDownload.on('downloaded', finishSubmissionDownload);
-
-        if(typeof(params.updateFunction) === 'function'){
-          submissionToDownload.on('progress', params.updateFunction);
-        }
-
-        waitOnSubmission[params.submissionId] = waitOnSubmission[params.submissionId] ? waitOnSubmission[params.submissionId].push(cb) : [cb];
-
-        submissionToDownload.download(function(err){
-          if(err){
-            $fh.forms.log.e("Error queueing submission for download " + err);
-            return cb(err);
+      function finishSubmissionDownload(err) {
+        err = typeof(err) === "string" && err.length === 24 ? null : err;
+        $fh.forms.log.d("finishSubmissionDownload ", err, submissionToDownload);
+        var subCBId = submissionToDownload.getRemoteSubmissionId();
+        var subsCbsWatiting = waitOnSubmission[subCBId];
+        if (subsCbsWatiting) {
+          var subCB = subsCbsWatiting.pop();
+          while (typeof(subCB) === 'function') {
+            subCB(err, submissionToDownload);
+            subCB = subsCbsWatiting.pop();
           }
-        });
-      } else {
-        $fh.forms.log.d("downloadSubmission submission exists", params);
 
-        //Submission was created, but not finished downloading
-        if(submissionAlreadySaved.status !== "downloaded"){
-          waitOnSubmission[params.submissionId] = waitOnSubmission[params.submissionId] ? waitOnSubmission[params.submissionId].push(cb) : [cb];
+          if (submissionToDownload.clearEvents) {
+            submissionToDownload.clearEvents();
+          }
         } else {
-          appForm.models.submissions.getSubmissionByMeta(submissionAlreadySaved, cb);
+          submissionToDownload.clearEvents();
+          return cb(err, submissionToDownload);
         }
-
       }
-    } else {
-      $fh.forms.log.e("No submissionId passed to download a submission");
-      return cb("No submissionId passed to download a submission");
+
+      $fh.forms.log.d("downloadSubmission called", params);
+
+      if (params.submissionId) {
+        $fh.forms.log.d("downloadSubmission SubmissionId exists" + params.submissionId);
+        var submissionAlreadySaved = appForm.models.submissions.findMetaByRemoteId(params.submissionId);
+
+        if (submissionAlreadySaved === null) {
+
+          $fh.forms.log.d("downloadSubmission submission does not exist, downloading", params);
+          submissionToDownload = new appForm.models.submission.newInstance(null, {
+            submissionId: params.submissionId
+          });
+
+          submissionToDownload.on('error', finishSubmissionDownload);
+
+          submissionToDownload.on('downloaded', finishSubmissionDownload);
+
+          if (typeof(params.updateFunction) === 'function') {
+            submissionToDownload.on('progress', params.updateFunction);
+          }
+
+          
+          if(typeof(cb) === "function"){
+            if(waitOnSubmission[params.submissionId]){
+              waitOnSubmission[params.submissionId].push(cb);  
+            } else {
+               waitOnSubmission[params.submissionId] = [];
+               waitOnSubmission[params.submissionId].push(cb);  
+            }  
+          }
+
+          submissionToDownload.download(function(err) {
+            if (err) {
+              $fh.forms.log.e("Error queueing submission for download " + err);
+              return cb(err);
+            }
+          });
+        } else {
+          $fh.forms.log.d("downloadSubmission submission exists", params);
+
+          //Submission was created, but not finished downloading
+          if (submissionAlreadySaved.status !== "downloaded") {
+            if(typeof(cb) === "function"){
+              if(waitOnSubmission[params.submissionId]){
+                waitOnSubmission[params.submissionId].push(cb);  
+              } else {
+                 waitOnSubmission[params.submissionId] = [];
+                 waitOnSubmission[params.submissionId].push(cb);  
+              }  
+            }
+          } else {
+            appForm.models.submissions.getSubmissionByMeta(submissionAlreadySaved, cb);
+          }
+
+        }
+      } else {
+        $fh.forms.log.e("No submissionId passed to download a submission");
+        return cb("No submissionId passed to download a submission");
+      }
     }
-  }
   return module;
 }(appForm.api || {});
 //mockup $fh apis for Addons.

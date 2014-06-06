@@ -42,8 +42,7 @@ appForm.stores = function(module) {
       } else {
         var url = _getUrl(model);
 
-        // if(self.isFileTransfer(model) && self.isPhoneGap()){ //TODO Niall Investigate Error in device download
-        if(false){
+        if(self.isFileTransfer(model) && self.isPhoneGap()){
           appForm.web.downloadFile(url, model.getFileMetaData(), cb);
         }
         else if(self.isFileTransfer(model)) {//Trying to download a file without phone. No need as the direct web urls can be used
@@ -135,7 +134,7 @@ appForm.stores = function(module) {
         break;
       case 'fileSubmissionDownload':
         props.submissionId = model.getSubmissionId();
-        props.submissionId = model.getFileGroupId();
+        props.fileGroupId = model.getFileGroupId();
         break;
       case 'offlineTest':
         return "http://127.0.0.1:8453";
