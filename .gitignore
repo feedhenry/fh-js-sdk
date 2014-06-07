@@ -9,7 +9,6 @@ src/appforms/dist/
 test/sync/testServer
 src/modules-cov/*
 src-cov/*
-dist/
 src/appforms/tests/feedhenry.js
 test/browser/browserified_tests.js
 test/browser/feedhenry-latest-require.js
