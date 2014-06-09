@@ -1829,7 +1829,7 @@ var FieldView = Backbone.View.extend({
             this.options.parentEl.append(this.$el);
         }
 
-        this.show();
+
 
         // force the element to be initially hidden
         if (this.$el.hasClass("hide")) {
@@ -1843,6 +1843,7 @@ var FieldView = Backbone.View.extend({
                 self.value(res);
             });
         }
+        this.show();
         this.checkActionBar();
         this.onRender();
     },
@@ -2256,7 +2257,7 @@ FieldCheckboxView = FieldView.extend({
     if (!value || !(value instanceof Array)){
       return;
     }
-    for (var i=0; i < value; i++){
+    for (var i=0; i < value.length; i++){
       var v=value[i];
       wrapperObj.find("input[value='"+v+"']").attr("checked","checked");
     }
@@ -2535,10 +2536,12 @@ FieldMapView = FieldView.extend({
         func = this.allMapInitFunc.shift();
       }
     }
+    this.mapResize();
   },
   onAllMapInit: function(func) {
     if (this.mapInited === this.curRepeat) {
       func();
+      this.mapResize();
     } else {
       if (this.allMapInitFunc.indexOf(func) === -1) {
         this.allMapInitFunc.push(func);
@@ -2600,6 +2603,9 @@ FieldMapView = FieldView.extend({
       }
     }
   },
+  onRender: function(){
+    this.mapResize();
+  },
   valueFromElement: function(index) {
     var map = this.maps[index];
     var marker = this.markers[index];
@@ -2618,6 +2624,8 @@ FieldMapView = FieldView.extend({
     function _handler() {
       var map = that.maps[index];
       var pt = new google.maps.LatLng(value.lat, value["long"]);
+      that.mapData[index].lat = value.lat;
+      that.mapData[index]["long"] = value["long"];
       map.setCenter(pt);
       map.setZoom(value.zoom);
       that.markers[index].setPosition(pt);
@@ -3224,7 +3232,6 @@ var FormView = BaseView.extend({
   templates: {
     formLogo: '<div class="fh_appform_logo_container" style="text-align:center;"><div class="fh_appform_logo"></div></div>',
     formTitle: '<div class="fh_appform_form_title"><%= title %></div>',
-    formDescription: '<div class="fh_appform_form_description"><%= description %></div>',
     formContainer: '<div id="fh_appform_container" class="fh_appform_form_area fh_appform_container"></div>',
     buttons: '<div id="fh_appform_navigation_buttons" class="fh_appform_button_bar"><button class="fh_appform_button_saveDraft fh_appform_hidden fh_appform_button_main fh_appform_button_action">Save Draft</button><button class="fh_appform_button_previous fh_appform_hidden fh_appform_button_default">Previous</button><button class="fh_appform_button_next fh_appform_hidden fh_appform_button_default">Next</button><button class="fh_appform_button_submit fh_appform_hidden fh_appform_button_action">Submit</button></div>'
   },
@@ -3324,9 +3331,6 @@ var FormView = BaseView.extend({
     self.$el.find(this.elementNames.formContainer).append(_.template(this.templates.formLogo, {}));
     self.$el.find(this.elementNames.formContainer).append(_.template(this.templates.formTitle, {
       title: this.model.getName()
-    }));
-    self.$el.find(this.elementNames.formContainer).append(_.template(this.templates.formDescription, {
-      description: this.model.getDescription()
     }));
 
     if (!params.submission) {
@@ -3528,7 +3532,7 @@ var FormView = BaseView.extend({
   render: function() {
     this.$el.find("#fh_appform_container.fh_appform_form_area").append(this.templates.buttons);
     this.rebindButtons();
-    this.pageViews[0].$el.removeClass("fh_appform_hidden");
+    this.pageViews[0].show();
     this.pageNum = 0;
     this.steps.activePageChange(this);
     this.checkRules({

@@ -8521,7 +8521,7 @@ module.exports = {
 },{"./fhparams":31,"./logger":37,"./queryMap":39,"JSON":3}],27:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.0.25-alpha",
+  "sdk_version": "2.0.26-alpha",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit",
   "INTERNAL_CONFIG_LOADED_EVENT": "internalfhconfigloaded",
@@ -13026,34 +13026,42 @@ var appForm = function(module) {
         if(err){
           console.error("Error loading config from local storage");
         }
-        //Loading the current state of the uploadManager for any upload tasks that are still in progress.
-        appForm.models.uploadManager.loadLocal(function(err) {
-          $fh.forms.log.d("Upload Manager loaded from memory.");
-          if (err) {
-            $fh.forms.log.e("Error loading upload manager from memory ", err);
+
+        appForm.models.submissions.loadLocal(function(err){
+          if(err){
+            console.error("Error loading submissions");
           }
 
-          //Starting any uploads that are queued
-          appForm.models.uploadManager.start();
-          //init forms module
-          $fh.forms.log.l("Refreshing Theme.");
-          appForm.models.theme.refresh(true, function(err) {
+          //Loading the current state of the uploadManager for any upload tasks that are still in progress.
+          appForm.models.uploadManager.loadLocal(function(err) {
+            $fh.forms.log.d("Upload Manager loaded from memory.");
             if (err) {
-              $fh.forms.log.e("Error refreshing theme ", err);
+              $fh.forms.log.e("Error loading upload manager from memory ", err);
             }
-            if (def.updateForms === true) {
-              $fh.forms.log.l("Refreshing Forms.");
-              appForm.models.forms.refresh(true, function(err) {
-                if (err) {
-                  $fh.forms.log.e("Error refreshing forms: ", err);
-                }
+
+            //Starting any uploads that are queued
+            appForm.models.uploadManager.start();
+            //init forms module
+            $fh.forms.log.l("Refreshing Theme.");
+            appForm.models.theme.refresh(true, function(err) {
+              if (err) {
+                $fh.forms.log.e("Error refreshing theme ", err);
+              }
+              if (def.updateForms === true) {
+                $fh.forms.log.l("Refreshing Forms.");
+                appForm.models.forms.refresh(true, function(err) {
+                  if (err) {
+                    $fh.forms.log.e("Error refreshing forms: ", err);
+                  }
+                  cb();
+                });
+              } else {
                 cb();
-              });
-            } else {
-              cb();
-            }
+              }
+            });
           });
         });
+
       });
     });
   }
@@ -13151,7 +13159,8 @@ appForm.utils = function(module) {
         readAsBlob: readAsBlob,
         readAsBase64Encoded: readAsBase64Encoded,
         readAsFile: readAsFile,
-        fileToBase64: fileToBase64
+        fileToBase64: fileToBase64,
+        getBasePath: getBasePath
     };
     var fileSystemAvailable = false;
     var _requestFileSystem = function() {
@@ -13208,17 +13217,16 @@ appForm.utils = function(module) {
 
 
     function getBasePath(cb) {
-        _getFileEntry("dummy.html", size, {
-            create: true,
-            exclusive: false
-        }, function(err, fileEntry) {
+        save("dummy.txt", "TestContnet", function(err, fileEntry) {
             if (err) {
                 return cb(err);
             }
 
-            var sPath = fileEntry.fullPath.replace("dummy.html", "");
-            fileEntry.remove();
-            return cb(null, sPath);
+            _getFileEntry("dummy.txt",0, {}, function(err, fileEntry){
+              var sPath = fileEntry.fullPath.replace("dummy.txt", "");
+              fileEntry.remove();
+              return cb(null, sPath);
+            });
         });
     }
 
@@ -13646,7 +13654,7 @@ appForm.web = function (module) {
       return cb("No Internet Connection Available.");
     }
 
-    appforms.utils.fileSystem.getBasePath(function(err, basePath){
+    appForm.utils.fileSystem.getBasePath(function(err, basePath){
       if(err){
         $fh.forms.log.e("Error getting base path for file download: " + url);
         return cb(err);
@@ -13654,7 +13662,7 @@ appForm.web = function (module) {
 
       function success(fileEntry){
         $fh.forms.log.d("File Download Completed Successfully. FilePath: " + fileEntry.fullPath);
-        return cb(null, fileEntry.fullPath);
+        return cb(null, fileEntry.toURL());
       }
 
       function fail(error){
@@ -13665,7 +13673,7 @@ appForm.web = function (module) {
       if(fileMetaData.fileName){
         $fh.forms.log.d("File name for file " + fileMetaData.fileName + " found. Starting download");
         var fullPath = basePath + fileMetaData.fileName;
-        ft.download(encodeURI(url), fullPath, success, fail, {headers: {
+        ft.download(encodeURI(url), fullPath, success, fail, false, {headers: {
           "Connection": "close"
         }});
       } else {
@@ -14104,7 +14112,7 @@ appForm.stores = function(module) {
         break;
       case 'fileSubmissionDownload':
         props.submissionId = model.getSubmissionId();
-        props.submissionId = model.getFileGroupId();
+        props.fileGroupId = model.getFileGroupId();
         break;
       case 'offlineTest':
         return "http://127.0.0.1:8453";
@@ -14572,7 +14580,7 @@ appForm.models = function(module) {
       'base64fileSubmission': '/forms/:appId/:submissionId/:fieldId/:hashName/submitFormFileBase64',
       'submissionStatus': '/forms/:appId/:submissionId/status',
       'formSubmissionDownload': '/forms/:appId/submission/:submissionId',
-      'fileSubmissionDownload': '/forms/:appId/submission/:submissionId/file/:fileId',
+      'fileSubmissionDownload': '/forms/:appId/submission/:submissionId/file/:fileGroupId',
       'completeSubmission': '/forms/:appId/:submissionId/completeSubmission',
       'config': '/forms/:appid/config/:deviceId'
     });
@@ -15044,7 +15052,7 @@ appForm.models = function (module) {
         urlTemplate = urlTemplate.replace(":submissionId", submissionId);
         urlTemplate = urlTemplate.replace(":fileGroupId", fileGroupId);
         urlTemplate = urlTemplate.replace(":appId", appForm.config.get('appId', "notSet"));
-        return urlTemplate;
+        return appForm.models.config.get("cloudHost", "notset") + "/mbaas" + urlTemplate;
       } else {
         return  "notset";
       }
@@ -15467,8 +15475,12 @@ appForm.models = function(module) {
 
   function newInstance(form, params) {
     params = params ? params : {};
+    var sub = new Submission(form, params);
 
-    return new Submission(form, params);
+    if(params.submissionId){
+      appForm.models.submissions.updateSubmissionWithoutSaving(sub);
+    }
+    return sub;
   }
 
   function fromLocal(localId, cb) {
@@ -15488,16 +15500,21 @@ appForm.models = function(module) {
           cb(err);
         } else {
           $fh.forms.log.d("Submission fromLocal. Load from local sucessfull: ", localId);
-          submission.reloadForm(function(err, res) {
-            if (err) {
-              $fh.forms.log.e("Submission fromLocal. reloadForm. Error re-loading form: ", localId, err);
-              cb(err);
-            } else {
-              $fh.forms.log.d("Submission fromLocal. reloadForm. Re-loading form successfull: ", localId);
-              _submissions[localId] = submission;
-              cb(null, submission);
-            }
-          });
+          if(submission.isDownloadSubmission()){
+            return cb(null, submission);
+          } else {
+            submission.reloadForm(function(err, res) {
+              if (err) {
+                $fh.forms.log.e("Submission fromLocal. reloadForm. Error re-loading form: ", localId, err);
+                cb(err);
+              } else {
+                $fh.forms.log.d("Submission fromLocal. reloadForm. Re-loading form successfull: ", localId);
+                _submissions[localId] = submission;
+                cb(null, submission);
+              }
+            });
+          }
+
         }
       });
     }
@@ -15667,6 +15684,15 @@ appForm.models = function(module) {
   };
   Submission.prototype.setUploadTaskId = function(utId) {
     this.set('uploadTaskId', utId);
+  };
+  Submission.prototype.isInProgress = function(){
+    return this.get("status") === "inprogress";
+  };
+  Submission.prototype.isDownloaded = function(){
+    return this.get("status") === "downloaded";
+  };
+  Submission.prototype.isSubmitted = function(){
+    return this.get("status") === "submitted";
   };
   Submission.prototype.submitted = function(cb) {
     var self = this;
@@ -15868,7 +15894,7 @@ appForm.models = function(module) {
     $fh.forms.log.d("In getSubmissionFiles: " + self.getLocalId());
     var submissionFiles = [];
 
-    var formFields = self.get("formFields", []);
+    var formFields = self.getFormFields();
 
     for (var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++) {
       var tmpFieldValues = formFields[formFieldIndex].fieldValues || [];
@@ -15996,6 +16022,10 @@ appForm.models = function(module) {
   Submission.prototype.isDownloadSubmission = function(){
     return this.get("downloadSubmission") === true;
   };
+
+  Submission.prototype.getSubmissionFile = function(fileName, cb){
+    appForm.utils.fileSystem.readAsFile(fileName, cb);
+  };
   Submission.prototype.clearLocalSubmissionFiles = function(cb) {
     $fh.forms.log.d("In clearLocalSubmissionFiles");
     var self = this;
@@ -16090,7 +16120,7 @@ appForm.models = function(module) {
     }
   };
   Submission.prototype.getInputValueObjectById = function(fieldId) {
-    var formFields = this.get('formFields', []);
+    var formFields = this.getFormFields();
     for (var i = 0; i < formFields.length; i++) {
       var formField = formFields[i];
 
@@ -16131,6 +16161,7 @@ appForm.models = function(module) {
     }
   };
   Submission.prototype.reloadForm = function(cb) {
+    $fh.forms.log.d("Submission reload form");
     var Form = appForm.models.Form;
     var formId = this.get('formId');
     var self = this;
@@ -16164,13 +16195,17 @@ appForm.models = function(module) {
     });
   };
 
+  Submission.prototype.getFormFields = function(){
+    return this.get("formFields", []);
+  };
+
   Submission.prototype.getFileFieldsId = function(cb){
     var self = this;
     var formFieldIds = [];
 
     if(self.isDownloadSubmission()){
       //For Submission downloads, there needs to be a scan through the formFields param
-      var formFields = self.get("formFields", []);
+      var formFields = self.getFormFields();
 
       for(var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++){
         var formFieldEntry = formFields[formFieldIndex].fieldId || {};
@@ -17608,6 +17643,7 @@ appForm.models = function (module) {
     function processDownloadFile(){
       $fh.forms.log.d("processDownloadFile called");
       fileSubmissionModel = new appForm.models.FileSubmissionDownload(fileTask);
+      fileSubmissionModel.setSubmissionId(submissionId);
       self.getRemoteStore().read(fileSubmissionModel, function (err, localFilePath) {
         if(err){
           $fh.forms.log.e("Error downloading a file from remote: " + err);
@@ -18143,6 +18179,7 @@ appForm.api = function (module) {
   module.init = appForm.init;
   module.log=appForm.models.log;
   var _submissions = null;
+  var waitOnSubmission = {};
   var formConfig = appForm.models.config;
   var defaultFunction = function(err){
     err = err ? err : "";
@@ -18361,49 +18398,101 @@ appForm.api = function (module) {
   }
 
   /*
-  * Function for downloading a submission stored on the remote server.
-  *
-  * @param params {}
-  * @param {function} cb (err, downloadTask)
-  * */
-  function downloadSubmission(params, cb){
-    params = params ? params : {};
-    cb = cb ? cb : defaultFunction;
+     * Function for downloading a submission stored on the remote server.
+     *
+     * @param params {}
+     * @param {function} cb (err, downloadTask)
+     * */
+    function downloadSubmission(params, cb) {
+      params = params ? params : {};
+      //cb = cb ? cb : defaultFunction;
+      var submissionToDownload = null;
 
-    if(params.submissionId){
-
-      var submissionAlreadySaved = appForm.models.submissions.findMetaByRemoteId(params.submissionId);
-
-      if(submissionAlreadySaved === null){
-        var submissionToDownload = new appForm.models.submission.newInstance(null, {submissionId: params.submissionId});
-
-        submissionToDownload.on('error', function(err){
-          $fh.forms.log.e("Error downloading submission with id " + params.submissionId);
-          submissionToDownload.clearEvents();
-          return cb(err);
-        });
-
-        submissionToDownload.on('downloaded', function(){
-          $fh.forms.log.l("Download of submission with id " + params.submissionId + " completed successfully");
-          submissionToDownload.clearEvents();
-          return cb(null, submissionToDownload);
-        });
-
-        submissionToDownload.download(function(err){
-          if(err){
-            $fh.forms.log.e("Error queueing submission for download " + err);
-            submissionToDownload.clearEvents();
-            return cb(err);
-          }
-        });
-      } else {
-        appForm.models.submissions.getSubmissionByMeta(submissionAlreadySaved, cb);
+      if(typeof(cb) !== 'function'){
+        return null;
       }
-    } else {
-      $fh.forms.log.e("No submissionId passed to download a submission");
-      return cb("No submissionId passed to download a submission");
+
+      function finishSubmissionDownload(err) {
+        err = typeof(err) === "string" && err.length === 24 ? null : err;
+        $fh.forms.log.d("finishSubmissionDownload ", err, submissionToDownload);
+        var subCBId = submissionToDownload.getRemoteSubmissionId();
+        var subsCbsWatiting = waitOnSubmission[subCBId];
+        if (subsCbsWatiting) {
+          var subCB = subsCbsWatiting.pop();
+          while (typeof(subCB) === 'function') {
+            subCB(err, submissionToDownload);
+            subCB = subsCbsWatiting.pop();
+          }
+
+          if (submissionToDownload.clearEvents) {
+            submissionToDownload.clearEvents();
+          }
+        } else {
+          submissionToDownload.clearEvents();
+          return cb(err, submissionToDownload);
+        }
+      }
+
+      $fh.forms.log.d("downloadSubmission called", params);
+
+      if (params.submissionId) {
+        $fh.forms.log.d("downloadSubmission SubmissionId exists" + params.submissionId);
+        var submissionAlreadySaved = appForm.models.submissions.findMetaByRemoteId(params.submissionId);
+
+        if (submissionAlreadySaved === null) {
+
+          $fh.forms.log.d("downloadSubmission submission does not exist, downloading", params);
+          submissionToDownload = new appForm.models.submission.newInstance(null, {
+            submissionId: params.submissionId
+          });
+
+          submissionToDownload.on('error', finishSubmissionDownload);
+
+          submissionToDownload.on('downloaded', finishSubmissionDownload);
+
+          if (typeof(params.updateFunction) === 'function') {
+            submissionToDownload.on('progress', params.updateFunction);
+          }
+
+          
+          if(typeof(cb) === "function"){
+            if(waitOnSubmission[params.submissionId]){
+              waitOnSubmission[params.submissionId].push(cb);  
+            } else {
+               waitOnSubmission[params.submissionId] = [];
+               waitOnSubmission[params.submissionId].push(cb);  
+            }  
+          }
+
+          submissionToDownload.download(function(err) {
+            if (err) {
+              $fh.forms.log.e("Error queueing submission for download " + err);
+              return cb(err);
+            }
+          });
+        } else {
+          $fh.forms.log.d("downloadSubmission submission exists", params);
+
+          //Submission was created, but not finished downloading
+          if (submissionAlreadySaved.status !== "downloaded") {
+            if(typeof(cb) === "function"){
+              if(waitOnSubmission[params.submissionId]){
+                waitOnSubmission[params.submissionId].push(cb);  
+              } else {
+                 waitOnSubmission[params.submissionId] = [];
+                 waitOnSubmission[params.submissionId].push(cb);  
+              }  
+            }
+          } else {
+            appForm.models.submissions.getSubmissionByMeta(submissionAlreadySaved, cb);
+          }
+
+        }
+      } else {
+        $fh.forms.log.e("No submissionId passed to download a submission");
+        return cb("No submissionId passed to download a submission");
+      }
     }
-  }
   return module;
 }(appForm.api || {});
 //mockup $fh apis for Addons.
@@ -20720,6 +20809,10 @@ function rulesEngine (formDef) {
 
     var fieldType = field.type;
     var fieldOptions = field.fieldOptions ? field.fieldOptions : {};
+
+    if(typeof(fieldValue) === 'undefined' || fieldValue === null){
+      return false;
+    }
 
     function numericalComparison(condition, fieldValue, testValue){
       var fieldValNum = parseInt(fieldValue, 10);
