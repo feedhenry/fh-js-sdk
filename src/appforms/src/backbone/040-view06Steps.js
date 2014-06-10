@@ -2,11 +2,13 @@ StepsView = Backbone.View.extend({
   className: 'fh_appform_steps',
 
   templates: {
-    table: '<div class="fh_appform_progress_wrapper"><table class="fh_appform_progress_steps" cellspacing="0"><tr></tr></table><span class="fh_appform_page_title"></span><span id="fh_appform_page_error" class="fh_appform_hidden fh_appform_page_title fh_appform_field_error" style="display:none;"></span></div>',
-    step: '<td><span class="number_container" style=""><div class="number"><%= step_num %></div></span><br style="clear:both"/></td>'
+      table: '<ul class="pagination pagination-lg col-xs-12"></ul>',
+      step: '<li><span class="text-center" style="width: <%= width %>%;"><%= step_num %></span></li>',
+      page_title: '<div class="col-xs-12 text-center"><h3 class="fh_appform_page_title"></h3></div>'
   },
 
-  initialize: function() {
+  initialize: function(options) {
+    this.options = options;
     var self = this;
 
     _.bindAll(this, 'render');
@@ -27,14 +29,13 @@ StepsView = Backbone.View.extend({
     }
 
     displayedPages.forEach(function(pageId, index) {
-
       var pageModel = self.parentView.getPageViewById(pageId).model;
       var item = $(_.template(self.templates.step, {
-        step_name: pageModel.getName(),
-        step_num: index + 1
+          step_name: pageModel.getName(),
+          step_num: index + 1,
+          width: width
       }));
-      item.css('width', width + '%');
-      $('tr:first', table).append(item);
+      $(table).append(item);
     });
 
     this.$el.append(table);
@@ -43,12 +44,12 @@ StepsView = Backbone.View.extend({
   activePageChange: function() {
     var self = this;
     self.render();
-    self.$el.find('td').removeClass('active');
+    self.$el.find('li').removeClass('active');
 
     var displayIndex = self.parentView.getDisplayIndex();
     var pageModel = self.parentView.pageViews[self.parentView.pageNum].model;
 
-    self.$el.find('td:eq(' + displayIndex + ')').addClass('active');
+    self.$el.find('li:eq(' + displayIndex + ')').addClass('active');
     self.$el.find('.fh_appform_page_title').html(pageModel.getName());
   }
 

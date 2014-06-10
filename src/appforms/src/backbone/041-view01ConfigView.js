@@ -1,108 +1,80 @@
 var ConfigView = Backbone.View.extend({
-  "templates": [
-    '<div class="fh_appform_field_area config_camera">' +
-    '<fieldset>' +
-    '<div class="fh_appform_field_title">Camera</div>' +
-    '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Quality</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="quality" value="<%= quality%>"/>' +
-    '</div>' +
-    '<br/>' +
-    '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Target Width</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="targetWidth" value="<%= targetWidth%>"/>' +
-    '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Target Height</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="targetHeight" value="<%= targetHeight%>"/>' +
-    '</div>' +
-    '<br/>' +
-    '</fieldset>' +
-    '</div>',
-    '<div class="fh_appform_field_area config_submission">' +
-    '<fieldset>' +
-    '<div class="fh_appform_field_title">Submission</div>' +
-    '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Max Retries</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="max_retries" value="<%= max_retries%>"/>' +
-    '</div>' +
-    '<br/>' +
-    '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Timeout</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="timeout" value="<%= timeout%>"/>' +
-    '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Min Sent Items to Save</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="sent_save_min" value="<%= sent_save_min%>"/>' +
-    '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Max Sent Items to Save</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="sent_save_max" value="<%= sent_save_max%>"/>' +
-    '</div>' +
-    '<br/>' +
-    '</fieldset>' +
-    '</div>',
-    '<style type="text/css">'+
-  '#_logsViewPanel{'+
-    'position:fixed;'+
-    'left:10px;'+
-    'top:10px;'+
-    'right:10px;'+
-    'bottom:10px;'+
-    'padding:8px;'+
-    'background: white;'+
-    '-webkit-border-radius: 8px;'+
-    'border-radius: 8px;'+
-    'overflow: auto;'+
-  '}'+
-  '#_closeViewBtn{'+
-    'border: 1px solid;'+
-    'padding:3px;'+
-  '}'+
-'</style>'+
-'<div class="fh_appform_field_area config_debugging">'+
-  '<fieldset>'+
-    '<div class="fh_appform_field_title">Debugging</div>'+
-    '<br/>' +
-    '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Device Id</label>' +
-    '<button class="fh_appform_button_action" id="fh_appform_show_deviceId">Show Device Id</button>' +
-    '</div>' +
-    '<br/>' +
-      '<div id="config_debugging_log_enabled" class="form-group" style="margin:5px 5px 5px 5px;">'+
-        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;margin-top:5px;">Log Enabled</label>'+
-        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" type="checkbox" data-key="logger"  <%= logger?"checked":"" %> value="true"/>'+
-      '</div>'+
-      '<br/>' +
-      '<div id="config_debugging_log_level" class="form-group" style="margin:5px 5px 5px 5px;">'+
-        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;margin-top:5px;">Log Level</label>'+
-        '<select class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="log_level">'+
-          '<%'+
-              'for (var i=0;i<log_levels.length;i++){'+
-                'var val=log_levels[i];'+
-                'var selected=(i==log_level)?"selected":"";'+
-                '%>'+
-                  '<option value="<%= i %>" <%= selected%>><%= val%></option>'+
-                '<%'+
-              '}'+
-            '%>'+
-        '</select>'+
-      '</div><br/><div id="config_debugging_log_line_limit" class="form-group" style="margin:5px 5px 5px 5px;">'+
-        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Log Line Number</label>'+
-        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="log_line_limit" value="<%= log_line_limit%>"/>'+
-      '</div><br/><div id="config_debugging_log_email" class="form-group" style="margin:5px 5px 5px 5px;">'+
-        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Log Email Address</label>'+
-        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 98%;float: right;" data-key="log_email" value="<%= log_email%>"/>'+
-      '</div>'+
-      '<div class="log_buttons" style="width:100%;margin: 20px 0px 20px 0px;padding:0px 0px 0px 0px;text-align:center;">'+
-        '<button class="fh_appform_button_default" style="width:30%;margin-right:10px" type="button" id="_viewLogsBtn">View Logs</button>'+
-        '<button class="fh_appform_button_cancel" style="width:30%;margin-right:10px" type="button" id="_clearLogsBtn">Clear Logs</button>'+
-        '<button class="fh_appform_button_action" style="width:30%;" type="button" id="_sendLogsBtn">Send Logs</button>'+
-      '</div>'+
-  '</fieldset>'+
-'</div>'+
-'<div class="hidden" id="_logsViewPanel">'+
-  '<div><span class="fh_appform_button_cancel" id="_closeViewBtn">Close</span></div>'+
-  '<div class="fh_appform_field_area" id="_logViewDiv"></div>'+
-'</div>'
-  ],
+  templates: {
+      camera_options: {
+          header: '<div class="fh_appform_field_area config_camera col-xs-10 col-xs-offset-1"><div class="fh_appform_field_title"><h3>Camera</h3></div></div>',
+          camera_options_quality: '<div class="form-group col-xs-offset-1 col-xs-11"><label class="fh_appform_field_instructions col-xs-3">Quality</label><input class="fh_appform_field_input col-xs-8 col-xs-offset-1 text-center" type="number" value="<%= quality%>"/></div>',
+          camera_options_target_width: '<div class="form-group col-xs-offset-1 col-xs-11"><label class="fh_appform_field_instructions col-xs-3" >Target Width</label><input class="fh_appform_field_input col-xs-8 col-xs-offset-1 text-center" type="number" data-key="targetWidth" value="<%= targetWidth%>"/></div>',
+          camera_options_target_height: '<div class="form-group col-xs-offset-1 col-xs-11"><label class="fh_appform_field_instructions col-xs-3">Target Height</label><input class="fh_appform_field_input col-xs-8 col-xs-offset-1 text-center" type="number" data-key="targetHeight" value="<%= targetHeight%>"/></div>',
+      },
+      submission_options: {
+          header: '<div class="fh_appform_field_area config_submission col-xs-10 col-xs-offset-1"><div class="fh_appform_field_title"><h3>Submission</h3></div></div>',
+          submission_options_max_retries: '<div class="form-group col-xs-offset-1 col-xs-11"><label class="fh_appform_field_instructions col-xs-3" >Max Retries</label><input class="fh_appform_field_input col-xs-8 col-xs-offset-1 text-center" type="number"  data-key="max_retries" value="<%= max_retries%>"/></div>',
+          submission_options_timeout: '<div class="form-group col-xs-offset-1 col-xs-11" ><label class="fh_appform_field_instructions col-xs-3" >Timeout</label><input class="fh_appform_field_input col-xs-8 col-xs-offset-1 text-center" type="number" data-key="timeout" value="<%= timeout%>"/></div>',
+          submission_options_sent_save_min: '<div class="form-group col-xs-offset-1 col-xs-11"><label class="fh_appform_field_instructions col-xs-3" >Min Sent Items to Save</label><input class="fh_appform_field_input col-xs-8 col-xs-offset-1 text-center" type="number" data-key="sent_save_min" value="<%= sent_save_min%>"/></div>',
+          submission_options_sent_save_max: '<div class="form-group col-xs-offset-1 col-xs-11"><label class="fh_appform_field_instructions col-xs-3">Max Sent Items to Save</label><input class="fh_appform_field_input col-xs-8 col-xs-offset-1 text-center" type="number" data-key="sent_save_max" value="<%= sent_save_max%>"/></div>',
+      },
+      debugging_options: {
+          header: '<div class="fh_appform_field_area config_debugging col-xs-10 col-xs-offset-1"><div class="fh_appform_field_title"><h3>Debugging</h4></div></div>',
+          debugging_show_device_id : '<div class="form-group col-xs-offset-1 col-xs-11">' +
+              '<label class="fh_appform_field_instructions col-xs-3">Device Id</label>' +
+              '<button class="fh_appform_button_action col-xs-4" id="fh_appform_show_deviceId">Show Device Id</button>' +
+              '</div>',
+          debugging_options_log_enabled: '<div class="form-group col-xs-offset-1 col-xs-11">' +
+              '<label class="fh_appform_field_instructions col-xs-3">Log Enabled</label>' +
+              '<input class="fh_appform_field_input col-xs-8 col-xs-offset-1" type="checkbox" data-key="logger"  <%= logger?"checked":"" %> value="true"/>' +
+              '</div>',
+          debugging_options_log_level: '<div class="form-group col-xs-offset-1 col-xs-11">' +
+              '<label class="fh_appform_field_instructions col-xs-3">Log Level</label>' +
+              '<select class="fh_appform_field_input col-xs-8 col-xs-offset-1" data-key="log_level">' +
+              '<%' +
+              'for (var i=0;i<log_levels.length;i++){' +
+              'var val=log_levels[i];' +
+              'var selected=(i==log_level)?"selected":"";' +
+              '%>' +
+              '<option value="<%= i %>" <%= selected%>><%= val%></option>' +
+              '<%' +
+              '}' +
+              '%>' +
+              '</select>' +
+              '</div>',
+          debugging_options_log_email: '<div class="form-group col-xs-offset-1 col-xs-11">' +
+              '<label class="fh_appform_field_instructions col-xs-3">Log Email Address</label>' +
+              '<input class="fh_appform_field_input col-xs-8 col-xs-offset-1 text-center" type="email" data-key="log_email" value="<%= log_email%>"/>' +
+              '</div>',
+          debugging_options_log_line_limit: '<div class="form-group col-xs-offset-1 col-xs-11">' +
+              '<label class="fh_appform_field_instructions col-xs-3">Log Line Number</label>' +
+              '<input class="fh_appform_field_input col-xs-8 col-xs-offset-1 text-center" type="number" data-key="log_line_limit" value="<%= log_line_limit%>"/>' +
+              '</div>',
+      },
+      log_buttons: '<div class="log_buttons">' +
+          '<button class="fh_appform_button_default col-xs-4" type="button" id="_viewLogsBtn">View Logs</button>' +
+          '<button class="fh_appform_button_cancel col-xs-4" type="button" id="_clearLogsBtn">Clear Logs</button>' +
+          '<button class="fh_appform_button_action col-xs-4" type="button" id="_sendLogsBtn">Send Logs</button>' +
+          '</div>',
+      log_panel: '<div class="hidden" id="_logsViewPanel">' +
+          '<div class="col-xs-12"><button class="fh_appform_button_cancel btn btn-danger col-xs-12" id="_closeViewBtn">Close</button></div>' +
+          '<div class="fh_appform_field_area" id="_logViewDiv"></div>' +
+          '</div>',
+      log_panel_css: '<style type="text/css">' +
+          '#_logsViewPanel{' +
+          'position:fixed;' +
+          'left:10px;' +
+          'top:10px;' +
+          'right:10px;' +
+          'bottom:10px;' +
+          'padding:8px;' +
+          'background: white;' +
+          '-webkit-border-radius: 8px;' +
+          'border-radius: 8px;' +
+          'overflow: auto;' +
+          '}' +
+          '#_closeViewBtn{' +
+          'border: 1px solid;' +
+          'padding:3px;' +
+          'margin-top:50px;' +
+          '}' +
+          '</style>'
+  },
   "_myEvents": {
     "click #_viewLogsBtn": "viewLogs",
     "click #_clearLogsBtn": "clearLogs",
@@ -140,28 +112,50 @@ var ConfigView = Backbone.View.extend({
     this.$el.find("#_logsViewPanel").hide();
   },
   "events": {},
-  "initialize": function() {
+  initialize: function(options) {
+    this.options = options;
     this.events = _.extend({}, this._myEvents, this.events);
   },
   "render": function() {
-    var self = this;
-    self.$el.html("");
-    var props = $fh.forms.config.getConfig();
-    props.deviceId = $fh.forms.config.getDeviceId();
-    var html = _.template(self.templates.join(""), props);
-    self.$el.append(html);
+      this.$el.html("");
+      var props = $fh.forms.config.getConfig();
 
-    if($fh.forms.config.editAllowed() === false){
-      self.$el.find(".config_camera").hide();
-      self.$el.find(".config_submission").hide();
 
-      self.$el.find("#config_debugging_log_enabled").hide();
-      self.$el.find("#config_debugging_log_level").hide();
-      self.$el.find("#config_debugging_log_line_limit").hide();
-      self.$el.find("#config_debugging_log_email").hide();
-    }
+      var html = "";
 
-    return self;
+      //camera options
+      //submission
+      //Debugging Options
+      var camera_options_ele = $(this.templates.camera_options.header);
+      var submission_options_ele = $(this.templates.submission_options.header);
+      var debugging_options_ele = $(this.templates.debugging_options.header);
+
+      _.each(this.templates.camera_options, function(val, key) {
+          if (key !== 'header') {
+              camera_options_ele.append(_.template(val, props));
+          }
+      });
+
+      _.each(this.templates.submission_options, function(val, key) {
+          if (key !== 'header') {
+              submission_options_ele.append(_.template(val, props));
+          }
+      });
+
+      _.each(this.templates.debugging_options, function(val, key) {
+          if (key !== 'header') {
+              debugging_options_ele.append(_.template(val, props));
+          }
+      });
+
+
+      this.$el.append(camera_options_ele);
+      this.$el.append(submission_options_ele);
+      this.$el.append(debugging_options_ele);
+      this.$el.append(this.templates.log_buttons);
+      this.$el.append(this.templates.log_panel);
+      this.$el.append(this.templates.log_panel_css);
+      return this;
   },
   "save": function(cb) {
     $fh.forms.log.l("Saving config");

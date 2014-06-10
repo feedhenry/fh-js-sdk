@@ -1,8 +1,8 @@
 FieldFileView = FieldView.extend({
-    input: "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action select' data-index='<%= index %>' style='margin-top:0px;'  type='<%= inputType %>'>Select A File</button>" +
-        "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action remove' data-index='<%= index %>' style='margin-top:0px;'  type='<%= inputType %>'><i class='fa fa-times-circle'></i>&nbsp;Remove File Entry</button>" +
-        "<input style='opacity: 0; filter:alpha(opacity: 0); width:2px;height:2px' class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/>",
-    type: "file",
+    input: "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action select' data-index='<%= index %>'  type='<%= inputType %>'>Select A File</button>" +
+            "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action remove' data-index='<%= index %>'  type='<%= inputType %>'><i class='fa fa-times-circle'></i>&nbsp;Remove File Entry</button>" +
+            "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/>",
+        type: "file",
     initialize: function() {
         var self = this;
 

@@ -1,6 +1,6 @@
 var FieldView = Backbone.View.extend({
 
-    className: 'fh_appform_field_area',
+    className: 'fh_appform_field_area col-xs-12',
     errMessageContainer: ".fh_appform_field_error_container",
     requiredClassName: "fh_appform_field_required",
     errorClassName: "fh_appform_field_error",
@@ -9,15 +9,15 @@ var FieldView = Backbone.View.extend({
     addInputButtonClass: ".fh_appform_addInputBtn",
     removeInputButtonClass: ".fh_appform_removeInputBtn",
     fieldWrapper: '<div class="fh_appform_input_wrapper"></div>',
-    input: "<input class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' value='<%= value %>' type='<%= inputType %>' />",
-    inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>'> <div class='fh_appform_field_input_container non_repeating' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden' ></div></div><br style='clear:both'/>    </div>",
-    inputTemplateRepeating: "<div id='wrapper_<%= fieldId %>_<%= index %>' > <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container repeating' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden'></div></div><br style='clear:both'/></div>",
+    input: "<input class='fh_appform_field_input <%= repeatingClassName%> col-xs-12' data-field='<%= fieldId %>' data-index='<%= index %>' value='<%= value %>' type='<%= inputType %>' />",
+    inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>' class='col-xs-12'> <div class='fh_appform_field_input_container non_repeating' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden col-xs-12 text-center' ></div></div><br style='clear:both'/>    </div>",
+    inputTemplateRepeating: "<div id='wrapper_<%= fieldId %>_<%= index %>' class='col-xs-12'> <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering col-xs-2'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container repeating col-xs-10' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden col-xs-12'></div></div></div>",
 
 
-    fh_appform_fieldActionBar: "<div class='fh_appform_field_button_bar' ><button class='fh_appform_removeInputBtn special_button fh_appform_button_action'>-</button><button class='special_button fh_appform_addInputBtn fh_appform_button_action'>+</button></div>",
-    title: '<label class="fh_appform_field_title <%= required%>"><%= title %> </label>',
-    titleRepeating: '<label class="fh_appform_field_title"><%= title %> </label>',
-    instructions: '<p class="fh_appform_field_instructions"><%= helpText %></p>',
+    fh_appform_fieldActionBar: "<div class='fh_appform_field_button_bar col-xs-12' ><button class='fh_appform_removeInputBtn special_button fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5'>-</button><button class='special_button fh_appform_addInputBtn fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5 pull-right'>+</button></div>",
+    title: '<div class="fh_appform_field_title"><h3 class="text-left  <%= required%>"><%= title %></h3></div>',
+    titleRepeating: '<div class="fh_appform_field_title"><h3 class="text-left"><%= title %></h3></div>',
+    instructions: '<p class="fh_appform_field_instructions"><h4 class="text-left"><%= helpText %></h4></p>',
     events: {
         "change": "contentChanged",
         "blur input,select,textarea": "validate",
@@ -190,7 +190,8 @@ var FieldView = Backbone.View.extend({
 
     },
     // TODO: cache the input element lookup?
-    initialize: function() {
+    initialize: function(options) {
+        this.options = options;
         _.bindAll(this, 'dumpContent', 'clearError', 'onAddInput', 'onRemoveInput');
 
         // if (this.model.isRequired()) {
@@ -272,7 +273,7 @@ var FieldView = Backbone.View.extend({
     },
     renderButton: function(index, label, extension_type) {
         var button = $('<button>');
-        button.addClass('special_button fh_appform_button_action');
+        button.addClass('special_button fh_appform_button_action col-xs-12');
         button.addClass(extension_type);
         button.attr("data-index", index);
         button.html(' ' + label);
@@ -283,7 +284,7 @@ var FieldView = Backbone.View.extend({
     addButton: function(input, extension_type, label) {
         var self = this;
         var button = $('<button>');
-        button.addClass('special_button fh_appform_button_action');
+        button.addClass('special_button fh_appform_button_action col-xs-12');
         button.addClass(extension_type);
         button.html(' ' + label);
 

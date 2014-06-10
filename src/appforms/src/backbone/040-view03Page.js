@@ -19,12 +19,13 @@ var PageView=BaseView.extend({
     "url":FieldUrlView
   },
   templates : {
-    pageTitle : '<div class="fh_appform_page_title"><%= pageTitle %></div>',
-    pageDescription: '<div class="fh_appform_page_description"><%= pageDescription%></div>',
-    section: '<div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area"></div>'
+    pageTitle: '<div class="fh_appform_page_title text-center"><%= pageTitle %></div>',
+    pageDescription: '<div class="fh_appform_page_description text-center"><h4><%= pageDescription%></h4></div>',
+    section: '<div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area col-xs-12"></div>'
   },
 
-  initialize: function() {
+  initialize: function(options) {
+    this.options = options;
     var self = this;
     _.bindAll(this, 'render',"show","hide");
     // Page Model will emit events if user input meets page rule to hide / show the page.
@@ -38,7 +39,7 @@ var PageView=BaseView.extend({
     this.fieldViews = {};
     this.sectionViews = {};
     // all pages hidden initially
-    this.$el.empty().addClass('fh_appform_page fh_appform_hidden');
+    this.$el.empty().addClass('fh_appform_page fh_appform_hidden col-xs-12');
 
     //Need to add the page title and description
     this.$el.append(_.template(this.templates.pageDescription, {pageDescription: this.model.getDescription()}));

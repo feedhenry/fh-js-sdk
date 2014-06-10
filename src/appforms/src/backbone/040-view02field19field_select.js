@@ -1,5 +1,5 @@
 FieldSelectView = FieldView.extend({
-  select: "<select class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>'><%= options %></select>",
+  select: "<select class='fh_appform_field_input <%= repeatingClassName%> col-xs-12' data-field='<%= fieldId %>' data-index='<%= index %>'><%= options %></select>",
   option: '<option value="<%= value %>" <%= selected %>><%= value %></option>',
 
   renderInput: function(index) {

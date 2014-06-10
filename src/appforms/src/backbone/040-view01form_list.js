@@ -9,7 +9,8 @@ var FormListView = BaseView.extend({
         error: '<li><button id="formlist_reload" class="button-block <%= enabledClass %> <%= dataClass %> fh_appform_button_default"><%= name %><div class="loading"></div></button></li>'
     },
 
-    initialize: function() {
+    initialize: function(options) {
+        this.options = options;
         $fh.forms.log.l("Initialize Form List");
         _.bindAll(this, 'render', 'appendForm');
         this.views = [];

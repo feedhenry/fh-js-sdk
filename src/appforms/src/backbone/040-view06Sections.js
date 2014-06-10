@@ -1,6 +1,7 @@
 SectionView=BaseView.extend({
 
-  initialize: function() {
+  initialize: function(options) {
+    this.options = options;
     _.bindAll(this, 'render');
     this.$el.addClass("fh_appform_section");
   },

@@ -1,12 +1,12 @@
 FieldSignatureView = FieldView.extend({
     extension_type: 'fhsig',
-    input: "<img class='sigImage' style='width: 100%;' data-field='<%= fieldId %>' data-index='<%= index %>'/>",
+    input: "<img class='sigImage img-responsive' data-field='<%= fieldId %>' data-index='<%= index %>'/>",
     templates: {
-        signaturePad: ['<div class="sigPad">', '<ul class="sigNav" style="text-align: center;">', '<button class="clearButton fh_appform_button_cancel">Clear</button><button class="cap_sig_done_btn fh_appform_button_action">Done</button>', '<br style="clear:both;" />', '</ul>', '<div class="sig sigWrapper">', '<canvas class="pad" width="<%= canvasWidth %>" height="<%= canvasHeight %>"></canvas>', '</div>', '</div>']
+        signaturePad: ['<div class="sigPad">', '<ul class="sigNav col-xs-12">', '<button class="clearButton fh_appform_button_cancel btn btn-danger col-xs-5 col-xs-offset-1">Clear</button><button class="cap_sig_done_btn fh_appform_button_action btn btn-primary col-xs-5 col-xs-offset-1">Done</button>', '<br style="clear:both;" />', '</ul>', '<div class="sig sigWrapper">', '<canvas class="pad" width="<%= canvasWidth %>" height="<%= canvasHeight %>"></canvas>', '</div>', '</div>']
     },
 
     initialize: function() {
-        FieldView.prototype.initialize.call(this);
+        FieldView.prototype.initialize.call(this, arguments);
         this.on('visible', this.clearError);
     },
     onElementShow: function(index) {

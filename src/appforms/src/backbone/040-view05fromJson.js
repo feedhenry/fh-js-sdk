@@ -6,7 +6,8 @@ var FromJsonView = BaseView.extend({
         body: '<h1>Insert JSON</h1><textarea id="jsonBox" rows="30" cols="50"></textarea><button id="convert">Convert</button><div id="resultArea"></div>'
     },
     el: '#jsonPage',
-    initialize: function() {
+    initialize: function(options) {
+        this.options = options;
         _.bindAll(this, 'render');
     },
     show: function() {
