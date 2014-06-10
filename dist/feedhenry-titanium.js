@@ -6902,8 +6902,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/Users/eshortiss/workspaces/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/eshortiss/workspaces/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -7140,10 +7140,7 @@ EventEmitter.prototype.addListener = function(type, listener) {
                     'leak detected. %d listeners added. ' +
                     'Use emitter.setMaxListeners() to increase limit.',
                     this._events[type].length);
-      if (typeof console.trace === 'function') {
-        // not supported in IE 10
-        console.trace();
-      }
+      console.trace();
     }
   }
 
@@ -7381,7 +7378,7 @@ process.chdir = function (dir) {
 module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/Users/eshortiss/workspaces/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -8577,7 +8574,7 @@ module.exports = {
 },{"./fhparams":29,"./logger":35,"./queryMap":37,"JSON":3}],26:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.0.24-alpha",
+  "sdk_version": "2.0.26-alpha",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit",
   "INTERNAL_CONFIG_LOADED_EVENT": "internalfhconfigloaded",
@@ -10805,9 +10802,7 @@ module.exports = {
   loadDataSet: self.loadDataSet,
   checkHasCustomSync: self.checkHasCustomSync
 };
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":19,"./api_cloud":21,"JSON":3}],"./modules/appProps":[function(_dereq_,module,exports){
-module.exports=_dereq_('zDENqi');
-},{}],"zDENqi":[function(_dereq_,module,exports){
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":19,"./api_cloud":21,"JSON":3}],"zDENqi":[function(_dereq_,module,exports){
 var consts = _dereq_("../constants");
 var ajax = _dereq_("../ajax");
 var logger = _dereq_("../logger");
@@ -10839,7 +10834,9 @@ module.exports = {
   setAppProps: setAppProps
 };
 
-},{"../ajax":18,"../constants":26,"../logger":35,"../queryMap":37}],"./cookies":[function(_dereq_,module,exports){
+},{"../ajax":18,"../constants":26,"../logger":35,"../queryMap":37}],"./appProps":[function(_dereq_,module,exports){
+module.exports=_dereq_('zDENqi');
+},{}],"./cookies":[function(_dereq_,module,exports){
 module.exports=_dereq_('RdeKcl');
 },{}],"RdeKcl":[function(_dereq_,module,exports){
 module.exports = {
