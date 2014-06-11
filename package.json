@@ -2,7 +2,7 @@
     "name": "fh-js-sdk",
     "version": "2.0.26-alpha",
     "description": "feedhenry js sdk",
-    "main": "feedhenry.js",
+    "main": "dist/feedhenry.js",
     "browser": {
         "JSON": "./libs/json2.js"
     },
