@@ -14163,7 +14163,7 @@ appForm.stores = function(module) {
     appForm.web.ajax.get(url, cb);
   };
   MBaaS.prototype.isOnline = function(cb){
-    var host = appForm.config.get('cloudHost', "");
+    var host = appForm.config.getCloudHost();
     var url = host + appForm.config.get('statusUrl', "/sys/info/ping");
 
     appForm.web.ajax.get(url, function(err){
@@ -14180,7 +14180,7 @@ appForm.stores = function(module) {
   function _getUrl(model) {
     $fh.forms.log.d("_getUrl ", model);
     var type = model.get('_type');
-    var host = appForm.config.get('cloudHost');
+    var host = appForm.config.getCloudHost();
     var mBaaSBaseUrl = appForm.config.get('mbaasBaseUrl');
     var formUrls = appForm.config.get('formUrls');
     var relativeUrl = "";
@@ -14543,6 +14543,7 @@ appForm.models = function (module) {
 appForm.models = function(module) {
   var Model = appForm.models.Model;
   var online = true;
+  var cloudHost = "notset";
 
   function Config() {
     Model.call(this, {
@@ -14609,6 +14610,9 @@ appForm.models = function(module) {
       dataAgent.remoteStore.read(self, _handler);
     });
   };
+  Config.prototype.getCloudHost = function(){
+    return cloudHost;  
+  };
   Config.prototype.staticConfig = function(config) {
     var self = this;
     var defaultConfig = {"defaultConfigValues": {}, "userConfigValues": {}};
@@ -14668,20 +14672,19 @@ appForm.models = function(module) {
     config = config || {};
     var cloud_props = $fh.cloud_props;
     var app_props = $fh.app_props;
-    var cloudUrl;
     var mode = 'dev';
     if (app_props) {
-      cloudUrl = app_props.host;
+      cloudHost = app_props.host;
     }
     if (cloud_props && cloud_props.hosts) {
-      cloudUrl = cloud_props.hosts.url;
+      cloudHost = cloud_props.hosts.url;
     }
 
     if(typeof(config.cloudHost) === 'string'){
-      cloudUrl = config.cloudHost;
+      cloudHost = config.cloudHost;
     }
 
-    self.set('cloudHost', cloudUrl);
+    
     self.set('mbaasBaseUrl', '/mbaas');
     var appId = self.get('appId');
     self.set('formUrls', {
@@ -15165,7 +15168,7 @@ appForm.models = function (module) {
         urlTemplate = urlTemplate.replace(":submissionId", submissionId);
         urlTemplate = urlTemplate.replace(":fileGroupId", fileGroupId);
         urlTemplate = urlTemplate.replace(":appId", appForm.config.get('appId', "notSet"));
-        return appForm.models.config.get("cloudHost", "notset") + "/mbaas" + urlTemplate;
+        return appForm.models.config.getCloudHost() + "/mbaas" + urlTemplate;
       } else {
         return  "notset";
       }
