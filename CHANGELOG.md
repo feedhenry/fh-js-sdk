@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.0.27-alpha - 2014-06-11 - IR229 - Niall Donnelly
+
+* 7366 - Fixed mbaas cloudhost being saved in local storage.
+
 ## 2.0.26-alpha - 2014-05-29 - IR228 - Niall Donnelly
 
 * 7324 - Fixed map rendering and checkboxed from drafts.
