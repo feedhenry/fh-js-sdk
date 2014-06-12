@@ -66,7 +66,7 @@ appForm.models = function (module) {
     return this.get('_id', '');
   };
   Field.prototype.getName = function () {
-    return this.get('name', 'unknown name');
+    return this.get('name', 'unknown');
   };
   Field.prototype.getHelpText = function () {
     return this.get('helpText', '');

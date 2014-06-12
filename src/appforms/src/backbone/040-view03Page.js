@@ -21,7 +21,7 @@ var PageView=BaseView.extend({
   templates : {
     pageTitle: '<div class="fh_appform_page_title text-center"><%= pageTitle %></div>',
     pageDescription: '<div class="fh_appform_page_description text-center"><h4><%= pageDescription%></h4></div>',
-    section: '<div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area col-xs-12"></div>'
+    section: '<div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area panel panel-default"><div class="panel-heading"><%= title %></div><div class="panel-body"></div></div>'
   },
 
   initialize: function(options) {
@@ -53,25 +53,28 @@ var PageView=BaseView.extend({
 
     if(sections != null){
       var sectionKey;
-      for(sectionKey in sections){
-        this.$el.append(_.template(this.templates.section, {"sectionId": sectionKey}));
-      }
+      
 
       //Add the section fields
       for(sectionKey in sections){
-        sections[sectionKey].forEach(function(field, index){
+        var sectionEl = $(_.template(this.templates.section, {"sectionId": sectionKey, title: sections[sectionKey].title}));
+        self.$el.append(sectionEl);
+        sections[sectionKey].fields.forEach(function(field, index){
           var fieldType = field.getType();
           if (self.viewMap[fieldType]) {
 
             $fh.forms.log.l("*- "+fieldType);
 
-            self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
-              parentEl: self.$el,
-              parentView: self,
-              model: field,
-              formView: self.options.formView,
-              sectionName: sectionKey
-            });
+            if(fieldType !== "sectionBreak"){
+                self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
+                parentEl: sectionEl.find('.panel-body'),
+                parentView: self,
+                model: field,
+                formView: self.options.formView,
+                sectionName: sectionKey
+              });  
+            }
+            
           } else {
             $fh.forms.log.w('FIELD NOT SUPPORTED:' + fieldType);
           }
@@ -102,7 +105,7 @@ var PageView=BaseView.extend({
 
   show: function () {
     var self = this;
-    self.$el.removeClass('fh_appform_hidden');
+    self.$el.show();
 
     for(var fieldViewId in self.fieldViews){
       if(self.fieldViews[fieldViewId].mapResize){
@@ -113,7 +116,7 @@ var PageView=BaseView.extend({
 
   hide: function () {
 
-    this.$el.addClass('fh_appform_hidden');
+    this.$el.hide();
   },
 
   showField: function (id) {

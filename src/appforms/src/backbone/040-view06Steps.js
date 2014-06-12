@@ -1,5 +1,5 @@
 StepsView = Backbone.View.extend({
-  className: 'fh_appform_steps',
+  className: 'fh_appform_steps col-xs-12',
 
   templates: {
       table: '<ul class="pagination pagination-lg col-xs-12"></ul>',
@@ -39,6 +39,7 @@ StepsView = Backbone.View.extend({
     });
 
     this.$el.append(table);
+    return this;
   },
 
   activePageChange: function() {

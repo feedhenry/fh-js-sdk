@@ -69,11 +69,11 @@ module.exports = function(grunt) {
         "dest": "libs/generated/appForms/appForms-core-no-v2.js"
       },
       forms_backbone: {
-        "src": ["src/appforms/src/backbone/*.js", "!src/appforms/src/backbone/000-closureStartRequireJS.js", "!src/appforms/src/backbone/999-closureEndRequireJS.js"],
+        "src": ["src/appforms/src/backbone/*.js", "!src/appforms/src/backbone/000-closureStartRequireJS.js", "!src/appforms/src/backbone/999-closureEndRequireJS.js", "!src/appforms/src/backbone/templates.js"],
         "dest": "dist/appForms-backbone.js"
       },
       forms_backboneRequireJS: {
-        "src": ["src/appforms/src/backbone/*.js", "!src/appforms/src/backbone/000-closureStart.js", "!src/appforms/src/backbone/999-closureEnd.js"],
+        "src": ["src/appforms/src/backbone/*.js", "!src/appforms/src/backbone/000-closureStart.js", "!src/appforms/src/backbone/999-closureEnd.js", "!src/appforms/src/backbone/templates.js"],
         "dest": "libs/generated/appForms/appForms-backboneRequireJS.js"
       },
       forms_sdk :{
@@ -210,6 +210,16 @@ module.exports = function(grunt) {
         }
       }
     },
+    replace: {
+      forms_templates: {
+        src: ["src/appforms/src/backbone/templates.js"],
+        dest: "src/appforms/src/backbone/040-view00Templates.js",
+        replacements: [{
+          from: '************TEMPLATES***************',                   // string replacement
+          to: grunt.file.read("src/appforms/src/backbone/040-view00Templates.html", {encoding: 'utf8'}).replace(/(\r\n|\n|\r)/gm,"")
+        }]
+      }
+    },
     watch: {
       browserify: {
         files: ['src/**/*.js', 'test/tests/*.js'],
@@ -267,6 +277,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-mocha-phantomjs');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-shell');
+  grunt.loadNpmTasks('grunt-text-replace');
 
   var spawns = [];
   grunt.registerTask('start-local-servers', function () {
@@ -335,7 +346,9 @@ module.exports = function(grunt) {
   //run tests in phatomjs
   grunt.registerTask('test', ['jshint', 'browserify:dist', 'browserify:require', 'browserify:test', 'connect:server', 'mocha_phantomjs:test']);
 
-  grunt.registerTask('concat-core-sdk', ['jshint', 'browserify:dist', 'concat:forms_sdk', 'concat:lawnchair', 'concat:crypto', 'concat:forms_core', 'concat:forms_core_no_v2', 'concat:forms_backbone', 'concat:forms_backboneRequireJS']);
+  grunt.registerTask('concat-forms-backbone', ['replace:forms_templates', 'concat:forms_backbone', 'concat:forms_backboneRequireJS'])
+
+  grunt.registerTask('concat-core-sdk', ['jshint', 'browserify:dist', 'concat:forms_core', 'concat:forms_sdk', 'concat:lawnchair', 'concat:crypto', 'concat:forms_core_no_v2', 'concat-forms-backbone' ]);
 
   grunt.registerTask('concat-titanium', ['concat:lawnchair', 'concat:lawnchair_titanium', 'concat:crypto']);
 

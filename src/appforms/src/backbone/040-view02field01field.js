@@ -161,12 +161,7 @@ var FieldView = Backbone.View.extend({
         this.$el.attr("data-field", this.model.getFieldId());
 
 
-        if (this.options.sectionName) {
-            //This field belongs to a section
-            this.options.parentEl.find('#fh_appform_' + this.options.sectionName).append(this.$el);
-        } else {
-            this.options.parentEl.append(this.$el);
-        }
+        this.options.parentEl.append(this.$el);
 
 
 

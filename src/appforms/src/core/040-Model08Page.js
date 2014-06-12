@@ -72,17 +72,19 @@ appForm.models = function (module) {
 
       if(insertSectionBreak && i === 0){ //Adding a first section.
         currentSection = "sectionBreak" + i;
-        sectionList[currentSection] = sectionList[currentSection] ? sectionList[currentSection] : [];
+        sectionList[currentSection] = sectionList[currentSection] ? sectionList[currentSection] : {fields: []};
+        sectionList[currentSection].title = "Section " + (i+1);
       }
 
       if(currentSection !== null && fieldModel.getType() !== "sectionBreak"){
-        sectionList[currentSection].push(fieldModel);
+        sectionList[currentSection].fields.push(fieldModel);
       }
 
       if(fieldModel.getType() === "sectionBreak"){
         currentSection = "sectionBreak" + i;
-        sectionList[currentSection] = sectionList[currentSection] ? sectionList[currentSection] : [];
-        sectionList[currentSection].push(fieldModel);
+        sectionList[currentSection] = sectionList[currentSection] ? sectionList[currentSection] : {fields: []};
+        sectionList[currentSection].title = fieldModel.get('name', "Section " + (i+1));
+        sectionList[currentSection].fields.push(fieldModel);
       }
     }
 

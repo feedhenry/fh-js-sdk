@@ -101,14 +101,14 @@ var FormView = BaseView.extend({
     self.formId = form.getFormId();
 
     self.$el.empty();
+    self.$el.append("<div id='fh_appform_templates' style='display:none;'>" + FormTemplates + "</div>");
     self.model = form;
 
     //Page views are always added before anything else happens, need to render the form title first
-    self.$el.append(this.templates.formContainer);
-    self.$el.find(this.elementNames.formContainer).append(_.template(this.templates.formLogo, {}));
-    self.$el.find(this.elementNames.formContainer).append(_.template(this.templates.formTitle, {
-      title: this.model.getName()
-    }));
+
+    var formHtml = _.template($('#temp_form_structure').html(), {title: self.model.getName()});
+
+    self.$el.append(formHtml);
 
     if (!params.submission) {
       params.submission = self.model.newSubmission();
@@ -309,6 +309,7 @@ var FormView = BaseView.extend({
   render: function() {
     this.$el.find("#fh_appform_container.fh_appform_form_area").append(this.templates.buttons);
     this.rebindButtons();
+    this.hideAllPages();
     this.pageViews[0].show();
     this.pageNum = 0;
     this.steps.activePageChange(this);

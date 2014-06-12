@@ -1521,6 +1521,7 @@ var BaseView=Backbone.View.extend({
     "onLoad":function(){},
     "onLoadEnd":function(){}
 }); 
+var FormTemplates = '<script type="text/template" id="temp_form_structure"><div id="fh_appform_container" class="fh_appform_form_area col-xs-offset-1 col-xs-10 fh_appform_container">  <div class="fh_appform_logo_container  col-xs-12">    <div class="fh_appform_logo  col-xs-12">    </div>  </div>  <div class="fh_appform_form_title col-xs-12 text-center">    <h1></h1>  </div></div></script>';
 var FormListView = BaseView.extend({
     events: {
         'click button#formlist_reload': 'reload'
@@ -1532,7 +1533,8 @@ var FormListView = BaseView.extend({
         error: '<li><button id="formlist_reload" class="button-block <%= enabledClass %> <%= dataClass %> fh_appform_button_default"><%= name %><div class="loading"></div></button></li>'
     },
 
-    initialize: function() {
+    initialize: function(options) {
+        this.options = options;
         $fh.forms.log.l("Initialize Form List");
         _.bindAll(this, 'render', 'appendForm');
         this.views = [];
@@ -1661,7 +1663,7 @@ var FormListItemView = BaseView.extend({
   });
 var FieldView = Backbone.View.extend({
 
-    className: 'fh_appform_field_area',
+    className: 'fh_appform_field_area col-xs-12',
     errMessageContainer: ".fh_appform_field_error_container",
     requiredClassName: "fh_appform_field_required",
     errorClassName: "fh_appform_field_error",
@@ -1670,15 +1672,15 @@ var FieldView = Backbone.View.extend({
     addInputButtonClass: ".fh_appform_addInputBtn",
     removeInputButtonClass: ".fh_appform_removeInputBtn",
     fieldWrapper: '<div class="fh_appform_input_wrapper"></div>',
-    input: "<input class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' value='<%= value %>' type='<%= inputType %>' />",
-    inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>'> <div class='fh_appform_field_input_container non_repeating' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden' ></div></div><br style='clear:both'/>    </div>",
-    inputTemplateRepeating: "<div id='wrapper_<%= fieldId %>_<%= index %>' > <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container repeating' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden'></div></div><br style='clear:both'/></div>",
+    input: "<input class='fh_appform_field_input <%= repeatingClassName%> col-xs-12' data-field='<%= fieldId %>' data-index='<%= index %>' value='<%= value %>' type='<%= inputType %>' />",
+    inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>' class='col-xs-12'> <div class='fh_appform_field_input_container non_repeating' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden col-xs-12 text-center' ></div></div><br style='clear:both'/>    </div>",
+    inputTemplateRepeating: "<div id='wrapper_<%= fieldId %>_<%= index %>' class='col-xs-12'> <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering col-xs-2'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container repeating col-xs-10' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden col-xs-12'></div></div></div>",
 
 
-    fh_appform_fieldActionBar: "<div class='fh_appform_field_button_bar' ><button class='fh_appform_removeInputBtn special_button fh_appform_button_action'>-</button><button class='special_button fh_appform_addInputBtn fh_appform_button_action'>+</button></div>",
-    title: '<label class="fh_appform_field_title <%= required%>"><%= title %> </label>',
-    titleRepeating: '<label class="fh_appform_field_title"><%= title %> </label>',
-    instructions: '<p class="fh_appform_field_instructions"><%= helpText %></p>',
+    fh_appform_fieldActionBar: "<div class='fh_appform_field_button_bar col-xs-12' ><button class='fh_appform_removeInputBtn special_button fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5'>-</button><button class='special_button fh_appform_addInputBtn fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5 pull-right'>+</button></div>",
+    title: '<div class="fh_appform_field_title"><h3 class="text-left  <%= required%>"><%= title %></h3></div>',
+    titleRepeating: '<div class="fh_appform_field_title"><h3 class="text-left"><%= title %></h3></div>',
+    instructions: '<p class="fh_appform_field_instructions"><h4 class="text-left"><%= helpText %></h4></p>',
     events: {
         "change": "contentChanged",
         "blur input,select,textarea": "validate",
@@ -1822,12 +1824,7 @@ var FieldView = Backbone.View.extend({
         this.$el.attr("data-field", this.model.getFieldId());
 
 
-        if (this.options.sectionName) {
-            //This field belongs to a section
-            this.options.parentEl.find('#fh_appform_' + this.options.sectionName).append(this.$el);
-        } else {
-            this.options.parentEl.append(this.$el);
-        }
+        this.options.parentEl.append(this.$el);
 
 
 
@@ -1851,7 +1848,8 @@ var FieldView = Backbone.View.extend({
 
     },
     // TODO: cache the input element lookup?
-    initialize: function() {
+    initialize: function(options) {
+        this.options = options;
         _.bindAll(this, 'dumpContent', 'clearError', 'onAddInput', 'onRemoveInput');
 
         // if (this.model.isRequired()) {
@@ -1933,7 +1931,7 @@ var FieldView = Backbone.View.extend({
     },
     renderButton: function(index, label, extension_type) {
         var button = $('<button>');
-        button.addClass('special_button fh_appform_button_action');
+        button.addClass('special_button fh_appform_button_action col-xs-12');
         button.addClass(extension_type);
         button.attr("data-index", index);
         button.html(' ' + label);
@@ -1944,7 +1942,7 @@ var FieldView = Backbone.View.extend({
     addButton: function(input, extension_type, label) {
         var self = this;
         var button = $('<button>');
-        button.addClass('special_button fh_appform_button_action');
+        button.addClass('special_button fh_appform_button_action col-xs-12');
         button.addClass(extension_type);
         button.html(' ' + label);
 
@@ -2268,10 +2266,10 @@ FieldEmailView = FieldView.extend({
    type:"email"
 });
 FieldFileView = FieldView.extend({
-    input: "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action select' data-index='<%= index %>' style='margin-top:0px;'  type='<%= inputType %>'>Select A File</button>" +
-        "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action remove' data-index='<%= index %>' style='margin-top:0px;'  type='<%= inputType %>'><i class='fa fa-times-circle'></i>&nbsp;Remove File Entry</button>" +
-        "<input style='opacity: 0; filter:alpha(opacity: 0); width:2px;height:2px' class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/>",
-    type: "file",
+    input: "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action select' data-index='<%= index %>'  type='<%= inputType %>'>Select A File</button>" +
+            "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action remove' data-index='<%= index %>'  type='<%= inputType %>'><i class='fa fa-times-circle'></i>&nbsp;Remove File Entry</button>" +
+            "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>'/>",
+        type: "file",
     initialize: function() {
         var self = this;
 
@@ -2360,7 +2358,7 @@ FieldFileView = FieldView.extend({
     }
 });
 FieldGeoView = FieldView.extend({
-  input: "<input class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>'  type='<%= inputType %>' disabled/>",
+  input: "<input class='fh_appform_field_input col-xs-12 text-center <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>'  type='<%= inputType %>' disabled/>",
   buttonHtml: "<i class='fa fa-map-marker'></i>&nbsp<%= buttonText %>",
   type: "text",
   initialize: function() {
@@ -2692,7 +2690,7 @@ FieldRadioView = FieldView.extend({
   }
 });
 FieldSelectView = FieldView.extend({
-  select: "<select class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>'><%= options %></select>",
+  select: "<select class='fh_appform_field_input <%= repeatingClassName%> col-xs-12' data-field='<%= fieldId %>' data-index='<%= index %>'><%= options %></select>",
   option: '<option value="<%= value %>" <%= selected %>><%= value %></option>',
 
   renderInput: function(index) {
@@ -2722,13 +2720,13 @@ FieldSelectView = FieldView.extend({
 });
 FieldSignatureView = FieldView.extend({
     extension_type: 'fhsig',
-    input: "<img class='sigImage' style='width: 100%;' data-field='<%= fieldId %>' data-index='<%= index %>'/>",
+    input: "<img class='sigImage img-responsive' data-field='<%= fieldId %>' data-index='<%= index %>'/>",
     templates: {
-        signaturePad: ['<div class="sigPad">', '<ul class="sigNav" style="text-align: center;">', '<button class="clearButton fh_appform_button_cancel">Clear</button><button class="cap_sig_done_btn fh_appform_button_action">Done</button>', '<br style="clear:both;" />', '</ul>', '<div class="sig sigWrapper">', '<canvas class="pad" width="<%= canvasWidth %>" height="<%= canvasHeight %>"></canvas>', '</div>', '</div>']
+        signaturePad: ['<div class="sigPad">', '<ul class="sigNav col-xs-12">', '<button class="clearButton fh_appform_button_cancel btn btn-danger col-xs-5 col-xs-offset-1">Clear</button><button class="cap_sig_done_btn fh_appform_button_action btn btn-primary col-xs-5 col-xs-offset-1">Done</button>', '<br style="clear:both;" />', '</ul>', '<div class="sig sigWrapper">', '<canvas class="pad" width="<%= canvasWidth %>" height="<%= canvasHeight %>"></canvas>', '</div>', '</div>']
     },
 
     initialize: function() {
-        FieldView.prototype.initialize.call(this);
+        FieldView.prototype.initialize.call(this, arguments);
         this.on('visible', this.clearError);
     },
     onElementShow: function(index) {
@@ -2998,12 +2996,12 @@ FieldTextView = FieldView.extend({
 
 });
 FieldTextareaView = FieldView.extend({
-    input: "<textarea class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>'  ></textarea>"
+    input: "<textarea class='fh_appform_field_input col-xs-12' data-field='<%= fieldId %>' data-index='<%= index %>'  ></textarea>"
 });
 FieldSectionBreak = FieldView.extend({
-  className: "fh_appform_section_break",
+  className: "fh_appform_section_break panel panel-default",
   templates: {
-    sectionBreak: '<div class="fh_appform_section_title"><%= sectionTitle %></div><div class="fh_appform_section_description"><%= sectionDescription%></div>'
+      sectionBreak: '<div class="panel-heading"><%= sectionTitle %></div>'
   },
   renderEle:function(){
     return _.template(this.templates.sectionBreak, {sectionTitle: this.model.getName(), sectionDescription: this.model.getHelpText()});
@@ -3017,9 +3015,9 @@ FieldSectionBreak = FieldView.extend({
 });
 FieldDateTimeView = FieldView.extend({
   extension_type: 'fhdate',
-  inputTime:"<div><input class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='time'></div>",
-  inputDate:"<div ><input class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='date'></div>",
-  inputDateTime:"<div ><input class='fh_appform_field_input <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='text'></div>",
+  inputTime: "<div><input class='fh_appform_field_input col-xs-12 text-center <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='time'></div>",
+  inputDate: "<div ><input class='fh_appform_field_input col-xs-12 text-center   <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='date'></div>",
+  inputDateTime: "<div ><input class='fh_appform_field_input col-xs-12 text-center   <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='text'></div>",
   renderInput:function(index){
     var fieldId = this.model.getFieldId();
     var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
@@ -3106,12 +3104,13 @@ var PageView=BaseView.extend({
     "url":FieldUrlView
   },
   templates : {
-    pageTitle : '<div class="fh_appform_page_title"><%= pageTitle %></div>',
-    pageDescription: '<div class="fh_appform_page_description"><%= pageDescription%></div>',
-    section: '<div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area"></div>'
+    pageTitle: '<div class="fh_appform_page_title text-center"><%= pageTitle %></div>',
+    pageDescription: '<div class="fh_appform_page_description text-center"><h4><%= pageDescription%></h4></div>',
+    section: '<div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area panel panel-default"><div class="panel-heading"><%= title %></div><div class="panel-body"></div></div>'
   },
 
-  initialize: function() {
+  initialize: function(options) {
+    this.options = options;
     var self = this;
     _.bindAll(this, 'render',"show","hide");
     // Page Model will emit events if user input meets page rule to hide / show the page.
@@ -3125,7 +3124,7 @@ var PageView=BaseView.extend({
     this.fieldViews = {};
     this.sectionViews = {};
     // all pages hidden initially
-    this.$el.empty().addClass('fh_appform_page fh_appform_hidden');
+    this.$el.empty().addClass('fh_appform_page fh_appform_hidden col-xs-12');
 
     //Need to add the page title and description
     this.$el.append(_.template(this.templates.pageDescription, {pageDescription: this.model.getDescription()}));
@@ -3139,25 +3138,28 @@ var PageView=BaseView.extend({
 
     if(sections != null){
       var sectionKey;
-      for(sectionKey in sections){
-        this.$el.append(_.template(this.templates.section, {"sectionId": sectionKey}));
-      }
+      
 
       //Add the section fields
       for(sectionKey in sections){
-        sections[sectionKey].forEach(function(field, index){
+        var sectionEl = $(_.template(this.templates.section, {"sectionId": sectionKey, title: sections[sectionKey].title}));
+        self.$el.append(sectionEl);
+        sections[sectionKey].fields.forEach(function(field, index){
           var fieldType = field.getType();
           if (self.viewMap[fieldType]) {
 
             $fh.forms.log.l("*- "+fieldType);
 
-            self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
-              parentEl: self.$el,
-              parentView: self,
-              model: field,
-              formView: self.options.formView,
-              sectionName: sectionKey
-            });
+            if(fieldType !== "sectionBreak"){
+                self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
+                parentEl: sectionEl.find('.panel-body'),
+                parentView: self,
+                model: field,
+                formView: self.options.formView,
+                sectionName: sectionKey
+              });  
+            }
+            
           } else {
             $fh.forms.log.w('FIELD NOT SUPPORTED:' + fieldType);
           }
@@ -3188,7 +3190,7 @@ var PageView=BaseView.extend({
 
   show: function () {
     var self = this;
-    self.$el.removeClass('fh_appform_hidden');
+    self.$el.show();
 
     for(var fieldViewId in self.fieldViews){
       if(self.fieldViews[fieldViewId].mapResize){
@@ -3199,7 +3201,7 @@ var PageView=BaseView.extend({
 
   hide: function () {
 
-    this.$el.addClass('fh_appform_hidden');
+    this.$el.hide();
   },
 
   showField: function (id) {
@@ -3230,17 +3232,19 @@ var FormView = BaseView.extend({
   "submission": null,
   "fieldValue": [],
   templates: {
-    formLogo: '<div class="fh_appform_logo_container" style="text-align:center;"><div class="fh_appform_logo"></div></div>',
-    formTitle: '<div class="fh_appform_form_title"><%= title %></div>',
-    formContainer: '<div id="fh_appform_container" class="fh_appform_form_area fh_appform_container"></div>',
-    buttons: '<div id="fh_appform_navigation_buttons" class="fh_appform_button_bar"><button class="fh_appform_button_saveDraft fh_appform_hidden fh_appform_button_main fh_appform_button_action">Save Draft</button><button class="fh_appform_button_previous fh_appform_hidden fh_appform_button_default">Previous</button><button class="fh_appform_button_next fh_appform_hidden fh_appform_button_default">Next</button><button class="fh_appform_button_submit fh_appform_hidden fh_appform_button_action">Submit</button></div>'
-  },
+  formLogo: '<div class="fh_appform_logo_container  col-xs-12"><div class="fh_appform_logo  col-xs-12"></div></div>',
+  formTitle: '<div class="fh_appform_form_title col-xs-12 text-center"><h1><%= title %></h1></div>',
+  formDescription: '<div class="fh_appform_form_description  col-xs-12 text-center"><h2><%= description %></h2></div>',
+  formContainer: '<div id="fh_appform_container" class="fh_appform_form_area col-xs-offset-1 col-xs-10 fh_appform_container"></div>',
+  buttons: '<div id="fh_appform_navigation_buttons" class="fh_appform_button_bar col-xs-12"><button class="fh_appform_button_saveDraft fh_appform_button_main fh_appform_button_action btn btn-primary">Save Draft</button><button class="fh_appform_button_previous fh_appform_button_default btn btn-default">Previous</button><button class="fh_appform_button_next fh_appform_button_default btn btn-default">Next</button><button class="fh_appform_button_submit fh_appform_button_action btn btn-primary">Submit</button></div>'
+},
   events: {},
   elementNames: {
     formContainer: "#fh_appform_container"
   },
 
-  initialize: function() {
+  initialize: function(options) {
+    this.options = this.options || options;
     var self = this;
     _.bindAll(this, "checkRules", "onValidateError");
     this.$el = this.options.parentEl;
@@ -3324,14 +3328,14 @@ var FormView = BaseView.extend({
     self.formId = form.getFormId();
 
     self.$el.empty();
+    self.$el.append("<div id='fh_appform_templates' style='display:none;'>" + FormTemplates + "</div>");
     self.model = form;
 
     //Page views are always added before anything else happens, need to render the form title first
-    self.$el.append(this.templates.formContainer);
-    self.$el.find(this.elementNames.formContainer).append(_.template(this.templates.formLogo, {}));
-    self.$el.find(this.elementNames.formContainer).append(_.template(this.templates.formTitle, {
-      title: this.model.getName()
-    }));
+
+    var formHtml = _.template($('#temp_form_structure').html(), {title: self.model.getName()});
+
+    self.$el.append(formHtml);
 
     if (!params.submission) {
       params.submission = self.model.newSubmission();
@@ -3495,37 +3499,37 @@ var FormView = BaseView.extend({
     var displayedIndex = this.getDisplayIndex();
 
     if (displayedIndex === 0 && displayedIndex === displayedPages - 1) {
-      this.$el.find(" button.fh_appform_button_previous").addClass("fh_appform_hidden");
-      this.$el.find("button.fh_appform_button_next").addClass("fh_appform_hidden");
-      this.$el.find("button.fh_appform_button_saveDraft").removeClass("fh_appform_hidden");
-      this.$el.find(" button.fh_appform_button_submit").removeClass("fh_appform_hidden");
-      this.$el.find(".fh_appform_button_bar button").removeClass('fh_appform_three_button');
-      this.$el.find(".fh_appform_button_bar button").addClass('fh_appform_two_button');
+        this.$el.find(" button.fh_appform_button_previous").hide();
+        this.$el.find("button.fh_appform_button_next").hide();
+        this.$el.find("button.fh_appform_button_saveDraft").show();
+        this.$el.find(" button.fh_appform_button_submit").show();
+        this.$el.find(".fh_appform_button_bar button").removeClass('col-xs-4');
+        this.$el.find(".fh_appform_button_bar button").addClass('col-xs-6');
     } else if (displayedIndex === 0) {
-      this.$el.find(" button.fh_appform_button_previous").addClass("fh_appform_hidden");
-      this.$el.find("button.fh_appform_button_next").removeClass("fh_appform_hidden");
-      this.$el.find("button.fh_appform_button_saveDraft").removeClass("fh_appform_hidden");
-      this.$el.find(" button.fh_appform_button_submit").addClass("fh_appform_hidden");
-      this.$el.find(".fh_appform_button_bar button").removeClass('fh_appform_three_button');
-      this.$el.find(".fh_appform_button_bar button").addClass('fh_appform_two_button');
+        this.$el.find(" button.fh_appform_button_previous").hide();
+        this.$el.find("button.fh_appform_button_next").show();
+        this.$el.find("button.fh_appform_button_saveDraft").show();
+        this.$el.find(" button.fh_appform_button_submit").hide();
+        this.$el.find(".fh_appform_button_bar button").removeClass('col-xs-4');
+        this.$el.find(".fh_appform_button_bar button").addClass('col-xs-6');
     } else if (displayedIndex === displayedPages - 1) {
-      this.$el.find(" button.fh_appform_button_previous").removeClass("fh_appform_hidden");
-      this.$el.find(" button.fh_appform_button_next").addClass("fh_appform_hidden");
-      this.$el.find(" button.fh_appform_button_saveDraft").removeClass("fh_appform_hidden");
-      this.$el.find(" button.fh_appform_button_submit").removeClass("fh_appform_hidden");
-      this.$el.find(".fh_appform_button_bar button").removeClass('fh_appform_two_button');
-      this.$el.find(".fh_appform_button_bar button").addClass('fh_appform_three_button');
+        this.$el.find(" button.fh_appform_button_previous").show();
+        this.$el.find(" button.fh_appform_button_next").hide();
+        this.$el.find(" button.fh_appform_button_saveDraft").show();
+        this.$el.find(" button.fh_appform_button_submit").show();
+        this.$el.find(".fh_appform_button_bar button").removeClass('col-xs-6');
+        this.$el.find(".fh_appform_button_bar button").addClass('col-xs-4');
     } else {
-      this.$el.find(" button.fh_appform_button_previous").removeClass("fh_appform_hidden");
-      this.$el.find(" button.fh_appform_button_next").removeClass("fh_appform_hidden");
-      this.$el.find(" button.fh_appform_button_saveDraft").removeClass("fh_appform_hidden");
-      this.$el.find(" button.fh_appform_button_submit").addClass("fh_appform_hidden");
-      this.$el.find(".fh_appform_button_bar button").removeClass('fh_appform_two_button');
-      this.$el.find(".fh_appform_button_bar button").addClass('fh_appform_three_button');
+        this.$el.find(" button.fh_appform_button_previous").show();
+        this.$el.find(" button.fh_appform_button_next").show();
+        this.$el.find(" button.fh_appform_button_saveDraft").show();
+        this.$el.find(" button.fh_appform_button_submit").hide();
+        this.$el.find(".fh_appform_button_bar button").removeClass('col-xs-6');
+        this.$el.find(".fh_appform_button_bar button").addClass('col-xs-4');
     }
     if (this.readonly) {
-      this.$el.find("button.fh_appform_button_saveDraft").addClass("fh_appform_hidden");
-      this.$el.find(" button.fh_appform_button_submit").addClass("fh_appform_hidden");
+        this.$el.find("button.fh_appform_button_saveDraft").hide();
+        this.$el.find(" button.fh_appform_button_submit").hide();
     }
 
   },
@@ -3755,7 +3759,8 @@ var FromJsonView = BaseView.extend({
         body: '<h1>Insert JSON</h1><textarea id="jsonBox" rows="30" cols="50"></textarea><button id="convert">Convert</button><div id="resultArea"></div>'
     },
     el: '#jsonPage',
-    initialize: function() {
+    initialize: function(options) {
+        this.options = options;
         _.bindAll(this, 'render');
     },
     show: function() {
@@ -3792,9 +3797,9 @@ var FromJsonView = BaseView.extend({
 });
 SectionView=BaseView.extend({
 
-  initialize: function() {
+  initialize: function(options) {
+    this.options = options;
     _.bindAll(this, 'render');
-    this.$el.addClass("fh_appform_section");
   },
   render: function(){
     this.options.parentEl.append(this.$el);
@@ -3802,14 +3807,16 @@ SectionView=BaseView.extend({
 
 });
 StepsView = Backbone.View.extend({
-  className: 'fh_appform_steps',
+  className: 'fh_appform_steps col-xs-12',
 
   templates: {
-    table: '<div class="fh_appform_progress_wrapper"><table class="fh_appform_progress_steps" cellspacing="0"><tr></tr></table><span class="fh_appform_page_title"></span><span id="fh_appform_page_error" class="fh_appform_hidden fh_appform_page_title fh_appform_field_error" style="display:none;"></span></div>',
-    step: '<td><span class="number_container" style=""><div class="number"><%= step_num %></div></span><br style="clear:both"/></td>'
+      table: '<ul class="pagination pagination-lg col-xs-12"></ul>',
+      step: '<li><span class="text-center" style="width: <%= width %>%;"><%= step_num %></span></li>',
+      page_title: '<div class="col-xs-12 text-center"><h3 class="fh_appform_page_title"></h3></div>'
   },
 
-  initialize: function() {
+  initialize: function(options) {
+    this.options = options;
     var self = this;
 
     _.bindAll(this, 'render');
@@ -3830,137 +3837,109 @@ StepsView = Backbone.View.extend({
     }
 
     displayedPages.forEach(function(pageId, index) {
-
       var pageModel = self.parentView.getPageViewById(pageId).model;
       var item = $(_.template(self.templates.step, {
-        step_name: pageModel.getName(),
-        step_num: index + 1
+          step_name: pageModel.getName(),
+          step_num: index + 1,
+          width: width
       }));
-      item.css('width', width + '%');
-      $('tr:first', table).append(item);
+      $(table).append(item);
     });
 
     this.$el.append(table);
+    return this;
   },
 
   activePageChange: function() {
     var self = this;
     self.render();
-    self.$el.find('td').removeClass('active');
+    self.$el.find('li').removeClass('active');
 
     var displayIndex = self.parentView.getDisplayIndex();
     var pageModel = self.parentView.pageViews[self.parentView.pageNum].model;
 
-    self.$el.find('td:eq(' + displayIndex + ')').addClass('active');
+    self.$el.find('li:eq(' + displayIndex + ')').addClass('active');
     self.$el.find('.fh_appform_page_title').html(pageModel.getName());
   }
 
 });
 var ConfigView = Backbone.View.extend({
-  "templates": [
-    '<div class="fh_appform_field_area config_camera">' +
-    '<fieldset>' +
-    '<div class="fh_appform_field_title">Camera</div>' +
-    '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Quality</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="quality" value="<%= quality%>"/>' +
-    '</div>' +
-    '<br/>' +
-    '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Target Width</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="targetWidth" value="<%= targetWidth%>"/>' +
-    '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Target Height</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="targetHeight" value="<%= targetHeight%>"/>' +
-    '</div>' +
-    '<br/>' +
-    '</fieldset>' +
-    '</div>',
-    '<div class="fh_appform_field_area config_submission">' +
-    '<fieldset>' +
-    '<div class="fh_appform_field_title">Submission</div>' +
-    '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Max Retries</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="max_retries" value="<%= max_retries%>"/>' +
-    '</div>' +
-    '<br/>' +
-    '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Timeout</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="timeout" value="<%= timeout%>"/>' +
-    '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Min Sent Items to Save</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="sent_save_min" value="<%= sent_save_min%>"/>' +
-    '</div><br/><div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Max Sent Items to Save</label>' +
-    '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="sent_save_max" value="<%= sent_save_max%>"/>' +
-    '</div>' +
-    '<br/>' +
-    '</fieldset>' +
-    '</div>',
-    '<style type="text/css">'+
-  '#_logsViewPanel{'+
-    'position:fixed;'+
-    'left:10px;'+
-    'top:10px;'+
-    'right:10px;'+
-    'bottom:10px;'+
-    'padding:8px;'+
-    'background: white;'+
-    '-webkit-border-radius: 8px;'+
-    'border-radius: 8px;'+
-    'overflow: auto;'+
-  '}'+
-  '#_closeViewBtn{'+
-    'border: 1px solid;'+
-    'padding:3px;'+
-  '}'+
-'</style>'+
-'<div class="fh_appform_field_area config_debugging">'+
-  '<fieldset>'+
-    '<div class="fh_appform_field_title">Debugging</div>'+
-    '<br/>' +
-    '<div class="form-group" style="margin:5px 5px 5px 5px;">' +
-    '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Device Id</label>' +
-    '<button class="fh_appform_button_action" id="fh_appform_show_deviceId">Show Device Id</button>' +
-    '</div>' +
-    '<br/>' +
-      '<div id="config_debugging_log_enabled" class="form-group" style="margin:5px 5px 5px 5px;">'+
-        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;margin-top:5px;">Log Enabled</label>'+
-        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" type="checkbox" data-key="logger"  <%= logger?"checked":"" %> value="true"/>'+
-      '</div>'+
-      '<br/>' +
-      '<div id="config_debugging_log_level" class="form-group" style="margin:5px 5px 5px 5px;">'+
-        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;margin-top:5px;">Log Level</label>'+
-        '<select class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="log_level">'+
-          '<%'+
-              'for (var i=0;i<log_levels.length;i++){'+
-                'var val=log_levels[i];'+
-                'var selected=(i==log_level)?"selected":"";'+
-                '%>'+
-                  '<option value="<%= i %>" <%= selected%>><%= val%></option>'+
-                '<%'+
-              '}'+
-            '%>'+
-        '</select>'+
-      '</div><br/><div id="config_debugging_log_line_limit" class="form-group" style="margin:5px 5px 5px 5px;">'+
-        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Log Line Number</label>'+
-        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 40%;float: right;" data-key="log_line_limit" value="<%= log_line_limit%>"/>'+
-      '</div><br/><div id="config_debugging_log_email" class="form-group" style="margin:5px 5px 5px 5px;">'+
-        '<label class="fh_appform_field_instructions" style="margin-top: 5px;font-weight: bold;line-height: 2em;">Log Email Address</label>'+
-        '<input class="fh_appform_field_input" style="display: inline-block;text-align: center;width: 98%;float: right;" data-key="log_email" value="<%= log_email%>"/>'+
-      '</div>'+
-      '<div class="log_buttons" style="width:100%;margin: 20px 0px 20px 0px;padding:0px 0px 0px 0px;text-align:center;">'+
-        '<button class="fh_appform_button_default" style="width:30%;margin-right:10px" type="button" id="_viewLogsBtn">View Logs</button>'+
-        '<button class="fh_appform_button_cancel" style="width:30%;margin-right:10px" type="button" id="_clearLogsBtn">Clear Logs</button>'+
-        '<button class="fh_appform_button_action" style="width:30%;" type="button" id="_sendLogsBtn">Send Logs</button>'+
-      '</div>'+
-  '</fieldset>'+
-'</div>'+
-'<div class="hidden" id="_logsViewPanel">'+
-  '<div><span class="fh_appform_button_cancel" id="_closeViewBtn">Close</span></div>'+
-  '<div class="fh_appform_field_area" id="_logViewDiv"></div>'+
-'</div>'
-  ],
+  templates: {
+      camera_options: {
+          header: '<div class="fh_appform_field_area config_camera col-xs-10 col-xs-offset-1"><div class="fh_appform_field_title"><h3>Camera</h3></div></div>',
+          camera_options_quality: '<div class="form-group col-xs-offset-1 col-xs-11"><label class="fh_appform_field_instructions col-xs-3">Quality</label><input class="fh_appform_field_input col-xs-8 col-xs-offset-1 text-center" type="number" value="<%= quality%>"/></div>',
+          camera_options_target_width: '<div class="form-group col-xs-offset-1 col-xs-11"><label class="fh_appform_field_instructions col-xs-3" >Target Width</label><input class="fh_appform_field_input col-xs-8 col-xs-offset-1 text-center" type="number" data-key="targetWidth" value="<%= targetWidth%>"/></div>',
+          camera_options_target_height: '<div class="form-group col-xs-offset-1 col-xs-11"><label class="fh_appform_field_instructions col-xs-3">Target Height</label><input class="fh_appform_field_input col-xs-8 col-xs-offset-1 text-center" type="number" data-key="targetHeight" value="<%= targetHeight%>"/></div>',
+      },
+      submission_options: {
+          header: '<div class="fh_appform_field_area config_submission col-xs-10 col-xs-offset-1"><div class="fh_appform_field_title"><h3>Submission</h3></div></div>',
+          submission_options_max_retries: '<div class="form-group col-xs-offset-1 col-xs-11"><label class="fh_appform_field_instructions col-xs-3" >Max Retries</label><input class="fh_appform_field_input col-xs-8 col-xs-offset-1 text-center" type="number"  data-key="max_retries" value="<%= max_retries%>"/></div>',
+          submission_options_timeout: '<div class="form-group col-xs-offset-1 col-xs-11" ><label class="fh_appform_field_instructions col-xs-3" >Timeout</label><input class="fh_appform_field_input col-xs-8 col-xs-offset-1 text-center" type="number" data-key="timeout" value="<%= timeout%>"/></div>',
+          submission_options_sent_save_min: '<div class="form-group col-xs-offset-1 col-xs-11"><label class="fh_appform_field_instructions col-xs-3" >Min Sent Items to Save</label><input class="fh_appform_field_input col-xs-8 col-xs-offset-1 text-center" type="number" data-key="sent_save_min" value="<%= sent_save_min%>"/></div>',
+          submission_options_sent_save_max: '<div class="form-group col-xs-offset-1 col-xs-11"><label class="fh_appform_field_instructions col-xs-3">Max Sent Items to Save</label><input class="fh_appform_field_input col-xs-8 col-xs-offset-1 text-center" type="number" data-key="sent_save_max" value="<%= sent_save_max%>"/></div>',
+      },
+      debugging_options: {
+          header: '<div class="fh_appform_field_area config_debugging col-xs-10 col-xs-offset-1"><div class="fh_appform_field_title"><h3>Debugging</h4></div></div>',
+          debugging_show_device_id : '<div class="form-group col-xs-offset-1 col-xs-11">' +
+              '<label class="fh_appform_field_instructions col-xs-3">Device Id</label>' +
+              '<button class="fh_appform_button_action col-xs-4" id="fh_appform_show_deviceId">Show Device Id</button>' +
+              '</div>',
+          debugging_options_log_enabled: '<div class="form-group col-xs-offset-1 col-xs-11">' +
+              '<label class="fh_appform_field_instructions col-xs-3">Log Enabled</label>' +
+              '<input class="fh_appform_field_input col-xs-8 col-xs-offset-1" type="checkbox" data-key="logger"  <%= logger?"checked":"" %> value="true"/>' +
+              '</div>',
+          debugging_options_log_level: '<div class="form-group col-xs-offset-1 col-xs-11">' +
+              '<label class="fh_appform_field_instructions col-xs-3">Log Level</label>' +
+              '<select class="fh_appform_field_input col-xs-8 col-xs-offset-1" data-key="log_level">' +
+              '<%' +
+              'for (var i=0;i<log_levels.length;i++){' +
+              'var val=log_levels[i];' +
+              'var selected=(i==log_level)?"selected":"";' +
+              '%>' +
+              '<option value="<%= i %>" <%= selected%>><%= val%></option>' +
+              '<%' +
+              '}' +
+              '%>' +
+              '</select>' +
+              '</div>',
+          debugging_options_log_email: '<div class="form-group col-xs-offset-1 col-xs-11">' +
+              '<label class="fh_appform_field_instructions col-xs-3">Log Email Address</label>' +
+              '<input class="fh_appform_field_input col-xs-8 col-xs-offset-1 text-center" type="email" data-key="log_email" value="<%= log_email%>"/>' +
+              '</div>',
+          debugging_options_log_line_limit: '<div class="form-group col-xs-offset-1 col-xs-11">' +
+              '<label class="fh_appform_field_instructions col-xs-3">Log Line Number</label>' +
+              '<input class="fh_appform_field_input col-xs-8 col-xs-offset-1 text-center" type="number" data-key="log_line_limit" value="<%= log_line_limit%>"/>' +
+              '</div>',
+      },
+      log_buttons: '<div class="log_buttons">' +
+          '<button class="fh_appform_button_default col-xs-4" type="button" id="_viewLogsBtn">View Logs</button>' +
+          '<button class="fh_appform_button_cancel col-xs-4" type="button" id="_clearLogsBtn">Clear Logs</button>' +
+          '<button class="fh_appform_button_action col-xs-4" type="button" id="_sendLogsBtn">Send Logs</button>' +
+          '</div>',
+      log_panel: '<div class="hidden" id="_logsViewPanel">' +
+          '<div class="col-xs-12"><button class="fh_appform_button_cancel btn btn-danger col-xs-12" id="_closeViewBtn">Close</button></div>' +
+          '<div class="fh_appform_field_area" id="_logViewDiv"></div>' +
+          '</div>',
+      log_panel_css: '<style type="text/css">' +
+          '#_logsViewPanel{' +
+          'position:fixed;' +
+          'left:10px;' +
+          'top:10px;' +
+          'right:10px;' +
+          'bottom:10px;' +
+          'padding:8px;' +
+          'background: white;' +
+          '-webkit-border-radius: 8px;' +
+          'border-radius: 8px;' +
+          'overflow: auto;' +
+          '}' +
+          '#_closeViewBtn{' +
+          'border: 1px solid;' +
+          'padding:3px;' +
+          'margin-top:50px;' +
+          '}' +
+          '</style>'
+  },
   "_myEvents": {
     "click #_viewLogsBtn": "viewLogs",
     "click #_clearLogsBtn": "clearLogs",
@@ -3998,28 +3977,50 @@ var ConfigView = Backbone.View.extend({
     this.$el.find("#_logsViewPanel").hide();
   },
   "events": {},
-  "initialize": function() {
+  initialize: function(options) {
+    this.options = options;
     this.events = _.extend({}, this._myEvents, this.events);
   },
   "render": function() {
-    var self = this;
-    self.$el.html("");
-    var props = $fh.forms.config.getConfig();
-    props.deviceId = $fh.forms.config.getDeviceId();
-    var html = _.template(self.templates.join(""), props);
-    self.$el.append(html);
+      this.$el.html("");
+      var props = $fh.forms.config.getConfig();
 
-    if($fh.forms.config.editAllowed() === false){
-      self.$el.find(".config_camera").hide();
-      self.$el.find(".config_submission").hide();
 
-      self.$el.find("#config_debugging_log_enabled").hide();
-      self.$el.find("#config_debugging_log_level").hide();
-      self.$el.find("#config_debugging_log_line_limit").hide();
-      self.$el.find("#config_debugging_log_email").hide();
-    }
+      var html = "";
 
-    return self;
+      //camera options
+      //submission
+      //Debugging Options
+      var camera_options_ele = $(this.templates.camera_options.header);
+      var submission_options_ele = $(this.templates.submission_options.header);
+      var debugging_options_ele = $(this.templates.debugging_options.header);
+
+      _.each(this.templates.camera_options, function(val, key) {
+          if (key !== 'header') {
+              camera_options_ele.append(_.template(val, props));
+          }
+      });
+
+      _.each(this.templates.submission_options, function(val, key) {
+          if (key !== 'header') {
+              submission_options_ele.append(_.template(val, props));
+          }
+      });
+
+      _.each(this.templates.debugging_options, function(val, key) {
+          if (key !== 'header') {
+              debugging_options_ele.append(_.template(val, props));
+          }
+      });
+
+
+      this.$el.append(camera_options_ele);
+      this.$el.append(submission_options_ele);
+      this.$el.append(debugging_options_ele);
+      this.$el.append(this.templates.log_buttons);
+      this.$el.append(this.templates.log_panel);
+      this.$el.append(this.templates.log_panel_css);
+      return this;
   },
   "save": function(cb) {
     $fh.forms.log.l("Saving config");
