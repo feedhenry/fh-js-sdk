@@ -22,18 +22,26 @@ var ready = function(cb){
     });
     if(!is_initialising){
       is_initialising = true;
-      initializer.init(function(err, initRes){
-        is_initialising = false;
-        if(err){
-          init_error = err;
-          return events.emit(constants.INIT_EVENT, err);
-        } else {
-          init_error = null;
-          is_cloud_ready = true;
-          cloud_host = new CloudHost(initRes.cloud);
-          return events.emit(constants.INIT_EVENT, null, {host: getCloudHostUrl()});
-        }
-      });
+      var fhinit = function(){
+        initializer.init(function(err, initRes){
+          is_initialising = false;
+          if(err){
+            init_error = err;
+            return events.emit(constants.INIT_EVENT, err);
+          } else {
+            init_error = null;
+            is_cloud_ready = true;
+            cloud_host = new CloudHost(initRes.cloud);
+            return events.emit(constants.INIT_EVENT, null, {host: getCloudHostUrl()});
+          }
+        });
+      }
+      if(typeof window.cordova !== "undefined" || typeof window.phonegap !== "undefined"){
+        //if we are running inside cordova/phonegap, only init after device is ready to ensure the device id is the right one
+        document.addEventListener("deviceready", fhinit, false);
+      } else {
+        fhinit();
+      }
     }
   }
 }

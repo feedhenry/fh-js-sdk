@@ -335,7 +335,7 @@ module.exports = function(grunt) {
   //run tests in phatomjs
   grunt.registerTask('test', ['jshint', 'browserify:dist', 'browserify:require', 'browserify:test', 'connect:server', 'mocha_phantomjs:test']);
 
-  grunt.registerTask('concat-core-sdk', ['jshint', 'browserify:dist', 'concat:forms_core', 'concat:forms_sdk', 'concat:lawnchair', 'concat:crypto', 'concat:forms_core_no_v2', 'concat:forms_backbone', 'concat:forms_backboneRequireJS']);
+  grunt.registerTask('concat-core-sdk', ['jshint',  'concat:lawnchair', 'concat:crypto', 'browserify:dist', 'concat:forms_core', 'concat:forms_sdk','concat:forms_core_no_v2', 'concat:forms_backbone', 'concat:forms_backboneRequireJS']);
 
   grunt.registerTask('concat-titanium', ['concat:lawnchair', 'concat:lawnchair_titanium', 'concat:crypto']);
 
