@@ -214,9 +214,14 @@ module.exports = function(grunt) {
       forms_templates: {
         src: ["src/appforms/src/backbone/templates.js"],
         dest: "src/appforms/src/backbone/040-view00Templates.js",
+        options: {
+          processTemplates: false
+        },
         replacements: [{
           from: '************TEMPLATES***************',                   // string replacement
-          to: grunt.file.read("src/appforms/src/backbone/040-view00Templates.html", {encoding: 'utf8'}).replace(/(\r\n|\n|\r)/gm,"")
+          to: function(){
+            return grunt.file.read("src/appforms/src/backbone/040-view00Templates.html", {encoding: 'utf8'}).replace(/(\r\n|\n|\r)/gm,""); 
+          }
         }]
       }
     },

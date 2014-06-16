@@ -1521,7 +1521,7 @@ var BaseView=Backbone.View.extend({
     "onLoad":function(){},
     "onLoadEnd":function(){}
 }); 
-var FormTemplates = '<script type="text/template" id="temp_form_structure"><div id="fh_appform_container" class="fh_appform_form_area col-xs-offset-1 col-xs-10 fh_appform_container">  <div class="fh_appform_logo_container  col-xs-12">    <div class="fh_appform_logo  col-xs-12">    </div>  </div>  <div class="fh_appform_form_title col-xs-12 text-center">    <h1></h1>  </div></div></script>';
+var FormTemplates = '<script type="text/template" id="temp_form_structure"><div id="fh_appform_container" class="fh_appform_form_area col-xs-offset-1 col-xs-10 fh_appform_container">  <div class="fh_appform_logo_container  col-xs-12">    <div class="fh_appform_logo  col-xs-12">    </div>  </div>  <div class="fh_appform_form_title col-xs-12 text-center">    <h1><%= title%></h1>  </div></div></script><script type="text/template" id="temp_page_structure"><div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area panel panel-default">  <div class="panel-heading text-center" data-field="fh_appform_<%= sectionId %>_body">    <%= title %>  </div>  <div id="fh_appform_<%= sectionId %>_body" class="panel-collapse collapse">    <div class="panel-body fh_appform_section_body">    </div>  </div></div></script><script type="text/template" id="temp_field_structure"><div class="fh_appform_input_wrapper">  <div class="fh_appform_field_title">    <h3 class="text-left  <%= required%>">    <%= title %>    </h3>  </div>  <p class="fh_appform_field_instructions">  <h4 class="text-left">  <%= helpText %>  </h4>  </p></div><div class="fh_appform_field_button_bar col-xs-12" >  <button class="fh_appform_removeInputBtn special_button fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5">-</button>  <button class="special_button fh_appform_addInputBtn fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5 pull-right">+</button></div></script><script type="text/template" id="temp_field_wrapper"><div id="wrapper_<%= fieldId %>_<%= index %>" class="col-xs-12">  <% if(repeating === true){ %>    <div class="<%= required %> fh_appform_field_title fh_appform_field_numbering col-xs-2">      <%=d_index%>.    </div>  <% } %>    <div class="fh_appform_field_input_container repeating <%= repeating === true ? \"col-xs-10\" : \"col-xs-12\"%>" >    <%= inputHtml %>    <div class="fh_appform_field_error_container fh_appform_hidden col-xs-12">    </div>  </div></div></script>';
 var FormListView = BaseView.extend({
     events: {
         'click button#formlist_reload': 'reload'
@@ -1795,7 +1795,17 @@ var FieldView = Backbone.View.extend({
         var index = this.curRepeat;
         var inputHtml = this.renderInput(index);
         var eleHtml = this.renderEle("", inputHtml, index);
-        this.$fieldWrapper.append(eleHtml);
+
+        var eleTemplate = _.template($("#temp_field_wrapper").html(), {
+            inputHtml: inputHtml, 
+            index: index,
+            d_index: index + 1,
+            required: this.model.isRequired() ? "required" : "",
+            fieldId: this.model.getFieldId(),
+            repeating: this.model.isRepeating()  
+        });
+
+        this.$fieldWrapper.append(eleTemplate);
         this.curRepeat++;
         this.onElementShow(index);
     },
@@ -1808,25 +1818,29 @@ var FieldView = Backbone.View.extend({
         this.maxRepeat = 1;
         this.curRepeat = 0;
 
-        this.$fieldWrapper.append(this.renderTitle());
-        this.$fieldWrapper.append(this.renderHelpText());
+        var fieldTemplate = $(_.template($("#temp_field_structure").html(), {
+            title: this.model.getName(),
+            helpText: this.model.getHelpText(),
+            required: this.model.isRequired() ? "required" : "",
+            repeating: this.model.isRepeating()
+        }));
+
+        this.$fieldWrapper = $(fieldTemplate[0]);
+        this.$fh_appform_fieldActionBar = $(fieldTemplate[1]);
 
         if (this.model.isRepeating()) {
             this.initialRepeat = this.model.getMinRepeat();
             this.maxRepeat = this.model.getMaxRepeat();
         }
+
         for (var i = 0; i < this.initialRepeat; i++) {
             this.addElement();
         }
 
-        this.$el.append(this.$fieldWrapper);
-        this.$el.append(this.$fh_appform_fieldActionBar);
+        this.$el.append(fieldTemplate);
         this.$el.attr("data-field", this.model.getFieldId());
 
-
         this.options.parentEl.append(this.$el);
-
-
 
         // force the element to be initially hidden
         if (this.$el.hasClass("hide")) {
@@ -1852,12 +1866,7 @@ var FieldView = Backbone.View.extend({
         this.options = options;
         _.bindAll(this, 'dumpContent', 'clearError', 'onAddInput', 'onRemoveInput');
 
-        // if (this.model.isRequired()) {
-        //   this.$el.addClass('required');
-        // }
-        this.$fieldWrapper = $(this.fieldWrapper);
-        this.$fh_appform_fieldActionBar = $(this.fh_appform_fieldActionBar);
-        // only call render once. model will never update
+        
         this.render();
     },
 
@@ -3106,7 +3115,7 @@ var PageView=BaseView.extend({
   templates : {
     pageTitle: '<div class="fh_appform_page_title text-center"><%= pageTitle %></div>',
     pageDescription: '<div class="fh_appform_page_description text-center"><h4><%= pageDescription%></h4></div>',
-    section: '<div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area panel panel-default"><div class="panel-heading"><%= title %></div><div class="panel-body"></div></div>'
+    section: ''
   },
 
   initialize: function(options) {
@@ -3138,12 +3147,21 @@ var PageView=BaseView.extend({
 
     if(sections != null){
       var sectionKey;
+
+      var sectionGroup = $('<div class="panel-group" id="accordion"></div>');
       
 
       //Add the section fields
       for(sectionKey in sections){
-        var sectionEl = $(_.template(this.templates.section, {"sectionId": sectionKey, title: sections[sectionKey].title}));
-        self.$el.append(sectionEl);
+        var sectionEl = $(_.template($('#temp_page_structure').html(), {"sectionId": sectionKey, title: sections[sectionKey].title}));
+        sectionEl.find('.panel-heading').click(function(e){
+          if($(e.target).data()){
+            if($(e.target).data().field){
+              $('#' + $(e.target).data().field).collapse('toggle');
+            }  
+          }
+        });
+        sectionGroup.append(sectionEl);
         sections[sectionKey].fields.forEach(function(field, index){
           var fieldType = field.getType();
           if (self.viewMap[fieldType]) {
@@ -3165,6 +3183,8 @@ var PageView=BaseView.extend({
           }
         });
       }
+
+      this.$el.append(sectionGroup);
     } else {
       fieldModelList.forEach(function (field, index) {
         if(!field) {
@@ -3536,6 +3556,7 @@ var FormView = BaseView.extend({
   render: function() {
     this.$el.find("#fh_appform_container.fh_appform_form_area").append(this.templates.buttons);
     this.rebindButtons();
+    this.hideAllPages();
     this.pageViews[0].show();
     this.pageNum = 0;
     this.steps.activePageChange(this);

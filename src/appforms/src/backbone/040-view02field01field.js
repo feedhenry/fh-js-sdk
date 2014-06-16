@@ -132,7 +132,17 @@ var FieldView = Backbone.View.extend({
         var index = this.curRepeat;
         var inputHtml = this.renderInput(index);
         var eleHtml = this.renderEle("", inputHtml, index);
-        this.$fieldWrapper.append(eleHtml);
+
+        var eleTemplate = _.template($("#temp_field_wrapper").html(), {
+            inputHtml: inputHtml, 
+            index: index,
+            d_index: index + 1,
+            required: this.model.isRequired() ? "required" : "",
+            fieldId: this.model.getFieldId(),
+            repeating: this.model.isRepeating()  
+        });
+
+        this.$fieldWrapper.append(eleTemplate);
         this.curRepeat++;
         this.onElementShow(index);
     },
@@ -145,25 +155,29 @@ var FieldView = Backbone.View.extend({
         this.maxRepeat = 1;
         this.curRepeat = 0;
 
-        this.$fieldWrapper.append(this.renderTitle());
-        this.$fieldWrapper.append(this.renderHelpText());
+        var fieldTemplate = $(_.template($("#temp_field_structure").html(), {
+            title: this.model.getName(),
+            helpText: this.model.getHelpText(),
+            required: this.model.isRequired() ? "required" : "",
+            repeating: this.model.isRepeating()
+        }));
+
+        this.$fieldWrapper = $(fieldTemplate[0]);
+        this.$fh_appform_fieldActionBar = $(fieldTemplate[1]);
 
         if (this.model.isRepeating()) {
             this.initialRepeat = this.model.getMinRepeat();
             this.maxRepeat = this.model.getMaxRepeat();
         }
+
         for (var i = 0; i < this.initialRepeat; i++) {
             this.addElement();
         }
 
-        this.$el.append(this.$fieldWrapper);
-        this.$el.append(this.$fh_appform_fieldActionBar);
+        this.$el.append(fieldTemplate);
         this.$el.attr("data-field", this.model.getFieldId());
 
-
         this.options.parentEl.append(this.$el);
-
-
 
         // force the element to be initially hidden
         if (this.$el.hasClass("hide")) {
@@ -189,12 +203,7 @@ var FieldView = Backbone.View.extend({
         this.options = options;
         _.bindAll(this, 'dumpContent', 'clearError', 'onAddInput', 'onRemoveInput');
 
-        // if (this.model.isRequired()) {
-        //   this.$el.addClass('required');
-        // }
-        this.$fieldWrapper = $(this.fieldWrapper);
-        this.$fh_appform_fieldActionBar = $(this.fh_appform_fieldActionBar);
-        // only call render once. model will never update
+        
         this.render();
     },
 

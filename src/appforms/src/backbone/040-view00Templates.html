@@ -9,3 +9,48 @@
   </div>
 </div>
 </script>
+<script type="text/template" id="temp_page_structure">
+<div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area panel panel-default">
+  <div class="panel-heading text-center" data-field="fh_appform_<%= sectionId %>_body">
+    <%= title %>
+  </div>
+  <div id="fh_appform_<%= sectionId %>_body" class="panel-collapse collapse">
+    <div class="panel-body fh_appform_section_body">
+    </div>
+  </div>
+</div>
+</script>
+<script type="text/template" id="temp_field_structure">
+<div class="fh_appform_input_wrapper">
+  <div class="fh_appform_field_title">
+    <h3 class="text-left  <%= required%>">
+    <%= title %>
+    </h3>
+  </div>
+  <p class="fh_appform_field_instructions">
+  <h4 class="text-left">
+  <%= helpText %>
+  </h4>
+  </p>
+</div>
+<div class="fh_appform_field_button_bar col-xs-12" >
+  <button class="fh_appform_removeInputBtn special_button fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5">-</button>
+  <button class="special_button fh_appform_addInputBtn fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5 pull-right">+</button>
+</div>
+</script>
+<script type="text/template" id="temp_field_wrapper">
+<div id="wrapper_<%= fieldId %>_<%= index %>" class="col-xs-12">
+
+  <% if(repeating === true){ %>
+    <div class="<%= required %> fh_appform_field_title fh_appform_field_numbering col-xs-2">
+      <%=d_index%>.
+    </div>
+  <% } %>
+  
+  <div class="fh_appform_field_input_container repeating <%= repeating === true ? \"col-xs-10\" : \"col-xs-12\"%>" >
+    <%= inputHtml %>
+    <div class="fh_appform_field_error_container fh_appform_hidden col-xs-12">
+    </div>
+  </div>
+</div>
+</script>
