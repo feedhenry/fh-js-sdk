@@ -160,7 +160,14 @@ module.exports = function(grunt) {
             function end () {
               var t = data;
               if(file.indexOf("constants.js") >= 0){
-                t = data.replace("BUILD_VERSION", pkg.version);
+                var version = pkg.version;
+                console.log("found current version = " + version);
+                if(process.env.BUILD_NUMBER){
+                  console.log("found BUILD_NUMBER in process.env " + process.env.BUILD_NUMBER);
+                  version = version.replace(/BUILD\-NUMBER/g, process.env.BUILD_NUMBER);
+                }
+                console.log("Version to inject is " + version);
+                t = data.replace("BUILD_VERSION", version);
               }
               this.queue(t);
               this.queue(null);
