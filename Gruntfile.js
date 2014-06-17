@@ -131,7 +131,11 @@ module.exports = function(grunt) {
             function end () {
               var t = data;
               if(file.indexOf("constants.js") >= 0){
-                t = data.replace("BUILD_VERSION", pkg.version);
+                var version = pkg.version;
+                if(process.env.BUILD_NUMBER){
+                  version.replace(/BUILD-NUMBER/g, process.env.BUILD_NUMBER);
+                }
+                t = data.replace("BUILD_VERSION", version);
               }
               this.queue(t);
               this.queue(null);

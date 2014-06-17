@@ -1,5 +1,5 @@
 # Changelog - FeedHenry Javascript SDK
-## 2.0.28-alpha - 2014-06-17 - IR230 - Wei Li
+## 2.0.28 - 2014-06-17 - IR230 - Wei Li
 
 * 7449 - Init FH JS SDK on deviceready when deployed to cordova apps
 
