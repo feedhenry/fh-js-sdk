@@ -5,8 +5,8 @@ FieldSignatureView = FieldView.extend({
         signaturePad: ['<div class="sigPad">', '<ul class="sigNav col-xs-12">', '<button class="clearButton fh_appform_button_cancel btn btn-danger col-xs-5 col-xs-offset-1">Clear</button><button class="cap_sig_done_btn fh_appform_button_action btn btn-primary col-xs-5 col-xs-offset-1">Done</button>', '<br style="clear:both;" />', '</ul>', '<div class="sig sigWrapper">', '<canvas class="pad" width="<%= canvasWidth %>" height="<%= canvasHeight %>"></canvas>', '</div>', '</div>']
     },
 
-    initialize: function() {
-        FieldView.prototype.initialize.call(this, arguments);
+    initialize: function(options) {
+        FieldView.prototype.initialize.call(this, options);
         this.on('visible', this.clearError);
     },
     onElementShow: function(index) {

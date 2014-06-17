@@ -41,9 +41,6 @@ var PageView=BaseView.extend({
     // all pages hidden initially
     this.$el.empty().addClass('fh_appform_page fh_appform_hidden col-xs-12');
 
-    //Need to add the page title and description
-    this.$el.append(_.template(this.templates.pageDescription, {pageDescription: this.model.getDescription()}));
-
     // add to parent before init fields so validation can work
     this.options.parentEl.append(this.$el);
 

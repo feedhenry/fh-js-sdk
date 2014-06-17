@@ -246,6 +246,16 @@ var FormView = BaseView.extend({
   getSubmission: function() {
     return this.submission;
   },
+  getPageIndexById: function(pageId){
+    for (var i = 0; i < this.pageViews.length; i++) {
+      var pageView = this.pageViews[i];
+      var pId = pageView.model.getPageId();
+      if (pId === pageId) {
+        return i;
+      }
+    }
+    return null;
+  },
   getPageViewById: function(pageId) {
     for (var i = 0; i < this.pageViews.length; i++) {
       var pageView = this.pageViews[i];
@@ -381,21 +391,28 @@ var FormView = BaseView.extend({
 
     return displayedPages;
   },
-  nextPage: function() {
+  displayCurrentPage: function(){
     this.hideAllPages();
-    this.pageNum = this.getNextPageIndex(this.pageNum);
     this.pageViews[this.pageNum].show();
     this.steps.activePageChange(this);
     this.checkPages();
     this.scrollToTop();
   },
+  goToPage: function(pageNum){
+    if(typeof(pageNum) !== "undefined" && !isNaN(parseInt(pageNum))){
+      this.pageNum = parseInt(pageNum);
+      this.displayCurrentPage();
+    } else {
+      $fh.forms.log.e("Error switching page: Invalid argument ", pageNum);
+    }     
+  },
+  nextPage: function() {
+    this.pageNum = this.getNextPageIndex(this.pageNum);
+    this.displayCurrentPage();
+  },
   prevPage: function() {
-    this.hideAllPages();
     this.pageNum = this.getPrevPageIndex(this.pageNum);
-    this.pageViews[this.pageNum].show();
-    this.steps.activePageChange(this);
-    this.checkPages();
-    this.scrollToTop();
+    this.displayCurrentPage();
   },
   scrollToTop: function(){
     //Positioning the window to the top of the form container

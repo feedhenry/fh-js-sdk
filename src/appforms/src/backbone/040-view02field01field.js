@@ -17,7 +17,7 @@ var FieldView = Backbone.View.extend({
     fh_appform_fieldActionBar: "<div class='fh_appform_field_button_bar col-xs-12' ><button class='fh_appform_removeInputBtn special_button fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5'>-</button><button class='special_button fh_appform_addInputBtn fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5 pull-right'>+</button></div>",
     title: '<div class="fh_appform_field_title"><h3 class="text-left  <%= required%>"><%= title %></h3></div>',
     titleRepeating: '<div class="fh_appform_field_title"><h3 class="text-left"><%= title %></h3></div>',
-    instructions: '<p class="fh_appform_field_instructions"><h4 class="text-left"><%= helpText %></h4></p>',
+    instructions: '',
     events: {
         "change": "contentChanged",
         "blur input,select,textarea": "validate",
@@ -129,6 +129,7 @@ var FieldView = Backbone.View.extend({
 
     },
     addElement: function() {
+        var self = this;
         var index = this.curRepeat;
         var inputHtml = this.renderInput(index);
         var eleHtml = this.renderEle("", inputHtml, index);
@@ -137,7 +138,7 @@ var FieldView = Backbone.View.extend({
             inputHtml: inputHtml, 
             index: index,
             d_index: index + 1,
-            required: this.model.isRequired() ? "required" : "",
+            required: this.model.isRequired() ? self.requiredClassName : "",
             fieldId: this.model.getFieldId(),
             repeating: this.model.isRepeating()  
         });
@@ -158,7 +159,7 @@ var FieldView = Backbone.View.extend({
         var fieldTemplate = $(_.template($("#temp_field_structure").html(), {
             title: this.model.getName(),
             helpText: this.model.getHelpText(),
-            required: this.model.isRequired() ? "required" : "",
+            required: this.model.isRequired() ? self.requiredClassName : "",
             repeating: this.model.isRepeating()
         }));
 

@@ -27,11 +27,12 @@
     <%= title %>
     </h3>
   </div>
-  <p class="fh_appform_field_instructions">
-  <h4 class="text-left">
-  <%= helpText %>
-  </h4>
-  </p>
+
+  <% if(helpText){ %>
+    <p class="fh_appform_field_instructions">
+      <%= helpText %>
+    </p>
+  <% } %>
 </div>
 <div class="fh_appform_field_button_bar col-xs-12" >
   <button class="fh_appform_removeInputBtn special_button fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5">-</button>
@@ -39,7 +40,7 @@
 </div>
 </script>
 <script type="text/template" id="temp_field_wrapper">
-<div id="wrapper_<%= fieldId %>_<%= index %>" class="col-xs-12">
+<div id="wrapper_<%= fieldId %>_<%= index %>" class="col-xs-12" style="padding:0px;">
 
   <% if(repeating === true){ %>
     <div class="<%= required %> fh_appform_field_title fh_appform_field_numbering col-xs-2">

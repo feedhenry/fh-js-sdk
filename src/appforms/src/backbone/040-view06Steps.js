@@ -1,10 +1,13 @@
 StepsView = Backbone.View.extend({
-  className: 'fh_appform_steps col-xs-12',
+  className: 'fh_appform_progress_steps col-xs-12',
 
   templates: {
       table: '<ul class="pagination pagination-lg col-xs-12"></ul>',
-      step: '<li><span class="text-center" style="width: <%= width %>%;"><%= step_num %></span></li>',
+      step: '<li data-index="<%= index %>"><span class="number_container text-center" style="width: <%= width %>%;"><%= step_num %></span></li>',
       page_title: '<div class="col-xs-12 text-center"><h3 class="fh_appform_page_title"></h3></div>'
+  },
+  events: {
+    'click li': 'switchPage'
   },
 
   initialize: function(options) {
@@ -33,6 +36,7 @@ StepsView = Backbone.View.extend({
       var item = $(_.template(self.templates.step, {
           step_name: pageModel.getName(),
           step_num: index + 1,
+          index: self.parentView.getPageIndexById(pageId),
           width: width
       }));
       $(table).append(item);
@@ -40,6 +44,16 @@ StepsView = Backbone.View.extend({
 
     this.$el.append(table);
     return this;
+  },
+  switchPage: function(e){
+    var index = 0;
+
+    if(e && $(e.currentTarget).data()){
+      index = $(e.currentTarget).data().index;
+      if(typeof(index) !== "undefined"){
+        this.parentView.goToPage(index);
+      }
+    }
   },
 
   activePageChange: function() {

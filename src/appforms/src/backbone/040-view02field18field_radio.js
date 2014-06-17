@@ -1,6 +1,6 @@
 FieldRadioView = FieldView.extend({
   hidden_field: '<input  id="radio<%= id %>" type="fh_appform_hidden" value="" data-type="radio">',
-  choice: '<input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" class="field radio" value="<%= value %>" type="radio"><label class="choice" ><%= choice %></label><br/>',
+  choice: '<div class="radio"><label class="choice" ><input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" class="field radio" value="<%= value %>" type="radio"><%= choice %></label></div>',
   radio: '<div class="fh_appform_field_input <%= repeatingClassName%>"><%= radioChoices %></div>',
 
   renderInput: function(index) {

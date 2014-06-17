@@ -353,7 +353,7 @@ module.exports = function(grunt) {
 
   grunt.registerTask('concat-forms-backbone', ['replace:forms_templates', 'concat:forms_backbone', 'concat:forms_backboneRequireJS'])
 
-  grunt.registerTask('concat-core-sdk', ['jshint', 'browserify:dist', 'concat:forms_core', 'concat:forms_sdk', 'concat:lawnchair', 'concat:crypto', 'concat:forms_core_no_v2', 'concat-forms-backbone' ]);
+  grunt.registerTask('concat-core-sdk', ['jshint', 'concat:lawnchair', 'concat:crypto', 'browserify:dist', 'concat:forms_core', 'concat:forms_sdk', 'concat:forms_core_no_v2', 'concat-forms-backbone' ]);
 
   grunt.registerTask('concat-titanium', ['concat:lawnchair', 'concat:lawnchair_titanium', 'concat:crypto']);
 

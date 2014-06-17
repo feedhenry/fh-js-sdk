@@ -1521,7 +1521,7 @@ var BaseView=Backbone.View.extend({
     "onLoad":function(){},
     "onLoadEnd":function(){}
 }); 
-var FormTemplates = '<script type="text/template" id="temp_form_structure"><div id="fh_appform_container" class="fh_appform_form_area col-xs-offset-1 col-xs-10 fh_appform_container">  <div class="fh_appform_logo_container  col-xs-12">    <div class="fh_appform_logo  col-xs-12">    </div>  </div>  <div class="fh_appform_form_title col-xs-12 text-center">    <h1><%= title%></h1>  </div></div></script><script type="text/template" id="temp_page_structure"><div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area panel panel-default">  <div class="panel-heading text-center" data-field="fh_appform_<%= sectionId %>_body">    <%= title %>  </div>  <div id="fh_appform_<%= sectionId %>_body" class="panel-collapse collapse">    <div class="panel-body fh_appform_section_body">    </div>  </div></div></script><script type="text/template" id="temp_field_structure"><div class="fh_appform_input_wrapper">  <div class="fh_appform_field_title">    <h3 class="text-left  <%= required%>">    <%= title %>    </h3>  </div>  <p class="fh_appform_field_instructions">  <h4 class="text-left">  <%= helpText %>  </h4>  </p></div><div class="fh_appform_field_button_bar col-xs-12" >  <button class="fh_appform_removeInputBtn special_button fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5">-</button>  <button class="special_button fh_appform_addInputBtn fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5 pull-right">+</button></div></script><script type="text/template" id="temp_field_wrapper"><div id="wrapper_<%= fieldId %>_<%= index %>" class="col-xs-12">  <% if(repeating === true){ %>    <div class="<%= required %> fh_appform_field_title fh_appform_field_numbering col-xs-2">      <%=d_index%>.    </div>  <% } %>    <div class="fh_appform_field_input_container repeating <%= repeating === true ? \"col-xs-10\" : \"col-xs-12\"%>" >    <%= inputHtml %>    <div class="fh_appform_field_error_container fh_appform_hidden col-xs-12">    </div>  </div></div></script>';
+var FormTemplates = '<script type="text/template" id="temp_form_structure"><div id="fh_appform_container" class="fh_appform_form_area col-xs-offset-1 col-xs-10 fh_appform_container">  <div class="fh_appform_logo_container  col-xs-12">    <div class="fh_appform_logo  col-xs-12">    </div>  </div>  <div class="fh_appform_form_title col-xs-12 text-center">    <h1><%= title%></h1>  </div></div></script><script type="text/template" id="temp_page_structure"><div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area panel panel-default">  <div class="panel-heading text-center" data-field="fh_appform_<%= sectionId %>_body">    <%= title %>  </div>  <div id="fh_appform_<%= sectionId %>_body" class="panel-collapse collapse">    <div class="panel-body fh_appform_section_body">    </div>  </div></div></script><script type="text/template" id="temp_field_structure"><div class="fh_appform_input_wrapper">  <div class="fh_appform_field_title">    <h3 class="text-left  <%= required%>">    <%= title %>    </h3>  </div>  <% if(helpText){ %>    <p class="fh_appform_field_instructions">      <%= helpText %>    </p>  <% } %></div><div class="fh_appform_field_button_bar col-xs-12" >  <button class="fh_appform_removeInputBtn special_button fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5">-</button>  <button class="special_button fh_appform_addInputBtn fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5 pull-right">+</button></div></script><script type="text/template" id="temp_field_wrapper"><div id="wrapper_<%= fieldId %>_<%= index %>" class="col-xs-12" style="padding:0px;">  <% if(repeating === true){ %>    <div class="<%= required %> fh_appform_field_title fh_appform_field_numbering col-xs-2">      <%=d_index%>.    </div>  <% } %>    <div class="fh_appform_field_input_container repeating <%= repeating === true ? \"col-xs-10\" : \"col-xs-12\"%>" >    <%= inputHtml %>    <div class="fh_appform_field_error_container fh_appform_hidden col-xs-12">    </div>  </div></div></script>';
 var FormListView = BaseView.extend({
     events: {
         'click button#formlist_reload': 'reload'
@@ -1680,7 +1680,7 @@ var FieldView = Backbone.View.extend({
     fh_appform_fieldActionBar: "<div class='fh_appform_field_button_bar col-xs-12' ><button class='fh_appform_removeInputBtn special_button fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5'>-</button><button class='special_button fh_appform_addInputBtn fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5 pull-right'>+</button></div>",
     title: '<div class="fh_appform_field_title"><h3 class="text-left  <%= required%>"><%= title %></h3></div>',
     titleRepeating: '<div class="fh_appform_field_title"><h3 class="text-left"><%= title %></h3></div>',
-    instructions: '<p class="fh_appform_field_instructions"><h4 class="text-left"><%= helpText %></h4></p>',
+    instructions: '',
     events: {
         "change": "contentChanged",
         "blur input,select,textarea": "validate",
@@ -1792,6 +1792,7 @@ var FieldView = Backbone.View.extend({
 
     },
     addElement: function() {
+        var self = this;
         var index = this.curRepeat;
         var inputHtml = this.renderInput(index);
         var eleHtml = this.renderEle("", inputHtml, index);
@@ -1800,7 +1801,7 @@ var FieldView = Backbone.View.extend({
             inputHtml: inputHtml, 
             index: index,
             d_index: index + 1,
-            required: this.model.isRequired() ? "required" : "",
+            required: this.model.isRequired() ? self.requiredClassName : "",
             fieldId: this.model.getFieldId(),
             repeating: this.model.isRepeating()  
         });
@@ -1821,7 +1822,7 @@ var FieldView = Backbone.View.extend({
         var fieldTemplate = $(_.template($("#temp_field_structure").html(), {
             title: this.model.getName(),
             helpText: this.model.getHelpText(),
-            required: this.model.isRequired() ? "required" : "",
+            required: this.model.isRequired() ? self.requiredClassName : "",
             repeating: this.model.isRepeating()
         }));
 
@@ -2657,7 +2658,7 @@ FieldPhoneView = FieldView.extend({
 });
 FieldRadioView = FieldView.extend({
   hidden_field: '<input  id="radio<%= id %>" type="fh_appform_hidden" value="" data-type="radio">',
-  choice: '<input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" class="field radio" value="<%= value %>" type="radio"><label class="choice" ><%= choice %></label><br/>',
+  choice: '<div class="radio"><label class="choice" ><input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" class="field radio" value="<%= value %>" type="radio"><%= choice %></label></div>',
   radio: '<div class="fh_appform_field_input <%= repeatingClassName%>"><%= radioChoices %></div>',
 
   renderInput: function(index) {
@@ -2734,8 +2735,8 @@ FieldSignatureView = FieldView.extend({
         signaturePad: ['<div class="sigPad">', '<ul class="sigNav col-xs-12">', '<button class="clearButton fh_appform_button_cancel btn btn-danger col-xs-5 col-xs-offset-1">Clear</button><button class="cap_sig_done_btn fh_appform_button_action btn btn-primary col-xs-5 col-xs-offset-1">Done</button>', '<br style="clear:both;" />', '</ul>', '<div class="sig sigWrapper">', '<canvas class="pad" width="<%= canvasWidth %>" height="<%= canvasHeight %>"></canvas>', '</div>', '</div>']
     },
 
-    initialize: function() {
-        FieldView.prototype.initialize.call(this, arguments);
+    initialize: function(options) {
+        FieldView.prototype.initialize.call(this, options);
         this.on('visible', this.clearError);
     },
     onElementShow: function(index) {
@@ -3135,9 +3136,6 @@ var PageView=BaseView.extend({
     // all pages hidden initially
     this.$el.empty().addClass('fh_appform_page fh_appform_hidden col-xs-12');
 
-    //Need to add the page title and description
-    this.$el.append(_.template(this.templates.pageDescription, {pageDescription: this.model.getDescription()}));
-
     // add to parent before init fields so validation can work
     this.options.parentEl.append(this.$el);
 
@@ -3493,6 +3491,16 @@ var FormView = BaseView.extend({
   getSubmission: function() {
     return this.submission;
   },
+  getPageIndexById: function(pageId){
+    for (var i = 0; i < this.pageViews.length; i++) {
+      var pageView = this.pageViews[i];
+      var pId = pageView.model.getPageId();
+      if (pId === pageId) {
+        return i;
+      }
+    }
+    return null;
+  },
   getPageViewById: function(pageId) {
     for (var i = 0; i < this.pageViews.length; i++) {
       var pageView = this.pageViews[i];
@@ -3628,21 +3636,28 @@ var FormView = BaseView.extend({
 
     return displayedPages;
   },
-  nextPage: function() {
+  displayCurrentPage: function(){
     this.hideAllPages();
-    this.pageNum = this.getNextPageIndex(this.pageNum);
     this.pageViews[this.pageNum].show();
     this.steps.activePageChange(this);
     this.checkPages();
     this.scrollToTop();
   },
+  goToPage: function(pageNum){
+    if(typeof(pageNum) !== "undefined" && !isNaN(parseInt(pageNum))){
+      this.pageNum = parseInt(pageNum);
+      this.displayCurrentPage();
+    } else {
+      $fh.forms.log.e("Error switching page: Invalid argument ", pageNum);
+    }     
+  },
+  nextPage: function() {
+    this.pageNum = this.getNextPageIndex(this.pageNum);
+    this.displayCurrentPage();
+  },
   prevPage: function() {
-    this.hideAllPages();
     this.pageNum = this.getPrevPageIndex(this.pageNum);
-    this.pageViews[this.pageNum].show();
-    this.steps.activePageChange(this);
-    this.checkPages();
-    this.scrollToTop();
+    this.displayCurrentPage();
   },
   scrollToTop: function(){
     //Positioning the window to the top of the form container
@@ -3828,12 +3843,15 @@ SectionView=BaseView.extend({
 
 });
 StepsView = Backbone.View.extend({
-  className: 'fh_appform_steps col-xs-12',
+  className: 'fh_appform_progress_steps col-xs-12',
 
   templates: {
       table: '<ul class="pagination pagination-lg col-xs-12"></ul>',
-      step: '<li><span class="text-center" style="width: <%= width %>%;"><%= step_num %></span></li>',
+      step: '<li data-index="<%= index %>"><span class="number_container text-center" style="width: <%= width %>%;"><%= step_num %></span></li>',
       page_title: '<div class="col-xs-12 text-center"><h3 class="fh_appform_page_title"></h3></div>'
+  },
+  events: {
+    'click li': 'switchPage'
   },
 
   initialize: function(options) {
@@ -3862,6 +3880,7 @@ StepsView = Backbone.View.extend({
       var item = $(_.template(self.templates.step, {
           step_name: pageModel.getName(),
           step_num: index + 1,
+          index: self.parentView.getPageIndexById(pageId),
           width: width
       }));
       $(table).append(item);
@@ -3869,6 +3888,16 @@ StepsView = Backbone.View.extend({
 
     this.$el.append(table);
     return this;
+  },
+  switchPage: function(e){
+    var index = 0;
+
+    if(e && $(e.currentTarget).data()){
+      index = $(e.currentTarget).data().index;
+      if(typeof(index) !== "undefined"){
+        this.parentView.goToPage(index);
+      }
+    }
   },
 
   activePageChange: function() {
