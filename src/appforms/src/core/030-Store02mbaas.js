@@ -72,7 +72,7 @@ appForm.stores = function(module) {
     appForm.web.ajax.get(url, cb);
   };
   MBaaS.prototype.isOnline = function(cb){
-    var host = appForm.config.get('cloudHost', "");
+    var host = appForm.config.getCloudHost();
     var url = host + appForm.config.get('statusUrl', "/sys/info/ping");
 
     appForm.web.ajax.get(url, function(err){
@@ -89,7 +89,7 @@ appForm.stores = function(module) {
   function _getUrl(model) {
     $fh.forms.log.d("_getUrl ", model);
     var type = model.get('_type');
-    var host = appForm.config.get('cloudHost');
+    var host = appForm.config.getCloudHost();
     var mBaaSBaseUrl = appForm.config.get('mbaasBaseUrl');
     var formUrls = appForm.config.get('formUrls');
     var relativeUrl = "";

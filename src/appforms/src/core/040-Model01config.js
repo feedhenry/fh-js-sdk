@@ -1,6 +1,7 @@
 appForm.models = function(module) {
   var Model = appForm.models.Model;
   var online = true;
+  var cloudHost = "notset";
 
   function Config() {
     Model.call(this, {
@@ -67,6 +68,9 @@ appForm.models = function(module) {
       dataAgent.remoteStore.read(self, _handler);
     });
   };
+  Config.prototype.getCloudHost = function(){
+    return cloudHost;  
+  };
   Config.prototype.staticConfig = function(config) {
     var self = this;
     var defaultConfig = {"defaultConfigValues": {}, "userConfigValues": {}};
@@ -126,20 +130,19 @@ appForm.models = function(module) {
     config = config || {};
     var cloud_props = $fh.cloud_props;
     var app_props = $fh.app_props;
-    var cloudUrl;
     var mode = 'dev';
     if (app_props) {
-      cloudUrl = app_props.host;
+      cloudHost = app_props.host;
     }
     if (cloud_props && cloud_props.hosts) {
-      cloudUrl = cloud_props.hosts.url;
+      cloudHost = cloud_props.hosts.url;
     }
 
     if(typeof(config.cloudHost) === 'string'){
-      cloudUrl = config.cloudHost;
+      cloudHost = config.cloudHost;
     }
 
-    self.set('cloudHost', cloudUrl);
+    
     self.set('mbaasBaseUrl', '/mbaas');
     var appId = self.get('appId');
     self.set('formUrls', {
