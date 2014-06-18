@@ -5,7 +5,7 @@
     </div>
   </div>
   <div class="fh_appform_form_title col-xs-12 text-center">
-    <h1><%= title%></h1>
+    <%= title%>
   </div>
 </div>
 </script>
@@ -22,11 +22,17 @@
 </script>
 <script type="text/template" id="temp_field_structure">
 <div class="fh_appform_input_wrapper">
-  <div class="fh_appform_field_title">
-    <h3 class="text-left  <%= required%>">
-    <%= title %>
-    </h3>
-  </div>
+  
+  <% if(repeating === true){ %>
+    <div class="fh_appform_field_title">
+      <%= title %>
+    </div>
+  <%} else {%>
+    <div class="fh_appform_field_title <%= required %>">
+      <%= title %>
+    </div>
+  <% } %>
+  
 
   <% if(helpText){ %>
     <p class="fh_appform_field_instructions">

@@ -1521,7 +1521,7 @@ var BaseView=Backbone.View.extend({
     "onLoad":function(){},
     "onLoadEnd":function(){}
 }); 
-var FormTemplates = '<script type="text/template" id="temp_form_structure"><div id="fh_appform_container" class="fh_appform_form_area col-xs-offset-1 col-xs-10 fh_appform_container">  <div class="fh_appform_logo_container  col-xs-12">    <div class="fh_appform_logo  col-xs-12">    </div>  </div>  <div class="fh_appform_form_title col-xs-12 text-center">    <h1><%= title%></h1>  </div></div></script><script type="text/template" id="temp_page_structure"><div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area panel panel-default">  <div class="panel-heading text-center" data-field="fh_appform_<%= sectionId %>_body">    <%= title %>  </div>  <div id="fh_appform_<%= sectionId %>_body" class="panel-collapse collapse">    <div class="panel-body fh_appform_section_body">    </div>  </div></div></script><script type="text/template" id="temp_field_structure"><div class="fh_appform_input_wrapper">  <div class="fh_appform_field_title">    <h3 class="text-left  <%= required%>">    <%= title %>    </h3>  </div>  <% if(helpText){ %>    <p class="fh_appform_field_instructions">      <%= helpText %>    </p>  <% } %></div><div class="fh_appform_field_button_bar col-xs-12" >  <button class="fh_appform_removeInputBtn special_button fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5">-</button>  <button class="special_button fh_appform_addInputBtn fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5 pull-right">+</button></div></script><script type="text/template" id="temp_field_wrapper"><div id="wrapper_<%= fieldId %>_<%= index %>" class="col-xs-12" style="padding:0px;">  <% if(repeating === true){ %>    <div class="<%= required %> fh_appform_field_title fh_appform_field_numbering col-xs-2">      <%=d_index%>.    </div>  <% } %>    <div class="fh_appform_field_input_container repeating <%= repeating === true ? \"col-xs-10\" : \"col-xs-12\"%>" >    <%= inputHtml %>    <div class="fh_appform_field_error_container fh_appform_hidden col-xs-12">    </div>  </div></div></script>';
+var FormTemplates = '<script type="text/template" id="temp_form_structure"><div id="fh_appform_container" class="fh_appform_form_area col-xs-offset-1 col-xs-10 fh_appform_container">  <div class="fh_appform_logo_container  col-xs-12">    <div class="fh_appform_logo  col-xs-12">    </div>  </div>  <div class="fh_appform_form_title col-xs-12 text-center">    <%= title%>  </div></div></script><script type="text/template" id="temp_page_structure"><div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area panel panel-default">  <div class="panel-heading text-center" data-field="fh_appform_<%= sectionId %>_body">    <%= title %>  </div>  <div id="fh_appform_<%= sectionId %>_body" class="panel-collapse collapse">    <div class="panel-body fh_appform_section_body">    </div>  </div></div></script><script type="text/template" id="temp_field_structure"><div class="fh_appform_input_wrapper">    <% if(repeating === true){ %>    <div class="fh_appform_field_title">      <%= title %>    </div>  <%} else {%>    <div class="fh_appform_field_title <%= required %>">      <%= title %>    </div>  <% } %>    <% if(helpText){ %>    <p class="fh_appform_field_instructions">      <%= helpText %>    </p>  <% } %></div><div class="fh_appform_field_button_bar col-xs-12" >  <button class="fh_appform_removeInputBtn special_button fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5">-</button>  <button class="special_button fh_appform_addInputBtn fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5 pull-right">+</button></div></script><script type="text/template" id="temp_field_wrapper"><div id="wrapper_<%= fieldId %>_<%= index %>" class="col-xs-12" style="padding:0px;">  <% if(repeating === true){ %>    <div class="<%= required %> fh_appform_field_title fh_appform_field_numbering col-xs-2">      <%=d_index%>.    </div>  <% } %>    <div class="fh_appform_field_input_container repeating <%= repeating === true ? \"col-xs-10\" : \"col-xs-12\"%>" >    <%= inputHtml %>    <div class="fh_appform_field_error_container fh_appform_hidden col-xs-12">    </div>  </div></div></script>';
 var FormListView = BaseView.extend({
     events: {
         'click button#formlist_reload': 'reload'
@@ -2219,8 +2219,8 @@ FieldCameraView = FieldView.extend({
 });
 window.sampleImageNum = -1;
 FieldCheckboxView = FieldView.extend({
-  checkboxes: '<div class="fh_appform_field_input <%= repeatingClassName%>"><div class="checkboxes"><%= choices %></div></div>',
-  choice: '<input data-fieldId="<%= fieldId %>" <%= checked %> data-index="<%= index %>" name="<%= fieldId %>[]" type="checkbox" class="field checkbox" value="<%= value %>" ><label class="choice" ><%= choice %></label><br/>',
+  checkboxes: '<div class="fh_appform_field_input btn-group-vertical <%= repeatingClassName%>" data-toggle="buttons"><%= choices %></div>',
+  choice: '<label class="btn btn-primary fh_appform_button_action choice" ><input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>[]"  class="field checkbox" value="<%= value %>" type="checkbox"><%= choice %></label>',
 
 
   renderInput: function(index) {
@@ -2657,9 +2657,8 @@ FieldPhoneView = FieldView.extend({
   type:"tel"
 });
 FieldRadioView = FieldView.extend({
-  hidden_field: '<input  id="radio<%= id %>" type="fh_appform_hidden" value="" data-type="radio">',
-  choice: '<div class="radio"><label class="choice" ><input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" class="field radio" value="<%= value %>" type="radio"><%= choice %></label></div>',
-  radio: '<div class="fh_appform_field_input <%= repeatingClassName%>"><%= radioChoices %></div>',
+  choice: '<label class="btn btn-primary fh_appform_button_action choice" ><input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" class="field radio" value="<%= value %>" type="radio"><%= choice %></label>',
+  radio: '<div class="fh_appform_field_input btn-group-vertical <%= repeatingClassName%>" data-toggle="buttons"><%= radioChoices %></div>',
 
   renderInput: function(index) {
     var choices = this.model.getRadioOption();
@@ -2692,6 +2691,7 @@ FieldRadioView = FieldView.extend({
     if (opt.length === 0) {
       opt = wrapperObj.find('input:first-child');
     }
+    $(opt).parent().addClass("active");
     opt.attr('checked', 'checked');
   },
   valueFromElement: function (index) {
