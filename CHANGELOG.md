@@ -1,4 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
+
+## 2.1.0 - 2014-06-23 - IR230 - Jason Madigan
+
+* 7468 - Admin calls fail in the preview
+
 ## 2.0.28 - 2014-06-17 - IR230 - Wei Li
 
 * 7449 - Init FH JS SDK on deviceready when deployed to cordova apps

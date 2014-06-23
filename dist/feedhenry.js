@@ -6777,8 +6777,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/Users/weili/work/fh/eng/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/weili/work/fh/eng/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/Users/jasonmadigan/Work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/jasonmadigan/Work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -7015,7 +7015,10 @@ EventEmitter.prototype.addListener = function(type, listener) {
                     'leak detected. %d listeners added. ' +
                     'Use emitter.setMaxListeners() to increase limit.',
                     this._events[type].length);
-      console.trace();
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
     }
   }
 
@@ -7253,7 +7256,7 @@ process.chdir = function (dir) {
 module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/Users/weili/work/fh/eng/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+},{"./support/isBuffer":12,"/Users/jasonmadigan/Work/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -8126,7 +8129,7 @@ module.exports = function(opts, success, fail){
 }
 
 },{"./ajax":18,"./appProps":25,"./fhparams":31,"./handleError":32,"./logger":37,"./waitForCloud":47,"JSON":3}],20:[function(_dereq_,module,exports){
-var logger =_dereq_("./logger");
+var logger = _dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
 var ajax = _dereq_("./ajax");
@@ -8137,9 +8140,9 @@ var constants = _dereq_("./constants");
 var checkAuth = _dereq_("./checkAuth");
 var appProps = _dereq_("./appProps");
 
-module.exports = function(opts, success, fail){
-  if(!fail){
-    fail = function(msg, error){
+module.exports = function(opts, success, fail) {
+  if (!fail) {
+    fail = function(msg, error) {
       logger.debug(msg + ":" + JSON.stringify(error));
     };
   }
@@ -8150,8 +8153,8 @@ module.exports = function(opts, success, fail){
     return fail('auth_no_clientToken', {});
   }
 
-  cloud.ready(function(err, data){
-    if(err){
+  cloud.ready(function(err, data) {
+    if (err) {
       return fail(err.message, err);
     } else {
       var req = {};
@@ -8171,6 +8174,11 @@ module.exports = function(opts, success, fail){
       req.device = device.getDeviceId();
       var app_props = appProps.getAppProps();
       var path = app_props.host + constants.boxprefix + "admin/authpolicy/auth";
+
+      if (app_props.local) {
+        path = constants.boxprefix + "admin/authpolicy/auth";
+      }
+
       req = fhparams.addFHParams(req);
 
       ajax({
@@ -8180,7 +8188,7 @@ module.exports = function(opts, success, fail){
         "data": JSON.stringify(req),
         "dataType": "json",
         "contentType": "application/json",
-        "timeout" : opts.timeout || app_props.timeout,
+        "timeout": opts.timeout || app_props.timeout,
         success: function(res) {
           checkAuth.handleAuthResponse(endurl, res, success, fail);
         },
@@ -8521,7 +8529,7 @@ module.exports = {
 },{"./fhparams":31,"./logger":37,"./queryMap":39,"JSON":3}],27:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.0.28-BUILD-NUMBER",
+  "sdk_version": "2.1.0-BUILD-NUMBER",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit",
   "INTERNAL_CONFIG_LOADED_EVENT": "internalfhconfigloaded",
