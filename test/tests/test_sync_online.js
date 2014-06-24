@@ -26,7 +26,7 @@ var onSync = function(cb){
   syncClient.forceSync(dataSetId, function(){
     setTimeout(function(){
       cb();
-    }, 501);
+    }, 600);
   });
 }
 

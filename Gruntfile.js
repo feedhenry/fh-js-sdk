@@ -131,7 +131,14 @@ module.exports = function(grunt) {
             function end () {
               var t = data;
               if(file.indexOf("constants.js") >= 0){
-                t = data.replace("BUILD_VERSION", pkg.version);
+                var version = pkg.version;
+                console.log("found current version = " + version);
+                if(process.env.BUILD_NUMBER){
+                  console.log("found BUILD_NUMBER in process.env " + process.env.BUILD_NUMBER);
+                  version = version.replace(/BUILD\-NUMBER/g, process.env.BUILD_NUMBER);
+                }
+                console.log("Version to inject is " + version);
+                t = data.replace("BUILD_VERSION", version);
               }
               this.queue(t);
               this.queue(null);
@@ -153,7 +160,14 @@ module.exports = function(grunt) {
             function end () {
               var t = data;
               if(file.indexOf("constants.js") >= 0){
-                t = data.replace("BUILD_VERSION", pkg.version);
+                var version = pkg.version;
+                console.log("found current version = " + version);
+                if(process.env.BUILD_NUMBER){
+                  console.log("found BUILD_NUMBER in process.env " + process.env.BUILD_NUMBER);
+                  version = version.replace(/BUILD\-NUMBER/g, process.env.BUILD_NUMBER);
+                }
+                console.log("Version to inject is " + version);
+                t = data.replace("BUILD_VERSION", version);
               }
               this.queue(t);
               this.queue(null);
@@ -353,7 +367,8 @@ module.exports = function(grunt) {
 
   grunt.registerTask('concat-forms-backbone', ['jshint', 'replace:forms_templates', 'concat:forms_backbone', 'concat:forms_backboneRequireJS']);
 
-  grunt.registerTask('concat-core-sdk', ['jshint', 'browserify:dist', 'concat:forms_core', 'concat:forms_sdk', 'concat:lawnchair', 'concat:crypto', 'concat:forms_core_no_v2', 'concat-forms-backbone']);
+  grunt.registerTask('concat-core-sdk', ['jshint',  'concat:lawnchair', 'concat:crypto', 'browserify:dist', 'concat:forms_core', 'concat:forms_sdk','concat:forms_core_no_v2', 'concat-forms-backbone']);
+
 
   grunt.registerTask('concat-titanium', ['concat:lawnchair', 'concat:lawnchair_titanium', 'concat:crypto']);
 
