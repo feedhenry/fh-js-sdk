@@ -56,7 +56,7 @@ var PageView=BaseView.extend({
 
       //Add the section fields
       for(sectionKey in sections){
-        var sectionEl = $(_.template($('#temp_page_structure').html(), {"sectionId": sectionKey, title: sections[sectionKey].title}));
+        var sectionEl = $(_.template(self.options.formView.$el.find('#temp_page_structure').html(), {"sectionId": sectionKey, title: sections[sectionKey].title}));
         sectionEl.find('.panel-heading').click(function(e){
           if($(e.target).data()){
             if($(e.target).data().field){

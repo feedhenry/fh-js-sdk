@@ -1,6 +1,6 @@
 FieldRadioView = FieldView.extend({
-  choice: '<label class="btn btn-primary fh_appform_button_action choice" ><input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" class="field radio" value="<%= value %>" type="radio"><%= choice %></label>',
-  radio: '<div class="fh_appform_field_input btn-group-vertical <%= repeatingClassName%>" data-toggle="buttons"><%= radioChoices %></div>',
+  choice: '<div class="radio"><label class=" choice" ><input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" class="field radio" value="<%= value %>" type="radio"><%= choice %></label></div>',
+  radio: '<div class="fh_appform_field_input <%= repeatingClassName%>" data-toggle="buttons"><%= radioChoices %></div>',
 
   renderInput: function(index) {
     var choices = this.model.getRadioOption();
@@ -39,5 +39,8 @@ FieldRadioView = FieldView.extend({
   valueFromElement: function (index) {
     var wrapperObj = this.getWrapper(index);
     return wrapperObj.find('input:checked').val() || this.model.getRadioOption()[0].label;
+  },
+  onElementShow: function(index){
+    
   }
 });

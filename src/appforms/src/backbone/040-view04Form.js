@@ -5,7 +5,7 @@ var FormView = BaseView.extend({
   "submission": null,
   "fieldValue": [],
   templates: {
-  formLogo: '<div class="fh_appform_logo_container  col-xs-12"><div class="fh_appform_logo  col-xs-12"></div></div>',
+  formLogo: '<div class="fh_appform_logo_container col-xs-12"><div class="fh_appform_logo"></div></div>',
   formTitle: '<div class="fh_appform_form_title col-xs-12 text-center"><h1><%= title %></h1></div>',
   formDescription: '<div class="fh_appform_form_description  col-xs-12 text-center"><h2><%= description %></h2></div>',
   formContainer: '<div id="fh_appform_container" class="fh_appform_form_area col-xs-offset-1 col-xs-10 fh_appform_container"></div>',
@@ -106,7 +106,7 @@ var FormView = BaseView.extend({
 
     //Page views are always added before anything else happens, need to render the form title first
 
-    var formHtml = _.template($('#temp_form_structure').html(), {title: self.model.getName()});
+    var formHtml = _.template(self.$el.find('#temp_form_structure').html(), {title: self.model.getName()});
 
     self.$el.append(formHtml);
 

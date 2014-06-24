@@ -18109,37 +18109,7 @@ appForm.models = (function(module) {
     var finalMsg = dateStr + " " + levelString.toUpperCase() + " " + msg;
     return finalMsg;
   };
-  Log.prototype.getPolishedLogs = function() {
-    var arr = [];
-    var logs = this.getLogs();
-    var patterns = [{
-      reg: /^.+\sERROR\s.*/,
-      color: $fh.forms.config.get('color_error') || "#FF0000"
-    }, {
-      reg: /^.+\sWARNING\s.*/,
-      color: $fh.forms.config.get('color_warning') || "#FF9933"
-    }, {
-      reg: /^.+\sLOG\s.*/,
-      color: $fh.forms.config.get('color_log') || "#009900"
-    }, {
-      reg: /^.+\sDEBUG\s.*/,
-      color: $fh.forms.config.get('color_debug') || "#3366FF"
-    }, {
-      reg: /^.+\sUNKNOWN\s.*/,
-      color: $fh.forms.config.get('color_unknown') || "#000000"
-    }];
-    for (var i = 0; i < logs.length; i++) {
-      var log = logs[i];
-      for (var j = 0; j < patterns.length; j++) {
-        var p = patterns[j];
-        if (p.reg.test(log)) {
-          arr.unshift("<div style='color:" + p.color + ";'>" + log + "</div>");
-          break;
-        }
-      }
-    }
-    return arr;
-  };
+  
   Log.prototype.write = function(cb) {
     var self = this;
     self.isWriting = true;
@@ -18243,7 +18213,7 @@ appForm.api = function (module) {
     },
     "set" : function(key, val){
       var self = this;
-      if(!key || !val){
+      if(typeof(key) !== "string" || typeof(val) === "undefined" || val === null){
         return;
       }
 

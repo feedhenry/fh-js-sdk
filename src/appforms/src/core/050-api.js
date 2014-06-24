@@ -46,7 +46,7 @@ appForm.api = function (module) {
     },
     "set" : function(key, val){
       var self = this;
-      if(!key || !val){
+      if(typeof(key) !== "string" || typeof(val) === "undefined" || val === null){
         return;
       }
 

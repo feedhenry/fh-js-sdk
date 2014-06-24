@@ -142,7 +142,18 @@ FieldCameraView = FieldView.extend({
             file.type = 'file';
             var fileObj = $(file);
             fileObj.hide();
-            self.$el.append(fileObj);
+
+            if(self.$el.find('input[type="file"]').length > 0){
+                fileObj = $(self.$el.find('input[type="file"]')[0]);
+            } else {
+                self.$el.append(fileObj);    
+                fileObj = $(self.$el.find('input[type="file"]')[0]);
+            }
+
+            fileObj.click(function(e){
+                console.log("File CLicked ", e);
+            });
+            
             fileObj.on('change', function() {
                 var file = fileObj[0];
                 if (file.files && file.files.length > 0) {
@@ -157,7 +168,7 @@ FieldCameraView = FieldView.extend({
                     });
                 }
             });
-            fileObj.click();
+            fileObj.trigger('click');
         }
     },
     valueFromElement: function(index) {

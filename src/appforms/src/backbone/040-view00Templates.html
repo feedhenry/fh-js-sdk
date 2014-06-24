@@ -1,7 +1,7 @@
 <script type="text/template" id="temp_form_structure">
 <div id="fh_appform_container" class="fh_appform_form_area col-xs-offset-1 col-xs-10 fh_appform_container">
   <div class="fh_appform_logo_container  col-xs-12">
-    <div class="fh_appform_logo  col-xs-12">
+    <div class="fh_appform_logo">
     </div>
   </div>
   <div class="fh_appform_form_title col-xs-12 text-center">
@@ -56,8 +56,151 @@
   
   <div class="fh_appform_field_input_container repeating <%= repeating === true ? \"col-xs-10\" : \"col-xs-12\"%>" >
     <%= inputHtml %>
-    <div class="fh_appform_field_error_container fh_appform_hidden col-xs-12">
+    <div class="fh_appform_field_error_container col-xs-12 fh_appform_hidden">
     </div>
   </div>
 </div>
 </script>
+
+<script type="text/template" id="temp_config_camera">
+<div class="panel panel-default" id="camera-settings">
+  <div class="panel-heading">
+    <h3 class="panel-title">Camera Settings</h3>
+  </div>
+  <div class="panel-body">
+    <div class="col-xs-12"> 
+      <div class="form-group">
+        <label for="targetWidth">Width (px)</label>
+        <input type="number" class="form-control fh_appform_field_input text-center" id="targetWidth" value="<%= targetWidth %>" data-key="targetWidth">
+      </div>
+      <div class="form-group">
+        <label for="targetHeight">Height (px)</label>
+        <input type="number" class="form-control fh_appform_field_input text-center" id="targetHeight" value="<%= targetHeight %>" data-key="targetHeight">
+      </div>
+      <div class="form-group">
+        <label for="quality">Quality (%)</label>
+        <input type="number" class="form-control fh_appform_field_input text-center" id="quality" value="<%= quality %>" data-key="quality" min="0" max="100">
+      </div>
+    </div>
+  </div>
+</div>
+</script>
+
+<script type="text/template" id="temp_config_submissions">
+<div class="panel panel-default" id="submission-settings">
+  <div class="panel-heading">
+    <h3 class="panel-title">Submission Settings</h3>
+  </div>
+  <div class="panel-body">
+    <div class="col-xs-12"> 
+      <div class="form-group">
+        <label for="max_retries">Max Retries</label>
+        <input type="number" class="form-control fh_appform_field_input text-center" id="max_retries" value="<%= max_retries %>" data-key="max_retries">
+      </div>
+      <div class="form-group">
+        <label for="timeout">Timeout (s)</label>
+        <input type="number" class="form-control fh_appform_field_input text-center" id="timeout" value="<%= timeout %>" data-key="timeout">
+      </div>
+      <div class="form-group">
+        <label for="sent_save_min">Number of sent submissions to keep (min)</label>
+        <input type="number" class="form-control fh_appform_field_input text-center" id="sent_save_min" value="<%= sent_save_min %>" data-key="sent_save_min" min="0">
+      </div>
+      <div class="form-group">
+        <label for="sent_save_max">Number of sent submissions to keep (max)</label>
+        <input type="number" class="form-control fh_appform_field_input text-center" id="sent_save_max" value="<%= sent_save_max %>" data-key="sent_save_max" min="0">
+      </div>
+    </div>  
+  </div>
+</div>
+<div class="modal fade" id="logsModal" tabindex="-1" role="dialog" aria-labelledby="logsModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" id="logsModalLabel">Debugging Logs</h4>
+      </div>
+      <div class="modal-body" id="logsModalLabelBody">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+</script>
+
+<script type="text/template" id="temp_config_log">
+<ul class="list-group col-xs-12">
+  <%= listStr%>  
+</ul>
+</script>
+
+<script type="text/template" id="temp_config_log_item">
+  <li class="list-group-item <%= logClass %>" style="overflow:auto;"><%= message%></li>
+</script>
+
+<script type="text/template" id="temp_config_debugging">
+<div class="panel panel-default" id="debugging-settings">
+  <div class="panel-heading">
+    <h3 class="panel-title">Debugging Options</h3>
+  </div>
+  <div class="panel-body">
+      <div class="col-xs-12">
+          <div class="form-group" id="log_level_div">
+              <label for="log_level">Log Level</label>
+              <select class="form-control fh_appform_field_input text-center" id="log_level" value="<%= log_level %>" data-key="log_level" >
+                <% for (var i=0;i<log_levels.length;i++){
+                  var val=log_levels[i];
+                  var selected=(i==log_level)?"selected":""; %>
+                  <option value="<%= i %>" <%= selected%>><%= val%></option>
+              <%}%>
+              </select>
+          </div>
+          <div class="form-group" id="log_email_div">
+              <label for="log_email">Log Reporting Email</label>
+              <input type="email" class="form-control fh_appform_field_input text-center" id="log_email" value="<%= log_email %>" data-key="logger" value="<%= log_email%>">
+          </div>
+          <div class="form-group" id="log_line_limit_div">
+              <label for="log_line_limit">Log Line Limit</label>
+              <input type="number" class="form-control fh_appform_field_input text-center" id="log_line_limit" value="<%= log_line_limit %>" data-key="log_line_limit" value="<%= log_line_limit%>" min="0">
+          </div>
+          <div class="btn-group-vertical col-xs-12">
+              <button class="btn btn-primary fh_appform_button_action" id="fh_appform_show_deviceId">Show Device Id</button>
+              <div class="btn-group" data-toggle="buttons" id="logger_wrapper_div">
+                    <label class="btn btn-primary fh_appform_button_action choice" id="logger_wrapper"><input id="logger" data-key="logger" class="field checkbox" <%= logger?"checked":"" %> type="checkbox"><div id="logger_message"><%= logger?"Disable Logging":"Enable Logging" %></div></label>
+              </div>
+              <button type="button" class="btn btn-default fh_appform_button_action" id="_viewLogsBtn">View Logs</button>
+              <button type="button" class="btn btn-default fh_appform_button_action" id="_sendLogsBtn">Send Logs</button>
+              <button type="button" class="btn btn-default fh_appform_button_cancel" id="_clearLogsBtn">Clear Logs</button>
+          </div>
+      </div>
+  </div>
+</div>
+</script>
+
+
+
+<script type="text/template" id="temp_config_misc">
+  <div class="panel panel-default first" id="misc-settings">
+  <div class="panel-heading">
+    <h3 class="panel-title">Misc Settings</h3>
+  </div>
+  <div class="panel-body">
+      <div class="col-xs-12">
+          <div class="btn-group-vertical col-xs-12">
+              <button type="button" class="btn btn-default fh_appform_button_action" id="_refreshFormsButton">Refresh Forms</button>
+          </div>
+      </div>
+  </div>
+</div>
+</script>
+
+<script type="text/template" id="forms-logo-sdk">
+<div class="fh_appform_logo_container  col-xs-12">
+  <div class="fh_appform_logo">
+  </div>
+</div>
+</script>
+
+
+

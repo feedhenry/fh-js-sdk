@@ -134,7 +134,7 @@ var FieldView = Backbone.View.extend({
         var inputHtml = this.renderInput(index);
         var eleHtml = this.renderEle("", inputHtml, index);
 
-        var eleTemplate = _.template($("#temp_field_wrapper").html(), {
+        var eleTemplate = _.template(self.options.formView.$el.find("#temp_field_wrapper").html(), {
             inputHtml: inputHtml, 
             index: index,
             d_index: index + 1,
@@ -156,7 +156,7 @@ var FieldView = Backbone.View.extend({
         this.maxRepeat = 1;
         this.curRepeat = 0;
 
-        var fieldTemplate = $(_.template($("#temp_field_structure").html(), {
+        var fieldTemplate = $(_.template(self.options.formView.$el.find("#temp_field_structure").html(), {
             title: this.model.getName(),
             helpText: this.model.getHelpText(),
             required: this.model.isRequired() ? self.requiredClassName : "",
@@ -262,9 +262,15 @@ var FieldView = Backbone.View.extend({
         wrapperObj.find(this.errMessageContainer).text(text);
         wrapperObj.find(this.errMessageContainer).show();
         wrapperObj.find(this.errMessageContainer).addClass(this.errorClassName);
-        wrapperObj.find("input,textarea,select").addClass(this.errorClassName);
+
+        if(wrapperObj.find("input[type='checkbox']").length === 0){
+            wrapperObj.find("input,textarea,select").addClass(this.errorClassName);    
+        }
+        
     },
     contentChanged: function(e) {
+        console.log("Conente changed", e);
+        e.preventDefault();
         this.validate(e);
     },
 

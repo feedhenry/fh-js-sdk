@@ -1,6 +1,6 @@
 FieldCheckboxView = FieldView.extend({
-  checkboxes: '<div class="fh_appform_field_input btn-group-vertical <%= repeatingClassName%>" data-toggle="buttons"><%= choices %></div>',
-  choice: '<label class="btn btn-primary fh_appform_button_action choice" ><input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>[]"  class="field checkbox" value="<%= value %>" type="checkbox"><%= choice %></label>',
+  checkboxes: '<div class="fh_appform_field_input checkbox <%= repeatingClassName%>"><%= choices %></div>',
+  choice: '<div class="checkbox"><label class="choice" ><input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>[]"  class="field checkbox" value="<%= value %>" type="checkbox"><%= choice %></label></div>',
 
 
   renderInput: function(index) {
