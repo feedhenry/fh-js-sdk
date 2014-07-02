@@ -1,7 +1,7 @@
 FieldFileView = FieldView.extend({
-    input: "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action select' data-index='<%= index %>'  type='<%= inputType %>'>Select A File</button>" +
-            "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action remove' data-index='<%= index %>'  type='<%= inputType %>'><i class='fa fa-times-circle'></i>&nbsp;Remove File Entry</button>" +
-            "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' style='display:none;'/>",
+    input: "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action select col-xs-12' data-index='<%= index %>'  type='<%= inputType %>'><i class='icon-folder-openSelect'></i> A File</button>" +
+            "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action remove col-xs-12' data-index='<%= index %>'  type='<%= inputType %>'><i class='icon-remove-circle'></i>&nbsp;Remove File Entry</button>" +
+            "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' style='max-width:1px; max-height: 0px; visibility:hidden;padding: 0px;margin: 0px;'/>",
         type: "file",
     initialize: function() {
         var self = this;
@@ -33,7 +33,6 @@ FieldFileView = FieldView.extend({
         } else { //user cancelled file selection
             self.showButton(index, null);
         }
-
     },
     valueFromElement: function(index) {
         var wrapperObj = this.getWrapper(index);
@@ -50,6 +49,7 @@ FieldFileView = FieldView.extend({
         var button = wrapperObj.find("button.select");
         var button_remove = wrapperObj.find("button.remove");
         var fileEle = wrapperObj.find(".fh_appform_field_input");
+
         button.show();
 
         if (fileObj == null) {
@@ -58,6 +58,10 @@ FieldFileView = FieldView.extend({
         } else {
             button.text(fileObj.fileName + "(" + fileObj.fileSize + ")");
             button_remove.show();
+        }
+
+        if(this.readonly){
+            button_remove.hide();
         }
 
         button.off("click");
@@ -74,7 +78,8 @@ FieldFileView = FieldView.extend({
             }
             self.resetFormElement(fileEle);
             self.showButton(index, null); // remove file entry
-        });
+        });   
+        
     },
     resetFormElement: function(e) {
         e.wrap("<form>").closest("form").get(0).reset();

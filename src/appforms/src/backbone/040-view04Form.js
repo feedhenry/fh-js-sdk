@@ -17,7 +17,9 @@ var FormView = BaseView.extend({
   },
 
   initialize: function(options) {
+    this.formEdited = false;
     this.options = this.options || options;
+    this.readonly = this.options.readOnly;
     var self = this;
     _.bindAll(this, "checkRules", "onValidateError");
     this.$el = this.options.parentEl;
@@ -55,6 +57,12 @@ var FormView = BaseView.extend({
     this.$el.find("button.fh_appform_button_saveDraft").hide();
     this.$el.find(" button.fh_appform_button_submit").hide();
   },
+  markFormEdited: function(){
+    this.formEdited = true;
+  },
+  isFormEdited: function(){
+    return this.formEdited === true;
+  },
   onValidateError: function(res) {
     var self = this;
     var firstView = null;
@@ -91,6 +99,16 @@ var FormView = BaseView.extend({
 
     if(invalidFieldId !== null && invalidPageNum !== null){
       var displayedIndex = this.getDisplayIndex(invalidPageNum) + 1;
+      self.goToPage(invalidPageNum, false);
+
+      self.pageViews[invalidPageNum].expandSection(invalidFieldId);
+
+      $('html, body').animate({
+          scrollTop: $("[data-field='" + invalidFieldId + "']").offset().top - 100
+      }, 1000);
+
+
+
       this.$el.find("#fh_appform_page_error").html("Unable to submit form. Validation error on page " + displayedIndex);
       this.$el.find("#fh_appform_page_error").show();
     }
@@ -230,7 +248,11 @@ var FormView = BaseView.extend({
     });
 
     this.$el.find("button.fh_appform_button_saveDraft").unbind().bind("click", function() {
-      self.saveToDraft();
+      if($fh.forms.config.isStudioMode()){//Studio mode does not submit.
+        alert("Please create a project and interact with the form there.");
+      } else {
+        self.saveToDraft();
+      }
     });
     this.$el.find("button.fh_appform_button_submit").unbind().bind("click", function() {
       if($fh.forms.config.isStudioMode()){//Studio mode does not submit.
@@ -281,6 +303,8 @@ var FormView = BaseView.extend({
     var displayedPages = this.getNumDisplayedPages();
     var displayedIndex = this.getDisplayIndex();
 
+    
+
     if (displayedIndex === 0 && displayedIndex === displayedPages - 1) {
         this.$el.find(" button.fh_appform_button_previous").hide();
         this.$el.find("button.fh_appform_button_next").hide();
@@ -288,20 +312,38 @@ var FormView = BaseView.extend({
         this.$el.find(" button.fh_appform_button_submit").show();
         this.$el.find(".fh_appform_button_bar button").removeClass('col-xs-4');
         this.$el.find(".fh_appform_button_bar button").addClass('col-xs-6');
+        if(this.readonly){
+          this.$el.find("#fh_appform_navigation_buttons").hide();  
+        }
+        
     } else if (displayedIndex === 0) {
         this.$el.find(" button.fh_appform_button_previous").hide();
+
+
         this.$el.find("button.fh_appform_button_next").show();
         this.$el.find("button.fh_appform_button_saveDraft").show();
         this.$el.find(" button.fh_appform_button_submit").hide();
         this.$el.find(".fh_appform_button_bar button").removeClass('col-xs-4');
-        this.$el.find(".fh_appform_button_bar button").addClass('col-xs-6');
+
+        if(this.readonly){
+          this.$el.find(".fh_appform_button_bar button").addClass('col-xs-12');
+        } else {
+          this.$el.find(".fh_appform_button_bar button").addClass('col-xs-6');  
+        }
+        
     } else if (displayedIndex === displayedPages - 1) {
         this.$el.find(" button.fh_appform_button_previous").show();
         this.$el.find(" button.fh_appform_button_next").hide();
         this.$el.find(" button.fh_appform_button_saveDraft").show();
         this.$el.find(" button.fh_appform_button_submit").show();
         this.$el.find(".fh_appform_button_bar button").removeClass('col-xs-6');
-        this.$el.find(".fh_appform_button_bar button").addClass('col-xs-4');
+        
+
+        if(this.readonly){
+          this.$el.find(".fh_appform_button_bar button").addClass('col-xs-12');
+        } else {
+          this.$el.find(".fh_appform_button_bar button").addClass('col-xs-4'); 
+        }
     } else {
         this.$el.find(" button.fh_appform_button_previous").show();
         this.$el.find(" button.fh_appform_button_next").show();
@@ -309,11 +351,19 @@ var FormView = BaseView.extend({
         this.$el.find(" button.fh_appform_button_submit").hide();
         this.$el.find(".fh_appform_button_bar button").removeClass('col-xs-6');
         this.$el.find(".fh_appform_button_bar button").addClass('col-xs-4');
+
+        if(this.readonly){
+          this.$el.find(".fh_appform_button_bar button").addClass('col-xs-6');
+        } else {
+          this.$el.find(".fh_appform_button_bar button").addClass('col-xs-4'); 
+        }
     }
+
     if (this.readonly) {
         this.$el.find("button.fh_appform_button_saveDraft").hide();
         this.$el.find(" button.fh_appform_button_submit").hide();
     }
+    
 
   },
   render: function() {
@@ -391,38 +441,36 @@ var FormView = BaseView.extend({
 
     return displayedPages;
   },
-  displayCurrentPage: function(){
+  displayCurrentPage: function(scroll){
     this.hideAllPages();
     this.pageViews[this.pageNum].show();
     this.steps.activePageChange(this);
     this.checkPages();
-    this.scrollToTop();
+    if(scroll){
+      this.scrollToTop();  
+    }
   },
-  goToPage: function(pageNum){
+  goToPage: function(pageNum, scroll){
     if(typeof(pageNum) !== "undefined" && !isNaN(parseInt(pageNum))){
       this.pageNum = parseInt(pageNum);
-      this.displayCurrentPage();
+      this.displayCurrentPage(scroll);
     } else {
       $fh.forms.log.e("Error switching page: Invalid argument ", pageNum);
     }     
   },
   nextPage: function() {
     this.pageNum = this.getNextPageIndex(this.pageNum);
-    this.displayCurrentPage();
+    this.displayCurrentPage(true);
   },
   prevPage: function() {
     this.pageNum = this.getPrevPageIndex(this.pageNum);
-    this.displayCurrentPage();
+    this.displayCurrentPage(true);
   },
   scrollToTop: function(){
     //Positioning the window to the top of the form container
-    var containerSize = $(this.elementNames.formContainer).outerHeight();
-    if(containerSize > 0){
-      containerSize *= -1;
-      window.scrollBy(0, containerSize);
-    } else {
-      window.scrollTo(0, 0);
-    }
+    $('html, body').animate({
+          scrollTop: 0
+    }, 500);
   },
   backEvent: function(){
     var self = this;
@@ -438,16 +486,23 @@ var FormView = BaseView.extend({
       view.hide();
     });
   },
-  submit: function() {
+  submit: function(cb) {
     var self = this;
     this.populateFieldViewsToSubmission(function() {
       self.submission.submit(function(err, res) {
         if (err) {
           $fh.forms.log.e("Error Submitting Form:", err);
+          if(typeof(cb) === "function"){
+            cb(err);
+          }
         } else {
           self.submission.upload(function(err, uploadTask) {
             if (err) {
               $fh.forms.log.e("Error Uploading Form:", err);
+            }
+
+            if(typeof(cb) === "function"){
+              cb();
             }
 
             self.$el.empty();
@@ -456,12 +511,15 @@ var FormView = BaseView.extend({
       });
     });
   },
-  saveToDraft: function() {
+  saveToDraft: function(cb) {
     var self = this;
     this.populateFieldViewsToSubmission(function() {
       self.submission.saveDraft(function(err, res) {
         if (err) {
           $fh.forms.log.e(err);
+        }
+        if(typeof(cb) === "function"){
+          cb();
         }
         self.$el.empty();
       });

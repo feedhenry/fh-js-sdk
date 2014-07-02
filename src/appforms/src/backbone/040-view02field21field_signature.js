@@ -10,12 +10,15 @@ FieldSignatureView = FieldView.extend({
         this.on('visible', this.clearError);
     },
     onElementShow: function(index) {
-        var html = $(this.renderButton(index, "<i class='fa fa-pencil'></i>&nbsp;Capture Signature", this.extension_type));
-        this.getWrapper(index).append(html);
-        var self = this;
-        html.on("click", function() {
-            self.showSignatureCapture(index);
-        });
+        if(!this.readonly){
+            var html = $(this.renderButton(index, "<i class='icon-pencil'></i>&nbsp;Capture Signature", this.extension_type));
+            this.getWrapper(index).append(html);
+            var self = this;
+            html.on("click", function() {
+                self.showSignatureCapture(index);
+            });
+        }
+        
     },
     validate: function(e) {
         this.trigger("checkrules");

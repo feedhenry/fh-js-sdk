@@ -1,8 +1,8 @@
 FieldDateTimeView = FieldView.extend({
   extension_type: 'fhdate',
-  inputTime: "<div><input class='fh_appform_field_input col-xs-12 text-center <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='time'></div>",
-  inputDate: "<div ><input class='fh_appform_field_input col-xs-12 text-center   <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='date'></div>",
-  inputDateTime: "<div ><input class='fh_appform_field_input col-xs-12 text-center   <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='text'></div>",
+  inputTime: "<input class='fh_appform_field_input col-xs-12 text-center <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='time'>",
+  inputDate: "<input class='fh_appform_field_input col-xs-12 text-center   <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='date'>",
+  inputDateTime: "<input class='fh_appform_field_input col-xs-12 text-center   <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='text'>",
   renderInput:function(index){
     var fieldId = this.model.getFieldId();
     var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
@@ -12,20 +12,24 @@ FieldDateTimeView = FieldView.extend({
     var buttonLabel="";
     if (unit==="datetime"){
       template=this.inputDateTime;
-      buttonLabel="<i class='fa fa-calendar'></i> <i class='fa fa-clock-o'></i>&nbspGet Current Date & Time";
+      buttonLabel="<i class='icon-calendar'></i> <i class='icon-time'></i>&nbspGet Current Date & Time";
     }else if (unit==="date"){
       template=this.inputDate;
-      buttonLabel="<i class='fa fa-calendar'></i>&nbspGet Current Date";
+      buttonLabel="<i class='icon-calendar'></i>&nbspGet Current Date";
     }else if (unit==="time"){
       template=this.inputTime;
-      buttonLabel="<i class='fa fa-clock-o'></i>&nbspGet Current Time";
+      buttonLabel="<i class='icon-time'></i>&nbspGet Current Time";
     }
     var html=_.template(template,{
       "fieldId":fieldId,
       "index":index,
       "repeatingClassName": repeatingClassName
     });
-    html+=this.renderButton(index,buttonLabel,"fhdate");
+
+    if(!this.readonly){
+      html+=this.renderButton(index,buttonLabel,"fhdate");   
+    }
+    
 
     return html;
   },
@@ -35,9 +39,12 @@ FieldDateTimeView = FieldView.extend({
   },
   onRender:function(){
     var that=this;
-    this.$el.on("click","button",function(){
-      that.action(this);
-    });
+
+    if(!this.readonly){
+      this.$el.on("click","button",function(){
+        that.action(this);
+      });  
+    }
   },
   action: function(el) {
     var index=$(el).data().index;

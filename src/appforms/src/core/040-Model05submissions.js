@@ -57,10 +57,10 @@ appForm.models = function(module) {
         if (sentSubmissions.length > maxSent) {
             $fh.forms.log.d("Submissions clearSentSubmission pruning sentSubmissions.length>maxSent");
             sentSubmissions = sentSubmissions.sort(function(a, b) {
-                if (a.submittedDate < b.submittedDate) {
-                    return -1;
-                } else {
+                if (Date(a.submittedDate) < Date(b.submittedDate)) {
                     return 1;
+                } else {
+                    return -1;
                 }
             });
             var toBeRemoved = [];
@@ -154,7 +154,8 @@ appForm.models = function(module) {
             'submissionStartedTimestamp',
             'submittedDate',
             'submissionId',
-            'saveDate'
+            'saveDate',
+            'uploadStartDate'
         ];
         var data = submission.getProps();
         var rtn = {};
@@ -242,11 +243,12 @@ appForm.models = function(module) {
 
         var status = params.status;
         var formId = params.formId;
+        var sortField = params.sortField || "createDate";
 
-        var submissions = this.get("submissions");
+        var submissions = this.get("submissions", []);
         var rtn = [];
         for (var i = 0; i < submissions.length; i++) {
-            if (submissions[i].status === status) {
+            if (status.indexOf(submissions[i].status) > -1) {
                 if (formId != null) {
                     if (submissions[i].formId === formId) {
                         rtn.push(submissions[i]);
@@ -257,6 +259,15 @@ appForm.models = function(module) {
 
             }
         }
+
+        rtn = rtn.sort(function(a, b) {
+            if (Date(a[sortField]) < Date(b[sortField])) {
+                return -1;
+            } else {
+                return 1;
+            }
+        });
+
         return rtn;
     };
     /**

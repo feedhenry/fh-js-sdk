@@ -1,6 +1,6 @@
 FieldGeoView = FieldView.extend({
   input: "<input class='fh_appform_field_input col-xs-12 text-center <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>'  type='<%= inputType %>' disabled/>",
-  buttonHtml: "<i class='fa fa-map-marker'></i>&nbsp<%= buttonText %>",
+  buttonHtml: "<i class='icon-location-arrow'></i>&nbsp<%= buttonText %>",
   type: "text",
   initialize: function() {
     this.geoValues=[];
@@ -21,25 +21,28 @@ FieldGeoView = FieldView.extend({
   },
   onElementShow: function(index){
     var self = this;
-    var rmBtn = $(this.renderButton(index, "<i class='fa fa-times-circle'></i>&nbsp;Remove Location", "remove"));
+    var rmBtn = $(this.renderButton(index, "<i class='icon-remove-circle'></i>&nbsp;Remove Location", "remove"));
     var btnLabel = this.locationUnit === "latlong" ? 'Capture Location (Lat/Lon)' : 'Capture Location (East/North)';
     btnLabel = _.template(this.buttonHtml, {"buttonText": btnLabel});
     var geoButton = $(this.renderButton(index, btnLabel, "fhgeo"));
 
+    if(!this.readonly){
+      this.getWrapper(index).append(geoButton);
+      this.getWrapper(index).append(rmBtn);
 
-    this.getWrapper(index).append(geoButton);
-    this.getWrapper(index).append(rmBtn);
+      geoButton.on("click", function(e){
+        self.getLocation(e, index);
+      });
 
-    geoButton.on("click", function(e){
-      self.getLocation(e, index);
-    });
+      rmBtn.on("click", function(e){
+        self.clearLocation(e, index);
+        rmBtn.hide();
+      });
 
-    rmBtn.on("click", function(e){
-      self.clearLocation(e, index);
       rmBtn.hide();
-    });
+    }
 
-    rmBtn.hide();
+    
   },
   clearLocation: function(e, index){
     var textInput = this.getWrapper(index).find(".fh_appform_field_input");
@@ -101,6 +104,9 @@ FieldGeoView = FieldView.extend({
     if($fh.geo){
       $fh.geo(function(res) {
         var location;
+
+        res.lat = Number(res.lat).toFixed(4);
+        res.lon = Number(res.lon).toFixed(4);
         if (that.locationUnit === "latlong") {
           that.geoValues[index] = {
             "lat": res.lat,

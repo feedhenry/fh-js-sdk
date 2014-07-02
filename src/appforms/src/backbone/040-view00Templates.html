@@ -1,5 +1,5 @@
 <script type="text/template" id="temp_form_structure">
-<div id="fh_appform_container" class="fh_appform_form_area col-xs-offset-1 col-xs-10 fh_appform_container">
+<div id="fh_appform_container" class="fh_appform_form_area col-xs-12 fh_appform_container">
   <div class="fh_appform_logo_container  col-xs-12">
     <div class="fh_appform_logo">
     </div>
@@ -11,31 +11,34 @@
 </script>
 <script type="text/template" id="temp_page_structure">
 <div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area panel panel-default">
-  <div class="panel-heading text-center" data-field="fh_appform_<%= sectionId %>_body">
+  <div class="panel-heading text-center fh_appform_section_title" data-field="fh_appform_<%= sectionId %>_body">
+    <i id="fh_appform_<%= sectionId %>_body_icon" class="pull-right <%= index === 0 ? \"icon-chevron-sign-down\" : \"icon-chevron-sign-up\"%> section_icon" > </i>
     <%= title %>
   </div>
-  <div id="fh_appform_<%= sectionId %>_body" class="panel-collapse collapse">
-    <div class="panel-body fh_appform_section_body">
-    </div>
+
+  <div id="fh_appform_<%= sectionId %>_body" class="panel-body" style="<%= index === 0 ? \"\" : \"display:none;\"%>">
   </div>
 </div>
 </script>
 <script type="text/template" id="temp_field_structure">
-<div class="fh_appform_input_wrapper">
+<div class="fh_appform_input_wrapper col-xs-12">
   
+
   <% if(repeating === true){ %>
-    <div class="fh_appform_field_title">
+    <div class="fh_appform_field_title col-xs-12">
+      <i class="<%= field_icon %>"><%= icon_content %></i>
       <%= title %>
     </div>
   <%} else {%>
-    <div class="fh_appform_field_title <%= required %>">
+    <div class="fh_appform_field_title col-xs-12 <%= required %>">
+      <i class="<%= field_icon %>"><%= icon_content %></i>
       <%= title %>
     </div>
   <% } %>
   
 
   <% if(helpText){ %>
-    <p class="fh_appform_field_instructions">
+    <p class="fh_appform_field_instructions col-xs-12">
       <%= helpText %>
     </p>
   <% } %>
@@ -63,22 +66,22 @@
 </script>
 
 <script type="text/template" id="temp_config_camera">
-<div class="panel panel-default" id="camera-settings">
-  <div class="panel-heading">
-    <h3 class="panel-title">Camera Settings</h3>
+<div class="panel panel-default fh_appform_section_area col-xs-12" id="camera-settings">
+  <div class="panel-heading" data-field="camera-settings-body">
+    <h3 class="panel-title fh_appform_section_title"><i id="camera-settings-body-icon" class="pull-right icon-chevron-sign-down" > </i>Camera Settings</h3>
   </div>
-  <div class="panel-body">
+  <div class="panel-body" id="camera-settings-body">
     <div class="col-xs-12"> 
       <div class="form-group">
-        <label for="targetWidth">Width (px)</label>
+        <label class="fh_appform_field_title col-xs-12" for="targetWidth">Width (px)</label>
         <input type="number" class="form-control fh_appform_field_input text-center" id="targetWidth" value="<%= targetWidth %>" data-key="targetWidth">
       </div>
       <div class="form-group">
-        <label for="targetHeight">Height (px)</label>
+        <label class="fh_appform_field_title col-xs-12" for="targetHeight">Height (px)</label>
         <input type="number" class="form-control fh_appform_field_input text-center" id="targetHeight" value="<%= targetHeight %>" data-key="targetHeight">
       </div>
       <div class="form-group">
-        <label for="quality">Quality (%)</label>
+        <label class="fh_appform_field_title col-xs-12" for="quality">Quality (%)</label>
         <input type="number" class="form-control fh_appform_field_input text-center" id="quality" value="<%= quality %>" data-key="quality" min="0" max="100">
       </div>
     </div>
@@ -87,26 +90,26 @@
 </script>
 
 <script type="text/template" id="temp_config_submissions">
-<div class="panel panel-default" id="submission-settings">
-  <div class="panel-heading">
-    <h3 class="panel-title">Submission Settings</h3>
+<div class="panel panel-default fh_appform_section_area col-xs-12" id="submission-settings">
+  <div class="panel-heading" data-field="submission-settings-body">
+    <h3 class="panel-title fh_appform_section_title"><i id="submission-settings-body-icon" class="pull-right icon-chevron-sign-down" > </i>Submission Settings</h3>
   </div>
-  <div class="panel-body">
+  <div class="panel-body" id="submission-settings-body">
     <div class="col-xs-12"> 
       <div class="form-group">
-        <label for="max_retries">Max Retries</label>
+        <label class="fh_appform_field_title col-xs-12" for="max_retries">Max Retries</label>
         <input type="number" class="form-control fh_appform_field_input text-center" id="max_retries" value="<%= max_retries %>" data-key="max_retries">
       </div>
       <div class="form-group">
-        <label for="timeout">Timeout (s)</label>
+        <label class="fh_appform_field_title col-xs-12" for="timeout">Timeout (s)</label>
         <input type="number" class="form-control fh_appform_field_input text-center" id="timeout" value="<%= timeout %>" data-key="timeout">
       </div>
       <div class="form-group">
-        <label for="sent_save_min">Number of sent submissions to keep (min)</label>
+        <label class="fh_appform_field_title col-xs-12" for="sent_save_min">Number of sent submissions to keep (min)</label>
         <input type="number" class="form-control fh_appform_field_input text-center" id="sent_save_min" value="<%= sent_save_min %>" data-key="sent_save_min" min="0">
       </div>
       <div class="form-group">
-        <label for="sent_save_max">Number of sent submissions to keep (max)</label>
+        <label class="fh_appform_field_title col-xs-12" for="sent_save_max">Number of sent submissions to keep (max)</label>
         <input type="number" class="form-control fh_appform_field_input text-center" id="sent_save_max" value="<%= sent_save_max %>" data-key="sent_save_max" min="0">
       </div>
     </div>  
@@ -114,15 +117,14 @@
 </div>
 <div class="modal fade" id="logsModal" tabindex="-1" role="dialog" aria-labelledby="logsModalLabel" aria-hidden="true">
   <div class="modal-dialog">
-    <div class="modal-content">
+    <div class="modal-content fh_appform_section_area">
       <div class="modal-header">
-        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-        <h4 class="modal-title" id="logsModalLabel">Debugging Logs</h4>
+        <h4 class="modal-title fh_appform_section_title text-center" id="logsModalLabel">Info</h4>
       </div>
       <div class="modal-body" id="logsModalLabelBody">
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-default fh_appform_button_cancel" data-dismiss="modal">Close</button>
       </div>
     </div>
   </div>
@@ -140,14 +142,14 @@
 </script>
 
 <script type="text/template" id="temp_config_debugging">
-<div class="panel panel-default" id="debugging-settings">
-  <div class="panel-heading">
-    <h3 class="panel-title">Debugging Options</h3>
+<div class="panel panel-default fh_appform_section_area col-xs-12" id="debugging-settings">
+  <div class="panel-heading" data-field="debugging-settings-body">
+    <h3 class="panel-title fh_appform_section_title"><i id="debugging-settings-body-icon" class="pull-right icon-chevron-sign-down" > </i>Debugging Options</h3>
   </div>
-  <div class="panel-body">
+  <div class="panel-body" id="debugging-settings-body">
       <div class="col-xs-12">
           <div class="form-group" id="log_level_div">
-              <label for="log_level">Log Level</label>
+              <label class="fh_appform_field_title col-xs-12" for="log_level">Log Level</label>
               <select class="form-control fh_appform_field_input text-center" id="log_level" value="<%= log_level %>" data-key="log_level" >
                 <% for (var i=0;i<log_levels.length;i++){
                   var val=log_levels[i];
@@ -157,11 +159,11 @@
               </select>
           </div>
           <div class="form-group" id="log_email_div">
-              <label for="log_email">Log Reporting Email</label>
+              <label class="fh_appform_field_title col-xs-12" for="log_email">Log Reporting Email</label>
               <input type="email" class="form-control fh_appform_field_input text-center" id="log_email" value="<%= log_email %>" data-key="logger" value="<%= log_email%>">
           </div>
           <div class="form-group" id="log_line_limit_div">
-              <label for="log_line_limit">Log Line Limit</label>
+              <label class="fh_appform_field_title col-xs-12" for="log_line_limit">Log Line Limit</label>
               <input type="number" class="form-control fh_appform_field_input text-center" id="log_line_limit" value="<%= log_line_limit %>" data-key="log_line_limit" value="<%= log_line_limit%>" min="0">
           </div>
           <div class="btn-group-vertical col-xs-12">
@@ -181,11 +183,11 @@
 
 
 <script type="text/template" id="temp_config_misc">
-  <div class="panel panel-default first" id="misc-settings">
-  <div class="panel-heading">
-    <h3 class="panel-title">Misc Settings</h3>
+  <div class="panel panel-default fh_appform_section_area  col-xs-12 first" id="misc-settings">
+  <div class="panel-heading" data-field="misc-settings-body">
+    <h3 class="panel-title fh_appform_section_title"><i id="misc-settings-body-icon" class="pull-right icon-chevron-sign-down" > </i>Misc Settings</h3>
   </div>
-  <div class="panel-body">
+  <div class="panel-body" id="misc-settings-body">
       <div class="col-xs-12">
           <div class="btn-group-vertical col-xs-12">
               <button type="button" class="btn btn-default fh_appform_button_action" id="_refreshFormsButton">Refresh Forms</button>

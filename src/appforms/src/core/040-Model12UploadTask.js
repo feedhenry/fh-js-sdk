@@ -139,6 +139,18 @@ appForm.models = function (module) {
   UploadTask.prototype.isStarted = function () {
     return this.getCurrentTask() === null ? false : true;
   };
+
+
+  UploadTask.prototype.setSubmissionQueued = function(cb){
+    var self = this;
+    self.submissionModel(function(err, submission){
+      if(err){
+        return cb(err);
+      }
+
+      submission.queued(cb);
+    });
+  };
   /**
    * upload/download form submission
    * @param  {Function} cb [description]
@@ -158,14 +170,17 @@ appForm.models = function (module) {
         // form data submitted successfully.
         formSub.lastUpdate = appForm.utils.getTime();
         self.set('submissionId', submissionId);
-        self.increProgress();
-        self.saveLocal(function (err) {
-          if (err) {
-            $fh.forms.log.e("Error saving uploadTask to local storage" + err);
-          }
+
+        self.setSubmissionQueued(function(err){
+          self.increProgress();
+          self.saveLocal(function (err) {
+            if (err) {
+              $fh.forms.log.e("Error saving uploadTask to local storage" + err);
+            }
+          });
+          self.emit('progress', self.getProgress());
+          return cb(null);
         });
-        self.emit('progress', self.getProgress());
-        return cb(null);
       }
     }
 
@@ -548,7 +563,7 @@ appForm.models = function (module) {
             cb(err);
           } else {
             var status = submission.get('status');
-            if (status !== 'inprogress' && status !== 'submitted' && status !== 'downloaded') {
+            if (status !== 'inprogress' && status !== 'submitted' && status !== 'downloaded' && status !== 'queued') {
               $fh.forms.log.e('Submission status is incorrect. Upload task should be started by submission object\'s upload method.' + status);
               cb('Submission status is incorrect. Upload task should be started by submission object\'s upload method.');
             } else {

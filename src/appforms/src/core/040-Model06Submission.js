@@ -18,23 +18,24 @@ appForm.models = function(module) {
     ],
     'pending': [
       'inprogress',
-      'error'
+      'error',
+      'draft'
     ],
     'inprogress': [
-      'submitted',
       'pending',
       'error',
       'inprogress',
-      'downloaded'
+      'downloaded',
+      'queued'
     ],
     'submitted': [],
     'error': [
       'draft',
       'pending',
-      'inprogress',
       'error'
     ],
-    'downloaded' : []
+    'downloaded' : [],
+    'queued' : ['error', 'submitted']
   };
 
   function newInstance(form, params) {
@@ -194,7 +195,7 @@ appForm.models = function(module) {
   };
   
   /**
-   * submit current submission to remote
+   * submit current submission. 
    * @param  {Function} cb [description]
    * @return {[type]}      [description]
    */
@@ -296,10 +297,33 @@ appForm.models = function(module) {
     self.set('submittedDate', appForm.utils.getTime());
     self.changeStatus(targetStatus, function(err) {
       if (err) {
+        $fh.forms.log.e("Error setting submitted status " + err);
         cb(err);
       } else {
+        $fh.forms.log.d("Submitted status set for submission " + self.get('submissionId') + " with localId " + self.getLocalId());
         self.emit('submitted', self.get('submissionId'));
         cb(null, null);
+      }
+    });
+  };
+  Submission.prototype.queued = function(cb){
+    var self = this;
+    if(self.isDownloadSubmission()){
+      var errMsg = "Downloaded submissions should not call queued function.";
+      $fh.forms.log.e(errMsg);
+      return cb(errMsg);
+    }
+
+     var targetStatus = 'queued';
+     self.set('queuedDate', appForm.utils.getTime());
+     self.changeStatus(targetStatus, function(err) {
+      if (err) {
+        $fh.forms.log.e("Error setting queued status " + err);
+        cb(err);
+      } else {
+        $fh.forms.log.d("Queued status set for submission " + self.get('submissionId') + " with localId " + self.getLocalId());
+        self.emit('queued', self.get('submissionId'));
+        cb(null, self);
       }
     });
   };
@@ -311,8 +335,10 @@ appForm.models = function(module) {
     that.set('downloadedDate', appForm.utils.getTime());
     that.changeStatus(targetStatus, function(err) {
       if (err) {
+        $fh.forms.log.e("Error setting downloaded status " + err);
         cb(err);
       } else {
+        $fh.forms.log.d("Downloaded status set for submission " + self.get('submissionId') + " with localId " + self.getLocalId());
         that.emit('downloaded', that.get('submissionId'));
         cb(null, that);
       }
@@ -368,7 +394,6 @@ appForm.models = function(module) {
           cb(null, ut);
         }
       });
-
     } else {
       return cb("Invalid Status to upload a form submission.");
     }
@@ -797,7 +822,7 @@ appForm.models = function(module) {
 
       for(var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++){
         var formFieldEntry = formFields[formFieldIndex].fieldId || {};
-        if(formFieldEntry.type === 'file' || formFieldEntry.type === 'photo'){
+        if(formFieldEntry.type === 'file' || formFieldEntry.type === 'photo' || formFieldEntry.type === 'signature'){
           if(formFieldEntry._id){
             formFieldIds.push(formFieldEntry._id);
           }

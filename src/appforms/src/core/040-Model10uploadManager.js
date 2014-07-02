@@ -28,37 +28,44 @@ appForm.models = function (module) {
     var utId;
     var uploadTask = null;
     var self = this;
-    if (submissionModel.getUploadTaskId()) {
-      utId = submissionModel.getUploadTaskId();
-    } else {
-      uploadTask = appForm.models.uploadTask.newInstance(submissionModel);
-      utId = uploadTask.getLocalId();
-    }
-    self.push(utId);
-    if (!self.timer) {
-      $fh.forms.log.d("Starting timer for uploadManager");
-      self.start();
-    }
-    if (uploadTask) {
-      uploadTask.saveLocal(function (err) {
-        if (err) {
-          $fh.forms.log.e(err);
+
+    self.checkOnlineStatus(function(){
+      if($fh.forms.config.isOnline()){
+        if (submissionModel.getUploadTaskId()) {
+          utId = submissionModel.getUploadTaskId();
+        } else {
+          uploadTask = appForm.models.uploadTask.newInstance(submissionModel);
+          utId = uploadTask.getLocalId();
         }
-        self.saveLocal(function (err) {
-          if (err) {
-            $fh.forms.log.e("Error saving upload manager: " + err);
-          }
-          cb(null, uploadTask);
-        });
-      });
-    } else {
-      self.saveLocal(function (err) {
-        if (err) {
-          $fh.forms.log.e("Error saving upload manager: " + err);
+        self.push(utId);
+        if (!self.timer) {
+          $fh.forms.log.d("Starting timer for uploadManager");
+          self.start();
         }
-        self.getTaskById(utId, cb);
-      });
-    }
+        if (uploadTask) {
+          uploadTask.saveLocal(function (err) {
+            if (err) {
+              $fh.forms.log.e(err);
+            }
+            self.saveLocal(function (err) {
+              if (err) {
+                $fh.forms.log.e("Error saving upload manager: " + err);
+              }
+              cb(null, uploadTask);
+            });
+          });
+        } else {
+          self.saveLocal(function (err) {
+            if (err) {
+              $fh.forms.log.e("Error saving upload manager: " + err);
+            }
+            self.getTaskById(utId, cb);
+          });
+        }
+      } else {
+        return cb("Working offline cannot submit form.");
+      }
+    });
   };
 
   /**

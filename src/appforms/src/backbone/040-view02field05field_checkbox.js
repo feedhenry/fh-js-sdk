@@ -1,6 +1,6 @@
 FieldCheckboxView = FieldView.extend({
-  checkboxes: '<div class="fh_appform_field_input checkbox <%= repeatingClassName%>"><%= choices %></div>',
-  choice: '<div class="checkbox"><label class="choice" ><input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>[]"  class="field checkbox" value="<%= value %>" type="checkbox"><%= choice %></label></div>',
+  checkboxes: '<div class="btn-group-vertical fh_appform_field_input col-xs-12 <%= repeatingClassName%>" data-toggle="buttons-checkbox"><%= choices %></div>',
+  choice: '<button class="btn btn-primary fh_appform_button_action" type="button" value="<%= value %>" name="<%= fieldId %>[]" data-field="<%= fieldId %>" data-index="<%= index %>"><%= choice %></button>',
 
 
   renderInput: function(index) {
@@ -34,7 +34,7 @@ FieldCheckboxView = FieldView.extend({
       selections: []
     };
     var wrapperObj=this.getWrapper(index);
-    var checked=wrapperObj.find("input:checked");
+    var checked=wrapperObj.find("button.active");
     checked.each(function(){
       value.selections.push($(this).val());
     });
@@ -47,7 +47,7 @@ FieldCheckboxView = FieldView.extend({
     }
     for (var i=0; i < value.length; i++){
       var v=value[i];
-      wrapperObj.find("input[value='"+v+"']").attr("checked","checked");
+      wrapperObj.find("button[value='"+v+"']").addClass("active");
     }
   }
 });

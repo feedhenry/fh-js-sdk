@@ -50,17 +50,22 @@ var PageView=BaseView.extend({
 
     if(sections != null){
       var sectionKey;
+      var sectionIndex = 0;
 
       var sectionGroup = $('<div class="panel-group" id="accordion"></div>');
       
 
       //Add the section fields
       for(sectionKey in sections){
-        var sectionEl = $(_.template(self.options.formView.$el.find('#temp_page_structure').html(), {"sectionId": sectionKey, title: sections[sectionKey].title}));
+        var sectionEl = $(_.template(self.options.formView.$el.find('#temp_page_structure').html(), {"sectionId": sectionKey, title: sections[sectionKey].title, index: sectionIndex}));
+        sectionIndex++;
         sectionEl.find('.panel-heading').click(function(e){
           if($(e.target).data()){
             if($(e.target).data().field){
-              $('#' + $(e.target).data().field).collapse('toggle');
+              console.log("FIELD FOUND, TOGGLE COLLAPSE", e);
+              $('#' + $(e.target).data().field).slideToggle(600);
+              $('#' + $(e.target).data().field + "_icon").toggleClass('icon-chevron-sign-up');
+              $('#' + $(e.target).data().field + "_icon").toggleClass('icon-chevron-sign-down');
             }  
           }
         });
@@ -108,6 +113,29 @@ var PageView=BaseView.extend({
           console.warn('FIELD NOT SUPPORTED:' + fieldType);
         }
       });
+    }
+  },
+
+  expandSection: function(fieldId){
+    var sections = this.model.getSections();
+    var sectionFound = false;
+    var sectionId = "";
+    for(var sectionKey in sections){
+      sections[sectionKey].fields.forEach(function(field, index){
+        if(field.get("_id") === fieldId){
+          sectionFound = true;
+          sectionId = sectionKey;
+        }
+      });
+    }
+
+    if(sectionFound){
+      $("#fh_appform_" + sectionId + "_body").slideDown(20);
+      $("#fh_appform_" + sectionId + "_body_icon").removeClass('icon-minus');
+
+      if(!$("#fh_appform_" + sectionId + "_body_icon").hasClass('icon-plus')){
+         $("#fh_appform_" + sectionId + "_body_icon").addClass('icon-plus');
+      }
     }
   },
 

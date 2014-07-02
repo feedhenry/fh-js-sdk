@@ -18,6 +18,23 @@ var FieldView = Backbone.View.extend({
     title: '<div class="fh_appform_field_title"><h3 class="text-left  <%= required%>"><%= title %></h3></div>',
     titleRepeating: '<div class="fh_appform_field_title"><h3 class="text-left"><%= title %></h3></div>',
     instructions: '',
+    fieldIconNames: {
+        text: "icon-font",
+        textarea: "icon icon-align-justify",
+        url: "icon-link",
+        number: "icon-number",
+        emailAddress: "icon-envelope-alt",
+        dropdown: "icon-caret-down",
+        checkboxes: "icon-check",
+        location: "icon-location-arrow",
+        locationMap: "icon-map-marker",
+        photo: "icon-camera",
+        signature: "icon-pencil",
+        file: "icon-cloud-upload",
+        dateTime: "icon-calendar",
+        sectionBreak: "icon-minus",
+        radio: "icon-circle-blank"
+    },
     events: {
         "change": "contentChanged",
         "blur input,select,textarea": "validate",
@@ -160,11 +177,17 @@ var FieldView = Backbone.View.extend({
             title: this.model.getName(),
             helpText: this.model.getHelpText(),
             required: this.model.isRequired() ? self.requiredClassName : "",
-            repeating: this.model.isRepeating()
+            repeating: this.model.isRepeating(),
+            field_icon: this.fieldIconNames[this.model.getType()],
+            icon_content: this.model.getType() === "number" ? 123 : ""
         }));
 
         this.$fieldWrapper = $(fieldTemplate[0]);
         this.$fh_appform_fieldActionBar = $(fieldTemplate[1]);
+
+        if(this.readonly){
+            this.$fh_appform_fieldActionBar.hide();   
+        }
 
         if (this.model.isRepeating()) {
             this.initialRepeat = this.model.getMinRepeat();
@@ -192,6 +215,8 @@ var FieldView = Backbone.View.extend({
                 self.value(res);
             });
         }
+
+
         this.show();
         this.checkActionBar();
         this.onRender();
@@ -202,6 +227,7 @@ var FieldView = Backbone.View.extend({
     // TODO: cache the input element lookup?
     initialize: function(options) {
         this.options = options;
+        this.readonly = options.formView.readonly;
         _.bindAll(this, 'dumpContent', 'clearError', 'onAddInput', 'onRemoveInput');
 
         
@@ -251,6 +277,7 @@ var FieldView = Backbone.View.extend({
     },
     validate: function(e) {
         var self = this;
+        this.options.formView.markFormEdited();
         var target = $(e.currentTarget);
         var index = target.data().index;
         var val = self.valueFromElement(index);
@@ -269,7 +296,7 @@ var FieldView = Backbone.View.extend({
         
     },
     contentChanged: function(e) {
-        console.log("Conente changed", e);
+        this.options.formView.markFormEdited();
         e.preventDefault();
         this.validate(e);
     },

@@ -5,24 +5,28 @@ FieldCameraView = FieldView.extend({
         '<div class="cam"></div>' +
         '</div>',
     onElementShow: function(index) {
-        var captureBtn = $(this.renderButton(index, "<i class='fa fa-camera'></i>&nbsp;Capture Photo From Camera", "fhcam"));
-        var libBtn = $(this.renderButton(index, "<i class='fa fa-folder'></i>&nbsp;Choose Photo from Library", "fhcam_lib"));
-        var rmBtn = $(this.renderButton(index, "<i class='fa fa-times-circle'></i>&nbsp;Remove Photo", "remove"));
+        var captureBtn = $(this.renderButton(index, "<i class='icon-camera'></i>&nbsp;Capture Photo From Camera", "fhcam"));
+        var libBtn = $(this.renderButton(index, "<i class='icon-folder-open'></i>&nbsp;Choose Photo from Library", "fhcam_lib"));
+        var rmBtn = $(this.renderButton(index, "<i class='icon-remove-circle'></i>&nbsp;Remove Photo", "remove"));
 
-        this.getWrapper(index).append(captureBtn);
-        this.getWrapper(index).append(libBtn);
-        this.getWrapper(index).append(rmBtn);
-        var self = this;
-        captureBtn.on('click', function(e) {
-            self.addFromCamera(e, index);
-        });
-        libBtn.on('click', function(e) {
-            self.addFromLibrary(e, index);
-        });
-        rmBtn.on('click', function(e) {
-            self.removeThumb(e, index);
-        });
-        rmBtn.hide();
+        if(!this.readonly){
+            this.getWrapper(index).append(captureBtn);
+            this.getWrapper(index).append(libBtn);
+            this.getWrapper(index).append(rmBtn);
+            var self = this;
+            captureBtn.on('click', function(e) {
+                self.addFromCamera(e, index);
+            });
+            libBtn.on('click', function(e) {
+                self.addFromLibrary(e, index);
+            });
+            rmBtn.on('click', function(e) {
+                self.removeThumb(e, index);
+            });
+            rmBtn.hide();    
+        }
+
+        
     },
     setImage: function(index, base64Img) {
         var wrapper = this.getWrapper(index);

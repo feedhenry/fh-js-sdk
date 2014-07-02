@@ -78,13 +78,15 @@ FieldMapView = FieldView.extend({
           target: mapCanvas,
           lon: location.lon,
           lat: location.lat,
-          zoom: self.mapSettings.defaultZoom
+          zoom: self.mapSettings.defaultZoom,
+          draggable: !self.readonly
         }, function(res) {
           self.maps[index] = res.map;
+
           var marker = new google.maps.Marker({
             position: self.maps[index].getCenter(),
             map: self.maps[index],
-            draggable: true,
+            draggable: !self.readonly,
             animation: google.maps.Animation.DROP,
             title: 'Drag this to set position'
           });

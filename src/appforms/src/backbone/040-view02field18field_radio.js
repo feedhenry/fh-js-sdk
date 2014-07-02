@@ -1,6 +1,6 @@
 FieldRadioView = FieldView.extend({
-  choice: '<div class="radio"><label class=" choice" ><input data-field="<%= fieldId %>" data-index="<%= index %>" name="<%= fieldId %>_<%= index %>" class="field radio" value="<%= value %>" type="radio"><%= choice %></label></div>',
-  radio: '<div class="fh_appform_field_input <%= repeatingClassName%>" data-toggle="buttons"><%= radioChoices %></div>',
+  choice: '<button class="btn btn-primary fh_appform_button_action" type="button" data-field="<%= fieldId %>" data-index="<%= index %>" data-value="<%= choice %>"><%= choice %></button>',
+  radio: '<div class="btn-group-vertical fh_appform_field_input col-xs-12 <%= repeatingClassName%>" data-toggle="buttons-radio"><%= radioChoices %></div>',
 
   renderInput: function(index) {
     var choices = this.model.getRadioOption();
@@ -29,16 +29,21 @@ FieldRadioView = FieldView.extend({
   },
   valuePopulateToElement: function (index, value) {
     var wrapperObj = this.getWrapper(index);
-    var opt = wrapperObj.find('input[value=\'' + value + '\']');
+    var opt = wrapperObj.find('button[data-value=\'' + value + '\']');
     if (opt.length === 0) {
-      opt = wrapperObj.find('input:first-child');
+      opt = wrapperObj.find('button:first-child');
     }
-    $(opt).parent().addClass("active");
-    opt.attr('checked', 'checked');
+    opt.addClass("active");
   },
   valueFromElement: function (index) {
     var wrapperObj = this.getWrapper(index);
-    return wrapperObj.find('input:checked').val() || this.model.getRadioOption()[0].label;
+
+    var data = wrapperObj.find('button.active').data();
+    if(data){
+      return wrapperObj.find('button.active').data().value;  
+    } else {
+      return this.model.getRadioOption()[0].label;
+    }
   },
   onElementShow: function(index){
     

@@ -111,6 +111,9 @@ appForm.api = function (module) {
     },
     "isStudioMode": function(){
       return formConfig.isStudioMode();
+    },
+    refresh: function(cb){
+      formConfig.refresh(true, cb);
     }
   };
 

@@ -43,6 +43,7 @@ StepsView = Backbone.View.extend({
     });
 
     this.$el.append(table);
+    this.$el.append(self.templates.page_title);
     return this;
   },
   switchPage: function(e){
@@ -51,7 +52,7 @@ StepsView = Backbone.View.extend({
     if(e && $(e.currentTarget).data()){
       index = $(e.currentTarget).data().index;
       if(typeof(index) !== "undefined"){
-        this.parentView.goToPage(index);
+        this.parentView.goToPage(index, false);
       }
     }
   },
@@ -63,9 +64,15 @@ StepsView = Backbone.View.extend({
 
     var displayIndex = self.parentView.getDisplayIndex();
     var pageModel = self.parentView.pageViews[self.parentView.pageNum].model;
+    var pageName = pageModel.getName();
 
     self.$el.find('li:eq(' + displayIndex + ')').addClass('active');
-    self.$el.find('.fh_appform_page_title').html(pageModel.getName());
+
+    if(pageName.length === 0){
+      pageName = "Page " + (displayIndex + 1);
+    }
+
+    self.$el.find('.fh_appform_page_title').html(pageName);
   }
 
 });
