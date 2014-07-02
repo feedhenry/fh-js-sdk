@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.1.0 - 2014-07-02 - IR231 - Niall Donnelly
+
+Added signature to file download
+
 ## 2.1.0 - 2014-06-23 - IR230 - Jason Madigan
 
 * 7468 - Admin calls fail in the preview
