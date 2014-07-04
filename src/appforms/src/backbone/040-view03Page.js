@@ -59,7 +59,12 @@ var PageView=BaseView.extend({
       for(sectionKey in sections){
         var sectionEl = $(_.template(self.options.formView.$el.find('#temp_page_structure').html(), {"sectionId": sectionKey, title: sections[sectionKey].title, index: sectionIndex}));
         sectionIndex++;
-        sectionEl.find('.panel-heading').click(function(e){
+        sectionEl.find('.panel-heading').off('click');
+        sectionEl.find('#fh_appform_sectionBreak0_body_icon').off('click');
+
+        sectionEl.find('#fh_appform_sectionBreak0_body_icon').on('click');
+
+        sectionEl.find('.panel-heading').on('click', function(e){
           if($(e.target).data()){
             if($(e.target).data().field){
               console.log("FIELD FOUND, TOGGLE COLLAPSE", e);
@@ -84,8 +89,7 @@ var PageView=BaseView.extend({
                 formView: self.options.formView,
                 sectionName: sectionKey
               });  
-            }
-            
+            } 
           } else {
             $fh.forms.log.w('FIELD NOT SUPPORTED:' + fieldType);
           }
