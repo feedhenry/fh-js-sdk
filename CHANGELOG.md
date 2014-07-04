@@ -1,6 +1,6 @@
 # Changelog - FeedHenry Javascript SDK
 
-## 2.1.0 - 2014-07-02 - IR231 - Niall Donnelly
+## 2.1.1 - 2014-07-02 - IR231 - Niall Donnelly
 
 Added signature to file download
 
