@@ -15635,6 +15635,9 @@ appForm.models = function(module) {
       var ruleEngine = form.getRuleEngine();
       var submission = self.getProps();
       ruleEngine.validateForm(submission, function(err, res) {
+        if(err){
+          return cb(err);
+        }
         var validation = res.validation;
         if (validation.valid) {
           return cb(null, validation.valid);
