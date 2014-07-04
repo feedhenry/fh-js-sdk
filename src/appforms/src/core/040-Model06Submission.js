@@ -178,6 +178,7 @@ appForm.models = function(module) {
     self.getForm(function(err, form) {
       if (err) {
         $fh.forms.log.e("Submission submit: Error getting form ", err);
+        return cb(err);
       }
       var ruleEngine = form.getRuleEngine();
       var submission = self.getProps();
@@ -186,54 +187,48 @@ appForm.models = function(module) {
         if (validation.valid) {
           return cb(null, validation.valid);
         } else {
-          cb(null, validation.valid);
           self.emit('validationerror', validation);
+          cb(null, validation.valid);
         }
       });
     });
   };
+
   /**
    * submit current submission to remote
    * @param  {Function} cb [description]
    * @return {[type]}      [description]
    */
   Submission.prototype.submit = function(cb) {
+    var that = this;
     $fh.forms.log.d("Submission submit: ");
     var targetStatus = 'pending';
     var validateResult = true;
-    var that = this;
+    
     this.set('timezoneOffset', appForm.utils.getTime(true));
-    this.getForm(function(err, form) {
-      if(err) {
-        $fh.forms.log.e("Submission submit: Error getting form ", err);
-      }
-      var ruleEngine = form.getRuleEngine();
-      var submission = that.getProps();
-      ruleEngine.validateForm(submission, function(err, res) {
-        if (err) {
-          $fh.forms.log.e("Submission submit validateForm: Error validating form ", err);
-          cb(err);
+    that.validateSubmission(function(err, res){
+      if (err) {
+        $fh.forms.log.e("Submission submit validateForm: Error validating form ", err);
+        cb(err);
+      } else {
+        $fh.forms.log.d("Submission submit: validateForm. Completed result", res);
+        var validation = res.validation;
+        if (validation.valid) {
+          $fh.forms.log.d("Submission submit: validateForm. Completed Form Valid", res);
+          that.set('submitDate', new Date());
+          that.changeStatus(targetStatus, function(error) {
+            if (error) {
+              cb(error);
+            } else {
+              that.emit('submit');
+              cb(null, null);
+            }
+          });
         } else {
-          $fh.forms.log.d("Submission submit: validateForm. Completed result", res);
-          var validation = res.validation;
-          if (validation.valid) {
-            $fh.forms.log.d("Submission submit: validateForm. Completed Form Valid", res);
-            that.set('submitDate', new Date());
-            that.changeStatus(targetStatus, function(error) {
-              if (error) {
-                cb(error);
-              } else {
-                that.emit('submit');
-                cb(null, null);
-              }
-            });
-          } else {
-            $fh.forms.log.d("Submission submit: validateForm. Completed Validation error", res);
-            cb('Validation error');
-            that.emit('validationerror', validation);
-          }
+          $fh.forms.log.d("Submission submit: validateForm. Completed Validation error", res);
+          cb('Validation error');
         }
-      });
+      }  
     });
   };
   Submission.prototype.getUploadTask = function(cb) {
