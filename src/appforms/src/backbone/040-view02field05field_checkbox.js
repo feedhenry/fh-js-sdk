@@ -1,6 +1,6 @@
 FieldCheckboxView = FieldView.extend({
-  checkboxes: '<div class="btn-group-vertical fh_appform_field_input col-xs-12 <%= repeatingClassName%>" data-toggle="buttons-checkbox"><%= choices %></div>',
-  choice: '<button class="btn btn-primary fh_appform_button_action" type="button" value="<%= value %>" name="<%= fieldId %>[]" data-field="<%= fieldId %>" data-index="<%= index %>"><i class="icon-check-empty choice_icon"><%= choice %></i></button>',
+  checkboxes: '<div class="btn-group-vertical fh_appform_field_input col-xs-12 <%= repeatingClassName%>" data-toggle="buttons-checkbox"></div>',
+  choice: '<button class="btn btn-primary text-left fh_appform_button_action col-xs-12" type="button" value="<%= value %>" name="<%= fieldId %>[]" data-field="<%= fieldId %>" data-index="<%= index %>"><i class="icon-check-empty choice_icon"></i><%= choice %></button>',
 
 
   renderInput: function(index) {
@@ -13,6 +13,8 @@ FieldCheckboxView = FieldView.extend({
     var required = this.getFieldRequired(index);
     
     var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
+    checkboxesHtml = _.template(this.checkboxes, {"repeatingClassName": repeatingClassName});
+    checkboxesHtml = $(checkboxesHtml);
 
     $.each(subfields, function(i, subfield) {
       var choice = _.template(self.choice, {
@@ -22,13 +24,17 @@ FieldCheckboxView = FieldView.extend({
         "value": subfield.label,
         "checked": (subfield.checked) ? "checked='checked'" : ""
       });
-      $(choice).on('click', function(e){
-
+      choice = $(choice);
+      choice.off('click');
+      choice.on('click', function(e){
+        //$(this).toggleClass('active');
+        $(this).find('.choice_icon').toggleClass('icon-check-empty');
+        $(this).find('.choice_icon').toggleClass('icon-check');
       });
+
+      checkboxesHtml.append(choice);
     });
-
-    checkboxesHtml = _.template(this.checkboxes, {"choices": choicesHtml, "repeatingClassName": repeatingClassName});
-
+    
     return checkboxesHtml;
   },
   valueFromElement: function(index) {

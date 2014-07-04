@@ -31,7 +31,7 @@ FieldDateTimeView = FieldView.extend({
     }
     
 
-    return html;
+    return $(html);
   },
   getUnit:function(){
     var def=this.model.getFieldDefinition();

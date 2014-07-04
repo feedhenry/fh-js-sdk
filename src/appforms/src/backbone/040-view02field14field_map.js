@@ -19,12 +19,13 @@ FieldMapView = FieldView.extend({
     FieldView.prototype.initialize.apply(this, arguments);
   },
   renderInput: function(index) {
-    return _.template(this.input, {
+    var inputEle = _.template(this.input, {
       width: this.mapSettings.mapWidth,
       height: this.mapSettings.mapHeight,
       'index': index,
       'id':Math.random()
     });
+    return $(inputEle);
   },
   show: function() {
     this.$el.show();

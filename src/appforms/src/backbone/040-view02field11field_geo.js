@@ -16,8 +16,7 @@ FieldGeoView = FieldView.extend({
       "repeatingClassName": repeatingClassName
     });
 
-
-    return html;
+    return $(html);
   },
   onElementShow: function(index){
     var self = this;

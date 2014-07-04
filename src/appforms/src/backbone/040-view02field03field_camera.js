@@ -154,10 +154,12 @@ FieldCameraView = FieldView.extend({
                 fileObj = $(self.$el.find('input[type="file"]')[0]);
             }
 
-            fileObj.click(function(e){
+            fileObj.off('click');
+            fileObj.on('click', function(e){
                 console.log("File CLicked ", e);
             });
-            
+
+            fileObj.off('change');
             fileObj.on('change', function() {
                 var file = fileObj[0];
                 if (file.files && file.files.length > 0) {

@@ -72,31 +72,22 @@ var FieldView = Backbone.View.extend({
         this.curRepeat--;
     },
     renderTitle: function() {
-        var name = this.model.getName();
-        var title = name;
-        var template = this.title;
-
-        if (this.model.isRepeating()) {
-            template = this.titleRepeating;
-        }
-
-        return _.template(template, {
-            "title": title,
-            "required": this.getFieldRequired(0)
-        });
+        //TODO Remove
     },
     renderInput: function(index) {
         var fieldId = this.model.getFieldId();
         var type = this.getHTMLInputType();
         var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
 
-        return _.template(this.input, {
+        var inputEle = _.template(this.input, {
             "fieldId": fieldId,
             "index": index,
             "inputType": type,
             "repeatingClassName": repeatingClassName,
             "value":this.model.getDefaultValue()
         });
+
+        return $(inputEle);
     },
     getHTMLInputType: function() {
         return this.type || "text";
@@ -104,7 +95,7 @@ var FieldView = Backbone.View.extend({
     /**
     * Repeating fields can have required and non-required repeating inputs depending on the minRepeat and maxRepeat values defined for the field
     **/
-    "getFieldRequired": function(index) {
+    getFieldRequired: function(index) {
         var required = "";
         if(this.model.isRequired()){
             if(index < this.initialRepeat){
@@ -118,20 +109,7 @@ var FieldView = Backbone.View.extend({
         return required;
     },
     renderEle: function(titleHtml, inputHtml, index) {
-        var fieldId = this.model.getFieldId();
-        var template = this.inputTemplate;
-
-
-        if (this.model.isRepeating()) {
-            template = this.inputTemplateRepeating;
-        }
-
-        return _.template(template, {
-            "fieldId": fieldId,
-            "index": index,
-            "inputHtml": inputHtml,
-            "required": this.getFieldRequired(index)
-        });
+        //TODO can be removed
     },
     renderHelpText: function() {
         var helpText = this.model.getHelpText();
@@ -143,22 +121,22 @@ var FieldView = Backbone.View.extend({
         } else {
             return "";
         }
-
     },
     addElement: function() {
         var self = this;
         var index = this.curRepeat;
         var inputHtml = this.renderInput(index);
-        var eleHtml = this.renderEle("", inputHtml, index);
 
         var eleTemplate = _.template(self.options.formView.$el.find("#temp_field_wrapper").html(), {
-            inputHtml: inputHtml, 
             index: index,
             d_index: index + 1,
             required: this.model.isRequired() ? self.requiredClassName : "",
             fieldId: this.model.getFieldId(),
             repeating: this.model.isRepeating()  
         });
+
+        eleTemplate = $(eleTemplate);
+        eleTemplate.find('.fh_appform_field_input_container').prepend(inputHtml);
 
         this.$fieldWrapper.append(eleTemplate);
         this.curRepeat++;

@@ -19,11 +19,11 @@ FieldSelectView = FieldView.extend({
       });
     });
 
-    return _.template(this.select, {
+    return $(_.template(this.select, {
       "fieldId":fieldId,
       "index":index,
       "options":options,
       "repeatingClassName": repeatingClassName
-    });
+    }));
   }
 });
