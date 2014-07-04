@@ -170,10 +170,7 @@ appForm.models = function(module) {
     });
   };
 
-  /**
-   * Validate the submission only.
-   */
-  Submission.prototype.validateSubmission = function(cb){
+  Submission.prototype.performValidation = function(cb){
     var self = this;
     self.getForm(function(err, form) {
       if (err) {
@@ -182,18 +179,27 @@ appForm.models = function(module) {
       }
       var ruleEngine = form.getRuleEngine();
       var submission = self.getProps();
-      ruleEngine.validateForm(submission, function(err, res) {
-        if(err){
-          return cb(err);
-        }
-        var validation = res.validation;
-        if (validation.valid) {
-          return cb(null, validation.valid);
-        } else {
-          self.emit('validationerror', validation);
-          cb(null, validation.valid);
-        }
-      });
+      ruleEngine.validateForm(submission, cb);
+    });
+  };
+
+  /**
+   * Validate the submission only.
+   */
+  Submission.prototype.validateSubmission = function(cb){
+    var self = this;
+
+    self.performValidation(function(err, res){
+      if(err){
+        return cb(err);
+      }
+      var validation = res.validation;
+      if (validation.valid) {
+        return cb(null, validation.valid);
+      } else {
+        self.emit('validationerror', validation);
+        cb(null, validation.valid);
+      }  
     });
   };
 
@@ -209,7 +215,7 @@ appForm.models = function(module) {
     var validateResult = true;
     
     this.set('timezoneOffset', appForm.utils.getTime(true));
-    that.validateSubmission(function(err, res){
+    that.performValidation(function(err, res){
       if (err) {
         $fh.forms.log.e("Submission submit validateForm: Error validating form ", err);
         cb(err);
