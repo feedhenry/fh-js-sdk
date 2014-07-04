@@ -9,7 +9,7 @@ FieldSectionBreak = FieldView.extend({
   renderTitle: function(){
     return "";
   },
-  "renderHelpText": function(){
+  renderHelpText: function(){
     return "";
   }
 });

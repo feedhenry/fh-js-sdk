@@ -16280,7 +16280,7 @@ appForm.models = function(module) {
 
       for(var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++){
         var formFieldEntry = formFields[formFieldIndex].fieldId || {};
-        if(formFieldEntry.type === 'file' || formFieldEntry.type === 'photo'){
+        if(formFieldEntry.type === 'file' || formFieldEntry.type === 'photo' || formFieldEntry.type === 'signature'){
           if(formFieldEntry._id){
             formFieldIds.push(formFieldEntry._id);
           }
