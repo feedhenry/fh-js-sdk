@@ -235,6 +235,7 @@ appForm.models = function(module) {
           });
         } else {
           $fh.forms.log.d("Submission submit: validateForm. Completed Validation error", res);
+          self.emit('validationerror', validation);
           cb('Validation error');
         }
       }  
