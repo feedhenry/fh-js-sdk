@@ -169,6 +169,29 @@ appForm.models = function(module) {
       }
     });
   };
+
+  /**
+   * Validate the submission only.
+   */
+  Submission.prototype.validateSubmission = function(cb){
+    var self = this;
+    self.getForm(function(err, form) {
+      if (err) {
+        $fh.forms.log.e("Submission submit: Error getting form ", err);
+      }
+      var ruleEngine = form.getRuleEngine();
+      var submission = self.getProps();
+      ruleEngine.validateForm(submission, function(err, res) {
+        var validation = res.validation;
+        if (validation.valid) {
+          return cb(null, validation.valid);
+        } else {
+          cb(null, validation.valid);
+          self.emit('validationerror', validation);
+        }
+      });
+    });
+  };
   /**
    * submit current submission to remote
    * @param  {Function} cb [description]

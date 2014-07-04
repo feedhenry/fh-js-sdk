@@ -1,8 +1,11 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.1.2 - 2014-07-04 - IR231 - Niall Donnelly
+7569 - Added validate submission to submission model.
+
 ## 2.1.1 - 2014-07-02 - IR231 - Niall Donnelly
 
-Added signature to file download
+7550 - Added signature to file download
 
 ## 2.1.0 - 2014-06-23 - IR230 - Jason Madigan
 
