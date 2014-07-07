@@ -53,7 +53,7 @@
     "url": "git://github.com/feedhenry/fh-js-sdk.git"
   },
   "author": "",
-  "license": "BSD",
+  "license": "Copyright (c) 2014 FeedHenry Ltd, All Rights Reserved.",
   "gitHead": "251a1f88a39f59f2652552ae245893a833faee71",
   "dependencies": {
     "type-of": "~2.0.1",
