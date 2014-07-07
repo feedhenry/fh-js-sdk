@@ -8,20 +8,22 @@ var ConfigView = Backbone.View.extend({
     "click #_sendLogsBtn": "sendLogs",
     "click #_closeViewBtn": "closeViewLogs",
     "click #fh_appform_show_deviceId": "showDeviceId",
-    "click #logger_wrapper": "toggleLogging"
+    "click #logger": "toggleLogging"
   },
   toggleLogging: function(){
     var loggingEnabled = $fh.forms.config.getConfig().logger;
     loggingEnabled = !loggingEnabled;
     $fh.forms.config.set("logger", loggingEnabled);
 
-    var loggingMessage = loggingEnabled ? "Disable Logging" : "Enable Logging";
+    var loggingMessage = loggingEnabled ? "Logging Enabled" : "Logging Disabled";
     var checkedClass = loggingEnabled ? "active" : "";
 
     if(loggingEnabled){
-      this.$el.find('#logger_wrapper').addClass('active');
+      this.$el.find('.choice_icon').addClass('icon-circle');
+      this.$el.find('.choice_icon').removeClass('icon-circle-blank');
     } else {
-      this.$el.find('#logger_wrapper').removeClass('active');
+      this.$el.find('.choice_icon').addClass('icon-circle-blank');
+      this.$el.find('.choice_icon').removeClass('icon-circle');
     }
 
     this.$el.find('#logger_message').html(loggingMessage);
@@ -142,17 +144,17 @@ var ConfigView = Backbone.View.extend({
       } 
       return this;
   },
-  "save": function(cb) {
+  save: function(cb) {
     $fh.forms.log.l("Saving config");
-    var inputs = this.$el.find("input,select,textarea");
+    var inputs = this.$el.find("input,select,textarea,button[data-key='logger']");
 
     if($fh.forms.config.editAllowed()){
       inputs.each(function() {
         var key = $(this).data().key;
         var val = $(this).val();
 
-        if ($(this).attr("type") && $(this).attr("type").toLowerCase() === "checkbox") {
-          if ($(this).attr("checked")) {
+        if (key === "logger") {
+          if ($(this).hasClass("active")) {
             val = true;
           } else {
             val = false;

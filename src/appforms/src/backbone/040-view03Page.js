@@ -48,6 +48,14 @@ var PageView=BaseView.extend({
 
     var sections = this.model.getSections();
 
+    function toggleSection(fieldTarget){
+      if(fieldTarget){
+        $('#' + fieldTarget).slideToggle(600);
+        $('#' + fieldTarget + "_icon").toggleClass('icon-chevron-sign-up');
+        $('#' + fieldTarget + "_icon").toggleClass('icon-chevron-sign-down');
+      } 
+    }
+
     if(sections != null){
       var sectionKey;
       var sectionIndex = 0;
@@ -58,19 +66,20 @@ var PageView=BaseView.extend({
       //Add the section fields
       for(sectionKey in sections){
         var sectionEl = $(_.template(self.options.formView.$el.find('#temp_page_structure').html(), {"sectionId": sectionKey, title: sections[sectionKey].title, index: sectionIndex}));
+        var sectionDivId = '#fh_appform_' + sectionKey + '_body_icon';
         sectionIndex++;
         sectionEl.find('.panel-heading').off('click');
-        sectionEl.find('#fh_appform_sectionBreak0_body_icon').off('click');
+        sectionEl.find(sectionDivId).off('click');
 
-        sectionEl.find('#fh_appform_sectionBreak0_body_icon').on('click');
+        sectionEl.find(sectionDivId).on('click', function(e){
+          var fieldTarget = $(this).parent().data().field;
+          toggleSection(fieldTarget);
+        });
 
         sectionEl.find('.panel-heading').on('click', function(e){
           if($(e.target).data()){
             if($(e.target).data().field){
-              console.log("FIELD FOUND, TOGGLE COLLAPSE", e);
-              $('#' + $(e.target).data().field).slideToggle(600);
-              $('#' + $(e.target).data().field + "_icon").toggleClass('icon-chevron-sign-up');
-              $('#' + $(e.target).data().field + "_icon").toggleClass('icon-chevron-sign-down');
+              toggleSection($(e.target).data().field);
             }  
           }
         });
