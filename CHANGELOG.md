@@ -1,4 +1,19 @@
 # Changelog - FeedHenry Javascript SDK
+
+## 2.2.0 - 2014-07-11 - IR231 - Niall Donnelly
+7414 Upgraded forms to bootstrap rendering.
+
+## 2.1.2 - 2014-07-04 - IR231 - Niall Donnelly
+7569 - Added validate submission to submission model.
+
+## 2.1.1 - 2014-07-02 - IR231 - Niall Donnelly
+
+7550 - Added signature to file download
+
+## 2.1.0 - 2014-06-23 - IR230 - Jason Madigan
+
+* 7468 - Admin calls fail in the preview
+
 ## 2.0.28 - 2014-06-17 - IR230 - Wei Li
 
 * 7449 - Init FH JS SDK on deviceready when deployed to cordova apps

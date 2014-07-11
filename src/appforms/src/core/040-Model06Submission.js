@@ -171,71 +171,75 @@ appForm.models = function(module) {
     });
   };
 
+  Submission.prototype.performValidation = function(cb){
+    var self = this;
+    self.getForm(function(err, form) {
+      if (err) {
+        $fh.forms.log.e("Submission submit: Error getting form ", err);
+        return cb(err);
+      }
+      var ruleEngine = form.getRuleEngine();
+      var submission = self.getProps();
+      ruleEngine.validateForm(submission, cb);
+    });
+  };
+
   /**
    * Validate the submission only.
    */
   Submission.prototype.validateSubmission = function(cb){
     var self = this;
-    self.getForm(function(err, form) {
-      if (err) {
-        $fh.forms.log.e("Submission submit: Error getting form ", err);
+
+    self.performValidation(function(err, res){
+      if(err){
+        return cb(err);
       }
-      var ruleEngine = form.getRuleEngine();
-      var submission = self.getProps();
-      ruleEngine.validateForm(submission, function(err, res) {
-        var validation = res.validation;
-        if (validation.valid) {
-          return cb(null, validation.valid);
-        } else {
-          cb(null, validation.valid);
-          self.emit('validationerror', validation);
-        }
-      });
+      var validation = res.validation;
+      if (validation.valid) {
+        return cb(null, validation.valid);
+      } else {
+        self.emit('validationerror', validation);
+        cb(null, validation.valid);
+      }  
     });
   };
-  
+
   /**
-   * submit current submission. 
+   * submit current submission to remote
    * @param  {Function} cb [description]
    * @return {[type]}      [description]
    */
   Submission.prototype.submit = function(cb) {
+    var that = this;
     $fh.forms.log.d("Submission submit: ");
     var targetStatus = 'pending';
     var validateResult = true;
-    var that = this;
+    
     this.set('timezoneOffset', appForm.utils.getTime(true));
-    this.getForm(function(err, form) {
-      if(err) {
-        $fh.forms.log.e("Submission submit: Error getting form ", err);
-      }
-      var ruleEngine = form.getRuleEngine();
-      var submission = that.getProps();
-      ruleEngine.validateForm(submission, function(err, res) {
-        if (err) {
-          $fh.forms.log.e("Submission submit validateForm: Error validating form ", err);
-          cb(err);
+    that.performValidation(function(err, res){
+      if (err) {
+        $fh.forms.log.e("Submission submit validateForm: Error validating form ", err);
+        cb(err);
+      } else {
+        $fh.forms.log.d("Submission submit: validateForm. Completed result", res);
+        var validation = res.validation;
+        if (validation.valid) {
+          $fh.forms.log.d("Submission submit: validateForm. Completed Form Valid", res);
+          that.set('submitDate', new Date());
+          that.changeStatus(targetStatus, function(error) {
+            if (error) {
+              cb(error);
+            } else {
+              that.emit('submit');
+              cb(null, null);
+            }
+          });
         } else {
-          $fh.forms.log.d("Submission submit: validateForm. Completed result", res);
-          var validation = res.validation;
-          if (validation.valid) {
-            $fh.forms.log.d("Submission submit: validateForm. Completed Form Valid", res);
-            that.set('submitDate', new Date());
-            that.changeStatus(targetStatus, function(error) {
-              if (error) {
-                cb(error);
-              } else {
-                that.emit('submit');
-                cb(null, null);
-              }
-            });
-          } else {
-            $fh.forms.log.d("Submission submit: validateForm. Completed Validation error", res);
-            cb('Validation error');
-            that.emit('validationerror', validation);
-          }
+          $fh.forms.log.d("Submission submit: validateForm. Completed Validation error", res);
+          that.emit('validationerror', validation);
+          cb('Validation error');
         }
-      });
+      }  
     });
   };
   Submission.prototype.getUploadTask = function(cb) {
@@ -822,7 +826,7 @@ appForm.models = function(module) {
 
       for(var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++){
         var formFieldEntry = formFields[formFieldIndex].fieldId || {};
-        if(formFieldEntry.type === 'file' || formFieldEntry.type === 'photo' || formFieldEntry.type === 'signature'){
+        if(formFieldEntry.type === 'file' || formFieldEntry.type === 'photo'  || formFieldEntry.type === 'signature'){
           if(formFieldEntry._id){
             formFieldIds.push(formFieldEntry._id);
           }

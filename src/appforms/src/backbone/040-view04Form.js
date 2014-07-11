@@ -462,6 +462,12 @@ var FormView = BaseView.extend({
       view.hide();
     });
   },
+  validateForm: function(cb){
+    var self = this;
+    this.populateFieldViewsToSubmission(function() {
+      self.submission.validateSubmission(cb);
+    });
+  },
   submit: function(cb) {
     var self = this;
     this.populateFieldViewsToSubmission(function() {

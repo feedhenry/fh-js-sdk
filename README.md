@@ -28,8 +28,8 @@ The FeedHenry Javascript SDK is built to work with Titanium applications. To get
 
 You can then require the FeedHenry SDK from any JavaScript file in your Titanium project, and use it as normal:
 	
-	var $fh = require('feedhenry');
-	$fh.act // ...FeedHenry Calls are now possible
+  	var $fh = require('feedhenry');
+  	$fh.act // ...FeedHenry Calls are now possible
 	
 For a practical exampe, see the [FeedHenry Titanium example app](https://github.com/feedhenry-training/fh-titanium-example).
 	

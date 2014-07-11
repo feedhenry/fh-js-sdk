@@ -1,4 +1,4 @@
-var logger =require("./logger");
+var logger = require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
 var ajax = require("./ajax");
@@ -9,9 +9,9 @@ var constants = require("./constants");
 var checkAuth = require("./checkAuth");
 var appProps = require("./appProps");
 
-module.exports = function(opts, success, fail){
-  if(!fail){
-    fail = function(msg, error){
+module.exports = function(opts, success, fail) {
+  if (!fail) {
+    fail = function(msg, error) {
       logger.debug(msg + ":" + JSON.stringify(error));
     };
   }
@@ -22,8 +22,8 @@ module.exports = function(opts, success, fail){
     return fail('auth_no_clientToken', {});
   }
 
-  cloud.ready(function(err, data){
-    if(err){
+  cloud.ready(function(err, data) {
+    if (err) {
       return fail(err.message, err);
     } else {
       var req = {};
@@ -43,6 +43,11 @@ module.exports = function(opts, success, fail){
       req.device = device.getDeviceId();
       var app_props = appProps.getAppProps();
       var path = app_props.host + constants.boxprefix + "admin/authpolicy/auth";
+
+      if (app_props.local) {
+        path = constants.boxprefix + "admin/authpolicy/auth";
+      }
+
       req = fhparams.addFHParams(req);
 
       ajax({
@@ -52,7 +57,7 @@ module.exports = function(opts, success, fail){
         "data": JSON.stringify(req),
         "dataType": "json",
         "contentType": "application/json",
-        "timeout" : opts.timeout || app_props.timeout,
+        "timeout": opts.timeout || app_props.timeout,
         success: function(res) {
           checkAuth.handleAuthResponse(endurl, res, success, fail);
         },
