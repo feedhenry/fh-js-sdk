@@ -443,6 +443,10 @@ var FormView = BaseView.extend({
     $('html, body').animate({
           scrollTop: 0
     }, 500);
+
+    setTimeout(function() { 
+        window.scrollTo(0, 0);
+    }, 500 + 75);
   },
   backEvent: function(){
     var self = this;
