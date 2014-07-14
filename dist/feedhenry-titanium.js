@@ -7140,7 +7140,10 @@ EventEmitter.prototype.addListener = function(type, listener) {
                     'leak detected. %d listeners added. ' +
                     'Use emitter.setMaxListeners() to increase limit.',
                     this._events[type].length);
-      console.trace();
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
     }
   }
 
@@ -10807,7 +10810,9 @@ module.exports = {
   loadDataSet: self.loadDataSet,
   checkHasCustomSync: self.checkHasCustomSync
 };
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":19,"./api_cloud":21,"JSON":3}],"zDENqi":[function(_dereq_,module,exports){
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":19,"./api_cloud":21,"JSON":3}],"./appProps":[function(_dereq_,module,exports){
+module.exports=_dereq_('zDENqi');
+},{}],"zDENqi":[function(_dereq_,module,exports){
 var consts = _dereq_("../constants");
 var ajax = _dereq_("../ajax");
 var logger = _dereq_("../logger");
@@ -10839,8 +10844,8 @@ module.exports = {
   setAppProps: setAppProps
 };
 
-},{"../ajax":18,"../constants":26,"../logger":35,"../queryMap":37}],"./modules/appProps":[function(_dereq_,module,exports){
-module.exports=_dereq_('zDENqi');
+},{"../ajax":18,"../constants":26,"../logger":35,"../queryMap":37}],"./cookies":[function(_dereq_,module,exports){
+module.exports=_dereq_('RdeKcl');
 },{}],"RdeKcl":[function(_dereq_,module,exports){
 module.exports = {
   readCookieValue  : function (cookie_name) {
@@ -10856,8 +10861,6 @@ module.exports = {
     }
   }
 };
-},{}],"./cookies":[function(_dereq_,module,exports){
-module.exports=_dereq_('RdeKcl');
 },{}],48:[function(_dereq_,module,exports){
 module.exports = {
   createUUID : function () {
