@@ -125,12 +125,12 @@
         <input type="number" class="form-control fh_appform_field_input text-center" id="timeout" value="<%= timeout %>" data-key="timeout">
       </div>
       <div class="form-group fh_appform_field_area">
-        <label class="fh_appform_field_title col-xs-12" for="sent_save_min">Number of sent submissions to keep (min)</label>
-        <input type="number" class="form-control fh_appform_field_input text-center" id="sent_save_min" value="<%= sent_save_min %>" data-key="sent_save_min" min="0">
-      </div>
-      <div class="form-group fh_appform_field_area">
-        <label class="fh_appform_field_title col-xs-12" for="sent_save_max">Number of sent submissions to keep (max)</label>
-        <input type="number" class="form-control fh_appform_field_input text-center" id="sent_save_max" value="<%= sent_save_max %>" data-key="sent_save_max" min="0">
+        <label class="fh_appform_field_title col-xs-12" for="sent_items_to_keep_list">Number of sent submissions to keep.</label>
+        <select id="sent_items_to_keep_list" multiple data-role="tagsinput" data-key="sent_items_to_keep_list">
+          <% for(var sent_item_index = 0; sent_item_index < sent_items_to_keep_list.length; sent_item_index++){ %>
+            <option value="<%= sent_items_to_keep_list[sent_item_index] %>"><%= sent_items_to_keep_list[sent_item_index] %></option>
+          <%}%>
+        </select>
       </div>
     </div>  
   </div>
