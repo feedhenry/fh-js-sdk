@@ -2316,7 +2316,7 @@ FieldEmailView = FieldView.extend({
 FieldFileView = FieldView.extend({
     input: "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action select col-xs-12' data-index='<%= index %>'  type='<%= inputType %>'><i class='icon-folder-openSelect'></i> A File</button>" +
         "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action remove col-xs-12' data-index='<%= index %>'  type='<%= inputType %>'><i class='icon-remove-circle'></i>&nbsp;Remove File Entry</button>" +
-        "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' style='max-width:1px; max-height: 1px; padding: 0px;margin: 0px;'/>",
+        "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' type='<%= inputType %>' style=''/>",
     type: "file",
     initialize: function() {
         var self = this;
@@ -2379,14 +2379,31 @@ FieldFileView = FieldView.extend({
             button_remove.hide();
         }
 
-        button.off("click");
-        button.on("click", function() {
-            var index = $(this).data().index;
-            $(fileEle).trigger('click');
-        });
+        //Some operating systems do not support opening a file select browser
+        //http://viljamis.com/blog/2012/file-upload-support-on-mobile/
+        if (navigator.userAgent.match(/(Android (1.0|1.1|1.5|1.6|2.0|2.1))|(Windows Phone (OS 7|8.0))|(XBLWP)|(ZuneWP)|(w(eb)?OSBrowser)|(webOS)|(Kindle\/(1.0|2.0|2.5|3.0))/)) {
+            //If not supported, show a warning on-device. There is also a warning in the studio when creating the form.
+           $(button).text("File upload not supported");
+           $(button).attr("disabled", true);
+           button.off("click");
+         }
+
+        
+        // button.on("click", function() {
+        //     var index = $(this).data().index;
+        //     console.log("FILE Button Click", index);
+        //     var wrapper = self.getWrapper(index);
+        //     wrapper = $(wrapper);
+        //     var fileEle = wrapper.find(".fh_appform_field_input");
+
+        //     console.log("File ELE ", fileEle);
+
+        //     $(fileEle).trigger('click');
+        // }); 
 
         button_remove.off("click");
         button_remove.on("click", function() {
+            console.log("button_remove Click");
             var index = $(this).data().index;
             if (self.fileObjs && self.fileObjs[index]) {
                 self.fileObjs[index] = null;
@@ -2846,12 +2863,15 @@ FieldSignatureView = FieldView.extend({
             "canvasWidth": canvasWidth
         }));
         var signaturePad = $('.sigPad', this.$el);
+
+        var diff = $(window).height() - window.outerHeight;
+        var diffpx = "" + diff + "px";
         signaturePad.css({
             position: 'fixed',
             'z-index': 9999,
             'bottom': '0px',
             'right': '0px',
-            top: '0px',
+            top: diffpx,
             left: '0px',
             'background-color': '#fff'
         });
