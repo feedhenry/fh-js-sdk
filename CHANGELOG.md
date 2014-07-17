@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.1.3 - 2014-07-17 - IR232 - Niall Donnelly
+
+7637 - Updated rules engine related to ticket 7637
+
 ## 2.1.2 - 2014-07-04 - IR231 - Niall Donnelly
 7569 - Added validate submission to submission model.
 

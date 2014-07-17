@@ -7015,7 +7015,10 @@ EventEmitter.prototype.addListener = function(type, listener) {
                     'leak detected. %d listeners added. ' +
                     'Use emitter.setMaxListeners() to increase limit.',
                     this._events[type].length);
-      console.trace();
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
     }
   }
 
@@ -15687,7 +15690,7 @@ appForm.models = function(module) {
           });
         } else {
           $fh.forms.log.d("Submission submit: validateForm. Completed Validation error", res);
-          self.emit('validationerror', validation);
+          that.emit('validationerror', validation);
           cb('Validation error');
         }
       }  
@@ -18546,9 +18549,9 @@ if (typeof $fh === 'undefined') {
 if ($fh.forms === undefined) {
   $fh.forms = appForm.api;
 }
-/*! fh-forms - v0.5.16 -  */
+/*! fh-forms - v0.5.21 -  */
 /*! async - v0.2.9 -  */
-/*! 2014-05-20 */
+/*! 2014-07-17 */
 /* This is the prefix file */
 if(appForm){
   appForm.RulesEngine=rulesEngine;
@@ -19841,6 +19844,7 @@ function rulesEngine (formDef) {
         }
       }, function (err) {
         if (err) return cb(err);
+
         return cb(undefined, res);
       });
     }
@@ -19987,9 +19991,14 @@ function rulesEngine (formDef) {
     }
 
     function getFieldValidationStatus(submittedField, fieldDef, previousFieldValues, cb) {
-      validateFieldInternal(submittedField, fieldDef, previousFieldValues, function (err, messages) {
-        if (err) return cb(err);
-        createValidatorResponse(submittedField.fieldId, messages, cb);
+      isFieldVisible(fieldDef._id, true, function(err, visible){
+        if(err){
+          return cb(err);
+        }
+        validateFieldInternal(submittedField, fieldDef, previousFieldValues, visible, function (err, messages) {
+          if (err) return cb(err);
+          createValidatorResponse(submittedField.fieldId, messages, cb);
+        });
       });
     }
 
@@ -20014,17 +20023,13 @@ function rulesEngine (formDef) {
       return ('undefined' === typeof fieldValue || null === fieldValue || "" === fieldValue); // empty string also regarded as not specified
     }
 
-    function validateFieldInternal(submittedField, fieldDef, previousFieldValues, cb) {
-      if ("function" === typeof previousFieldValues) {
-        cb = previousFieldValues;
-        previousFieldValues = null;
-      }
-
+    function validateFieldInternal(submittedField, fieldDef, previousFieldValues, visible, cb) {
+      previousFieldValues = previousFieldValues || null;
       countSubmittedValues(submittedField, function (err, numSubmittedValues) {
         if (err) return cb(err);
         async.series({
-          valuesSubmitted: async.apply(checkValueSubmitted, submittedField, fieldDef),
-          repeats: async.apply(checkRepeat, numSubmittedValues, fieldDef),
+          valuesSubmitted: async.apply(checkValueSubmitted, submittedField, fieldDef, visible),
+          repeats: async.apply(checkRepeat, numSubmittedValues, fieldDef, visible),
           values: async.apply(checkValues, submittedField, fieldDef, previousFieldValues)
         }, function (err, results) {
           if (err) return cb(err);
@@ -20045,13 +20050,16 @@ function rulesEngine (formDef) {
 
       return; // just functions below this
 
-      function checkValueSubmitted(submittedField, fieldDefinition, cb) {
+      function checkValueSubmitted(submittedField, fieldDefinition, visible, cb) {
         if (!fieldDefinition.required) return cb(undefined, null);
+
         var valueSubmitted = submittedField && submittedField.fieldValues && (submittedField.fieldValues.length > 0);
-        if (!valueSubmitted) {
+        //No value submitted is only an error if the field is visible.
+        if (!valueSubmitted && visible) {
           return cb(undefined, "No value submitted for field " + fieldDefinition.name);
         }
         return cb(undefined, null);
+
       }
 
       function countSubmittedValues(submittedField, cb) {
@@ -20066,7 +20074,11 @@ function rulesEngine (formDef) {
         return cb(undefined, numSubmittedValues);
       }
 
-      function checkRepeat(numSubmittedValues, fieldDefinition, cb) {
+      function checkRepeat(numSubmittedValues, fieldDefinition, visible, cb) {
+        //If the field is not visible, then checking the repeating values of the field is not required
+        if(!visible){
+          return cb(undefined, null);
+        }
 
         if (fieldDefinition.repeating && fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.definition) {
           if (fieldDefinition.fieldOptions.definition.minRepeat) {
@@ -20118,7 +20130,6 @@ function rulesEngine (formDef) {
           });
         });
       }
-
     }
 
     function convertSimpleFormatToRegex(field_format_string) {
@@ -20400,7 +20411,6 @@ function rulesEngine (formDef) {
         if (fieldValueSize > 1000) {
           fieldValueSizeKB = fieldValueSize / 1000;
         }
-        console.log("Comparing File Size: ", fileSizeMax, fieldValueSize);
         if (fieldValueSize > (fileSizeMax * 1000)) {
           return cb(new Error("File size is too large. File can be a maximum of " + fileSizeMax + "KB. Size of file selected: " + fieldValueSizeKB + "KB"));
         } else {

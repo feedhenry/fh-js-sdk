@@ -7140,7 +7140,10 @@ EventEmitter.prototype.addListener = function(type, listener) {
                     'leak detected. %d listeners added. ' +
                     'Use emitter.setMaxListeners() to increase limit.',
                     this._events[type].length);
-      console.trace();
+      if (typeof console.trace === 'function') {
+        // not supported in IE 10
+        console.trace();
+      }
     }
   }
 
@@ -8579,7 +8582,7 @@ module.exports = {
 },{"./fhparams":29,"./logger":35,"./queryMap":37,"JSON":3}],26:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.1.1-BUILD-NUMBER",
+  "sdk_version": "2.1.2-BUILD-NUMBER",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit",
   "INTERNAL_CONFIG_LOADED_EVENT": "internalfhconfigloaded",
@@ -10841,7 +10844,9 @@ module.exports = {
   setAppProps: setAppProps
 };
 
-},{"../ajax":18,"../constants":26,"../logger":35,"../queryMap":37}],"RdeKcl":[function(_dereq_,module,exports){
+},{"../ajax":18,"../constants":26,"../logger":35,"../queryMap":37}],"./cookies":[function(_dereq_,module,exports){
+module.exports=_dereq_('RdeKcl');
+},{}],"RdeKcl":[function(_dereq_,module,exports){
 module.exports = {
   readCookieValue  : function (cookie_name) {
     if (typeof Titanium !== 'undefined'){
@@ -10856,8 +10861,6 @@ module.exports = {
     }
   }
 };
-},{}],"./cookies":[function(_dereq_,module,exports){
-module.exports=_dereq_('RdeKcl');
 },{}],48:[function(_dereq_,module,exports){
 module.exports = {
   createUUID : function () {
