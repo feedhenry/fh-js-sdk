@@ -4155,19 +4155,19 @@ var ConfigView = Backbone.View.extend({
         var logs = $fh.forms.log.getLogs();
         var patterns = [{
             reg: /^.+\sERROR\s.*/,
-            class: "list-group-item-danger"
+            classStyle: "list-group-item-danger"
         }, {
             reg: /^.+\sWARNING\s.*/,
-            class: "list-group-item-warning"
+            classStyle: "list-group-item-warning"
         }, {
             reg: /^.+\sLOG\s.*/,
-            class: "list-group-item-info"
+            classStyle: "list-group-item-info"
         }, {
             reg: /^.+\sDEBUG\s.*/,
-            class: "list-group-item-success"
+            classStyle: "list-group-item-success"
         }, {
             reg: /^.+\sUNKNOWN\s.*/,
-            class: "list-group-item-warning"
+            classStyle: "list-group-item-warning"
         }];
 
 
@@ -4179,7 +4179,7 @@ var ConfigView = Backbone.View.extend({
                 var p = patterns[j];
                 if (p.reg.test(log)) {
                     listStr += _.template($('#temp_config_log_item').html(), {
-                        logClass: p.class,
+                        logClass: p.classStyle,
                         message: log
                     });
                     break;
