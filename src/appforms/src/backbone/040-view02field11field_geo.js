@@ -50,9 +50,6 @@ FieldGeoView = FieldView.extend({
         textInput.val("");
         this.geoValues.splice(index, 1); // Remove the geo value from the field
     },
-    onRender: function() {
-        var that = this;
-    },
     convertLocation: function(location) {
         var lat = location.lat;
         var lon = location.lon;

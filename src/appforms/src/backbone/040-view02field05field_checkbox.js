@@ -27,7 +27,6 @@ FieldCheckboxView = FieldView.extend({
       choice = $(choice);
       choice.off('click');
       choice.on('click', function(e){
-        //$(this).toggleClass('active');
         $(this).find('.choice_icon').toggleClass('icon-check-empty');
         $(this).find('.choice_icon').toggleClass('icon-check');
       });

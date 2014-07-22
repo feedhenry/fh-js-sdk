@@ -10,7 +10,7 @@ var FieldView = Backbone.View.extend({
     removeInputButtonClass: ".fh_appform_removeInputBtn",
     fieldWrapper: '<div class="fh_appform_input_wrapper"></div>',
     input: "<input class='fh_appform_field_input <%= repeatingClassName%> col-xs-12' data-field='<%= fieldId %>' data-index='<%= index %>' value='<%= value %>' type='<%= inputType %>' />",
-    inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>' class='col-xs-12'> <div class='fh_appform_field_input_container non_repeating' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden col-xs-12 text-center' ></div></div><br style='clear:both'/>    </div>",
+    inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>' class='col-xs-12'> <div class='fh_appform_field_input_container non_repeating' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden col-xs-12 text-center' ></div></div><br class='clearfix'/>    </div>",
     inputTemplateRepeating: "<div id='wrapper_<%= fieldId %>_<%= index %>' class='col-xs-12'> <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering col-xs-2'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container repeating col-xs-10' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden col-xs-12'></div></div></div>",
 
 
@@ -71,9 +71,6 @@ var FieldView = Backbone.View.extend({
         this.getWrapper(lastIndex).remove();
         this.curRepeat--;
     },
-    renderTitle: function() {
-        //TODO Remove
-    },
     renderInput: function(index) {
         var fieldId = this.model.getFieldId();
         var type = this.getHTMLInputType();
@@ -107,9 +104,6 @@ var FieldView = Backbone.View.extend({
 
         }
         return required;
-    },
-    renderEle: function(titleHtml, inputHtml, index) {
-        //TODO can be removed
     },
     renderHelpText: function() {
         var helpText = this.model.getHelpText();

@@ -73,22 +73,8 @@ FieldFileView = FieldView.extend({
            button.off("click");
          }
 
-        
-        // button.on("click", function() {
-        //     var index = $(this).data().index;
-        //     console.log("FILE Button Click", index);
-        //     var wrapper = self.getWrapper(index);
-        //     wrapper = $(wrapper);
-        //     var fileEle = wrapper.find(".fh_appform_field_input");
-
-        //     console.log("File ELE ", fileEle);
-
-        //     $(fileEle).trigger('click');
-        // }); 
-
         button_remove.off("click");
         button_remove.on("click", function() {
-            console.log("button_remove Click");
             var index = $(this).data().index;
             if (self.fileObjs && self.fileObjs[index]) {
                 self.fileObjs[index] = null;

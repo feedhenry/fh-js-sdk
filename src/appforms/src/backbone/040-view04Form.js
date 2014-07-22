@@ -58,7 +58,7 @@ var FormView = BaseView.extend({
     this.formEdited = true;
   },
   isFormEdited: function(){
-    return this.formEdited === true;
+    return this.formEdited;
   },
   onValidateError: function(res) {
     var self = this;
@@ -442,11 +442,9 @@ var FormView = BaseView.extend({
     //Positioning the window to the top of the form container
     $('html, body').animate({
           scrollTop: 0
-    }, 500);
-
-    setTimeout(function() { 
+    }, 500, function() { 
         window.scrollTo(0, 0);
-    }, 500 + 75);
+    });
   },
   backEvent: function(){
     var self = this;
