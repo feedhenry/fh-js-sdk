@@ -3868,11 +3868,13 @@ var FormView = BaseView.extend({
       self.submission.saveDraft(function(err, res) {
         if (err) {
           $fh.forms.log.e(err);
+        } else {
+          self.formEdited = false;  
         }
+        
         if(typeof(cb) === "function"){
-          cb();
+          cb(err);
         }
-        self.$el.empty();
       });
     });
   },
