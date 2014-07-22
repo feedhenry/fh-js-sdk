@@ -3794,7 +3794,7 @@ var FormView = BaseView.extend({
     }
   },
   goToPage: function(pageNum, scroll){
-    if(typeof(pageNum) !== "undefined" && !isNaN(parseInt(pageNum))){
+    if(_.isFinite(pageNum)){
       this.pageNum = parseInt(pageNum);
       this.displayCurrentPage(scroll);
     } else {
