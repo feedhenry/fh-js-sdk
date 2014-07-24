@@ -51,7 +51,7 @@ appForm.utils = function (module) {
         targetHeight: height,
         sourceType: params.sourceType,
         saveToPhotoAlbum: false,
-        destinationType: Camera.DestinationType.DATA_URL,
+        destinationType: Camera.DestinationType.FILE_URI,
         encodingType: Camera.EncodingType.PNG
       });
     } else if (isHtml5) {
@@ -62,7 +62,7 @@ appForm.utils = function (module) {
   }
   function _phoneGapSuccess(cb) {
     return function (imageData) {
-      var base64Img = 'data:image/png;base64,' + imageData;
+      var base64Img = imageData;
       cb(null, base64Img);
     };
   }

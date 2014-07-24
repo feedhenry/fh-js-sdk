@@ -8529,7 +8529,7 @@ module.exports = {
 },{"./fhparams":31,"./logger":37,"./queryMap":39,"JSON":3}],27:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.1.2-BUILD-NUMBER",
+  "sdk_version": "2.1.3-BUILD-NUMBER",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit",
   "INTERNAL_CONFIG_LOADED_EVENT": "internalfhconfigloaded",
@@ -13531,7 +13531,7 @@ appForm.utils = function (module) {
         targetHeight: height,
         sourceType: params.sourceType,
         saveToPhotoAlbum: false,
-        destinationType: Camera.DestinationType.DATA_URL,
+        destinationType: Camera.DestinationType.FILE_URI,
         encodingType: Camera.EncodingType.PNG
       });
     } else if (isHtml5) {
@@ -13542,7 +13542,7 @@ appForm.utils = function (module) {
   }
   function _phoneGapSuccess(cb) {
     return function (imageData) {
-      var base64Img = 'data:image/png;base64,' + imageData;
+      var base64Img = imageData;
       cb(null, base64Img);
     };
   }

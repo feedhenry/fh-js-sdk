@@ -107,12 +107,12 @@ FieldCameraView = FieldView.extend({
                     $(video).css('width', '100%');
                     camObj.find('.cam').append(video);
                     actionBar.find('.camOk').on('click', function() {
-                        self.model.utils.takePhoto(params, function(err, base64Img) {
+                        self.model.utils.takePhoto(params, function(err, imageURI) {
                             camObj.remove();
                             if (err) {
                                 $fh.forms.log.e(err);
                             } else {
-                                self.setImage(index, base64Img);
+                                self.setImage(index, imageURI);
                             }
                         });
                     });
@@ -129,12 +129,12 @@ FieldCameraView = FieldView.extend({
         if (self.model.utils.isPhoneGapCamAvailable()) {
             e.preventDefault();
             params.sourceType = Camera.PictureSourceType.PHOTOLIBRARY;
-            self.model.utils.takePhoto(params, function(err, base64Image) {
+            self.model.utils.takePhoto(params, function(err, imageURI) {
                 if (err) {
                     $fh.forms.log.e("error occured with take photo ", JSON.stringify(err));
                 }
-                if (base64Image) {
-                    self.setImage(index, base64Image);
+                if (imageURI) {
+                    self.setImage(index, imageURI);
                 }
             });
         } else {
