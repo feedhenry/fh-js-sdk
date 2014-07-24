@@ -62,7 +62,6 @@ describe("submissions model",function(){
       var downloadSubmission = appForm.api.downloadSubmission;
 
       downloadSubmission({fromRemote: true, submissionId: submissionId}, function(err, submission){
-        assert.ok(!err);
         assert.ok(submission);
         assert.ok(submission.getRemoteSubmissionId().length > 0);
         var rtn=appForm.models.submissions.getDownloaded();

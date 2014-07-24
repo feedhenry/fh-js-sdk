@@ -150,27 +150,27 @@ describe("UploadTask model", function() {
                 ut.uploadTick(function(err) { //First upload fails -- upload task should be set to try again.
                   assert(!err);
                   assert(ut.getCurrentTask() === 0);
-                  assert(submission.getStatus() === "inprogress");
+                  assert(submission.getStatus() === "queued");
                   assert(ut.get("retryNeeded") === true);
                   assert(ut.get("retryAttempts") === 1);
 
                   ut.uploadTick(function(err){// Next upload tick should reset the uploadTask
                     assert(!err);
-                    assert(submission.getStatus() === "inprogress");
+                    assert(submission.getStatus() === "queued");
                     assert(ut.get("retryNeeded") === false);
                     assert(ut.get("retryAttempts") === 1);
 
                     ut.uploadTick(function(err){ //Next upload fails again
                       assert(!err);
                       assert(ut.getCurrentTask() === 0);
-                      assert(submission.getStatus() === "inprogress");
+                      assert(submission.getStatus() === "queued");
                       assert(ut.get("retryNeeded") === true);
                       assert(ut.get("retryAttempts") === 2);
 
                       ut.uploadTick(function(err){// Next upload tick should reset the uploadTask again
                         assert(!err);
                         assert(ut.getCurrentTask() === 0);
-                        assert(submission.getStatus() === "inprogress");
+                        assert(submission.getStatus() === "queued");
                         assert(ut.get("retryNeeded") === false);
                         assert(ut.get("retryAttempts") === 2);
 
@@ -221,7 +221,7 @@ describe("UploadTask model", function() {
                   assert(ut.getCurrentTask() === 0);
                   assert(ut.get("retryNeeded") === true);
                   assert(ut.get("retryAttempts") === 1);
-                  assert(submission.getStatus() === "inprogress");
+                  assert(submission.getStatus() === "queued");
                   done();
                 });
               });
@@ -263,20 +263,20 @@ describe("UploadTask model", function() {
                   assert(ut.getCurrentTask() === 0);
                   assert(ut.get("retryNeeded") === true);
                   assert(ut.get("retryAttempts") === 1);
-                  assert(submission.getStatus() === "inprogress");
+                  assert(submission.getStatus() === "queued");
 
                   ut.uploadTick(function(err) { //rebuilds the upload task
                     assert(!err);
                     assert(ut.get("retryNeeded") === false);
                     assert(ut.get("retryAttempts") === 1);
-                    assert(submission.getStatus() === "inprogress");
+                    assert(submission.getStatus() === "queued");
 
                     ut.uploadTick(function(err) { //Next file uploaded sucessfully to mbaas.
                       assert(!err);
-                      assert(submission.getStatus() === "inprogress");
+                      assert(submission.getStatus() === "queued");
                       ut.uploadTick(function(err) { //call completeSubmission
                         assert(!err);
-                        assert(submission.getStatus() === "inprogress");
+                        assert(submission.getStatus() === "queued");
 
                         ut.uploadTick(function(err) { //Submission is now complete
                           assert(!err);

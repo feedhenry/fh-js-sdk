@@ -342,7 +342,7 @@ appForm.models = function(module) {
         $fh.forms.log.e("Error setting downloaded status " + err);
         cb(err);
       } else {
-        $fh.forms.log.d("Downloaded status set for submission " + self.get('submissionId') + " with localId " + self.getLocalId());
+        $fh.forms.log.d("Downloaded status set for submission " + that.get('submissionId') + " with localId " + that.getLocalId());
         that.emit('downloaded', that.get('submissionId'));
         cb(null, that);
       }

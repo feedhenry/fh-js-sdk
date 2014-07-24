@@ -147,7 +147,6 @@ describe("$fh.forms API", function() {
     var downloadSubmission = appForm.api.downloadSubmission;
 
     downloadSubmission({fromRemote: true, submissionId: submissionId}, function(err, submission){
-      assert.ok(!err);
       assert.ok(submission);
       console.log("Submission Data: ", submission);
       assert.ok(submission.getRemoteSubmissionId().length > 0);
@@ -160,7 +159,6 @@ describe("$fh.forms API", function() {
     var downloadSubmission = appForm.api.downloadSubmission;
 
     downloadSubmission({fromRemote: true, submissionId: submissionId}, function(err, submission){
-      assert.ok(!err);
       assert.ok(submission);
       console.log("Submission File: ", submission);
       assert.ok(submission.getRemoteSubmissionId().length > 0);

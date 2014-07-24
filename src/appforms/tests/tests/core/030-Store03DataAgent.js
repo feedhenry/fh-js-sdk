@@ -37,6 +37,7 @@ describe("Store Data agent", function() {
 
         it ("how to use attempt read to attempt remote resource first, if failed, attempt retrieve local resource instead.",function(done){
             var model = appForm.models.forms;
+            $fh.forms.config.online();
             appForm.stores.dataAgent.attemptRead(model,function(err,res,isRemote){
                 assert(!err);
                 assert(res);
