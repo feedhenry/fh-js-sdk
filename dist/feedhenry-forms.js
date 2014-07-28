@@ -13515,24 +13515,30 @@ appForm.utils = function (module) {
     var width =  params.targetWidth ? params.targetWidth : $fh.forms.config.get("targetWidth", 640);
     var height = params.targetHeight ? params.targetHeight : $fh.forms.config.get("targetHeight", 480);
     var quality= params.quality ? params.quality : $fh.forms.config.get("quality", 50);
+    //For Safety, the default value of saving to photo album is true.
+    var saveToPhotoAlbum = typeof(params.saveToPhotoAlbum) !== "undefined" ? params.saveToPhotoAlbum : $fh.forms.config.get("saveToPhotoAlbum", true);
+    var encodingType = params.encodingType ? params.encodingType : $fh.forms.config.get("encodingType", 'jpeg');
 
     params.targetWidth = width;
     params.targetHeight = height;
     params.quality = quality;
+    params.saveToPhotoAlbum = saveToPhotoAlbum;
+    params.encodingType = encodingType;
 
     if ("undefined" === typeof(params.sourceType) && typeof(Camera) !== 'undefined') {
       params.sourceType = Camera.PictureSourceType.CAMERA;
     }
 
     if (isPhoneGap) {
+      params.encodingType = params.encodingType === 'jpeg' ? Camera.EncodingType.JPEG : Camera.EncodingType.PNG;
       navigator.camera.getPicture(_phoneGapSuccess(cb), cb, {
         quality: quality,
         targetWidth: width,
         targetHeight: height,
         sourceType: params.sourceType,
-        saveToPhotoAlbum: false,
+        saveToPhotoAlbum: params.saveToPhotoAlbum,
         destinationType: Camera.DestinationType.FILE_URI,
-        encodingType: Camera.EncodingType.PNG
+        encodingType: params.encodingType
       });
     } else if (isHtml5) {
       snapshot(params, cb);
@@ -13542,8 +13548,8 @@ appForm.utils = function (module) {
   }
   function _phoneGapSuccess(cb) {
     return function (imageData) {
-      var base64Img = imageData;
-      cb(null, base64Img);
+      var imageURI = imageData;
+      cb(null, imageURI);
     };
   }
   function _html5Camera(params, cb) {
@@ -16572,14 +16578,14 @@ appForm.models.Field = function (module) {
     var isStore = params.isStore === undefined ? true : params.isStore;
     var lastModDate = new Date().getTime();
     if (typeof inputValue === 'undefined' || inputValue === null) {
-      return cb(null, null);
+      return cb("No input value to process_file", null);
     }
-    if (typeof inputValue !== 'object' || !inputValue instanceof HTMLInputElement && !inputValue instanceof File && !checkFileObj(inputValue)) {
-      throw 'the input value for file field should be a html file input element or a File object';
+
+    //Can be either a html input element or a File object
+    if(!(inputValue instanceof HTMLInputElement || inputValue instanceof File)){
+      return cb('the input value for file field should be a html file input element or a File object');
     }
-    if (checkFileObj(inputValue)) {
-      return cb(null, inputValue);
-    }
+
     var file = inputValue;
     if (inputValue instanceof HTMLInputElement) {
       file = inputValue.files[0];  // 1st file only, not support many files yet.
@@ -16714,25 +16720,34 @@ appForm.models.Field = function (module) {
   function checkFileObj(obj) {
     return obj.fileName && obj.fileType && obj.hashName;
   }
+
   function imageProcess(params, cb) {
+    var self = this;
     var inputValue = params.value;
     var isStore = params.isStore === undefined ? true : params.isStore;
     if (typeof(inputValue) !== "string") {
-      return cb("Expected base64 string image, but parameter was not a string", null);
+      return cb("Expected base64 string image or file URI but parameter was not a string", null);
     }
 
-    if(inputValue.length < 1 || inputValue.indexOf(";base64,") === -1){
-      return cb("Expected base64 string but got string " + inputValue, null);
+    //Input value can be either a base64 String or file uri, the behaviour of upload will change accordingly.
+
+    if(inputValue.length < 1){
+      return cb("Expected base64 string or file uri but got string of lenght 0:  " + inputValue, null);
     }
-    var imgName = '';
-    var dataArr = inputValue.split(';base64,');
-    var imgType = dataArr[0].split(':')[1];
-    var extension = imgType.split('/')[1];
-    var size = inputValue.length;
-    genImageName(function (err, n) {
-      imgName = params.filePlaceholder ? params.filePlaceholder : 'filePlaceHolder' + n;
-      //TODO Abstract this out
-      var meta = {
+//    if(inputValue.length < 1 || inputValue.indexOf(";base64,") === -1){
+//
+//    }
+
+    if(inputValue.indexOf(";base64,") > -1){
+      var imgName = '';
+      var dataArr = inputValue.split(';base64,');
+      var imgType = dataArr[0].split(':')[1];
+      var extension = imgType.split('/')[1];
+      var size = inputValue.length;
+      genImageName(function (err, n) {
+        imgName = params.filePlaceholder ? params.filePlaceholder : 'filePlaceHolder' + n;
+        //TODO Abstract this out
+        var meta = {
           'fileName': imgName + '.' + extension,
           'hashName': imgName,
           'contentType': 'base64',
@@ -16741,19 +16756,36 @@ appForm.models.Field = function (module) {
           'imgHeader': 'data:' + imgType + ';base64,',
           'fileUpdateTime': new Date().getTime()
         };
-      if (isStore) {
-        appForm.utils.fileSystem.save(imgName, dataArr[1], function (err, res) {
-          if (err) {
-            $fh.forms.log.e(err);
-            cb(err);
-          } else {
-            cb(null, meta);
-          }
-        });
-      } else {
-        cb(null, meta);
-      }
-    });
+        if (isStore) {
+          appForm.utils.fileSystem.save(imgName, dataArr[1], function (err, res) {
+            if (err) {
+              $fh.forms.log.e(err);
+              cb(err);
+            } else {
+              cb(null, meta);
+            }
+          });
+        } else {
+          cb(null, meta);
+        }
+      });
+    } else if(inputValue.indexOf("file://")) {
+      //Image is a file uri, the file needs to be saved as a file.
+      //Can use the process_file function to do this.
+      //Need to read the file as a file first
+      appForm.utils.fileSystem.readAsFile(inputValue, function(err, file){
+        if(err){
+          return cb(err);
+        }
+
+        params.value = file;
+        self.process_file(params, cb);
+      });
+    } else {
+      return cb("Invalid file type. Expected either a base64 image or file URI but got " + inputValue);
+    }
+
+
   }
   function genImageName(cb) {
     var name = new Date().getTime() + '' + Math.ceil(Math.random() * 100000);

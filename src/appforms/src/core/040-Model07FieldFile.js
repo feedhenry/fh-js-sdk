@@ -10,14 +10,14 @@ appForm.models.Field = function (module) {
     var isStore = params.isStore === undefined ? true : params.isStore;
     var lastModDate = new Date().getTime();
     if (typeof inputValue === 'undefined' || inputValue === null) {
-      return cb(null, null);
+      return cb("No input value to process_file", null);
     }
-    if (typeof inputValue !== 'object' || !inputValue instanceof HTMLInputElement && !inputValue instanceof File && !checkFileObj(inputValue)) {
-      throw 'the input value for file field should be a html file input element or a File object';
+
+    //Can be either a html input element or a File object
+    if(!(inputValue instanceof HTMLInputElement || inputValue instanceof File)){
+      return cb('the input value for file field should be a html file input element or a File object');
     }
-    if (checkFileObj(inputValue)) {
-      return cb(null, inputValue);
-    }
+
     var file = inputValue;
     if (inputValue instanceof HTMLInputElement) {
       file = inputValue.files[0];  // 1st file only, not support many files yet.

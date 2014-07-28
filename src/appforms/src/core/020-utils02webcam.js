@@ -35,24 +35,30 @@ appForm.utils = function (module) {
     var width =  params.targetWidth ? params.targetWidth : $fh.forms.config.get("targetWidth", 640);
     var height = params.targetHeight ? params.targetHeight : $fh.forms.config.get("targetHeight", 480);
     var quality= params.quality ? params.quality : $fh.forms.config.get("quality", 50);
+    //For Safety, the default value of saving to photo album is true.
+    var saveToPhotoAlbum = typeof(params.saveToPhotoAlbum) !== "undefined" ? params.saveToPhotoAlbum : $fh.forms.config.get("saveToPhotoAlbum", true);
+    var encodingType = params.encodingType ? params.encodingType : $fh.forms.config.get("encodingType", 'jpeg');
 
     params.targetWidth = width;
     params.targetHeight = height;
     params.quality = quality;
+    params.saveToPhotoAlbum = saveToPhotoAlbum;
+    params.encodingType = encodingType;
 
     if ("undefined" === typeof(params.sourceType) && typeof(Camera) !== 'undefined') {
       params.sourceType = Camera.PictureSourceType.CAMERA;
     }
 
     if (isPhoneGap) {
+      params.encodingType = params.encodingType === 'jpeg' ? Camera.EncodingType.JPEG : Camera.EncodingType.PNG;
       navigator.camera.getPicture(_phoneGapSuccess(cb), cb, {
         quality: quality,
         targetWidth: width,
         targetHeight: height,
         sourceType: params.sourceType,
-        saveToPhotoAlbum: false,
+        saveToPhotoAlbum: params.saveToPhotoAlbum,
         destinationType: Camera.DestinationType.FILE_URI,
-        encodingType: Camera.EncodingType.PNG
+        encodingType: params.encodingType
       });
     } else if (isHtml5) {
       snapshot(params, cb);
@@ -62,8 +68,8 @@ appForm.utils = function (module) {
   }
   function _phoneGapSuccess(cb) {
     return function (imageData) {
-      var base64Img = imageData;
-      cb(null, base64Img);
+      var imageURI = imageData;
+      cb(null, imageURI);
     };
   }
   function _html5Camera(params, cb) {
