@@ -16734,9 +16734,6 @@ appForm.models.Field = function (module) {
     if(inputValue.length < 1){
       return cb("Expected base64 string or file uri but got string of lenght 0:  " + inputValue, null);
     }
-//    if(inputValue.length < 1 || inputValue.indexOf(";base64,") === -1){
-//
-//    }
 
     if(inputValue.indexOf(";base64,") > -1){
       var imgName = '';
@@ -16791,7 +16788,7 @@ appForm.models.Field = function (module) {
     var name = new Date().getTime() + '' + Math.ceil(Math.random() * 100000);
     appForm.utils.md5(name, cb);
   }
-  function covertImage(value, cb) {
+  function convertImage(value, cb) {
     if (value.length === 0) {
       cb(null, value);
     } else {
@@ -16807,24 +16804,47 @@ appForm.models.Field = function (module) {
       }
     }
   }
+
+  //An image can be either a base64 image or a binary image.
+  //If base64, need to load the data as text.
+  //If binary, just need to load the file uri.
   function _loadImage(meta, cb) {
     if (meta) {
+
       var name = meta.hashName;
-      appForm.utils.fileSystem.readAsText(name, function (err, text) {
-        if (err) {
-          $fh.forms.log.e(err);
-        }
-        meta.data = text;
-        cb(err, meta);
-      });
+      if(meta.contentType === "base64"){
+        appForm.utils.fileSystem.readAsText(name, function (err, text) {
+          if (err) {
+            $fh.forms.log.e(err);
+          }
+          meta.data = text;
+          cb(err, meta);
+        });
+      } else if(meta.contentType === "binary"){
+        appForm.utils.fileSystem.readAsFile(name, function(err, file){
+          if(err){
+            $fh.forms.log.e("Error reading file " + name, err);
+          }
+
+          if(file && file.fullPath){
+            meta.data = file.fullPath;
+          } else {
+            meta.data = "file-not-found";
+          }
+
+          cb(err, meta);
+        });
+      } else {
+        $fh.forms.log.e("Error load image with invalid meta" + meta.contentType);
+      }
     } else {
       cb(null, meta);
     }
   }
   module.prototype.process_signature = imageProcess;
-  module.prototype.convert_signature = covertImage;
+  module.prototype.convert_signature = convertImage;
   module.prototype.process_photo = imageProcess;
-  module.prototype.convert_photo = covertImage;
+  module.prototype.convert_photo = convertImage;
   return module;
 }(appForm.models.Field || {});
 /**

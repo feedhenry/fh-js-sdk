@@ -2191,9 +2191,14 @@ FieldCameraView = FieldView.extend({
     },
     valuePopulateToElement: function(index, value) {
         if (value) {
-            var base64Data = value.data;
-            var base64Img = value.imgHeader + base64Data;
-            this.setImage(index, base64Img);
+            var imageData = null;
+            if(value.imgHeader){
+              imageData = value.data;
+              var base64Img = value.imgHeader + imageData;
+              this.setImage(index, base64Img);
+            } else {
+              this.setImage(index, value.data);
+            }
         }
     }
 });
