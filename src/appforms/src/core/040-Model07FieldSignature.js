@@ -10,6 +10,7 @@ appForm.models.Field = function (module) {
     var self = this;
     var inputValue = params.value;
     var isStore = params.isStore === undefined ? true : params.isStore;
+    var previousFile = params.previousFile || {};
     if (typeof(inputValue) !== "string") {
       return cb("Expected base64 string image or file URI but parameter was not a string", null);
     }
@@ -27,7 +28,7 @@ appForm.models.Field = function (module) {
       var extension = imgType.split('/')[1];
       var size = inputValue.length;
       genImageName(function (err, n) {
-        imgName = params.filePlaceholder ? params.filePlaceholder : 'filePlaceHolder' + n;
+        imgName = previousFile.hashName ? previousFile.hashName : 'filePlaceHolder' + n;
         //TODO Abstract this out
         var meta = {
           'fileName': imgName + '.' + extension,
@@ -39,7 +40,7 @@ appForm.models.Field = function (module) {
           'fileUpdateTime': new Date().getTime()
         };
         if (isStore) {
-          appForm.utils.fileSystem.save(imgName, dataArr[1], function (err, res) {
+          appForm.stores.localStorage.updateTextFile(imgName, dataArr[1], function (err, res) {
             if (err) {
               $fh.forms.log.e(err);
               cb(err);
@@ -51,7 +52,7 @@ appForm.models.Field = function (module) {
           cb(null, meta);
         }
       });
-    } else if(inputValue.indexOf("file://")) {
+    } else {
       //Image is a file uri, the file needs to be saved as a file.
       //Can use the process_file function to do this.
       //Need to read the file as a file first
@@ -63,11 +64,7 @@ appForm.models.Field = function (module) {
         params.value = file;
         self.process_file(params, cb);
       });
-    } else {
-      return cb("Invalid file type. Expected either a base64 image or file URI but got " + inputValue);
     }
-
-
   }
   function genImageName(cb) {
     var name = new Date().getTime() + '' + Math.ceil(Math.random() * 100000);
@@ -98,7 +95,7 @@ appForm.models.Field = function (module) {
 
       var name = meta.hashName;
       if(meta.contentType === "base64"){
-        appForm.utils.fileSystem.readAsText(name, function (err, text) {
+        appForm.stores.localStorage.readFileText(name, function (err, text) {
           if (err) {
             $fh.forms.log.e(err);
           }
@@ -106,7 +103,7 @@ appForm.models.Field = function (module) {
           cb(err, meta);
         });
       } else if(meta.contentType === "binary"){
-        appForm.utils.fileSystem.readAsFile(name, function(err, file){
+        appForm.stores.localStorage.readFile(name, function(err, file){
           if(err){
             $fh.forms.log.e("Error reading file " + name, err);
           }

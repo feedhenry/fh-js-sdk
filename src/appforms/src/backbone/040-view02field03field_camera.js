@@ -23,8 +23,14 @@ FieldCameraView = FieldView.extend({
             self.removeThumb(e, index);
         });
         rmBtn.hide();
+
+        if($fh.forms.config.get("picture_source") === "library"){
+          captureBtn.hide();
+        } else if ($fh.forms.config.get("picture_source") === "camera"){
+          libBtn.hide();
+        }
     },
-    setImage: function(index, base64Img, isBase64) {
+    setImage: function(index, base64Img) {
         var wrapper = this.getWrapper(index);
         var img = wrapper.find('img.imageThumb');
         img.attr('src', base64Img).show();
@@ -112,7 +118,7 @@ FieldCameraView = FieldView.extend({
                             if (err) {
                                 $fh.forms.log.e(err);
                             } else {
-                                self.setImage(index, base64Image, true);
+                                self.setImage(index, base64Image);
                             }
                         });
                     });

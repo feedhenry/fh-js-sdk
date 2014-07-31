@@ -1,6 +1,6 @@
 {
   "name": "fh-js-sdk",
-  "version": "2.1.3-BUILD-NUMBER",
+  "version": "2.1.4-BUILD-NUMBER",
   "description": "feedhenry js sdk",
   "main": "dist/feedhenry.js",
   "browser": {

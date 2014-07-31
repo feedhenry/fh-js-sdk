@@ -13254,51 +13254,82 @@ appForm.utils = function(module) {
      * @return {[type]}          [description]
      */
     function save(fileName, content, cb) {
-        var saveObj = null;
-        var size = 0;
-        if (typeof content === 'object') {
-            if (content instanceof File) {
-                //File object
-                saveObj = content;
-                size = saveObj.size;
-            } else if (content instanceof Blob) {
-                saveObj = content;
-                size = saveObj.size;
-            } else {
-                //JSON object
-                var contentstr = JSON.stringify(content);
-                saveObj = _createBlobOrString(contentstr);
-                size = saveObj.size || saveObj.length;
-            }
-        } else if (typeof content === 'string') {
-            saveObj = _createBlobOrString(content);
-            size = saveObj.size || saveObj.length;
-        }
+      var self = this;
+      var saveObj = null;
+      var size = 0;
+      if (typeof content === 'object') {
+          if (content instanceof File) {
+              //File object
+              saveObj = content;
+              size = saveObj.size;
+          } else if (content instanceof Blob) {
+              saveObj = content;
+              size = saveObj.size;
+          } else {
+              //JSON object
+              var contentstr = JSON.stringify(content);
+              saveObj = _createBlobOrString(contentstr);
+              size = saveObj.size || saveObj.length;
+          }
+      } else if (typeof content === 'string') {
+          saveObj = _createBlobOrString(content);
+          size = saveObj.size || saveObj.length;
+      }
 
-        _getFileEntry(fileName, size, {
-            create: true
-        }, function(err, fileEntry) {
-            if (err) {
-                cb(err);
-            } else {
-                fileEntry.createWriter(function(writer) {
-                    function _onFinished(evt) {
-                        return cb(null, evt);
-                    }
+      _getFileEntry(fileName, size, {
+          create: true
+      }, function(err, fileEntry) {
+          if (err) {
+              cb(err);
+          } else {
 
-                    function _onTruncated() {
-                        writer.onwriteend = _onFinished;
-                        writer.write(saveObj); //write method can take a blob or file object according to html5 standard.
-                    }
-                    writer.onwriteend = _onTruncated;
-                    //truncate the file first.
-                    writer.truncate(0);
-                }, function(e) {
-                    console.error("fileEntry.createWriter Failed to create file write: " + e);
-                    cb('Failed to create file write:' + e);
+            if(appForm.utils.isPhoneGap() && saveObj instanceof File){
+              //Writing binary files is not possible in windows phone.
+              //So if the thing to save is a file, and it is in phonegap, use the copyTo functions instead.
+              fileEntry.getParent(function(parentDir){
+                //Get the file entry for the file input
+                _resolveFile(saveObj.fullPath, function(err, fileToCopy){
+                  if(err){
+                    return cb(err);
+                  }
+                  fileName = fileEntry.name;
+
+                  fileEntry.remove(function(){
+                    fileToCopy.copyTo(parentDir, fileName, function(copiedFile){
+                      return cb(null, copiedFile);
+                    }, function(err){
+                      return cb(err);
+                    });
+                  }, function(err){
+                    return cb(err);
+                  });
+                }, function(err){
+                  return cb(err);
                 });
+              }, function(err){
+                return cb(err);
+              });
+            }  else {
+              //Otherwise, just write text
+              fileEntry.createWriter(function(writer) {
+                function _onFinished(evt) {
+                  return cb(null, evt);
+                }
+
+                function _onTruncated() {
+                  writer.onwriteend = _onFinished;
+                  writer.write(saveObj); //write method can take a blob or file object according to html5 standard.
+                }
+                writer.onwriteend = _onTruncated;
+                //truncate the file first.
+                writer.truncate(0);
+              }, function(e) {
+                cb('Failed to create file write:' + e);
+              });
             }
-        });
+
+          }
+      });
     }
     /**
      * Remove a file from file system
@@ -13318,7 +13349,6 @@ appForm.utils = function(module) {
             fileEntry.remove(function() {
                 cb(null, null);
             }, function(e) {
-                console.error("file remove fileEntry.remove failed " + e);
                 cb('Failed to remove file' + e);
             });
         });
@@ -13414,33 +13444,53 @@ appForm.utils = function(module) {
             fe.file(function(file) {
                 cb(null, file);
             }, function(e) {
-                console.error('Failed to get file:' + e);
                 cb(e);
             });
         });
     }
 
+    function _resolveFile(fileName, cb){
+      if(fileName.indexOf("file://") === -1 && window.device.platform !== "Win32NT"){
+        fileName = "file://" + fileName;
+      }
+      window.resolveLocalFileSystemURI(fileName, function(fileEntry){
+        return cb(null, fileEntry);
+      }, function(err){
+        return cb(err);
+      });
+    }
+
     function _getFileEntry(fileName, size, params, cb) {
-        _checkEnv();
+      var self = this;
+      _checkEnv();
+      if(typeof(fileName) === "string"){
         _requestFileSystem(PERSISTENT, size, function gotFS(fileSystem) {
-            fileSystem.root.getFile(fileName, params, function gotFileEntry(fileEntry) {
-                cb(null, fileEntry);
-            }, function(err) {
-                if (err.name === 'QuotaExceededError' || err.code === 10) {
-                    //this happens only on browser. request for 1 gb storage
-                    //TODO configurable from cloud
-                    var bigSize = 1024 * 1024 * 1024;
-                    _requestQuote(bigSize, function(err, bigSize) {
-                        _getFileEntry(fileName, size, params, cb);
-                    });
-                } else {
-                    cb(err);
-                }
-            });
+          fileSystem.root.getFile(fileName, params, function gotFileEntry(fileEntry) {
+            cb(null, fileEntry);
+          }, function(err) {
+            if (err.name === 'QuotaExceededError' || err.code === 10) {
+              //this happens only on browser. request for 1 gb storage
+              //TODO configurable from cloud
+              var bigSize = 1024 * 1024 * 1024;
+              _requestQuote(bigSize, function(err, bigSize) {
+                _getFileEntry(fileName, size, params, cb);
+              });
+            } else {
+              if(!appForm.utils.isPhoneGap()){
+                return cb(err);
+              } else {
+                _resolveFile(fileName, cb);
+              }
+            }
+          });
         }, function() {
-            console.error('Failed to requestFileSystem: ' + fileName);
-            cb('Failed to requestFileSystem');
+          cb('Failed to requestFileSystem');
         });
+      } else {
+        if(typeof(cb) === "function"){
+          cb("Expected file name to be a string but was " + fileName);
+        }
+      }
     }
 
     function _requestQuote(size, cb) {
@@ -13516,7 +13566,7 @@ appForm.utils = function (module) {
     var height = params.targetHeight ? params.targetHeight : $fh.forms.config.get("targetHeight", 480);
     var quality= params.quality ? params.quality : $fh.forms.config.get("quality", 50);
     //For Safety, the default value of saving to photo album is true.
-    var saveToPhotoAlbum = typeof(params.saveToPhotoAlbum) !== "undefined" ? params.saveToPhotoAlbum : $fh.forms.config.get("saveToPhotoAlbum", true);
+    var saveToPhotoAlbum = typeof(params.saveToPhotoAlbum) !== "undefined" ? params.saveToPhotoAlbum : $fh.forms.config.get("saveToPhotoAlbum");
     var encodingType = params.encodingType ? params.encodingType : $fh.forms.config.get("encodingType", 'jpeg');
 
     params.targetWidth = width;
@@ -13814,24 +13864,20 @@ appForm.stores = function(module) {
   };
   //read a model from local storage
   LocalStorage.prototype.read = function(model, cb) {
-    if (model.get("_type") === "offlineTest") {
-      cb(null, {});
+    var key = _getKey(model);
+    if (key != null) {
+      _fhData({
+        'act': 'load',
+        'key': key.toString()
+      }, cb, cb);
     } else {
-      var key = model.getLocalId();
-      if (key != null) {
-        _fhData({
-          'act': 'load',
-          'key': key.toString()
-        }, cb, cb);
-      } else {
-        //model does not exist in local storage if key is null.
-        cb(null, null);
-      }
+      //model does not exist in local storage if key is null.
+      cb(null, null);
     }
   };
   //update a model
   LocalStorage.prototype.update = function(model, cb) {
-    var key = model.getLocalId();
+    var key = _getKey(model);
     var data = model.getProps();
     var dataStr = JSON.stringify(data);
     _fhData({
@@ -13842,14 +13888,14 @@ appForm.stores = function(module) {
   };
   //delete a model
   LocalStorage.prototype["delete"] = function(model, cb) {
-    var key = model.getLocalId();
+    var key = _getKey(model);
     _fhData({
       'act': 'remove',
       'key': key.toString()
     }, cb, cb);
   };
   LocalStorage.prototype.upsert = function(model, cb) {
-    var key = model.getLocalId();
+    var key = _getKey(model);
     if (key === null) {
       this.create(model, cb);
     } else {
@@ -13866,9 +13912,43 @@ appForm.stores = function(module) {
       return fileSystem.isFileSystemAvailable();
     };
   };
+  LocalStorage.prototype.saveFile = function(fileName, fileToSave, cb){
+    if(!_fileSystemAvailable()){
+      return cb("File system not available");
+    }
+
+    _fhData({
+      'act': 'save',
+      'key': fileName,
+      'val': fileToSave
+    }, cb, cb);
+  };
+  LocalStorage.prototype.updateTextFile = function(key, dataStr, cb){
+    _fhData({
+      'act': 'save',
+      'key': key,
+      'val': dataStr
+    }, cb, cb);
+  };
+  LocalStorage.prototype.readFile = function(fileName, cb){
+    _fhData({
+      'act': 'loadFile',
+      'key': fileName
+    }, cb, cb);
+  };
+  LocalStorage.prototype.readFileText = function(fileName, cb){
+    _fhData({
+      'act': 'load',
+      'key': fileName
+    }, cb, cb);
+  };
   _fileSystemAvailable = function() {
     return fileSystem.isFileSystemAvailable();
   };
+
+  function _getKey(key){
+    return typeof(key.getLocalId) === "function" ? key.getLocalId() : key;
+  }
   //use different local storage model according to environment
   function _fhData() {
     if (_fileSystemAvailable()) {
@@ -13913,7 +13993,13 @@ appForm.stores = function(module) {
         if (err) {
           hash = key;
         }
-        var filename = hash + '.txt';
+
+        var filename = hash;
+
+        if(key.indexOf("filePlaceHolder") === -1){
+          filename += ".txt";
+        }
+
         if (typeof navigator.externalstorage !== 'undefined') {
           navigator.externalstorage.enable(function handleSuccess(res) {
             var path = filename;
@@ -13981,6 +14067,23 @@ appForm.stores = function(module) {
       });
     }
 
+    function loadFile(key) {
+      filenameForKey(key, function(hash) {
+        fileSystem.readAsFile(hash, function(err, file) {
+          if (err) {
+            if (err.name === 'NotFoundError' || err.code === 1) {
+              //same respons of $fh.data if key not found.
+              success(null, null);
+            } else {
+              fail(err);
+            }
+          } else {
+            success(null, file);
+          }
+        });
+      });
+    }
+
     if (typeof options.act === 'undefined') {
       return load(options.key);
     } else if (options.act === 'save') {
@@ -13989,6 +14092,8 @@ appForm.stores = function(module) {
       return remove(options.key);
     } else if (options.act === 'load') {
       return load(options.key);
+    } else if (options.act === 'loadFile') {
+      return loadFile(options.key);
     } else {
       if (typeof failure !== 'undefined') {
         return failure('Action [' + options.act + '] is not defined', {});
@@ -14567,7 +14672,10 @@ appForm.models = function(module) {
       "log_email": "test@example.com",
       "log_level": 3,
       "log_levels": ["error", "warning", "log", "debug"],
-      "config_admin_user": true
+      "config_admin_user": true,
+      "picture_source": "both",
+      "saveToPhotoAlbum": true,
+      "encodingType": "jpeg"
     };
 
     for(var key in staticConfig){
@@ -14989,7 +15097,7 @@ appForm.models = function (module) {
     $fh.forms.log.d("FileSubmission loadFile");
     var fileName = this.getHashName();
     var that = this;
-    appForm.utils.fileSystem.readAsFile(fileName, function (err, file) {
+    appForm.stores.localStorage.readFile(fileName, function (err, file) {
       if (err) {
         $fh.forms.log.e("FileSubmission loadFile. Error reading file", fileName, err);
         cb(err);
@@ -16010,7 +16118,7 @@ appForm.models = function(module) {
           //File already exists for this input, overwrite rather than create a new file
           if(target.fieldValues[index]){
             if(typeof(target.fieldValues[index].hashName) === "string"){
-              params.filePlaceholder = target.fieldValues[index].hashName;
+              params.previousFile = target.fieldValues[index];
             }
           }
 
@@ -16077,7 +16185,7 @@ appForm.models = function(module) {
   };
 
   Submission.prototype.getSubmissionFile = function(fileName, cb){
-    appForm.utils.fileSystem.readAsFile(fileName, cb);
+    appForm.stores.localStorage.readFile(fileName, cb);
   };
   Submission.prototype.clearLocalSubmissionFiles = function(cb) {
     $fh.forms.log.d("In clearLocalSubmissionFiles");
@@ -16088,7 +16196,7 @@ appForm.models = function(module) {
 
     for (var fileMetaObject in filesInSubmission) {
       $fh.forms.log.d("Clearing file " + filesInSubmission[fileMetaObject]);
-      appForm.utils.fileSystem.remove(filesInSubmission[fileMetaObject], function(err) {
+      appForm.stores.localStorage.delete(filesInSubmission[fileMetaObject], function(err) {
         if (err) {
           $fh.forms.log.e("Error removing files from " + err);
         }
@@ -16131,7 +16239,7 @@ appForm.models = function(module) {
           val = valArr[valIndex];
           if(typeof(val.hashName) === "string"){
             //This is a file, needs to be removed
-            appForm.utils.fileSystem.remove(val.hashName, function(err){
+            appForm.stores.localStorage.delete(val.hashName, function(err){
               $fh.forms.log.e("Error removing file from transaction ", err);
             });
           }
@@ -16163,7 +16271,7 @@ appForm.models = function(module) {
     }
 
     if(typeof(valRemoved.hashName) === "string"){
-      appForm.utils.fileSystem.remove(valRemoved.hashName, function(err){
+      appForm.stores.localStorage.delete(valRemoved.hashName, function(err){
         if(err){
           $fh.forms.log.e("Error removing file: ", err);
         } else {
@@ -16577,18 +16685,49 @@ appForm.models.Field = function (module) {
     var inputValue = params.value;
     var isStore = params.isStore === undefined ? true : params.isStore;
     var lastModDate = new Date().getTime();
+    var previousFile = params.previousFile || {};
+    var hashName = null;
     if (typeof inputValue === 'undefined' || inputValue === null) {
       return cb("No input value to process_file", null);
     }
 
-    //Can be either a html input element or a File object
-    if(!(inputValue instanceof HTMLInputElement || inputValue instanceof File)){
-      return cb('the input value for file field should be a html file input element or a File object');
+    function getFileType(fileType, fileNameString){
+      fileType = fileType || "";
+      fileNameString = fileNameString || "";
+
+      //The type if file is already known. No need to parse it out.
+      if(fileType.length > 0){
+        return fileType;
+      }
+
+      //Camera does not sent file type. Have to parse it from the file name.
+      if(fileNameString.indexOf(".png") > -1){
+        return "image/png";
+      } else if(fileNameString.indexOf(".jpg") > -1){
+        return "image/jpeg";
+      } else {
+        return "application/octet-stream";
+      }
+    }
+
+    function getFileName(fileNameString, filePathString){
+      fileNameString = fileNameString || "";
+      if(fileNameString.length > 0){
+        return fileNameString;
+      } else {
+        //Need to extract the name from the file path
+        var indexOfName = filePathString.lastIndexOf("/");
+        if(indexOfName > -1){
+          return filePathString.slice(indexOfName);
+        } else {
+          return null;
+        }
+      }
     }
 
     var file = inputValue;
     if (inputValue instanceof HTMLInputElement) {
-      file = inputValue.files[0];  // 1st file only, not support many files yet.
+      file = inputValue.files[0] || {};  // 1st file only, not support many files yet.
     }
 
     if(typeof(file.lastModifiedDate) === 'undefined'){
@@ -16596,35 +16735,61 @@ appForm.models.Field = function (module) {
     }
 
     if(file.lastModifiedDate instanceof Date){
-      lastModDate = file.lastModifiedDate.getTime();  
+      lastModDate = file.lastModifiedDate.getTime();
     }
+
+    var fileName = getFileName(file.name || file.fileName, file.fullPath);
+
+    var fileType = getFileType(file.type || file.fileType, fileName);
+
+    //Placeholder files do not have a file type. It inherits from previous types
+    if(fileName === null && !previousFile.fileName){
+      return cb("Expected picture to be PNG or JPEG but was null");
+    }
+
+    if(previousFile.hashName){
+      if(fileName === previousFile.hashName || file.hashName === previousFile.hashName){
+        //Submitting an existing file already saved, no need to save.
+        return cb(null, previousFile);
+      }
+    }
+
     var rtnJSON = {
-        'fileName': file.name,
-        'fileSize': file.size,
-        'fileType': file.type,
-        'fileUpdateTime': lastModDate,
-        'hashName': '',
-        'contentType': 'binary'
-      };
-    var name = file.name + new Date().getTime() + Math.ceil(Math.random() * 100000);
+      'fileName': fileName,
+      'fileSize': file.size,
+      'fileType': fileType,
+      'fileUpdateTime': lastModDate,
+      'hashName': '',
+      'contentType': 'binary'
+    };
+
+    //The file to be submitted is new
+    previousFile = rtnJSON;
+
+    var name = fileName + new Date().getTime() + Math.ceil(Math.random() * 100000);
     appForm.utils.md5(name, function (err, res) {
-      var hashName = res;
+      hashName = res;
       if (err) {
         hashName = name;
       }
       hashName = 'filePlaceHolder' + hashName;
-      rtnJSON.hashName = hashName;
+
+      if(fileName.length === 0){
+        previousFile.fileName = hashName;
+      }
+
+      previousFile.hashName = hashName;
       if (isStore) {
-        appForm.utils.fileSystem.save(hashName, file, function (err, res) {
+        appForm.stores.localStorage.saveFile(hashName, file, function (err, res) {
           if (err) {
             $fh.forms.log.e(err);
             cb(err);
           } else {
-            cb(null, rtnJSON);
+            cb(null, previousFile);
           }
         });
       } else {
-        cb(null, rtnJSON);
+        cb(null, previousFile);
       }
     });
   };
@@ -16725,6 +16890,7 @@ appForm.models.Field = function (module) {
     var self = this;
     var inputValue = params.value;
     var isStore = params.isStore === undefined ? true : params.isStore;
+    var previousFile = params.previousFile || {};
     if (typeof(inputValue) !== "string") {
       return cb("Expected base64 string image or file URI but parameter was not a string", null);
     }
@@ -16742,7 +16908,7 @@ appForm.models.Field = function (module) {
       var extension = imgType.split('/')[1];
       var size = inputValue.length;
       genImageName(function (err, n) {
-        imgName = params.filePlaceholder ? params.filePlaceholder : 'filePlaceHolder' + n;
+        imgName = previousFile.hashName ? previousFile.hashName : 'filePlaceHolder' + n;
         //TODO Abstract this out
         var meta = {
           'fileName': imgName + '.' + extension,
@@ -16754,7 +16920,7 @@ appForm.models.Field = function (module) {
           'fileUpdateTime': new Date().getTime()
         };
         if (isStore) {
-          appForm.utils.fileSystem.save(imgName, dataArr[1], function (err, res) {
+          appForm.stores.localStorage.updateTextFile(imgName, dataArr[1], function (err, res) {
             if (err) {
               $fh.forms.log.e(err);
               cb(err);
@@ -16766,7 +16932,7 @@ appForm.models.Field = function (module) {
           cb(null, meta);
         }
       });
-    } else if(inputValue.indexOf("file://")) {
+    } else {
       //Image is a file uri, the file needs to be saved as a file.
       //Can use the process_file function to do this.
       //Need to read the file as a file first
@@ -16778,11 +16944,7 @@ appForm.models.Field = function (module) {
         params.value = file;
         self.process_file(params, cb);
       });
-    } else {
-      return cb("Invalid file type. Expected either a base64 image or file URI but got " + inputValue);
     }
-
-
   }
   function genImageName(cb) {
     var name = new Date().getTime() + '' + Math.ceil(Math.random() * 100000);
@@ -16813,7 +16975,7 @@ appForm.models.Field = function (module) {
 
       var name = meta.hashName;
       if(meta.contentType === "base64"){
-        appForm.utils.fileSystem.readAsText(name, function (err, text) {
+        appForm.stores.localStorage.readFileText(name, function (err, text) {
           if (err) {
             $fh.forms.log.e(err);
           }
@@ -16821,7 +16983,7 @@ appForm.models.Field = function (module) {
           cb(err, meta);
         });
       } else if(meta.contentType === "binary"){
-        appForm.utils.fileSystem.readAsFile(name, function(err, file){
+        appForm.stores.localStorage.readFile(name, function(err, file){
           if(err){
             $fh.forms.log.e("Error reading file " + name, err);
           }

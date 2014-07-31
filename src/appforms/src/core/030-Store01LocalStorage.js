@@ -19,24 +19,20 @@ appForm.stores = function(module) {
   };
   //read a model from local storage
   LocalStorage.prototype.read = function(model, cb) {
-    if (model.get("_type") === "offlineTest") {
-      cb(null, {});
+    var key = _getKey(model);
+    if (key != null) {
+      _fhData({
+        'act': 'load',
+        'key': key.toString()
+      }, cb, cb);
     } else {
-      var key = model.getLocalId();
-      if (key != null) {
-        _fhData({
-          'act': 'load',
-          'key': key.toString()
-        }, cb, cb);
-      } else {
-        //model does not exist in local storage if key is null.
-        cb(null, null);
-      }
+      //model does not exist in local storage if key is null.
+      cb(null, null);
     }
   };
   //update a model
   LocalStorage.prototype.update = function(model, cb) {
-    var key = model.getLocalId();
+    var key = _getKey(model);
     var data = model.getProps();
     var dataStr = JSON.stringify(data);
     _fhData({
@@ -47,14 +43,14 @@ appForm.stores = function(module) {
   };
   //delete a model
   LocalStorage.prototype["delete"] = function(model, cb) {
-    var key = model.getLocalId();
+    var key = _getKey(model);
     _fhData({
       'act': 'remove',
       'key': key.toString()
     }, cb, cb);
   };
   LocalStorage.prototype.upsert = function(model, cb) {
-    var key = model.getLocalId();
+    var key = _getKey(model);
     if (key === null) {
       this.create(model, cb);
     } else {
@@ -71,9 +67,43 @@ appForm.stores = function(module) {
       return fileSystem.isFileSystemAvailable();
     };
   };
+  LocalStorage.prototype.saveFile = function(fileName, fileToSave, cb){
+    if(!_fileSystemAvailable()){
+      return cb("File system not available");
+    }
+
+    _fhData({
+      'act': 'save',
+      'key': fileName,
+      'val': fileToSave
+    }, cb, cb);
+  };
+  LocalStorage.prototype.updateTextFile = function(key, dataStr, cb){
+    _fhData({
+      'act': 'save',
+      'key': key,
+      'val': dataStr
+    }, cb, cb);
+  };
+  LocalStorage.prototype.readFile = function(fileName, cb){
+    _fhData({
+      'act': 'loadFile',
+      'key': fileName
+    }, cb, cb);
+  };
+  LocalStorage.prototype.readFileText = function(fileName, cb){
+    _fhData({
+      'act': 'load',
+      'key': fileName
+    }, cb, cb);
+  };
   _fileSystemAvailable = function() {
     return fileSystem.isFileSystemAvailable();
   };
+
+  function _getKey(key){
+    return typeof(key.getLocalId) === "function" ? key.getLocalId() : key;
+  }
   //use different local storage model according to environment
   function _fhData() {
     if (_fileSystemAvailable()) {
@@ -118,7 +148,13 @@ appForm.stores = function(module) {
         if (err) {
           hash = key;
         }
-        var filename = hash + '.txt';
+
+        var filename = hash;
+
+        if(key.indexOf("filePlaceHolder") === -1){
+          filename += ".txt";
+        }
+
         if (typeof navigator.externalstorage !== 'undefined') {
           navigator.externalstorage.enable(function handleSuccess(res) {
             var path = filename;
@@ -186,6 +222,23 @@ appForm.stores = function(module) {
       });
     }
 
+    function loadFile(key) {
+      filenameForKey(key, function(hash) {
+        fileSystem.readAsFile(hash, function(err, file) {
+          if (err) {
+            if (err.name === 'NotFoundError' || err.code === 1) {
+              //same respons of $fh.data if key not found.
+              success(null, null);
+            } else {
+              fail(err);
+            }
+          } else {
+            success(null, file);
+          }
+        });
+      });
+    }
+
     if (typeof options.act === 'undefined') {
       return load(options.key);
     } else if (options.act === 'save') {
@@ -194,6 +247,8 @@ appForm.stores = function(module) {
       return remove(options.key);
     } else if (options.act === 'load') {
       return load(options.key);
+    } else if (options.act === 'loadFile') {
+      return loadFile(options.key);
     } else {
       if (typeof failure !== 'undefined') {
         return failure('Action [' + options.act + '] is not defined', {});

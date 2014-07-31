@@ -36,7 +36,7 @@ appForm.utils = function (module) {
     var height = params.targetHeight ? params.targetHeight : $fh.forms.config.get("targetHeight", 480);
     var quality= params.quality ? params.quality : $fh.forms.config.get("quality", 50);
     //For Safety, the default value of saving to photo album is true.
-    var saveToPhotoAlbum = typeof(params.saveToPhotoAlbum) !== "undefined" ? params.saveToPhotoAlbum : $fh.forms.config.get("saveToPhotoAlbum", true);
+    var saveToPhotoAlbum = typeof(params.saveToPhotoAlbum) !== "undefined" ? params.saveToPhotoAlbum : $fh.forms.config.get("saveToPhotoAlbum");
     var encodingType = params.encodingType ? params.encodingType : $fh.forms.config.get("encodingType", 'jpeg');
 
     params.targetWidth = width;

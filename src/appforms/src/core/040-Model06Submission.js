@@ -549,7 +549,7 @@ appForm.models = function(module) {
           //File already exists for this input, overwrite rather than create a new file
           if(target.fieldValues[index]){
             if(typeof(target.fieldValues[index].hashName) === "string"){
-              params.filePlaceholder = target.fieldValues[index].hashName;
+              params.previousFile = target.fieldValues[index];
             }
           }
 
@@ -616,7 +616,7 @@ appForm.models = function(module) {
   };
 
   Submission.prototype.getSubmissionFile = function(fileName, cb){
-    appForm.utils.fileSystem.readAsFile(fileName, cb);
+    appForm.stores.localStorage.readFile(fileName, cb);
   };
   Submission.prototype.clearLocalSubmissionFiles = function(cb) {
     $fh.forms.log.d("In clearLocalSubmissionFiles");
@@ -627,7 +627,7 @@ appForm.models = function(module) {
 
     for (var fileMetaObject in filesInSubmission) {
       $fh.forms.log.d("Clearing file " + filesInSubmission[fileMetaObject]);
-      appForm.utils.fileSystem.remove(filesInSubmission[fileMetaObject], function(err) {
+      appForm.stores.localStorage.delete(filesInSubmission[fileMetaObject], function(err) {
         if (err) {
           $fh.forms.log.e("Error removing files from " + err);
         }
@@ -670,7 +670,7 @@ appForm.models = function(module) {
           val = valArr[valIndex];
           if(typeof(val.hashName) === "string"){
             //This is a file, needs to be removed
-            appForm.utils.fileSystem.remove(val.hashName, function(err){
+            appForm.stores.localStorage.delete(val.hashName, function(err){
               $fh.forms.log.e("Error removing file from transaction ", err);
             });
           }
@@ -702,7 +702,7 @@ appForm.models = function(module) {
     }
 
     if(typeof(valRemoved.hashName) === "string"){
-      appForm.utils.fileSystem.remove(valRemoved.hashName, function(err){
+      appForm.stores.localStorage.delete(valRemoved.hashName, function(err){
         if(err){
           $fh.forms.log.e("Error removing file: ", err);
         } else {
