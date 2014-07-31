@@ -13888,6 +13888,12 @@ appForm.stores = function(module) {
   };
   //read a model from local storage
   LocalStorage.prototype.read = function(model, cb) {
+    if(typeof(model) === "object"){
+      if (model.get("_type") === "offlineTest"){
+        return cb(null, {});
+      }
+    }
+
     var key = _getKey(model);
     if (key != null) {
       _fhData({
@@ -18115,7 +18121,7 @@ appForm.models = function (module) {
       }
     });
 
-    function processUploadSuccess(){
+    function processUploadSuccess(cb){
       $fh.forms.log.d("processUploadSuccess Called");
       self.submissionModel(function (_err, model) {
         if(_err){
@@ -18126,7 +18132,7 @@ appForm.models = function (module) {
       });
     }
 
-    function processDownloadSuccess(){
+    function processDownloadSuccess(cb){
       $fh.forms.log.d("processDownloadSuccess Called");
       self.submissionModel(function (_err, model) {
         if(_err){
@@ -18139,16 +18145,14 @@ appForm.models = function (module) {
     }
 
     if(self.isDownloadTask()){
-      processDownloadSuccess();
+      processDownloadSuccess(function(err){
+        self.clearLocal(cb);
+      });
     } else {
-      processUploadSuccess();
-    }
-
-    self.clearLocal(function(err){
-      if(err){
-        $fh.forms.log.e("Error clearing upload task local storage: ", err);
-      }      
+      processUploadSuccess(function(err){
+        self.clearLocal(cb);
     });
+    }
   };
   /**
    * the upload task is failed. It will not complete the task but will set error with error returned.
