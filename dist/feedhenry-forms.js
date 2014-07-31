@@ -4216,6 +4216,11 @@ Lawnchair.adapter('html5-filesystem', (function(global){
       var error = function(e) { fail(e); if ( callback ) me.fn( me.name, callback ).call( me, me ); };
       var size = options.size || 100*1024*1024;
       var name = this.name;
+      //disable file backup to icloud
+      me.backup = false;
+      if(typeof options.backup !== 'undefined'){
+        me.backup = options.backup;
+      }
 
       function requestFileSystem(amount) {
 //        console.log('in requestFileSystem');
@@ -4272,7 +4277,7 @@ Lawnchair.adapter('html5-filesystem', (function(global){
       obj.key = key;
       var error = function(e) { fail(e); if ( callback ) me.lambda( callback ).call( me ); };
       root( this, function( store ) {
-        store.getFile( key, {create:true}, function( file ) {
+        var writeContent = function(file, error){
           file.createWriter(function( writer ) {
             writer.onerror = error;
             writer.onwriteend = function() {
@@ -4289,6 +4294,18 @@ Lawnchair.adapter('html5-filesystem', (function(global){
             var writerContent = createBlobOrString(contentStr);
             writer.write(writerContent);
           }, error );
+        }
+        store.getFile( key, {create:true}, function( file ) {
+          if(typeof file.setMetadata === 'function' && (me.backup === false || me.backup === 'false')){
+            //set meta data on the file to make sure it won't be backed up by icloud
+            file.setMetadata(function(){
+              writeContent(file, error);
+            }, function(){
+              writeContent(file, error);
+            }, {'com.apple.MobileBackup': 1});
+          } else {
+            writeContent(file, error);
+          }
         }, error );
       });
       return this;
@@ -9457,9 +9474,10 @@ var self = {
     // Storage strategy to use for Lawnchair - supported strategies are 'html5-filesystem' and 'dom'
     "file_system_quota" : 50 * 1024 * 1204,
     // Amount of space to request from the HTML5 filesystem API when running in browser
-    "has_custom_sync" : null
+    "has_custom_sync" : null,
     //If the app has custom cloud sync function, it should be set to true. If set to false, the default mbaas sync implementation will be used. When set to null or undefined, 
     //a check will be performed to determine which implementation to use
+    "icloud_backup" : false //ios only. If set to true, the file will be backed by icloud
   },
 
   notifications: {
@@ -10272,7 +10290,7 @@ var self = {
     };
     self.getDataSet(dataset_id, function(dataset) {
       // save dataset to local storage
-      Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota}, function (){
+      Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota, backup: self.config.icloud_backup}, function (){
         this.save({key:"dataset_" + dataset_id, val:dataset}, function(){
           //save success
           if(cb) return cb();
@@ -10290,7 +10308,7 @@ var self = {
       self.consoleLog(errMsg);
     };
 
-        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       
+        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota, backup: self.config.icloud_backup},function (){       
           this.get( "dataset_" + dataset_id, function (data){
             if (data && data.val) {
               var dataset = data.val;
@@ -13246,59 +13264,95 @@ appForm.utils = function(module) {
         });
     }
 
+    function _getSaveObject(content){
+      var saveObj = null;
+      if (typeof content === 'object' && content !== null) {
+        if (content instanceof File || content instanceof Blob) {
+          //File object
+          saveObj = content;
+        } else {
+          //JSON object
+          var contentstr = JSON.stringify(content);
+          saveObj = _createBlobOrString(contentstr);
+        }
+      } else if (typeof content === 'string') {
+        saveObj = _createBlobOrString(content);
+      }
+
+      return saveObj;
+    }
+
     /**
      * Save a content to file system into a file
+     *
+     * In the case where the content is a File and PhoneGap is available, the function will attempt to use the "copyTo" function instead of writing the file.
+     * This is because windows phone does not allow writing binary files with PhoneGap.
      * @param  {[type]} fileName file name to be stored.
      * @param  {[type]} content  json object / string /  file object / blob object
      * @param  {[type]} cb  (err, result)
      * @return {[type]}          [description]
      */
     function save(fileName, content, cb) {
-        var saveObj = null;
-        var size = 0;
-        if (typeof content === 'object') {
-            if (content instanceof File) {
-                //File object
-                saveObj = content;
-                size = saveObj.size;
-            } else if (content instanceof Blob) {
-                saveObj = content;
-                size = saveObj.size;
-            } else {
-                //JSON object
-                var contentstr = JSON.stringify(content);
-                saveObj = _createBlobOrString(contentstr);
-                size = saveObj.size || saveObj.length;
-            }
-        } else if (typeof content === 'string') {
-            saveObj = _createBlobOrString(content);
-            size = saveObj.size || saveObj.length;
-        }
+      var self = this;
+      var saveObj = _getSaveObject(content);
+      if(saveObj === null){
+        return cb("Invalid content type. Object was null");
+      }
+      var size = saveObj.size || saveObj.length;
 
-        _getFileEntry(fileName, size, {
-            create: true
-        }, function(err, fileEntry) {
-            if (err) {
-                cb(err);
-            } else {
-                fileEntry.createWriter(function(writer) {
-                    function _onFinished(evt) {
-                        return cb(null, evt);
-                    }
+      _getFileEntry(fileName, size, {
+          create: true
+      }, function(err, fileEntry) {
+          if (err) {
+              cb(err);
+          } else {
+            if(appForm.utils.isPhoneGap() && saveObj instanceof File){
+              //Writing binary files is not possible in windows phone.
+              //So if the thing to save is a file, and it is in phonegap, use the copyTo functions instead.
+              fileEntry.getParent(function(parentDir){
+                //Get the file entry for the file input
+                _resolveFile(saveObj.fullPath, function(err, fileToCopy){
+                  if(err){
+                    return cb(err);
+                  }
+                  fileName = fileEntry.name;
 
-                    function _onTruncated() {
-                        writer.onwriteend = _onFinished;
-                        writer.write(saveObj); //write method can take a blob or file object according to html5 standard.
-                    }
-                    writer.onwriteend = _onTruncated;
-                    //truncate the file first.
-                    writer.truncate(0);
-                }, function(e) {
-                    console.error("fileEntry.createWriter Failed to create file write: " + e);
-                    cb('Failed to create file write:' + e);
+                  fileEntry.remove(function(){
+                    fileToCopy.copyTo(parentDir, fileName, function(copiedFile){
+                      return cb(null, copiedFile);
+                    }, function(err){
+                      return cb(err);
+                    });
+                  }, function(err){
+                    return cb(err);
+                  });
+                }, function(err){
+                  return cb(err);
                 });
+              }, function(err){
+                return cb(err);
+              });
+            }  else {
+              //Otherwise, just write text
+              fileEntry.createWriter(function(writer) {
+                function _onFinished(evt) {
+                  return cb(null, evt);
+                }
+
+                function _onTruncated() {
+                  writer.onwriteend = _onFinished;
+                  writer.write(saveObj); //write method can take a blob or file object according to html5 standard.
+                }
+                writer.onwriteend = _onTruncated;
+                //truncate the file first.
+                writer.truncate(0);
+              }, function(e) {
+                cb('Failed to create file write:' + e);
+              });
             }
-        });
+
+          }
+      });
     }
     /**
      * Remove a file from file system
@@ -13318,7 +13372,6 @@ appForm.utils = function(module) {
             fileEntry.remove(function() {
                 cb(null, null);
             }, function(e) {
-                console.error("file remove fileEntry.remove failed " + e);
                 cb('Failed to remove file' + e);
             });
         });
@@ -13414,33 +13467,55 @@ appForm.utils = function(module) {
             fe.file(function(file) {
                 cb(null, file);
             }, function(e) {
-                console.error('Failed to get file:' + e);
                 cb(e);
             });
         });
     }
 
+    function _resolveFile(fileName, cb){
+      //This is necessary to get the correct uri for apple. The URI in a file object for iphone does not have the file:// prefix.
+      //This gives invalid uri errors when trying to resolve.
+      if(fileName.indexOf("file://") === -1 && window.device.platform !== "Win32NT"){
+        fileName = "file://" + fileName;
+      }
+      window.resolveLocalFileSystemURI(fileName, function(fileEntry){
+        return cb(null, fileEntry);
+      }, function(err){
+        return cb(err);
+      });
+    }
+
     function _getFileEntry(fileName, size, params, cb) {
-        _checkEnv();
+      var self = this;
+      _checkEnv();
+      if(typeof(fileName) === "string"){
         _requestFileSystem(PERSISTENT, size, function gotFS(fileSystem) {
-            fileSystem.root.getFile(fileName, params, function gotFileEntry(fileEntry) {
-                cb(null, fileEntry);
-            }, function(err) {
-                if (err.name === 'QuotaExceededError' || err.code === 10) {
-                    //this happens only on browser. request for 1 gb storage
-                    //TODO configurable from cloud
-                    var bigSize = 1024 * 1024 * 1024;
-                    _requestQuote(bigSize, function(err, bigSize) {
-                        _getFileEntry(fileName, size, params, cb);
-                    });
-                } else {
-                    cb(err);
-                }
-            });
+          fileSystem.root.getFile(fileName, params, function gotFileEntry(fileEntry) {
+            cb(null, fileEntry);
+          }, function(err) {
+            if (err.name === 'QuotaExceededError' || err.code === 10) {
+              //this happens only on browser. request for 1 gb storage
+              //TODO configurable from cloud
+              var bigSize = 1024 * 1024 * 1024;
+              _requestQuote(bigSize, function(err, bigSize) {
+                _getFileEntry(fileName, size, params, cb);
+              });
+            } else {
+              if(!appForm.utils.isPhoneGap()){
+                return cb(err);
+              } else {
+                _resolveFile(fileName, cb);
+              }
+            }
+          });
         }, function() {
-            console.error('Failed to requestFileSystem: ' + fileName);
-            cb('Failed to requestFileSystem');
+          cb('Failed to requestFileSystem');
         });
+      } else {
+        if(typeof(cb) === "function"){
+          cb("Expected file name to be a string but was " + fileName);
+        }
+      }
     }
 
     function _requestQuote(size, cb) {
@@ -13458,7 +13533,6 @@ appForm.utils = function(module) {
     }
 
     function _checkEnv() {
-        // debugger;
         if (window.requestFileSystem) {
             _requestFileSystem = window.requestFileSystem;
             fileSystemAvailable = true;
@@ -13515,24 +13589,30 @@ appForm.utils = function (module) {
     var width =  params.targetWidth ? params.targetWidth : $fh.forms.config.get("targetWidth", 640);
     var height = params.targetHeight ? params.targetHeight : $fh.forms.config.get("targetHeight", 480);
     var quality= params.quality ? params.quality : $fh.forms.config.get("quality", 50);
+    //For Safety, the default value of saving to photo album is true.
+    var saveToPhotoAlbum = typeof(params.saveToPhotoAlbum) !== "undefined" ? params.saveToPhotoAlbum : $fh.forms.config.get("saveToPhotoAlbum");
+    var encodingType = params.encodingType ? params.encodingType : $fh.forms.config.get("encodingType", 'jpeg');
 
     params.targetWidth = width;
     params.targetHeight = height;
     params.quality = quality;
+    params.saveToPhotoAlbum = saveToPhotoAlbum;
+    params.encodingType = encodingType;
 
     if ("undefined" === typeof(params.sourceType) && typeof(Camera) !== 'undefined') {
       params.sourceType = Camera.PictureSourceType.CAMERA;
     }
 
     if (isPhoneGap) {
+      params.encodingType = params.encodingType === 'jpeg' ? Camera.EncodingType.JPEG : Camera.EncodingType.PNG;
       navigator.camera.getPicture(_phoneGapSuccess(cb), cb, {
         quality: quality,
         targetWidth: width,
         targetHeight: height,
         sourceType: params.sourceType,
-        saveToPhotoAlbum: false,
-        destinationType: Camera.DestinationType.DATA_URL,
-        encodingType: Camera.EncodingType.PNG
+        saveToPhotoAlbum: params.saveToPhotoAlbum,
+        destinationType: Camera.DestinationType.FILE_URI,
+        encodingType: params.encodingType
       });
     } else if (isHtml5) {
       snapshot(params, cb);
@@ -13542,8 +13622,8 @@ appForm.utils = function (module) {
   }
   function _phoneGapSuccess(cb) {
     return function (imageData) {
-      var base64Img = 'data:image/png;base64,' + imageData;
-      cb(null, base64Img);
+      var imageURI = imageData;
+      cb(null, imageURI);
     };
   }
   function _html5Camera(params, cb) {
@@ -13779,7 +13859,7 @@ appForm.stores = function (module) {
   Store.prototype.update = function (model, cb) {
     throw 'Update not implemented:' + this.name;
   };
-  Store.prototype["delete"] = function (model, cb) {
+  Store.prototype.removeEntry = function (model, cb) {
     throw 'Delete not implemented:' + this.name;
   };
   Store.prototype.upsert = function (model, cb) {
@@ -13808,24 +13888,26 @@ appForm.stores = function(module) {
   };
   //read a model from local storage
   LocalStorage.prototype.read = function(model, cb) {
-    if (model.get("_type") === "offlineTest") {
-      cb(null, {});
-    } else {
-      var key = model.getLocalId();
-      if (key != null) {
-        _fhData({
-          'act': 'load',
-          'key': key.toString()
-        }, cb, cb);
-      } else {
-        //model does not exist in local storage if key is null.
-        cb(null, null);
+    if(typeof(model) === "object"){
+      if (model.get("_type") === "offlineTest"){
+        return cb(null, {});
       }
+    }
+
+    var key = _getKey(model);
+    if (key != null) {
+      _fhData({
+        'act': 'load',
+        'key': key.toString()
+      }, cb, cb);
+    } else {
+      //model does not exist in local storage if key is null.
+      cb(null, null);
     }
   };
   //update a model
   LocalStorage.prototype.update = function(model, cb) {
-    var key = model.getLocalId();
+    var key = _getKey(model);
     var data = model.getProps();
     var dataStr = JSON.stringify(data);
     _fhData({
@@ -13835,15 +13917,15 @@ appForm.stores = function(module) {
     }, cb, cb);
   };
   //delete a model
-  LocalStorage.prototype["delete"] = function(model, cb) {
-    var key = model.getLocalId();
+  LocalStorage.prototype.removeEntry = function(model, cb) {
+    var key = _getKey(model);
     _fhData({
       'act': 'remove',
       'key': key.toString()
     }, cb, cb);
   };
   LocalStorage.prototype.upsert = function(model, cb) {
-    var key = model.getLocalId();
+    var key = _getKey(model);
     if (key === null) {
       this.create(model, cb);
     } else {
@@ -13860,9 +13942,43 @@ appForm.stores = function(module) {
       return fileSystem.isFileSystemAvailable();
     };
   };
+  LocalStorage.prototype.saveFile = function(fileName, fileToSave, cb){
+    if(!_fileSystemAvailable()){
+      return cb("File system not available");
+    }
+
+    _fhData({
+      'act': 'save',
+      'key': fileName,
+      'val': fileToSave
+    }, cb, cb);
+  };
+  LocalStorage.prototype.updateTextFile = function(key, dataStr, cb){
+    _fhData({
+      'act': 'save',
+      'key': key,
+      'val': dataStr
+    }, cb, cb);
+  };
+  LocalStorage.prototype.readFile = function(fileName, cb){
+    _fhData({
+      'act': 'loadFile',
+      'key': fileName
+    }, cb, cb);
+  };
+  LocalStorage.prototype.readFileText = function(fileName, cb){
+    _fhData({
+      'act': 'load',
+      'key': fileName
+    }, cb, cb);
+  };
   _fileSystemAvailable = function() {
     return fileSystem.isFileSystemAvailable();
   };
+
+  function _getKey(key){
+    return typeof(key.getLocalId) === "function" ? key.getLocalId() : key;
+  }
   //use different local storage model according to environment
   function _fhData() {
     if (_fileSystemAvailable()) {
@@ -13907,7 +14023,13 @@ appForm.stores = function(module) {
         if (err) {
           hash = key;
         }
-        var filename = hash + '.txt';
+
+        var filename = hash;
+
+        if(key.indexOf("filePlaceHolder") === -1){
+          filename += ".txt";
+        }
+
         if (typeof navigator.externalstorage !== 'undefined') {
           navigator.externalstorage.enable(function handleSuccess(res) {
             var path = filename;
@@ -13975,6 +14097,23 @@ appForm.stores = function(module) {
       });
     }
 
+    function loadFile(key) {
+      filenameForKey(key, function(hash) {
+        fileSystem.readAsFile(hash, function(err, file) {
+          if (err) {
+            if (err.name === 'NotFoundError' || err.code === 1) {
+              //same respons of $fh.data if key not found.
+              success(null, null);
+            } else {
+              fail(err);
+            }
+          } else {
+            success(null, file);
+          }
+        });
+      });
+    }
+
     if (typeof options.act === 'undefined') {
       return load(options.key);
     } else if (options.act === 'save') {
@@ -13983,6 +14122,8 @@ appForm.stores = function(module) {
       return remove(options.key);
     } else if (options.act === 'load') {
       return load(options.key);
+    } else if (options.act === 'loadFile') {
+      return loadFile(options.key);
     } else {
       if (typeof failure !== 'undefined') {
         return failure('Action [' + options.act + '] is not defined', {});
@@ -14429,7 +14570,7 @@ appForm.models = function (module) {
      */
   Model.prototype.clearLocal = function (cb) {
     var localStorage = appForm.stores.localStorage;
-    localStorage["delete"](this, cb);
+    localStorage.removeEntry(this, cb);
   };
   Model.prototype.getDataAgent = function () {
     if (!this.dataAgent) {
@@ -14561,7 +14702,10 @@ appForm.models = function(module) {
       "log_email": "test@example.com",
       "log_level": 3,
       "log_levels": ["error", "warning", "log", "debug"],
-      "config_admin_user": true
+      "config_admin_user": true,
+      "picture_source": "both",
+      "saveToPhotoAlbum": true,
+      "encodingType": "jpeg"
     };
 
     for(var key in staticConfig){
@@ -14983,7 +15127,7 @@ appForm.models = function (module) {
     $fh.forms.log.d("FileSubmission loadFile");
     var fileName = this.getHashName();
     var that = this;
-    appForm.utils.fileSystem.readAsFile(fileName, function (err, file) {
+    appForm.stores.localStorage.readFile(fileName, function (err, file) {
       if (err) {
         $fh.forms.log.e("FileSubmission loadFile. Error reading file", fileName, err);
         cb(err);
@@ -15808,7 +15952,7 @@ appForm.models = function(module) {
         $fh.forms.log.e("Error setting downloaded status " + err);
         cb(err);
       } else {
-        $fh.forms.log.d("Downloaded status set for submission " + self.get('submissionId') + " with localId " + self.getLocalId());
+        $fh.forms.log.d("Downloaded status set for submission " + that.get('submissionId') + " with localId " + that.getLocalId());
         that.emit('downloaded', that.get('submissionId'));
         cb(null, that);
       }
@@ -16040,7 +16184,7 @@ appForm.models = function(module) {
           //File already exists for this input, overwrite rather than create a new file
           if(target.fieldValues[index]){
             if(typeof(target.fieldValues[index].hashName) === "string"){
-              params.filePlaceholder = target.fieldValues[index].hashName;
+              params.previousFile = target.fieldValues[index];
             }
           }
 
@@ -16107,7 +16251,7 @@ appForm.models = function(module) {
   };
 
   Submission.prototype.getSubmissionFile = function(fileName, cb){
-    appForm.utils.fileSystem.readAsFile(fileName, cb);
+    appForm.stores.localStorage.readFile(fileName, cb);
   };
   Submission.prototype.clearLocalSubmissionFiles = function(cb) {
     $fh.forms.log.d("In clearLocalSubmissionFiles");
@@ -16118,7 +16262,7 @@ appForm.models = function(module) {
 
     for (var fileMetaObject in filesInSubmission) {
       $fh.forms.log.d("Clearing file " + filesInSubmission[fileMetaObject]);
-      appForm.utils.fileSystem.remove(filesInSubmission[fileMetaObject], function(err) {
+      appForm.stores.localStorage.removeEntry(filesInSubmission[fileMetaObject], function(err) {
         if (err) {
           $fh.forms.log.e("Error removing files from " + err);
         }
@@ -16161,7 +16305,7 @@ appForm.models = function(module) {
           val = valArr[valIndex];
           if(typeof(val.hashName) === "string"){
             //This is a file, needs to be removed
-            appForm.utils.fileSystem.remove(val.hashName, function(err){
+            appForm.stores.localStorage.removeEntry(val.hashName, function(err){
               $fh.forms.log.e("Error removing file from transaction ", err);
             });
           }
@@ -16193,7 +16337,7 @@ appForm.models = function(module) {
     }
 
     if(typeof(valRemoved.hashName) === "string"){
-      appForm.utils.fileSystem.remove(valRemoved.hashName, function(err){
+      appForm.stores.localStorage.removeEntry(valRemoved.hashName, function(err){
         if(err){
           $fh.forms.log.e("Error removing file: ", err);
         } else {
@@ -16607,18 +16751,49 @@ appForm.models.Field = function (module) {
     var inputValue = params.value;
     var isStore = params.isStore === undefined ? true : params.isStore;
     var lastModDate = new Date().getTime();
+    var previousFile = params.previousFile || {};
+    var hashName = null;
     if (typeof inputValue === 'undefined' || inputValue === null) {
-      return cb(null, null);
+      return cb("No input value to process_file", null);
     }
-    if (typeof inputValue !== 'object' || !inputValue instanceof HTMLInputElement && !inputValue instanceof File && !checkFileObj(inputValue)) {
-      throw 'the input value for file field should be a html file input element or a File object';
+
+    function getFileType(fileType, fileNameString){
+      fileType = fileType || "";
+      fileNameString = fileNameString || "";
+
+      //The type if file is already known. No need to parse it out.
+      if(fileType.length > 0){
+        return fileType;
+      }
+
+      //Camera does not sent file type. Have to parse it from the file name.
+      if(fileNameString.indexOf(".png") > -1){
+        return "image/png";
+      } else if(fileNameString.indexOf(".jpg") > -1){
+        return "image/jpeg";
+      } else {
+        return "application/octet-stream";
+      }
     }
-    if (checkFileObj(inputValue)) {
-      return cb(null, inputValue);
+
+    function getFileName(fileNameString, filePathString){
+      fileNameString = fileNameString || "";
+      if(fileNameString.length > 0){
+        return fileNameString;
+      } else {
+        //Need to extract the name from the file path
+        var indexOfName = filePathString.lastIndexOf("/");
+        if(indexOfName > -1){
+          return filePathString.slice(indexOfName);
+        } else {
+          return null;
+        }
+      }
     }
+
     var file = inputValue;
     if (inputValue instanceof HTMLInputElement) {
-      file = inputValue.files[0];  // 1st file only, not support many files yet.
+      file = inputValue.files[0] || {};  // 1st file only, not support many files yet.
     }
 
     if(typeof(file.lastModifiedDate) === 'undefined'){
@@ -16626,35 +16801,62 @@ appForm.models.Field = function (module) {
     }
 
     if(file.lastModifiedDate instanceof Date){
-      lastModDate = file.lastModifiedDate.getTime();  
+      lastModDate = file.lastModifiedDate.getTime();
     }
+
+    var fileName = getFileName(file.name || file.fileName, file.fullPath);
+
+    var fileType = getFileType(file.type || file.fileType, fileName);
+
+    //Placeholder files do not have a file type. It inherits from previous types
+    if(fileName === null && !previousFile.fileName){
+      return cb("Expected picture to be PNG or JPEG but was null");
+    }
+
+    if(previousFile.hashName){
+      if(fileName === previousFile.hashName || file.hashName === previousFile.hashName){
+        //Submitting an existing file already saved, no need to save.
+        return cb(null, previousFile);
+      }
+    }
+
     var rtnJSON = {
-        'fileName': file.name,
-        'fileSize': file.size,
-        'fileType': file.type,
-        'fileUpdateTime': lastModDate,
-        'hashName': '',
-        'contentType': 'binary'
-      };
-    var name = file.name + new Date().getTime() + Math.ceil(Math.random() * 100000);
+      'fileName': fileName,
+      'fileSize': file.size,
+      'fileType': fileType,
+      'fileUpdateTime': lastModDate,
+      'hashName': '',
+      'imgHeader': '',
+      'contentType': 'binary'
+    };
+
+    //The file to be submitted is new
+    previousFile = rtnJSON;
+
+    var name = fileName + new Date().getTime() + Math.ceil(Math.random() * 100000);
     appForm.utils.md5(name, function (err, res) {
-      var hashName = res;
+      hashName = res;
       if (err) {
         hashName = name;
       }
       hashName = 'filePlaceHolder' + hashName;
-      rtnJSON.hashName = hashName;
+
+      if(fileName.length === 0){
+        previousFile.fileName = hashName;
+      }
+
+      previousFile.hashName = hashName;
       if (isStore) {
-        appForm.utils.fileSystem.save(hashName, file, function (err, res) {
+        appForm.stores.localStorage.saveFile(hashName, file, function (err, res) {
           if (err) {
             $fh.forms.log.e(err);
             cb(err);
           } else {
-            cb(null, rtnJSON);
+            cb(null, previousFile);
           }
         });
       } else {
-        cb(null, rtnJSON);
+        cb(null, previousFile);
       }
     });
   };
@@ -16750,25 +16952,32 @@ appForm.models.Field = function (module) {
   function checkFileObj(obj) {
     return obj.fileName && obj.fileType && obj.hashName;
   }
+
   function imageProcess(params, cb) {
+    var self = this;
     var inputValue = params.value;
     var isStore = params.isStore === undefined ? true : params.isStore;
+    var previousFile = params.previousFile || {};
     if (typeof(inputValue) !== "string") {
-      return cb("Expected base64 string image, but parameter was not a string", null);
+      return cb("Expected base64 string image or file URI but parameter was not a string", null);
     }
 
-    if(inputValue.length < 1 || inputValue.indexOf(";base64,") === -1){
-      return cb("Expected base64 string but got string " + inputValue, null);
+    //Input value can be either a base64 String or file uri, the behaviour of upload will change accordingly.
+
+    if(inputValue.length < 1){
+      return cb("Expected base64 string or file uri but got string of lenght 0:  " + inputValue, null);
     }
-    var imgName = '';
-    var dataArr = inputValue.split(';base64,');
-    var imgType = dataArr[0].split(':')[1];
-    var extension = imgType.split('/')[1];
-    var size = inputValue.length;
-    genImageName(function (err, n) {
-      imgName = params.filePlaceholder ? params.filePlaceholder : 'filePlaceHolder' + n;
-      //TODO Abstract this out
-      var meta = {
+
+    if(inputValue.indexOf(";base64,") > -1){
+      var imgName = '';
+      var dataArr = inputValue.split(';base64,');
+      var imgType = dataArr[0].split(':')[1];
+      var extension = imgType.split('/')[1];
+      var size = inputValue.length;
+      genImageName(function (err, n) {
+        imgName = previousFile.hashName ? previousFile.hashName : 'filePlaceHolder' + n;
+        //TODO Abstract this out
+        var meta = {
           'fileName': imgName + '.' + extension,
           'hashName': imgName,
           'contentType': 'base64',
@@ -16777,25 +16986,38 @@ appForm.models.Field = function (module) {
           'imgHeader': 'data:' + imgType + ';base64,',
           'fileUpdateTime': new Date().getTime()
         };
-      if (isStore) {
-        appForm.utils.fileSystem.save(imgName, dataArr[1], function (err, res) {
-          if (err) {
-            $fh.forms.log.e(err);
-            cb(err);
-          } else {
-            cb(null, meta);
-          }
-        });
-      } else {
-        cb(null, meta);
-      }
-    });
+        if (isStore) {
+          appForm.stores.localStorage.updateTextFile(imgName, dataArr[1], function (err, res) {
+            if (err) {
+              $fh.forms.log.e(err);
+              cb(err);
+            } else {
+              cb(null, meta);
+            }
+          });
+        } else {
+          cb(null, meta);
+        }
+      });
+    } else {
+      //Image is a file uri, the file needs to be saved as a file.
+      //Can use the process_file function to do this.
+      //Need to read the file as a file first
+      appForm.utils.fileSystem.readAsFile(inputValue, function(err, file){
+        if(err){
+          return cb(err);
+        }
+
+        params.value = file;
+        self.process_file(params, cb);
+      });
+    }
   }
   function genImageName(cb) {
     var name = new Date().getTime() + '' + Math.ceil(Math.random() * 100000);
     appForm.utils.md5(name, cb);
   }
-  function covertImage(value, cb) {
+  function convertImage(value, cb) {
     if (value.length === 0) {
       cb(null, value);
     } else {
@@ -16811,24 +17033,47 @@ appForm.models.Field = function (module) {
       }
     }
   }
+
+  //An image can be either a base64 image or a binary image.
+  //If base64, need to load the data as text.
+  //If binary, just need to load the file uri.
   function _loadImage(meta, cb) {
     if (meta) {
+
       var name = meta.hashName;
-      appForm.utils.fileSystem.readAsText(name, function (err, text) {
-        if (err) {
-          $fh.forms.log.e(err);
-        }
-        meta.data = text;
-        cb(err, meta);
-      });
+      if(meta.contentType === "base64"){
+        appForm.stores.localStorage.readFileText(name, function (err, text) {
+          if (err) {
+            $fh.forms.log.e(err);
+          }
+          meta.data = text;
+          cb(err, meta);
+        });
+      } else if(meta.contentType === "binary"){
+        appForm.stores.localStorage.readFile(name, function(err, file){
+          if(err){
+            $fh.forms.log.e("Error reading file " + name, err);
+          }
+
+          if(file && file.fullPath){
+            meta.data = file.fullPath;
+          } else {
+            meta.data = "file-not-found";
+          }
+
+          cb(err, meta);
+        });
+      } else {
+        $fh.forms.log.e("Error load image with invalid meta" + meta.contentType);
+      }
     } else {
       cb(null, meta);
     }
   }
   module.prototype.process_signature = imageProcess;
-  module.prototype.convert_signature = covertImage;
+  module.prototype.convert_signature = convertImage;
   module.prototype.process_photo = imageProcess;
-  module.prototype.convert_photo = covertImage;
+  module.prototype.convert_photo = convertImage;
   return module;
 }(appForm.models.Field || {});
 /**
@@ -17936,7 +18181,7 @@ appForm.models = function (module) {
       }
     });
 
-    function processUploadSuccess(){
+    function processUploadSuccess(cb){
       $fh.forms.log.d("processUploadSuccess Called");
       self.submissionModel(function (_err, model) {
         if(_err){
@@ -17947,7 +18192,7 @@ appForm.models = function (module) {
       });
     }
 
-    function processDownloadSuccess(){
+    function processDownloadSuccess(cb){
       $fh.forms.log.d("processDownloadSuccess Called");
       self.submissionModel(function (_err, model) {
         if(_err){
@@ -17960,16 +18205,14 @@ appForm.models = function (module) {
     }
 
     if(self.isDownloadTask()){
-      processDownloadSuccess();
+      processDownloadSuccess(function(err){
+        self.clearLocal(cb);
+      });
     } else {
-      processUploadSuccess();
+      processUploadSuccess(function(err){
+        self.clearLocal(cb);
+      });
     }
-
-    self.clearLocal(function(err){
-      if(err){
-        $fh.forms.log.e("Error clearing upload task local storage: ", err);
-      }      
-    });
   };
   /**
    * the upload task is failed. It will not complete the task but will set error with error returned.

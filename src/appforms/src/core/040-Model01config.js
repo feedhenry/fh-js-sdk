@@ -116,7 +116,10 @@ appForm.models = function(module) {
       "log_email": "test@example.com",
       "log_level": 3,
       "log_levels": ["error", "warning", "log", "debug"],
-      "config_admin_user": true
+      "config_admin_user": true,
+      "picture_source": "both",
+      "saveToPhotoAlbum": true,
+      "encodingType": "jpeg"
     };
 
     for(var key in staticConfig){

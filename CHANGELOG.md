@@ -1,7 +1,11 @@
 # Changelog - FeedHenry Javascript SDK
 
 ## 2.2.0 - 2014-07-11 - IR231 - Niall Donnelly
-7414 Upgraded forms to bootstrap rendering.
+* 7414 - Upgraded forms to bootstrap rendering.
+
+## 2.1.4 - 2014-07-31 - IR233 - Niall Donnelly
+
+* 7656 - Refactored photo capture to return file URI instead of base64 string.
 
 ## 2.1.3 - 2014-07-17 - IR232 - Niall Donnelly
 

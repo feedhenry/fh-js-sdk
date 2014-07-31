@@ -13,7 +13,7 @@ appForm.models = function (module) {
     $fh.forms.log.d("FileSubmission loadFile");
     var fileName = this.getHashName();
     var that = this;
-    appForm.utils.fileSystem.readAsFile(fileName, function (err, file) {
+    appForm.stores.localStorage.readFile(fileName, function (err, file) {
       if (err) {
         $fh.forms.log.e("FileSubmission loadFile. Error reading file", fileName, err);
         cb(err);

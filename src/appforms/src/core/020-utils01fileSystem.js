@@ -78,59 +78,95 @@ appForm.utils = function(module) {
         });
     }
 
+    function _getSaveObject(content){
+      var saveObj = null;
+      if (typeof content === 'object' && content !== null) {
+        if (content instanceof File || content instanceof Blob) {
+          //File object
+          saveObj = content;
+        } else {
+          //JSON object
+          var contentstr = JSON.stringify(content);
+          saveObj = _createBlobOrString(contentstr);
+        }
+      } else if (typeof content === 'string') {
+        saveObj = _createBlobOrString(content);
+      }
+
+      return saveObj;
+    }
+
     /**
      * Save a content to file system into a file
+     *
+     * In the case where the content is a File and PhoneGap is available, the function will attempt to use the "copyTo" function instead of writing the file.
+     * This is because windows phone does not allow writing binary files with PhoneGap.
      * @param  {[type]} fileName file name to be stored.
      * @param  {[type]} content  json object / string /  file object / blob object
      * @param  {[type]} cb  (err, result)
      * @return {[type]}          [description]
      */
     function save(fileName, content, cb) {
-        var saveObj = null;
-        var size = 0;
-        if (typeof content === 'object') {
-            if (content instanceof File) {
-                //File object
-                saveObj = content;
-                size = saveObj.size;
-            } else if (content instanceof Blob) {
-                saveObj = content;
-                size = saveObj.size;
-            } else {
-                //JSON object
-                var contentstr = JSON.stringify(content);
-                saveObj = _createBlobOrString(contentstr);
-                size = saveObj.size || saveObj.length;
-            }
-        } else if (typeof content === 'string') {
-            saveObj = _createBlobOrString(content);
-            size = saveObj.size || saveObj.length;
-        }
+      var self = this;
+      var saveObj = _getSaveObject(content);
+      if(saveObj === null){
+        return cb("Invalid content type. Object was null");
+      }
+      var size = saveObj.size || saveObj.length;
 
-        _getFileEntry(fileName, size, {
-            create: true
-        }, function(err, fileEntry) {
-            if (err) {
-                cb(err);
-            } else {
-                fileEntry.createWriter(function(writer) {
-                    function _onFinished(evt) {
-                        return cb(null, evt);
-                    }
+      _getFileEntry(fileName, size, {
+          create: true
+      }, function(err, fileEntry) {
+          if (err) {
+              cb(err);
+          } else {
+            if(appForm.utils.isPhoneGap() && saveObj instanceof File){
+              //Writing binary files is not possible in windows phone.
+              //So if the thing to save is a file, and it is in phonegap, use the copyTo functions instead.
+              fileEntry.getParent(function(parentDir){
+                //Get the file entry for the file input
+                _resolveFile(saveObj.fullPath, function(err, fileToCopy){
+                  if(err){
+                    return cb(err);
+                  }
+                  fileName = fileEntry.name;
 
-                    function _onTruncated() {
-                        writer.onwriteend = _onFinished;
-                        writer.write(saveObj); //write method can take a blob or file object according to html5 standard.
-                    }
-                    writer.onwriteend = _onTruncated;
-                    //truncate the file first.
-                    writer.truncate(0);
-                }, function(e) {
-                    console.error("fileEntry.createWriter Failed to create file write: " + e);
-                    cb('Failed to create file write:' + e);
+                  fileEntry.remove(function(){
+                    fileToCopy.copyTo(parentDir, fileName, function(copiedFile){
+                      return cb(null, copiedFile);
+                    }, function(err){
+                      return cb(err);
+                    });
+                  }, function(err){
+                    return cb(err);
+                  });
+                }, function(err){
+                  return cb(err);
                 });
+              }, function(err){
+                return cb(err);
+              });
+            }  else {
+              //Otherwise, just write text
+              fileEntry.createWriter(function(writer) {
+                function _onFinished(evt) {
+                  return cb(null, evt);
+                }
+
+                function _onTruncated() {
+                  writer.onwriteend = _onFinished;
+                  writer.write(saveObj); //write method can take a blob or file object according to html5 standard.
+                }
+                writer.onwriteend = _onTruncated;
+                //truncate the file first.
+                writer.truncate(0);
+              }, function(e) {
+                cb('Failed to create file write:' + e);
+              });
             }
-        });
+
+          }
+      });
     }
     /**
      * Remove a file from file system
@@ -150,7 +186,6 @@ appForm.utils = function(module) {
             fileEntry.remove(function() {
                 cb(null, null);
             }, function(e) {
-                console.error("file remove fileEntry.remove failed " + e);
                 cb('Failed to remove file' + e);
             });
         });
@@ -246,33 +281,55 @@ appForm.utils = function(module) {
             fe.file(function(file) {
                 cb(null, file);
             }, function(e) {
-                console.error('Failed to get file:' + e);
                 cb(e);
             });
         });
     }
 
+    function _resolveFile(fileName, cb){
+      //This is necessary to get the correct uri for apple. The URI in a file object for iphone does not have the file:// prefix.
+      //This gives invalid uri errors when trying to resolve.
+      if(fileName.indexOf("file://") === -1 && window.device.platform !== "Win32NT"){
+        fileName = "file://" + fileName;
+      }
+      window.resolveLocalFileSystemURI(fileName, function(fileEntry){
+        return cb(null, fileEntry);
+      }, function(err){
+        return cb(err);
+      });
+    }
+
     function _getFileEntry(fileName, size, params, cb) {
-        _checkEnv();
+      var self = this;
+      _checkEnv();
+      if(typeof(fileName) === "string"){
         _requestFileSystem(PERSISTENT, size, function gotFS(fileSystem) {
-            fileSystem.root.getFile(fileName, params, function gotFileEntry(fileEntry) {
-                cb(null, fileEntry);
-            }, function(err) {
-                if (err.name === 'QuotaExceededError' || err.code === 10) {
-                    //this happens only on browser. request for 1 gb storage
-                    //TODO configurable from cloud
-                    var bigSize = 1024 * 1024 * 1024;
-                    _requestQuote(bigSize, function(err, bigSize) {
-                        _getFileEntry(fileName, size, params, cb);
-                    });
-                } else {
-                    cb(err);
-                }
-            });
+          fileSystem.root.getFile(fileName, params, function gotFileEntry(fileEntry) {
+            cb(null, fileEntry);
+          }, function(err) {
+            if (err.name === 'QuotaExceededError' || err.code === 10) {
+              //this happens only on browser. request for 1 gb storage
+              //TODO configurable from cloud
+              var bigSize = 1024 * 1024 * 1024;
+              _requestQuote(bigSize, function(err, bigSize) {
+                _getFileEntry(fileName, size, params, cb);
+              });
+            } else {
+              if(!appForm.utils.isPhoneGap()){
+                return cb(err);
+              } else {
+                _resolveFile(fileName, cb);
+              }
+            }
+          });
         }, function() {
-            console.error('Failed to requestFileSystem: ' + fileName);
-            cb('Failed to requestFileSystem');
+          cb('Failed to requestFileSystem');
         });
+      } else {
+        if(typeof(cb) === "function"){
+          cb("Expected file name to be a string but was " + fileName);
+        }
+      }
     }
 
     function _requestQuote(size, cb) {
@@ -290,7 +347,6 @@ appForm.utils = function(module) {
     }
 
     function _checkEnv() {
-        // debugger;
         if (window.requestFileSystem) {
             _requestFileSystem = window.requestFileSystem;
             fileSystemAvailable = true;

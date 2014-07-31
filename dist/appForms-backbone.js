@@ -2050,24 +2050,28 @@ FieldCameraView = FieldView.extend({
         var libBtn = $(this.renderButton(index, "<i class='icon-folder-open'></i>&nbsp;Choose Photo from Library", "fhcam_lib"));
         var rmBtn = $(this.renderButton(index, "<i class='icon-remove-circle'></i>&nbsp;Remove Photo", "remove"));
 
-        if(!this.readonly){
-            this.getWrapper(index).append(captureBtn);
-            this.getWrapper(index).append(libBtn);
-            this.getWrapper(index).append(rmBtn);
-            var self = this;
-            captureBtn.on('click', function(e) {
-                self.addFromCamera(e, index);
-            });
-            libBtn.on('click', function(e) {
-                self.addFromLibrary(e, index);
-            });
-            rmBtn.on('click', function(e) {
-                self.removeThumb(e, index);
-            });
-            rmBtn.hide();    
-        }
+      if(!this.readonly){
+        this.getWrapper(index).append(captureBtn);
+        this.getWrapper(index).append(libBtn);
+        this.getWrapper(index).append(rmBtn);
+        var self = this;
+        captureBtn.on('click', function(e) {
+            self.addFromCamera(e, index);
+        });
+        libBtn.on('click', function(e) {
+            self.addFromLibrary(e, index);
+        });
+        rmBtn.on('click', function(e) {
+            self.removeThumb(e, index);
+        });
+        rmBtn.hide();
 
-        
+        if($fh.forms.config.get("picture_source") === "library"){
+          captureBtn.hide();
+        } else if ($fh.forms.config.get("picture_source") === "camera"){
+          libBtn.hide();
+        }
+      }
     },
     setImage: function(index, base64Img) {
         var wrapper = this.getWrapper(index);
@@ -2152,20 +2156,17 @@ FieldCameraView = FieldView.extend({
                     $(video).css('width', '100%');
                     camObj.find('.cam').append(video);
                     actionBar.find('.camOk').on('click', function() {
-                        self.model.utils.takePhoto(params, function(err, base64Img) {
+                        self.model.utils.takePhoto(params, function(err, base64Image) {//The image that comes from the html5 camera is base64
                             camObj.remove();
                             if (err) {
                                 $fh.forms.log.e(err);
                             } else {
-                                self.setImage(index, base64Img);
+                                self.setImage(index, base64Image);
                             }
                         });
                     });
                 }
             });
-        } else {
-            var sampleImg = self.sampleImage();
-            self.setImage(index, sampleImg);
         }
     },
     addFromLibrary: function(e, index) {
@@ -2174,12 +2175,12 @@ FieldCameraView = FieldView.extend({
         if (self.model.utils.isPhoneGapCamAvailable()) {
             e.preventDefault();
             params.sourceType = Camera.PictureSourceType.PHOTOLIBRARY;
-            self.model.utils.takePhoto(params, function(err, base64Image) {
+            self.model.utils.takePhoto(params, function(err, imageURI) {
                 if (err) {
                     $fh.forms.log.e("error occured with take photo ", JSON.stringify(err));
                 }
-                if (base64Image) {
-                    self.setImage(index, base64Image);
+                if (imageURI) {
+                    self.setImage(index, imageURI);
                 }
             });
         } else {
@@ -2210,7 +2211,7 @@ FieldCameraView = FieldView.extend({
                         if (err) {
                             $fh.forms.log.e(err);
                         } else {
-                            self.setImage(index, base64Img);
+                            self.setImage(index, base64Img, true);
                         }
                     });
                 }
@@ -2224,22 +2225,17 @@ FieldCameraView = FieldView.extend({
     },
     valuePopulateToElement: function(index, value) {
         if (value) {
-            var base64Data = value.data;
-            var base64Img = value.imgHeader + base64Data;
-            this.setImage(index, base64Img);
+            var imageData = null;
+            if(value.imgHeader){
+              imageData = value.data;
+              var base64Img = value.imgHeader + imageData;
+              this.setImage(index, base64Img);
+            } else {
+              this.setImage(index, value.data);
+            }
         }
-    },
-    sampleImages: [
-        '/9j/4QAYRXhpZgAASUkqAAgAAAAAAAAAAAAAAP/sABFEdWNreQABAAQAAAAAAAD/4QMraHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLwA8P3hwYWNrZXQgYmVnaW49Iu+7vyIgaWQ9Ilc1TTBNcENlaGlIenJlU3pOVGN6a2M5ZCI/PiA8eDp4bXBtZXRhIHhtbG5zOng9ImFkb2JlOm5zOm1ldGEvIiB4OnhtcHRrPSJBZG9iZSBYTVAgQ29yZSA1LjAtYzA2MCA2MS4xMzQ3NzcsIDIwMTAvMDIvMTItMTc6MzI6MDAgICAgICAgICI+IDxyZGY6UkRGIHhtbG5zOnJkZj0iaHR0cDovL3d3dy53My5vcmcvMTk5OS8wMi8yMi1yZGYtc3ludGF4LW5zIyI+IDxyZGY6RGVzY3JpcHRpb24gcmRmOmFib3V0PSIiIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bXA6Q3JlYXRvclRvb2w9IkFkb2JlIFBob3Rvc2hvcCBDUzUgTWFjaW50b3NoIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjVEMzgyQjRCMTU1MjExRTJBNzNDQzMyMEE5ODI5OEU0IiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOjVEMzgyQjRDMTU1MjExRTJBNzNDQzMyMEE5ODI5OEU0Ij4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6NUQzODJCNDkxNTUyMTFFMkE3M0NDMzIwQTk4Mjk4RTQiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6NUQzODJCNEExNTUyMTFFMkE3M0NDMzIwQTk4Mjk4RTQiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz7/7gAOQWRvYmUAZMAAAAAB/9sAhAAbGhopHSlBJiZBQi8vL0JHPz4+P0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHAR0pKTQmND8oKD9HPzU/R0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0dHR0f/wAARCAAyADIDASIAAhEBAxEB/8QATQABAQAAAAAAAAAAAAAAAAAAAAQBAQEBAAAAAAAAAAAAAAAAAAAEBRABAAAAAAAAAAAAAAAAAAAAABEBAAAAAAAAAAAAAAAAAAAAAP/aAAwDAQACEQMRAD8AiASt8AAAAAAAAAAAAAAAAAAAAAAAAAAAAAB//9k=',
-        'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAALklEQVQYV2NkwAT/oUKMyFIoHKAETBFIDU6FIEUgSaJMBJk0MhQihx2W8IcIAQBhewsKNsLKIgAAAABJRU5ErkJggg==',
-        'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAYUlEQVQYV2NkQAJlM1X/g7hd6bdBFCOyHCNIEigBppElkNkgeYIKYBrwKoQ6A+wEuDtwOQHmLLgbQbqQ3YnubhSfwRTj9DUu3+J0I7oGkPVwXwMZKOEHdCdcPdQJILczAAACnDmkK8T25gAAAABJRU5ErkJggg=='
-    ],
-    sampleImage: function() {
-        window.sampleImageNum = (window.sampleImageNum += 1) % this.sampleImages.length;
-        return this.sampleImages[window.sampleImageNum];
     }
 });
-window.sampleImageNum = -1;
 FieldCheckboxView = FieldView.extend({
   checkboxes: '<div class="btn-group-vertical fh_appform_field_input col-xs-12 <%= repeatingClassName%>" data-toggle="buttons-checkbox"></div>',
   choice: '<button class="btn btn-primary text-left fh_appform_button_action col-xs-12" type="button" value="<%= value %>" name="<%= fieldId %>[]" data-field="<%= fieldId %>" data-index="<%= index %>"><i class="icon-check-empty choice_icon"></i><%= choice %></button>',
