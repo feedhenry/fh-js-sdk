@@ -4216,6 +4216,11 @@ Lawnchair.adapter('html5-filesystem', (function(global){
       var error = function(e) { fail(e); if ( callback ) me.fn( me.name, callback ).call( me, me ); };
       var size = options.size || 100*1024*1024;
       var name = this.name;
+      //disable file backup to icloud
+      me.backup = false;
+      if(typeof options.backup !== 'undefined'){
+        me.backup = options.backup;
+      }
 
       function requestFileSystem(amount) {
 //        console.log('in requestFileSystem');
@@ -4272,7 +4277,7 @@ Lawnchair.adapter('html5-filesystem', (function(global){
       obj.key = key;
       var error = function(e) { fail(e); if ( callback ) me.lambda( callback ).call( me ); };
       root( this, function( store ) {
-        store.getFile( key, {create:true}, function( file ) {
+        var writeContent = function(file, error){
           file.createWriter(function( writer ) {
             writer.onerror = error;
             writer.onwriteend = function() {
@@ -4289,6 +4294,18 @@ Lawnchair.adapter('html5-filesystem', (function(global){
             var writerContent = createBlobOrString(contentStr);
             writer.write(writerContent);
           }, error );
+        }
+        store.getFile( key, {create:true}, function( file ) {
+          if(typeof file.setMetadata === 'function' && (me.backup === false || me.backup === 'false')){
+            //set meta data on the file to make sure it won't be backed up by icloud
+            file.setMetadata(function(){
+              writeContent(file, error);
+            }, function(){
+              writeContent(file, error);
+            }, {'com.apple.MobileBackup': 1});
+          } else {
+            writeContent(file, error);
+          }
         }, error );
       });
       return this;
@@ -8529,7 +8546,7 @@ module.exports = {
 },{"./fhparams":31,"./logger":37,"./queryMap":39,"JSON":3}],27:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.1.3-BUILD-NUMBER",
+  "sdk_version": "2.1.4-BUILD-NUMBER",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit",
   "INTERNAL_CONFIG_LOADED_EVENT": "internalfhconfigloaded",
@@ -9457,9 +9474,10 @@ var self = {
     // Storage strategy to use for Lawnchair - supported strategies are 'html5-filesystem' and 'dom'
     "file_system_quota" : 50 * 1024 * 1204,
     // Amount of space to request from the HTML5 filesystem API when running in browser
-    "has_custom_sync" : null
+    "has_custom_sync" : null,
     //If the app has custom cloud sync function, it should be set to true. If set to false, the default mbaas sync implementation will be used. When set to null or undefined, 
     //a check will be performed to determine which implementation to use
+    "icloud_backup" : false //ios only. If set to true, the file will be backed by icloud
   },
 
   notifications: {
@@ -10272,7 +10290,7 @@ var self = {
     };
     self.getDataSet(dataset_id, function(dataset) {
       // save dataset to local storage
-      Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota}, function (){
+      Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota, backup: self.config.icloud_backup}, function (){
         this.save({key:"dataset_" + dataset_id, val:dataset}, function(){
           //save success
           if(cb) return cb();
@@ -10290,7 +10308,7 @@ var self = {
       self.consoleLog(errMsg);
     };
 
-        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       
+        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota, backup: self.config.icloud_backup},function (){       
           this.get( "dataset_" + dataset_id, function (data){
             if (data && data.val) {
               var dataset = data.val;

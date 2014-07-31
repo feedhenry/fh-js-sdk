@@ -4216,6 +4216,11 @@ Lawnchair.adapter('html5-filesystem', (function(global){
       var error = function(e) { fail(e); if ( callback ) me.fn( me.name, callback ).call( me, me ); };
       var size = options.size || 100*1024*1024;
       var name = this.name;
+      //disable file backup to icloud
+      me.backup = false;
+      if(typeof options.backup !== 'undefined'){
+        me.backup = options.backup;
+      }
 
       function requestFileSystem(amount) {
 //        console.log('in requestFileSystem');
@@ -4272,7 +4277,7 @@ Lawnchair.adapter('html5-filesystem', (function(global){
       obj.key = key;
       var error = function(e) { fail(e); if ( callback ) me.lambda( callback ).call( me ); };
       root( this, function( store ) {
-        store.getFile( key, {create:true}, function( file ) {
+        var writeContent = function(file, error){
           file.createWriter(function( writer ) {
             writer.onerror = error;
             writer.onwriteend = function() {
@@ -4289,6 +4294,18 @@ Lawnchair.adapter('html5-filesystem', (function(global){
             var writerContent = createBlobOrString(contentStr);
             writer.write(writerContent);
           }, error );
+        }
+        store.getFile( key, {create:true}, function( file ) {
+          if(typeof file.setMetadata === 'function' && (me.backup === false || me.backup === 'false')){
+            //set meta data on the file to make sure it won't be backed up by icloud
+            file.setMetadata(function(){
+              writeContent(file, error);
+            }, function(){
+              writeContent(file, error);
+            }, {'com.apple.MobileBackup': 1});
+          } else {
+            writeContent(file, error);
+          }
         }, error );
       });
       return this;
@@ -8529,7 +8546,7 @@ module.exports = {
 },{"./fhparams":31,"./logger":37,"./queryMap":39,"JSON":3}],27:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.1.3-BUILD-NUMBER",
+  "sdk_version": "2.1.4-BUILD-NUMBER",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit",
   "INTERNAL_CONFIG_LOADED_EVENT": "internalfhconfigloaded",
@@ -9457,9 +9474,10 @@ var self = {
     // Storage strategy to use for Lawnchair - supported strategies are 'html5-filesystem' and 'dom'
     "file_system_quota" : 50 * 1024 * 1204,
     // Amount of space to request from the HTML5 filesystem API when running in browser
-    "has_custom_sync" : null
+    "has_custom_sync" : null,
     //If the app has custom cloud sync function, it should be set to true. If set to false, the default mbaas sync implementation will be used. When set to null or undefined, 
     //a check will be performed to determine which implementation to use
+    "icloud_backup" : false //ios only. If set to true, the file will be backed by icloud
   },
 
   notifications: {
@@ -10272,7 +10290,7 @@ var self = {
     };
     self.getDataSet(dataset_id, function(dataset) {
       // save dataset to local storage
-      Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota}, function (){
+      Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota, backup: self.config.icloud_backup}, function (){
         this.save({key:"dataset_" + dataset_id, val:dataset}, function(){
           //save success
           if(cb) return cb();
@@ -10290,7 +10308,7 @@ var self = {
       self.consoleLog(errMsg);
     };
 
-        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota},function (){       
+        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota, backup: self.config.icloud_backup},function (){       
           this.get( "dataset_" + dataset_id, function (data){
             if (data && data.val) {
               var dataset = data.val;
@@ -13246,8 +13264,29 @@ appForm.utils = function(module) {
         });
     }
 
+    function _getSaveObject(content){
+      var saveObj = null;
+      if (typeof content === 'object' && content !== null) {
+        if (content instanceof File || content instanceof Blob) {
+          //File object
+          saveObj = content;
+        } else {
+          //JSON object
+          var contentstr = JSON.stringify(content);
+          saveObj = _createBlobOrString(contentstr);
+        }
+      } else if (typeof content === 'string') {
+        saveObj = _createBlobOrString(content);
+      }
+
+      return saveObj;
+    }
+
     /**
      * Save a content to file system into a file
+     *
+     * In the case where the content is a File and PhoneGap is available, the function will attempt to use the "copyTo" function instead of writing the file.
+     * This is because windows phone does not allow writing binary files with PhoneGap.
      * @param  {[type]} fileName file name to be stored.
      * @param  {[type]} content  json object / string /  file object / blob object
      * @param  {[type]} cb  (err, result)
@@ -13255,26 +13294,11 @@ appForm.utils = function(module) {
      */
     function save(fileName, content, cb) {
       var self = this;
-      var saveObj = null;
-      var size = 0;
-      if (typeof content === 'object') {
-          if (content instanceof File) {
-              //File object
-              saveObj = content;
-              size = saveObj.size;
-          } else if (content instanceof Blob) {
-              saveObj = content;
-              size = saveObj.size;
-          } else {
-              //JSON object
-              var contentstr = JSON.stringify(content);
-              saveObj = _createBlobOrString(contentstr);
-              size = saveObj.size || saveObj.length;
-          }
-      } else if (typeof content === 'string') {
-          saveObj = _createBlobOrString(content);
-          size = saveObj.size || saveObj.length;
+      var saveObj = _getSaveObject(content);
+      if(saveObj === null){
+        return cb("Invalid content type. Object was null");
       }
+      var size = saveObj.size || saveObj.length;
 
       _getFileEntry(fileName, size, {
           create: true
@@ -13282,7 +13306,6 @@ appForm.utils = function(module) {
           if (err) {
               cb(err);
           } else {
-
             if(appForm.utils.isPhoneGap() && saveObj instanceof File){
               //Writing binary files is not possible in windows phone.
               //So if the thing to save is a file, and it is in phonegap, use the copyTo functions instead.
@@ -13450,6 +13473,8 @@ appForm.utils = function(module) {
     }
 
     function _resolveFile(fileName, cb){
+      //This is necessary to get the correct uri for apple. The URI in a file object for iphone does not have the file:// prefix.
+      //This gives invalid uri errors when trying to resolve.
       if(fileName.indexOf("file://") === -1 && window.device.platform !== "Win32NT"){
         fileName = "file://" + fileName;
       }
@@ -13508,7 +13533,6 @@ appForm.utils = function(module) {
     }
 
     function _checkEnv() {
-        // debugger;
         if (window.requestFileSystem) {
             _requestFileSystem = window.requestFileSystem;
             fileSystemAvailable = true;
@@ -13835,7 +13859,7 @@ appForm.stores = function (module) {
   Store.prototype.update = function (model, cb) {
     throw 'Update not implemented:' + this.name;
   };
-  Store.prototype["delete"] = function (model, cb) {
+  Store.prototype.removeEntry = function (model, cb) {
     throw 'Delete not implemented:' + this.name;
   };
   Store.prototype.upsert = function (model, cb) {
@@ -13887,7 +13911,7 @@ appForm.stores = function(module) {
     }, cb, cb);
   };
   //delete a model
-  LocalStorage.prototype["delete"] = function(model, cb) {
+  LocalStorage.prototype.removeEntry = function(model, cb) {
     var key = _getKey(model);
     _fhData({
       'act': 'remove',
@@ -14540,7 +14564,7 @@ appForm.models = function (module) {
      */
   Model.prototype.clearLocal = function (cb) {
     var localStorage = appForm.stores.localStorage;
-    localStorage["delete"](this, cb);
+    localStorage.removeEntry(this, cb);
   };
   Model.prototype.getDataAgent = function () {
     if (!this.dataAgent) {
@@ -16196,7 +16220,7 @@ appForm.models = function(module) {
 
     for (var fileMetaObject in filesInSubmission) {
       $fh.forms.log.d("Clearing file " + filesInSubmission[fileMetaObject]);
-      appForm.stores.localStorage.delete(filesInSubmission[fileMetaObject], function(err) {
+      appForm.stores.localStorage.removeEntry(filesInSubmission[fileMetaObject], function(err) {
         if (err) {
           $fh.forms.log.e("Error removing files from " + err);
         }
@@ -16239,7 +16263,7 @@ appForm.models = function(module) {
           val = valArr[valIndex];
           if(typeof(val.hashName) === "string"){
             //This is a file, needs to be removed
-            appForm.stores.localStorage.delete(val.hashName, function(err){
+            appForm.stores.localStorage.removeEntry(val.hashName, function(err){
               $fh.forms.log.e("Error removing file from transaction ", err);
             });
           }
@@ -16271,7 +16295,7 @@ appForm.models = function(module) {
     }
 
     if(typeof(valRemoved.hashName) === "string"){
-      appForm.stores.localStorage.delete(valRemoved.hashName, function(err){
+      appForm.stores.localStorage.removeEntry(valRemoved.hashName, function(err){
         if(err){
           $fh.forms.log.e("Error removing file: ", err);
         } else {
@@ -16760,6 +16784,7 @@ appForm.models.Field = function (module) {
       'fileType': fileType,
       'fileUpdateTime': lastModDate,
       'hashName': '',
+      'imgHeader': '',
       'contentType': 'binary'
     };
 

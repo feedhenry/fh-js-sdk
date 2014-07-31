@@ -78,8 +78,29 @@ appForm.utils = function(module) {
         });
     }
 
+    function _getSaveObject(content){
+      var saveObj = null;
+      if (typeof content === 'object' && content !== null) {
+        if (content instanceof File || content instanceof Blob) {
+          //File object
+          saveObj = content;
+        } else {
+          //JSON object
+          var contentstr = JSON.stringify(content);
+          saveObj = _createBlobOrString(contentstr);
+        }
+      } else if (typeof content === 'string') {
+        saveObj = _createBlobOrString(content);
+      }
+
+      return saveObj;
+    }
+
     /**
      * Save a content to file system into a file
+     *
+     * In the case where the content is a File and PhoneGap is available, the function will attempt to use the "copyTo" function instead of writing the file.
+     * This is because windows phone does not allow writing binary files with PhoneGap.
      * @param  {[type]} fileName file name to be stored.
      * @param  {[type]} content  json object / string /  file object / blob object
      * @param  {[type]} cb  (err, result)
@@ -87,26 +108,11 @@ appForm.utils = function(module) {
      */
     function save(fileName, content, cb) {
       var self = this;
-      var saveObj = null;
-      var size = 0;
-      if (typeof content === 'object') {
-          if (content instanceof File) {
-              //File object
-              saveObj = content;
-              size = saveObj.size;
-          } else if (content instanceof Blob) {
-              saveObj = content;
-              size = saveObj.size;
-          } else {
-              //JSON object
-              var contentstr = JSON.stringify(content);
-              saveObj = _createBlobOrString(contentstr);
-              size = saveObj.size || saveObj.length;
-          }
-      } else if (typeof content === 'string') {
-          saveObj = _createBlobOrString(content);
-          size = saveObj.size || saveObj.length;
+      var saveObj = _getSaveObject(content);
+      if(saveObj === null){
+        return cb("Invalid content type. Object was null");
       }
+      var size = saveObj.size || saveObj.length;
 
       _getFileEntry(fileName, size, {
           create: true
@@ -114,7 +120,6 @@ appForm.utils = function(module) {
           if (err) {
               cb(err);
           } else {
-
             if(appForm.utils.isPhoneGap() && saveObj instanceof File){
               //Writing binary files is not possible in windows phone.
               //So if the thing to save is a file, and it is in phonegap, use the copyTo functions instead.
@@ -282,6 +287,8 @@ appForm.utils = function(module) {
     }
 
     function _resolveFile(fileName, cb){
+      //This is necessary to get the correct uri for apple. The URI in a file object for iphone does not have the file:// prefix.
+      //This gives invalid uri errors when trying to resolve.
       if(fileName.indexOf("file://") === -1 && window.device.platform !== "Win32NT"){
         fileName = "file://" + fileName;
       }
@@ -340,7 +347,6 @@ appForm.utils = function(module) {
     }
 
     function _checkEnv() {
-        // debugger;
         if (window.requestFileSystem) {
             _requestFileSystem = window.requestFileSystem;
             fileSystemAvailable = true;

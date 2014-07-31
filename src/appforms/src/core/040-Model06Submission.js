@@ -627,7 +627,7 @@ appForm.models = function(module) {
 
     for (var fileMetaObject in filesInSubmission) {
       $fh.forms.log.d("Clearing file " + filesInSubmission[fileMetaObject]);
-      appForm.stores.localStorage.delete(filesInSubmission[fileMetaObject], function(err) {
+      appForm.stores.localStorage.removeEntry(filesInSubmission[fileMetaObject], function(err) {
         if (err) {
           $fh.forms.log.e("Error removing files from " + err);
         }
@@ -670,7 +670,7 @@ appForm.models = function(module) {
           val = valArr[valIndex];
           if(typeof(val.hashName) === "string"){
             //This is a file, needs to be removed
-            appForm.stores.localStorage.delete(val.hashName, function(err){
+            appForm.stores.localStorage.removeEntry(val.hashName, function(err){
               $fh.forms.log.e("Error removing file from transaction ", err);
             });
           }
@@ -702,7 +702,7 @@ appForm.models = function(module) {
     }
 
     if(typeof(valRemoved.hashName) === "string"){
-      appForm.stores.localStorage.delete(valRemoved.hashName, function(err){
+      appForm.stores.localStorage.removeEntry(valRemoved.hashName, function(err){
         if(err){
           $fh.forms.log.e("Error removing file: ", err);
         } else {

@@ -42,7 +42,7 @@ appForm.stores = function(module) {
     }, cb, cb);
   };
   //delete a model
-  LocalStorage.prototype["delete"] = function(model, cb) {
+  LocalStorage.prototype.removeEntry = function(model, cb) {
     var key = _getKey(model);
     _fhData({
       'act': 'remove',
