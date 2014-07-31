@@ -84,6 +84,7 @@ appForm.models.Field = function (module) {
       'fileType': fileType,
       'fileUpdateTime': lastModDate,
       'hashName': '',
+      'imgHeader': '',
       'contentType': 'binary'
     };
 
