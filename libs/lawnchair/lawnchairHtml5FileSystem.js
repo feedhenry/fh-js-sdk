@@ -105,6 +105,11 @@ Lawnchair.adapter('html5-filesystem', (function(global){
       var error = function(e) { fail(e); if ( callback ) me.fn( me.name, callback ).call( me, me ); };
       var size = options.size || 100*1024*1024;
       var name = this.name;
+      //disable file backup to icloud
+      me.backup = false;
+      if(typeof options.backup !== 'undefined'){
+        me.backup = options.backup;
+      }
 
       function requestFileSystem(amount) {
 //        console.log('in requestFileSystem');
@@ -161,7 +166,7 @@ Lawnchair.adapter('html5-filesystem', (function(global){
       obj.key = key;
       var error = function(e) { fail(e); if ( callback ) me.lambda( callback ).call( me ); };
       root( this, function( store ) {
-        store.getFile( key, {create:true}, function( file ) {
+        var writeContent = function(file, error){
           file.createWriter(function( writer ) {
             writer.onerror = error;
             writer.onwriteend = function() {
@@ -178,6 +183,18 @@ Lawnchair.adapter('html5-filesystem', (function(global){
             var writerContent = createBlobOrString(contentStr);
             writer.write(writerContent);
           }, error );
+        }
+        store.getFile( key, {create:true}, function( file ) {
+          if(typeof file.setMetadata === 'function' && (me.backup === false || me.backup === 'false')){
+            //set meta data on the file to make sure it won't be backed up by icloud
+            file.setMetadata(function(){
+              writeContent(file, error);
+            }, function(){
+              writeContent(file, error);
+            }, {'com.apple.MobileBackup': 1});
+          } else {
+            writeContent(file, error);
+          }
         }, error );
       });
       return this;
