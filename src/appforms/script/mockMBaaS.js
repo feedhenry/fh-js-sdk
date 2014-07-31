@@ -40,7 +40,7 @@ function applyServer(app) {
 
 function _ping(req, res){
   console.log("In _ping, ", req.params);
-  res.end("OK");
+  res.json("OK");
 }
 
 function _getConfig(req, res){

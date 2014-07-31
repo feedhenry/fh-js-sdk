@@ -19,6 +19,12 @@ appForm.stores = function(module) {
   };
   //read a model from local storage
   LocalStorage.prototype.read = function(model, cb) {
+    if(typeof(model) === "object"){
+      if (model.get("_type") === "offlineTest"){
+        return cb(null, {});
+      }
+    }
+
     var key = _getKey(model);
     if (key != null) {
       _fhData({

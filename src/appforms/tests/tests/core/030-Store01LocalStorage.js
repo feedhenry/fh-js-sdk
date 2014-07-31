@@ -49,7 +49,7 @@ describe("Local Storage store", function() {
         var model = new Model();
         model.set("hello", "world");
         appForm.stores.localStorage.create(model, function(err, res) {
-            appForm.stores.localStorage.delete(model, function(err, res) {
+            appForm.stores.localStorage.removeEntry(model, function(err, res) {
                 assert(!err);
                 assert(res == null);
                 appForm.stores.localStorage.read(model, function(err, res) {
@@ -67,7 +67,7 @@ describe("Local Storage store", function() {
         var Model = appForm.models.Model;
         var model = new Model();
         model.setLocalId("unknownkey");
-        appForm.stores.localStorage.delete(model, function(err, res) {
+        appForm.stores.localStorage.removeEntry(model, function(err, res) {
             assert(!err);
             assert(!res);
             done();
@@ -127,11 +127,11 @@ describe("Fallback use $fh data / how to forcely use $fh data", function() {
           assert.ok(!err);
           assert.ok(res);
 
-            appForm.stores.localStorage.delete(model, function(err, res) {
+            appForm.stores.localStorage.removeEntry(model, function(err, res) {
                 assert(!err);
                 assert(res==null);
 
-                appForm.stores.localStorage.read(model, function(err, res) {
+                appForm.stores.localStorage.removeEntry(model, function(err, res) {
                     assert(!err);
                     assert(res == null);
                     done();
@@ -146,7 +146,7 @@ describe("Fallback use $fh data / how to forcely use $fh data", function() {
         var Model = appForm.models.Model;
         var model = new Model();
         model.setLocalId("unknownkey");
-        appForm.stores.localStorage.delete(model, function(err, res) {
+        appForm.stores.localStorage.removeEntry(model, function(err, res) {
             assert(!err);
             assert(!res);
             done();
