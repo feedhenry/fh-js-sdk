@@ -2,7 +2,7 @@ var ConfigView = Backbone.View.extend({
     templates: {
 
     },
-    events: {
+    "_events": {
         "click #_viewLogsBtn": "viewLogs",
         "click #_clearLogsBtn": "clearLogs",
         "click #_sendLogsBtn": "sendLogs",
@@ -100,7 +100,7 @@ var ConfigView = Backbone.View.extend({
     },
     initialize: function(options) {
         this.options = options;
-        this.events = _.extend({}, this.events);
+        this.events = _.extend({}, this._events, this.events);
     },
     render: function() {
         this.$el.empty();
