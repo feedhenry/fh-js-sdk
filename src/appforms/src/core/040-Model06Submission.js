@@ -443,7 +443,7 @@ appForm.models = function(module) {
     this.set('errorMessage', errorMsg);
     var targetStatus = 'error';
     this.changeStatus(targetStatus, cb);
-    this.emit('submitted', errorMsg);
+    this.emit('error', errorMsg);
   };
   Submission.prototype.getStatus = function() {
     return this.get('status');
