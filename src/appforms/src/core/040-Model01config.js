@@ -119,7 +119,8 @@ appForm.models = function(module) {
       "config_admin_user": true,
       "picture_source": "both",
       "saveToPhotoAlbum": true,
-      "encodingType": "jpeg"
+      "encodingType": "jpeg",
+      "sent_items_to_keep_list": [5, 10, 20, 30, 40, 50, 100]
     };
 
     for(var key in staticConfig){
