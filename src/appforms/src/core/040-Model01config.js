@@ -165,12 +165,20 @@ appForm.models = function(module) {
     self.set('statusUrl', '/sys/info/ping');
   };
   Config.prototype.setOnline = function(){
+    var wasOnline = online;
     online = true;
-    this.emit('online');
+
+    if(!wasOnline){
+      this.emit('online');
+    }
   };
   Config.prototype.setOffline = function(){
+    var wasOnline = online;
     online = false;
-    this.emit('offline');
+
+    if(wasOnline){
+      this.emit('offline');  
+    }
   };
   Config.prototype.isOnline = function(){
     var self = this;
