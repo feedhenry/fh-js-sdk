@@ -2852,15 +2852,24 @@ FieldSignatureView = FieldView.extend({
         }));
         var signaturePad = $('.sigPad', this.$el);
 
-        var diff = $(window).height() - window.outerHeight;
+        var diff = 0;
+        
+        //Windows phone overlays the task bar on the top of the screen. 
+        //Setting the position of the task bar to be absolute for windows phones.
+        //http://stackoverflow.com/questions/19518145/windows-phone-8-html5-viewport-is-higher-than-the-screen-after-update-to-8-0-103
+        if (navigator.userAgent.match(/IEMobile\/10\.0/)) {
+            diff = $(window).height() - window.outerHeight;
+        }
+
         var diffpx = "" + diff + "px";
+        
         signaturePad.css({
-            position: 'fixed',
+            'position': 'fixed',
             'z-index': 9999,
             'bottom': '0px',
             'right': '0px',
-            top: diffpx,
-            left: '0px',
+            'top': diffpx,
+            'left': '0px',
             'background-color': '#fff'
         });
 
