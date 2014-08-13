@@ -24,9 +24,9 @@ FieldRadioView = FieldView.extend({
       jQObj = $(jQObj);
 
       if (choice.checked === true) {
-        jQObj.addClass('active');
-        jQObj.removeClass('icon-circle-blank');
-        jQObj.addClass('icon-circle');
+        jQObj.addClass("active");
+        jQObj.find('.choice_icon').removeClass('icon-circle-blank');
+        jQObj.find('.choice_icon').addClass('icon-circle');
       }
 
       jQObj.off('click');
@@ -46,6 +46,11 @@ FieldRadioView = FieldView.extend({
   valuePopulateToElement: function (index, value) {
     var wrapperObj = this.getWrapper(index);
     var opt = wrapperObj.find('button[data-value=\'' + value + '\']');
+
+    $(wrapperObj).find('button.active').removeClass("active");
+    $(opt).parent().find('.choice_icon').removeClass('icon-circle');
+    $(opt).parent().find('.choice_icon').addClass('icon-circle-blank');
+
     if (opt.length === 0) {
       opt = wrapperObj.find('button:first-child');
     }
