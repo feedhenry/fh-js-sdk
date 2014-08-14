@@ -83,6 +83,7 @@
     "grunt-contrib-watch": "~0.6.0",
     "through": "~2.3.4",
     "grunt-shell": "~0.6.4",
-    "grunt-env": "~0.4.1"
+    "grunt-env": "~0.4.1",
+    "grunt-text-replace": "0.3.12"
   }
 }
