@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.2.1 - 2014-07-18 - IR234 - Niall Donnelly
+* 7824 Added photo capture configuration options.
+
 ## 2.2.0 - 2014-07-11 - IR231 - Niall Donnelly
 * 7414 - Upgraded forms to bootstrap rendering.
 

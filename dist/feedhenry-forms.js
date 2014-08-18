@@ -16607,13 +16607,20 @@ appForm.models = function (module) {
     var photoOptions = {
       "targetWidth" : null,
       "targetHeight" : null,
-      "quality" : null
+      "quality" : null,
+      "saveToPhotoAlbum": null,
+      "pictureSource": null,
+      "encodingType": null
     };
 
     var fieldDef = this.getFieldDefinition();
     photoOptions.targetWidth = fieldDef.photoWidth;
     photoOptions.targetHeight = fieldDef.photoHeight;
     photoOptions.quality = fieldDef.photoQuality;
+    photoOptions.saveToPhotoAlbum = fieldDef.saveToPhotoAlbum;
+    photoOptions.pictureSource = fieldDef.photoSource;
+    photoOptions.encodingType = fieldDef.photoType;
+
     return photoOptions;
   };
   Field.prototype.isRepeating = function () {

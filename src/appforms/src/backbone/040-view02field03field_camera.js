@@ -5,9 +5,11 @@ FieldCameraView = FieldView.extend({
         '<div class="cam"></div>' +
         '</div>',
     onElementShow: function(index) {
-        var captureBtn = $(this.renderButton(index, "<i class='icon-camera'></i>&nbsp;Capture Photo From Camera", "fhcam"));
-        var libBtn = $(this.renderButton(index, "<i class='icon-folder-open'></i>&nbsp;Choose Photo from Library", "fhcam_lib"));
-        var rmBtn = $(this.renderButton(index, "<i class='icon-remove-circle'></i>&nbsp;Remove Photo", "remove"));
+      var captureBtn = $(this.renderButton(index, "<i class='icon-camera'></i>&nbsp;Capture Photo From Camera", "fhcam"));
+      var libBtn = $(this.renderButton(index, "<i class='icon-folder-open'></i>&nbsp;Choose Photo from Library", "fhcam_lib"));
+      var rmBtn = $(this.renderButton(index, "<i class='icon-remove-circle'></i>&nbsp;Remove Photo", "remove"));
+
+      var params = this.model.getPhotoOptions();
 
       if(!this.readonly){
         this.getWrapper(index).append(captureBtn);
@@ -25,9 +27,9 @@ FieldCameraView = FieldView.extend({
         });
         rmBtn.hide();
 
-        if($fh.forms.config.get("picture_source") === "library"){
+        if(params.pictureSource === "library"){
           captureBtn.hide();
-        } else if ($fh.forms.config.get("picture_source") === "camera"){
+        } else if (params.pictureSource === "camera"){
           libBtn.hide();
         }
       }
