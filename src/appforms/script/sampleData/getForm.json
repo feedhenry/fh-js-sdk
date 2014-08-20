@@ -354,7 +354,7 @@
         "fieldRules": [
             {
                 "type": "skip",
-                "targetField": "52efeb62538082e229000004",
+                "targetField": ["52efeb62538082e229000004", "52efeb9c538082e229000006"],
                 "_id": "52fa375c1e680d9654ea2f6d",
                 "ruleConditionalStatements": [
                     {

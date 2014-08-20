@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.3.0 - 2014-07-20 - IR234 - Niall Donnelly
+* 7821 Added multiple rule target upgraded rules engine.
+
 ## 2.2.1 - 2014-07-18 - IR234 - Niall Donnelly
 * 7824 Added photo capture configuration options.
 
