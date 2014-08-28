@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.4.0 - 2014-07-28 - IR235 - Niall Donnelly
+* 7822 Added handling for admin fields in forms.
+
 ## 2.3.0 - 2014-07-20 - IR234 - Niall Donnelly
 * 7821 Added multiple rule target upgraded rules engine.
 
