@@ -80,17 +80,21 @@ appForm.models = function (module) {
   };
 
 
-/**
-   * return default value for a field
-   *
-*/
-Field.prototype.getDefaultValue = function () {
-  var def = this.getFieldDefinition();
-  if (def) {
-    return def.defaultValue;
-  }
-  return "";
-};
+  /**
+     * return default value for a field
+     *
+  */
+  Field.prototype.getDefaultValue = function () {
+    var def = this.getFieldDefinition();
+    if (def) {
+      return def.defaultValue;
+    }
+    return "";
+  };
+
+  Field.prototype.isAdminField = function(){
+    return this.get("adminOnly");
+  };
 
 
   /**

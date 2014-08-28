@@ -31,13 +31,14 @@ appForm.models = function (module) {
   Page.prototype.getFieldDef=function(){
     return this.get("fields",[]);
   };
-  Page.prototype.getFieldDef=function(){
-      return this.get("fields",[]);
-  };
   Page.prototype.getFieldModelList=function(){
       var list=[];
       for (var i=0;i<this.fieldsIds.length;i++){
-          list.push(this.form.getFieldModelById(this.fieldsIds[i]));
+        var fieldModel = this.form.getFieldModelById(this.fieldsIds[i]);
+
+        if(!fieldModel.isAdminField()){
+          list.push(fieldModel);
+        }
       }
       return list;
   };
@@ -101,17 +102,6 @@ appForm.models = function (module) {
   };
   Page.prototype.getDescription = function () {
     return this.get('description', '');
-  };
-  Page.prototype.getFieldDef = function () {
-    return this.get('fields', []);
-  };
-  Page.prototype.getFieldModelList = function () {
-    var list = [];
-    for (var i = 0; i < this.fieldsIds.length; i++) {
-      list.push(this.form.getFieldModelById(this.fieldsIds[i]));
-    }
-
-    return list;
   };
 
     module.Page=Page;

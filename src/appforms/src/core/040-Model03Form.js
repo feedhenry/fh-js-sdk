@@ -264,7 +264,7 @@ appForm.models = function (module) {
     var fieldsId = [];
     for (var fieldId in this.fields) {
       var field = this.fields[fieldId];
-      if (field.getType() === 'file' || field.getType() === 'photo' || field.getType() === 'signature') {
+      if ((field.getType() === 'file' || field.getType() === 'photo' || field.getType() === 'signature') && !field.isAdminField()) {
         fieldsId.push(fieldId);
       }
     }

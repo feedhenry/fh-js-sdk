@@ -68,6 +68,4 @@ describe("Store Data agent", function() {
         done();
       });
     });
-  });
-
 });

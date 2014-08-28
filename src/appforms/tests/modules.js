@@ -47,6 +47,10 @@
 };
 
 var testData = {"formId" : "52efeb30538082e229000002",
+  "adminFormId": "53fdb9c22ab6c0b02a98c302",
+  "adminFieldId": "53fdb9d82ab6c0b02a98c304",
+  "adminNonAdminFieldId": "53fdb9d82ab6c0b02a98c303",
+  "adminPageId": "53fdb9c22ab6c0b02a98c301",
   "formName" : "testForm",
   "pageId": "52efeb30538082e229000001",
   "fieldId" : "52efeb62538082e229000003",
