@@ -8546,7 +8546,7 @@ module.exports = {
 },{"./fhparams":31,"./logger":37,"./queryMap":39,"JSON":3}],27:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.3.0-BUILD-NUMBER",
+  "sdk_version": "2.4.0-BUILD-NUMBER",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit",
   "INTERNAL_CONFIG_LOADED_EVENT": "internalfhconfigloaded",
@@ -14957,10 +14957,42 @@ appForm.models = function (module) {
      * @return {[type]} [description]
      */
   Form.prototype.initialise = function () {
+    this.filterAdminFields();
     this.initialisePage();
     this.initialiseFields();
     this.initialiseRules();
   };
+  /**
+   * Admin fields should not be part of the form.
+   */
+  Form.prototype.filterAdminFields = function(){
+    var pages = this.getPagesDef();
+    var newFieldRef = {};
+
+
+    for(var pageIndex = 0; pageIndex < pages.length; pageIndex++){
+      var page = pages[pageIndex];
+      var pageFields = page.fields;
+      var filteredFields = [];
+      var fieldInPageIndex = 0;
+
+      for(var fieldIndex = 0; fieldIndex < pageFields.length; fieldIndex++){
+        var field = pageFields[fieldIndex];
+
+        if(!field.adminOnly){
+          newFieldRef[field._id] = {page: pageIndex, field: fieldInPageIndex};
+          fieldInPageIndex++;
+          filteredFields.push(field);
+        }
+      }
+
+      pages[pageIndex].fields = filteredFields;
+    }
+
+    this.set("pages", pages);
+    this.set("fieldRef", newFieldRef);
+  };
+
   Form.prototype.initialiseFields = function () {
     $fh.forms.log.d("Form: initialiseFields");
     var fieldsRef = this.getFieldRef();
@@ -15102,7 +15134,7 @@ appForm.models = function (module) {
     var fieldsId = [];
     for (var fieldId in this.fields) {
       var field = this.fields[fieldId];
-      if ((field.getType() === 'file' || field.getType() === 'photo' || field.getType() === 'signature') && !field.isAdminField()) {
+      if (field.getType() === 'file' || field.getType() === 'photo' || field.getType() === 'signature') {
         fieldsId.push(fieldId);
       }
     }
@@ -17129,14 +17161,13 @@ appForm.models = function (module) {
   Page.prototype.getFieldDef=function(){
     return this.get("fields",[]);
   };
+  Page.prototype.getFieldDef=function(){
+      return this.get("fields",[]);
+  };
   Page.prototype.getFieldModelList=function(){
       var list=[];
       for (var i=0;i<this.fieldsIds.length;i++){
-        var fieldModel = this.form.getFieldModelById(this.fieldsIds[i]);
-
-        if(!fieldModel.isAdminField()){
-          list.push(fieldModel);
-        }
+          list.push(this.form.getFieldModelById(this.fieldsIds[i]));
       }
       return list;
   };
@@ -17200,6 +17231,17 @@ appForm.models = function (module) {
   };
   Page.prototype.getDescription = function () {
     return this.get('description', '');
+  };
+  Page.prototype.getFieldDef = function () {
+    return this.get('fields', []);
+  };
+  Page.prototype.getFieldModelList = function () {
+    var list = [];
+    for (var i = 0; i < this.fieldsIds.length; i++) {
+      list.push(this.form.getFieldModelById(this.fieldsIds[i]));
+    }
+
+    return list;
   };
 
     module.Page=Page;
