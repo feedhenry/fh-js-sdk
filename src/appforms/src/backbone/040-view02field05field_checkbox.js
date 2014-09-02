@@ -28,14 +28,18 @@ FieldCheckboxView = FieldView.extend({
 
       if(subfield.checked === true){
         choice.addClass("active");
+        choice.addClass('option-checked');
         choice.find(".choice_icon").removeClass("icon-check-empty");
         choice.find(".choice_icon").addClass("icon-check");
       }
 
       choice.off('click');
       choice.on('click', function(e){
+        $(this).toggleClass('option-checked');
         $(this).find('.choice_icon').toggleClass('icon-check-empty');
         $(this).find('.choice_icon').toggleClass('icon-check');
+
+        $(this).trigger('change');
       });
 
       checkboxesHtml.append(choice);
@@ -48,7 +52,7 @@ FieldCheckboxView = FieldView.extend({
       selections: []
     };
     var wrapperObj=this.getWrapper(index);
-    var checked=wrapperObj.find("button.active");
+    var checked=wrapperObj.find("button.option-checked");
     checked.each(function(){
       value.selections.push($(this).val());
     });
@@ -60,7 +64,7 @@ FieldCheckboxView = FieldView.extend({
       return;
     }
 
-    wrapperObj.find("button.active").removeClass("active");
+    wrapperObj.find("button.option-checked").removeClass("active");
     wrapperObj.find('button .choice_icon').addClass('icon-check-empty');
     wrapperObj.find('button .choice_icon').removeClass('icon-check');
 

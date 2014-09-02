@@ -1913,8 +1913,10 @@ var FieldView = Backbone.View.extend({
     validate: function(e) {
         var self = this;
         this.options.formView.markFormEdited();
-        var target = $(e.currentTarget);
-        var index = target.data().index;
+        var currentTarget = $(e.currentTarget);
+        var target = $(e.target);
+
+        var index = currentTarget.data().index || target.data().index;
         var val = self.valueFromElement(index);
         self.validateElement(index, val);
         self.trigger("checkrules");
@@ -2268,14 +2270,18 @@ FieldCheckboxView = FieldView.extend({
 
       if(subfield.checked === true){
         choice.addClass("active");
+        choice.addClass('option-checked');
         choice.find(".choice_icon").removeClass("icon-check-empty");
         choice.find(".choice_icon").addClass("icon-check");
       }
 
       choice.off('click');
       choice.on('click', function(e){
+        $(this).toggleClass('option-checked');
         $(this).find('.choice_icon').toggleClass('icon-check-empty');
         $(this).find('.choice_icon').toggleClass('icon-check');
+
+        $(this).trigger('change');
       });
 
       checkboxesHtml.append(choice);
@@ -2288,7 +2294,7 @@ FieldCheckboxView = FieldView.extend({
       selections: []
     };
     var wrapperObj=this.getWrapper(index);
-    var checked=wrapperObj.find("button.active");
+    var checked=wrapperObj.find("button.option-checked");
     checked.each(function(){
       value.selections.push($(this).val());
     });
@@ -2300,7 +2306,7 @@ FieldCheckboxView = FieldView.extend({
       return;
     }
 
-    wrapperObj.find("button.active").removeClass("active");
+    wrapperObj.find("button.option-checked").removeClass("active");
     wrapperObj.find('button .choice_icon').addClass('icon-check-empty');
     wrapperObj.find('button .choice_icon').removeClass('icon-check');
 
@@ -2719,9 +2725,6 @@ FieldRadioView = FieldView.extend({
   renderInput: function(index) {
     var choices = this.model.getRadioOption();
     var self = this;
-    var radioChoicesHtml = "";
-    var fullRadioHtml = "";
-    var html = "";
     var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
     var inputElement = _.template(self.radio, { "repeatingClassName": repeatingClassName});
     inputElement = $(inputElement);
@@ -2739,17 +2742,21 @@ FieldRadioView = FieldView.extend({
 
       if (choice.checked === true) {
         jQObj.addClass("active");
+        jQObj.addClass('option-checked');
         jQObj.find('.choice_icon').removeClass('icon-circle-blank');
         jQObj.find('.choice_icon').addClass('icon-circle');
       }
 
       jQObj.off('click');
       jQObj.on('click', function(e){
+        $(this).parent().find('.option-checked').removeClass('option-checked');
         $(this).parent().find('.choice_icon').removeClass('icon-circle');
         $(this).parent().find('.choice_icon').addClass('icon-circle-blank');
 
+        $(this).addClass('option-checked');
         $(this).find('.choice_icon').removeClass('icon-circle-blank');
-        $(this).find('.choice_icon').addClass('icon-circle');  
+        $(this).find('.choice_icon').addClass('icon-circle');
+        $(this).trigger('change');
       });
 
       inputElement.append(jQObj);
@@ -2762,6 +2769,7 @@ FieldRadioView = FieldView.extend({
     var opt = wrapperObj.find('button[data-value=\'' + value + '\']');
 
     $(wrapperObj).find('button.active').removeClass("active");
+    $(wrapperObj).find('button.option-checked').removeClass("option-checked");
     $(opt).parent().find('.choice_icon').removeClass('icon-circle');
     $(opt).parent().find('.choice_icon').addClass('icon-circle-blank');
 
@@ -2769,17 +2777,19 @@ FieldRadioView = FieldView.extend({
       opt = wrapperObj.find('button:first-child');
     }
     opt.addClass("active");
+    opt.addClass("option-checked");
     opt.find('.choice_icon').removeClass('icon-circle-blank');
     opt.find('.choice_icon').addClass('icon-circle');
+    $(opt).trigger('change');
   },
   valueFromElement: function (index) {
     var wrapperObj = this.getWrapper(index);
 
-    var data = wrapperObj.find('button.active').data();
+    var data = wrapperObj.find('button.option-checked').data();
     if(data){
-      return wrapperObj.find('button.active').data().value;  
+      return wrapperObj.find('button.option-checked').data().value;
     } else {
-      return this.model.getRadioOption()[0].label;
+      return null;
     }
   },
   onElementShow: function(index){

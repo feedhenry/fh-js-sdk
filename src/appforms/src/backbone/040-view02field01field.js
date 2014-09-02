@@ -250,8 +250,10 @@ var FieldView = Backbone.View.extend({
     validate: function(e) {
         var self = this;
         this.options.formView.markFormEdited();
-        var target = $(e.currentTarget);
-        var index = target.data().index;
+        var currentTarget = $(e.currentTarget);
+        var target = $(e.target);
+
+        var index = currentTarget.data().index || target.data().index;
         var val = self.valueFromElement(index);
         self.validateElement(index, val);
         self.trigger("checkrules");
