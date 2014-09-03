@@ -127,13 +127,13 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
         syncClient.doCreate(dataSetId, record, function(){
           //try to create the same record multiple times will generate the same hash, 
           //which will only create one pending request
-          syncClient.doCreate(dataSetId, record, function(){
+          //syncClient.doCreate(dataSetId, record, function(){
             expect(fail).to.have.not.been.called;
             //force sync and check the request params
             onSync(function(){
               checkUpdateRequest();
             });
-          });
+          //}, fail);
 
         }, fail);
       });

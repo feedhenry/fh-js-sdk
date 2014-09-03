@@ -6794,8 +6794,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":6,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/Users/weili/work/fh/eng/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":6,"/Users/weili/work/fh/eng/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],8:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -7032,10 +7032,7 @@ EventEmitter.prototype.addListener = function(type, listener) {
                     'leak detected. %d listeners added. ' +
                     'Use emitter.setMaxListeners() to increase limit.',
                     this._events[type].length);
-      if (typeof console.trace === 'function') {
-        // not supported in IE 10
-        console.trace();
-      }
+      console.trace();
     }
   }
 
@@ -7273,7 +7270,7 @@ process.chdir = function (dir) {
 module.exports=_dereq_(6)
 },{}],13:[function(_dereq_,module,exports){
 module.exports=_dereq_(7)
-},{"./support/isBuffer":12,"/Users/ndonnelly/program_source_for_dev/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
+},{"./support/isBuffer":12,"/Users/weili/work/fh/eng/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":11,"inherits":10}],14:[function(_dereq_,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -7761,7 +7758,7 @@ var ajax = module.exports = function (options) {
     baseHeaders = {},
     protocol = /^([\w-]+:)\/\//.test(settings.url) ? RegExp.$1 : window.location.protocol,
     xhr = settings.xhr(settings.crossDomain),
-    abortTimeout
+    abortTimeout = null;
 
   if (!settings.crossDomain) baseHeaders['X-Requested-With'] = 'XMLHttpRequest'
   if (mime) {
@@ -7774,13 +7771,13 @@ var ajax = module.exports = function (options) {
   settings.headers = extend(baseHeaders, settings.headers || {})
 
   if (typeof Titanium !== 'undefined') {
-    xhr.setOnerror(function(){
+    xhr.onerror  = function(){
       if (!abortTimeout){
         return;
       }
       clearTimeout(abortTimeout);
       ajaxError(null, 'error', xhr, settings);
-    });
+    };
   }
 
   xhr.onreadystatechange = function () {
@@ -7970,9 +7967,11 @@ function getXhr(crossDomain){
   }
   // For Titanium SDK
   if (typeof Titanium !== 'undefined'){
-    xhr = Titanium.Network.createHTTPClient({
-      timeout: ajax.settings.timeout
-    });
+    var parms = {};
+    if(ajax.settings && ajax.settings.timeout){
+      params.timeout = ajax.settings.timeout;
+    }
+    xhr = Titanium.Network.createHTTPClient(params);
   }
 
   return xhr;
@@ -8546,7 +8545,7 @@ module.exports = {
 },{"./fhparams":31,"./logger":37,"./queryMap":39,"JSON":3}],27:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.4.0-BUILD-NUMBER",
+  "sdk_version": "2.4.1-BUILD-NUMBER",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit",
   "INTERNAL_CONFIG_LOADED_EVENT": "internalfhconfigloaded",
@@ -10268,7 +10267,7 @@ var self = {
         success(res);
       }, function(msg, err) {
         failure(msg, err);
-      })
+      });
     }
   },
 
@@ -10281,17 +10280,21 @@ var self = {
     }, 500);
   },
 
-  saveDataSet: function (dataset_id, cb) {
-    var onFail =  function(msg, err) {
-      // save failed
-      var errMsg = 'save to local storage failed  msg:' + msg + ' err:' + err;
+  getStorageAdapter: function(dataset_id, isSave, cb){
+    var onFail = function(msg, err){
+      var errMsg = (isSave?'save to': 'load from' ) + ' local storage failed msg: ' + msg + ' err: ' + err;
       self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);
       self.consoleLog(errMsg);
     };
+    Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota, backup: self.config.icloud_backup}, function(){
+      return cb(null, this);
+    });
+  },
+
+  saveDataSet: function (dataset_id, cb) {
     self.getDataSet(dataset_id, function(dataset) {
-      // save dataset to local storage
-      Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota, backup: self.config.icloud_backup}, function (){
-        this.save({key:"dataset_" + dataset_id, val:dataset}, function(){
+      self.getStorageAdapter(dataset_id, true, function(err, storage){
+        storage.save({key:"dataset_" + dataset_id, val:dataset}, function(){
           //save success
           if(cb) return cb();
         });
@@ -10300,35 +10303,37 @@ var self = {
   },
 
   loadDataSet: function (dataset_id, success, failure) {
-    // load dataset from local storage
-    var onFail = function(msg, err) {
-      // load failed
-      var errMsg = 'load from local storage failed  msg:' + msg;
-      self.doNotify(dataset_id, null, self.notifications.CLIENT_STORAGE_FAILED, errMsg);
-      self.consoleLog(errMsg);
-    };
-
-        Lawnchair({fail:onFail, adapter: self.config.storage_strategy, size:self.config.file_system_quota, backup: self.config.icloud_backup},function (){       
-          this.get( "dataset_" + dataset_id, function (data){
-            if (data && data.val) {
-              var dataset = data.val;
-              if(typeof dataset === "string"){
-                dataset = JSON.parse(dataset);
-              }
-              // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
-              // the user wants sync
-              dataset.initialised = false;
-              self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
-              self.consoleLog('load from local storage success for dataset_id :' + dataset_id);
-              if(success) return success(dataset);
-            } else {
-              // no data yet, probably first time. failure calback should handle this
-              if(failure) return failure();
-            }
-       });
+    self.getStorageAdapter(dataset_id, false, function(err, storage){
+      storage.get( "dataset_" + dataset_id, function (data){
+        if (data && data.val) {
+          var dataset = data.val;
+          if(typeof dataset === "string"){
+            dataset = JSON.parse(dataset);
+          }
+          // Datasets should not be auto initialised when loaded - the mange function should be called for each dataset
+          // the user wants sync
+          dataset.initialised = false;
+          self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
+          self.consoleLog('load from local storage success for dataset_id :' + dataset_id);
+          if(success) return success(dataset);
+        } else {
+          // no data yet, probably first time. failure calback should handle this
+          if(failure) return failure();
+        }
+      });
     });
   },
 
+  clearCache: function(dataset_id, cb){
+    self.getStorageAdapter(dataset_id, true, function(err, storage){
+      storage.remove("dataset_" + dataset_id, function(){
+        self.consoleLog('local cache is cleared for dataset : ' + dataset_id);
+        if(cb){
+          return cb();
+        }
+      });
+    });
+  },
 
   updateDatasetFromLocal: function(dataset, pendingRec) {
     var pending = dataset.pending;
@@ -10798,7 +10803,8 @@ module.exports = {
   forceSync: self.forceSync,
   generateHash: self.generateHash,
   loadDataSet: self.loadDataSet,
-  checkHasCustomSync: self.checkHasCustomSync
+  checkHasCustomSync: self.checkHasCustomSync,
+  clearCache: self.clearCache
 };
 },{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":19,"./api_cloud":21,"JSON":3}],46:[function(_dereq_,module,exports){
 module.exports = {
