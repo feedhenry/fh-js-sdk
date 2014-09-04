@@ -10172,8 +10172,7 @@ var self = {
     for( var dataset_id in self.datasets ) {
       if( self.datasets.hasOwnProperty(dataset_id) ) {
         var dataset = self.datasets[dataset_id];
-
-        if( !dataset.syncRunning && (dataset.config.sync_active || dataset.syncForced)) {
+        if(dataset && !dataset.syncRunning && (dataset.config.sync_active || dataset.syncForced)) {
           // Check to see if it is time for the sync loop to run again
           var lastSyncStart = dataset.syncLoopStart;
           var lastSyncCmp = dataset.syncLoopEnd;
@@ -10325,6 +10324,7 @@ var self = {
   },
 
   clearCache: function(dataset_id, cb){
+    delete self.datasets[dataset_id];
     self.getStorageAdapter(dataset_id, true, function(err, storage){
       storage.remove("dataset_" + dataset_id, function(){
         self.consoleLog('local cache is cleared for dataset : ' + dataset_id);
