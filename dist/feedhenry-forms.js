@@ -9509,7 +9509,10 @@ var self = {
   // Initialise config to default values;
   config: undefined,
 
+  //TODO: deprecate this
   notify_callback: undefined,
+
+  notify_callback_map : {},
 
   init_is_called: false,
 
@@ -9529,8 +9532,12 @@ var self = {
     }
   },
 
-  notify: function(callback) {
-    self.notify_callback = callback;
+  notify: function(datasetId, callback) {
+    if(arguments.length === 1 && typeof datasetId === 'function'){
+      self.notify_callback = datasetId;
+    } else {
+      self.notify_callback_map[datasetId] = callback;
+    }
   },
 
   manage: function(dataset_id, options, query_params, meta_data, cb) {
@@ -9724,7 +9731,8 @@ var self = {
 
   doNotify: function(dataset_id, uid, code, message) {
 
-    if( self.notify_callback ) {
+    if( self.notify_callback || self.notify_callback_map[dataset_id]) {
+      var notifyFunc = self.notify_callback_map[dataset_id] || self.notify_callback;
       if ( self.config['notify_' + code] ) {
         var notification = {
           "dataset_id" : dataset_id,
@@ -9734,7 +9742,7 @@ var self = {
         };
         // make sure user doesn't block
         setTimeout(function () {
-          self.notify_callback(notification);
+          notifyFunc(notification);
         }, 0);
       }
     }
@@ -10325,6 +10333,7 @@ var self = {
 
   clearCache: function(dataset_id, cb){
     delete self.datasets[dataset_id];
+    self.notify_callback_map[dataset_id] === null;
     self.getStorageAdapter(dataset_id, true, function(err, storage){
       storage.remove("dataset_" + dataset_id, function(){
         self.consoleLog('local cache is cleared for dataset : ' + dataset_id);
