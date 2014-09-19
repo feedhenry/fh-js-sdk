@@ -64,7 +64,7 @@ var ajax = module.exports = function (options) {
     baseHeaders = {},
     protocol = /^([\w-]+:)\/\//.test(settings.url) ? RegExp.$1 : window.location.protocol,
     xhr = settings.xhr(settings.crossDomain),
-    abortTimeout
+    abortTimeout = null;
 
   if (!settings.crossDomain) baseHeaders['X-Requested-With'] = 'XMLHttpRequest'
   if (mime) {
@@ -77,13 +77,13 @@ var ajax = module.exports = function (options) {
   settings.headers = extend(baseHeaders, settings.headers || {})
 
   if (typeof Titanium !== 'undefined') {
-    xhr.setOnerror(function(){
+    xhr.onerror  = function(){
       if (!abortTimeout){
         return;
       }
       clearTimeout(abortTimeout);
       ajaxError(null, 'error', xhr, settings);
-    });
+    };
   }
 
   xhr.onreadystatechange = function () {
@@ -273,9 +273,11 @@ function getXhr(crossDomain){
   }
   // For Titanium SDK
   if (typeof Titanium !== 'undefined'){
-    xhr = Titanium.Network.createHTTPClient({
-      timeout: ajax.settings.timeout
-    });
+    var parms = {};
+    if(ajax.settings && ajax.settings.timeout){
+      params.timeout = ajax.settings.timeout;
+    }
+    xhr = Titanium.Network.createHTTPClient(params);
   }
 
   return xhr;
