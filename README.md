@@ -18,7 +18,7 @@ Detailed documentation for the JavaScript SDK's API can be found here: http://do
 ## Using with Titanium Applications
 The FeedHenry Javascript SDK is built to work with Titanium applications. To get started, you need to first include the FeedHenry JS SDK, `feedhenry.js` in your Resources folder, at the root level. You also need to include a `fhconfig.js` file, which sets configuration properties for initializing the JS SDK. This file is a little different than normal, it should take the format of:
 
-    exports = {
+    module.exports = {
      "appid":"yourAppIdHere",
      "appkey":"yourAppKeyHere",
      "connectiontag":"yourConnectionTagHere",
