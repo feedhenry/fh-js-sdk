@@ -834,7 +834,7 @@ appForm.models = function(module) {
       });
     }
 
-    return this.get("formFields", []);
+    return formFields;
   };
 
   Submission.prototype.getFileFieldsId = function(cb){

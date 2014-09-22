@@ -165,6 +165,16 @@ describe("$fh.forms API", function() {
       assert.ok(submission.getSubmissionFiles().length === 1);
       assert.ok(submission.getSubmissionFiles()[0].url);
       assert.ok(submission.getSubmissionFiles()[0].localURI);
+
+      //Checking for no null values
+      var formFields = submission.getFormFields();
+      _.each(formFields, function(formField){
+        var values = formField.fieldValues;
+        _.each(values, function(value){
+          assert.ok(value !== null && typeof(value) !== "undefined");
+        });
+      });
+
       done();
     });
   });

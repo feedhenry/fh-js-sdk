@@ -151,6 +151,7 @@ describe("UploadTask model", function() {
                   assert(!err);
                   assert(ut.getCurrentTask() === 0);
                   assert(submission.getStatus() === "queued");
+                  assert.ok(submission.getRemoteSubmissionId());
                   assert(ut.get("retryNeeded") === true);
                   assert(ut.get("retryAttempts") === 1);
 

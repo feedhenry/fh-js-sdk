@@ -24,7 +24,7 @@
         "_id": "5335b83b0b4ee17a4f4c096d",
         "repeating": false
       },
-      "fieldValues": ["jgff"]
+      "fieldValues": ["text1", null]
     }
   ],
   "comments": [],
