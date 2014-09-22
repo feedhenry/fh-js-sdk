@@ -57,6 +57,11 @@ appForm.models = function (module) {
       if(rawData){
         return processRawFormJSON();
       } else {
+
+        /**
+         * No Form JSON object to process into Models, load the form from local
+         * storage.
+         */
         that.refresh(false, function(err, form){
           if(err){
             return cb(err);

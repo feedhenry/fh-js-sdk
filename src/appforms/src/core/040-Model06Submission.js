@@ -253,6 +253,10 @@ appForm.models = function(module) {
   Submission.prototype.getFormId = function(){
     return this.get("formId");
   };
+  /**
+   * If a submission is a download submission, the JSON definition of the form
+   * that it was submitted against is contained in the submission.
+   */
   Submission.prototype.getFormSubmittedAgainst = function(){
     return this.get("formSubmittedAgainst");
   };
