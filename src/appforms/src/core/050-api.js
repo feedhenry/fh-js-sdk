@@ -309,7 +309,7 @@ appForm.api = function (module) {
           $fh.forms.log.d("downloadSubmission submission exists", params);
 
           //Submission was created, but not finished downloading
-          if (submissionAlreadySaved.status !== "downloaded") {
+          if (submissionAlreadySaved.status !== "downloaded" && submissionAlreadySaved.status !== "submitted") {
             if(typeof(cb) === "function"){
               if(waitOnSubmission[params.submissionId]){
                 waitOnSubmission[params.submissionId].push(cb);  

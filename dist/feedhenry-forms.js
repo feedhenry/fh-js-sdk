@@ -14894,6 +14894,17 @@ appForm.models = function (module) {
 
       if(rawData){
         return processRawFormJSON();
+      } else {
+        that.refresh(false, function(err, form){
+          if(err){
+            return cb(err);
+          }
+
+          form.initialise();
+
+          _forms[formId] = form;
+          return cb(null, form);
+        });
       }
     }
 
@@ -15901,6 +15912,12 @@ appForm.models = function(module) {
       cb(null, null);
     }
   };
+  Submission.prototype.getFormId = function(){
+    return this.get("formId");
+  };
+  Submission.prototype.getFormSubmittedAgainst = function(){
+    return this.get("formSubmittedAgainst");
+  };
   Submission.prototype.getDownloadTask = function(cb){
     var self = this;
     $fh.forms.log.d("getDownloadTask");
@@ -16271,6 +16288,7 @@ appForm.models = function(module) {
     }
   };
   Submission.prototype.getInputValueByFieldId = function(fieldId, cb) {
+    var self = this;
     var values = this.getInputValueObjectById(fieldId).fieldValues;
     this.getForm(function(err, form) {
       var fieldModel = form.getFieldModelById(fieldId);
@@ -16464,6 +16482,16 @@ appForm.models = function(module) {
   };
 
   Submission.prototype.getFormFields = function(){
+    var formFields = this.get("formFields", []);
+
+    //Removing null values
+    for(var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++){
+      formFields[formFieldIndex].fieldValues = formFields[formFieldIndex].fieldValues || [];
+      formFields[formFieldIndex].fieldValues = formFields[formFieldIndex].fieldValues.filter(function(fieldValue){
+        return fieldValue !== null && typeof(fieldValue) !== "undefined";
+      });
+    }
+
     return this.get("formFields", []);
   };
 
@@ -17091,6 +17119,13 @@ appForm.models.Field = function (module) {
   //If binary, just need to load the file uri.
   function _loadImage(meta, cb) {
     if (meta) {
+
+      /**
+       * If the file already contains a local uri, then no need to load it.
+       */
+      if(meta.localURI){
+        return cb(null, meta);
+      }
 
       var name = meta.hashName;
       if(meta.contentType === "base64"){
@@ -17725,6 +17760,10 @@ appForm.models = function (module) {
     self.submissionModel(function(err, submission){
       if(err){
         return cb(err);
+      }
+
+      if(self.get("submissionId")){
+        submission.setRemoteSubmissionId(self.get("submissionId"));
       }
 
       submission.queued(cb);
@@ -18854,7 +18893,7 @@ appForm.api = function (module) {
           $fh.forms.log.d("downloadSubmission submission exists", params);
 
           //Submission was created, but not finished downloading
-          if (submissionAlreadySaved.status !== "downloaded") {
+          if (submissionAlreadySaved.status !== "downloaded" && submissionAlreadySaved.status !== "submitted") {
             if(typeof(cb) === "function"){
               if(waitOnSubmission[params.submissionId]){
                 waitOnSubmission[params.submissionId].push(cb);  

@@ -148,6 +148,10 @@ appForm.models = function (module) {
         return cb(err);
       }
 
+      if(self.get("submissionId")){
+        submission.setRemoteSubmissionId(self.get("submissionId"));
+      }
+
       submission.queued(cb);
     });
   };

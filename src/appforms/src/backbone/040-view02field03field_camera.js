@@ -185,15 +185,23 @@ FieldCameraView = FieldView.extend({
         return img.attr('src');
     },
     valuePopulateToElement: function(index, value) {
-        if (value) {
-            var imageData = null;
-            if(value.imgHeader){
-              imageData = value.data;
-              var base64Img = value.imgHeader + imageData;
-              this.setImage(index, base64Img);
-            } else {
-              this.setImage(index, value.data);
-            }
+      /**
+       * If the image object has a "localURI" parameter,
+       * it means that the image is located on the local file system.
+       */
+      if(value.localURI){
+        this.setImage(index, value.localURI);
+      } else if (value.data) {
+        var imageData = null;
+        if(value.imgHeader){
+          imageData = value.data;
+          var base64Img = value.imgHeader + imageData;
+          this.setImage(index, base64Img);
+        } else {
+          this.setImage(index, value.data);
         }
+      } else {
+        $fh.forms.log.e("No image parameters present to populate image data: " + JSON.stringify(value));
+      }
     }
 });

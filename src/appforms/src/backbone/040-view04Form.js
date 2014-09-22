@@ -12,17 +12,17 @@ var FormView = BaseView.extend({
   elementNames: {
     formContainer: "#fh_appform_container"
   },
-
   initialize: function(options) {
-    this.formEdited = false;
-    this.options = this.options || options;
-    this.readonly = this.options.readOnly;
     var self = this;
+    self.formEdited = false;
+    self.options = self.options || options;
+    self.readonly = self.options.readOnly;
+
     _.bindAll(this, "checkRules", "onValidateError");
-    this.$el = this.options.parentEl;
-    this.fieldModels = [];
-    this.pageViewStatus = {};
-    this.$el.empty();
+    self.$el = self.options.parentEl;
+    self.fieldModels = [];
+    self.pageViewStatus = {};
+    self.$el.empty();
   },
   loadForm: function(params, cb) {
     var self = this;
@@ -59,6 +59,10 @@ var FormView = BaseView.extend({
   },
   isFormEdited: function(){
     return this.formEdited;
+  },
+  //Function to disable drafts in the form view.
+  disableDrafts: function(){
+    this.$el.find("button.fh_appform_button_saveDraft").prop("disabled", true);
   },
   onValidateError: function(res) {
     var self = this;

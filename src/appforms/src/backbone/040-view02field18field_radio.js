@@ -30,6 +30,7 @@ FieldRadioView = FieldView.extend({
       jQObj.off('click');
       jQObj.on('click', function(e){
         $(this).parent().find('.option-checked').removeClass('option-checked');
+        $(this).parent().find('.active').removeClass('active');
         $(this).parent().find('.choice_icon').removeClass('icon-circle');
         $(this).parent().find('.choice_icon').addClass('icon-circle-blank');
 

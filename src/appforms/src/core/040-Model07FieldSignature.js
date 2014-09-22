@@ -93,6 +93,13 @@ appForm.models.Field = function (module) {
   function _loadImage(meta, cb) {
     if (meta) {
 
+      /**
+       * If the file already contains a local uri, then no need to load it.
+       */
+      if(meta.localURI){
+        return cb(null, meta);
+      }
+
       var name = meta.hashName;
       if(meta.contentType === "base64"){
         appForm.stores.localStorage.readFileText(name, function (err, text) {

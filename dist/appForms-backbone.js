@@ -2228,16 +2228,24 @@ FieldCameraView = FieldView.extend({
         return img.attr('src');
     },
     valuePopulateToElement: function(index, value) {
-        if (value) {
-            var imageData = null;
-            if(value.imgHeader){
-              imageData = value.data;
-              var base64Img = value.imgHeader + imageData;
-              this.setImage(index, base64Img);
-            } else {
-              this.setImage(index, value.data);
-            }
+      /**
+       * If the image object has a "localURI" parameter,
+       * it means that the image is located on the local file system.
+       */
+      if(value.localURI){
+        this.setImage(index, value.localURI);
+      } else if (value.data) {
+        var imageData = null;
+        if(value.imgHeader){
+          imageData = value.data;
+          var base64Img = value.imgHeader + imageData;
+          this.setImage(index, base64Img);
+        } else {
+          this.setImage(index, value.data);
         }
+      } else {
+        $fh.forms.log.e("No image parameters present to populate image data: " + JSON.stringify(value));
+      }
     }
 });
 FieldCheckboxView = FieldView.extend({
@@ -2750,6 +2758,7 @@ FieldRadioView = FieldView.extend({
       jQObj.off('click');
       jQObj.on('click', function(e){
         $(this).parent().find('.option-checked').removeClass('option-checked');
+        $(this).parent().find('.active').removeClass('active');
         $(this).parent().find('.choice_icon').removeClass('icon-circle');
         $(this).parent().find('.choice_icon').addClass('icon-circle-blank');
 
@@ -2844,6 +2853,8 @@ FieldSignatureView = FieldView.extend({
             html.on("click", function() {
                 self.showSignatureCapture(index);
             });
+        } else {
+          this.$el.append("<img class='sigImage img-responsive'/>");
         }
 
     },
@@ -2925,12 +2936,23 @@ FieldSignatureView = FieldView.extend({
         return img.attr("src");
     },
     valuePopulateToElement: function(index, value) {
-        if (value) {
+      /**
+       * If the image value has a localURI parameter, it means that the image is
+       * located on the local file system.
+       */
+        var wrapper = this.getWrapper(index);
+        var img;
+        if(value.localURI){
+          img = wrapper.find("img.sigImage");
+          img.attr("src", value.localURI);
+        } else if (value.data) {
             var base64Data = value.data;
             var base64Img = value.imgHeader + base64Data;
-            var wrapper = this.getWrapper(index);
-            var img = wrapper.find("img.sigImage");
+
+            img = wrapper.find("img.sigImage");
             img.attr("src", base64Img);
+        } else {
+          $fh.forms.log.e("No image parameters present to populate image data: " + JSON.stringify(value));
         }
 
     },
@@ -3417,17 +3439,17 @@ var FormView = BaseView.extend({
   elementNames: {
     formContainer: "#fh_appform_container"
   },
-
   initialize: function(options) {
-    this.formEdited = false;
-    this.options = this.options || options;
-    this.readonly = this.options.readOnly;
     var self = this;
+    self.formEdited = false;
+    self.options = self.options || options;
+    self.readonly = self.options.readOnly;
+
     _.bindAll(this, "checkRules", "onValidateError");
-    this.$el = this.options.parentEl;
-    this.fieldModels = [];
-    this.pageViewStatus = {};
-    this.$el.empty();
+    self.$el = self.options.parentEl;
+    self.fieldModels = [];
+    self.pageViewStatus = {};
+    self.$el.empty();
   },
   loadForm: function(params, cb) {
     var self = this;
@@ -3464,6 +3486,10 @@ var FormView = BaseView.extend({
   },
   isFormEdited: function(){
     return this.formEdited;
+  },
+  //Function to disable drafts in the form view.
+  disableDrafts: function(){
+    this.$el.find("button.fh_appform_button_saveDraft").prop("disabled", true);
   },
   onValidateError: function(res) {
     var self = this;

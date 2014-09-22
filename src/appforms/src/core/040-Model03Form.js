@@ -56,6 +56,17 @@ appForm.models = function (module) {
 
       if(rawData){
         return processRawFormJSON();
+      } else {
+        that.refresh(false, function(err, form){
+          if(err){
+            return cb(err);
+          }
+
+          form.initialise();
+
+          _forms[formId] = form;
+          return cb(null, form);
+        });
       }
     }
 

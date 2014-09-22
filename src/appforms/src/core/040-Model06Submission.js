@@ -250,6 +250,12 @@ appForm.models = function(module) {
       cb(null, null);
     }
   };
+  Submission.prototype.getFormId = function(){
+    return this.get("formId");
+  };
+  Submission.prototype.getFormSubmittedAgainst = function(){
+    return this.get("formSubmittedAgainst");
+  };
   Submission.prototype.getDownloadTask = function(cb){
     var self = this;
     $fh.forms.log.d("getDownloadTask");
@@ -620,6 +626,7 @@ appForm.models = function(module) {
     }
   };
   Submission.prototype.getInputValueByFieldId = function(fieldId, cb) {
+    var self = this;
     var values = this.getInputValueObjectById(fieldId).fieldValues;
     this.getForm(function(err, form) {
       var fieldModel = form.getFieldModelById(fieldId);
@@ -813,6 +820,16 @@ appForm.models = function(module) {
   };
 
   Submission.prototype.getFormFields = function(){
+    var formFields = this.get("formFields", []);
+
+    //Removing null values
+    for(var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++){
+      formFields[formFieldIndex].fieldValues = formFields[formFieldIndex].fieldValues || [];
+      formFields[formFieldIndex].fieldValues = formFields[formFieldIndex].fieldValues.filter(function(fieldValue){
+        return fieldValue !== null && typeof(fieldValue) !== "undefined";
+      });
+    }
+
     return this.get("formFields", []);
   };
 

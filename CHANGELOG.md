@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.4.1 - 2014-09-22 - IR237 - Niall Donnelly
+* 7823 - Fixed forms bugs related to new forms integration app.
+
 ## 2.4.0 - 2014-07-28 - IR235 - Niall Donnelly
 * 7822 Added handling for admin fields in forms.
 

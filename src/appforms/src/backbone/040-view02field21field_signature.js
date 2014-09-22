@@ -17,6 +17,8 @@ FieldSignatureView = FieldView.extend({
             html.on("click", function() {
                 self.showSignatureCapture(index);
             });
+        } else {
+          this.$el.append("<img class='sigImage img-responsive'/>");
         }
 
     },
@@ -98,12 +100,23 @@ FieldSignatureView = FieldView.extend({
         return img.attr("src");
     },
     valuePopulateToElement: function(index, value) {
-        if (value) {
+      /**
+       * If the image value has a localURI parameter, it means that the image is
+       * located on the local file system.
+       */
+        var wrapper = this.getWrapper(index);
+        var img;
+        if(value.localURI){
+          img = wrapper.find("img.sigImage");
+          img.attr("src", value.localURI);
+        } else if (value.data) {
             var base64Data = value.data;
             var base64Img = value.imgHeader + base64Data;
-            var wrapper = this.getWrapper(index);
-            var img = wrapper.find("img.sigImage");
+
+            img = wrapper.find("img.sigImage");
             img.attr("src", base64Img);
+        } else {
+          $fh.forms.log.e("No image parameters present to populate image data: " + JSON.stringify(value));
         }
 
     },
