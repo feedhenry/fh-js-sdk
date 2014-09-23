@@ -26,11 +26,12 @@ describe("Field Model", function() {
     it("check if the field repeating", function() {
         assert(fieldModel.isRepeating());
     });
-    it("get general properties (name, helptext,type,field id, etc)", function() {
+    it("get general properties (name, helptext,type,field id, fieldCode etc)", function() {
         assert(fieldModel.getType());
         assert(fieldModel.getFieldId());
         assert(fieldModel.getName());
         assert(fieldModel.getHelpText()=="");
+        assert(fieldModel.getCode());
     });
     it("how to get rules associated to a field", function() {
         var rules = fieldModel.getRules();

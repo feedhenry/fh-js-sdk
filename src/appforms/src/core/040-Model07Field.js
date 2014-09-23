@@ -75,10 +75,16 @@ appForm.models = function (module) {
   Field.prototype.getName = function () {
     return this.get('name', 'unknown');
   };
+  /**
+   * Function to return the Field Code specified in the studio if it exists
+   * otherwise return null.
+   */
+  Field.prototype.getCode = function(){
+    return this.get('fieldCode', null);
+  };
   Field.prototype.getHelpText = function () {
     return this.get('helpText', '');
   };
-
 
   /**
      * return default value for a field

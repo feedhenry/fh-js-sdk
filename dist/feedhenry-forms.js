@@ -14913,6 +14913,11 @@ appForm.models = function (module) {
       if(rawData){
         return processRawFormJSON();
       } else {
+
+        /**
+         * No Form JSON object to process into Models, load the form from local
+         * storage.
+         */
         that.refresh(false, function(err, form){
           if(err){
             return cb(err);
@@ -15121,6 +15126,26 @@ appForm.models = function (module) {
   };
   Form.prototype.getFieldModelById = function (fieldId) {
     return this.fields[fieldId];
+  };
+  /**
+   * Finding a field model by the Field Code specified in the studio if it exists
+   * Otherwise return null;
+   * @param code - The code of the field that is being searched for
+   */
+  Form.prototype.getFieldModelByCode = function(code){
+    var self = this;
+    if(!code || typeof(code) !== "string"){
+      return null;
+    }
+
+    for(var fieldId in self.fields){
+      var field = self.fields[fieldId];
+      if(field.getCode() !== null && field.getCode() === code){
+        return field;
+      }
+    }
+
+    return null;
   };
   Form.prototype.getFieldDefByIndex = function (pageIndex, fieldIndex) {
     $fh.forms.log.d("Form: getFieldDefByIndex: ", pageIndex, fieldIndex);
@@ -15933,6 +15958,10 @@ appForm.models = function(module) {
   Submission.prototype.getFormId = function(){
     return this.get("formId");
   };
+  /**
+   * If a submission is a download submission, the JSON definition of the form
+   * that it was submitted against is contained in the submission.
+   */
   Submission.prototype.getFormSubmittedAgainst = function(){
     return this.get("formSubmittedAgainst");
   };
@@ -16510,7 +16539,7 @@ appForm.models = function(module) {
       });
     }
 
-    return this.get("formFields", []);
+    return formFields;
   };
 
   Submission.prototype.getFileFieldsId = function(cb){
@@ -16717,10 +16746,16 @@ appForm.models = function (module) {
   Field.prototype.getName = function () {
     return this.get('name', 'unknown');
   };
+  /**
+   * Function to return the Field Code specified in the studio if it exists
+   * otherwise return null.
+   */
+  Field.prototype.getCode = function(){
+    return this.get('fieldCode', null);
+  };
   Field.prototype.getHelpText = function () {
     return this.get('helpText', '');
   };
-
 
   /**
      * return default value for a field

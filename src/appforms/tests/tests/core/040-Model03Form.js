@@ -98,6 +98,25 @@ describe("Form model", function() {
             done();
         });
     });
+
+    it("how to get a field model by field code", function(done) {
+      var Form = appForm.models.Form;
+       new Form({
+         formId: testData.formId,
+         fromRemote: true
+       }, function(err, form){
+         assert.ok(!err, "Unexpected Error Getting Form");
+         assert.ok(form, "Expected A Form But Got Null");
+
+         //Getting a field by code.
+         var field = form.getFieldModelByCode(testData.fieldCode);
+
+         assert.ok(field, "Expected to find a field but got nothing.");
+         assert.ok(field.getName() === "LOCN", "Expected field name to be 'LOCN' but was " + field.getName());
+         done();
+       });
+    });
+
     it("how to get a page model by page id", function(done) {
         var Form = appForm.models.Form;
         new Form({

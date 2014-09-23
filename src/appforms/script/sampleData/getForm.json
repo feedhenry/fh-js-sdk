@@ -374,6 +374,7 @@
           {
             "required": false,
             "type": "location",
+            "fieldCode": "code1",
             "name": "LOCN",
             "_id": "52efeb62538082e229000333",
             "repeating": false,
@@ -387,6 +388,7 @@
           {
             "required": false,
             "type": "text",
+            "fieldCode": "code2",
             "name": "Text",
             "_id": "52efeb62538082e229000003",
             "repeating": true,
@@ -414,6 +416,7 @@
               }
             },
             "required": false,
+            "fieldCode": "code3",
             "type": "radio",
             "name": "Radio",
             "_id": "52efeb62538082e229000004",
@@ -436,6 +439,7 @@
             },
             "required": false,
             "type": "checkboxes",
+            "fieldCode": "code4",
             "name": "Checkboxes",
             "_id": "52efeb9c538082e229000005",
             "repeating": false
@@ -443,6 +447,7 @@
           {
             "required": false,
             "type": "photo",
+            "fieldCode": "code5",
             "name": "Photo",
             "_id": "52efeb9c538082e229000006",
             "repeating": false
@@ -450,6 +455,7 @@
           {
             "required": false,
             "type": "file",
+            "fieldCode": "code6",
             "name": "File",
             "_id": "52efeb9c538082e229000007",
             "repeating": false

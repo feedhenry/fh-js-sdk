@@ -59,5 +59,6 @@ var testData = {"formId" : "52efeb30538082e229000002",
   "fieldIdFile" : "52efeb9c538082e229000007",
   "fieldIdPhoto": "52efeb9c538082e229000006",
   "fieldIdLocation": "52efeb62538082e229000333",
+  "fieldCode" : "code1",
   "themeName" : "appFormsPhase2"
 };

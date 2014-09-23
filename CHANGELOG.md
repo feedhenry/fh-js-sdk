@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.4.3 - 2014-09-23 - IR237 - Niall Donnelly
+* 7986 - Added support for field codes for form fields.
+
 ## 2.4.2 - 2014-09-22 - IR237 - Niall Donnelly
 * 7823 - Fixed forms bugs related to new forms integration app.
 

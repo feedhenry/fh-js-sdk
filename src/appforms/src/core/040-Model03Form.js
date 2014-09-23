@@ -271,6 +271,26 @@ appForm.models = function (module) {
   Form.prototype.getFieldModelById = function (fieldId) {
     return this.fields[fieldId];
   };
+  /**
+   * Finding a field model by the Field Code specified in the studio if it exists
+   * Otherwise return null;
+   * @param code - The code of the field that is being searched for
+   */
+  Form.prototype.getFieldModelByCode = function(code){
+    var self = this;
+    if(!code || typeof(code) !== "string"){
+      return null;
+    }
+
+    for(var fieldId in self.fields){
+      var field = self.fields[fieldId];
+      if(field.getCode() !== null && field.getCode() === code){
+        return field;
+      }
+    }
+
+    return null;
+  };
   Form.prototype.getFieldDefByIndex = function (pageIndex, fieldIndex) {
     $fh.forms.log.d("Form: getFieldDefByIndex: ", pageIndex, fieldIndex);
     var pages = this.getPagesDef();
