@@ -11,50 +11,55 @@ var api_hash = require("./modules/api_hash");
 var api_sync = require("./modules/sync-cli");
 var api_mbaas = require("./modules/api_mbaas");
 var api_cloud = require("./modules/api_cloud");
+var api_forms = require("./modules/api_forms");
 var fhparams = require("./modules/fhparams");
 var appProps = require("./modules/appProps");
 var device = require("./modules/device");
 
-var defaultFail = function(msg, error){
-  logger.error(msg + ":" + JSON.stringify(error));
+var defaultFail = function(msg, error) {
+    logger.error(msg + ":" + JSON.stringify(error));
 };
 
-var addListener = function(type, listener){
-  events.addListener(type, listener);
-  if(type === constants.INIT_EVENT){
-    //for fhinit event, need to check the status of cloud and may need to fire the listener immediately.
-    if(cloud.isReady()){
-      listener(null, {host: cloud.getCloudHostUrl()});
-    } else if(cloud.getInitError()){
-      listener(cloud.getInitError());
+var addListener = function(type, listener) {
+    events.addListener(type, listener);
+    if (type === constants.INIT_EVENT) {
+        //for fhinit event, need to check the status of cloud and may need to fire the listener immediately.
+        if (cloud.isReady()) {
+            listener(null, {
+                host: cloud.getCloudHostUrl()
+            });
+        } else if (cloud.getInitError()) {
+            listener(cloud.getInitError());
+        }
     }
-  }
 };
 
-var once = function(type, listener){
-  if(type === constants.INIT_EVENT && cloud.isReady()){
-    listener(null, {host: cloud.getCloudHostUrl()});
-  } else if(type === constants.INIT_EVENT && cloud.getInitError()){
-    listener(cloud.getInitError());
-  } else {
-    events.once(type, listener);
-  }
+var once = function(type, listener) {
+    if (type === constants.INIT_EVENT && cloud.isReady()) {
+        listener(null, {
+            host: cloud.getCloudHostUrl()
+        });
+    } else if (type === constants.INIT_EVENT && cloud.getInitError()) {
+        listener(cloud.getInitError());
+    } else {
+        events.once(type, listener);
+    }
 };
 
 //Legacy shim. Init hapens based on fhconfig.json or, for v2, global var called fh_app_props which is injected as part of the index.html wrapper
-var init = function(opts, success, fail){
-  logger.warn("$fh.init will be deprecated soon");
-  cloud.ready(function(err, host){
-    if(err){
-      if(typeof fail === "function"){
-        return fail(err);
-      }
-    } else {
-      if(typeof success === "function"){
-        success(host.host);
-      }
-    }
-  });
+var init = function(opts, success, fail) {
+    logger.warn("$fh.init will be deprecated soon");
+    cloud.ready(function(err, host) {
+        if (err) {
+            if (typeof fail === "function") {
+                return fail(err);
+            }
+        } else {
+            if (typeof success === "function") {
+                success(host.host);
+            }
+        }
+    });
 };
 
 var fh = window.$fh || {};
@@ -62,6 +67,7 @@ fh.init = init;
 fh.act = api_act;
 fh.auth = api_auth;
 fh.cloud = api_cloud;
+fh.forms = api_forms;
 fh.sec = api_sec;
 fh.hash = api_hash;
 fh.sync = api_sync;
@@ -70,12 +76,12 @@ fh.mbaas = api_mbaas;
 fh._getDeviceId = device.getDeviceId;
 fh.fh_timeout = 60000; //keep backward compatible
 
-fh.getCloudURL = function(){
-  return cloud.getCloudHostUrl();
+fh.getCloudURL = function() {
+    return cloud.getCloudHostUrl();
 };
 
-fh.getFHParams = function(){
-  return fhparams.buildFHParams();
+fh.getFHParams = function() {
+    return fhparams.buildFHParams();
 };
 
 //events
@@ -83,32 +89,36 @@ fh.addListener = addListener;
 fh.on = addListener;
 fh.once = once;
 var methods = ["removeListener", "removeAllListeners", "setMaxListeners", "listeners", "emit"];
-for(var i=0;i<methods.length;i++){
-  fh[methods[i]] = events[methods[i]];
+for (var i = 0; i < methods.length; i++) {
+    fh[methods[i]] = events[methods[i]];
 }
 
 //keep backward compatibility
-fh.on(constants.INIT_EVENT, function(err, host){
-  if(err){
-    fh.cloud_props = {};
-    fh.app_props = {};
-  } else {
-    fh.cloud_props = {hosts: {url: host.host}};
-    fh.app_props = appProps.getAppProps();
-  }
+fh.on(constants.INIT_EVENT, function(err, host) {
+    if (err) {
+        fh.cloud_props = {};
+        fh.app_props = {};
+    } else {
+        fh.cloud_props = {
+            hosts: {
+                url: host.host
+            }
+        };
+        fh.app_props = appProps.getAppProps();
+    }
 });
 
 //keep backward compatibility
-fh.on(constants.INTERNAL_CONFIG_LOADED_EVENT, function(err, host){
-  if(err){
-    fh.app_props = {};
-  } else {
-    fh.app_props = appProps.getAppProps();
-  }
+fh.on(constants.INTERNAL_CONFIG_LOADED_EVENT, function(err, host) {
+    if (err) {
+        fh.app_props = {};
+    } else {
+        fh.app_props = appProps.getAppProps();
+    }
 
-  // Emit config loaded event - appprops set at this point
-  // V2 legacy SDK uses this to know when to fire $fh.ready (i.e. appprops is now set)
-  events.emit(constants.CONFIG_LOADED_EVENT, null);
+    // Emit config loaded event - appprops set at this point
+    // V2 legacy SDK uses this to know when to fire $fh.ready (i.e. appprops is now set)
+    events.emit(constants.CONFIG_LOADED_EVENT, null);
 });
 
 //for test
@@ -117,8 +127,3 @@ fh.reset = cloud.reset;
 //So, we assign $fh to the window name space directly here. (otherwise, we have to fork the grunt browserify plugin, then fork browerify and the dependent umd module, really not worthing the effort).
 window.$fh = fh;
 module.exports = fh;
-
-
-
-
-
