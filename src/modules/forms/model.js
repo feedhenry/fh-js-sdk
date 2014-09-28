@@ -1,6 +1,7 @@
 var utils = require("./utils");
 var localStorage = require("./localStorage");
 var dataAgent = require("./dataAgent");
+var Event = require('../../../libs/events');
 
 function Model(opt) {
     this.props = {
@@ -17,36 +18,11 @@ function Model(opt) {
     }
     this.touch();
 };
-Model.prototype.on = function(name, func) {
-    if (!this.events[name]) {
-        this.events[name] = [];
-    }
-    if (this.events[name].indexOf(func) < 0) {
-        this.events[name].push(func);
-    }
-};
-Model.prototype.off = function(name, func) {
-    if (this.events[name]) {
-        if (this.events[name].indexOf(func) >= 0) {
-            this.events[name].splice(this.events[name].indexOf(func), 1);
-        }
-    }
-};
+Model.prototype.on = Event.on;
+Model.prototype.off = Event.removeListener;
 
-Model.prototype.clearEvents = function() {
-    this.events = {};
-};
-Model.prototype.emit = function() {
-    var args = Array.slice.call(arguments, 0);
-    var e = args.shift();
-    var funcs = this.events[e];
-    if (funcs && funcs.length > 0) {
-        for (var i = 0; i < funcs.length; i++) {
-            var func = funcs[i];
-            func.apply(this, args);
-        }
-    }
-};
+Model.prototype.clearEvents = Event.removeAllListeners;
+Model.prototype.emit = Event.emit;
 Model.prototype.getProps = function() {
     return this.props;
 };
