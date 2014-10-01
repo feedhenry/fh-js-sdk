@@ -19553,7 +19553,7 @@ var aes_keygen = function(p, s, f){
 
 module.exports = aes_keygen;
 },{"../../../libs/rsa":6}],78:[function(_dereq_,module,exports){
-            var CryptoJS = _dereq_("../../../libs/generated/crypto");
+var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 var encrypt = function(p, s, f){
   var fields = ['key', 'plaintext', 'iv'];
