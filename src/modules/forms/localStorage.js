@@ -2,8 +2,6 @@
  * Local storage stores a model's json definition persistently.
  */
 
-var Model = require("./model");
-var log = require("./log");
 var config = require("./config");
 var utils = require("./utils");
 var fileSystem = require("./fileSystem");

@@ -5,27 +5,23 @@
  */
 
 var utils = require("./utils");
-var Model = require("./model");
 var config = require("./config");
 
 function Log() {
-    Model.call(this, {
-        '_type': 'log',
-        "_ludid": "log"
-    });
-    this.set("logs", []);
+    console.log("Init Log");
+    this.logs = [];
     this.isWriting = false;
     this.moreToWrite = false;
 }
 
-utils.extend(Log, Model);
 
 Log.prototype.info = function(logLevel, msgs) {
+    var self = this;
     if (config.get("logger") === true) {
         var levelString = "";
         var curLevel = config.get("log_level");
         var log_levels = config.get("log_levels");
-        var self = this;
+        
         if (typeof logLevel === "string") {
             levelString = logLevel;
             logLevel = log_levels.indexOf(logLevel.toLowerCase());

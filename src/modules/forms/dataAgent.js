@@ -1,9 +1,16 @@
 var Store = require("./store");
-var Model = require("./model");
 var log = require("./log");
 var config = require("./config");
 var storeMbaas = require("./storeMbaas");
 var localStorage = require("./localStorage");
+var utils = require("./utils");
+
+var DataAgent = {
+    initialize: function(remoteStore, localStore){
+        this.remoteStore = remoteStore;
+        this.localStore = localStore;    
+    }
+};
 
 //default data agent uses mbaas as remote store, localstorage as local store
 function DataAgent(remoteStore, localStore) {

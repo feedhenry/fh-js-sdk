@@ -2,27 +2,17 @@ var utils = require("./utils");
 var localStorage = require("./localStorage");
 var dataAgent = require("./dataAgent");
 var Event = require('../../../libs/events');
+var _ = require('../../../libs/underscore.js');
 
-function Model(opt) {
+var Model = function(){
     this.props = {
         '_id': null,
         '_type': null,
         '_ludid': null
     };
-
     this.events = {};
-    if (typeof opt !== 'undefined') {
-        for (var key in opt) {
-            this.props[key] = opt[key];
-        }
-    }
-    this.touch();
 };
-Model.prototype.on = Event.on;
-Model.prototype.off = Event.removeListener;
 
-Model.prototype.clearEvents = Event.removeAllListeners;
-Model.prototype.emit = Event.emit;
 Model.prototype.getProps = function() {
     return this.props;
 };
@@ -156,5 +146,7 @@ Model.prototype.getDataAgent = function() {
 Model.prototype.setDataAgent = function(dataAgent) {
     this.dataAgent = dataAgent;
 };
+
+console.log("MODEL ", JSON.stringify(Model));
 
 module.exports = Model;

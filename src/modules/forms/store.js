@@ -1,6 +1,4 @@
-var Model = require("./model");
-var log = require("./log");
-var config = require("./config");
+
 
 function Store(name) {
     this.name = name;

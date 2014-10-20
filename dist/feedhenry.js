@@ -10532,7 +10532,7 @@ fh.reset = cloud.reset;
 //So, we assign $fh to the window name space directly here. (otherwise, we have to fork the grunt browserify plugin, then fork browerify and the dependent umd module, really not worthing the effort).
 window.$fh = fh;
 module.exports = fh;
-},{"./modules/ajax":19,"./modules/api_act":20,"./modules/api_auth":21,"./modules/api_cloud":22,"./modules/api_forms":23,"./modules/api_hash":24,"./modules/api_mbaas":25,"./modules/api_sec":26,"./modules/appProps":27,"./modules/constants":29,"./modules/device":31,"./modules/events":32,"./modules/fhparams":33,"./modules/logger":73,"./modules/sync-cli":81,"./modules/waitForCloud":83}],18:[function(_dereq_,module,exports){
+},{"./modules/ajax":19,"./modules/api_act":20,"./modules/api_auth":21,"./modules/api_cloud":22,"./modules/api_forms":23,"./modules/api_hash":24,"./modules/api_mbaas":25,"./modules/api_sec":26,"./modules/appProps":27,"./modules/constants":29,"./modules/device":31,"./modules/events":32,"./modules/fhparams":33,"./modules/logger":49,"./modules/sync-cli":57,"./modules/waitForCloud":59}],18:[function(_dereq_,module,exports){
 var XDomainRequestWrapper = function(xdr){
   this.xdr = xdr;
   this.isWrapper = true;
@@ -10999,7 +10999,7 @@ function extend(target) {
   return target
 }
 
-},{"./XDomainRequestWrapper":18,"./events":32,"./logger":73,"type-of":16}],20:[function(_dereq_,module,exports){
+},{"./XDomainRequestWrapper":18,"./events":32,"./logger":49,"type-of":16}],20:[function(_dereq_,module,exports){
 var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -11050,7 +11050,7 @@ module.exports = function(opts, success, fail){
   })
 }
 
-},{"./ajax":19,"./appProps":27,"./fhparams":33,"./handleError":68,"./logger":73,"./waitForCloud":83,"JSON":5}],21:[function(_dereq_,module,exports){
+},{"./ajax":19,"./appProps":27,"./fhparams":33,"./handleError":44,"./logger":49,"./waitForCloud":59,"JSON":5}],21:[function(_dereq_,module,exports){
 var logger = _dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -11121,7 +11121,7 @@ module.exports = function(opts, success, fail) {
     }
   });
 }
-},{"./ajax":19,"./appProps":27,"./checkAuth":28,"./constants":29,"./device":31,"./fhparams":33,"./handleError":68,"./logger":73,"./waitForCloud":83,"JSON":5}],22:[function(_dereq_,module,exports){
+},{"./ajax":19,"./appProps":27,"./checkAuth":28,"./constants":29,"./device":31,"./fhparams":33,"./handleError":44,"./logger":49,"./waitForCloud":59,"JSON":5}],22:[function(_dereq_,module,exports){
 var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -11166,340 +11166,344 @@ module.exports = function(opts, success, fail){
     }
   })
 }
-},{"./ajax":19,"./appProps":27,"./fhparams":33,"./handleError":68,"./logger":73,"./waitForCloud":83,"JSON":5}],23:[function(_dereq_,module,exports){
-var formConfig = _dereq_("./forms/config");
-var forms = _dereq_("./forms/forms");
-var Form = _dereq_("./forms/form");
-var theme = _dereq_("./forms/theme");
-var submissions = _dereq_("./forms/submissions");
-var submission = _dereq_("./forms/submission");
-var log = _dereq_("./forms/log");
-var init = _dereq_("./forms/init");
+},{"./ajax":19,"./appProps":27,"./fhparams":33,"./handleError":44,"./logger":49,"./waitForCloud":59,"JSON":5}],23:[function(_dereq_,module,exports){
+// var formConfig = require("./forms/config");
+// var forms = require("./forms/forms");
+// var Form = require("./forms/form");
+// var theme = require("./forms/theme");
+// var submissions = require("./forms/submissions");
+// var submission = require("./forms/submission");
+// var log = require("./forms/log");
+// var init = require("./forms/init");
 
-var _submissions = null;
-var waitOnSubmission = {};
-var defaultFunction = function(err) {
-    err = err ? err : "";
-    log.w("Default Function Called " + err);
-};
+// var _submissions = null;
+// var waitOnSubmission = {};
+// var defaultFunction = function(err) {
+//     err = err ? err : "";
+//     log.w("Default Function Called " + err);
+// };
 
-/**
- * Get and set config values. Can only set a config value if you are an config_admin_user
- */
-var configInterface = {
-    editAllowed: function() {
-        var defaultConfigValues = formConfig.get("defaultConfigValues", {});
-        return defaultConfigValues["config_admin_user"] === true;
-    },
-    "get": function(key) {
-        var self = this;
-        if (key) {
-            var userConfigValues = formConfig.get("userConfigValues", {});
-            var defaultConfigValues = formConfig.get("defaultConfigValues", {});
-
-
-            if (userConfigValues[key]) {
-                return userConfigValues[key];
-            } else {
-                return defaultConfigValues[key];
-            }
-
-        }
-    },
-    "getDeviceId": function() {
-        return formConfig.get("deviceId", "Not Set");
-    },
-    "set": function(key, val) {
-        var self = this;
-        if (typeof(key) !== "string" || typeof(val) === "undefined" || val === null) {
-            return;
-        }
-
-        if (self.editAllowed() || key === "max_sent_saved") {
-            var userConfig = formConfig.get("userConfigValues", {});
-            userConfig[key] = val;
-            formConfig.set("userConfigValues", userConfig);
-        }
-
-    },
-    "getConfig": function() {
-        var self = this;
-        var defaultValues = formConfig.get("defaultConfigValues", {});
-        var userConfigValues = formConfig.get("userConfigValues", {});
-        var returnObj = {};
-
-        if (self.editAllowed()) {
-            for (var defKey in defaultValues) {
-                if (userConfigValues[defKey]) {
-                    returnObj[defKey] = userConfigValues[defKey];
-                } else {
-                    returnObj[defKey] = defaultValues[defKey];
-                }
-            }
-            return returnObj;
-        } else {
-            return defaultValues;
-        }
-    },
-    "saveConfig": function(cb) {
-        var self = this;
-        formConfig.saveLocal(function(err, configModel) {
-            if (err) {
-                log.e("Error saving a form config: ", err);
-            } else {
-                log.l("Form config saved sucessfully.");
-            }
-
-            if (typeof(cb) === 'function') {
-                cb();
-            }
-        });
-    },
-    "offline": function() {
-        formConfig.setOffline();
-    },
-    "online": function() {
-        formConfig.setOnline();
-    },
-    "mbaasOnline": function(cb) {
-        if (typeof(cb) === "function") {
-            formConfig.on('online', cb);
-        }
-    },
-    "mbaasOffline": function(cb) {
-        if (typeof(cb) === "function") {
-            formConfig.on('offline', cb);
-        }
-    },
-    "isOnline": function() {
-        return formConfig.isOnline();
-    },
-    "isStudioMode": function() {
-        return formConfig.isStudioMode();
-    },
-    refresh: function(cb) {
-        formConfig.refresh(true, cb);
-    }
-};
+// /**
+//  * Get and set config values. Can only set a config value if you are an config_admin_user
+//  */
+// var configInterface = {
+//     editAllowed: function() {
+//         var defaultConfigValues = formConfig.get("defaultConfigValues", {});
+//         return defaultConfigValues["config_admin_user"] === true;
+//     },
+//     "get": function(key) {
+//         var self = this;
+//         if (key) {
+//             var userConfigValues = formConfig.get("userConfigValues", {});
+//             var defaultConfigValues = formConfig.get("defaultConfigValues", {});
 
 
-/**
- * Retrieve forms model. It contains forms list. check forms model usage
- * @param  {[type]}   params {fromRemote:boolean}
- * @param  {Function} cb    (err, formsModel)
- * @return {[type]}          [description]
- */
-var getForms = function(params, cb) {
-    if (typeof(params) === 'function') {
-        cb = params;
-        params = {};
-    }
+//             if (userConfigValues[key]) {
+//                 return userConfigValues[key];
+//             } else {
+//                 return defaultConfigValues[key];
+//             }
 
-    params = params ? params : {};
-    cb = cb ? cb : defaultFunction;
-    var fromRemote = params.fromRemote;
-    if (fromRemote === undefined) {
-        fromRemote = false;
-    }
-    forms.refresh(fromRemote, cb);
-};
-/**
- * Retrieve form model with specified form id.
- * @param  {[type]}   params {formId: string, fromRemote:boolean}
- * @param  {Function} cb     (err, formModel)
- * @return {[type]}          [description]
- */
-var getForm = function(params, cb) {
-    if (typeof(params) === 'function') {
-        cb = params;
-        params = {};
-    }
+//         }
+//     },
+//     "getDeviceId": function() {
+//         return formConfig.get("deviceId", "Not Set");
+//     },
+//     "set": function(key, val) {
+//         var self = this;
+//         if (typeof(key) !== "string" || typeof(val) === "undefined" || val === null) {
+//             return;
+//         }
 
-    params = params ? params : {};
-    cb = cb ? cb : defaultFunction;
-    Form(params, cb);
-};
+//         if (self.editAllowed() || key === "max_sent_saved") {
+//             var userConfig = formConfig.get("userConfigValues", {});
+//             userConfig[key] = val;
+//             formConfig.set("userConfigValues", userConfig);
+//         }
 
-/**
- * Find a theme definition for this app.
- * @param params {fromRemote:boolean(false)}
- * @param {Function} cb {err, themeData} . themeData = {"json" : {<theme json definition>}, "css" : "css" : "<css style definition for this app>"}
- */
-var getTheme = function(params, cb) {
-    if (typeof(params) === 'function') {
-        cb = params;
-        params = {};
-    }
+//     },
+//     "getConfig": function() {
+//         var self = this;
+//         var defaultValues = formConfig.get("defaultConfigValues", {});
+//         var userConfigValues = formConfig.get("userConfigValues", {});
+//         var returnObj = {};
 
-    params = params ? params : {};
-    cb = cb ? cb : defaultFunction;
-    if (!params.fromRemote) {
-        params.fromRemote = false;
-    }
-    theme.refresh(params.fromRemote, function(err, updatedTheme) {
-        if (err) {
-            return cb(err);
-        }
-        if (updatedTheme === null) {
-            return cb(new Error('No theme defined for this app'));
-        }
-        if (params.css === true) {
-            return cb(null, theme.getCSS());
-        } else {
-            return cb(null, theme);
-        }
-    });
-};
+//         if (self.editAllowed()) {
+//             for (var defKey in defaultValues) {
+//                 if (userConfigValues[defKey]) {
+//                     returnObj[defKey] = userConfigValues[defKey];
+//                 } else {
+//                     returnObj[defKey] = defaultValues[defKey];
+//                 }
+//             }
+//             return returnObj;
+//         } else {
+//             return defaultValues;
+//         }
+//     },
+//     "saveConfig": function(cb) {
+//         var self = this;
+//         formConfig.saveLocal(function(err, configModel) {
+//             if (err) {
+//                 log.e("Error saving a form config: ", err);
+//             } else {
+//                 log.l("Form config saved sucessfully.");
+//             }
 
-/**
- * Get submissions that are submitted. I.e. submitted and complete.
- * @param params {}
- * @param {Function} cb     (err, submittedArray)
- */
-var getSubmissions = function(params, cb) {
-    if (typeof(params) === 'function') {
-        cb = params;
-        params = {};
-    }
-
-    params = params ? params : {};
-    cb = cb ? cb : defaultFunction;
-
-    //Getting submissions that have been completed.
-    submissions.loadLocal(function(err) {
-        if (err) {
-            log.e(err);
-            cb(err);
-        } else {
-            cb(null, _submissions);
-        }
-    });
-};
-
-var submitForm = function(submission, cb) {
-    if (submission) {
-        submission.submit(function(err) {
-            if (err) {
-                return cb(err);
-            }
-
-            //Submission finished and validated. Now upload the form
-            submission.upload(cb);
-        });
-    } else {
-        return cb('Invalid submission object.');
-    }
-};
-
-/*
- * Function for downloading a submission stored on the remote server.
- *
- * @param params {}
- * @param {function} cb (err, downloadTask)
- * */
-var downloadSubmission = function(params, cb) {
-    params = params ? params : {};
-    //cb = cb ? cb : defaultFunction;
-    var submissionToDownload = null;
-
-    if (typeof(cb) !== 'function') {
-        return null;
-    }
-
-    function finishSubmissionDownload(err) {
-        err = typeof(err) === "string" && err.length === 24 ? null : err;
-        log.d("finishSubmissionDownload ", err, submissionToDownload);
-        var subCBId = submissionToDownload.getRemoteSubmissionId();
-        var subsCbsWatiting = waitOnSubmission[subCBId];
-        if (subsCbsWatiting) {
-            var subCB = subsCbsWatiting.pop();
-            while (typeof(subCB) === 'function') {
-                subCB(err, submissionToDownload);
-                subCB = subsCbsWatiting.pop();
-            }
-
-            if (submissionToDownload.clearEvents) {
-                submissionToDownload.clearEvents();
-            }
-        } else {
-            submissionToDownload.clearEvents();
-            return cb(err, submissionToDownload);
-        }
-    }
-
-    log.d("downloadSubmission called", params);
-
-    if (params.submissionId) {
-        log.d("downloadSubmission SubmissionId exists" + params.submissionId);
-        var submissionAlreadySaved = submissions.findMetaByRemoteId(params.submissionId);
-
-        if (submissionAlreadySaved === null) {
-
-            log.d("downloadSubmission submission does not exist, downloading", params);
-            submissionToDownload = new submission.newInstance(null, {
-                submissionId: params.submissionId
-            });
-
-            submissionToDownload.on('error', finishSubmissionDownload);
-
-            submissionToDownload.on('downloaded', finishSubmissionDownload);
-
-            if (typeof(params.updateFunction) === 'function') {
-                submissionToDownload.on('progress', params.updateFunction);
-            }
+//             if (typeof(cb) === 'function') {
+//                 cb();
+//             }
+//         });
+//     },
+//     "offline": function() {
+//         formConfig.setOffline();
+//     },
+//     "online": function() {
+//         formConfig.setOnline();
+//     },
+//     "mbaasOnline": function(cb) {
+//         if (typeof(cb) === "function") {
+//             formConfig.on('online', cb);
+//         }
+//     },
+//     "mbaasOffline": function(cb) {
+//         if (typeof(cb) === "function") {
+//             formConfig.on('offline', cb);
+//         }
+//     },
+//     "isOnline": function() {
+//         return formConfig.isOnline();
+//     },
+//     "isStudioMode": function() {
+//         return formConfig.isStudioMode();
+//     },
+//     refresh: function(cb) {
+//         formConfig.refresh(true, cb);
+//     }
+// };
 
 
-            if (typeof(cb) === "function") {
-                if (waitOnSubmission[params.submissionId]) {
-                    waitOnSubmission[params.submissionId].push(cb);
-                } else {
-                    waitOnSubmission[params.submissionId] = [];
-                    waitOnSubmission[params.submissionId].push(cb);
-                }
-            }
+// /**
+//  * Retrieve forms model. It contains forms list. check forms model usage
+//  * @param  {[type]}   params {fromRemote:boolean}
+//  * @param  {Function} cb    (err, formsModel)
+//  * @return {[type]}          [description]
+//  */
+// var getForms = function(params, cb) {
+//     if (typeof(params) === 'function') {
+//         cb = params;
+//         params = {};
+//     }
 
-            submissionToDownload.download(function(err) {
-                if (err) {
-                    log.e("Error queueing submission for download " + err);
-                    return cb(err);
-                }
-            });
-        } else {
-            log.d("downloadSubmission submission exists", params);
+//     params = params ? params : {};
+//     cb = cb ? cb : defaultFunction;
+//     var fromRemote = params.fromRemote;
+//     if (fromRemote === undefined) {
+//         fromRemote = false;
+//     }
+//     forms.refresh(fromRemote, cb);
+// };
+// /**
+//  * Retrieve form model with specified form id.
+//  * @param  {[type]}   params {formId: string, fromRemote:boolean}
+//  * @param  {Function} cb     (err, formModel)
+//  * @return {[type]}          [description]
+//  */
+// var getForm = function(params, cb) {
+//     if (typeof(params) === 'function') {
+//         cb = params;
+//         params = {};
+//     }
 
-            //Submission was created, but not finished downloading
-            if (submissionAlreadySaved.status !== "downloaded" && submissionAlreadySaved.status !== "submitted") {
-                if (typeof(cb) === "function") {
-                    if (waitOnSubmission[params.submissionId]) {
-                        waitOnSubmission[params.submissionId].push(cb);
-                    } else {
-                        waitOnSubmission[params.submissionId] = [];
-                        waitOnSubmission[params.submissionId].push(cb);
-                    }
-                }
-            } else {
-                submissions.getSubmissionByMeta(submissionAlreadySaved, cb);
-            }
+//     params = params ? params : {};
+//     cb = cb ? cb : defaultFunction;
+//     Form(params, cb);
+// };
 
-        }
-    } else {
-        log.e("No submissionId passed to download a submission");
-        return cb("No submissionId passed to download a submission");
-    }
-};
+// /**
+//  * Find a theme definition for this app.
+//  * @param params {fromRemote:boolean(false)}
+//  * @param {Function} cb {err, themeData} . themeData = {"json" : {<theme json definition>}, "css" : "css" : "<css style definition for this app>"}
+//  */
+// var getTheme = function(params, cb) {
+//     if (typeof(params) === 'function') {
+//         cb = params;
+//         params = {};
+//     }
 
-module.exports = {
-    getForms: getForms,
-    getForm: getForm,
-    getTheme: getTheme,
-    getSubmissions: getSubmissions,
-    downloadSubmission: downloadSubmission,
-    submitForm: submitForm,
-    config: configInterface,
-    log: log,
-    init: init
-}
-},{"./forms/config":34,"./forms/form":47,"./forms/forms":52,"./forms/init":53,"./forms/log":55,"./forms/submission":61,"./forms/submissions":62,"./forms/theme":63}],24:[function(_dereq_,module,exports){
+//     params = params ? params : {};
+//     cb = cb ? cb : defaultFunction;
+//     if (!params.fromRemote) {
+//         params.fromRemote = false;
+//     }
+//     theme.refresh(params.fromRemote, function(err, updatedTheme) {
+//         if (err) {
+//             return cb(err);
+//         }
+//         if (updatedTheme === null) {
+//             return cb(new Error('No theme defined for this app'));
+//         }
+//         if (params.css === true) {
+//             return cb(null, theme.getCSS());
+//         } else {
+//             return cb(null, theme);
+//         }
+//     });
+// };
+
+// /**
+//  * Get submissions that are submitted. I.e. submitted and complete.
+//  * @param params {}
+//  * @param {Function} cb     (err, submittedArray)
+//  */
+// var getSubmissions = function(params, cb) {
+//     if (typeof(params) === 'function') {
+//         cb = params;
+//         params = {};
+//     }
+
+//     params = params ? params : {};
+//     cb = cb ? cb : defaultFunction;
+
+//     //Getting submissions that have been completed.
+//     submissions.loadLocal(function(err) {
+//         if (err) {
+//             log.e(err);
+//             cb(err);
+//         } else {
+//             cb(null, _submissions);
+//         }
+//     });
+// };
+
+// var submitForm = function(submission, cb) {
+//     if (submission) {
+//         submission.submit(function(err) {
+//             if (err) {
+//                 return cb(err);
+//             }
+
+//             //Submission finished and validated. Now upload the form
+//             submission.upload(cb);
+//         });
+//     } else {
+//         return cb('Invalid submission object.');
+//     }
+// };
+
+// /*
+//  * Function for downloading a submission stored on the remote server.
+//  *
+//  * @param params {}
+//  * @param {function} cb (err, downloadTask)
+//  * */
+// var downloadSubmission = function(params, cb) {
+//     params = params ? params : {};
+//     //cb = cb ? cb : defaultFunction;
+//     var submissionToDownload = null;
+
+//     if (typeof(cb) !== 'function') {
+//         return null;
+//     }
+
+//     function finishSubmissionDownload(err) {
+//         err = typeof(err) === "string" && err.length === 24 ? null : err;
+//         log.d("finishSubmissionDownload ", err, submissionToDownload);
+//         var subCBId = submissionToDownload.getRemoteSubmissionId();
+//         var subsCbsWatiting = waitOnSubmission[subCBId];
+//         if (subsCbsWatiting) {
+//             var subCB = subsCbsWatiting.pop();
+//             while (typeof(subCB) === 'function') {
+//                 subCB(err, submissionToDownload);
+//                 subCB = subsCbsWatiting.pop();
+//             }
+
+//             if (submissionToDownload.clearEvents) {
+//                 submissionToDownload.clearEvents();
+//             }
+//         } else {
+//             submissionToDownload.clearEvents();
+//             return cb(err, submissionToDownload);
+//         }
+//     }
+
+//     log.d("downloadSubmission called", params);
+
+//     if (params.submissionId) {
+//         log.d("downloadSubmission SubmissionId exists" + params.submissionId);
+//         var submissionAlreadySaved = submissions.findMetaByRemoteId(params.submissionId);
+
+//         if (submissionAlreadySaved === null) {
+
+//             log.d("downloadSubmission submission does not exist, downloading", params);
+//             submissionToDownload = new submission.newInstance(null, {
+//                 submissionId: params.submissionId
+//             });
+
+//             submissionToDownload.on('error', finishSubmissionDownload);
+
+//             submissionToDownload.on('downloaded', finishSubmissionDownload);
+
+//             if (typeof(params.updateFunction) === 'function') {
+//                 submissionToDownload.on('progress', params.updateFunction);
+//             }
+
+
+//             if (typeof(cb) === "function") {
+//                 if (waitOnSubmission[params.submissionId]) {
+//                     waitOnSubmission[params.submissionId].push(cb);
+//                 } else {
+//                     waitOnSubmission[params.submissionId] = [];
+//                     waitOnSubmission[params.submissionId].push(cb);
+//                 }
+//             }
+
+//             submissionToDownload.download(function(err) {
+//                 if (err) {
+//                     log.e("Error queueing submission for download " + err);
+//                     return cb(err);
+//                 }
+//             });
+//         } else {
+//             log.d("downloadSubmission submission exists", params);
+
+//             //Submission was created, but not finished downloading
+//             if (submissionAlreadySaved.status !== "downloaded" && submissionAlreadySaved.status !== "submitted") {
+//                 if (typeof(cb) === "function") {
+//                     if (waitOnSubmission[params.submissionId]) {
+//                         waitOnSubmission[params.submissionId].push(cb);
+//                     } else {
+//                         waitOnSubmission[params.submissionId] = [];
+//                         waitOnSubmission[params.submissionId].push(cb);
+//                     }
+//                 }
+//             } else {
+//                 submissions.getSubmissionByMeta(submissionAlreadySaved, cb);
+//             }
+
+//         }
+//     } else {
+//         log.e("No submissionId passed to download a submission");
+//         return cb("No submissionId passed to download a submission");
+//     }
+// };
+
+// module.exports = {
+//     getForms: getForms,
+//     getForm: getForm,
+//     getTheme: getTheme,
+//     getSubmissions: getSubmissions,
+//     downloadSubmission: downloadSubmission,
+//     submitForm: submitForm,
+//     config: configInterface,
+//     log: log,
+//     init: init
+// }
+
+var Model = _dereq_("./forms/model");
+
+module.exports = Model;
+},{"./forms/model":39}],24:[function(_dereq_,module,exports){
 var hashImpl = _dereq_("./security/hash");
 
 module.exports = function(p, s, f){
@@ -11511,7 +11515,7 @@ module.exports = function(p, s, f){
   params.params = p;
   hashImpl(params, s, f);
 };
-},{"./security/hash":79}],25:[function(_dereq_,module,exports){
+},{"./security/hash":55}],25:[function(_dereq_,module,exports){
 var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -11557,7 +11561,7 @@ module.exports = function(opts, success, fail){
   });
 } 
 
-},{"./ajax":19,"./appProps":27,"./constants":29,"./fhparams":33,"./handleError":68,"./logger":73,"./waitForCloud":83,"JSON":5}],26:[function(_dereq_,module,exports){
+},{"./ajax":19,"./appProps":27,"./constants":29,"./fhparams":33,"./handleError":44,"./logger":49,"./waitForCloud":59,"JSON":5}],26:[function(_dereq_,module,exports){
 var keygen = _dereq_("./security/aes-keygen");
 var aes = _dereq_("./security/aes-node");
 var rsa = _dereq_("./security/rsa-node");
@@ -11601,7 +11605,7 @@ module.exports = function(p, s, f){
     }
   }
 }
-},{"./security/aes-keygen":77,"./security/aes-node":78,"./security/hash":79,"./security/rsa-node":80}],27:[function(_dereq_,module,exports){
+},{"./security/aes-keygen":53,"./security/aes-node":54,"./security/hash":55,"./security/rsa-node":56}],27:[function(_dereq_,module,exports){
 var consts = _dereq_("./constants");
 var ajax = _dereq_("./ajax");
 var logger = _dereq_("./logger");
@@ -11673,7 +11677,7 @@ module.exports = {
   setAppProps: setAppProps
 };
 
-},{"./ajax":19,"./constants":29,"./logger":73,"./queryMap":75}],28:[function(_dereq_,module,exports){
+},{"./ajax":19,"./constants":29,"./logger":49,"./queryMap":51}],28:[function(_dereq_,module,exports){
 var logger = _dereq_("./logger");
 var queryMap = _dereq_("./queryMap");
 var JSON = _dereq_("JSON");
@@ -11781,7 +11785,7 @@ module.exports = {
   "handleAuthResponse": handleAuthResponse
 };
 
-},{"./fhparams":33,"./logger":73,"./queryMap":75,"JSON":5}],29:[function(_dereq_,module,exports){
+},{"./fhparams":33,"./logger":49,"./queryMap":51,"JSON":5}],29:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
   "sdk_version": "2.4.3-BUILD-NUMBER",
@@ -11887,7 +11891,7 @@ module.exports = {
   }
 }
 
-},{"./cookies":30,"./logger":73,"./platformsMap":74,"./uuid":82}],32:[function(_dereq_,module,exports){
+},{"./cookies":30,"./logger":49,"./platformsMap":50,"./uuid":58}],32:[function(_dereq_,module,exports){
 var EventEmitter = _dereq_('events').EventEmitter;
 
 var emitter = new EventEmitter();
@@ -11964,7 +11968,7 @@ module.exports = {
   "setAuthSessionToken":setAuthSessionToken
 }
 
-},{"./appProps":27,"./device":31,"./logger":73,"./sdkversion":76}],34:[function(_dereq_,module,exports){
+},{"./appProps":27,"./device":31,"./logger":49,"./sdkversion":52}],34:[function(_dereq_,module,exports){
 var Model = _dereq_("./model");
 var utils = _dereq_("./utils");
 var log = _dereq_("./log");
@@ -11972,22 +11976,15 @@ var log = _dereq_("./log");
 var online = true;
 var cloudHost = "notset";
 
-var Config = {
+var Config = Model.extend({
+    _type: 'confg',
+    _ludid: "config"
+});
 
-};
-
-function Config() {
-    Model.call(this, {
-        '_type': 'config',
-        "_ludid": "config"
-    });
-}
-
-utils.extend(Config, Model);
 
 //call in appForm.init
-Config.prototype.init = function(config, cb) {
-    if (Config.prototype.studioMode) { //running in studio
+Config.init = function(config, cb) {
+    if (Config.studioMode) { //running in studio
         this.set("studioMode", true);
         this.fromJSON(config);
         cb();
@@ -11999,10 +11996,10 @@ Config.prototype.init = function(config, cb) {
         this.refresh(true, cb);
     }
 };
-Config.prototype.isStudioMode = function() {
+Config.isStudioMode = function() {
     return this.get("studioMode");
 };
-Config.prototype.refresh = function(fromRemote, cb) {
+Config.refresh = function(fromRemote, cb) {
     var dataAgent = this.getDataAgent();
     var self = this;
     if (typeof cb === 'undefined') {
@@ -12042,10 +12039,10 @@ Config.prototype.refresh = function(fromRemote, cb) {
         dataAgent.remoteStore.read(self, _handler);
     });
 };
-Config.prototype.getCloudHost = function() {
+Config.getCloudHost = function() {
     return cloudHost;
 };
-Config.prototype.staticConfig = function(config) {
+Config.staticConfig = function(config) {
     var self = this;
     var defaultConfig = {
         "defaultConfigValues": {},
@@ -12053,9 +12050,9 @@ Config.prototype.staticConfig = function(config) {
     };
     //If user already has set values, don't want to overwrite them
     if (self.get("userConfigValues")) {
-        defaultConfig.prototype.userConfigValues = self.get("userConfigValues");
+        defaultConfig.userConfigValues = self.get("userConfigValues");
     }
-    var appid = $fh && $fh.app_props ? $fh.app_props.appid : Config.prototype.appid;
+    var appid = $fh && $fh.app_props ? $fh.app_props.appid : Config.appid;
     var mode = $fh && $fh.app_props ? $fh.app_props.mode : 'dev';
     self.set('appId', appid);
     self.set('env', mode);
@@ -12074,11 +12071,11 @@ Config.prototype.staticConfig = function(config) {
     }
 
     //config_admin_user can not be set by the user.
-    if (Config.prototype.config_admin_user) {
-        delete Config.prototype.config_admin_user;
+    if (Config.config_admin_user) {
+        delete Config.config_admin_user;
     }
 
-    defaultConfig.prototype.defaultConfigValues = config;
+    defaultConfig.defaultConfigValues = config;
     var staticConfig = {
         "sent_save_min": 5,
         "sent_save_max": 1000,
@@ -12101,12 +12098,12 @@ Config.prototype.staticConfig = function(config) {
     };
 
     for (var key in staticConfig) {
-        defaultConfig.prototype.defaultConfigValues[key] = staticConfig[key];
+        defaultConfig.defaultConfigValues[key] = staticConfig[key];
     }
 
     self.fromJSON(defaultConfig);
 };
-Config.prototype._initMBaaS = function(config) {
+Config._initMBaaS = function(config) {
     var self = this;
     config = config || {};
     var cloud_props = $fh.cloud_props;
@@ -12119,8 +12116,8 @@ Config.prototype._initMBaaS = function(config) {
         cloudHost = cloud_props.hosts.url;
     }
 
-    if (typeof(Config.prototype.cloudHost) === 'string') {
-        cloudHost = Config.prototype.cloudHost;
+    if (typeof(Config.cloudHost) === 'string') {
+        cloudHost = Config.cloudHost;
     }
 
 
@@ -12141,7 +12138,7 @@ Config.prototype._initMBaaS = function(config) {
     });
     self.set('statusUrl', '/sys/info/ping');
 };
-Config.prototype.setOnline = function() {
+Config.setOnline = function() {
     var wasOnline = online;
     online = true;
 
@@ -12149,7 +12146,7 @@ Config.prototype.setOnline = function() {
         this.emit('online');
     }
 };
-Config.prototype.setOffline = function() {
+Config.setOffline = function() {
     var wasOnline = online;
     online = false;
 
@@ -12157,7 +12154,7 @@ Config.prototype.setOffline = function() {
         this.emit('offline');
     }
 };
-Config.prototype.isOnline = function() {
+Config.isOnline = function() {
     var self = this;
     if (utils.isPhoneGap()) {
         if (navigator.connection.type) {
@@ -12170,19 +12167,27 @@ Config.prototype.isOnline = function() {
     }
 
 };
-Config.prototype.isStudioMode = function() {
+Config.isStudioMode = function() {
     return this.get("studioMode", false);
 };
 
+console.log("CONFIG", JSON.stringify(Config));
 
 module.config = new Config();
-},{"./log":55,"./model":56,"./utils":66}],35:[function(_dereq_,module,exports){
+},{"./log":38,"./model":39,"./utils":42}],35:[function(_dereq_,module,exports){
 var Store = _dereq_("./store");
-var Model = _dereq_("./model");
 var log = _dereq_("./log");
 var config = _dereq_("./config");
 var storeMbaas = _dereq_("./storeMbaas");
 var localStorage = _dereq_("./localStorage");
+var utils = _dereq_("./utils");
+
+var DataAgent = {
+    initialize: function(remoteStore, localStore){
+        this.remoteStore = remoteStore;
+        this.localStore = localStore;    
+    }
+};
 
 //default data agent uses mbaas as remote store, localstorage as local store
 function DataAgent(remoteStore, localStore) {
@@ -12304,745 +12309,7 @@ module.exports = {
     DataAgent: DataAgent,
     dataAgent: new DataAgent(storeMbaas, localStorage)
 };
-},{"./config":34,"./localStorage":54,"./log":55,"./model":56,"./store":59,"./storeMbaas":60}],36:[function(_dereq_,module,exports){
-/**
- * Field model for form
- * @param  {[type]} module [description]
- * @return {[type]}        [description]
- */
-var Model = _dereq_("./model");
-var log = _dereq_("./log");
-var config = _dereq_("./config");
-var utils = _dereq_("./utils");
-var fieldCheckboxes = _dereq_("./fieldCheckboxes");
-var fieldFile = _dereq_("./fieldFile");
-var fieldImage = _dereq_("./fieldImage");
-var fieldLocation = _dereq_("./fieldLocation");
-var fieldMatrix = _dereq_("./fieldMatrix");
-var fieldRadio = _dereq_("./fieldRadio");
-
-function Field(opt, form) {
-    Model.call(this, {
-        '_type': 'field'
-    });
-    if (opt) {
-        this.fromJSON(opt);
-        this.genLocalId();
-    }
-    if (form) {
-        this.form = form;
-    }
-}
-
-utils.extend(Field, Model);
-
-//Extending any special functions needed.
-utils.extend(Field, fieldFile);
-utils.extend(Field, fieldImage);
-utils.extend(Field, fieldLocation);
-utils.extend(Field, fieldMatrix);
-utils.extend(Field, fieldRadio);
-
-Field.prototype.isRequired = function() {
-    return this.get('required');
-};
-Field.prototype.getFieldValidation = function() {
-    return this.getFieldOptions().validation || {};
-};
-Field.prototype.getFieldDefinition = function() {
-    return this.getFieldOptions().definition || {};
-};
-Field.prototype.getMinRepeat = function() {
-    var def = this.getFieldDefinition();
-    return def.minRepeat || 1;
-};
-Field.prototype.getMaxRepeat = function() {
-    var def = this.getFieldDefinition();
-    return def.maxRepeat || 1;
-};
-Field.prototype.getFieldOptions = function() {
-    return this.get('fieldOptions', {
-        'validation': {},
-        'definition': {}
-    });
-};
-Field.prototype.getPhotoOptions = function() {
-    var photoOptions = {
-        "targetWidth": null,
-        "targetHeight": null,
-        "quality": null,
-        "saveToPhotoAlbum": null,
-        "pictureSource": null,
-        "encodingType": null
-    };
-
-    var fieldDef = this.getFieldDefinition();
-    photoOptions.targetWidth = fieldDef.photoWidth;
-    photoOptions.targetHeight = fieldDef.photoHeight;
-    photoOptions.quality = fieldDef.photoQuality;
-    photoOptions.saveToPhotoAlbum = fieldDef.saveToPhotoAlbum;
-    photoOptions.pictureSource = fieldDef.photoSource;
-    photoOptions.encodingType = fieldDef.photoType;
-
-    return photoOptions;
-};
-Field.prototype.isRepeating = function() {
-    return this.get('repeating', false);
-};
-/**
- * retrieve field type.
- * @return {[type]} [description]
- */
-Field.prototype.getType = function() {
-    return this.get('type', 'text');
-};
-Field.prototype.getFieldId = function() {
-    return this.get('_id', '');
-};
-Field.prototype.getName = function() {
-    return this.get('name', 'unknown');
-};
-/**
- * Function to return the Field Code specified in the studio if it exists
- * otherwise return null.
- */
-Field.prototype.getCode = function() {
-    return this.get('fieldCode', null);
-};
-Field.prototype.getHelpText = function() {
-    return this.get('helpText', '');
-};
-
-/**
- * return default value for a field
- *
- */
-Field.prototype.getDefaultValue = function() {
-    var def = this.getFieldDefinition();
-    if (def) {
-        return def.defaultValue;
-    }
-    return "";
-};
-
-Field.prototype.isAdminField = function() {
-    return this.get("adminOnly");
-};
-
-
-/**
- * Process an input value. convert to submission format. run Field.prototype.validate before this
- * @param  {[type]} params {"value", "isStore":optional}
- * @param {cb} cb(err,res)
- * @return {[type]}           submission json used for fieldValues for the field
- */
-Field.prototype.processInput = function(params, cb) {
-    var type = this.getType();
-    var processorName = 'process_' + type;
-    var inputValue = params.value;
-    if (typeof inputValue === 'undefined' || inputValue === null) {
-        //if user input is empty, keep going.
-        return cb(null, inputValue);
-    }
-    // try to find specified processor
-    if (this[processorName] && typeof this[processorName] === 'function') {
-        this[processorName](params, cb);
-    } else {
-        cb(null, inputValue);
-    }
-};
-/**
- * Convert the submission value back to input value.
- * @param  {[type]} submissionValue [description]
- * @param { function} cb callback
- * @return {[type]}                 [description]
- */
-Field.prototype.convertSubmission = function(submissionValue, cb) {
-    var type = this.getType();
-    var processorName = 'convert_' + type;
-    // try to find specified processor
-    if (this[processorName] && typeof this[processorName] === 'function') {
-        this[processorName](submissionValue, cb);
-    } else {
-        cb(null, submissionValue);
-    }
-};
-/**
- * validate an input with this Field.prototype.
- * @param  {[type]} inputValue [description]
- * @return true / error message
- */
-Field.prototype.validate = function(inputValue, inputValueIndex, cb) {
-    if (typeof(inputValueIndex) === 'function') {
-        cb = inputValueIndex;
-        inputValueIndex = 0;
-    }
-    this.form.getRuleEngine().validateFieldValue(this.getFieldId(), inputValue, inputValueIndex, cb);
-};
-/**
- * return rule array attached to this Field.prototype.
- * @return {[type]} [description]
- */
-Field.prototype.getRules = function() {
-    var id = this.getFieldId();
-    return this.form.getRulesByFieldId(id);
-};
-Field.prototype.setVisible = function(isVisible) {
-    this.set('visible', isVisible);
-    if (isVisible) {
-        this.emit('visible');
-    } else {
-        this.emit('hidden');
-    }
-};
-
-module.exports = Field;
-},{"./config":34,"./fieldCheckboxes":37,"./fieldFile":38,"./fieldImage":39,"./fieldLocation":40,"./fieldMatrix":41,"./fieldRadio":42,"./log":55,"./model":56,"./utils":66}],37:[function(_dereq_,module,exports){
-/**
- * extension of Field class to support checkbox field
- */
-
-function getCheckBoxOptions() {
-    var def = this.getFieldDefinition();
-    if (def.options) {
-        return def.options;
-    } else {
-        throw 'checkbox choice definition is not found in field definition';
-    }
-};
-
-function process_checkboxes(params, cb) {
-    var inputValue = params.value;
-    if (!inputValue || !inputValue.selections || !(inputValue.selections instanceof Array)) {
-        cb('the input value for processing checkbox field should be like {selections: [val1,val2]}');
-    } else {
-        cb(null, inputValue);
-    }
-};
-
-function convert_checkboxes(value, cb) {
-    var rtn = [];
-    for (var i = 0; i < value.length; i++) {
-        rtn.push(value[i].selections);
-    }
-    cb(null, rtn);
-};
-
-module.exports = {
-    getCheckBoxOptions: getCheckBoxOptions,
-    process_checkboxes: process_checkboxes,
-    convert_checkboxes: convert_checkboxes
-}
-},{}],38:[function(_dereq_,module,exports){
-/**
- * extension of Field class to support file field
- */
-var Model = _dereq_("./model");
-var log = _dereq_("./log");
-var config = _dereq_("./config");
-var localStorage = _dereq_("./localStorage");
-
-function checkFileObj(obj) {
-    return obj.fileName && obj.fileType && obj.hashName;
-}
-
-function process_file(params, cb) {
-    var inputValue = params.value;
-    var isStore = params.isStore === undefined ? true : params.isStore;
-    var lastModDate = new Date().getTime();
-    var previousFile = params.previousFile || {};
-    var hashName = null;
-    if (typeof inputValue === 'undefined' || inputValue === null) {
-        return cb("No input value to process_file", null);
-    }
-
-    function getFileType(fileType, fileNameString) {
-        fileType = fileType || "";
-        fileNameString = fileNameString || "";
-
-        //The type if file is already known. No need to parse it out.
-        if (fileType.length > 0) {
-            return fileType;
-        }
-
-        //Camera does not sent file type. Have to parse it from the file name.
-        if (fileNameString.indexOf(".png") > -1) {
-            return "image/png";
-        } else if (fileNameString.indexOf(".jpg") > -1) {
-            return "image/jpeg";
-        } else {
-            return "application/octet-stream";
-        }
-    }
-
-    function getFileName(fileNameString, filePathString) {
-        fileNameString = fileNameString || "";
-        if (fileNameString.length > 0) {
-            return fileNameString;
-        } else {
-            //Need to extract the name from the file path
-            var indexOfName = filePathString.lastIndexOf("/");
-            if (indexOfName > -1) {
-                return filePathString.slice(indexOfName);
-            } else {
-                return null;
-            }
-        }
-    }
-
-    var file = inputValue;
-    if (inputValue instanceof HTMLInputElement) {
-        file = inputValue.files[0] || {}; // 1st file only, not support many files yet.
-    }
-
-    if (typeof(file.lastModifiedDate) === 'undefined') {
-        lastModDate = utils.getTime().getTime();
-    }
-
-    if (file.lastModifiedDate instanceof Date) {
-        lastModDate = file.lastModifiedDate.getTime();
-    }
-
-    var fileName = getFileName(file.name || file.fileName, file.fullPath);
-
-    var fileType = getFileType(file.type || file.fileType, fileName);
-
-    //Placeholder files do not have a file type. It inherits from previous types
-    if (fileName === null && !previousFile.fileName) {
-        return cb("Expected picture to be PNG or JPEG but was null");
-    }
-
-    if (previousFile.hashName) {
-        if (fileName === previousFile.hashName || file.hashName === previousFile.hashName) {
-            //Submitting an existing file already saved, no need to save.
-            return cb(null, previousFile);
-        }
-    }
-
-    var rtnJSON = {
-        'fileName': fileName,
-        'fileSize': file.size,
-        'fileType': fileType,
-        'fileUpdateTime': lastModDate,
-        'hashName': '',
-        'imgHeader': '',
-        'contentType': 'binary'
-    };
-
-    //The file to be submitted is new
-    previousFile = rtnJSON;
-
-    var name = fileName + new Date().getTime() + Math.ceil(Math.random() * 100000);
-    utils.md5(name, function(err, res) {
-        hashName = res;
-        if (err) {
-            hashName = name;
-        }
-        hashName = 'filePlaceHolder' + hashName;
-
-        if (fileName.length === 0) {
-            previousFile.fileName = hashName;
-        }
-
-        previousFile.hashName = hashName;
-        if (isStore) {
-            localStorage.saveFile(hashName, file, function(err, res) {
-                if (err) {
-                    log.e(err);
-                    cb(err);
-                } else {
-                    cb(null, previousFile);
-                }
-            });
-        } else {
-            cb(null, previousFile);
-        }
-    });
-};
-
-module.exports = {
-    checkFileObj: checkFileObj,
-    process_file: process_file
-}
-},{"./config":34,"./localStorage":54,"./log":55,"./model":56}],39:[function(_dereq_,module,exports){
-/**
- * extension of Field class to support file field
- */
-
-var localStorage = _dereq_("./localStorage");
-var fileSystem = _dereq_("./fileSystem");
-var log = _dereq_("./log");
-var config = _dereq_("./config");
-
-function imageProcess(params, cb) {
-    var self = this;
-    var inputValue = params.value;
-    var isStore = params.isStore === undefined ? true : params.isStore;
-    var previousFile = params.previousFile || {};
-    if (typeof(inputValue) !== "string") {
-        return cb("Expected base64 string image or file URI but parameter was not a string", null);
-    }
-
-    //Input value can be either a base64 String or file uri, the behaviour of upload will change accordingly.
-
-    if (inputValue.length < 1) {
-        return cb("Expected base64 string or file uri but got string of lenght 0:  " + inputValue, null);
-    }
-
-    if (inputValue.indexOf(";base64,") > -1) {
-        var imgName = '';
-        var dataArr = inputValue.split(';base64,');
-        var imgType = dataArr[0].split(':')[1];
-        var extension = imgType.split('/')[1];
-        var size = inputValue.length;
-        genImageName(function(err, n) {
-            imgName = previousFile.hashName ? previousFile.hashName : 'filePlaceHolder' + n;
-            //TODO Abstract this out
-            var meta = {
-                'fileName': imgName + '.' + extension,
-                'hashName': imgName,
-                'contentType': 'base64',
-                'fileSize': size,
-                'fileType': imgType,
-                'imgHeader': 'data:' + imgType + ';base64,',
-                'fileUpdateTime': new Date().getTime()
-            };
-            if (isStore) {
-                localStorage.updateTextFile(imgName, dataArr[1], function(err, res) {
-                    if (err) {
-                        log.e(err);
-                        cb(err);
-                    } else {
-                        cb(null, meta);
-                    }
-                });
-            } else {
-                cb(null, meta);
-            }
-        });
-    } else {
-        //Image is a file uri, the file needs to be saved as a file.
-        //Can use the process_file function to do this.
-        //Need to read the file as a file first
-        fileSystem.readAsFile(inputValue, function(err, file) {
-            if (err) {
-                return cb(err);
-            }
-
-            params.value = file;
-            self.process_file(params, cb);
-        });
-    }
-}
-
-function genImageName(cb) {
-    var name = new Date().getTime() + '' + Math.ceil(Math.random() * 100000);
-    utils.md5(name, cb);
-}
-
-function convertImage(value, cb) {
-    if (value.length === 0) {
-        cb(null, value);
-    } else {
-        var count = value.length;
-        for (var i = 0; i < value.length; i++) {
-            var meta = value[i];
-            _loadImage(meta, function() {
-                count--;
-                if (count === 0) {
-                    cb(null, value);
-                }
-            });
-        }
-    }
-}
-
-//An image can be either a base64 image or a binary image.
-//If base64, need to load the data as text.
-//If binary, just need to load the file uri.
-function _loadImage(meta, cb) {
-    if (meta) {
-
-        /**
-         * If the file already contains a local uri, then no need to load it.
-         */
-        if (meta.localURI) {
-            return cb(null, meta);
-        }
-
-        var name = meta.hashName;
-        if (meta.contentType === "base64") {
-            localStorage.readFileText(name, function(err, text) {
-                if (err) {
-                    log.e(err);
-                }
-                meta.data = text;
-                cb(err, meta);
-            });
-        } else if (meta.contentType === "binary") {
-            localStorage.readFile(name, function(err, file) {
-                if (err) {
-                    log.e("Error reading file " + name, err);
-                }
-
-                if (file && file.fullPath) {
-                    meta.data = file.fullPath;
-                } else {
-                    meta.data = "file-not-found";
-                }
-
-                cb(err, meta);
-            });
-        } else {
-            log.e("Error load image with invalid meta" + meta.contentType);
-        }
-    } else {
-        cb(null, meta);
-    }
-}
-
-module.exports = {
-    process_signature: process_signature,
-    convert_signature: convert_signature,
-    process_photo: process_photo,
-    convert_photo: convert_photo
-};
-},{"./config":34,"./fileSystem":46,"./localStorage":54,"./log":55}],40:[function(_dereq_,module,exports){
-/**
- * extension of Field class to support latitude longitude field
- */
-
-var Model = _dereq_("./model");
-var log = _dereq_("./log");
-var config = _dereq_("./config");
-
-function process_location(params, cb) {
-    var inputValue = params.value;
-    var def = this.getFieldDefinition();
-    var obj = {};
-    switch (def.locationUnit) {
-        case 'latlong':
-            if (!inputValue.lat || !inputValue["long"]) {
-                cb('the input values for latlong field is {lat: number, long: number}');
-            } else {
-                obj = {
-                    'lat': inputValue.lat,
-                    'long': inputValue["long"]
-                };
-                cb(null, obj);
-            }
-            break;
-        case 'eastnorth':
-            if (!inputValue.zone || !inputValue.eastings || !inputValue.northings) {
-                cb('the input values for northeast field is {zone: text, eastings: text, northings:text}');
-            } else {
-                obj = {
-                    'zone': inputValue.zone,
-                    'eastings': inputValue.eastings,
-                    'northings': inputValue.northings
-                };
-                cb(null, obj);
-            }
-            break;
-        default:
-            cb('Invalid subtype type of location field, allowed types: latlong and eastnorth, was: ' + def.locationUnit);
-            break;
-    }
-};
-
-module.exports = {
-    process_location: process_location
-}
-},{"./config":34,"./log":55,"./model":56}],41:[function(_dereq_,module,exports){
-/**
- * extension of Field class to support matrix field
- */
-
-var Model = _dereq_("./model");
-var log = _dereq_("./log");
-var config = _dereq_("./config");
-
-function getMatrixRows() {
-    var def = this.getFieldDefinition();
-    if (def.rows) {
-        return def.rows;
-    } else {
-        log.e('matrix rows definition is not found in field definition');
-        return null;
-    }
-};
-
-function getMatrixCols() {
-    var def = this.getFieldDefinition();
-    if (def.columns) {
-        return def.columns;
-    } else {
-        log.e('matrix columns definition is not found in field definition');
-        return null;
-    }
-};
-
-module.exports = {
-    getMatrixRows: getMatrixRows,
-    getMatrixCols: getMatrixCols
-}
-},{"./config":34,"./log":55,"./model":56}],42:[function(_dereq_,module,exports){
-/**
- * extension of Field class to support radio field
- */
-
-var Model = _dereq_("./model");
-var log = _dereq_("./log");
-var config = _dereq_("./config");
-
-function getRadioOption() {
-    var def = this.getFieldDefinition();
-    if (def.options) {
-        return def.options;
-    } else {
-        log.e('Radio options definition is not found in field definition');
-    }
-};
-
-module.exports = {
-    getRadioOption: getRadioOption
-}
-},{"./config":34,"./log":55,"./model":56}],43:[function(_dereq_,module,exports){
-var Model = _dereq_("./model");
-var log = _dereq_("./log");
-var config = _dereq_("./config");
-var localStorage = _dereq_("./localStorage");
-
-function FileSubmission(fileData) {
-    log.d("FileSubmission ", fileData);
-    Model.call(this, {
-        '_type': 'fileSubmission',
-        'data': fileData
-    });
-};
-utils.extend(FileSubmission, Model);
-FileSubmission.prototype.loadFile = function(cb) {
-    log.d("FileSubmission loadFile");
-    var fileName = this.getHashName();
-    var that = this;
-    localStorage.readFile(fileName, function(err, file) {
-        if (err) {
-            log.e("FileSubmission loadFile. Error reading file", fileName, err);
-            cb(err);
-        } else {
-            log.d("FileSubmission loadFile. File read correctly", fileName, file);
-            that.fileObj = file;
-            cb(null);
-        }
-    });
-};
-FileSubmission.prototype.getProps = function() {
-    if (this.fileObj) {
-        log.d("FileSubmissionDownload: file object found");
-        return this.fileObj;
-    } else {
-        log.e("FileSubmissionDownload: no file object found");
-    }
-};
-FileSubmission.prototype.setSubmissionId = function(submissionId) {
-    log.d("FileSubmission setSubmissionId.", submissionId);
-    this.set('submissionId', submissionId);
-};
-FileSubmission.prototype.getSubmissionId = function() {
-    return this.get('submissionId');
-};
-FileSubmission.prototype.getHashName = function() {
-    return this.get('data').hashName;
-};
-FileSubmission.prototype.getFieldId = function() {
-    return this.get('data').fieldId;
-};
-
-module.exports = FileSubmission;
-},{"./config":34,"./localStorage":54,"./log":55,"./model":56}],44:[function(_dereq_,module,exports){
-var Model = _dereq_("./model");
-var log = _dereq_("./log");
-var config = _dereq_("./config");
-var localStorage = _dereq_("./localStorage");
-var FileSubmission = _dereq_("./fileSubmission");
-
-function Base64FileSubmission(fileData) {
-    FileSubmission.call(this, fileData);
-    this.set('_type', 'base64fileSubmission');
-}
-
-utils.extend(Base64FileSubmission, FileSubmission);
-module.exports = Base64FileSubmission;
-},{"./config":34,"./fileSubmission":43,"./localStorage":54,"./log":55,"./model":56}],45:[function(_dereq_,module,exports){
-var Model = _dereq_("./model");
-var log = _dereq_("./log");
-var config = _dereq_("./config");
-var localStorage = _dereq_("./localStorage");
-var FileSubmission = _dereq_("./fileSubmission");
-
-
-function FileSubmissionDownload(fileData) {
-    log.d("FileSubmissionDownload ", fileData);
-    Model.call(this, {
-        '_type': 'fileSubmissionDownload',
-        'data': fileData
-    });
-}
-utils.extend(FileSubmissionDownload, Model);
-FileSubmissionDownload.prototype.setSubmissionId = function(submissionId) {
-    log.d("FileSubmission setSubmissionId.", submissionId);
-    this.set('submissionId', submissionId);
-};
-FileSubmissionDownload.prototype.getSubmissionId = function() {
-    log.d("FileSubmission getSubmissionId: ", this.get('submissionId'));
-    return this.get('submissionId', "");
-};
-FileSubmissionDownload.prototype.getHashName = function() {
-    log.d("FileSubmission getHashName: ", this.get('data').hashName);
-    return this.get('data', {}).hashName;
-};
-FileSubmissionDownload.prototype.getFieldId = function() {
-    log.d("FileSubmission getFieldId: ", this.get('data').fieldId);
-    return this.get('data', {}).fieldId;
-};
-FileSubmissionDownload.prototype.getFileMetaData = function() {
-    log.d("FileSubmission getFileMetaData: ", this.get('data'));
-    if (this.get('data')) {
-        log.d("FileSubmission getFileMetaData: data found", this.get('data'));
-    } else {
-        log.e("FileSubmission getFileMetaData: No data found");
-    }
-    return this.get('data', {});
-};
-FileSubmissionDownload.prototype.getFileGroupId = function() {
-    log.d("FileSubmission getFileGroupId: ", this.get('data'));
-    return this.get('data', {}).groupId || "notset";
-};
-FileSubmissionDownload.prototype.getRemoteFileURL = function() {
-    var self = this;
-    log.d("FileSubmission getRemoteFileURL: ");
-
-    //RemoteFileUrl = cloudHost + /mbaas/forms/submission/:submissionId/file/:fileGroupId
-    //Returned by the mbaas.
-    function buildRemoteFileUrl() {
-        var submissionId = self.getSubmissionId();
-        var fileGroupId = self.getFileGroupId();
-        var urlTemplate = config.get('formUrls', {}).fileSubmissionDownload;
-        if (urlTemplate) {
-            urlTemplate = urlTemplate.replace(":submissionId", submissionId);
-            urlTemplate = urlTemplate.replace(":fileGroupId", fileGroupId);
-            urlTemplate = urlTemplate.replace(":appId", config.get('appId', "notSet"));
-            return config.getCloudHost() + "/mbaas" + urlTemplate;
-        } else {
-            return "notset";
-        }
-    }
-
-    return buildRemoteFileUrl();
-};
-
-module.exports = FileSubmissionDownload;
-},{"./config":34,"./fileSubmission":43,"./localStorage":54,"./log":55,"./model":56}],46:[function(_dereq_,module,exports){
+},{"./config":34,"./localStorage":37,"./log":38,"./store":40,"./storeMbaas":41,"./utils":42}],36:[function(_dereq_,module,exports){
 var utils = _dereq_("./utils");
 var async = _dereq_('../../../libs/async');
 
@@ -13412,537 +12679,11 @@ module.exports = {
     fileToBase64: fileToBase64,
     getBasePath: getBasePath
 };
-},{"../../../libs/async":1,"./utils":66}],47:[function(_dereq_,module,exports){
-var Model = _dereq_("./model");
-var Page = _dereq_("./page");
-var Field = _dereq_("./field");
-var RulesEngine = _dereq_("./rulesEngine");
-var utils = _dereq_("./utils");
-var log = _dereq_("./log");
-var submission = _dereq_("./submission");
-
-var _forms = {};
-//cache of all forms. single instance for 1 formid
-/**
- * [Form description]
- * @param {[type]}   params  {formId: string, fromRemote:boolean(false), rawMode:false, rawData:JSON}
- * @param {Function} cb         [description]
- */
-function Form(params, cb) {
-    var that = this;
-    var rawMode = params.rawMode || false;
-    var rawData = params.rawData || null;
-    var formId = params.formId;
-    var fromRemote = params.fromRemote;
-    log.d("Form: ", rawMode, rawData, formId, fromRemote);
-
-    if (typeof fromRemote === 'function' || typeof cb === 'function') {
-        if (typeof fromRemote === 'function') {
-            cb = fromRemote;
-            fromRemote = false;
-        }
-    } else {
-        return log.e('a callback function is required for initialising form data. new Form (formId, [isFromRemote], cb)');
-    }
-
-    if (!formId) {
-        return cb('Cannot initialise a form object without an id. id:' + formId, null);
-    }
-
-
-    Model.call(that, {
-        '_id': formId,
-        '_type': 'form'
-    });
-    that.set('_id', formId);
-    that.setLocalId(that.genLocalId(formId));
-
-
-    function loadFromLocal() {
-        log.d("Form: loadFromLocal ", rawMode, rawData, formId, fromRemote);
-        if (_forms[formId]) {
-            //found form object in mem return it.
-            cb(null, _forms[formId]);
-            return _forms[formId];
-        }
-
-        function processRawFormJSON() {
-            that.fromJSON(rawData);
-            that.initialise();
-
-            _forms[that.getFormId()] = that;
-            return cb(null, that);
-        }
-
-        if (rawData) {
-            return processRawFormJSON();
-        } else {
-
-            /**
-             * No Form JSON object to process into Models, load the form from local
-             * storage.
-             */
-            that.refresh(false, function(err, form) {
-                if (err) {
-                    return cb(err);
-                }
-
-                form.initialise();
-
-                _forms[formId] = form;
-                return cb(null, form);
-            });
-        }
-    }
-
-
-    function loadFromRemote() {
-        log.d("Form: loadFromRemote", rawMode, rawData, formId, fromRemote);
-
-        function checkForUpdate(form) {
-            log.d("Form: checkForUpdate", rawMode, rawData, formId, fromRemote);
-            form.refresh(false, function(err, obj) {
-                if (err) {
-                    log.e("Error refreshing form from local: ", err);
-                }
-                if (forms.isFormUpdated(form)) {
-                    form.refresh(true, function(err, obj1) {
-                        if (err) {
-                            return cb(err, null);
-                        }
-                        form.initialise();
-
-                        _forms[formId] = obj1;
-                        return cb(err, obj1);
-                    });
-                } else {
-                    form.initialise();
-                    _forms[formId] = obj;
-                    cb(err, obj);
-                }
-            });
-        }
-
-        if (_forms[formId]) {
-            log.d("Form: loaded from cache", rawMode, rawData, formId, fromRemote);
-            //found form object in mem return it.
-            if (!forms.isFormUpdated(_forms[formId])) {
-                cb(null, _forms[formId]);
-                return _forms[formId];
-            }
-        }
-
-        checkForUpdate(that);
-    }
-
-    //Raw mode is for avoiding interaction with the mbaas
-    if (rawMode === true) {
-        loadFromLocal();
-    } else {
-        loadFromRemote();
-    }
-};
-
-utils.extend(Form, Model);
-
-Form.prototype.getLastUpdate = function() {
-    log.d("Form: getLastUpdate");
-    return this.get('lastUpdatedTimestamp');
-};
-Form.prototype.genLocalId = function(formId) {
-    formId = typeof(formId) === 'string' ? formId : this.get("_id", "");
-    return "form_" + formId;
-};
-/**
- * Initiliase form json to objects
- * @return {[type]} [description]
- */
-Form.prototype.initialise = function() {
-    this.filterAdminFields();
-    this.initialisePage();
-    this.initialiseFields();
-    this.initialiseRules();
-};
-/**
- * Admin fields should not be part of the form.
- */
-Form.prototype.filterAdminFields = function() {
-    var pages = this.getPagesDef();
-    var newFieldRef = {};
-
-    for (var pageIndex = 0; pageIndex < pages.length; pageIndex++) {
-        var page = pages[pageIndex];
-        var pageFields = page.fields;
-        var filteredFields = [];
-        var fieldInPageIndex = 0;
-
-        for (var fieldIndex = 0; fieldIndex < pageFields.length; fieldIndex++) {
-            var field = pageFields[fieldIndex];
-
-            if (!field.adminOnly) {
-                newFieldRef[field._id] = {
-                    page: pageIndex,
-                    field: fieldInPageIndex
-                };
-                fieldInPageIndex++;
-                filteredFields.push(field);
-            }
-        }
-
-        pages[pageIndex].fields = filteredFields;
-    }
-
-    this.set("pages", pages);
-    this.set("fieldRef", newFieldRef);
-};
-
-Form.prototype.initialiseFields = function() {
-    log.d("Form: initialiseFields");
-    var fieldsRef = this.getFieldRef();
-    this.fields = {};
-    for (var fieldId in fieldsRef) {
-        var fieldRef = fieldsRef[fieldId];
-        var pageIndex = fieldRef.page;
-        var fieldIndex = fieldRef.field;
-        if (pageIndex === undefined || fieldIndex === undefined) {
-            throw 'Corruptted field reference';
-        }
-        var fieldDef = this.getFieldDefByIndex(pageIndex, fieldIndex);
-        if (fieldDef) {
-            this.fields[fieldId] = new Field(fieldDef, this);
-        } else {
-            throw 'Field def is not found.';
-        }
-    }
-};
-Form.prototype.initialisePage = function() {
-    log.d("Form: initialisePage");
-    var pages = this.getPagesDef();
-    this.pages = [];
-    for (var i = 0; i < pages.length; i++) {
-        var pageDef = pages[i];
-        var pageModel = new Page(pageDef, this);
-        this.pages.push(pageModel);
-    }
-};
-Form.prototype.getPageNumberByFieldId = function(fieldId) {
-    if (fieldId) {
-        return this.getFieldRef()[fieldId].page;
-    } else {
-        return null;
-    }
-};
-Form.prototype.getPageModelList = function() {
-    return this.pages;
-};
-Form.prototype.getName = function() {
-    return this.get('name', '');
-};
-Form.prototype.getDescription = function() {
-    return this.get('description', '');
-};
-Form.prototype.getPageRules = function() {
-    return this.get('pageRules', []);
-};
-Form.prototype.getFieldRules = function() {
-    return this.get('fieldRules', []);
-};
-Form.prototype.getFieldRef = function() {
-    return this.get('fieldRef', {});
-};
-Form.prototype.getPagesDef = function() {
-    return this.get('pages', []);
-};
-Form.prototype.getPageRef = function() {
-    return this.get('pageRef', {});
-};
-Form.prototype.getFieldModelById = function(fieldId) {
-    return this.fields[fieldId];
-};
-/**
- * Finding a field model by the Field Code specified in the studio if it exists
- * Otherwise return null;
- * @param code - The code of the field that is being searched for
- */
-Form.prototype.getFieldModelByCode = function(code) {
-    var self = this;
-    if (!code || typeof(code) !== "string") {
-        return null;
-    }
-
-    for (var fieldId in self.fields) {
-        var field = self.fields[fieldId];
-        if (field.getCode() !== null && field.getCode() === code) {
-            return field;
-        }
-    }
-
-    return null;
-};
-Form.prototype.getFieldDefByIndex = function(pageIndex, fieldIndex) {
-    log.d("Form: getFieldDefByIndex: ", pageIndex, fieldIndex);
-    var pages = this.getPagesDef();
-    var page = pages[pageIndex];
-    if (page) {
-        var fields = page.fields ? page.fields : [];
-        var field = fields[fieldIndex];
-        if (field) {
-            return field;
-        }
-    }
-    log.e("Form: getFieldDefByIndex: No field found for page and field index: ", pageIndex, fieldIndex);
-    return null;
-};
-Form.prototype.getPageModelById = function(pageId) {
-    log.d("Form: getPageModelById: ", pageId);
-    var index = this.getPageRef()[pageId];
-    if (typeof index === 'undefined') {
-        log.e('page id is not found in pageRef: ' + pageId);
-    } else {
-        return this.pages[index];
-    }
-};
-Form.prototype.newSubmission = function() {
-    log.d("Form: newSubmission");
-    return submission.newInstance(this);
-};
-Form.prototype.getFormId = function() {
-    return this.get('_id');
-};
-Form.prototype.removeFromCache = function() {
-    log.d("Form: removeFromCache");
-    if (_forms[this.getFormId()]) {
-        delete _forms[this.getFormId()];
-    }
-};
-Form.prototype.getFileFieldsId = function() {
-    log.d("Form: getFileFieldsId");
-    var fieldsId = [];
-    for (var fieldId in this.fields) {
-        var field = this.fields[fieldId];
-        if (field.getType() === 'file' || field.getType() === 'photo' || field.getType() === 'signature') {
-            fieldsId.push(fieldId);
-        }
-    }
-    return fieldsId;
-};
-
-Form.prototype.getRuleEngine = function() {
-    log.d("Form: getRuleEngine");
-    if (this.rulesEngine) {
-        return this.rulesEngine;
-    } else {
-        var formDefinition = this.getProps();
-        this.rulesEngine = new RulesEngine(formDefinition);
-        return this.rulesEngine;
-    }
-};
-
-
-module.exports = Form;
-},{"./field":36,"./log":55,"./model":56,"./page":57,"./rulesEngine":58,"./submission":61,"./utils":66}],48:[function(_dereq_,module,exports){
-var Model = _dereq_("./model");
-var log = _dereq_("./log");
-var config = _dereq_("./config");
-
-function FormSubmission(submissionJSON) {
-    Model.call(this, {
-        '_type': 'formSubmission',
-        'data': submissionJSON
-    });
-}
-utils.extend(FormSubmission, Model);
-FormSubmission.prototype.getProps = function() {
-    return this.get('data');
-};
-FormSubmission.prototype.getFormId = function() {
-    if (!this.get('data')) {
-        log.e("No form data for form submission");
-    }
-
-    return this.get('data').formId;
-};
-
-module.exports = FormSubmission;
-},{"./config":34,"./log":55,"./model":56}],49:[function(_dereq_,module,exports){
-var Model = _dereq_("./model");
-var log = _dereq_("./log");
-var config = _dereq_("./config");
-
-function FormSubmissionComplete(submissionTask) {
-    Model.call(this, {
-        '_type': 'completeSubmission',
-        'submissionId': submissionTask.get('submissionId'),
-        'localSubmissionId': submissionTask.get('localSubmissionId')
-    });
-}
-utils.extend(FormSubmissionComplete, Model);
-
-module.exports = FormSubmissionComplete;
-},{"./config":34,"./log":55,"./model":56}],50:[function(_dereq_,module,exports){
-var Model = _dereq_("./model");
-var log = _dereq_("./log");
-var config = _dereq_("./config");
-
-function FormSubmissionDownload(uploadTask) {
-    Model.call(this, {
-        '_type': 'formSubmissionDownload',
-        'data': uploadTask
-    });
-}
-utils.extend(FormSubmissionDownload, Model);
-FormSubmission.prototype.getSubmissionId = function() {
-    return this.get('data').get("submissionId", "not-set");
-};
-
-module.exports = FormSubmissionDownload;
-},{"./config":34,"./log":55,"./model":56}],51:[function(_dereq_,module,exports){
-var Model = _dereq_("./model");
-var log = _dereq_("./log");
-var config = _dereq_("./config");
-
-function FormSubmissionStatus(submissionTask) {
-    Model.call(this, {
-        '_type': 'submissionStatus',
-        'submissionId': submissionTask.get('submissionId'),
-        'localSubmissionId': submissionTask.get('localSubmissionId')
-    });
-}
-utils.extend(FormSubmissionStatus, Model);
-
-module.exports = FormSubmissionStatus;
-},{"./config":34,"./log":55,"./model":56}],52:[function(_dereq_,module,exports){
-var Model = _dereq_("./model");
-var utils = _dereq_("./utils");
-var log = _dereq_("./log");
-
-function Forms() {
-    Model.call(this, {
-        '_type': 'forms',
-        '_ludid': 'forms_list',
-        'loaded': false
-    });
-}
-
-utils.extend(Forms, Model);
-
-Forms.prototype.isFormUpdated = function(formModel) {
-    var id = formModel.get('_id');
-    var formLastUpdate = formModel.getLastUpdate();
-    var formMeta = this.getFormMetaById(id);
-    if (formMeta) {
-        return formLastUpdate !== formMeta.lastUpdatedTimestamp;
-    } else {
-        //could have been deleted. leave it for now
-        return false;
-    }
-};
-Forms.prototype.setLocalId = function() {
-    log.e("Forms setLocalId. Not Permitted for Forms.prototype.");
-};
-Forms.prototype.getFormMetaById = function(formId) {
-    log.d("Forms getFormMetaById ", formId);
-    var forms = this.getFormsList();
-    for (var i = 0; i < forms.length; i++) {
-        var form = forms[i];
-        if (form._id === formId) {
-            return form;
-        }
-    }
-    log.e("Forms getFormMetaById: No form found for id: ", formId);
-    return null;
-};
-Forms.prototype.size = function() {
-    return this.get('forms').length;
-};
-Forms.prototype.getFormsList = function() {
-    return this.get('forms', []);
-};
-Forms.prototype.getFormIdByIndex = function(index) {
-    log.d("Forms getFormIdByIndex: ", index);
-    return this.getFormsList()[index]._id;
-};
-
-
-module.exports = new Forms();
-},{"./log":55,"./model":56,"./utils":66}],53:[function(_dereq_,module,exports){
-var log = _dereq_("./log");
-var config = _dereq_("./config");
-var submissions = _dereq_("./submissions");
-var uploadManager = _dereq_("./uploadManager");
-var theme = _dereq_("./theme");
-var forms = _dereq_("./forms");
-
-var init = function(params, cb) {
-    var def = {
-        'updateForms': true
-    };
-    if (typeof cb === 'undefined') {
-        cb = params;
-    } else {
-        for (var key in params) {
-            def[key] = params[key];
-        }
-    }
-
-    //init config module
-    var config = def.config || {};
-    config.init(config, function(err) {
-        if (err) {
-            log.e("Form config loading error: ", err);
-        }
-        log.loadLocal(function(err) {
-            if (err) {
-                console.error("Error loading config from local storage");
-            }
-
-            submissions.loadLocal(function(err) {
-                if (err) {
-                    console.error("Error loading submissions");
-                }
-
-                //Loading the current state of the uploadManager for any upload tasks that are still in progress.
-                uploadManager.loadLocal(function(err) {
-                    log.d("Upload Manager loaded from memory.");
-                    if (err) {
-                        log.e("Error loading upload manager from memory ", err);
-                    }
-
-                    //Starting any uploads that are queued
-                    uploadManager.start();
-                    //init forms module
-                    log.l("Refreshing Theme.");
-                    theme.refresh(true, function(err) {
-                        if (err) {
-                            log.e("Error refreshing theme ", err);
-                        }
-                        if (def.updateForms === true) {
-                            log.l("Refreshing Forms.");
-                            forms.refresh(true, function(err) {
-                                if (err) {
-                                    log.e("Error refreshing forms: ", err);
-                                }
-                                cb();
-                            });
-                        } else {
-                            cb();
-                        }
-                    });
-                });
-            });
-
-        });
-    });
-}
-
-module.exports = init;
-},{"./config":34,"./forms":52,"./log":55,"./submissions":62,"./theme":63,"./uploadManager":64}],54:[function(_dereq_,module,exports){
+},{"../../../libs/async":1,"./utils":42}],37:[function(_dereq_,module,exports){
 /**
  * Local storage stores a model's json definition persistently.
  */
 
-var Model = _dereq_("./model");
-var log = _dereq_("./log");
 var config = _dereq_("./config");
 var utils = _dereq_("./utils");
 var fileSystem = _dereq_("./fileSystem");
@@ -14206,7 +12947,7 @@ function _fhFileData(options, success, failure) {
 }
 
 module.exports = LocalStorage;
-},{"./config":34,"./fileSystem":46,"./log":55,"./model":56,"./store":59,"./utils":66}],55:[function(_dereq_,module,exports){
+},{"./config":34,"./fileSystem":36,"./store":40,"./utils":42}],38:[function(_dereq_,module,exports){
 /**
  * Async log module
  * @param  {[type]} module [description]
@@ -14214,27 +12955,23 @@ module.exports = LocalStorage;
  */
 
 var utils = _dereq_("./utils");
-var Model = _dereq_("./model");
 var config = _dereq_("./config");
 
 function Log() {
-    Model.call(this, {
-        '_type': 'log',
-        "_ludid": "log"
-    });
-    this.set("logs", []);
+    console.log("Init Log");
+    this.logs = [];
     this.isWriting = false;
     this.moreToWrite = false;
 }
 
-utils.extend(Log, Model);
 
 Log.prototype.info = function(logLevel, msgs) {
+    var self = this;
     if (config.get("logger") === true) {
         var levelString = "";
         var curLevel = config.get("log_level");
         var log_levels = config.get("log_levels");
-        var self = this;
+        
         if (typeof logLevel === "string") {
             levelString = logLevel;
             logLevel = log_levels.indexOf(logLevel.toLowerCase());
@@ -14337,32 +13074,22 @@ Log.prototype.sendLogs = function(cb) {
 
 
 module.exports = new Log();
-},{"./config":34,"./model":56,"./utils":66}],56:[function(_dereq_,module,exports){
+},{"./config":34,"./utils":42}],39:[function(_dereq_,module,exports){
 var utils = _dereq_("./utils");
 var localStorage = _dereq_("./localStorage");
 var dataAgent = _dereq_("./dataAgent");
 var Event = _dereq_('../../../libs/events');
+var _ = _dereq_('../../../libs/underscore.js');
 
-function Model(opt) {
+var Model = function(){
     this.props = {
         '_id': null,
         '_type': null,
         '_ludid': null
     };
-
     this.events = {};
-    if (typeof opt !== 'undefined') {
-        for (var key in opt) {
-            this.props[key] = opt[key];
-        }
-    }
-    this.touch();
 };
-Model.prototype.on = Event.on;
-Model.prototype.off = Event.removeListener;
 
-Model.prototype.clearEvents = Event.removeAllListeners;
-Model.prototype.emit = Event.emit;
 Model.prototype.getProps = function() {
     return this.props;
 };
@@ -14497,1665 +13224,11 @@ Model.prototype.setDataAgent = function(dataAgent) {
     this.dataAgent = dataAgent;
 };
 
+console.log("MODEL ", JSON.stringify(Model));
+
 module.exports = Model;
-},{"../../../libs/events":2,"./dataAgent":35,"./localStorage":54,"./utils":66}],57:[function(_dereq_,module,exports){
-/**
- * One form contains multiple pages
- */
-var Model = _dereq_("./model");
-var log = _dereq_("./log");
-var config = _dereq_("./config");
+},{"../../../libs/events":2,"../../../libs/underscore.js":7,"./dataAgent":35,"./localStorage":37,"./utils":42}],40:[function(_dereq_,module,exports){
 
-function Page(opt, parentForm) {
-    if (typeof opt === 'undefined' || typeof parentForm === 'undefined') {
-        log.e('Page initialise failed: new Page(pageDefinitionJSON, parentFormModel)');
-        return;
-    }
-    Model.call(this, {
-        '_type': 'page'
-    });
-    this.fromJSON(opt);
-    this.form = parentForm;
-    this.initialise();
-}
-utils.extend(Page, Model);
-Page.prototype.initialise = function() {
-    var fieldsDef = this.getFieldDef();
-    this.fieldsIds = [];
-    for (var i = 0; i < fieldsDef.length; i++) {
-        this.fieldsIds.push(fieldsDef[i]._id);
-    }
-};
-Page.prototype.setVisible = function(isVisible) {
-    this.set('visible', isVisible);
-    if (isVisible) {
-        this.emit('visible');
-    } else {
-        this.emit('hidden');
-    }
-};
-Page.prototype.getFieldDef = function() {
-    return this.get("fields", []);
-};
-Page.prototype.getFieldDef = function() {
-    return this.get("fields", []);
-};
-Page.prototype.getFieldModelList = function() {
-    var list = [];
-    for (var i = 0; i < this.fieldsIds.length; i++) {
-        list.push(this.form.getFieldModelById(this.fieldsIds[i]));
-    }
-    return list;
-};
-Page.prototype.checkForSectionBreaks = function() { //Checking for any sections
-    for (var i = 0; i < this.fieldsIds.length; i++) {
-        var fieldModel = this.form.getFieldModelById(this.fieldsIds[i]);
-        if (fieldModel && fieldModel.getType() === "sectionBreak") {
-            return true;
-        }
-    }
-    return false;
-};
-Page.prototype.getSections = function() { //Checking for any sections
-    var sectionList = {};
-    var currentSection = null;
-    var sectionBreaksExist = this.checkForSectionBreaks();
-    var insertSectionBreak = false;
-
-    if (sectionBreaksExist) {
-        //If there are section breaks, the first field in the form must be a section break. If not, add a placeholder
-        var firstField = this.form.getFieldModelById(this.fieldsIds[0]);
-
-        if (firstField.getType() !== "sectionBreak") {
-            insertSectionBreak = true;
-        }
-    } else {
-        return null;
-    }
-
-    for (var i = 0; i < this.fieldsIds.length; i++) {
-        var fieldModel = this.form.getFieldModelById(this.fieldsIds[i]);
-
-        if (insertSectionBreak && i === 0) { //Adding a first section.
-            currentSection = "sectionBreak" + i;
-            sectionList[currentSection] = sectionList[currentSection] ? sectionList[currentSection] : {
-                fields: []
-            };
-            sectionList[currentSection].title = "Section " + (i + 1);
-        }
-
-        if (currentSection !== null && fieldModel.getType() !== "sectionBreak") {
-            sectionList[currentSection].fields.push(fieldModel);
-        }
-
-        if (fieldModel.getType() === "sectionBreak") {
-            currentSection = "sectionBreak" + i;
-            sectionList[currentSection] = sectionList[currentSection] ? sectionList[currentSection] : {
-                fields: []
-            };
-            sectionList[currentSection].title = fieldModel.get('name', "Section " + (i + 1));
-            sectionList[currentSection].fields.push(fieldModel);
-        }
-    }
-
-    return sectionList;
-};
-Page.prototype.getFieldModelById = function(fieldId) {
-    return this.form.getFieldModelById(fieldId);
-};
-Page.prototype.getPageId = function() {
-    return this.get("_id", "");
-};
-Page.prototype.getName = function() {
-    return this.get('name', '');
-};
-Page.prototype.getDescription = function() {
-    return this.get('description', '');
-};
-Page.prototype.getFieldDef = function() {
-    return this.get('fields', []);
-};
-Page.prototype.getFieldModelList = function() {
-    var list = [];
-    for (var i = 0; i < this.fieldsIds.length; i++) {
-        list.push(this.form.getFieldModelById(this.fieldsIds[i]));
-    }
-
-    return list;
-};
-
-module.exports = Page;
-},{"./config":34,"./log":55,"./model":56}],58:[function(_dereq_,module,exports){
-/*! fh-forms - v0.8.00 -  */
-/*! async - v0.2.9 -  */
-/*! 2014-08-27 */
-/* This is the prefix file */
-
-var async = _dereq_('../../../libs/async');
-var _ = _dereq_('../../../libs/underscore');
-
-function rulesEngine(formDef) {
-    /*
-     * Sample Usage
-     *
-     * var engine = formsRulesEngine(form-definition);
-     *
-     * engine.validateForms(form-submission, function(err, res) {});
-     *      res:
-     *      {
-     *          "validation": {
-     *              "fieldId": {
-     *                  "fieldId": "",
-     *                  "valid": true,
-     *                  "errorMessages": [
-     *                      "length should be 3 to 5",
-     *                      "should not contain dammit",
-     *                      "should repeat at least 2 times"
-     *                  ]
-     *              },
-     *              "fieldId1": {
-     *
-     *              }
-     *          }
-     *      }
-     *
-     *
-     * engine.validateField(fieldId, submissionJSON, function(err,res) {});
-     *      // validate only field values on validation (no rules, no repeat checking)
-     *      res:
-     *      "validation":{
-     *              "fieldId":{
-     *                  "fieldId":"",
-     *                  "valid":true,
-     *                  "errorMessages":[
-     *                      "length should be 3 to 5",
-     *                      "should not contain dammit"
-     *                  ]
-     *              }
-     *          }
-     *
-     * engine.checkRules(submissionJSON, unction(err, res) {})
-     *      // check all rules actions
-     *      res:
-     *      {
-     *          "actions": {
-     *              "pages": {
-     *                  "targetId": {
-     *                      "targetId": "",
-     *                      "action": "show|hide"
-     *                  }
-     *              },
-     *              "fields": {
-     *
-     *              }
-     *          }
-     *      }
-     *
-     */
-
-    var FIELD_TYPE_CHECKBOX = "checkboxes";
-    var FIELD_TYPE_DATETIME = "dateTime";
-    var FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY = "date";
-    var FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY = "time";
-    var FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME = "datetime";
-
-    var formsRulesEngine = function(formDef) {
-        var initialised;
-
-        var definition = formDef;
-        var submission;
-
-        var fieldMap = {};
-        var adminFieldMap = {}; //Admin fields should not be part of a submission
-        var requiredFieldMap = {};
-        var submissionRequiredFieldsMap = {}; // map to hold the status of the required fields per submission
-        var fieldRulePredicateMap = {};
-        var fieldRuleSubjectMap = {};
-        var pageRulePredicateMap = {};
-        var pageRuleSubjectMap = {};
-        var submissionFieldsMap = {};
-        var validatorsMap = {
-            "text": validatorString,
-            "textarea": validatorString,
-            "number": validatorNumericString,
-            "emailAddress": validatorEmail,
-            "dropdown": validatorDropDown,
-            "radio": validatorDropDown,
-            "checkboxes": validatorCheckboxes,
-            "location": validatorLocation,
-            "locationMap": validatorLocationMap,
-            "photo": validatorFile,
-            "signature": validatorFile,
-            "file": validatorFile,
-            "dateTime": validatorDateTime,
-            "url": validatorString,
-            "sectionBreak": validatorSection
-        };
-
-        var validatorsClientMap = {
-            "text": validatorString,
-            "textarea": validatorString,
-            "number": validatorNumericString,
-            "emailAddress": validatorEmail,
-            "dropdown": validatorDropDown,
-            "radio": validatorDropDown,
-            "checkboxes": validatorCheckboxes,
-            "location": validatorLocation,
-            "locationMap": validatorLocationMap,
-            "photo": validatorAnyFile,
-            "signature": validatorAnyFile,
-            "file": validatorAnyFile,
-            "dateTime": validatorDateTime,
-            "url": validatorString,
-            "sectionBreak": validatorSection
-        };
-
-        var isFieldRuleSubject = function(fieldId) {
-            return !!fieldRuleSubjectMap[fieldId];
-        };
-
-        var isPageRuleSubject = function(pageId) {
-            return !!pageRuleSubjectMap[pageId];
-        };
-
-        function buildFieldMap(cb) {
-            // Iterate over all fields in form definition & build fieldMap
-            async.each(definition.pages, function(page, cbPages) {
-                async.each(page.fields, function(field, cbFields) {
-                    field.pageId = page._id;
-
-                    /**
-                     * If the field is an admin field, then it is not considered part of validation for a submission.
-                     */
-                    if (field.adminOnly) {
-                        adminFieldMap[field._id] = field;
-                        return cbFields();
-                    }
-
-                    field.fieldOptions = field.fieldOptions ? field.fieldOptions : {};
-                    field.fieldOptions.definition = field.fieldOptions.definition ? field.fieldOptions.definition : {};
-                    field.fieldOptions.validation = field.fieldOptions.validation ? field.fieldOptions.validation : {};
-
-                    fieldMap[field._id] = field;
-                    if (field.required) {
-                        requiredFieldMap[field._id] = {
-                            field: field,
-                            submitted: false,
-                            validated: false
-                        };
-                    }
-                    return cbFields();
-                }, function() {
-                    return cbPages();
-                });
-            }, cb);
-        }
-
-        function buildFieldRuleMaps(cb) {
-            // Iterate over all rules in form definition & build ruleSubjectMap
-            async.each(definition.fieldRules, function(rule, cbRules) {
-                async.each(rule.ruleConditionalStatements, function(ruleConditionalStatement, cbRuleConditionalStatements) {
-                    var fieldId = ruleConditionalStatement.sourceField;
-                    fieldRulePredicateMap[fieldId] = fieldRulePredicateMap[fieldId] || [];
-                    fieldRulePredicateMap[fieldId].push(rule);
-                    return cbRuleConditionalStatements();
-                }, function() {
-
-                    /**
-                     * Target fields are an array of fieldIds that can be targeted by a field rule
-                     * To maintain backwards compatibility, the case where the targetPage is not an array has to be considered
-                     * @type {*|Array}
-                     */
-                    if (Array.isArray(rule.targetField)) {
-                        async.each(rule.targetField, function(targetField, cb) {
-                            fieldRuleSubjectMap[targetField] = fieldRuleSubjectMap[targetField] || [];
-                            fieldRuleSubjectMap[targetField].push(rule);
-                            cb();
-                        }, cbRules);
-                    } else {
-                        fieldRuleSubjectMap[rule.targetField] = fieldRuleSubjectMap[rule.targetField] || [];
-                        fieldRuleSubjectMap[rule.targetField].push(rule);
-                        return cbRules();
-                    }
-                });
-            }, cb);
-        }
-
-        function buildPageRuleMap(cb) {
-            // Iterate over all rules in form definition & build ruleSubjectMap
-            async.each(definition.pageRules, function(rule, cbRules) {
-                async.each(rule.ruleConditionalStatements, function(ruleConditionalStatement, cbRulePredicates) {
-                    var fieldId = ruleConditionalStatement.sourceField;
-                    pageRulePredicateMap[fieldId] = pageRulePredicateMap[fieldId] || [];
-                    pageRulePredicateMap[fieldId].push(rule);
-                    return cbRulePredicates();
-                }, function() {
-
-                    /**
-                     * Target pages are an array of pageIds that can be targeted by a page rule
-                     * To maintain backwards compatibility, the case where the targetPage is not an array has to be considered
-                     * @type {*|Array}
-                     */
-                    if (Array.isArray(rule.targetPage)) {
-                        async.each(rule.targetPage, function(targetPage, cb) {
-                            pageRuleSubjectMap[targetPage] = pageRuleSubjectMap[targetPage] || [];
-                            pageRuleSubjectMap[targetPage].push(rule);
-                            cb();
-                        }, cbRules);
-                    } else {
-                        pageRuleSubjectMap[rule.targetPage] = pageRuleSubjectMap[rule.targetPage] || [];
-                        pageRuleSubjectMap[rule.targetPage].push(rule);
-                        return cbRules();
-                    }
-                });
-            }, cb);
-        }
-
-        function buildSubmissionFieldsMap(cb) {
-            submissionRequiredFieldsMap = JSON.parse(JSON.stringify(requiredFieldMap)); // clone the map for use with this submission
-            submissionFieldsMap = {}; // start with empty map, rulesEngine can be called with multiple submissions
-
-            // iterate over all the fields in the submissions and build a map for easier lookup
-            async.each(submission.formFields, function(formField, cb) {
-                if (!formField.fieldId) return cb(new Error("No fieldId in this submission entry: " + util.inspect(formField)));
-
-                /**
-                 * If the field passed in a submission is an admin field, then return an error.
-                 */
-                if (adminFieldMap[formField.fieldId]) {
-                    return cb("Submission " + formField.fieldId + " is an admin field. Admin fields cannot be passed to the rules engine.");
-                }
-
-                submissionFieldsMap[formField.fieldId] = formField;
-                return cb();
-            }, cb);
-        }
-
-        function init(cb) {
-            if (initialised) return cb();
-            async.parallel([
-                buildFieldMap,
-                buildFieldRuleMaps,
-                buildPageRuleMap
-            ], function(err) {
-                if (err) return cb(err);
-                initialised = true;
-                return cb();
-            });
-        }
-
-        function initSubmission(formSubmission, cb) {
-            init(function(err) {
-                if (err) return cb(err);
-
-                submission = formSubmission;
-                buildSubmissionFieldsMap(cb);
-            });
-        }
-
-        function getPreviousFieldValues(submittedField, previousSubmission, cb) {
-            if (previousSubmission && previousSubmission.formFields) {
-                async.filter(previousSubmission.formFields, function(formField, cb) {
-                    return cb(formField.fieldId.toString() === submittedField.fieldId.toString());
-                }, function(results) {
-                    var previousFieldValues = null;
-                    if (results && results[0] && results[0].fieldValues) {
-                        previousFieldValues = results[0].fieldValues;
-                    }
-                    return cb(undefined, previousFieldValues);
-                });
-            } else {
-                return cb();
-            }
-        }
-
-        function validateForm(submission, previousSubmission, cb) {
-            if ("function" === typeof previousSubmission) {
-                cb = previousSubmission;
-                previousSubmission = null;
-            }
-            init(function(err) {
-                if (err) return cb(err);
-
-                initSubmission(submission, function(err) {
-                    if (err) return cb(err);
-
-                    async.waterfall([
-
-                        function(cb) {
-                            return cb(undefined, {
-                                validation: {
-                                    valid: true
-                                }
-                            }); // any invalid fields will set this to false
-                        },
-                        function(res, cb) {
-                            validateSubmittedFields(res, previousSubmission, cb);
-                        },
-                        checkIfRequiredFieldsNotSubmitted
-                    ], function(err, results) {
-                        if (err) return cb(err);
-
-                        return cb(undefined, results);
-                    });
-                });
-            });
-        }
-
-        function validateSubmittedFields(res, previousSubmission, cb) {
-            // for each field, call validateField
-            async.each(submission.formFields, function(submittedField, callback) {
-                var fieldID = submittedField.fieldId;
-                var fieldDef = fieldMap[fieldID];
-
-                getPreviousFieldValues(submittedField, previousSubmission, function(err, previousFieldValues) {
-                    if (err) return callback(err);
-                    getFieldValidationStatus(submittedField, fieldDef, previousFieldValues, function(err, fieldRes) {
-                        if (err) return callback(err);
-
-                        if (!fieldRes.valid) {
-                            res.validation.valid = false; // indicate invalid form if any fields invalid
-                            res.validation[fieldID] = fieldRes; // add invalid field info to validate form result
-                        }
-
-                        return callback();
-                    });
-
-                });
-            }, function(err) {
-                if (err) {
-                    return cb(err);
-                }
-                return cb(undefined, res);
-            });
-        }
-
-        function checkIfRequiredFieldsNotSubmitted(res, cb) {
-            async.each(Object.keys(submissionRequiredFieldsMap), function(requiredFieldId, cb) {
-                var resField = {};
-                if (!submissionRequiredFieldsMap[requiredFieldId].submitted) {
-                    isFieldVisible(requiredFieldId, true, function(err, visible) {
-                        if (err) return cb(err);
-                        if (visible) { // we only care about required fields if they are visible
-                            resField.fieldId = requiredFieldId;
-                            resField.valid = false;
-                            resField.fieldErrorMessage = ["Required Field Not Submitted"];
-                            res.validation[requiredFieldId] = resField;
-                            res.validation.valid = false;
-                        }
-                        return cb();
-                    });
-                } else { // was included in submission
-                    return cb();
-                }
-            }, function(err) {
-                if (err) return cb(err);
-
-                return cb(undefined, res);
-            });
-        }
-
-        /*
-         * validate only field values on validation (no rules, no repeat checking)
-         *     res:
-         *     "validation":{
-         *             "fieldId":{
-         *                 "fieldId":"",
-         *                 "valid":true,
-         *                 "errorMessages":[
-         *                     "length should be 3 to 5",
-         *                     "should not contain dammit"
-         *                 ]
-         *             }
-         *         }
-         */
-        function validateField(fieldId, submission, cb) {
-            init(function(err) {
-                if (err) return cb(err);
-
-                initSubmission(submission, function(err) {
-                    if (err) return cb(err);
-
-                    var submissionField = submissionFieldsMap[fieldId];
-                    var fieldDef = fieldMap[fieldId];
-                    getFieldValidationStatus(submissionField, fieldDef, null, function(err, res) {
-                        if (err) return cb(err);
-                        var ret = {
-                            validation: {}
-                        };
-                        ret.validation[fieldId] = res;
-                        return cb(undefined, ret);
-                    });
-                });
-            });
-        }
-
-        /*
-         * validate only single field value (no rules, no repeat checking)
-         * cb(err, result)
-         * example of result:
-         * "validation":{
-         *         "fieldId":{
-         *             "fieldId":"",
-         *             "valid":true,
-         *             "errorMessages":[
-         *                 "length should be 3 to 5",
-         *                 "should not contain dammit"
-         *             ]
-         *         }
-         *     }
-         */
-        function validateFieldValue(fieldId, inputValue, valueIndex, cb) {
-            if ("function" === typeof valueIndex) {
-                cb = valueIndex;
-                valueIndex = 0;
-            }
-
-            init(function(err) {
-                if (err) return cb(err);
-                var fieldDefinition = fieldMap[fieldId];
-
-                var required = false;
-                if (fieldDefinition.repeating &&
-                    fieldDefinition.fieldOptions &&
-                    fieldDefinition.fieldOptions.definition &&
-                    fieldDefinition.fieldOptions.definition.minRepeat) {
-                    required = (valueIndex < fieldDefinition.fieldOptions.definition.minRepeat);
-                } else {
-                    required = fieldDefinition.required;
-                }
-
-                var validation = (fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) ? fieldDefinition.fieldOptions.validation : undefined;
-
-                if (validation && false === validation.validateImmediately) {
-                    var ret = {
-                        validation: {}
-                    };
-                    ret.validation[fieldId] = {
-                        "valid": true
-                    };
-                    return cb(undefined, ret);
-                }
-
-                if (fieldEmpty(inputValue)) {
-                    if (required) {
-                        return formatResponse("No value specified for required input", cb);
-                    } else {
-                        return formatResponse(undefined, cb); // optional field not supplied is valid
-                    }
-                }
-
-                // not empty need to validate
-                getClientValidatorFunction(fieldDefinition.type, function(err, validator) {
-                    if (err) return cb(err);
-
-                    validator(inputValue, fieldDefinition, undefined, function(err) {
-                        var message;
-                        if (err) {
-                            if (err.message) {
-                                message = err.message;
-                            } else {
-                                message = "Unknown error message";
-                            }
-                        }
-                        formatResponse(message, cb);
-                    });
-                });
-            });
-
-            function formatResponse(msg, cb) {
-                var messages = {
-                    errorMessages: []
-                };
-                if (msg) {
-                    messages.errorMessages.push(msg);
-                }
-                return createValidatorResponse(fieldId, messages, function(err, res) {
-                    if (err) return cb(err);
-                    var ret = {
-                        validation: {}
-                    };
-                    ret.validation[fieldId] = res;
-                    return cb(undefined, ret);
-                });
-            }
-        }
-
-        function createValidatorResponse(fieldId, messages, cb) {
-            // intentionally not checking err here, used further down to get validation errors
-            var res = {};
-            res.fieldId = fieldId;
-            res.errorMessages = messages.errorMessages || [];
-            res.fieldErrorMessage = messages.fieldErrorMessage || [];
-            async.some(res.errorMessages, function(item, cb) {
-                return cb(item !== null);
-            }, function(someErrors) {
-                res.valid = !someErrors && (res.fieldErrorMessage.length < 1);
-
-                return cb(undefined, res);
-            });
-        }
-
-        function getFieldValidationStatus(submittedField, fieldDef, previousFieldValues, cb) {
-            isFieldVisible(fieldDef._id, true, function(err, visible) {
-                if (err) {
-                    return cb(err);
-                }
-                validateFieldInternal(submittedField, fieldDef, previousFieldValues, visible, function(err, messages) {
-                    if (err) return cb(err);
-                    createValidatorResponse(submittedField.fieldId, messages, cb);
-                });
-            });
-        }
-
-        function getMapFunction(key, map, cb) {
-            var validator = map[key];
-            if (!validator) {
-                return cb(new Error("Invalid Field Type " + key));
-            }
-
-            return cb(undefined, validator);
-        }
-
-        function getValidatorFunction(fieldType, cb) {
-            return getMapFunction(fieldType, validatorsMap, cb);
-        }
-
-        function getClientValidatorFunction(fieldType, cb) {
-            return getMapFunction(fieldType, validatorsClientMap, cb);
-        }
-
-        function fieldEmpty(fieldValue) {
-            return ('undefined' === typeof fieldValue || null === fieldValue || "" === fieldValue); // empty string also regarded as not specified
-        }
-
-        function validateFieldInternal(submittedField, fieldDef, previousFieldValues, visible, cb) {
-            previousFieldValues = previousFieldValues || null;
-            countSubmittedValues(submittedField, function(err, numSubmittedValues) {
-                if (err) return cb(err);
-                async.series({
-                    valuesSubmitted: async.apply(checkValueSubmitted, submittedField, fieldDef, visible),
-                    repeats: async.apply(checkRepeat, numSubmittedValues, fieldDef, visible),
-                    values: async.apply(checkValues, submittedField, fieldDef, previousFieldValues)
-                }, function(err, results) {
-                    if (err) return cb(err);
-
-                    var fieldErrorMessages = [];
-                    if (results.valuesSubmitted) {
-                        fieldErrorMessages.push(results.valuesSubmitted);
-                    }
-                    if (results.repeats) {
-                        fieldErrorMessages.push(results.repeats);
-                    }
-                    return cb(undefined, {
-                        fieldErrorMessage: fieldErrorMessages,
-                        errorMessages: results.values
-                    });
-                });
-            });
-
-            return; // just functions below this
-
-            function checkValueSubmitted(submittedField, fieldDefinition, visible, cb) {
-                if (!fieldDefinition.required) return cb(undefined, null);
-
-                var valueSubmitted = submittedField && submittedField.fieldValues && (submittedField.fieldValues.length > 0);
-                //No value submitted is only an error if the field is visible.
-                if (!valueSubmitted && visible) {
-                    return cb(undefined, "No value submitted for field " + fieldDefinition.name);
-                }
-                return cb(undefined, null);
-
-            }
-
-            function countSubmittedValues(submittedField, cb) {
-                var numSubmittedValues = 0;
-                if (submittedField && submittedField.fieldValues && submittedField.fieldValues.length > 0) {
-                    for (var i = 0; i < submittedField.fieldValues.length; i += 1) {
-                        if (submittedField.fieldValues[i]) {
-                            numSubmittedValues += 1;
-                        }
-                    }
-                }
-                return cb(undefined, numSubmittedValues);
-            }
-
-            function checkRepeat(numSubmittedValues, fieldDefinition, visible, cb) {
-                //If the field is not visible, then checking the repeating values of the field is not required
-                if (!visible) {
-                    return cb(undefined, null);
-                }
-
-                if (fieldDefinition.repeating && fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.definition) {
-                    if (fieldDefinition.fieldOptions.definition.minRepeat) {
-                        if (numSubmittedValues < fieldDefinition.fieldOptions.definition.minRepeat) {
-                            return cb(undefined, "Expected min of " + fieldDefinition.fieldOptions.definition.minRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues);
-                        }
-                    }
-
-                    if (fieldDefinition.fieldOptions.definition.maxRepeat) {
-                        if (numSubmittedValues > fieldDefinition.fieldOptions.definition.maxRepeat) {
-                            return cb(undefined, "Expected max of " + fieldDefinition.fieldOptions.definition.maxRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues);
-                        }
-                    }
-                } else {
-                    if (numSubmittedValues > 1) {
-                        return cb(undefined, "Should not have multiple values for non-repeating field");
-                    }
-                }
-
-                return cb(undefined, null);
-            }
-
-            function checkValues(submittedField, fieldDefinition, previousFieldValues, cb) {
-                getValidatorFunction(fieldDefinition.type, function(err, validator) {
-                    if (err) return cb(err);
-                    async.map(submittedField.fieldValues, function(fieldValue, cb) {
-                        if (fieldEmpty(fieldValue)) {
-                            return cb(undefined, null);
-                        } else {
-                            validator(fieldValue, fieldDefinition, previousFieldValues, function(validationError) {
-                                var errorMessage;
-                                if (validationError) {
-                                    errorMessage = validationError.message || "Error during validation of field";
-                                } else {
-                                    errorMessage = null;
-                                }
-
-                                if (submissionRequiredFieldsMap[fieldDefinition._id]) { // set to true if at least one value
-                                    submissionRequiredFieldsMap[fieldDefinition._id].submitted = true;
-                                }
-
-                                return cb(undefined, errorMessage);
-                            });
-                        }
-                    }, function(err, results) {
-                        if (err) return cb(err);
-
-                        return cb(undefined, results);
-                    });
-                });
-            }
-        }
-
-        function convertSimpleFormatToRegex(field_format_string) {
-            var regex = "^";
-            var C = "c".charCodeAt(0);
-            var N = "n".charCodeAt(0);
-
-            var i;
-            var ch;
-            var match;
-            var len = field_format_string.length;
-            for (i = 0; i < len; i += 1) {
-                ch = field_format_string.charCodeAt(i);
-                switch (ch) {
-                    case C:
-                        match = "[a-zA-Z0-9]";
-                        break;
-                    case N:
-                        match = "[0-9]";
-                        break;
-                    default:
-                        var num = ch.toString(16).toUpperCase();
-                        match = "\\u" + ("0000" + num).substr(-4);
-                        break;
-                }
-                regex += match;
-            }
-            return regex + "$";
-        }
-
-        function validFormatRegex(fieldValue, field_format_string) {
-            var pattern = new RegExp(field_format_string);
-            return pattern.test(fieldValue);
-        }
-
-        function validFormat(fieldValue, field_format_mode, field_format_string) {
-            var regex;
-            if ("simple" === field_format_mode) {
-                regex = convertSimpleFormatToRegex(field_format_string);
-            } else if ("regex" === field_format_mode) {
-                regex = field_format_string;
-            } else { // should never be anything else, but if it is then default to simple format
-                regex = convertSimpleFormatToRegex(field_format_string);
-            }
-
-            return validFormatRegex(fieldValue, regex);
-        }
-
-        function validatorString(fieldValue, fieldDefinition, previousFieldValues, cb) {
-            if (typeof fieldValue !== "string") {
-                return cb(new Error("Expected string but got " + typeof(fieldValue)));
-            }
-
-            var validation = {};
-            if (fieldDefinition && fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) {
-                validation = fieldDefinition.fieldOptions.validation;
-            }
-
-            var field_format_mode = validation.field_format_mode || "";
-            field_format_mode = field_format_mode.trim();
-            var field_format_string = validation.field_format_string || "";
-            field_format_string = field_format_string.trim();
-
-            if (field_format_string && (field_format_string.length > 0) && field_format_mode && (field_format_mode.length > 0)) {
-                if (!validFormat(fieldValue, field_format_mode, field_format_string)) {
-                    return cb(new Error("field value in incorrect format, expected format: " + field_format_string + " but submission value is: " + fieldValue));
-                }
-            }
-
-            if (fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.min) {
-                if (fieldValue.length < fieldDefinition.fieldOptions.validation.min) {
-                    return cb(new Error("Expected minimum string length of " + fieldDefinition.fieldOptions.validation.min + " but submission is " + fieldValue.length + ". Submitted val: " + fieldValue));
-                }
-            }
-
-            if (fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.max) {
-                if (fieldValue.length > fieldDefinition.fieldOptions.validation.max) {
-                    return cb(new Error("Expected maximum string length of " + fieldDefinition.fieldOptions.validation.max + " but submission is " + fieldValue.length + ". Submitted val: " + fieldValue));
-                }
-            }
-
-            return cb();
-        }
-
-        function validatorNumericString(fieldValue, fieldDefinition, previousFieldValues, cb) {
-            var testVal = (fieldValue - 0); // coerce to number (or NaN)
-            /*jshint eqeqeq:false */
-            var numeric = (testVal == fieldValue); // testVal co-erced to numeric above, so numeric comparison and NaN != NaN
-
-            if (!numeric) {
-                return cb(new Error("Expected numeric but got: " + fieldValue));
-            }
-
-            return validatorNumber(testVal, fieldDefinition, previousFieldValues, cb);
-        }
-
-        function validatorNumber(fieldValue, fieldDefinition, previousFieldValues, cb) {
-            if (typeof fieldValue !== "number") {
-                return cb(new Error("Expected number but got " + typeof(fieldValue)));
-            }
-
-            if (fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation && fieldDefinition.fieldOptions.validation.min) {
-                if (fieldValue < fieldDefinition.fieldOptions.validation.min) {
-                    return cb(new Error("Expected minimum Number " + fieldDefinition.fieldOptions.validation.min + " but submission is " + fieldValue + ". Submitted number: " + fieldValue));
-                }
-            }
-
-            if (fieldDefinition.fieldOptions.validation.max) {
-                if (fieldValue > fieldDefinition.fieldOptions.validation.max) {
-                    return cb(new Error("Expected maximum Number " + fieldDefinition.fieldOptions.validation.max + " but submission is " + fieldValue + ". Submitted number: " + fieldValue));
-                }
-            }
-
-            return cb();
-        }
-
-        function validatorEmail(fieldValue, fieldDefinition, previousFieldValues, cb) {
-            if (typeof(fieldValue) !== "string") {
-                return cb(new Error("Expected string but got " + typeof(fieldValue)));
-            }
-
-            if (fieldValue.match(/[-0-9a-zA-Z.+_]+@[-0-9a-zA-Z.+_]+\.[a-zA-Z]{2,4}/g) === null) {
-                return cb(new Error("Invalid email address format: " + fieldValue));
-            } else {
-                return cb();
-            }
-        }
-
-        function validatorDropDown(fieldValue, fieldDefinition, previousFieldValues, cb) {
-            if (typeof(fieldValue) !== "string") {
-                return cb(new Error("Expected submission to be string but got " + typeof(fieldValue)));
-            }
-
-            //Check value exists in the field definition
-            if (!fieldDefinition.fieldOptions.definition.options) {
-                return cb(new Error("No options exist for field " + fieldDefinition.name));
-            }
-
-            async.some(fieldDefinition.fieldOptions.definition.options, function(dropdownOption, cb) {
-                return cb(dropdownOption.label === fieldValue);
-            }, function(found) {
-                if (!found) {
-                    return cb(new Error("Invalid option specified: " + fieldValue));
-                } else {
-                    return cb();
-                }
-            });
-        }
-
-        function validatorCheckboxes(fieldValue, fieldDefinition, previousFieldValues, cb) {
-            var minVal;
-            if (fieldDefinition && fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) {
-                minVal = fieldDefinition.fieldOptions.validation.min;
-            }
-            var maxVal;
-            if (fieldDefinition && fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) {
-                maxVal = fieldDefinition.fieldOptions.validation.max;
-            }
-
-            if (minVal) {
-                if (fieldValue.selections === null || fieldValue.selections === undefined || fieldValue.selections.length < minVal) {
-                    var len;
-                    if (fieldValue.selections) {
-                        len = fieldValue.selections.length;
-                    }
-                    return cb(new Error("Expected a minimum number of selections " + minVal + " but got " + len));
-                }
-            }
-
-            if (maxVal) {
-                if (fieldValue.selections) {
-                    if (fieldValue.selections.length > maxVal) {
-                        return cb(new Error("Expected a maximum number of selections " + maxVal + " but got " + fieldValue.selections.length));
-                    }
-                }
-            }
-
-            var optionsInCheckbox = [];
-
-            async.eachSeries(fieldDefinition.fieldOptions.definition.options, function(choice, cb) {
-                for (var choiceName in choice) {
-                    optionsInCheckbox.push(choice[choiceName]);
-                }
-                return cb();
-            }, function() {
-                async.eachSeries(fieldValue.selections, function(selection, cb) {
-                    if (typeof(selection) !== "string") {
-                        return cb(new Error("Expected checkbox submission to be string but got " + typeof(selection)));
-                    }
-
-                    if (optionsInCheckbox.indexOf(selection) === -1) {
-                        return cb(new Error("Checkbox Option " + selection + " does not exist in the field."));
-                    }
-
-                    return cb();
-                }, cb);
-            });
-        }
-
-        function validatorLocationMap(fieldValue, fieldDefinition, previousFieldValues, cb) {
-            if (fieldValue.lat && fieldValue["long"]) {
-                if (isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue["long"]))) {
-                    return cb(new Error("Invalid latitude and longitude values"));
-                } else {
-                    return cb();
-                }
-            } else {
-                return cb(new Error("Invalid object for locationMap submission"));
-            }
-        }
-
-
-        function validatorLocation(fieldValue, fieldDefinition, previousFieldValues, cb) {
-            if (fieldDefinition.fieldOptions.definition.locationUnit === "latlong") {
-                if (fieldValue.lat && fieldValue["long"]) {
-                    if (isNaN(parseFloat(fieldValue.lat)) || isNaN(parseFloat(fieldValue["long"]))) {
-                        return cb(new Error("Invalid latitude and longitude values"));
-                    } else {
-                        return cb();
-                    }
-                } else {
-                    return cb(new Error("Invalid object for latitude longitude submission"));
-                }
-            } else {
-                if (fieldValue.zone && fieldValue.eastings && fieldValue.northings) {
-                    //Zone must be 3 characters, eastings 6 and northings 9
-                    return validateNorthingsEastings(fieldValue, cb);
-                } else {
-                    return cb(new Error("Invalid object for northings easting submission. Zone, Eastings and Northings elemets are required"));
-                }
-            }
-
-            function validateNorthingsEastings(fieldValue, cb) {
-                if (typeof(fieldValue.zone) !== "string" || fieldValue.zone.length === 0) {
-                    return cb(new Error("Invalid zone definition for northings and eastings location. " + fieldValue.zone));
-                }
-
-                var east = parseInt(fieldValue.eastings, 10);
-                if (isNaN(east)) {
-                    return cb(new Error("Invalid eastings definition for northings and eastings location. " + fieldValue.eastings));
-                }
-
-                var north = parseInt(fieldValue.northings, 10);
-                if (isNaN(north)) {
-                    return cb(new Error("Invalid northings definition for northings and eastings location. " + fieldValue.northings));
-                }
-
-                return cb();
-            }
-        }
-
-        function validatorAnyFile(fieldValue, fieldDefinition, previousFieldValues, cb) {
-            // if any of the following validators return ok, then return ok.
-            validatorBase64(fieldValue, fieldDefinition, previousFieldValues, function(err) {
-                if (!err) {
-                    return cb();
-                }
-                validatorFile(fieldValue, fieldDefinition, previousFieldValues, function(err) {
-                    if (!err) {
-                        return cb();
-                    }
-                    validatorFileObj(fieldValue, fieldDefinition, previousFieldValues, function(err) {
-                        if (!err) {
-                            return cb();
-                        }
-                        return cb(err);
-                    });
-                });
-            });
-        }
-
-        function checkFileSize(fieldDefinition, fieldValue, sizeKey, cb) {
-            fieldDefinition = fieldDefinition || {};
-            var fieldOptions = fieldDefinition.fieldOptions || {};
-            var fieldOptionsDef = fieldOptions.definition || {};
-            var fileSizeMax = fieldOptionsDef.file_size || null; //FileSizeMax will be in KB. File size is in bytes
-
-            if (fileSizeMax !== null) {
-                var fieldValueSize = fieldValue[sizeKey];
-                var fieldValueSizeKB = 1;
-                if (fieldValueSize > 1000) {
-                    fieldValueSizeKB = fieldValueSize / 1000;
-                }
-                if (fieldValueSize > (fileSizeMax * 1000)) {
-                    return cb(new Error("File size is too large. File can be a maximum of " + fileSizeMax + "KB. Size of file selected: " + fieldValueSizeKB + "KB"));
-                } else {
-                    return cb();
-                }
-            } else {
-                return cb();
-            }
-        }
-
-        function validatorFile(fieldValue, fieldDefinition, previousFieldValues, cb) {
-            if (typeof fieldValue !== "object") {
-                return cb(new Error("Expected object but got " + typeof(fieldValue)));
-            }
-
-            var keyTypes = [{
-                keyName: "fileName",
-                valueType: "string"
-            }, {
-                keyName: "fileSize",
-                valueType: "number"
-            }, {
-                keyName: "fileType",
-                valueType: "string"
-            }, {
-                keyName: "fileUpdateTime",
-                valueType: "number"
-            }, {
-                keyName: "hashName",
-                valueType: "string"
-            }];
-
-            async.each(keyTypes, function(keyType, cb) {
-                var actualType = typeof fieldValue[keyType.keyName];
-                if (actualType !== keyType.valueType) {
-                    return cb(new Error("Expected " + keyType.valueType + " but got " + actualType));
-                }
-                if (keyType.keyName === "fileName" && fieldValue[keyType.keyName].length <= 0) {
-                    return cb(new Error("Expected value for " + keyType.keyName));
-                }
-
-                return cb();
-            }, function(err) {
-                if (err) return cb(err);
-
-                checkFileSize(fieldDefinition, fieldValue, "fileSize", function(err) {
-                    if (err) {
-                        return cb(err);
-                    }
-
-                    if (fieldValue.hashName.indexOf("filePlaceHolder") > -1) { //TODO abstract out to config
-                        return cb();
-                    } else if (previousFieldValues && previousFieldValues.hashName && previousFieldValues.hashName.indexOf(fieldValue.hashName) > -1) {
-                        return cb();
-                    } else {
-                        return cb(new Error("Invalid file placeholder text" + fieldValue.hashName));
-                    }
-                });
-            });
-        }
-
-        function validatorFileObj(fieldValue, fieldDefinition, previousFieldValues, cb) {
-            if ((typeof File !== "function")) {
-                return cb(new Error("Expected File object but got " + typeof(fieldValue)));
-            }
-
-            var keyTypes = [{
-                keyName: "name",
-                valueType: "string"
-            }, {
-                keyName: "size",
-                valueType: "number"
-            }];
-
-            async.each(keyTypes, function(keyType, cb) {
-                var actualType = typeof fieldValue[keyType.keyName];
-                if (actualType !== keyType.valueType) {
-                    return cb(new Error("Expected " + keyType.valueType + " but got " + actualType));
-                }
-                if (actualType === "string" && fieldValue[keyType.keyName].length <= 0) {
-                    return cb(new Error("Expected value for " + keyType.keyName));
-                }
-                if (actualType === "number" && fieldValue[keyType.keyName] <= 0) {
-                    return cb(new Error("Expected > 0 value for " + keyType.keyName));
-                }
-
-                return cb();
-            }, function(err) {
-                if (err) return cb(err);
-
-
-                checkFileSize(fieldDefinition, fieldValue, "size", function(err) {
-                    if (err) {
-                        return cb(err);
-                    }
-                    return cb();
-                });
-            });
-        }
-
-        function validatorBase64(fieldValue, fieldDefinition, previousFieldValues, cb) {
-            if (typeof fieldValue !== "string") {
-                return cb(new Error("Expected base64 string but got " + typeof(fieldValue)));
-            }
-
-            if (fieldValue.length <= 0) {
-                return cb(new Error("Expected base64 string but was empty"));
-            }
-
-            return cb();
-        }
-
-        function validatorDateTime(fieldValue, fieldDefinition, previousFieldValues, cb) {
-            var testDate;
-            var valid = false;
-            var parts = [];
-
-            if (typeof(fieldValue) !== "string") {
-                return cb(new Error("Expected string but got " + typeof(fieldValue)));
-            }
-
-            switch (fieldDefinition.fieldOptions.definition.datetimeUnit) {
-                case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-
-                    parts = fieldValue.split("/");
-                    valid = parts.length === 3;
-
-                    if (valid) {
-                        valid = isNumberBetween(parts[2], 1, 31);
-                    }
-
-                    if (valid) {
-                        valid = isNumberBetween(parts[1], 1, 12);
-                    }
-
-                    if (valid) {
-                        valid = isNumberBetween(parts[0], 1000, 9999);
-                    }
-
-                    try {
-                        if (valid) {
-                            testDate = new Date(parts[3], parts[1], parts[0]);
-                        } else {
-                            testDate = new Date(fieldValue);
-                        }
-                        valid = (testDate.toString() !== "Invalid Date");
-                    } catch (e) {
-                        valid = false;
-                    }
-
-                    if (valid) {
-                        return cb();
-                    } else {
-                        return cb(new Error("Invalid date value " + fieldValue + ". Date format is YYYY/MM/DD"));
-                    }
-                    break;
-                case FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY:
-                    parts = fieldValue.split(':');
-                    valid = (parts.length === 2) || (parts.length === 3);
-                    if (valid) {
-                        valid = isNumberBetween(parts[0], 0, 23);
-                    }
-                    if (valid) {
-                        valid = isNumberBetween(parts[1], 0, 59);
-                    }
-                    if (valid && (parts.length === 3)) {
-                        valid = isNumberBetween(parts[2], 0, 59);
-                    }
-                    if (valid) {
-                        return cb();
-                    } else {
-                        return cb(new Error("Invalid time value " + fieldValue + ". Time format is HH:MM:SS"));
-                    }
-                    break;
-                case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-                    parts = fieldValue.split(/[- :]/);
-
-                    valid = (parts.length === 6) || (parts.length === 5);
-
-                    if (valid) {
-                        valid = isNumberBetween(parts[2], 1, 31);
-                    }
-
-                    if (valid) {
-                        valid = isNumberBetween(parts[1], 1, 12);
-                    }
-
-                    if (valid) {
-                        valid = isNumberBetween(parts[0], 1000, 9999);
-                    }
-
-                    if (valid) {
-                        valid = isNumberBetween(parts[3], 0, 23);
-                    }
-                    if (valid) {
-                        valid = isNumberBetween(parts[4], 0, 59);
-                    }
-                    if (valid && parts.length === 6) {
-                        valid = isNumberBetween(parts[5], 0, 59);
-                    } else {
-                        parts[5] = 0;
-                    }
-
-                    try {
-                        if (valid) {
-                            testDate = new Date(parts[0], parts[1], parts[2], parts[3], parts[4], parts[5]);
-                        } else {
-                            testDate = new Date(fieldValue);
-                        }
-
-                        valid = (testDate.toString() !== "Invalid Date");
-                    } catch (e) {
-                        valid = false;
-                    }
-
-                    if (valid) {
-                        return cb();
-                    } else {
-                        return cb(new Error("Invalid dateTime string " + fieldValue + ". dateTime format is YYYY/MM/DD HH:MM:SS"));
-                    }
-                    break;
-                default:
-                    return cb(new Error("Invalid dateTime fieldtype " + fieldDefinition.fieldOptions.definition.datetimeUnit));
-            }
-        }
-
-        function validatorSection(value, fieldDefinition, previousFieldValues, cb) {
-            return cb(new Error("Should not submit section field: " + fieldDefinition.name));
-        }
-
-        function rulesResult(rules, cb) {
-            var visible = true;
-
-            // Itterate over each rule that this field is a predicate of
-            async.each(rules, function(rule, cbRule) {
-                // For each rule, itterate over the predicate fields and evaluate the rule
-                var predicateMapQueries = [];
-                var predicateMapPassed = [];
-                async.each(rule.ruleConditionalStatements, function(ruleConditionalStatement, cbPredicates) {
-                    var field = fieldMap[ruleConditionalStatement.sourceField];
-                    var passed = false;
-                    var submissionValues = [];
-                    var condition;
-                    var testValue;
-                    if (submissionFieldsMap[ruleConditionalStatement.sourceField] && submissionFieldsMap[ruleConditionalStatement.sourceField].fieldValues) {
-                        submissionValues = submissionFieldsMap[ruleConditionalStatement.sourceField].fieldValues;
-                        condition = ruleConditionalStatement.restriction;
-                        testValue = ruleConditionalStatement.sourceValue;
-
-                        // Validate rule predictes on the first entry only.
-                        passed = isConditionActive(field, submissionValues[0], testValue, condition);
-                    }
-                    predicateMapQueries.push({
-                        "field": field,
-                        "submissionValues": submissionValues,
-                        "condition": condition,
-                        "testValue": testValue,
-                        "passed": passed
-                    });
-
-                    if (passed) {
-                        predicateMapPassed.push(field);
-                    }
-                    return cbPredicates();
-                }, function(err) {
-                    if (err) cbRule(err);
-
-                    function rulesPassed(condition, passed, queries) {
-                        return ((condition === "and") && ((passed.length === queries.length))) || // "and" condition - all rules must pass
-                        ((condition === "or") && ((passed.length > 0))); // "or" condition - only one rule must pass
-                    }
-
-                    /**
-                     * If any rule condition that targets the field/page hides that field/page, then the page is hidden.
-                     * Hiding the field/page takes precedence over any show. This will maintain consistency.
-                     * E.g. if x is y then show p1,p2 takes precendence over if x is z then hide p1, p2
-                     */
-                    if (rulesPassed(rule.ruleConditionalOperator, predicateMapPassed, predicateMapQueries)) {
-                        visible = (rule.type === "show") && visible;
-                    } else {
-                        visible = (rule.type !== "show") && visible;
-                    }
-
-                    return cbRule();
-                });
-            }, function(err) {
-                if (err) return cb(err);
-
-                return cb(undefined, visible);
-            });
-        }
-
-        function isPageVisible(pageId, cb) {
-            init(function(err) {
-                if (err) return cb(err);
-                if (isPageRuleSubject(pageId)) { // if the page is the target of a rule
-                    return rulesResult(pageRuleSubjectMap[pageId], cb); // execute page rules
-                } else {
-                    return cb(undefined, true); // if page is not subject of any rule then must be visible
-                }
-            });
-        }
-
-        function isFieldVisible(fieldId, checkContainingPage, cb) {
-            /*
-             * fieldId = Id of field to check for reule predeciate references
-             * checkContainingPage = if true check page containing field, and return false if the page is hidden
-             */
-            init(function(err) {
-                if (err) return cb(err);
-
-                // Fields are visable by default
-                var field = fieldMap[fieldId];
-
-                /**
-                 * If the field is an admin field, the rules engine returns an error, as admin fields cannot be the subject of rules engine actions.
-                 */
-                if (adminFieldMap[fieldId]) {
-                    return cb(new Error("Submission " + fieldId + " is an admin field. Admin fields cannot be passed to the rules engine."));
-                } else if (!field) {
-                    return cb(new Error("Field does not exist in form"));
-                }
-
-                async.waterfall([
-
-                    function testPage(cb) {
-                        if (checkContainingPage) {
-                            isPageVisible(field.pageId, cb);
-                        } else {
-                            return cb(undefined, true);
-                        }
-                    },
-                    function testField(pageVisible, cb) {
-                        if (!pageVisible) { // if page containing field is not visible then don't need to check field
-                            return cb(undefined, false);
-                        }
-
-                        if (isFieldRuleSubject(fieldId)) { // If the field is the subject of a rule it may have been hidden
-                            return rulesResult(fieldRuleSubjectMap[fieldId], cb); // execute field rules
-                        } else {
-                            return cb(undefined, true); // if not subject of field rules then can't be hidden
-                        }
-                    }
-                ], cb);
-            });
-        }
-
-        /*
-         * check all rules actions
-         *      res:
-         *      {
-         *          "actions": {
-         *              "pages": {
-         *                  "targetId": {
-         *                      "targetId": "",
-         *                      "action": "show|hide"
-         *                  }
-         *              },
-         *              "fields": {
-         *              }
-         *          }
-         *      }
-         */
-        function checkRules(submissionJSON, cb) {
-            init(function(err) {
-                if (err) return cb(err);
-
-                initSubmission(submissionJSON, function(err) {
-                    if (err) return cb(err);
-                    var actions = {};
-
-                    async.parallel([
-
-                        function(cb) {
-                            actions.fields = {};
-                            async.eachSeries(Object.keys(fieldRuleSubjectMap), function(fieldId, cb) {
-                                isFieldVisible(fieldId, false, function(err, fieldVisible) {
-                                    if (err) return cb(err);
-                                    actions.fields[fieldId] = {
-                                        targetId: fieldId,
-                                        action: (fieldVisible ? "show" : "hide")
-                                    };
-                                    return cb();
-                                });
-                            }, cb);
-                        },
-                        function(cb) {
-                            actions.pages = {};
-                            async.eachSeries(Object.keys(pageRuleSubjectMap), function(pageId, cb) {
-                                isPageVisible(pageId, function(err, pageVisible) {
-                                    if (err) return cb(err);
-                                    actions.pages[pageId] = {
-                                        targetId: pageId,
-                                        action: (pageVisible ? "show" : "hide")
-                                    };
-                                    return cb();
-                                });
-                            }, cb);
-                        }
-                    ], function(err) {
-                        if (err) return cb(err);
-
-                        return cb(undefined, {
-                            actions: actions
-                        });
-                    });
-                });
-            });
-        }
-
-        return {
-            validateForm: validateForm,
-            validateField: validateField,
-            validateFieldValue: validateFieldValue,
-            checkRules: checkRules,
-
-            // The following are used internally, but exposed for tests
-            validateFieldInternal: validateFieldInternal,
-            initSubmission: initSubmission,
-            isFieldVisible: isFieldVisible,
-            isConditionActive: isConditionActive
-        };
-    };
-
-    function isNumberBetween(num, min, max) {
-        var numVal = parseInt(num, 10);
-        return (!isNaN(numVal) && (numVal >= min) && (numVal <= max));
-    }
-
-    function cvtTimeToSeconds(fieldValue) {
-        var seconds = 0;
-        if (typeof fieldValue === "string") {
-            var parts = fieldValue.split(':');
-            valid = (parts.length === 2) || (parts.length === 3);
-            if (valid) {
-                valid = isNumberBetween(parts[0], 0, 23);
-                seconds += (parseInt(parts[0], 10) * 60 * 60);
-            }
-            if (valid) {
-                valid = isNumberBetween(parts[1], 0, 59);
-                seconds += (parseInt(parts[1], 10) * 60);
-            }
-            if (valid && (parts.length === 3)) {
-                valid = isNumberBetween(parts[2], 0, 59);
-                seconds += parseInt(parts[2], 10);
-            }
-        }
-        return seconds;
-    }
-
-    function isConditionActive(field, fieldValue, testValue, condition) {
-
-        var fieldType = field.type;
-        var fieldOptions = field.fieldOptions ? field.fieldOptions : {};
-
-        if (typeof(fieldValue) === 'undefined' || fieldValue === null) {
-            return false;
-        }
-
-        function numericalComparison(condition, fieldValue, testValue) {
-            var fieldValNum = parseInt(fieldValue, 10);
-            var testValNum = parseInt(testValue, 10);
-
-            if (isNaN(fieldValNum) || isNaN(testValNum)) {
-                return false;
-            }
-
-            if ("is equal to" === condition) {
-                return fieldValNum === testValNum;
-            } else if ("is less than" === condition) {
-                return fieldValNum < testValNum;
-            } else if ("is greater than" === condition) {
-                return fieldValNum > testValNum;
-            } else {
-                return false;
-            }
-        }
-
-        var valid = true;
-        if ("is equal to" === condition) {
-            valid = numericalComparison("is equal to", fieldValue, testValue);
-        } else if ("is greater than" === condition) {
-            valid = numericalComparison("is greater than", fieldValue, testValue);
-        } else if ("is less than" === condition) {
-            valid = numericalComparison("is less than", fieldValue, testValue);
-        } else if ("is at" === condition) {
-            valid = false;
-            if (fieldType === FIELD_TYPE_DATETIME) {
-                switch (fieldOptions.definition.datetimeUnit) {
-                    case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-                        try {
-                            valid = (new Date(new Date(fieldValue).toDateString()).getTime() === new Date(new Date(testValue).toDateString()).getTime());
-                        } catch (e) {
-                            valid = false;
-                        }
-                        break;
-                    case FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY:
-                        valid = cvtTimeToSeconds(fieldValue) === cvtTimeToSeconds(testValue);
-                        break;
-                    case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-                        try {
-                            valid = (new Date(fieldValue).getTime() === new Date(testValue).getTime());
-                        } catch (e) {
-                            valid = false;
-                        }
-                        break;
-                    default:
-                        valid = false; // TODO should raise error here?
-                        break;
-                }
-            }
-        } else if ("is before" === condition) {
-            valid = false;
-            if (fieldType === FIELD_TYPE_DATETIME) {
-                switch (fieldOptions.definition.datetimeUnit) {
-                    case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-                        try {
-                            valid = (new Date(new Date(fieldValue).toDateString()).getTime() < new Date(new Date(testValue).toDateString()).getTime());
-                        } catch (e) {
-                            valid = false;
-                        }
-                        break;
-                    case FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY:
-                        valid = cvtTimeToSeconds(fieldValue) < cvtTimeToSeconds(testValue);
-                        break;
-                    case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-                        try {
-                            valid = (new Date(fieldValue).getTime() < new Date(testValue).getTime());
-                        } catch (e) {
-                            valid = false;
-                        }
-                        break;
-                    default:
-                        valid = false; // TODO should raise error here?
-                        break;
-                }
-            }
-        } else if ("is after" === condition) {
-            valid = false;
-            if (fieldType === FIELD_TYPE_DATETIME) {
-                switch (fieldOptions.definition.datetimeUnit) {
-                    case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-                        try {
-                            valid = (new Date(new Date(fieldValue).toDateString()).getTime() > new Date(new Date(testValue).toDateString()).getTime());
-                        } catch (e) {
-                            valid = false;
-                        }
-                        break;
-                    case FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY:
-                        valid = cvtTimeToSeconds(fieldValue) > cvtTimeToSeconds(testValue);
-                        break;
-                    case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-                        try {
-                            valid = (new Date(fieldValue).getTime() > new Date(testValue).getTime());
-                        } catch (e) {
-                            valid = false;
-                        }
-                        break;
-                    default:
-                        valid = false; // TODO should raise error here?
-                        break;
-                }
-            }
-        } else if ("is" === condition) {
-            if (fieldType === FIELD_TYPE_CHECKBOX) {
-                valid = fieldValue && fieldValue.selections && fieldValue.selections.indexOf(testValue) !== -1;
-            } else {
-                valid = fieldValue === testValue;
-            }
-        } else if ("is not" === condition) {
-            if (fieldType === FIELD_TYPE_CHECKBOX) {
-                valid = fieldValue && fieldValue.selections && fieldValue.selections.indexOf(testValue) === -1;
-            } else {
-                valid = fieldValue !== testValue;
-            }
-        } else if ("contains" === condition) {
-            valid = fieldValue.indexOf(testValue) !== -1;
-        } else if ("does not contain" === condition) {
-            valid = fieldValue.indexOf(testValue) === -1;
-        } else if ("begins with" === condition) {
-            valid = fieldValue.substring(0, testValue.length) === testValue;
-        } else if ("ends with" === condition) {
-            valid = fieldValue.substring(Math.max(0, (fieldValue.length - testValue.length)), fieldValue.length) === testValue;
-        } else {
-            valid = false;
-        }
-
-        return valid;
-    }
-}
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = rulesEngine;
-}
-},{"../../../libs/async":1,"../../../libs/underscore":7}],59:[function(_dereq_,module,exports){
-var Model = _dereq_("./model");
-var log = _dereq_("./log");
-var config = _dereq_("./config");
 
 function Store(name) {
     this.name = name;
@@ -16182,8 +13255,7 @@ Store.prototype.upsert = function(model, cb) {
 };
 
 module.exports = Store;
-},{"./config":34,"./log":55,"./model":56}],60:[function(_dereq_,module,exports){
-var Model = _dereq_("./model");
+},{}],41:[function(_dereq_,module,exports){
 var log = _dereq_("./log");
 var config = _dereq_("./config");
 var utils = _dereq_("./utils");
@@ -16332,2396 +13404,17 @@ function _getUrl(model) {
 }
 
 module.exports = MBaaS;
-},{"./config":34,"./log":55,"./model":56,"./store":59,"./utils":66,"./web":67}],61:[function(_dereq_,module,exports){
-//implmenetation
-var _submissions = {};
-//cache in mem for single reference usage.
-var Model = _dereq_("./model");
-var submissions = _dereq_("./submissions");
-var log = _dereq_("./log");
-var utils = _dereq_("./utils");
-var config = _dereq_("./config");
-var uploadManager = _dereq_("./uploadManager");
-var submissions = _dereq_("./submissions");
-var localStorage = _dereq_("./localStorage");
-var Form = _dereq_("./form");
-
-var statusMachine = {
-    'new': [
-        'draft',
-        'pending'
-    ],
-    'draft': [
-        'pending',
-        'draft'
-    ],
-    'pending': [
-        'inprogress',
-        'error',
-        'draft'
-    ],
-    'inprogress': [
-        'pending',
-        'error',
-        'inprogress',
-        'downloaded',
-        'queued'
-    ],
-    'submitted': [],
-    'error': [
-        'draft',
-        'pending',
-        'error'
-    ],
-    'downloaded': [],
-    'queued': ['error', 'submitted']
-};
-
-function Submission(form, params) {
-    params = params || {};
-    log.d("Submission: ", params);
-    Model.call(this, {
-        '_type': 'submission'
-    });
-    if (typeof form !== 'undefined' && form) {
-        this.set('formName', form.get('name'));
-        this.set('formId', form.get('_id'));
-        this.set('deviceFormTimestamp', form.getLastUpdate());
-        this.set('createDate', utils.getTime());
-        this.set('timezoneOffset', utils.getTime(true));
-        this.set('appId', config.get('appId'));
-        this.set('appEnvironment', config.get('env'));
-        this.set('appCloudName', '');
-        this.set('comments', []);
-        this.set('formFields', []);
-        this.set('saveDate', null);
-        this.set('submitDate', null);
-        this.set('uploadStartDate', null);
-        this.set('submittedDate', null);
-        this.set('userId', null);
-        this.set('filesInSubmission', []);
-        this.set('deviceId', config.get('deviceId'));
-        this.transactionMode = false;
-    } else {
-        this.set('appId', config.get('appId'));
-        if (params.submissionId) {
-            this.set('downloadSubmission', true);
-            this.setRemoteSubmissionId(params.submissionId);
-        } else {
-            this.set('status', 'new');
-        }
-    }
-    this.set('status', 'new');
-    this.genLocalId();
-    var localId = this.getLocalId();
-    _submissions[localId] = this;
-}
-
-utils.extend(Submission, Model);
-
-/**
- * save current submission as draft
- * @return {[type]} [description]
- */
-Submission.prototype.saveDraft = function(cb) {
-    log.d("Submission saveDraft: ");
-    var targetStatus = 'draft';
-    var that = this;
-    this.set('timezoneOffset', utils.getTime(true));
-    this.set('saveDate', utils.getTime());
-    this.changeStatus(targetStatus, function(err) {
-        if (err) {
-            return cb(err);
-        } else {
-            that.emit('savedraft');
-            cb(null, null);
-        }
-    });
-};
-Submission.prototype.validateField = function(fieldId, cb) {
-    log.d("Submission validateField: ", fieldId);
-    var that = this;
-    this.getForm(function(err, form) {
-        if (err) {
-            cb(err);
-        } else {
-            var submissionData = that.getProps();
-            var ruleEngine = form.getRuleEngine();
-            ruleEngine.validateField(fieldId, submissionData, cb);
-        }
-    });
-};
-Submission.prototype.checkRules = function(cb) {
-    log.d("Submission checkRules: ");
-    var self = this;
-    this.getForm(function(err, form) {
-        if (err) {
-            cb(err);
-        } else {
-            var submission = self.getProps();
-            var ruleEngine = form.getRuleEngine();
-            ruleEngine.checkRules(submission, cb);
-        }
-    });
-};
-
-Submission.prototype.performValidation = function(cb) {
-    var self = this;
-    self.getForm(function(err, form) {
-        if (err) {
-            log.e("Submission submit: Error getting form ", err);
-            return cb(err);
-        }
-        var ruleEngine = form.getRuleEngine();
-        var submission = self.getProps();
-        ruleEngine.validateForm(submission, cb);
-    });
-};
-
-/**
- * Validate the submission only.
- */
-Submission.prototype.validateSubmission = function(cb) {
-    var self = this;
-
-    self.performValidation(function(err, res) {
-        if (err) {
-            return cb(err);
-        }
-        var validation = res.validation;
-        if (validation.valid) {
-            return cb(null, validation.valid);
-        } else {
-            self.emit('validationerror', validation);
-            cb(null, validation.valid);
-        }
-    });
-};
-
-/**
- * submit current submission to remote
- * @param  {Function} cb [description]
- * @return {[type]}      [description]
- */
-Submission.prototype.submit = function(cb) {
-    var that = this;
-    log.d("Submission submit: ");
-    var targetStatus = 'pending';
-    var validateResult = true;
-
-    this.set('timezoneOffset', utils.getTime(true));
-    that.performValidation(function(err, res) {
-        if (err) {
-            log.e("Submission submit validateForm: Error validating form ", err);
-            cb(err);
-        } else {
-            log.d("Submission submit: validateForm. Completed result", res);
-            var validation = res.validation;
-            if (validation.valid) {
-                log.d("Submission submit: validateForm. Completed Form Valid", res);
-                that.set('submitDate', new Date());
-                that.changeStatus(targetStatus, function(error) {
-                    if (error) {
-                        cb(error);
-                    } else {
-                        that.emit('submit');
-                        cb(null, null);
-                    }
-                });
-            } else {
-                log.d("Submission submit: validateForm. Completed Validation error", res);
-                that.emit('validationerror', validation);
-                cb('Validation error');
-            }
-        }
-    });
-};
-Submission.prototype.getUploadTask = function(cb) {
-    var taskId = this.getUploadTaskId();
-    if (taskId) {
-        uploadManager.getTaskById(taskId, cb);
-    } else {
-        cb(null, null);
-    }
-};
-Submission.prototype.getFormId = function() {
-    return this.get("formId");
-};
-/**
- * If a submission is a download submission, the JSON definition of the form
- * that it was submitted against is contained in the submission.
- */
-Submission.prototype.getFormSubmittedAgainst = function() {
-    return this.get("formSubmittedAgainst");
-};
-Submission.prototype.getDownloadTask = function(cb) {
-    var self = this;
-    log.d("getDownloadTask");
-    if (self.isDownloadSubmission()) {
-        self.getUploadTask(cb);
-    } else {
-        if (cb && typeof(cb) === 'function') {
-            log.e("Submission is not a download submission");
-            return cb("Submission is not a download submission");
-        }
-    }
-};
-Submission.prototype.cancelUploadTask = function(cb) {
-    var targetStatus = 'submit';
-    var that = this;
-    uploadManager.cancelSubmission(this, function(err) {
-        if (err) {
-            log.e(err);
-        }
-        that.changeStatus(targetStatus, cb);
-    });
-};
-Submission.prototype.getUploadTaskId = function() {
-    return this.get('uploadTaskId');
-};
-Submission.prototype.setUploadTaskId = function(utId) {
-    this.set('uploadTaskId', utId);
-};
-Submission.prototype.isInProgress = function() {
-    return this.get("status") === "inprogress";
-};
-Submission.prototype.isDownloaded = function() {
-    return this.get("status") === "downloaded";
-};
-Submission.prototype.isSubmitted = function() {
-    return this.get("status") === "submitted";
-};
-Submission.prototype.submitted = function(cb) {
-    var self = this;
-    if (self.isDownloadSubmission()) {
-        var errMsg = "Downloaded submissions should not call submitted function.";
-        log.e(errMsg);
-        return cb(errMsg);
-    }
-    log.d("Submission submitted called");
-
-    var targetStatus = 'submitted';
-
-    self.set('submittedDate', utils.getTime());
-    self.changeStatus(targetStatus, function(err) {
-        if (err) {
-            log.e("Error setting submitted status " + err);
-            cb(err);
-        } else {
-            log.d("Submitted status set for submission " + self.get('submissionId') + " with localId " + self.getLocalId());
-            self.emit('submitted', self.get('submissionId'));
-            cb(null, null);
-        }
-    });
-};
-Submission.prototype.queued = function(cb) {
-    var self = this;
-    if (self.isDownloadSubmission()) {
-        var errMsg = "Downloaded submissions should not call queued function.";
-        log.e(errMsg);
-        return cb(errMsg);
-    }
-
-    var targetStatus = 'queued';
-    self.set('queuedDate', utils.getTime());
-    self.changeStatus(targetStatus, function(err) {
-        if (err) {
-            log.e("Error setting queued status " + err);
-            cb(err);
-        } else {
-            log.d("Queued status set for submission " + self.get('submissionId') + " with localId " + self.getLocalId());
-            self.emit('queued', self.get('submissionId'));
-            cb(null, self);
-        }
-    });
-};
-Submission.prototype.downloaded = function(cb) {
-    log.d("Submission Downloaded called");
-    var that = this;
-    var targetStatus = 'downloaded';
-
-    that.set('downloadedDate', utils.getTime());
-    that.changeStatus(targetStatus, function(err) {
-        if (err) {
-            log.e("Error setting downloaded status " + err);
-            cb(err);
-        } else {
-            log.d("Downloaded status set for submission " + that.get('submissionId') + " with localId " + that.getLocalId());
-            that.emit('downloaded', that.get('submissionId'));
-            cb(null, that);
-        }
-    });
-};
-//joint form id and submissions timestamp.
-Submission.prototype.genLocalId = function() {
-    var lid = utils.localId(this);
-    var formId = this.get('formId') || Math.ceil(Math.random() * 100000);
-    this.setLocalId(formId + '_' + lid);
-};
-/**
- * change status and save the submission locally and register to submissions list.
- * @param {[type]} status [description]
- */
-Submission.prototype.changeStatus = function(status, cb) {
-    if (this.isStatusValid(status)) {
-        var that = this;
-        this.set('status', status);
-        this.saveToList(function(err) {
-            if (err) {
-                log.e(err);
-            }
-        });
-        this.saveLocal(cb);
-    } else {
-        log.e('Target status is not valid: ' + status);
-        cb('Target status is not valid: ' + status);
-    }
-};
-Submission.prototype.upload = function(cb) {
-    var targetStatus = "inprogress";
-    var self = this;
-    if (this.isStatusValid(targetStatus)) {
-        this.set("status", targetStatus);
-        this.set("uploadStartDate", utils.getTime());
-        submissions.updateSubmissionWithoutSaving(this);
-        uploadManager.queueSubmission(self, function(err, ut) {
-            if (err) {
-                cb(err);
-            } else {
-                ut.set("error", null);
-                ut.saveLocal(function(err) {
-                    if (err) {
-                        log.e("Error saving upload task: " + err);
-                    }
-                });
-                self.emit("inprogress", ut);
-                ut.on("progress", function(progress) {
-                    log.d("Emitting upload progress for submission: " + self.getLocalId() + JSON.stringify(progress));
-                    self.emit("progress", progress);
-                });
-                cb(null, ut);
-            }
-        });
-    } else {
-        return cb("Invalid Status to upload a form submission.");
-    }
-};
-Submission.prototype.download = function(cb) {
-    var that = this;
-    log.d("Starting download for submission: " + that.getLocalId());
-    var targetStatus = "pending";
-    if (this.isStatusValid(targetStatus)) {
-        this.set("status", targetStatus);
-        targetStatus = "inprogress";
-        if (this.isStatusValid(targetStatus)) {
-            this.set("status", targetStatus);
-            //Status is valid, add the submission to the
-            uploadManager.queueSubmission(that, function(err, downloadTask) {
-                if (err) {
-                    return cb(err);
-                }
-                downloadTask.set("error", null);
-                downloadTask.saveLocal(function(err) {
-                    if (err) {
-                        log.e("Error saving download task: " + err);
-                    }
-                });
-                that.emit("inprogress", downloadTask);
-                downloadTask.on("progress", function(progress) {
-                    log.d("Emitting download progress for submission: " + that.getLocalId() + JSON.stringify(progress));
-                    that.emit("progress", progress);
-                });
-                return cb(null, downloadTask);
-            });
-        } else {
-            return cb("Invalid Status to dowload a form submission");
-        }
-    } else {
-        return cb("Invalid Status to download a form submission.");
-    }
-};
-Submission.prototype.saveToList = function(cb) {
-    submissions.saveSubmission(this, cb);
-};
-Submission.prototype.error = function(errorMsg, cb) {
-    this.set('errorMessage', errorMsg);
-    var targetStatus = 'error';
-    this.changeStatus(targetStatus, cb);
-    this.emit('error', errorMsg);
-};
-Submission.prototype.getStatus = function() {
-    return this.get('status');
-};
-/**
- * check if a target status is valid
- * @param  {[type]}  targetStatus [description]
- * @return {Boolean}              [description]
- */
-Submission.prototype.isStatusValid = function(targetStatus) {
-    log.d("isStatusValid. Target Status: " + targetStatus + " Current Status: " + this.get('status').toLowerCase());
-    var status = this.get('status').toLowerCase();
-    var nextStatus = statusMachine[status];
-    if (nextStatus.indexOf(targetStatus) > -1) {
-        return true;
-    } else {
-        this.set('status', 'error');
-        return false;
-    }
-};
-Submission.prototype.addComment = function(msg, user) {
-    var now = utils.getTime();
-    var ts = now.getTime();
-    var newComment = {
-        'madeBy': typeof user === 'undefined' ? '' : user.toString(),
-        'madeOn': now,
-        'value': msg,
-        'timeStamp': ts
-    };
-    this.getComments().push(newComment);
-    return ts;
-};
-Submission.prototype.getComments = function() {
-    return this.get('comments');
-};
-Submission.prototype.removeComment = function(timeStamp) {
-    var comments = this.getComments();
-    for (var i = 0; i < comments.length; i++) {
-        var comment = comments[i];
-        if (comment.timeStamp === timeStamp) {
-            comments.splice(i, 1);
-            return;
-        }
-    }
-};
-
-Submission.prototype.populateFilesInSubmission = function() {
-    var self = this;
-    var tmpFileNames = [];
-
-    var submissionFiles = self.getSubmissionFiles();
-    for (var fieldValIndex = 0; fieldValIndex < submissionFiles.length; fieldValIndex++) {
-        if (submissionFiles[fieldValIndex].fileName) {
-            tmpFileNames.push(submissionFiles[fieldValIndex].fileName);
-        } else if (submissionFiles[fieldValIndex].hashName) {
-            tmpFileNames.push(submissionFiles[fieldValIndex].hashName);
-        }
-    }
-
-    self.set("filesInSubmission", submissionFiles);
-};
-
-Submission.prototype.getSubmissionFiles = function() {
-    var self = this;
-    log.d("In getSubmissionFiles: " + self.getLocalId());
-    var submissionFiles = [];
-
-    var formFields = self.getFormFields();
-
-    for (var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++) {
-        var tmpFieldValues = formFields[formFieldIndex].fieldValues || [];
-        for (var fieldValIndex = 0; fieldValIndex < tmpFieldValues.length; fieldValIndex++) {
-            if (tmpFieldValues[fieldValIndex].fileName) {
-                submissionFiles.push(tmpFieldValues[fieldValIndex]);
-            } else if (tmpFieldValues[fieldValIndex].hashName) {
-                submissionFiles.push(tmpFieldValues[fieldValIndex]);
-            }
-        }
-
-    }
-
-    return submissionFiles;
-};
-
-/**
- * Add a value to submission.
- * This will not cause the field been validated.
- * Validation should happen:
- * 1. onblur (field value)
- * 2. onsubmit (whole submission json)
- *
- * @param {[type]} params   {"fieldId","value","index":optional}
- * @param {} cb(err,res) callback function when finished
- * @return true / error message
- */
-Submission.prototype.addInputValue = function(params, cb) {
-    log.d("Adding input value: ", JSON.stringify(params || {}));
-    var that = this;
-    var fieldId = params.fieldId;
-    var inputValue = params.value;
-
-    if (inputValue !== null && typeof(inputValue) !== 'undefined') {
-        var index = params.index === undefined ? -1 : params.index;
-        this.getForm(function(err, form) {
-            var fieldModel = form.getFieldModelById(fieldId);
-            if (that.transactionMode) {
-                if (!that.tmpFields[fieldId]) {
-                    that.tmpFields[fieldId] = [];
-                }
-
-                params.isStore = false; //Don't store the files until the transaction is complete
-                fieldModel.processInput(params, function(err, result) {
-                    if (err) {
-                        return cb(err);
-                    } else {
-                        if (index > -1) {
-                            that.tmpFields[fieldId][index] = result;
-                        } else {
-                            that.tmpFields[fieldId].push(result);
-                        }
-
-                        return cb(null, result);
-                    }
-                });
-            } else {
-                var target = that.getInputValueObjectById(fieldId);
-
-                //File already exists for this input, overwrite rather than create a new file
-                if (target.fieldValues[index]) {
-                    if (typeof(target.fieldValues[index].hashName) === "string") {
-                        params.previousFile = target.fieldValues[index];
-                    }
-                }
-
-
-                fieldModel.processInput(params, function(err, result) {
-                    if (err) {
-                        return cb(err);
-                    } else {
-                        if (index > -1) {
-                            target.fieldValues[index] = result;
-                        } else {
-                            target.fieldValues.push(result);
-                        }
-
-                        if (typeof(result.hashName) === "string") {
-                            that.pushFile(result.hashName);
-                        }
-
-                        return cb(null, result);
-                    }
-                });
-            }
-        });
-    } else {
-        log.e("addInputValue: Input value was null. Params: " + fieldId);
-        return cb(null, {});
-    }
-};
-Submission.prototype.pushFile = function(hashName) {
-    var subFiles = this.get('filesInSubmission', []);
-    if (typeof(hashName) === "string") {
-        if (subFiles.indexOf(hashName) === -1) {
-            subFiles.push(hashName);
-            this.set('filesInSubmission', subFiles);
-        }
-    }
-};
-Submission.prototype.removeFileValue = function(hashName) {
-    var subFiles = this.get('filesInSubmission', []);
-    if (typeof(hashName) === "string" && subFiles.indexOf(hashName) > -1) {
-        subFiles.splice(subFiles.indexOf(hashName), 1);
-        this.set('filesInSubmission', subFiles);
-    }
-};
-Submission.prototype.getInputValueByFieldId = function(fieldId, cb) {
-    var self = this;
-    var values = this.getInputValueObjectById(fieldId).fieldValues;
-    this.getForm(function(err, form) {
-        var fieldModel = form.getFieldModelById(fieldId);
-        fieldModel.convertSubmission(values, cb);
-    });
-};
-/**
- * Reset submission
- * @return {[type]} [description]
- */
-Submission.prototype.reset = function() {
-    var self = this;
-    self.clearLocalSubmissionFiles(function(err) {
-        self.set('formFields', []);
-    });
-};
-Submission.prototype.isDownloadSubmission = function() {
-    return this.get("downloadSubmission") === true;
-};
-
-Submission.prototype.getSubmissionFile = function(fileName, cb) {
-    localStorage.readFile(fileName, cb);
-};
-Submission.prototype.clearLocalSubmissionFiles = function(cb) {
-    log.d("In clearLocalSubmissionFiles");
-    var self = this;
-    var filesInSubmission = self.get("filesInSubmission", []);
-    log.d("Files to clear ", filesInSubmission);
-    var localFileName = "";
-
-    for (var fileMetaObject in filesInSubmission) {
-        log.d("Clearing file " + filesInSubmission[fileMetaObject]);
-        localStorage.removeEntry(filesInSubmission[fileMetaObject], function(err) {
-            if (err) {
-                log.e("Error removing files from " + err);
-            }
-        });
-    }
-    cb();
-};
-Submission.prototype.startInputTransaction = function() {
-    this.transactionMode = true;
-    this.tmpFields = {};
-};
-Submission.prototype.endInputTransaction = function(succeed) {
-    this.transactionMode = false;
-    var tmpFields = {};
-    var fieldId = "";
-    var valIndex = 0;
-    var valArr = [];
-    var val = "";
-    if (succeed) {
-        tmpFields = this.tmpFields;
-        for (fieldId in tmpFields) {
-            var target = this.getInputValueObjectById(fieldId);
-            valArr = tmpFields[fieldId];
-            for (valIndex = 0; valIndex < valArr.length; valIndex++) {
-                val = valArr[valIndex];
-                target.fieldValues.push(val);
-                if (typeof(val.hashName) === "string") {
-                    this.pushFile(val.hashName);
-                }
-            }
-        }
-        this.tmpFields = {};
-    } else {
-        //clear any files set as part of the transaction
-        tmpFields = this.tmpFields;
-        this.tmpFields = {};
-        for (fieldId in tmpFields) {
-            valArr = tmpFields[fieldId];
-            for (valIndex = 0; valIndex < valArr.length; valIndex++) {
-                val = valArr[valIndex];
-                if (typeof(val.hashName) === "string") {
-                    //This is a file, needs to be removed
-                    localStorage.removeEntry(val.hashName, function(err) {
-                        log.e("Error removing file from transaction ", err);
-                    });
-                }
-            }
-        }
-    }
-};
-/**
- * remove an input value from submission
- * @param  {[type]} fieldId field id
- * @param  {[type]} index (optional) the position of the value will be removed if it is repeated field.
- * @return {[type]}         [description]
- */
-Submission.prototype.removeFieldValue = function(fieldId, index) {
-    var self = this;
-    var targetArr = [];
-    var valRemoved = {};
-    if (this.transactionMode) {
-        targetArr = this.tmpFields.fieldId;
-    } else {
-        targetArr = this.getInputValueObjectById(fieldId).fieldId;
-    }
-    if (typeof index === 'undefined') {
-        valRemoved = targetArr.splice(0, targetArr.length);
-    } else {
-        if (targetArr.length > index) {
-            valRemoved = targetArr.splice(index, 1);
-        }
-    }
-
-    if (typeof(valRemoved.hashName) === "string") {
-        localStorage.removeEntry(valRemoved.hashName, function(err) {
-            if (err) {
-                log.e("Error removing file: ", err);
-            } else {
-                self.removeFileValue(valRemoved.hashName);
-            }
-        });
-    }
-};
-Submission.prototype.getInputValueObjectById = function(fieldId) {
-    var formFields = this.getFormFields();
-    for (var i = 0; i < formFields.length; i++) {
-        var formField = formFields[i];
-
-        if (formField.fieldId._id) {
-            if (formField.fieldId._id === fieldId) {
-                return formField;
-            }
-        } else {
-            if (formField.fieldId === fieldId) {
-                return formField;
-            }
-        }
-    }
-    var newField = {
-        'fieldId': fieldId,
-        'fieldValues': []
-    };
-    formFields.push(newField);
-    return newField;
-};
-/**
- * get form model related to this submission.
- * @return {[type]} [description]
- */
-Submission.prototype.getForm = function(cb) {
-    var formId = this.get('formId');
-
-    if (formId) {
-        log.d("FormId found for getForm: " + formId);
-        new Form({
-            'formId': formId,
-            'rawMode': true
-        }, cb);
-    } else {
-        log.e("No form Id specified for getForm");
-        return cb("No form Id specified for getForm");
-    }
-};
-Submission.prototype.reloadForm = function(cb) {
-    log.d("Submission reload form");
-    var formId = this.get('formId');
-    var self = this;
-    new Form({
-        formId: formId,
-        'rawMode': true
-    }, function(err, form) {
-        if (err) {
-            cb(err);
-        } else {
-            self.form = form;
-            if (!self.get('deviceFormTimestamp', null)) {
-                self.set('deviceFormTimestamp', form.getLastUpdate());
-            }
-            cb(null, form);
-        }
-    });
-};
-/**
- * Retrieve all file fields related value
- * If the submission has been downloaded, there is no gurantee that the form is  on-device.
- * @return {[type]} [description]
- */
-Submission.prototype.getFileInputValues = function(cb) {
-    var self = this;
-    self.getFileFieldsId(function(err, fileFieldIds) {
-        if (err) {
-            return cb(err);
-        }
-        return cb(null, self.getInputValueArray(fileFieldIds));
-    });
-};
-
-Submission.prototype.getFormFields = function() {
-    var formFields = this.get("formFields", []);
-
-    //Removing null values
-    for (var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++) {
-        formFields[formFieldIndex].fieldValues = formFields[formFieldIndex].fieldValues || [];
-        formFields[formFieldIndex].fieldValues = formFields[formFieldIndex].fieldValues.filter(function(fieldValue) {
-            return fieldValue !== null && typeof(fieldValue) !== "undefined";
-        });
-    }
-
-    return formFields;
-};
-
-Submission.prototype.getFileFieldsId = function(cb) {
-    var self = this;
-    var formFieldIds = [];
-
-    if (self.isDownloadSubmission()) {
-        //For Submission downloads, there needs to be a scan through the formFields param
-        var formFields = self.getFormFields();
-
-        for (var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++) {
-            var formFieldEntry = formFields[formFieldIndex].fieldId || {};
-            if (formFieldEntry.type === 'file' || formFieldEntry.type === 'photo' || formFieldEntry.type === 'signature') {
-                if (formFieldEntry._id) {
-                    formFieldIds.push(formFieldEntry._id);
-                }
-            }
-        }
-        return cb(null, formFieldIds);
-    } else {
-        self.getForm(function(err, form) {
-            if (err) {
-                log.e("Error getting form for getFileFieldsId" + err);
-                return cb(err);
-            }
-            return cb(err, form.getFileFieldsId());
-        });
-    }
-};
-
-Submission.prototype.updateFileLocalURI = function(fileDetails, newLocalFileURI, cb) {
-    log.d("updateFileLocalURI: " + newLocalFileURI);
-    var self = this;
-    fileDetails = fileDetails || {};
-
-    if (fileDetails.fileName && newLocalFileURI) {
-        //Search for the file placeholder name.
-        self.findFilePlaceholderFieldId(fileDetails.fileName, function(err, fieldDetails) {
-            if (err) {
-                return cb(err);
-            }
-            if (fieldDetails.fieldId) {
-                var tmpObj = self.getInputValueObjectById(fieldDetails.fieldId).fieldValues[fieldDetails.valueIndex];
-                tmpObj.localURI = newLocalFileURI;
-                self.getInputValueObjectById(fieldDetails.fieldId).fieldValues[fieldDetails.valueIndex] = tmpObj;
-                self.saveLocal(cb);
-            } else {
-                log.e("No file field matches the placeholder name " + fileDetails.fileName);
-                return cb("No file field matches the placeholder name " + fileDetails.fileName);
-            }
-        });
-    } else {
-        log.e("Submission: updateFileLocalURI : No fileName for submissionId : " + JSON.stringify(fileDetails));
-        return cb("Submission: updateFileLocalURI : No fileName for submissionId : " + JSON.stringify(fileDetails));
-    }
-};
-
-Submission.prototype.findFilePlaceholderFieldId = function(filePlaceholderName, cb) {
-    var self = this;
-    var fieldDetails = {};
-    self.getFileFieldsId(function(err, fieldIds) {
-        for (var i = 0; i < fieldIds.length; i++) {
-            var fieldId = fieldIds[i];
-            var inputValue = self.getInputValueObjectById(fieldId);
-            for (var j = 0; j < inputValue.fieldValues.length; j++) {
-                var tmpObj = inputValue.fieldValues[j];
-                if (tmpObj) {
-                    if (tmpObj.fileName !== null && tmpObj.fileName === filePlaceholderName) {
-                        fieldDetails.fieldId = fieldId;
-                        fieldDetails.valueIndex = j;
-                    }
-                }
-            }
-        }
-        return cb(null, fieldDetails);
-    });
-};
-
-Submission.prototype.getInputValueArray = function(fieldIds) {
-    var rtn = [];
-    for (var i = 0; i < fieldIds.length; i++) {
-        var fieldId = fieldIds[i];
-        var inputValue = this.getInputValueObjectById(fieldId);
-        for (var j = 0; j < inputValue.fieldValues.length; j++) {
-            var tmpObj = inputValue.fieldValues[j];
-            if (tmpObj) {
-                tmpObj.fieldId = fieldId;
-                rtn.push(tmpObj);
-            }
-        }
-    }
-    return rtn;
-};
-Submission.prototype.clearLocal = function(cb) {
-    var self = this;
-    //remove from uploading list
-    uploadManager.cancelSubmission(self, function(err, uploadTask) {
-        if (err) {
-            log.e(err);
-            return cb(err);
-        }
-        //remove from submission list
-        submissions.removeSubmission(self.getLocalId(), function(err) {
-            if (err) {
-                log.e(err);
-                return cb(err);
-            }
-            self.clearLocalSubmissionFiles(function() {
-                Model.clearLocal.call(self, function(err) {
-                    if (err) {
-                        log.e(err);
-                        return cb(err);
-                    }
-                    cb(null, null);
-                });
-            });
-        });
-    });
-};
-Submission.prototype.getRemoteSubmissionId = function() {
-    return this.get("submissionId", "");
-};
-Submission.prototype.setRemoteSubmissionId = function(submissionId) {
-    if (submissionId) {
-        this.set("submissionId", submissionId);
-    }
-};
-
-function newInstance(form, params) {
-    params = params ? params : {};
-    var sub = new Submission(form, params);
-
-    if (params.submissionId) {
-        submissions.updateSubmissionWithoutSaving(sub);
-    }
-    return sub;
-}
-
-function fromLocal(localId, cb) {
-    log.d("Submission fromLocal: ", localId);
-    if (_submissions[localId]) {
-        log.d("Submission fromLocal from cache: ", localId);
-        //already loaded
-        cb(null, _submissions[localId]);
-    } else {
-        //load from storage
-        log.d("Submission fromLocal not in cache. Loading from local storage.: ", localId);
-        var submissionObject = new Submission();
-        submissionObject.setLocalId(localId);
-        submissionObject.loadLocal(function(err, submission) {
-            if (err) {
-                log.e("Submission fromLocal. Error loading from local: ", localId, err);
-                cb(err);
-            } else {
-                log.d("Submission fromLocal. Load from local sucessfull: ", localId);
-                if (submission.isDownloadSubmission()) {
-                    return cb(null, submission);
-                } else {
-                    submission.reloadForm(function(err, res) {
-                        if (err) {
-                            log.e("Submission fromLocal. reloadForm. Error re-loading form: ", localId, err);
-                            cb(err);
-                        } else {
-                            log.d("Submission fromLocal. reloadForm. Re-loading form successfull: ", localId);
-                            _submissions[localId] = submission;
-                            cb(null, submission);
-                        }
-                    });
-                }
-
-            }
-        });
-    }
-}
-
-module.exports = {
-    newInstance: newInstance,
-    fromLocal: fromLocal
-};
-},{"./config":34,"./form":47,"./localStorage":54,"./log":55,"./model":56,"./submissions":62,"./uploadManager":64,"./utils":66}],62:[function(_dereq_,module,exports){
-var Model = _dereq_("./model");
-var log = _dereq_("./log");
-var submission = _dereq_("./submission");
-var utils = _dereq_("./utils");
-var config = _dereq_("./config");
-
-function Submissions() {
-    Model.call(this, {
-        '_type': 'submissions',
-        '_ludid': 'submissions_list',
-        'submissions': []
-    });
-}
-utils.extend(Submissions, Model);
-Submissions.prototype.setLocalId = function() {
-    log.e("Submissions setLocalId. Not Permitted for submissions.");
-};
-/**
- * save a submission to list and store it immediately
- * @param  {[type]}   submission [description]
- * @param  {Function} cb         [description]
- * @return {[type]}              [description]
- */
-Submissions.prototype.saveSubmission = function(submission, cb) {
-    log.d("Submissions saveSubmission");
-    var self = this;
-    this.updateSubmissionWithoutSaving(submission);
-    this.clearSentSubmission(function() {
-        self.saveLocal(cb);
-    });
-};
-Submissions.prototype.updateSubmissionWithoutSaving = function(submission) {
-    log.d("Submissions updateSubmissionWithoutSaving");
-    var pruneData = this.pruneSubmission(submission);
-    var localId = pruneData._ludid;
-    if (localId) {
-        var meta = this.findMetaByLocalId(localId);
-        var submissions = this.get('submissions');
-        if (meta) {
-            //existed, remove the old meta and save the new one.
-            submissions.splice(submissions.indexOf(meta), 1);
-            submissions.push(pruneData);
-        } else {
-            // not existed, insert to the tail.
-            submissions.push(pruneData);
-        }
-    } else {
-        // invalid local id.
-        log.e('Invalid submission for localId:', localId, JSON.stringify(submission));
-    }
-};
-Submissions.prototype.clearSentSubmission = function(cb) {
-    log.d("Submissions clearSentSubmission");
-    var self = this;
-    var maxSent = config.get("max_sent_saved") ? config.get("max_sent_saved") : config.get("sent_save_min");
-    var submissions = this.get("submissions");
-    var sentSubmissions = this.getSubmitted();
-
-
-    if (sentSubmissions.length > maxSent) {
-        log.d("Submissions clearSentSubmission pruning sentSubmissions.length>maxSent");
-        sentSubmissions = sentSubmissions.sort(function(a, b) {
-            if (Date(a.submittedDate) < Date(b.submittedDate)) {
-                return 1;
-            } else {
-                return -1;
-            }
-        });
-        var toBeRemoved = [];
-        while (sentSubmissions.length > maxSent) {
-            toBeRemoved.push(sentSubmissions.pop());
-        }
-        var count = toBeRemoved.length;
-        for (var i = 0; i < toBeRemoved.length; i++) {
-            var subMeta = toBeRemoved[i];
-            self.getSubmissionByMeta(subMeta, function(err, submission) {
-                submission.clearLocal(function(err) {
-                    if (err) {
-                        log.e("Submissions clearSentSubmission submission clearLocal", err);
-                    }
-                    count--;
-                    if (count === 0) {
-                        cb(null, null);
-                    }
-                });
-            });
-        }
-    } else {
-        cb(null, null);
-    }
-};
-Submissions.prototype.findByFormId = function(formId) {
-    log.d("Submissions findByFormId", formId);
-    var rtn = [];
-    var submissions = this.get('submissions');
-    for (var i = 0; i < submissions.length; i++) {
-        var obj = submissions[i];
-        if (submissions[i].formId === formId) {
-            rtn.push(obj);
-        }
-    }
-    return rtn;
-};
-Submissions.prototype.getSubmissions = function() {
-    return this.get('submissions');
-};
-Submissions.prototype.getSubmissionMetaList = Submissions.prototype.getSubmissions;
-//function alias
-Submissions.prototype.findMetaByLocalId = function(localId) {
-    log.d("Submissions findMetaByLocalId", localId);
-    var submissions = this.get('submissions');
-    for (var i = 0; i < submissions.length; i++) {
-        var obj = submissions[i];
-        if (submissions[i]._ludid === localId) {
-            return obj;
-        }
-    }
-
-    //log.e("Submissions findMetaByLocalId: No submissions for localId: ", localId);
-    return null;
-};
-
-/**
- * Finding a submission object by it's remote Id
- * @param remoteId
- * @returns {*}
- */
-Submissions.prototype.findMetaByRemoteId = function(remoteId) {
-    remoteId = remoteId || "";
-
-    log.d("Submissions findMetaByRemoteId: " + remoteId);
-    var submissions = this.get('submissions');
-    for (var i = 0; i < submissions.length; i++) {
-        var obj = submissions[i];
-        if (submissions[i].submissionId) {
-            if (submissions[i].submissionId === remoteId) {
-                return obj;
-            }
-        }
-    }
-
-    return null;
-};
-Submissions.prototype.pruneSubmission = function(submission) {
-    log.d("Submissions pruneSubmission");
-    var fields = [
-        '_id',
-        '_ludid',
-        'status',
-        'formName',
-        'formId',
-        '_localLastUpdate',
-        'createDate',
-        'submitDate',
-        'deviceFormTimestamp',
-        'errorMessage',
-        'submissionStartedTimestamp',
-        'submittedDate',
-        'submissionId',
-        'saveDate',
-        'uploadStartDate'
-    ];
-    var data = submission.getProps();
-    var rtn = {};
-    for (var i = 0; i < fields.length; i++) {
-        var key = fields[i];
-        rtn[key] = data[key];
-    }
-    return rtn;
-};
-
-Submissions.prototype.clear = function(cb) {
-    log.d("Submissions clear");
-    var that = this;
-    this.clearLocal(function(err) {
-        if (err) {
-            log.e(err);
-            cb(err);
-        } else {
-            that.set("submissions", []);
-            cb(null, null);
-        }
-    });
-};
-Submissions.prototype.getDrafts = function(params) {
-    log.d("Submissions getDrafts: ", params);
-    if (!params) {
-        params = {};
-    }
-    params.status = "draft";
-    return this.findByStatus(params);
-};
-Submissions.prototype.getPending = function(params) {
-    log.d("Submissions getPending: ", params);
-    if (!params) {
-        params = {};
-    }
-    params.status = "pending";
-    return this.findByStatus(params);
-};
-Submissions.prototype.getSubmitted = function(params) {
-    log.d("Submissions getSubmitted: ", params);
-    if (!params) {
-        params = {};
-    }
-    params.status = "submitted";
-    return this.findByStatus(params);
-};
-Submissions.prototype.getError = function(params) {
-    log.d("Submissions getError: ", params);
-    if (!params) {
-        params = {};
-    }
-    params.status = "error";
-    return this.findByStatus(params);
-};
-Submissions.prototype.getInProgress = function(params) {
-    log.d("Submissions getInProgress: ", params);
-    if (!params) {
-        params = {};
-    }
-    params.status = "inprogress";
-    return this.findByStatus(params);
-};
-Submissions.prototype.getDownloaded = function(params) {
-    log.d("Submissions getDownloaded: ", params);
-    if (!params) {
-        params = {};
-    }
-    params.status = "downloaded";
-    return this.findByStatus(params);
-};
-Submissions.prototype.findByStatus = function(params) {
-    log.d("Submissions findByStatus: ", params);
-    if (!params) {
-        params = {};
-    }
-    if (typeof params === "string") {
-        params = {
-            status: params
-        };
-    }
-    if (params.status === null) {
-        return [];
-    }
-
-    var status = params.status;
-    var formId = params.formId;
-    var sortField = params.sortField || "createDate";
-
-    var submissions = this.get("submissions", []);
-    var rtn = [];
-    for (var i = 0; i < submissions.length; i++) {
-        if (status.indexOf(submissions[i].status) > -1) {
-            if (formId != null) {
-                if (submissions[i].formId === formId) {
-                    rtn.push(submissions[i]);
-                }
-            } else {
-                rtn.push(submissions[i]);
-            }
-
-        }
-    }
-
-    rtn = rtn.sort(function(a, b) {
-        if (Date(a[sortField]) < Date(b[sortField])) {
-            return -1;
-        } else {
-            return 1;
-        }
-    });
-
-    return rtn;
-};
-/**
- * return a submission model object by the meta data passed in.
- * @param  {[type]}   meta [description]
- * @param  {Function} cb   [description]
- * @return {[type]}        [description]
- */
-Submissions.prototype.getSubmissionByMeta = function(meta, cb) {
-    log.d("Submissions getSubmissionByMeta: ", meta);
-    var localId = meta._ludid;
-    if (localId) {
-        submission.fromLocal(localId, cb);
-    } else {
-        log.e("Submissions getSubmissionByMeta: local id not found for retrieving submission.", localId, meta);
-        cb("local id not found for retrieving submission");
-    }
-};
-Submissions.prototype.removeSubmission = function(localId, cb) {
-    log.d("Submissions removeSubmission: ", localId);
-    var index = this.indexOf(localId);
-    if (index > -1) {
-        this.get('submissions').splice(index, 1);
-    }
-    this.saveLocal(cb);
-};
-Submissions.prototype.indexOf = function(localId, cb) {
-    log.d("Submissions indexOf: ", localId);
-    var submissions = this.get('submissions');
-    for (var i = 0; i < submissions.length; i++) {
-        var obj = submissions[i];
-        if (submissions[i]._ludid === localId) {
-            return i;
-        }
-    }
-    return -1;
-};
-
-module.exports = new Submissions();
-},{"./config":34,"./log":55,"./model":56,"./submission":61,"./utils":66}],63:[function(_dereq_,module,exports){
-function Theme() {
-    Model.call(this, {
-        '_type': 'theme',
-        '_ludid': 'theme_object'
-    });
-}
-Theme.prototype.getCSS = function() {
-    return this.get('css', '');
-};
-appForm.utils.extend(Theme, Model);
-
-module.exports = new Theme();
-},{}],64:[function(_dereq_,module,exports){
-/**
- * Manages submission uploading tasks
- */
-var Model = _dereq_("./model");
-var utils = _dereq_("./utils");
-var log = _dereq_("./log");
-var dataAgent = _dereq_("./dataAgent");
-var uploadTask = _dereq_("./uploadTask");
-
-function UploadManager() {
-    var self = this;
-    Model.call(self, {
-        '_type': 'uploadManager',
-        '_ludid': 'uploadManager_queue'
-    });
-
-    self.set('taskQueue', []);
-    self.sending = false;
-    self.timerInterval = 200;
-    self.sendingStart = utils.getTime();
-}
-utils.extend(UploadManager, Model);
-
-/**
- * Queue a submission to uploading tasks queue
- * @param  {[type]} submissionModel [description]
- * @param {Function} cb callback once finished
- * @return {[type]}                 [description]
- */
-UploadManager.prototype.queueSubmission = function(submissionModel, cb) {
-    config.d("Queueing Submission for uploadManager");
-    var utId;
-    var uploadTask = null;
-    var self = this;
-
-    self.checkOnlineStatus(function() {
-        if ($fh.forms.config.isOnline()) {
-            if (submissionModel.getUploadTaskId()) {
-                utId = submissionModel.getUploadTaskId();
-            } else {
-                uploadTask = uploadTask.newInstance(submissionModel);
-                utId = uploadTask.getLocalId();
-            }
-            self.push(utId);
-            if (!self.timer) {
-                config.d("Starting timer for uploadManager");
-                self.start();
-            }
-            if (uploadTask) {
-                uploadTask.saveLocal(function(err) {
-                    if (err) {
-                        config.e(err);
-                    }
-                    self.saveLocal(function(err) {
-                        if (err) {
-                            config.e("Error saving upload manager: " + err);
-                        }
-                        cb(null, uploadTask);
-                    });
-                });
-            } else {
-                self.saveLocal(function(err) {
-                    if (err) {
-                        config.e("Error saving upload manager: " + err);
-                    }
-                    self.getTaskById(utId, cb);
-                });
-            }
-        } else {
-            return cb("Working offline cannot submit form.");
-        }
-    });
-};
-
-/**
- * cancel a submission uploading
- * @param  {[type]}   submissionsModel [description]
- * @param  {Function} cb               [description]
- * @return {[type]}                    [description]
- */
-UploadManager.prototype.cancelSubmission = function(submissionsModel, cb) {
-    var uploadTId = submissionsModel.getUploadTaskId();
-    var queue = this.get('taskQueue');
-    if (uploadTId) {
-        var index = queue.indexOf(uploadTId);
-        if (index > -1) {
-            queue.splice(index, 1);
-        }
-        this.getTaskById(uploadTId, function(err, task) {
-            if (err) {
-                config.e(err);
-                cb(err, task);
-            } else {
-                if (task) {
-                    task.clearLocal(cb);
-                } else {
-                    cb(null, null);
-                }
-            }
-        });
-        this.saveLocal(function(err) {
-            if (err) {
-                config.e(err);
-            }
-        });
-    } else {
-        cb(null, null);
-    }
-};
-
-UploadManager.prototype.getTaskQueue = function() {
-    return this.get('taskQueue', []);
-};
-/**
- * start a timer
- * @param  {} interval ms
- * @return {[type]}      [description]
- */
-UploadManager.prototype.start = function() {
-    var that = this;
-    that.stop();
-    that.timer = setInterval(function() {
-        that.tick();
-    }, this.timerInterval);
-};
-/**
- * stop uploading
- * @return {[type]} [description]
- */
-UploadManager.prototype.stop = function() {
-    if (this.timer) {
-        clearInterval(this.timer);
-        this.timer = null;
-    }
-};
-UploadManager.prototype.push = function(uploadTaskId) {
-    this.get('taskQueue').push(uploadTaskId);
-    this.saveLocal(function(err) {
-        if (err) {
-            config.e("Error saving local Upload manager", err);
-        }
-    });
-};
-UploadManager.prototype.shift = function() {
-    var shiftedTask = this.get('taskQueue').shift();
-    this.saveLocal(function(err) {
-        if (err) {
-            config.e(err);
-        }
-    });
-    return shiftedTask;
-};
-UploadManager.prototype.rollTask = function() {
-    this.push(this.shift());
-};
-UploadManager.prototype.tick = function() {
-    var self = this;
-    if (self.sending) {
-        var now = utils.getTime();
-        var timePassed = now.getTime() - self.sendingStart.getTime();
-        if (timePassed > $fh.forms.config.get("timeout") * 1000) {
-            //time expired. roll current task to the end of queue
-            config.e('Uploading content timeout. it will try to reupload.');
-            self.sending = false;
-            self.rollTask();
-        }
-    } else {
-        if (self.hasTask()) {
-            self.sending = true;
-            self.sendingStart = utils.getTime();
-
-            self.getCurrentTask(function(err, task) {
-                if (err || !task) {
-                    config.e(err);
-                    self.sending = false;
-                } else {
-                    if (task.isCompleted() || task.isError()) {
-                        //current task uploaded or aborted by error. shift it from queue
-                        self.shift();
-                        self.sending = false;
-                        self.saveLocal(function(err) {
-                            if (err) {
-                                config.e("Error saving upload manager: ", err);
-                            }
-                        });
-                    } else {
-                        self.checkOnlineStatus(function() {
-                            if ($fh.forms.config.isOnline()) {
-                                task.uploadTick(function(err) {
-                                    if (err) {
-                                        config.e("Error on upload tick: ", err, task);
-                                    }
-
-                                    //callback when finished. ready for next upload command
-                                    self.sending = false;
-                                });
-                            } else {
-                                config.d("Upload Manager: Tick: Not online.");
-                            }
-                        });
-                    }
-                }
-            });
-        } else {
-            //no task . stop timer.
-            self.stop();
-        }
-    }
-};
-UploadManager.prototype.hasTask = function() {
-    return this.get('taskQueue').length > 0;
-};
-UploadManager.prototype.getCurrentTask = function(cb) {
-    var taskId = this.getTaskQueue()[0];
-    if (taskId) {
-        this.getTaskById(taskId, cb);
-    } else {
-        cb(null, null);
-    }
-};
-UploadManager.prototype.checkOnlineStatus = function(cb) {
-    return dataAgent.checkOnlineStatus(cb);
-};
-UploadManager.prototype.getTaskById = function(taskId, cb) {
-    return uploadTask.fromLocal(taskId, cb);
-};
-
-module.exports = new UploadManager();
-},{"./dataAgent":35,"./log":55,"./model":56,"./uploadTask":65,"./utils":66}],65:[function(_dereq_,module,exports){
-/**
- * Uploading task for each submission
- */
-
-var Model = _dereq_("./model");
-var log = _dereq_("./log");
-var config = _dereq_("./config");
-var dataAgent = _dereq_("./dataAgent");
-var FormSubmission = _dereq_("./formSubmission");
-var FormSubmissionDownload = _dereq_("./formSubmissionDownload");
-var FormSubmissionStatus = _dereq_("./formSubmissionStatus");
-var Base64FileSubmission = _dereq_("./fileSubmissionBase64");
-var FileSubmission = _dereq_("./fileSubmission");
-var FileSubmissionDownload = _dereq_("./fileSubmissionDownload");
-var FormSubmissionComplete = _dereq_("./formSubmissionComplete");
-var Form = _dereq_("./form");
-var submission = _dereq_("./submission");
-
-var _uploadTasks = {};
-
-function newInstance(submissionModel) {
-    if (submissionModel) {
-        var utObj = new UploadTask();
-        utObj.init(submissionModel);
-        _uploadTasks[utObj.getLocalId()] = utObj;
-        return utObj;
-    } else {
-        return {};
-    }
-}
-
-
-function fromLocal(localId, cb) {
-    if (_uploadTasks[localId]) {
-        return cb(null, _uploadTasks[localId]);
-    }
-    var utObj = new UploadTask();
-    utObj.setLocalId(localId);
-    _uploadTasks[localId] = utObj;
-    utObj.loadLocal(cb);
-}
-
-
-function UploadTask() {
-    Model.call(this, {
-        '_type': 'uploadTask'
-    });
-}
-
-
-utils.extend(UploadTask, Model);
-UploadTask.prototype.init = function(submissionModel) {
-    var self = this;
-    var submissionLocalId = submissionModel.getLocalId();
-    self.setLocalId(submissionLocalId + '_' + 'uploadTask');
-    self.set('submissionLocalId', submissionLocalId);
-    self.set('fileTasks', []);
-    self.set('currentTask', null);
-    self.set('completed', false);
-    self.set('retryAttempts', 0);
-    self.set('retryNeeded', false);
-    self.set('mbaasCompleted', false);
-    self.set('submissionTransferType', 'upload');
-    submissionModel.setUploadTaskId(self.getLocalId());
-
-    function initSubmissionUpload() {
-        var json = submissionModel.getProps();
-        self.set('jsonTask', json);
-        self.set('formId', submissionModel.get('formId'));
-
-    }
-
-    function initSubmissionDownload() {
-        self.set('submissionId', submissionModel.getRemoteSubmissionId());
-        self.set('jsonTask', {});
-        self.set('submissionTransferType', 'download');
-    }
-
-    if (submissionModel.isDownloadSubmission()) {
-        initSubmissionDownload();
-    } else {
-        initSubmissionUpload();
-    }
-};
-UploadTask.prototype.getTotalSize = function() {
-    var self = this;
-    var jsonSize = JSON.stringify(self.get('jsonTask')).length;
-    var fileTasks = self.get('fileTasks');
-    var fileSize = 0;
-    var fileTask;
-    for (var i = 0; i < fileTasks.length; i++) {
-        fileTask = fileTasks[i];
-        fileSize += fileTask.fileSize;
-    }
-    return jsonSize + fileSize;
-};
-UploadTask.prototype.getUploadedSize = function() {
-    var currentTask = this.getCurrentTask();
-    if (currentTask === null) {
-        return 0;
-    } else {
-        var jsonSize = JSON.stringify(this.get('jsonTask')).length;
-        var fileTasks = this.get('fileTasks');
-        var fileSize = 0;
-        for (var i = 0, fileTask;
-            (fileTask = fileTasks[i]) && i < currentTask; i++) {
-            fileSize += fileTask.fileSize;
-        }
-        return jsonSize + fileSize;
-    }
-};
-UploadTask.prototype.getRemoteStore = function() {
-    return dataAgent.remoteStore;
-};
-UploadTask.prototype.addFileTasks = function(submissionModel, cb) {
-    var self = this;
-    submissionModel.getFileInputValues(function(err, files) {
-        if (err) {
-            $fh.forms.log.e("Error getting file Input values: " + err);
-            return cb(err);
-        }
-        for (var i = 0; i < files.length; i++) {
-            var file = files[i];
-            self.addFileTask(file);
-        }
-        cb();
-    });
-};
-UploadTask.prototype.addFileTask = function(fileDef) {
-    this.get('fileTasks').push(fileDef);
-};
-/**
- * get current uploading task
- * @return {[type]} [description]
- */
-UploadTask.prototype.getCurrentTask = function() {
-    return this.get('currentTask', null);
-};
-UploadTask.prototype.getRetryAttempts = function() {
-    return this.get('retryAttempts');
-};
-UploadTask.prototype.increRetryAttempts = function() {
-    this.set('retryAttempts', this.get('retryAttempts') + 1);
-};
-UploadTask.prototype.resetRetryAttempts = function() {
-    this.set('retryAttempts', 0);
-};
-UploadTask.prototype.isStarted = function() {
-    return this.getCurrentTask() === null ? false : true;
-};
-
-
-UploadTask.prototype.setSubmissionQueued = function(cb) {
-    var self = this;
-    self.submissionModel(function(err, submission) {
-        if (err) {
-            return cb(err);
-        }
-
-        if (self.get("submissionId")) {
-            submission.setRemoteSubmissionId(self.get("submissionId"));
-        }
-
-        submission.queued(cb);
-    });
-};
-/**
- * upload/download form submission
- * @param  {Function} cb [description]
- * @return {[type]}      [description]
- */
-UploadTask.prototype.uploadForm = function(cb) {
-    var self = this;
-
-    function processUploadDataResult(res) {
-        $fh.forms.log.d("In processUploadDataResult");
-        var formSub = self.get("jsonTask");
-        if (res.error) {
-            $fh.forms.log.e("Error submitting form " + res.error);
-            return cb("Error submitting form " + res.error);
-        } else {
-            var submissionId = res.submissionId;
-            // form data submitted successfully.
-            formSub.lastUpdate = utils.getTime();
-            self.set('submissionId', submissionId);
-
-            self.setSubmissionQueued(function(err) {
-                self.increProgress();
-                self.saveLocal(function(err) {
-                    if (err) {
-                        $fh.forms.log.e("Error saving uploadTask to local storage" + err);
-                    }
-                });
-                self.emit('progress', self.getProgress());
-                return cb(null);
-            });
-        }
-    }
-
-    function processDownloadDataResult(err, res) {
-        $fh.forms.log.d("In processDownloadDataResult");
-        if (err) {
-            $fh.forms.log.e("Error downloading submission data" + err);
-            return cb(err);
-        }
-
-        //Have the definition of the submission
-        self.submissionModel(function(err, submissionModel) {
-            $fh.forms.log.d("Got SubmissionModel", err, submissionModel);
-            if (err) {
-                return cb(err);
-            }
-            var JSONRes = {};
-
-            //Instantiate the model from the json definition
-            if (typeof(res) === "string") {
-                try {
-                    JSONRes = JSON.parse(res);
-                } catch (e) {
-                    $fh.forms.log.e("processDownloadDataResult Invalid JSON Object Returned", res);
-                    return cb("Invalid JSON Object Returned");
-                }
-            } else {
-                JSONRes = res;
-            }
-
-            if (JSONRes.status) {
-                delete JSONRes.status;
-            }
-
-            submissionModel.fromJSON(JSONRes);
-            self.set('jsonTask', res);
-            submissionModel.saveLocal(function(err) {
-                $fh.forms.log.d("Saved SubmissionModel", err, submissionModel);
-                if (err) {
-                    $fh.forms.log.e("Error saving updated submission from download submission: " + err);
-                }
-
-                //Submission Model is now populated with all the fields in the submission
-                self.addFileTasks(submissionModel, function(err) {
-                    $fh.forms.log.d("addFileTasks called", err, submissionModel);
-                    if (err) {
-                        return cb(err);
-                    }
-                    self.increProgress();
-                    self.saveLocal(function(err) {
-                        if (err) {
-                            $fh.forms.log.e("Error saving downloadTask to local storage" + err);
-                        }
-
-                        self.emit('progress', self.getProgress());
-                        return cb();
-                    });
-                });
-            });
-        });
-    }
-
-    function uploadSubmissionJSON() {
-        $fh.forms.log.d("In uploadSubmissionJSON");
-        var formSub = self.get('jsonTask');
-        self.submissionModel(function(err, submissionModel) {
-            if (err) {
-                return cb(err);
-            }
-            self.addFileTasks(submissionModel, function(err) {
-                if (err) {
-                    $fh.forms.log.e("Error adding file tasks for submission upload");
-                    return cb(err);
-                }
-
-                var formSubmissionModel = new FormSubmission(formSub);
-                self.getRemoteStore().create(formSubmissionModel, function(err, res) {
-                    if (err) {
-                        return cb(err);
-                    } else {
-                        var updatedFormDefinition = res.updatedFormDefinition;
-                        if (updatedFormDefinition) {
-                            // remote form definition is updated
-                            self.refreshForm(updatedFormDefinition, function(err) {
-                                //refresh form def in parallel. maybe not needed.
-                                $fh.forms.log.d("Form Updated, refreshed");
-                                if (err) {
-                                    $fh.forms.log.e(err);
-                                }
-                                processUploadDataResult(res);
-                            });
-                        } else {
-                            processUploadDataResult(res);
-                        }
-                    }
-                });
-            });
-        });
-
-    }
-
-    function downloadSubmissionJSON() {
-        var formSubmissionDownload = new FormSubmissionDownload(self);
-        self.getRemoteStore().read(formSubmissionDownload, processDownloadDataResult);
-    }
-
-    if (self.isDownloadTask()) {
-        downloadSubmissionJSON();
-    } else {
-        uploadSubmissionJSON();
-    }
-};
-
-/**
- * Handles the case where a call to completeSubmission returns a status other than "completed".
- * Will only ever get to this function when a call is made to the completeSubmission server.
- *
- *
- * @param err (String) Error message associated with the error returned
- * @param res {"status" : <pending/error>, "pendingFiles" : [<any pending files not yet uploaded>]}
- * @param cb Function callback
- */
-UploadTask.prototype.handleCompletionError = function(err, res, cb) {
-    $fh.forms.log.d("handleCompletionError Called");
-    var errorMessage = err;
-    if (res.status === 'pending') {
-        //The submission is not yet complete, there are files waiting to upload. This is an unexpected state as all of the files should have been uploaded.
-        errorMessage = 'Submission Still Pending.';
-    } else if (res.status === 'error') {
-        //There was an error completing the submission.
-        errorMessage = 'Error completing submission';
-    } else {
-        errorMessage = 'Invalid return type from complete submission';
-    }
-    cb(errorMessage);
-};
-
-/**
- * Handles the case where the current submission status is required from the server.
- * Based on the files waiting to be uploaded, the upload task is re-built with pendingFiles from the server.
- *
- * @param cb
- */
-UploadTask.prototype.handleIncompleteSubmission = function(cb) {
-    var self = this;
-
-    function processUploadIncompleteSubmission() {
-
-        var remoteStore = self.getRemoteStore();
-        var submissionStatus = new FormSubmissionStatus(self);
-
-        remoteStore.submissionStatus(submissionStatus, function(err, res) {
-            var errMessage = "";
-            if (err) {
-                cb(err);
-            } else if (res.status === 'error') {
-                //The server had an error submitting the form, finish with an error
-                errMessage = 'Error submitting form.';
-                cb(errMessage);
-            } else if (res.status === 'complete') {
-                //Submission is complete, make uploading progress further
-                self.increProgress();
-                cb();
-            } else if (res.status === 'pending') {
-                //Submission is still pending, check for files not uploaded yet.
-                var pendingFiles = res.pendingFiles || [];
-                if (pendingFiles.length > 0) {
-                    self.resetUploadTask(pendingFiles, function() {
-                        cb();
-                    });
-                } else {
-                    //No files pending on the server, make the progress further
-                    self.increProgress();
-                    cb();
-                }
-            } else {
-                //Should not get to this point. Only valid status responses are error, pending and complete.
-                errMessage = 'Invalid submission status response.';
-                cb(errMessage);
-            }
-        });
-    }
-
-    function processDownloadIncompleteSubmission() {
-        //No need to go the the server to get submission details -- The current progress status is valid locally
-        cb();
-    }
-
-    if (self.isDownloadTask()) {
-        processDownloadIncompleteSubmission();
-    } else {
-        processUploadIncompleteSubmission();
-    }
-};
-
-/**
- * Resetting the upload task based on the response from getSubmissionStatus
- * @param pendingFiles -- Array of files still waiting to upload
- * @param cb
- */
-UploadTask.prototype.resetUploadTask = function(pendingFiles, cb) {
-    var filesToUpload = this.get('fileTasks');
-    var resetFilesToUpload = [];
-    var fileIndex;
-    //Adding the already completed files to the reset array.
-    for (fileIndex = 0; fileIndex < filesToUpload.length; fileIndex++) {
-        if (pendingFiles.indexOf(filesToUpload[fileIndex].hashName) < 0) {
-            resetFilesToUpload.push(filesToUpload[fileIndex]);
-        }
-    }
-    //Adding the pending files to the end of the array.
-    for (fileIndex = 0; fileIndex < filesToUpload.length; fileIndex++) {
-        if (pendingFiles.indexOf(filesToUpload[fileIndex].hashName) > -1) {
-            resetFilesToUpload.push(filesToUpload[fileIndex]);
-        }
-    }
-    var resetFileIndex = filesToUpload.length - pendingFiles.length - 1;
-    var resetCurrentTask = 0;
-    if (resetFileIndex > 0) {
-        resetCurrentTask = resetFileIndex;
-    }
-    //Reset current task
-    this.set('currentTask', resetCurrentTask);
-    this.set('fileTasks', resetFilesToUpload);
-    this.saveLocal(cb); //Saving the reset files list to local
-};
-UploadTask.prototype.uploadFile = function(cb) {
-    var self = this;
-    var progress = self.getCurrentTask();
-
-    if (progress === null) {
-        progress = 0;
-        self.set('currentTask', progress);
-    }
-    var fileTask = self.get('fileTasks', [])[progress];
-    var submissionId = self.get('submissionId');
-    var fileSubmissionModel;
-    if (!fileTask) {
-        $fh.forms.log.e("No file task found when trying to transfer a file.");
-        return cb('cannot find file task');
-    }
-
-    if (!submissionId) {
-        $fh.forms.log.e("No submission id found when trying to transfer a file.");
-        return cb("No submission Id found");
-    }
-
-    function processUploadFile() {
-        $fh.forms.log.d("processUploadFile for submissionId: ");
-        if (fileTask.contentType === 'base64') {
-            fileSubmissionModel = new Base64FileSubmission(fileTask);
-        } else {
-            fileSubmissionModel = new FileSubmission(fileTask);
-        }
-        fileSubmissionModel.setSubmissionId(submissionId);
-        fileSubmissionModel.loadFile(function(err) {
-            if (err) {
-                $fh.forms.log.e("Error loading file for upload: " + err);
-                return cb(err);
-            } else {
-                self.getRemoteStore().create(fileSubmissionModel, function(err, res) {
-                    if (err) {
-                        cb(err);
-                    } else {
-                        if (res.status === 'ok' || res.status === 200 || res.status === '200') {
-                            fileTask.updateDate = utils.getTime();
-                            self.increProgress();
-                            self.saveLocal(function(err) {
-                                //save current status.
-                                if (err) {
-                                    $fh.forms.log.e("Error saving upload task" + err);
-                                }
-                            });
-                            self.emit('progress', self.getProgress());
-                            cb(null);
-                        } else {
-                            var errorMessage = 'File upload failed for file: ' + fileTask.fileName;
-                            cb(errorMessage);
-                        }
-                    }
-                });
-            }
-        });
-    }
-
-    function processDownloadFile() {
-        $fh.forms.log.d("processDownloadFile called");
-        fileSubmissionModel = new FileSubmissionDownload(fileTask);
-        fileSubmissionModel.setSubmissionId(submissionId);
-        self.getRemoteStore().read(fileSubmissionModel, function(err, localFilePath) {
-            if (err) {
-                $fh.forms.log.e("Error downloading a file from remote: " + err);
-                return cb(err);
-            }
-
-            $fh.forms.log.d("processDownloadFile called. Local File Path: " + localFilePath);
-
-            //Update the submission model to add local file uri to a file submission object
-            self.submissionModel(function(err, submissionModel) {
-                if (err) {
-                    $fh.forms.log.e("Error Loading submission model for processDownloadFile " + err);
-                    return cb(err);
-                }
-
-                submissionModel.updateFileLocalURI(fileTask, localFilePath, function(err) {
-                    if (err) {
-                        $fh.forms.log.e("Error updating file local url for fileTask " + JSON.stringify(fileTask));
-                        return cb(err);
-                    }
-
-                    self.increProgress();
-                    self.saveLocal(function(err) {
-                        //save current status.
-                        if (err) {
-                            $fh.forms.log.e("Error saving download task");
-                        }
-                    });
-                    self.emit('progress', self.getProgress());
-                    return cb();
-                });
-            });
-        });
-    }
-
-    if (self.isDownloadTask()) {
-        processDownloadFile();
-    } else {
-        processUploadFile();
-    }
-};
-UploadTask.prototype.isDownloadTask = function() {
-    return this.get("submissionTransferType") === "download";
-};
-//The upload task needs to be retried
-UploadTask.prototype.setRetryNeeded = function(retryNeeded) {
-    //If there is a submissionId, then a retry is needed. If not, then the current task should be set to null to retry the submission.
-    if (this.get('submissionId', null) != null) {
-        this.set('retryNeeded', retryNeeded);
-    } else {
-        this.set('retryNeeded', false);
-        this.set('currentTask', null);
-    }
-};
-UploadTask.prototype.retryNeeded = function() {
-    return this.get('retryNeeded');
-};
-UploadTask.prototype.uploadTick = function(cb) {
-    var self = this;
-
-    function _handler(err) {
-        if (err) {
-            $fh.forms.log.d('Err, retrying transfer: ' + self.getLocalId());
-            //If the upload has encountered an error -- flag the submission as needing a retry on the next tick -- User should be insulated from an error until the retries are finished.
-            self.increRetryAttempts();
-            if (self.getRetryAttempts() <= $fh.forms.config.get('max_retries')) {
-                self.setRetryNeeded(true);
-                self.saveLocal(function(err) {
-                    if (err) {
-                        $fh.forms.log.e("Error saving upload taskL " + err);
-                    }
-
-                    cb();
-                });
-            } else {
-                //The number of retry attempts exceeds the maximum number of retry attempts allowed, flag the upload as an error.
-                self.setRetryNeeded(true);
-                self.resetRetryAttempts();
-                self.error(err, function() {
-                    cb(err);
-                });
-            }
-        } else {
-            //no error.
-            self.setRetryNeeded(false);
-            self.saveLocal(function(_err) {
-                if (_err) {
-                    $fh.forms.log.e("Error saving upload task to local memory" + _err);
-                }
-            });
-            self.submissionModel(function(err, submission) {
-                if (err) {
-                    cb(err);
-                } else {
-                    var status = submission.get('status');
-                    if (status !== 'inprogress' && status !== 'submitted' && status !== 'downloaded' && status !== 'queued') {
-                        $fh.forms.log.e('Submission status is incorrect. Upload task should be started by submission object\'s upload method.' + status);
-                        cb('Submission status is incorrect. Upload task should be started by submission object\'s upload method.');
-                    } else {
-                        cb();
-                    }
-                }
-            });
-        }
-    }
-    if (!this.isFormCompleted()) {
-        // No current task, send the form json
-        this.uploadForm(_handler);
-    } else if (this.retryNeeded()) {
-        //If a retry is needed, this tick gets the current status of the submission from the server and resets the submission.
-        this.handleIncompleteSubmission(_handler);
-    } else if (!this.isFileCompleted()) {
-        //files to be uploaded
-        this.uploadFile(_handler);
-    } else if (!this.isMBaaSCompleted()) {
-        //call mbaas to complete upload
-        this.uploadComplete(_handler);
-    } else if (!this.isCompleted()) {
-        //complete the upload task
-        this.success(_handler);
-    } else {
-        //task is already completed.
-        _handler(null, null);
-    }
-};
-UploadTask.prototype.increProgress = function() {
-    var curTask = this.getCurrentTask();
-    if (curTask === null) {
-        curTask = 0;
-    } else {
-        curTask++;
-    }
-    this.set('currentTask', curTask);
-};
-UploadTask.prototype.uploadComplete = function(cb) {
-    $fh.forms.log.d("UploadComplete Called");
-    var self = this;
-    var submissionId = self.get('submissionId', null);
-
-    if (submissionId === null) {
-        return cb('Failed to complete submission. Submission Id not found.');
-    }
-
-    function processDownloadComplete() {
-        $fh.forms.log.d("processDownloadComplete Called");
-        self.increProgress();
-        cb(null);
-    }
-
-    function processUploadComplete() {
-        $fh.forms.log.d("processUploadComplete Called");
-        var remoteStore = self.getRemoteStore();
-        var completeSubmission = new FormSubmissionComplete(self);
-        remoteStore.create(completeSubmission, function(err, res) {
-            //if status is not "completed", then handle the completion err
-            res = res || {};
-            if (res.status !== 'complete') {
-                return self.handleCompletionError(err, res, cb);
-            }
-            //Completion is now completed sucessfully.. we can make the progress further.
-            self.increProgress();
-            cb(null);
-        });
-    }
-
-    if (self.isDownloadTask()) {
-        processDownloadComplete();
-    } else {
-        processUploadComplete();
-    }
-};
-/**
- * the upload task is successfully completed. This will be called when all uploading process finished successfully.
- * @return {[type]} [description]
- */
-UploadTask.prototype.success = function(cb) {
-    $fh.forms.log.d("Transfer Sucessful. Success Called.");
-    var self = this;
-    var submissionId = self.get('submissionId', null);
-    self.set('completed', true);
-
-
-    function processUploadSuccess(cb) {
-        $fh.forms.log.d("processUploadSuccess Called");
-        self.submissionModel(function(_err, model) {
-            if (_err) {
-                return cb(_err);
-            }
-            model.set('submissionId', submissionId);
-            model.submitted(cb);
-        });
-    }
-
-    function processDownloadSuccess(cb) {
-        $fh.forms.log.d("processDownloadSuccess Called");
-        self.submissionModel(function(_err, model) {
-            if (_err) {
-                return cb(_err);
-            } else {
-                model.populateFilesInSubmission();
-                model.downloaded(cb);
-            }
-        });
-    }
-
-    self.saveLocal(function(err) {
-        if (err) {
-            $fh.forms.log.e("Error Clearing Upload Task");
-        }
-
-        if (self.isDownloadTask()) {
-            processDownloadSuccess(function(err) {
-                self.clearLocal(cb);
-            });
-        } else {
-            processUploadSuccess(function(err) {
-                self.clearLocal(cb);
-            });
-        }
-    });
-};
-/**
- * the upload task is failed. It will not complete the task but will set error with error returned.
- * @param  {[type]}   err [description]
- * @param  {Function} cb  [description]
- * @return {[type]}       [description]
- */
-UploadTask.prototype.error = function(uploadErrorMessage, cb) {
-    var self = this;
-    $fh.forms.log.e("Error uploading submission: ", uploadErrorMessage);
-    self.set('error', uploadErrorMessage);
-    self.saveLocal(function(err) {
-        if (err) {
-            $fh.forms.log.e('Upload task save failed: ' + err);
-        }
-
-        self.submissionModel(function(_err, model) {
-            if (_err) {
-                cb(_err);
-            } else {
-                model.setUploadTaskId(null);
-                model.error(uploadErrorMessage, function(err) {
-                    if (err) {
-                        $fh.forms.log.e("Error updating submission model to error status ", err);
-                    }
-                    self.clearLocal(function(err) {
-                        if (err) {
-                            $fh.forms.log.e("Error clearing upload task local storage: ", err);
-                        }
-                        cb(err);
-                    });
-                });
-            }
-        });
-    });
-};
-UploadTask.prototype.isFormCompleted = function() {
-    var curTask = this.getCurrentTask();
-    if (curTask === null) {
-        return false;
-    } else {
-        return true;
-    }
-};
-UploadTask.prototype.isFileCompleted = function() {
-    var curTask = this.getCurrentTask();
-    if (curTask === null) {
-        return false;
-    } else if (curTask < this.get('fileTasks', []).length) {
-        return false;
-    } else {
-        return true;
-    }
-};
-UploadTask.prototype.isError = function() {
-    var error = this.get('error', null);
-    if (error) {
-        return true;
-    } else {
-        return false;
-    }
-};
-UploadTask.prototype.isCompleted = function() {
-    return this.get('completed', false);
-};
-UploadTask.prototype.isMBaaSCompleted = function() {
-    var self = this;
-    if (!self.isFileCompleted()) {
-        return false;
-    } else {
-        var curTask = self.getCurrentTask();
-        if (curTask > self.get('fileTasks', []).length) {
-            //change offset if completion bit is changed
-            self.set("mbaasCompleted", true);
-            self.saveLocal(function(err) {
-                if (err) {
-                    $fh.forms.log.e("Error saving upload task: ", err);
-                }
-            });
-            return true;
-        } else {
-            return false;
-        }
-    }
-};
-UploadTask.prototype.getProgress = function() {
-    var self = this;
-    var rtn = {
-        'formJSON': false,
-        'currentFileIndex': 0,
-        'totalFiles': self.get('fileTasks').length,
-        'totalSize': self.getTotalSize(),
-        'uploaded': self.getUploadedSize(),
-        'retryAttempts': self.getRetryAttempts(),
-        'submissionTransferType': self.get('submissionTransferType')
-    };
-    var progress = self.getCurrentTask();
-    if (progress === null) {
-        return rtn;
-    } else {
-        rtn.formJSON = true;
-        rtn.currentFileIndex = progress;
-    }
-    return rtn;
-};
-/**
- * Refresh related form definition.
- * @param  {Function} cb [description]
- * @return {[type]}      [description]
- */
-UploadTask.prototype.refreshForm = function(updatedForm, cb) {
-    var formId = this.get('formId');
-    new Form({
-        'formId': formId,
-        'rawMode': true,
-        'rawData': updatedForm
-    }, function(err, form) {
-        if (err) {
-            $fh.forms.log.e(err);
-        }
-
-        $fh.forms.log.l('successfully updated form the form with id ' + updatedForm._id);
-        cb();
-    });
-};
-UploadTask.prototype.submissionModel = function(cb) {
-    submission.fromLocal(this.get('submissionLocalId'), function(err, submission) {
-        if (err) {
-            $fh.forms.log.e("Error getting submission model from local memory " + err);
-        }
-        cb(err, submission);
-    });
-};
-
-module.exports = {
-    'newInstance': newInstance,
-    'fromLocal': fromLocal
-};
-},{"./config":34,"./dataAgent":35,"./fileSubmission":43,"./fileSubmissionBase64":44,"./fileSubmissionDownload":45,"./form":47,"./formSubmission":48,"./formSubmissionComplete":49,"./formSubmissionDownload":50,"./formSubmissionStatus":51,"./log":55,"./model":56,"./submission":61}],66:[function(_dereq_,module,exports){
+},{"./config":34,"./log":38,"./store":40,"./utils":42,"./web":43}],42:[function(_dereq_,module,exports){
 var hash = _dereq_('../api_hash');
+var _ = _dereq_('../../../libs/underscore.js');
 
 function isPhoneGap() {
     return (typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined");
 }
 
 function extend(child, parent) {
-    if (parent.constructor && parent.constructor === Function) {
-        for (var mkey in parent.prototype) {
-            child.prototype[mkey] = parent.prototype[mkey];
-        }
-    } else {
-        for (var key in parent) {
-            child.prototype[key] = parent[key];
-        }
-    }
+    console.log(" ************* EXTEND ****************", JSON.stringify(child), JSON.stringify(parent));
+    _.extend(child, parent);
 }
 
 function getTime(timezoneOffset) {
@@ -18791,7 +13484,7 @@ module.exports = {
     send: send,
     isPhoneGap: isPhoneGap
 };
-},{"../api_hash":24}],67:[function(_dereq_,module,exports){
+},{"../../../libs/underscore.js":7,"../api_hash":24}],43:[function(_dereq_,module,exports){
 var Model = _dereq_("./model");
 var log = _dereq_("./log");
 var config = _dereq_("./config");
@@ -18944,7 +13637,7 @@ module.exports = {
     uploadFile: uploadFile,
     downloadFile: downloadFile
 };
-},{"../ajax":19,"./config":34,"./fileSystem":46,"./log":55,"./model":56,"./utils":66}],68:[function(_dereq_,module,exports){
+},{"../ajax":19,"./config":34,"./fileSystem":36,"./log":38,"./model":39,"./utils":42}],44:[function(_dereq_,module,exports){
 var JSON = _dereq_("JSON");
 
 module.exports = function(fail, req, resStatus, error){
@@ -18971,7 +13664,7 @@ module.exports = function(fail, req, resStatus, error){
   }
 };
 
-},{"JSON":5}],69:[function(_dereq_,module,exports){
+},{"JSON":5}],45:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
 var appProps = _dereq_("./appProps");
 
@@ -19061,7 +13754,7 @@ CloudHost.prototype.getCloudUrl = function(path){
 
 
 module.exports = CloudHost;
-},{"./appProps":27,"./constants":29}],70:[function(_dereq_,module,exports){
+},{"./appProps":27,"./constants":29}],46:[function(_dereq_,module,exports){
 var loadScript = _dereq_("./loadScript");
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
 var lawnchairext = _dereq_('./lawnchair-ext');
@@ -19218,7 +13911,7 @@ module.exports = {
   "init": init,
   "loadCloudProps": loadCloudProps
 }
-},{"../../libs/generated/lawnchair":4,"./ajax":19,"./appProps":27,"./constants":29,"./events":32,"./fhparams":33,"./handleError":68,"./lawnchair-ext":71,"./loadScript":72,"./logger":73,"./security/hash":79,"JSON":5}],71:[function(_dereq_,module,exports){
+},{"../../libs/generated/lawnchair":4,"./ajax":19,"./appProps":27,"./constants":29,"./events":32,"./fhparams":33,"./handleError":44,"./lawnchair-ext":47,"./loadScript":48,"./logger":49,"./security/hash":55,"JSON":5}],47:[function(_dereq_,module,exports){
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
 
 var fileStorageAdapter = function (app_props, hashFunc) {
@@ -19406,7 +14099,7 @@ var addAdapter = function(app_props, hashFunc){
 module.exports = {
   addAdapter: addAdapter
 }
-},{"../../libs/generated/lawnchair":4}],72:[function(_dereq_,module,exports){
+},{"../../libs/generated/lawnchair":4}],48:[function(_dereq_,module,exports){
 module.exports = function (url, callback) {
   var script;
   var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
@@ -19429,7 +14122,7 @@ module.exports = function (url, callback) {
   head.insertBefore(script, head.firstChild);
 };
 
-},{}],73:[function(_dereq_,module,exports){
+},{}],49:[function(_dereq_,module,exports){
 var console = _dereq_('console');
 var log = _dereq_('loglevel');
 
@@ -19453,7 +14146,7 @@ log.setLevel('info');
  * Use either string or integer value
  */
 module.exports = log;
-},{"console":9,"loglevel":15}],74:[function(_dereq_,module,exports){
+},{"console":9,"loglevel":15}],50:[function(_dereq_,module,exports){
 module.exports = [
   {
     "destination" :"ipad",
@@ -19481,7 +14174,7 @@ module.exports = [
   }
 ];
 
-},{}],75:[function(_dereq_,module,exports){
+},{}],51:[function(_dereq_,module,exports){
 module.exports = function(url) {
   var qmap = {};
   var i = url.split("?");
@@ -19497,7 +14190,7 @@ module.exports = function(url) {
   }
   return qmap;
 };
-},{}],76:[function(_dereq_,module,exports){
+},{}],52:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
 
 module.exports = function() {
@@ -19510,7 +14203,7 @@ module.exports = function() {
   return type + "/" + constants.sdk_version;
 };
 
-},{"./constants":29}],77:[function(_dereq_,module,exports){
+},{"./constants":29}],53:[function(_dereq_,module,exports){
 var rsa = _dereq_("../../../libs/rsa");
 var SecureRandom = rsa.SecureRandom;
 var byte2Hex = rsa.byte2Hex;
@@ -19552,7 +14245,7 @@ var aes_keygen = function(p, s, f){
 }
 
 module.exports = aes_keygen;
-},{"../../../libs/rsa":6}],78:[function(_dereq_,module,exports){
+},{"../../../libs/rsa":6}],54:[function(_dereq_,module,exports){
 var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 var encrypt = function(p, s, f){
@@ -19593,7 +14286,7 @@ module.exports = {
   encrypt: encrypt,
   decrypt: decrypt
 }
-},{"../../../libs/generated/crypto":3}],79:[function(_dereq_,module,exports){
+},{"../../../libs/generated/crypto":3}],55:[function(_dereq_,module,exports){
 var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 
@@ -19618,7 +14311,7 @@ var hash = function(p, s, f){
 }
 
 module.exports = hash;
-},{"../../../libs/generated/crypto":3}],80:[function(_dereq_,module,exports){
+},{"../../../libs/generated/crypto":3}],56:[function(_dereq_,module,exports){
 var rsa = _dereq_("../../../libs/rsa");
 var RSAKey = rsa.RSAKey;
 
@@ -19643,7 +14336,7 @@ var encrypt = function(p, s, f){
 module.exports = {
   encrypt: encrypt
 }
-},{"../../../libs/rsa":6}],81:[function(_dereq_,module,exports){
+},{"../../../libs/rsa":6}],57:[function(_dereq_,module,exports){
 var JSON = _dereq_("JSON");
 var actAPI = _dereq_("./api_act");
 var cloudAPI = _dereq_("./api_cloud");
@@ -21034,7 +15727,7 @@ module.exports = {
   checkHasCustomSync: self.checkHasCustomSync,
   clearCache: self.clearCache
 };
-},{"../../libs/generated/crypto":3,"../../libs/generated/lawnchair":4,"./api_act":20,"./api_cloud":22,"JSON":5}],82:[function(_dereq_,module,exports){
+},{"../../libs/generated/crypto":3,"../../libs/generated/lawnchair":4,"./api_act":20,"./api_cloud":22,"JSON":5}],58:[function(_dereq_,module,exports){
 module.exports = {
   createUUID : function () {
     //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
@@ -21051,7 +15744,7 @@ module.exports = {
   }
 };
 
-},{}],83:[function(_dereq_,module,exports){
+},{}],59:[function(_dereq_,module,exports){
 var initializer = _dereq_("./initializer");
 var events = _dereq_("./events");
 var CloudHost = _dereq_("./hosts");
@@ -21152,6 +15845,6 @@ module.exports = {
   getInitError: getInitError,
   reset: reset
 }
-},{"./appProps":27,"./constants":29,"./events":32,"./hosts":69,"./initializer":70,"./logger":73}]},{},[17])
+},{"./appProps":27,"./constants":29,"./events":32,"./hosts":45,"./initializer":46,"./logger":49}]},{},[17])
 (17)
 });

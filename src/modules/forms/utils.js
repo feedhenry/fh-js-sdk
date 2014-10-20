@@ -1,19 +1,13 @@
 var hash = require('../api_hash');
+var _ = require('../../../libs/underscore.js');
 
 function isPhoneGap() {
     return (typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined");
 }
 
 function extend(child, parent) {
-    if (parent.constructor && parent.constructor === Function) {
-        for (var mkey in parent.prototype) {
-            child.prototype[mkey] = parent.prototype[mkey];
-        }
-    } else {
-        for (var key in parent) {
-            child.prototype[key] = parent[key];
-        }
-    }
+    console.log(" ************* EXTEND ****************", JSON.stringify(child), JSON.stringify(parent));
+    _.extend(child, parent);
 }
 
 function getTime(timezoneOffset) {
