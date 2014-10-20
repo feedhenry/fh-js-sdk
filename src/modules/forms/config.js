@@ -5,15 +5,18 @@ var log = require("./log");
 var online = true;
 var cloudHost = "notset";
 
-var Config = Model.extend({
-    _type: 'confg',
-    _ludid: "config"
-});
+function Config() {
+    Model.call(this, {
+        '_type': 'config',
+        "_ludid": "config"
+    });
+};
 
+utils.extend(Config, Model);
 
 //call in appForm.init
-Config.init = function(config, cb) {
-    if (Config.studioMode) { //running in studio
+Config.prototype.init = function(config, cb) {
+    if (config.studioMode) { //running in studio
         this.set("studioMode", true);
         this.fromJSON(config);
         cb();
@@ -25,10 +28,10 @@ Config.init = function(config, cb) {
         this.refresh(true, cb);
     }
 };
-Config.isStudioMode = function() {
+Config.prototype.isStudioMode = function() {
     return this.get("studioMode");
 };
-Config.refresh = function(fromRemote, cb) {
+Config.prototype.refresh = function(fromRemote, cb) {
     var dataAgent = this.getDataAgent();
     var self = this;
     if (typeof cb === 'undefined') {
@@ -44,7 +47,7 @@ Config.refresh = function(fromRemote, cb) {
                 try {
                     configObj = JSON.parse(res);
                 } catch (error) {
-                    log.e("Invalid json config defintion from remote", error);
+                    $fh.forms.log.e("Invalid json config defintion from remote", error);
                     configObj = {};
                     return cb(error, null);
                 }
@@ -62,16 +65,16 @@ Config.refresh = function(fromRemote, cb) {
     }
     self.loadLocal(function(err, localConfig) {
         if (err) {
-            log.e("Config loadLocal ", err);
+            $fh.forms.log.e("Config loadLocal ", err);
         }
 
         dataAgent.remoteStore.read(self, _handler);
     });
 };
-Config.getCloudHost = function() {
+Config.prototype.getCloudHost = function() {
     return cloudHost;
 };
-Config.staticConfig = function(config) {
+Config.prototype.staticConfig = function(config) {
     var self = this;
     var defaultConfig = {
         "defaultConfigValues": {},
@@ -81,7 +84,7 @@ Config.staticConfig = function(config) {
     if (self.get("userConfigValues")) {
         defaultConfig.userConfigValues = self.get("userConfigValues");
     }
-    var appid = $fh && $fh.app_props ? $fh.app_props.appid : Config.appid;
+    var appid = $fh && $fh.app_props ? $fh.app_props.appid : config.appid;
     var mode = $fh && $fh.app_props ? $fh.app_props.mode : 'dev';
     self.set('appId', appid);
     self.set('env', mode);
@@ -100,8 +103,8 @@ Config.staticConfig = function(config) {
     }
 
     //config_admin_user can not be set by the user.
-    if (Config.config_admin_user) {
-        delete Config.config_admin_user;
+    if (config.config_admin_user) {
+        delete config.config_admin_user;
     }
 
     defaultConfig.defaultConfigValues = config;
@@ -132,7 +135,7 @@ Config.staticConfig = function(config) {
 
     self.fromJSON(defaultConfig);
 };
-Config._initMBaaS = function(config) {
+Config.prototype._initMBaaS = function(config) {
     var self = this;
     config = config || {};
     var cloud_props = $fh.cloud_props;
@@ -145,8 +148,8 @@ Config._initMBaaS = function(config) {
         cloudHost = cloud_props.hosts.url;
     }
 
-    if (typeof(Config.cloudHost) === 'string') {
-        cloudHost = Config.cloudHost;
+    if (typeof(config.cloudHost) === 'string') {
+        cloudHost = config.cloudHost;
     }
 
 
@@ -167,7 +170,7 @@ Config._initMBaaS = function(config) {
     });
     self.set('statusUrl', '/sys/info/ping');
 };
-Config.setOnline = function() {
+Config.prototype.setOnline = function() {
     var wasOnline = online;
     online = true;
 
@@ -175,7 +178,7 @@ Config.setOnline = function() {
         this.emit('online');
     }
 };
-Config.setOffline = function() {
+Config.prototype.setOffline = function() {
     var wasOnline = online;
     online = false;
 
@@ -183,7 +186,7 @@ Config.setOffline = function() {
         this.emit('offline');
     }
 };
-Config.isOnline = function() {
+Config.prototype.isOnline = function() {
     var self = this;
     if (utils.isPhoneGap()) {
         if (navigator.connection.type) {
@@ -196,10 +199,8 @@ Config.isOnline = function() {
     }
 
 };
-Config.isStudioMode = function() {
+Config.prototype.isStudioMode = function() {
     return this.get("studioMode", false);
 };
 
-console.log("CONFIG", JSON.stringify(Config));
-
-module.config = new Config();
+module.exports = Config;

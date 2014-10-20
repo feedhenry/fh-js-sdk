@@ -3,6 +3,7 @@ var log = require("./log");
 var config = require("./config");
 var localStorage = require("./localStorage");
 var FileSubmission = require("./fileSubmission");
+var utils = require("./utils");
 
 
 function FileSubmissionDownload(fileData) {
@@ -11,8 +12,10 @@ function FileSubmissionDownload(fileData) {
         '_type': 'fileSubmissionDownload',
         'data': fileData
     });
-}
+};
+
 utils.extend(FileSubmissionDownload, Model);
+
 FileSubmissionDownload.prototype.setSubmissionId = function(submissionId) {
     log.d("FileSubmission setSubmissionId.", submissionId);
     this.set('submissionId', submissionId);

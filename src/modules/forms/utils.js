@@ -6,8 +6,7 @@ function isPhoneGap() {
 }
 
 function extend(child, parent) {
-    console.log(" ************* EXTEND ****************", JSON.stringify(child), JSON.stringify(parent));
-    _.extend(child, parent);
+    return _.extend(child.prototype, parent.prototype);
 }
 
 function getTime(timezoneOffset) {

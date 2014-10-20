@@ -5,12 +5,6 @@ var storeMbaas = require("./storeMbaas");
 var localStorage = require("./localStorage");
 var utils = require("./utils");
 
-var DataAgent = {
-    initialize: function(remoteStore, localStore){
-        this.remoteStore = remoteStore;
-        this.localStore = localStore;    
-    }
-};
 
 //default data agent uses mbaas as remote store, localstorage as local store
 function DataAgent(remoteStore, localStore) {
@@ -18,7 +12,6 @@ function DataAgent(remoteStore, localStore) {
     this.remoteStore = remoteStore;
     this.localStore = localStore;
 }
-
 utils.extend(DataAgent, Store);
 /**
  * Read from local store first,
@@ -127,8 +120,4 @@ DataAgent.prototype.checkOnlineStatus = function(cb) {
     });
 };
 
-//DataAgent is read only store
-module.exports = {
-    DataAgent: DataAgent,
-    dataAgent: new DataAgent(storeMbaas, localStorage)
-};
+module.exports = DataAgent;

@@ -2,6 +2,7 @@ var Model = require("./model");
 var log = require("./log");
 var config = require("./config");
 var localStorage = require("./localStorage");
+var utils = require("./utils");
 
 function FileSubmission(fileData) {
     log.d("FileSubmission ", fileData);
@@ -10,7 +11,9 @@ function FileSubmission(fileData) {
         'data': fileData
     });
 };
+
 utils.extend(FileSubmission, Model);
+
 FileSubmission.prototype.loadFile = function(cb) {
     log.d("FileSubmission loadFile");
     var fileName = this.getHashName();

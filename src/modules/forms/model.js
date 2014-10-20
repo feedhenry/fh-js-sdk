@@ -4,7 +4,7 @@ var dataAgent = require("./dataAgent");
 var Event = require('../../../libs/events');
 var _ = require('../../../libs/underscore.js');
 
-var Model = function(){
+var Model = function(options){
     this.props = {
         '_id': null,
         '_type': null,
@@ -12,6 +12,8 @@ var Model = function(){
     };
     this.events = {};
 };
+
+utils.extend(Model, Event);
 
 Model.prototype.getProps = function() {
     return this.props;

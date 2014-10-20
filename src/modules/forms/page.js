@@ -16,8 +16,8 @@ function Page(opt, parentForm) {
     this.fromJSON(opt);
     this.form = parentForm;
     this.initialise();
-}
-utils.extend(Page, Model);
+};
+
 Page.prototype.initialise = function() {
     var fieldsDef = this.getFieldDef();
     this.fieldsIds = [];

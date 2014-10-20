@@ -7,7 +7,9 @@ var web = require("./web");
 function MBaaS() {
     Store.call(this, 'MBaaS');
 }
+
 utils.extend(MBaaS, Store);
+
 MBaaS.prototype.checkStudio = function() {
     return config.get("studioMode");
 };

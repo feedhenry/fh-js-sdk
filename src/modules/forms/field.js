@@ -25,13 +25,11 @@ function Field(opt, form) {
     if (form) {
         this.form = form;
     }
-}
+};
 
 utils.extend(Field, Model);
-
-//Extending any special functions needed.
+utils.extend(Field, fieldCheckboxes);
 utils.extend(Field, fieldFile);
-utils.extend(Field, fieldImage);
 utils.extend(Field, fieldLocation);
 utils.extend(Field, fieldMatrix);
 utils.extend(Field, fieldRadio);

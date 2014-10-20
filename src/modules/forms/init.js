@@ -4,6 +4,7 @@ var submissions = require("./submissions");
 var uploadManager = require("./uploadManager");
 var theme = require("./theme");
 var forms = require("./forms");
+var async = require('../../../libs/async');
 
 var init = function(params, cb) {
     var def = {
@@ -19,51 +20,35 @@ var init = function(params, cb) {
 
     //init config module
     var config = def.config || {};
-    config.init(config, function(err) {
-        if (err) {
-            log.e("Form config loading error: ", err);
+
+    async.series([
+        function(cb) {
+            log.loadLocal(cb);
+        },
+        function(cb) {
+            log.l("Loading Config");
+            config.init(config, cb);
+        },
+        function(cb) {
+            log.l("Loading Submissions");
+            submissions.loadLocal(cb);
+        },
+        function(cb) {
+            log.l("Loading Upload Tasks");
+            uploadManager.loadLocal(cb);
         }
-        log.loadLocal(function(err) {
-            if (err) {
-                console.error("Error loading config from local storage");
-            }
+    ], function(err) {
+        if(err){
+            log.e("Error Initialising Forms: " + err);
+            return cb(err);
+        }
 
-            submissions.loadLocal(function(err) {
-                if (err) {
-                    console.error("Error loading submissions");
-                }
+        log.l("Initialisation Complete. Starting Upload Manager");
+        //Starting any uploads that are queued
+        uploadManager.start();
+        //init forms module
 
-                //Loading the current state of the uploadManager for any upload tasks that are still in progress.
-                uploadManager.loadLocal(function(err) {
-                    log.d("Upload Manager loaded from memory.");
-                    if (err) {
-                        log.e("Error loading upload manager from memory ", err);
-                    }
-
-                    //Starting any uploads that are queued
-                    uploadManager.start();
-                    //init forms module
-                    log.l("Refreshing Theme.");
-                    theme.refresh(true, function(err) {
-                        if (err) {
-                            log.e("Error refreshing theme ", err);
-                        }
-                        if (def.updateForms === true) {
-                            log.l("Refreshing Forms.");
-                            forms.refresh(true, function(err) {
-                                if (err) {
-                                    log.e("Error refreshing forms: ", err);
-                                }
-                                cb();
-                            });
-                        } else {
-                            cb();
-                        }
-                    });
-                });
-            });
-
-        });
+        return cb();
     });
 }
 

@@ -15,6 +15,7 @@ var FileSubmissionDownload = require("./fileSubmissionDownload");
 var FormSubmissionComplete = require("./formSubmissionComplete");
 var Form = require("./form");
 var submission = require("./submission");
+var utils = require("./utils");
 
 var _uploadTasks = {};
 
@@ -47,8 +48,8 @@ function UploadTask() {
     });
 }
 
-
 utils.extend(UploadTask, Model);
+
 UploadTask.prototype.init = function(submissionModel) {
     var self = this;
     var submissionLocalId = submissionModel.getLocalId();

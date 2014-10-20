@@ -353,8 +353,6 @@ function _checkEnv() {
         PERSISTENT = window.PERSISTENT;
     }
 }
-// debugger;
-_checkEnv();
 
 module.exports = {
     isFileSystemAvailable: isFileSystemAvailable,

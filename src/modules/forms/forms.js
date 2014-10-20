@@ -2,6 +2,8 @@ var Model = require("./model");
 var utils = require("./utils");
 var log = require("./log");
 
+var forms;
+
 function Forms() {
     Model.call(this, {
         '_type': 'forms',

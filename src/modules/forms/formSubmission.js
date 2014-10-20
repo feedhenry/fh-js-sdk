@@ -1,6 +1,7 @@
 var Model = require("./model");
 var log = require("./log");
 var config = require("./config");
+var utils = require("./utils");
 
 function FormSubmission(submissionJSON) {
     Model.call(this, {
@@ -8,7 +9,9 @@ function FormSubmission(submissionJSON) {
         'data': submissionJSON
     });
 }
+
 utils.extend(FormSubmission, Model);
+
 FormSubmission.prototype.getProps = function() {
     return this.get('data');
 };

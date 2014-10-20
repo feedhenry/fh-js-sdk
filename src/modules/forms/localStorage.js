@@ -11,8 +11,10 @@ var _fileSystemAvailable = function() {};
 //placeholder
 function LocalStorage() {
     Store.call(this, 'LocalStorage');
-}
+};
+
 utils.extend(LocalStorage, Store);
+
 //store a model to local storage
 LocalStorage.prototype.create = function(model, cb) {
     var key = utils.localId(model);

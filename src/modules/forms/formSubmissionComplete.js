@@ -1,6 +1,7 @@
 var Model = require("./model");
 var log = require("./log");
 var config = require("./config");
+var utils = require("./utils");
 
 function FormSubmissionComplete(submissionTask) {
     Model.call(this, {
@@ -9,6 +10,7 @@ function FormSubmissionComplete(submissionTask) {
         'localSubmissionId': submissionTask.get('localSubmissionId')
     });
 }
+
 utils.extend(FormSubmissionComplete, Model);
 
 module.exports = FormSubmissionComplete;

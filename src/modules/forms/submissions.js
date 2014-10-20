@@ -10,8 +10,10 @@ function Submissions() {
         '_ludid': 'submissions_list',
         'submissions': []
     });
-}
+};
+
 utils.extend(Submissions, Model);
+
 Submissions.prototype.setLocalId = function() {
     log.e("Submissions setLocalId. Not Permitted for submissions.");
 };

@@ -135,8 +135,8 @@ function _loadImage(meta, cb) {
 }
 
 module.exports = {
-    process_signature: process_signature,
-    convert_signature: convert_signature,
-    process_photo: process_photo,
-    convert_photo: convert_photo
+    process_signature: imageProcess,
+    convert_signature: convertImage,
+    process_photo: imageProcess,
+    convert_photo: convertImage
 };

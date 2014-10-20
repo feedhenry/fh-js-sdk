@@ -6,6 +6,7 @@ var utils = require("./utils");
 var log = require("./log");
 var dataAgent = require("./dataAgent");
 var uploadTask = require("./uploadTask");
+var utils = require("./utils");
 
 function UploadManager() {
     var self = this;
@@ -19,6 +20,7 @@ function UploadManager() {
     self.timerInterval = 200;
     self.sendingStart = utils.getTime();
 }
+
 utils.extend(UploadManager, Model);
 
 /**
