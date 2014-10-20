@@ -1,0 +1,29 @@
+var chai = require('chai');
+var expect = chai.expect;
+var sinonChai = require('sinon-chai');
+chai.use(sinonChai);
+
+var process = require("process");
+if(document && document.location){
+  if(document.location.href.indexOf("coverage=1") > -1){
+    process.env.LIB_COV = 1;
+  }
+}
+
+console.log(__dir);
+
+var utils = process.env.LIB_COV? require("../../src-cov/modules/forms/utils") : require("../../src/modules/forms/utils");
+
+describe("test forms utils module", function(){
+	it("should extend a function", function(){
+		var func1 = function(){};
+		func1.prototype.function1 = function(){};
+
+		var func2 = function(){};
+		func2.prototype.function2 = function(){};
+
+		utils.extend(func1, func2);
+
+		expect(func1.prototype).to.have.property("function2");
+	});
+});
