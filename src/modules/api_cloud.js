@@ -15,7 +15,7 @@ function doCloudCall(opts, success, fail){
     "url": url,
     "type": opts.method || "POST",
     "dataType": opts.dataType || "json",
-    "data": JSON.stringify(params),
+    "data": params,
     "contentType": opts.contentType || "application/json",
     "timeout": opts.timeout || appProps.timeout,
     "success": success,
