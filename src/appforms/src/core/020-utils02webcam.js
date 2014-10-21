@@ -4,6 +4,8 @@ appForm.utils = function (module) {
   module.isHtml5CamAvailable = isHtml5CamAvailable;
   module.initHtml5Camera = initHtml5Camera;
   module.cancelHtml5Camera = cancelHtml5Camera;
+  module.captureBarcode = captureBarcode;
+
   var isPhoneGap = false;
   var isHtml5 = false;
   var video = null;
@@ -50,23 +52,26 @@ appForm.utils = function (module) {
     }
 
     if (isPhoneGap) {
-      params.encodingType = params.encodingType === 'jpeg' ? Camera.EncodingType.JPEG : Camera.EncodingType.PNG;
-      navigator.camera.getPicture(_phoneGapSuccess(cb), cb, {
-        quality: quality,
-        targetWidth: width,
-        targetHeight: height,
-        sourceType: params.sourceType,
-        saveToPhotoAlbum: params.saveToPhotoAlbum,
-        destinationType: Camera.DestinationType.FILE_URI,
-        encodingType: params.encodingType
-      });
+      _phoneGapPhoto(params, cb);
     } else if (isHtml5) {
       snapshot(params, cb);
     } else {
       cb('Your device does not support camera.');
     }
   }
-  function _phoneGapSuccess(cb) {
+  function _phoneGapPhoto(params, cb){
+    params.encodingType = params.encodingType === 'jpeg' ? Camera.EncodingType.JPEG : Camera.EncodingType.PNG;
+    navigator.camera.getPicture(_phoneGapPhotoSuccess(cb), cb, {
+      quality: params.quality,
+      targetWidth: params.targetWidth,
+      targetHeight: params.targetHeight,
+      sourceType: params.sourceType,
+      saveToPhotoAlbum: params.saveToPhotoAlbum,
+      destinationType: Camera.DestinationType.FILE_URI,
+      encodingType: params.encodingType
+    });
+  }
+  function _phoneGapPhotoSuccess(cb) {
     return function (imageData) {
       var imageURI = imageData;
       cb(null, imageURI);
@@ -89,6 +94,50 @@ appForm.utils = function (module) {
     } else {
       $fh.forms.log.e('Media device was not released by browser.');
       cb('Media device occupied.');
+    }
+  }
+
+  /**
+   * Capturing a barcode using the PhoneGap barcode plugin
+   */
+  function _phoneGapBarcode(params, cb){
+    if(cordova && cordova.plugins && cordova.plugins.barcodeScanner){
+      cordova.plugins.barcodeScanner.scan(
+        function (result) {
+          $fh.forms.log.d("Barcode Found: " + JSON.stringify(result));
+          return cb(null, result);
+        },
+        function (error) {
+          $fh.forms.log.e("Scanning failed: " + error);
+          cb("Scanning failed: " + error);
+        }
+      );
+    } else {
+      return cb("Barcode plugin not installed");
+    }
+  }
+
+  /**
+   * Capturing a barcode using a webcam and image processors.
+   * @param params
+   * @param cb
+   * @private
+   */
+  function _webBarcode(params, cb){
+    //Initialise the web cam
+
+    //take a snapshot
+
+    //Pass to testing functions
+
+    return cb("Not done yet");
+  }
+
+  function captureBarcode(params, cb){
+    if(isPhoneGapAvailable()){
+      _phoneGapBarcode(params,cb);
+    } else {
+      _webBarcode(params, cb);
     }
   }
   function checkEnv() {

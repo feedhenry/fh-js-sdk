@@ -183,7 +183,7 @@ appForm.models = function(module) {
   Config.prototype.isOnline = function(){
     var self = this;
     if(appForm.utils.isPhoneGap()){
-      if(navigator.connection.type){
+      if(navigator.connection && navigator.connection.type){
         return online === true && navigator.connection.type !== Connection.NONE;
       } else {
         return online === true;

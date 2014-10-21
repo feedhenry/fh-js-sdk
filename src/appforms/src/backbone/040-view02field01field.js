@@ -10,30 +10,25 @@ var FieldView = Backbone.View.extend({
     removeInputButtonClass: ".fh_appform_removeInputBtn",
     fieldWrapper: '<div class="fh_appform_input_wrapper"></div>',
     input: "<input class='fh_appform_field_input <%= repeatingClassName%> col-xs-12' data-field='<%= fieldId %>' data-index='<%= index %>' value='<%= value %>' type='<%= inputType %>' />",
-    inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>' class='col-xs-12'> <div class='fh_appform_field_input_container non_repeating' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden col-xs-12 text-center' ></div></div><br class='clearfix'/>    </div>",
-    inputTemplateRepeating: "<div id='wrapper_<%= fieldId %>_<%= index %>' class='col-xs-12'> <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering col-xs-2'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container repeating col-xs-10' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden col-xs-12'></div></div></div>",
-
-
-    fh_appform_fieldActionBar: "<div class='fh_appform_field_button_bar col-xs-12' ><button class='fh_appform_removeInputBtn special_button fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5'>-</button><button class='special_button fh_appform_addInputBtn fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5 pull-right'>+</button></div>",
-    title: '<div class="fh_appform_field_title"><h3 class="text-left  <%= required%>"><%= title %></h3></div>',
-    titleRepeating: '<div class="fh_appform_field_title"><h3 class="text-left"><%= title %></h3></div>',
-    instructions: '',
     fieldIconNames: {
-        text: "icon-font",
-        textarea: "icon icon-align-justify",
-        url: "icon-link",
-        number: "icon-number",
-        emailAddress: "icon-envelope-alt",
-        dropdown: "icon-caret-down",
-        checkboxes: "icon-check",
-        location: "icon-location-arrow",
-        locationMap: "icon-map-marker",
-        photo: "icon-camera",
-        signature: "icon-pencil",
-        file: "icon-cloud-upload",
-        dateTime: "icon-calendar",
-        sectionBreak: "icon-minus",
-        radio: "icon-circle-blank"
+      text: "icon-font",
+      textarea: "icon icon-align-justify",
+      url: "icon-link",
+      number: "icon-number",
+      emailAddress: "icon-envelope-alt",
+      dropdown: "icon-caret-down",
+      checkboxes: "icon-check",
+      location: "icon-location-arrow",
+      locationMap: "icon-map-marker",
+      photo: "icon-camera",
+      signature: "icon-pencil",
+      file: "icon-cloud-upload",
+      dateTime: "icon-calendar",
+      sectionBreak: "icon-minus",
+      radio: "icon-circle-blank",
+      barcode: "icon-barcode",
+      sliderNumber: "icon-number",
+      sliderOptions: "icon-circle-blank"
     },
     events: {
         "change": "contentChanged",
@@ -104,17 +99,6 @@ var FieldView = Backbone.View.extend({
 
         }
         return required;
-    },
-    renderHelpText: function() {
-        var helpText = this.model.getHelpText();
-
-        if (typeof helpText === "string" && helpText.length > 0) {
-            return _.template(this.instructions, {
-                "helpText": helpText
-            });
-        } else {
-            return "";
-        }
     },
     addElement: function() {
         var self = this;

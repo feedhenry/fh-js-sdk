@@ -1673,30 +1673,25 @@ var FieldView = Backbone.View.extend({
     removeInputButtonClass: ".fh_appform_removeInputBtn",
     fieldWrapper: '<div class="fh_appform_input_wrapper"></div>',
     input: "<input class='fh_appform_field_input <%= repeatingClassName%> col-xs-12' data-field='<%= fieldId %>' data-index='<%= index %>' value='<%= value %>' type='<%= inputType %>' />",
-    inputTemplate: "<div id='wrapper_<%= fieldId %>_<%= index %>' class='col-xs-12'> <div class='fh_appform_field_input_container non_repeating' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden col-xs-12 text-center' ></div></div><br class='clearfix'/>    </div>",
-    inputTemplateRepeating: "<div id='wrapper_<%= fieldId %>_<%= index %>' class='col-xs-12'> <div class='<%= required %> fh_appform_field_title fh_appform_field_numbering col-xs-2'> <%=index + 1%>.  </div> <div class='fh_appform_field_input_container repeating col-xs-10' >  <%= inputHtml %> <div class='fh_appform_field_error_container fh_appform_hidden col-xs-12'></div></div></div>",
-
-
-    fh_appform_fieldActionBar: "<div class='fh_appform_field_button_bar col-xs-12' ><button class='fh_appform_removeInputBtn special_button fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5'>-</button><button class='special_button fh_appform_addInputBtn fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5 pull-right'>+</button></div>",
-    title: '<div class="fh_appform_field_title"><h3 class="text-left  <%= required%>"><%= title %></h3></div>',
-    titleRepeating: '<div class="fh_appform_field_title"><h3 class="text-left"><%= title %></h3></div>',
-    instructions: '',
     fieldIconNames: {
-        text: "icon-font",
-        textarea: "icon icon-align-justify",
-        url: "icon-link",
-        number: "icon-number",
-        emailAddress: "icon-envelope-alt",
-        dropdown: "icon-caret-down",
-        checkboxes: "icon-check",
-        location: "icon-location-arrow",
-        locationMap: "icon-map-marker",
-        photo: "icon-camera",
-        signature: "icon-pencil",
-        file: "icon-cloud-upload",
-        dateTime: "icon-calendar",
-        sectionBreak: "icon-minus",
-        radio: "icon-circle-blank"
+      text: "icon-font",
+      textarea: "icon icon-align-justify",
+      url: "icon-link",
+      number: "icon-number",
+      emailAddress: "icon-envelope-alt",
+      dropdown: "icon-caret-down",
+      checkboxes: "icon-check",
+      location: "icon-location-arrow",
+      locationMap: "icon-map-marker",
+      photo: "icon-camera",
+      signature: "icon-pencil",
+      file: "icon-cloud-upload",
+      dateTime: "icon-calendar",
+      sectionBreak: "icon-minus",
+      radio: "icon-circle-blank",
+      barcode: "icon-barcode",
+      sliderNumber: "icon-number",
+      sliderOptions: "icon-circle-blank"
     },
     events: {
         "change": "contentChanged",
@@ -1767,17 +1762,6 @@ var FieldView = Backbone.View.extend({
 
         }
         return required;
-    },
-    renderHelpText: function() {
-        var helpText = this.model.getHelpText();
-
-        if (typeof helpText === "string" && helpText.length > 0) {
-            return _.template(this.instructions, {
-                "helpText": helpText
-            });
-        } else {
-            return "";
-        }
     },
     addElement: function() {
         var self = this;
@@ -3234,6 +3218,241 @@ FieldDateTimeView = FieldView.extend({
 FieldUrlView = FieldView.extend({
   type: "url"
 });
+FieldBarcodeView = FieldView.extend({
+  type: "barcode",
+  input: "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action select col-xs-12' data-index='<%= index %>'  type='<%= inputType %>'>Scan Barcode</button>" +
+    "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action remove col-xs-12' data-index='<%= index %>'  type='<%= inputType %>'><i class='icon-remove-circle'></i>&nbsp;Remove Barcode Entry</button>" +
+    "Barcode <input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' data-bfield='text' type='text' disabled/>" +
+    "Format <input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' data-bfield='format' type='text' disabled/>",
+  initialize: function() {
+    var self = this;
+
+    self.barcodeObjects = [];
+    FieldView.prototype.initialize.apply(self, arguments);
+  },
+  contentChanged: function(e) {
+    //Dont need to do anything when the content changes.
+  },
+  valueFromElement: function(index) {
+    var self = this;
+    return self.barcodeObjects[index] || {};
+  },
+  showButton: function(index, barcodeObject) {
+    var self = this;
+    var wrapperObj = this.getWrapper(index);
+    var button = wrapperObj.find("button.select");
+    var button_remove = wrapperObj.find("button.remove");
+
+
+    var barcodeTextEle = wrapperObj.find("input[data-bfield='text']")[0];
+    var barcodeFormatEle = wrapperObj.find("input[data-bfield='format']")[0];
+
+    button.show();
+
+    if (barcodeObject == null) {
+      button_remove.hide();
+    } else {
+      barcodeTextEle.val(barcodeObject.text);
+      barcodeFormatEle.val(barcodeObject.format);
+      button_remove.show();
+    }
+
+    if (this.readonly) {
+      button.hide();
+      button_remove.hide();
+    }
+    button.off('click');
+    button.on('click', function(e) {
+      self.scanBarcode(e, index);
+    });
+
+  },
+  //Scanning a barcode from the device.
+  scanBarcode: function(e, index){
+    var self = this;
+    $fh.forms.log.d("Scanning barcode");
+
+    self.model.utils.captureBarcode({}, function(err, result){
+      if(err){
+        $fh.forms.log.e("Error scanning barcode: " + err);
+        self.showButton(index, null);
+      } else if(result.text && result.format){
+        $fh.forms.log.d("Got Barcode Result: " + JSON.stringify(result));
+        self.barcodeObjects[index] = {
+          text: result.text,
+          format: result.format
+        };
+
+        self.showButton(index,  self.barcodeObjects[index]);
+      } else {
+        $fh.forms.log.d("Barcode Scan Cancelled: " + JSON.stringify(result));
+        self.showButton(index, null);
+      }
+    });
+  },
+  valuePopulateToElement: function(index, value) {
+    var self = this;
+    if (value) {
+      self.barcodeObjects[index] = value;
+      this.showButton(index, value);
+    }
+  },
+  onElementShow: function(index) {
+    this.showButton(index, null);
+  }
+});
+FieldSliderNumberView = FieldView.extend({
+  type: "sliderNumber",
+  input: "<div class='col-xs-12 sliderValue'></div>" +
+    "<input class='fh_appform_field_input col-xs-12' data-field='<%= fieldId %>' data-index='<%= index %>'  type='range' min='<%= min %>' max='<%= max %>' step='<%= stepSize %>' value='<%= defaultValue %>'>",
+  renderInput: function(index) {
+    var self = this;
+    var fieldId=this.model.getFieldId();
+
+    var fieldValidation = self.model.getFieldValidation();
+    var fieldDefinition = self.model.getFieldDefinition();
+    var defaultValue = self.model.getDefaultValue();
+
+    var params = {
+      fieldId: fieldId,
+      index: index,
+      min: fieldValidation.min || 0,
+      max: fieldValidation.max || 10,
+      stepSize: fieldDefinition.stepSize || 1,
+      defaultValue: defaultValue
+    };
+
+
+    return $(_.template(this.input, params));
+  },
+  onElementShow: function(index) {
+    //Initialising the rangeslider
+
+    var wrapperObj = this.getWrapper(index);
+
+    var input = $(wrapperObj.find("input[type='range']"));
+
+    //Rangeslider may not be available
+    //If not, just use the basic browser range control if available.
+    if(input.rangeslider){
+      input.rangeslider({
+
+      });
+    }
+  },
+  valueFromElement: function(index) {
+    var wrapperObj = this.getWrapper(index);
+    return wrapperObj.find("input[type='range']").val() || "";
+  },
+  valuePopulateToElement: function(index, value) {
+    var wrapperObj = this.getWrapper(index);
+
+    if(value){
+      wrapperObj.find("input[type='range']").val(value);
+    }
+  },
+  contentChanged: function(e){
+    var self = this;
+    var fileEle = e.target;
+    var filejQ = $(fileEle);
+    var index = filejQ.data().index;
+
+    var wrapperObj = this.getWrapper(index);
+
+    var input = $(wrapperObj.find("input[type='range']"));
+    var value = input.val();
+
+    wrapperObj.find(".sliderValue").html("Selected Value: " + value);
+  },
+  getHTMLInputType: function() {
+    return "range";
+  }
+});
+FieldSliderOptionsView = FieldView.extend({
+  type: "sliderOptions",
+  input: "<div class='col-xs-12 sliderValue'></div>" +
+    "<input class='fh_appform_field_input col-xs-12' data-field='<%= fieldId %>' data-index='<%= index %>'  type='range' min='<%= min %>' max='<%= max %>' step='<%= stepSize %>' value='<%= defaultValue %>'>",
+  renderInput: function(index) {
+    var self = this;
+    var fieldId= self.model.getFieldId();
+
+    var choices = self.model.getSliderOptions();
+
+    var defaultValue = 0;
+
+
+    //Find which choice is selected.
+    for(var choiceIndex = 0; choiceIndex < choices.length; choiceIndex++){
+      var choice = choices[choiceIndex];
+
+      if(choice.checked){
+        defaultValue = choiceIndex;
+        break;
+      }
+    }
+
+    var params = {
+      fieldId: fieldId,
+      index: index,
+      min: 0,
+      max: choices.length - 1,
+      stepSize: 1,
+      defaultValue: defaultValue
+    };
+
+    return $(_.template(this.input, params));
+  },
+  onElementShow: function(index) {
+    //Initialising the rangeslider
+
+    var wrapperObj = this.getWrapper(index);
+
+    var input = $(wrapperObj.find("input[type='range']"));
+
+    //Rangeslider may not be available
+    //If not, just use the basic browser range control if available.
+    if(input.rangeslider){
+      input.rangeslider({
+
+      });
+    }
+  },
+  valueFromElement: function(index) {
+    var wrapperObj = this.getWrapper(index);
+    return wrapperObj.find("input[type='range']").val() || "";
+  },
+  valuePopulateToElement: function(index, value) {
+    var wrapperObj = this.getWrapper(index);
+
+    if(value){
+      wrapperObj.find("input[type='range']").val(value);
+    }
+  },
+  contentChanged: function(e){
+    var self = this;
+    var fileEle = e.target;
+    var filejQ = $(fileEle);
+    var index = filejQ.data().index;
+
+    var wrapperObj = this.getWrapper(index);
+
+    var input = $(wrapperObj.find("input[type='range']"));
+    var value = input.val();
+
+    value = parseInt(value);
+
+    if(isNaN(value)){
+      return;
+    }
+
+    var choices = self.model.getSliderOptions();
+
+    wrapperObj.find(".sliderValue").html("Selected Value: " + choices[value].label);
+  },
+  getHTMLInputType: function() {
+    return "range";
+  }
+});
 var PageView=BaseView.extend({
 
   viewMap: {
@@ -3252,7 +3471,10 @@ var PageView=BaseView.extend({
     "locationMap": FieldMapView,
     "dateTime":FieldDateTimeView,
     "sectionBreak":FieldSectionBreak,
-    "url":FieldUrlView
+    "url":FieldUrlView,
+    "barcode": FieldBarcodeView,
+    "sliderNumber": FieldSliderNumberView,
+    "sliderOptions": FieldSliderOptionsView
   },
   templates : {
     pageTitle: '<div class="fh_appform_page_title text-center"><%= pageTitle %></div>',

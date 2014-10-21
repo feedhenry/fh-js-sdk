@@ -95,8 +95,8 @@ appForm.stores = function (module) {
     var self=this;
 
     if(appForm.utils.isPhoneGap()){
-      if(navigator.connection.type){
-        if(navigator.connection.type === Connection.NONE){
+      if(navigator.connection){
+        if(navigator.connection.type && navigator.connection.type === Connection.NONE){
           //No connection availabile, no need to ping.
           $fh.forms.config.offline();
           return cb(false);
