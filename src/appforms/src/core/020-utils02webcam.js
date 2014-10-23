@@ -86,7 +86,7 @@ appForm.utils = function (module) {
     canvas.width = width;
     canvas.height = height;
     if (!localMediaStream) {
-      navigator.getUserMedia({ video: true }, function (stream) {
+      navigator.getUserMedia({ video: true, audio:false }, function (stream) {
         video.src = window.URL.createObjectURL(stream);
         localMediaStream = stream;
         cb(null, video);
@@ -149,7 +149,7 @@ appForm.utils = function (module) {
       isHtml5 = true;
       video = document.createElement('video');
       video.autoplay = 'autoplay';
-      canvas = document.createElement('canvas');
+      canvas = document.getElementById('qr-canvas');
       ctx = canvas.getContext('2d');
     } else {
       console.error('Cannot detect usable media API. Camera will not run properly on this device.');
@@ -181,8 +181,22 @@ appForm.utils = function (module) {
       // "image/webp" works in Chrome.
       // Other browsers will fall back to image/png.
       var base64 = canvas.toDataURL('image/png');
-      cancelHtml5Camera();
-      cb(null, base64);
+      console.log("base64", base64);
+      var imageData = ctx.getImageData(0, 0, params.targetWidth, params.targetHeight);
+
+      if(params.cancelHtml5Camera){
+        cancelHtml5Camera();
+      }
+
+
+
+      //Deciding whether to return raw image data or a base64 image.
+      //rawData is mainly used for scanning for barcodes.
+      if(params.rawData){
+        return cb(null, {ctx: ctx, imageData: imageData, width: params.targetWidth, height: params.targetHeight, base64: base64});
+      } else {
+        return cb(null, base64);
+      }
     } else {
       $fh.forms.log.e('Media resource is not available');
       cb('Resource not available');

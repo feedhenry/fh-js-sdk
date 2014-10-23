@@ -2100,6 +2100,9 @@ FieldCameraView = FieldView.extend({
 
         params = this.model.getPhotoOptions();
 
+        //Need to cancel the html5 camera when the photo is taken.
+        params.cancelHtml5Camera = true;
+
         if (this.model.utils.isPhoneGapCamAvailable()) {
             this.model.utils.takePhoto(params, function(err, imageURI) {
                 if (err) {
@@ -3223,7 +3226,11 @@ FieldBarcodeView = FieldView.extend({
   input: "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action select col-xs-12' data-index='<%= index %>'  type='<%= inputType %>'>Scan Barcode</button>" +
     "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action remove col-xs-12' data-index='<%= index %>'  type='<%= inputType %>'><i class='icon-remove-circle'></i>&nbsp;Remove Barcode Entry</button>" +
     "Barcode <input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' data-bfield='text' type='text' disabled/>" +
-    "Format <input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' data-bfield='format' type='text' disabled/>",
+    "Format <input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' data-bfield='format' type='text' disabled/>" + '<canvas id="qr-canvas" width="800" height="600" style="width: 800px; height: 600px;"></canvas>',
+  html5Cam: '<div class="html5Cam">' +
+    '<div class="camActionBar"><button class="camCancel camBtn fh_appform_button_cancel">Cancel</button><button class="camOk camBtn fh_appform_button_action">Ok</button></div>' +
+    '<div class="cam"></div>' +
+    '</div>',
   initialize: function() {
     var self = this;
 
@@ -3239,7 +3246,7 @@ FieldBarcodeView = FieldView.extend({
   },
   showButton: function(index, barcodeObject) {
     var self = this;
-    var wrapperObj = this.getWrapper(index);
+    var wrapperObj = self.getWrapper(index);
     var button = wrapperObj.find("button.select");
     var button_remove = wrapperObj.find("button.remove");
 
@@ -3267,34 +3274,112 @@ FieldBarcodeView = FieldView.extend({
     });
 
   },
+  setImage: function(index, base64Img) {
+    var wrapper = this.getWrapper(index);
+    var img = wrapper.find('img.imageThumb');
+    img.attr('src', base64Img).show();
+    wrapper.find('button').hide();
+    wrapper.find('.remove').show();
+  },
   //Scanning a barcode from the device.
   scanBarcode: function(e, index){
     var self = this;
     $fh.forms.log.d("Scanning barcode");
 
-    self.model.utils.captureBarcode({}, function(err, result){
-      if(err){
-        $fh.forms.log.e("Error scanning barcode: " + err);
-        self.showButton(index, null);
-      } else if(result.text && result.format){
-        $fh.forms.log.d("Got Barcode Result: " + JSON.stringify(result));
-        self.barcodeObjects[index] = {
-          text: result.text,
-          format: result.format
-        };
+    //Capturing a barcode using a phonegap plugin.
+    function phonegapBarcode(){
+      self.model.utils.captureBarcode({}, function(err, result){
+        if(err){
+          $fh.forms.log.e("Error scanning barcode: " + err);
+          self.showButton(index, null);
+        } else if(result.text && result.format){
+          $fh.forms.log.d("Got Barcode Result: " + JSON.stringify(result));
+          self.barcodeObjects[index] = {
+            text: result.text,
+            format: result.format
+          };
 
-        self.showButton(index,  self.barcodeObjects[index]);
-      } else {
-        $fh.forms.log.d("Barcode Scan Cancelled: " + JSON.stringify(result));
-        self.showButton(index, null);
-      }
-    });
+          self.showButton(index,  self.barcodeObjects[index]);
+        } else {
+          $fh.forms.log.d("Barcode Scan Cancelled: " + JSON.stringify(result));
+          self.showButton(index, null);
+        }
+      });
+    }
+
+    //Capturing a barcode using a webcam and processing
+    function webBarcode(){
+
+      //First, render the html5 camera
+      var camObj = $(self.html5Cam);
+      var actionBar = camObj.find('.camActionBar');
+      camObj.css({
+        'position': 'fixed',
+        'top': 0,
+        'bottom': 0,
+        'left': 0,
+        'right': 0,
+        'background': '#000',
+        'z-index': 9999,
+        'height': "50px"
+      });
+      actionBar.css({
+        'text-align': 'center',
+        'padding': '10px',
+        'background': '#999'
+      });
+      actionBar.find('button').css({
+        'width': '80px',
+        'height': '30px',
+        'margin-right': '8px',
+        'font-size': '1.3em'
+      });
+      self.$el.append(camObj);
+      actionBar.find('.camCancel').on('click', function() {
+        self.model.utils.cancelHtml5Camera();
+        camObj.remove();
+      });
+      self.model.utils.initHtml5Camera({}, function(err, video) {
+        if (err) {
+          $fh.forms.log.e(err);
+          camObj.remove();
+        } else {
+          $(video).css('width', '100%');
+          camObj.find('.cam').append(video);
+          actionBar.find('.camOk').on('click', function() {
+            self.model.utils.takePhoto({rawData: true}, function(err, rawImageData) {//The image that comes from the html5 camera is base64
+//              camObj.remove();
+              if (err) {
+                $fh.forms.log.e(err);
+              } else {
+                self.setImage(index, rawImageData.base64);
+                console.log("Got Image: ", rawImageData.base64);
+
+                self.model.utils.decodeQRCode(rawImageData, function(err, result){
+                  console.log("DECODE QR CODE: ", err, result);
+                });
+              }
+            });
+          });
+        }
+      });
+    }
+
+
+    //Checking for phonegap. This will try to use the plugin if it is available.
+    if(self.model.utils.isPhoneGapCamAvailable()){
+      phonegapBarcode();
+    } else {
+      webBarcode();
+    }
+
+
   },
   valuePopulateToElement: function(index, value) {
     var self = this;
     if (value) {
       self.barcodeObjects[index] = value;
-      this.showButton(index, value);
+      self.showButton(index, value);
     }
   },
   onElementShow: function(index) {
@@ -3303,11 +3388,10 @@ FieldBarcodeView = FieldView.extend({
 });
 FieldSliderNumberView = FieldView.extend({
   type: "sliderNumber",
-  input: "<div class='col-xs-12 sliderValue'></div>" +
-    "<input class='fh_appform_field_input col-xs-12' data-field='<%= fieldId %>' data-index='<%= index %>'  type='range' min='<%= min %>' max='<%= max %>' step='<%= stepSize %>' value='<%= defaultValue %>'>",
+  input: "<div class='fh_appform_field_input slideInput' data-field='<%= fieldId %>' data-index='<%= index %>'></div>",
   renderInput: function(index) {
     var self = this;
-    var fieldId=this.model.getFieldId();
+    var fieldId=self.model.getFieldId();
 
     var fieldValidation = self.model.getFieldValidation();
     var fieldDefinition = self.model.getFieldDefinition();
@@ -3318,8 +3402,8 @@ FieldSliderNumberView = FieldView.extend({
       index: index,
       min: fieldValidation.min || 0,
       max: fieldValidation.max || 10,
-      stepSize: fieldDefinition.stepSize || 1,
-      defaultValue: defaultValue
+      step: fieldDefinition.stepSize || 1,
+      value: defaultValue
     };
 
 
@@ -3327,28 +3411,40 @@ FieldSliderNumberView = FieldView.extend({
   },
   onElementShow: function(index) {
     //Initialising the rangeslider
+    var self = this;
+    var fieldId=self.model.getFieldId();
+    var fieldValidation = self.model.getFieldValidation();
+    var fieldDefinition = self.model.getFieldDefinition();
+    var defaultValue = self.model.getDefaultValue();
+
+    var params = {
+      fieldId: fieldId,
+      index: index,
+      min: fieldValidation.min || 0,
+      max: fieldValidation.max || 10,
+      step: fieldDefinition.stepSize || 1,
+      value: defaultValue
+    };
 
     var wrapperObj = this.getWrapper(index);
 
-    var input = $(wrapperObj.find("input[type='range']"));
+    var input = $(wrapperObj.find("input[type='text']"));
 
     //Rangeslider may not be available
     //If not, just use the basic browser range control if available.
-    if(input.rangeslider){
-      input.rangeslider({
-
-      });
+    if(input.sGlide){
+      input.sGlide();
     }
   },
   valueFromElement: function(index) {
     var wrapperObj = this.getWrapper(index);
-    return wrapperObj.find("input[type='range']").val() || "";
+    return wrapperObj.find("input[type='text']").val() || "";
   },
   valuePopulateToElement: function(index, value) {
     var wrapperObj = this.getWrapper(index);
 
     if(value){
-      wrapperObj.find("input[type='range']").val(value);
+      wrapperObj.find("input[type='text']").val(value);
     }
   },
   contentChanged: function(e){
@@ -3359,19 +3455,18 @@ FieldSliderNumberView = FieldView.extend({
 
     var wrapperObj = this.getWrapper(index);
 
-    var input = $(wrapperObj.find("input[type='range']"));
+    var input = $(wrapperObj.find("input[type='text']"));
     var value = input.val();
 
     wrapperObj.find(".sliderValue").html("Selected Value: " + value);
   },
   getHTMLInputType: function() {
-    return "range";
+    return "text";
   }
 });
 FieldSliderOptionsView = FieldView.extend({
   type: "sliderOptions",
-  input: "<div class='col-xs-12 sliderValue'></div>" +
-    "<input class='fh_appform_field_input col-xs-12' data-field='<%= fieldId %>' data-index='<%= index %>'  type='range' min='<%= min %>' max='<%= max %>' step='<%= stepSize %>' value='<%= defaultValue %>'>",
+  input: "<input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>'  type='text'>",
   renderInput: function(index) {
     var self = this;
     var fieldId= self.model.getFieldId();
@@ -3396,8 +3491,8 @@ FieldSliderOptionsView = FieldView.extend({
       index: index,
       min: 0,
       max: choices.length - 1,
-      stepSize: 1,
-      defaultValue: defaultValue
+      step: 1,
+      value: defaultValue
     };
 
     return $(_.template(this.input, params));
@@ -3405,27 +3500,72 @@ FieldSliderOptionsView = FieldView.extend({
   onElementShow: function(index) {
     //Initialising the rangeslider
 
+    var self = this;
+    var fieldId= self.model.getFieldId();
+
+    var choices = self.model.getSliderOptions();
+
+    var defaultValue = 0;
+
+
+    //Find which choice is selected.
+    for(var choiceIndex = 0; choiceIndex < choices.length; choiceIndex++){
+      var choice = choices[choiceIndex];
+
+      if(choice.checked){
+        defaultValue = choiceIndex;
+        break;
+      }
+    }
+
+    var params = {
+      fieldId: fieldId,
+      index: index,
+      min: 0,
+      max: choices.length - 1,
+      step: 1,
+      value: defaultValue,
+      formatter: function(value){
+        return self.valueFromElement(index);
+      }
+    };
+
     var wrapperObj = this.getWrapper(index);
 
-    var input = $(wrapperObj.find("input[type='range']"));
+    var input = $(wrapperObj.find("input[type='text']"));
 
     //Rangeslider may not be available
     //If not, just use the basic browser range control if available.
-    if(input.rangeslider){
-      input.rangeslider({
-
-      });
+    if(input.slider){
+      input.slider(params);
     }
   },
   valueFromElement: function(index) {
+    var self = this;
     var wrapperObj = this.getWrapper(index);
-    return wrapperObj.find("input[type='range']").val() || "";
+    var selectedIndex = wrapperObj.find("input[type='text']").val();
+
+    selectedIndex = parseInt(selectedIndex);
+
+    if(isNaN(selectedIndex)){
+      return null;
+    }
+
+    var options = self.model.getSliderOptions();
+
+    var selectedOption = options[selectedIndex];
+
+    if(selectedOption && selectedOption.label){
+      return selectedOption.label;
+    } else {
+      return null;
+    }
   },
   valuePopulateToElement: function(index, value) {
     var wrapperObj = this.getWrapper(index);
 
     if(value){
-      wrapperObj.find("input[type='range']").val(value);
+      wrapperObj.find("input[type='text']").val(value);
     }
   },
   contentChanged: function(e){
@@ -3436,7 +3576,7 @@ FieldSliderOptionsView = FieldView.extend({
 
     var wrapperObj = this.getWrapper(index);
 
-    var input = $(wrapperObj.find("input[type='range']"));
+    var input = $(wrapperObj.find("input[type='text']"));
     var value = input.val();
 
     value = parseInt(value);
@@ -3450,7 +3590,7 @@ FieldSliderOptionsView = FieldView.extend({
     wrapperObj.find(".sliderValue").html("Selected Value: " + choices[value].label);
   },
   getHTMLInputType: function() {
-    return "range";
+    return "text";
   }
 });
 var PageView=BaseView.extend({

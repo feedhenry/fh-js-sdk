@@ -1,6 +1,6 @@
-/*! fh-forms - v0.8.00 -  */
+/*! fh-forms - v0.10.0 -  */
 /*! async - v0.2.9 -  */
-/*! 2014-08-27 */
+/*! 2014-10-22 */
 /* This is the prefix file */
 if(appForm){
   appForm.RulesEngine=rulesEngine;
@@ -1039,8 +1039,6 @@ function rulesEngine (formDef) {
      *
      */
 
-    var FIELD_TYPE_CHECKBOX = "checkboxes";
-    var FIELD_TYPE_DATETIME = "dateTime";
     var FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY = "date";
     var FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY = "time";
     var FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME = "datetime";
@@ -1075,7 +1073,10 @@ function rulesEngine (formDef) {
         "file": validatorFile,
         "dateTime": validatorDateTime,
         "url": validatorString,
-        "sectionBreak": validatorSection
+        "sectionBreak": validatorSection,
+        "barcode": validatorBarcode,
+        "sliderNumber": validatorNumericString,
+        "sliderOptions": validatorDropDown
       };
 
       var validatorsClientMap = {
@@ -1093,8 +1094,195 @@ function rulesEngine (formDef) {
         "file": validatorAnyFile,
         "dateTime": validatorDateTime,
         "url": validatorString,
-        "sectionBreak": validatorSection
+        "sectionBreak": validatorSection,
+        "barcode": validatorBarcode,
+        "sliderNumber": validatorNumericString,
+        "sliderOptions": validatorDropDown
       };
+
+      var fieldValueComparison = {
+        "text": function(fieldValue, testValue, condition){
+          return this.comparisonString(fieldValue, testValue, condition);
+        },
+        "textarea": function(fieldValue, testValue, condition){
+          return this.comparisonString(fieldValue, testValue, condition);
+        },
+        "number": function(fieldValue, testValue, condition){
+          return this.numericalComparison(fieldValue, testValue, condition);
+        },
+        "emailAddress": function(fieldValue, testValue, condition){
+          return this.comparisonString(fieldValue, testValue, condition);
+        },
+        "dropdown": function(fieldValue, testValue, condition){
+          return this.comparisonString(fieldValue, testValue, condition);
+        },
+        "radio": function(fieldValue, testValue, condition){
+          return this.comparisonString(fieldValue, testValue, condition);
+        },
+        "checkboxes": function(fieldValue, testValue, condition){
+          fieldValue = fieldValue || {};
+          var valueFound = false;
+
+          if(!(fieldValue.selections instanceof Array)){
+            return false;
+          }
+
+          //Check if the testValue is contained in the selections
+          for(var selectionIndex = 0; selectionIndex < fieldValue.selections.length; selectionIndex++ ){
+            var selectionValue = fieldValue.selections[selectionIndex];
+            //Note, here we are using the "is" string comparator to check if the testValue matches the current selectionValue
+            if(this.comparisonString(selectionValue, testValue, "is")){
+              valueFound = true;
+            }
+          }
+
+          if(condition === "is"){
+            return valueFound;
+          } else {
+            return !valueFound;
+          }
+
+        },
+        "dateTime": function(fieldValue, testValue, condition, fieldOptions){
+          var valid = false;
+
+          fieldOptions = fieldOptions || {definition: {}};
+
+          //dateNumVal is assigned an easily comparible number depending on the type of units used.
+          var dateNumVal = null;
+          var testNumVal = null;
+
+          switch (fieldOptions.definition.datetimeUnit) {
+            case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
+              try {
+                dateNumVal = new Date(new Date(fieldValue).toDateString()).getTime();
+                testNumVal = new Date(new Date(testValue).toDateString()).getTime();
+                valid = true;
+              } catch (e) {
+                dateNumVal = null;
+                testNumVal = null;
+                valid = false;
+              }
+              break;
+            case FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY:
+              var cvtTime = this.cvtTimeToSeconds(fieldValue);
+              var cvtTestVal = this.cvtTimeToSeconds(testValue);
+              dateNumVal = cvtTime.seconds;
+              testNumVal = cvtTestVal.seconds;
+              valid = cvtTime.valid && cvtTestVal.valid;
+              break;
+            case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
+              try {
+                dateNumVal = (new Date(fieldValue).getTime());
+                testNumVal = (new Date(testValue).getTime());
+                valid = true;
+              } catch (e) {
+                valid = false;
+              }
+              break;
+            default:
+              valid = false;
+              break;
+          }
+
+          //The value is not valid, no point in comparing.
+          if(!valid){
+            return false;
+          }
+
+          if ("is at" === condition) {
+            valid = dateNumVal === testNumVal;
+          } else if ("is before" === condition) {
+            valid = dateNumVal < testNumVal;
+          } else if ("is after" === condition) {
+            valid = dateNumVal > testNumVal;
+          } else {
+            valid = false;
+          }
+
+          return valid;
+        },
+        "url": function(fieldValue, testValue, condition){
+          return this.comparisonString(fieldValue, testValue, condition);
+        },
+        "barcode": function(fieldValue, testValue, condition){
+          fieldValue = fieldValue || {};
+
+          if(typeof(fieldValue.text) !== "string"){
+            return false;
+          }
+
+          return this.comparisonString(fieldValue.text, testValue, condition);
+        },
+        "sliderNumber": function(fieldValue, testValue, condition){
+          return this.numericalComparison(fieldValue, testValue, condition);
+        },
+        "sliderOptions": function(fieldValue, testValue, condition){
+          return this.radio(fieldValue, testValue, condition);
+        },
+        "comparisonString": function(fieldValue, testValue, condition){
+          var valid = true;
+
+          if ("is" === condition) {
+            valid = fieldValue === testValue;
+          } else if ("is not" === condition) {
+            valid = fieldValue !== testValue;
+          } else if ("contains" === condition) {
+            valid = fieldValue.indexOf(testValue) !== -1;
+          } else if ("does not contain" === condition) {
+            valid = fieldValue.indexOf(testValue) === -1;
+          } else if ("begins with" === condition) {
+            valid = fieldValue.substring(0, testValue.length) === testValue;
+          } else if ("ends with" === condition) {
+            valid = fieldValue.substring(Math.max(0, (fieldValue.length - testValue.length)), fieldValue.length) === testValue;
+          } else {
+            valid = false;
+          }
+
+          return valid;
+        },
+        "numericalComparison": function(fieldValue, testValue, condition){
+          var fieldValNum = parseInt(fieldValue, 10);
+          var testValNum = parseInt(testValue, 10);
+
+          if(isNaN(fieldValNum) || isNaN(testValNum)){
+            return false;
+          }
+
+          if ("is equal to" === condition) {
+            return fieldValNum === testValNum;
+          } else if ("is less than" === condition) {
+            return fieldValNum < testValNum;
+          } else if ("is greater than" === condition) {
+            return fieldValNum > testValNum;
+          } else {
+            return false;
+          }
+        },
+        "cvtTimeToSeconds": function(fieldValue) {
+          var valid = false;
+          var seconds = 0;
+          if (typeof fieldValue === "string") {
+            var parts = fieldValue.split(':');
+            valid = (parts.length === 2) || (parts.length === 3);
+            if (valid) {
+              valid = isNumberBetween(parts[0], 0, 23);
+              seconds += (parseInt(parts[0], 10) * 60 * 60);
+            }
+            if (valid) {
+              valid = isNumberBetween(parts[1], 0, 59);
+              seconds += (parseInt(parts[1], 10) * 60);
+            }
+            if (valid && (parts.length === 3)) {
+              valid = isNumberBetween(parts[2], 0, 59);
+              seconds += parseInt(parts[2], 10);
+            }
+          }
+          return {valid: valid, seconds: seconds};
+        }
+      };
+
+
 
       var isFieldRuleSubject = function (fieldId) {
         return !!fieldRuleSubjectMap[fieldId];
@@ -1893,6 +2081,37 @@ function rulesEngine (formDef) {
         });
       }
 
+      /**
+       * Function to validate a barcode submission
+       *
+       * Must be an object with the following contents
+       *
+       * {
+     *   text: "<<content of barcode>>",
+     *   format: "<<barcode content format>>"
+     * }
+       *
+       * @param fieldValue
+       * @param fieldDefinition
+       * @param previousFieldValues
+       * @param cb
+       */
+      function validatorBarcode(fieldValue, fieldDefinition, previousFieldValues, cb){
+        if(typeof(fieldValue) !== "object" || fieldValue === null){
+          return cb(new Error("Expected object but got " + typeof(fieldValue)));
+        }
+
+        if(typeof(fieldValue.text) !== "string"){
+          return cb(new Error("Expected text parameter but got " + fieldValue.text));
+        }
+
+        if(typeof(fieldValue.format) !== "string"){
+          return cb(new Error("Expected format parameter but got " + fieldValue.format));
+        }
+
+        return cb();
+      }
+
       function checkFileSize(fieldDefinition, fieldValue, sizeKey, cb) {
         fieldDefinition = fieldDefinition || {};
         var fieldOptions = fieldDefinition.fieldOptions || {};
@@ -2324,6 +2543,28 @@ function rulesEngine (formDef) {
         });
       }
 
+      function isConditionActive(field, fieldValue, testValue, condition) {
+
+        var fieldType = field.type;
+        var fieldOptions = field.fieldOptions ? field.fieldOptions : {};
+
+        if(typeof(fieldValue) === 'undefined' || fieldValue === null){
+          return false;
+        }
+
+        if(typeof(fieldValueComparison[fieldType]) === "function"){
+          return fieldValueComparison[fieldType](fieldValue, testValue, condition, fieldOptions);
+        } else {
+          return false;
+        }
+
+      }
+
+      function isNumberBetween(num, min, max) {
+        var numVal = parseInt(num, 10);
+        return (!isNaN(numVal) && (numVal >= min) && (numVal <= max));
+      }
+
       return {
         validateForm: validateForm,
         validateField: validateField,
@@ -2337,172 +2578,6 @@ function rulesEngine (formDef) {
         isConditionActive: isConditionActive
       };
     };
-
-    function isNumberBetween(num, min, max) {
-      var numVal = parseInt(num, 10);
-      return (!isNaN(numVal) && (numVal >= min) && (numVal <= max));
-    }
-
-    function cvtTimeToSeconds(fieldValue) {
-      var seconds = 0;
-      if (typeof fieldValue === "string") {
-        var parts = fieldValue.split(':');
-        valid = (parts.length === 2) || (parts.length === 3);
-        if (valid) {
-          valid = isNumberBetween(parts[0], 0, 23);
-          seconds += (parseInt(parts[0], 10) * 60 * 60);
-        }
-        if (valid) {
-          valid = isNumberBetween(parts[1], 0, 59);
-          seconds += (parseInt(parts[1], 10) * 60);
-        }
-        if (valid && (parts.length === 3)) {
-          valid = isNumberBetween(parts[2], 0, 59);
-          seconds += parseInt(parts[2], 10);
-        }
-      }
-      return seconds;
-    }
-
-    function isConditionActive(field, fieldValue, testValue, condition) {
-
-      var fieldType = field.type;
-      var fieldOptions = field.fieldOptions ? field.fieldOptions : {};
-
-      if(typeof(fieldValue) === 'undefined' || fieldValue === null){
-        return false;
-      }
-
-      function numericalComparison(condition, fieldValue, testValue){
-        var fieldValNum = parseInt(fieldValue, 10);
-        var testValNum = parseInt(testValue, 10);
-
-        if(isNaN(fieldValNum) || isNaN(testValNum)){
-          return false;
-        }
-
-        if ("is equal to" === condition) {
-          return fieldValNum === testValNum;
-        } else if ("is less than" === condition) {
-          return fieldValNum < testValNum;
-        } else if ("is greater than" === condition) {
-          return fieldValNum > testValNum;
-        } else {
-          return false;
-        }
-      }
-
-      var valid = true;
-      if ("is equal to" === condition) {
-        valid = numericalComparison("is equal to", fieldValue, testValue);
-      } else if ("is greater than" === condition) {
-        valid = numericalComparison("is greater than", fieldValue, testValue);
-      } else if ("is less than" === condition) {
-        valid = numericalComparison("is less than", fieldValue, testValue);
-      } else if ("is at" === condition) {
-        valid = false;
-        if (fieldType === FIELD_TYPE_DATETIME) {
-          switch (fieldOptions.definition.datetimeUnit) {
-            case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-              try {
-                valid = (new Date(new Date(fieldValue).toDateString()).getTime() === new Date(new Date(testValue).toDateString()).getTime());
-              } catch (e) {
-                valid = false;
-              }
-              break;
-            case FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY:
-              valid = cvtTimeToSeconds(fieldValue) === cvtTimeToSeconds(testValue);
-              break;
-            case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-              try {
-                valid = (new Date(fieldValue).getTime() === new Date(testValue).getTime());
-              } catch (e) {
-                valid = false;
-              }
-              break;
-            default:
-              valid = false; // TODO should raise error here?
-              break;
-          }
-        }
-      } else if ("is before" === condition) {
-        valid = false;
-        if (fieldType === FIELD_TYPE_DATETIME) {
-          switch (fieldOptions.definition.datetimeUnit) {
-            case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-              try {
-                valid = (new Date(new Date(fieldValue).toDateString()).getTime() < new Date(new Date(testValue).toDateString()).getTime());
-              } catch (e) {
-                valid = false;
-              }
-              break;
-            case FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY:
-              valid = cvtTimeToSeconds(fieldValue) < cvtTimeToSeconds(testValue);
-              break;
-            case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-              try {
-                valid = (new Date(fieldValue).getTime() < new Date(testValue).getTime());
-              } catch (e) {
-                valid = false;
-              }
-              break;
-            default:
-              valid = false; // TODO should raise error here?
-              break;
-          }
-        }
-      } else if ("is after" === condition) {
-        valid = false;
-        if (fieldType === FIELD_TYPE_DATETIME) {
-          switch (fieldOptions.definition.datetimeUnit) {
-            case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATEONLY:
-              try {
-                valid = (new Date(new Date(fieldValue).toDateString()).getTime() > new Date(new Date(testValue).toDateString()).getTime());
-              } catch (e) {
-                valid = false;
-              }
-              break;
-            case FIELD_TYPE_DATETIME_DATETIMEUNIT_TIMEONLY:
-              valid = cvtTimeToSeconds(fieldValue) > cvtTimeToSeconds(testValue);
-              break;
-            case FIELD_TYPE_DATETIME_DATETIMEUNIT_DATETIME:
-              try {
-                valid = (new Date(fieldValue).getTime() > new Date(testValue).getTime());
-              } catch (e) {
-                valid = false;
-              }
-              break;
-            default:
-              valid = false; // TODO should raise error here?
-              break;
-          }
-        }
-      } else if ("is" === condition) {
-        if (fieldType === FIELD_TYPE_CHECKBOX) {
-          valid = fieldValue && fieldValue.selections && fieldValue.selections.indexOf(testValue) !== -1;
-        } else {
-          valid = fieldValue === testValue;
-        }
-      } else if ("is not" === condition) {
-        if (fieldType === FIELD_TYPE_CHECKBOX) {
-          valid = fieldValue && fieldValue.selections && fieldValue.selections.indexOf(testValue) === -1;
-        } else {
-          valid = fieldValue !== testValue;
-        }
-      } else if ("contains" === condition) {
-        valid = fieldValue.indexOf(testValue) !== -1;
-      } else if ("does not contain" === condition) {
-        valid = fieldValue.indexOf(testValue) === -1;
-      } else if ("begins with" === condition) {
-        valid = fieldValue.substring(0, testValue.length) === testValue;
-      } else if ("ends with" === condition) {
-        valid = fieldValue.substring(Math.max(0, (fieldValue.length - testValue.length)), fieldValue.length) === testValue;
-      } else {
-        valid = false;
-      }
-
-      return valid;
-    }
 
     if (typeof module !== 'undefined' && module.exports) {
       module.exports = formsRulesEngine;

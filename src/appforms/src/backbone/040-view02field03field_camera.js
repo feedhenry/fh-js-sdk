@@ -73,6 +73,9 @@ FieldCameraView = FieldView.extend({
 
         params = this.model.getPhotoOptions();
 
+        //Need to cancel the html5 camera when the photo is taken.
+        params.cancelHtml5Camera = true;
+
         if (this.model.utils.isPhoneGapCamAvailable()) {
             this.model.utils.takePhoto(params, function(err, imageURI) {
                 if (err) {
