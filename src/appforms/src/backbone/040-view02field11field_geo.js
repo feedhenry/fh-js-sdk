@@ -9,7 +9,8 @@ FieldGeoView = FieldView.extend({
     },
     renderInput: function(index) {
         var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
-        var html = _.template(this.input, {
+        var html = _.template(this.input);
+        html = html({
             "fieldId": this.model.getFieldId(),
             "index": index,
             "inputType": "text",
@@ -22,7 +23,8 @@ FieldGeoView = FieldView.extend({
         var self = this;
         var rmBtn = $(this.renderButton(index, "<i class='icon-remove-circle'></i>&nbsp;Remove Location", "remove"));
         var btnLabel = this.locationUnit === "latlong" ? 'Capture Location (Lat/Lon)' : 'Capture Location (East/North)';
-        btnLabel = _.template(this.buttonHtml, {
+        btnLabel = _.template(this.buttonHtml);
+        btnLabel = btnLabel({
             "buttonText": btnLabel
         });
         var geoButton = $(this.renderButton(index, btnLabel, "fhgeo"));

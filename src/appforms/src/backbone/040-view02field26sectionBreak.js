@@ -4,7 +4,7 @@ FieldSectionBreak = FieldView.extend({
       sectionBreak: '<div class="panel-heading"><%= sectionTitle %></div>'
   },
   renderEle:function(){
-    return _.template(this.templates.sectionBreak, {sectionTitle: this.model.getName(), sectionDescription: this.model.getHelpText()});
+    return _.template(this.templates.sectionBreak)( {sectionTitle: this.model.getName(), sectionDescription: this.model.getHelpText()});
   },
   renderTitle: function(){
     return "";

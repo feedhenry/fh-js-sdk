@@ -6,12 +6,14 @@ FieldRadioView = FieldView.extend({
     var choices = this.model.getRadioOption();
     var self = this;
     var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
-    var inputElement = _.template(self.radio, { "repeatingClassName": repeatingClassName});
+    var inputElement = _.template(self.radio);
+    inputElement = inputElement({ "repeatingClassName": repeatingClassName});
     inputElement = $(inputElement);
 
     var fieldId = this.model.getFieldId();
     $.each(choices, function(i, choice) {
-      var jQObj = _.template(self.choice, {
+      var jQObj = _.template(self.choice);
+      jQObj = jQObj({
         "fieldId": fieldId,
         "choice": choice.label,
         "value": choice.label,

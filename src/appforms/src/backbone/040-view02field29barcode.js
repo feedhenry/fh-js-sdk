@@ -3,7 +3,7 @@ FieldBarcodeView = FieldView.extend({
   input: "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action select col-xs-12' data-index='<%= index %>'  type='<%= inputType %>'>Scan Barcode</button>" +
     "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action remove col-xs-12' data-index='<%= index %>'  type='<%= inputType %>'><i class='icon-remove-circle'></i>&nbsp;Remove Barcode Entry</button>" +
     "Barcode <input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' data-bfield='text' type='text' disabled/>" +
-    "Format <input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' data-bfield='format' type='text' disabled/>" + '<canvas id="qr-canvas" width="800" height="600" style="width: 800px; height: 600px;"></canvas>',
+    "Format <input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' data-bfield='format' type='text' disabled/>",
   html5Cam: '<div class="html5Cam">' +
     '<div class="camActionBar"><button class="camCancel camBtn fh_appform_button_cancel">Cancel</button><button class="camOk camBtn fh_appform_button_action">Ok</button></div>' +
     '<div class="cam"></div>' +
@@ -132,7 +132,7 @@ FieldBarcodeView = FieldView.extend({
                 self.setImage(index, rawImageData.base64);
                 console.log("Got Image: ", rawImageData.base64);
 
-                self.model.utils.decodeQRCode(rawImageData, function(err, result){
+                self.model.utils.decodeBarcode(rawImageData, function(err, result){
                   console.log("DECODE QR CODE: ", err, result);
                 });
               }

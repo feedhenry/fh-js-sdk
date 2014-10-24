@@ -19,7 +19,7 @@ FieldSliderNumberView = FieldView.extend({
     };
 
 
-    return $(_.template(this.input, params));
+    return $(_.template(this.input)( params));
   },
   onElementShow: function(index) {
     //Initialising the rangeslider

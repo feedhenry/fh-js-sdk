@@ -65,7 +65,7 @@ var ConfigView = Backbone.View.extend({
             for (var j = 0; j < patterns.length; j++) {
                 var p = patterns[j];
                 if (p.reg.test(log)) {
-                    listStr += _.template($('#temp_config_log_item').html(), {
+                    listStr += _.template($('#temp_config_log_item').html())( {
                         logClass: p.classStyle,
                         message: log
                     });
@@ -73,7 +73,7 @@ var ConfigView = Backbone.View.extend({
                 }
             }
         }
-        var listGroup = _.template($('#temp_config_log').html(), {
+        var listGroup = _.template($('#temp_config_log').html())( {
             listStr: listStr
         });
         return listGroup;
@@ -107,13 +107,13 @@ var ConfigView = Backbone.View.extend({
 
         this.$el.append("<div id='fh_appform_templates' style='display:none;'>" + FormTemplates + "</div>");
         //Append Logo
-        this.$el.append(_.template(this.$el.find('#forms-logo-sdk').html()));
+        this.$el.append(_.template(this.$el.find('#forms-logo-sdk').html()))();
         var props = $fh.forms.config.getConfig();
 
-        var cameraSettingsHtml = _.template(this.$el.find('#temp_config_camera').html(), props);
-        var submissionSettingsHtml = _.template(this.$el.find('#temp_config_submissions').html(), props);
-        var debuggingSettingsHtml = _.template(this.$el.find('#temp_config_debugging').html(), props);
-        var miscSettingsHtml = _.template(this.$el.find('#temp_config_misc').html(), props);
+        var cameraSettingsHtml = _.template(this.$el.find('#temp_config_camera').html())( props);
+        var submissionSettingsHtml = _.template(this.$el.find('#temp_config_submissions').html())( props);
+        var debuggingSettingsHtml = _.template(this.$el.find('#temp_config_debugging').html())( props);
+        var miscSettingsHtml = _.template(this.$el.find('#temp_config_misc').html())( props);
 
         this.$el.append(miscSettingsHtml);
         this.$el.append(debuggingSettingsHtml);

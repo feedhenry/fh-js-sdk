@@ -33,7 +33,7 @@ FieldSignatureView = FieldView.extend({
         var canvasWidth = winWidth - 2;
         var lineTop = canvasHeight - 20;
 
-        this.$el.append(_.template(this.templates.signaturePad.join(''), {
+        this.$el.append(_.template(this.templates.signaturePad.join(''))( {
             "canvasHeight": canvasHeight,
             "canvasWidth": canvasWidth
         }));

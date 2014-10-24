@@ -149,7 +149,7 @@ appForm.utils = function (module) {
       isHtml5 = true;
       video = document.createElement('video');
       video.autoplay = 'autoplay';
-      canvas = document.getElementById('qr-canvas');
+      canvas = document.createElement('canvas');
       ctx = canvas.getContext('2d');
     } else {
       console.error('Cannot detect usable media API. Camera will not run properly on this device.');
@@ -188,12 +188,10 @@ appForm.utils = function (module) {
         cancelHtml5Camera();
       }
 
-
-
       //Deciding whether to return raw image data or a base64 image.
       //rawData is mainly used for scanning for barcodes.
       if(params.rawData){
-        return cb(null, {ctx: ctx, imageData: imageData, width: params.targetWidth, height: params.targetHeight, base64: base64});
+        return cb(null, {imageData: imageData, width: params.targetWidth, height: params.targetHeight, base64: base64});
       } else {
         return cb(null, base64);
       }

@@ -2395,25 +2395,25 @@ appForm.utils = function (module) {
   module.decodeQRCode = function (params, cb) {
     console.log("decodeQRCode", params);
 
-    qrcode.callback = function(data){
-      console.log("GOT DATA: " + data);
-      return cb();
-    };
-
-    qrcode.debug = true;
-    qrcode.imagedata = params.imageData;
-    qrcode.width = params.width;
-    qrcode.height = params.height;
-
-    var result = null;
-
-    try{
-      result = qrcode.process(params.ctx);
-    } catch (e){
-      console.error(e);
-    }
+//    qrcode.callback = function(data){
+//      console.log("GOT DATA: " + data);
+//      return cb();
+//    };
+//
+//    qrcode.debug = true;
+//    qrcode.imagedata = params.imageData;
+//    qrcode.width = params.width;
+//    qrcode.height = params.height;
+//
+//    var result = null;
+//
+//    try{
+//      result = qrcode.process(params.ctx);
+//    } catch (e){
+//      console.error(e);
+//    }
     //TODO Niall Decode QR Code
-//    return cb("Not Finished Yet.");
+    return cb("Not Finished Yet.");
   };
 
   return module;

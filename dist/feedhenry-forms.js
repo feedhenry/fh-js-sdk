@@ -13721,7 +13721,7 @@ appForm.utils = function (module) {
       isHtml5 = true;
       video = document.createElement('video');
       video.autoplay = 'autoplay';
-      canvas = document.getElementById('qr-canvas');
+      canvas = document.createElement('canvas');
       ctx = canvas.getContext('2d');
     } else {
       console.error('Cannot detect usable media API. Camera will not run properly on this device.');
@@ -13760,12 +13760,10 @@ appForm.utils = function (module) {
         cancelHtml5Camera();
       }
 
-
-
       //Deciding whether to return raw image data or a base64 image.
       //rawData is mainly used for scanning for barcodes.
       if(params.rawData){
-        return cb(null, {ctx: ctx, imageData: imageData, width: params.targetWidth, height: params.targetHeight, base64: base64});
+        return cb(null, {imageData: imageData, width: params.targetWidth, height: params.targetHeight, base64: base64});
       } else {
         return cb(null, base64);
       }
@@ -15587,7 +15585,7 @@ appForm.utils = function (module) {
     this._ee = function() {
       var h = this._cv.length;
       if (h < 3) {
-        throw "Couldn't find enough finder patterns"
+        throw "Couldn't find enough finder patterns (" + h + ")";
       }
       if (h > 3) {
         var b = 0;
@@ -16174,25 +16172,25 @@ appForm.utils = function (module) {
   module.decodeQRCode = function (params, cb) {
     console.log("decodeQRCode", params);
 
-    qrcode.callback = function(data){
-      console.log("GOT DATA: " + data);
-      return cb();
-    };
-
-    qrcode.debug = true;
-    qrcode.imagedata = params.imageData;
-    qrcode.width = params.width;
-    qrcode.height = params.height;
-
-    var result = null;
-
-    try{
-      qrcode.process(params.ctx);
-    } catch (e){
-      console.error(e);
-    }
+//    qrcode.callback = function(data){
+//      console.log("GOT DATA: " + data);
+//      return cb();
+//    };
+//
+//    qrcode.debug = true;
+//    qrcode.imagedata = params.imageData;
+//    qrcode.width = params.width;
+//    qrcode.height = params.height;
+//
+//    var result = null;
+//
+//    try{
+//      result = qrcode.process(params.ctx);
+//    } catch (e){
+//      console.error(e);
+//    }
     //TODO Niall Decode QR Code
-//    return cb("Not Finished Yet.");
+    return cb("Not Finished Yet.");
   };
 
   return module;
@@ -16228,7 +16226,7 @@ appForm.utils = function (module) {
     } catch (e) { // Backwards-compatibility
       window.BlobBuilder = window.BlobBuilder || window.WebKitBlobBuilder || window.MozBlobBuilder;
       blob = new BlobBuilder();
-      blob.append(response);
+      blob.append(barcodeDecodeFunctions);
       blob = blob.getBlob();
     }
 

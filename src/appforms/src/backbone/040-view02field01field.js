@@ -71,13 +71,14 @@ var FieldView = Backbone.View.extend({
         var type = this.getHTMLInputType();
         var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
 
-        var inputEle = _.template(this.input, {
-            "fieldId": fieldId,
-            "index": index,
-            "inputType": type,
-            "repeatingClassName": repeatingClassName,
-            "value":this.model.getDefaultValue()
-        });
+        var inputEle = _.template(this.input);
+        inputEle = inputEle({
+              "fieldId": fieldId,
+              "index": index,
+              "inputType": type,
+              "repeatingClassName": repeatingClassName,
+              "value":this.model.getDefaultValue()
+          });
 
         return $(inputEle);
     },
@@ -105,7 +106,8 @@ var FieldView = Backbone.View.extend({
         var index = this.curRepeat;
         var inputHtml = this.renderInput(index);
 
-        var eleTemplate = _.template(self.options.formView.$el.find("#temp_field_wrapper").html(), {
+        var eleTemplate = _.template(self.options.formView.$el.find("#temp_field_wrapper").html());
+        eleTemplate = eleTemplate({
             index: index,
             d_index: index + 1,
             required: this.model.isRequired() ? self.requiredClassName : "",
@@ -129,14 +131,18 @@ var FieldView = Backbone.View.extend({
         this.maxRepeat = 1;
         this.curRepeat = 0;
 
-        var fieldTemplate = $(_.template(self.options.formView.$el.find("#temp_field_structure").html(), {
+        var fieldTemplate = _.template(self.options.formView.$el.find("#temp_field_structure").html());
+        fieldTemplate = fieldTemplate({
             title: this.model.getName(),
             helpText: this.model.getHelpText(),
             required: this.model.isRequired() ? self.requiredClassName : "",
             repeating: this.model.isRepeating(),
             field_icon: this.fieldIconNames[this.model.getType()],
             icon_content: this.model.getType() === "number" ? 123 : ""
-        }));
+        });
+
+
+        fieldTemplate = $(fieldTemplate);
 
         this.$fieldWrapper = $(fieldTemplate[0]);
         this.$fh_appform_fieldActionBar = $(fieldTemplate[1]);

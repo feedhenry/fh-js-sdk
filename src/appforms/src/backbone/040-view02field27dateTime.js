@@ -20,7 +20,7 @@ FieldDateTimeView = FieldView.extend({
       template=this.inputTime;
       buttonLabel="<i class='icon-time'></i>&nbspGet Current Time";
     }
-    var html=_.template(template,{
+    var html=_.template(template)({
       "fieldId":fieldId,
       "index":index,
       "repeatingClassName": repeatingClassName

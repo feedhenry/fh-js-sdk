@@ -8,7 +8,8 @@ var FormListItemView = BaseView.extend({
       var html;
       // var errorLoading = this.model.get('fh_error_loading');
       var enabled = true;
-      html = _.template(this.templates.form_button, {
+      html = _.template(this.templates.form_button);
+      html = html({
         name: this.model.name,
         enabledClass: enabled ? 'button-main' : '',
         dataClass: 'fetched'

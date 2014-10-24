@@ -3,6 +3,7 @@ FieldSelectView = FieldView.extend({
   option: '<option value="<%= value %>" <%= selected %>><%= value %></option>',
 
   renderInput: function(index) {
+    var self=this;
     var fieldId=this.model.getFieldId();
     var choices = this.model.get('fieldOptions');
     choices = choices.definition.options;
@@ -11,15 +12,17 @@ FieldSelectView = FieldView.extend({
     var html = "";
     var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
 
-    var self=this;
+
+    var optionTemplate = _.template(self.option);
     $.each(choices, function(i, choice) {
-      options += _.template(self.option, {
+
+      options += optionTemplate({
         "value": choice.label,
         "selected": (choice.checked) ? "selected='selected'" : ""
       });
     });
 
-    return $(_.template(this.select, {
+    return $(_.template(this.select)({
       "fieldId":fieldId,
       "index":index,
       "options":options,

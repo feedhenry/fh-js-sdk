@@ -19,7 +19,8 @@ FieldMapView = FieldView.extend({
     FieldView.prototype.initialize.apply(this, arguments);
   },
   renderInput: function(index) {
-    var inputEle = _.template(this.input, {
+    var inputEle = _.template(this.input);
+    inputEle = inputEle({
       width: this.mapSettings.mapWidth,
       height: this.mapSettings.mapHeight,
       'index': index,

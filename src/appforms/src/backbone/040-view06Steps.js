@@ -33,7 +33,7 @@ StepsView = Backbone.View.extend({
 
     displayedPages.forEach(function(pageId, index) {
       var pageModel = self.parentView.getPageViewById(pageId).model;
-      var item = $(_.template(self.templates.step, {
+      var item = $(_.template(self.templates.step)( {
           step_name: pageModel.getName(),
           step_num: index + 1,
           index: self.parentView.getPageIndexById(pageId),

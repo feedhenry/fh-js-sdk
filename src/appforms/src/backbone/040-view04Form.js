@@ -125,7 +125,7 @@ var FormView = BaseView.extend({
 
     //Page views are always added before anything else happens, need to render the form title first
 
-    var formHtml = _.template(self.$el.find('#temp_form_structure').html(), {title: self.model.getName()});
+    var formHtml = _.template(self.$el.find('#temp_form_structure').html())( {title: self.model.getName()});
 
     self.$el.append(formHtml);
 
@@ -182,7 +182,7 @@ var FormView = BaseView.extend({
     self.fieldViews = fieldViews;
     self.pageViews = pageViews;
     self.pageCount = pageViews.length;
-    var buttonsHtml = _.template(self.$el.find('#temp_form_buttons').html());
+    var buttonsHtml = _.template(self.$el.find('#temp_form_buttons').html())();
     this.$el.find("#fh_appform_container.fh_appform_form_area").append(buttonsHtml);
   },
   checkRules: function(params) {
