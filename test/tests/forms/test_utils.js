@@ -1,5 +1,6 @@
 var chai = require('chai');
 var expect = chai.expect;
+var sinon = require('sinon');
 var sinonChai = require('sinon-chai');
 chai.use(sinonChai);
 
@@ -10,9 +11,7 @@ if(document && document.location){
   }
 }
 
-console.log(__dir);
-
-var utils = process.env.LIB_COV? require("../../src-cov/modules/forms/utils") : require("../../src/modules/forms/utils");
+var utils = process.env.LIB_COV ? require("../../../src-cov/modules/forms/utils") : require("../../../src/modules/forms/utils");
 
 describe("test forms utils module", function(){
 	it("should extend a function", function(){

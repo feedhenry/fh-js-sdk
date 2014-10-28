@@ -363,7 +363,7 @@ module.exports = function(grunt) {
   grunt.registerTask('local', ['start-local-servers', 'connect:server:keepalive']);
 
   //run tests in phatomjs
-  grunt.registerTask('test', ['jshint', 'browserify:dist', 'browserify:require', 'browserify:test', 'connect:server', 'mocha_phantomjs:test']);
+  grunt.registerTask('test', ['jshint', 'browserify:dist', 'browserify:require','shell:jscov', 'browserify:test', 'connect:server', 'mocha_phantomjs:test']);
 
   grunt.registerTask('concat-forms-backbone', ['jshint', 'replace:forms_templates', 'concat:forms_backbone', 'concat:forms_backboneRequireJS']);
 
@@ -378,6 +378,8 @@ module.exports = function(grunt) {
   grunt.registerTask('titanium', 'concat-titanium browserify:dist_titanium concat-titanium-globals');
 
   grunt.registerTask('coverage', ['shell:jscov', 'browserify:require_cov', 'browserify:test_cov', 'connect:server', 'mocha_phantomjs:test_coverage', 'shell:htmlcov']);
+
+  grunt.registerTask('meh', ['shell:jscov', 'browserify:test', 'connect:server', 'mocha_phantomjs:test']);
 
   grunt.registerTask('default', 'concat-core-sdk test');
 };

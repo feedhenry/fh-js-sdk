@@ -1136,8 +1136,8 @@
     }
 
 }());
-}).call(this,_dereq_("/home/nialldontech/feedhenry_stuff/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
-},{"/home/nialldontech/feedhenry_stuff/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":12}],2:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/home/niall/devstuff/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"))
+},{"/home/niall/devstuff/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":12}],2:[function(_dereq_,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -10171,8 +10171,8 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-}).call(this,_dereq_("/home/nialldontech/feedhenry_stuff/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":13,"/home/nialldontech/feedhenry_stuff/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":12,"inherits":11}],15:[function(_dereq_,module,exports){
+}).call(this,_dereq_("/home/niall/devstuff/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":13,"/home/niall/devstuff/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":12,"inherits":11}],15:[function(_dereq_,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
