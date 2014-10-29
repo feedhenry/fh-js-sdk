@@ -1578,12 +1578,12 @@ var FormListView = BaseView.extend({
         } catch (e) {
             msg = "An unexpected error occurred.";
         }
-        var html = _.template(this.templates.error, {
+        var html = _.template(this.templates.error);
+        $('ul', this.$el).append(html({
             name: msg + "<br/>Please Retry Later",
             enabledClass: 'fh_appform_button_cancel', //TODO May not be this class. Double check
             dataClass: 'fetched'
-        });
-        $('ul', this.$el).append(html);
+        }));
 
     },
 
@@ -1637,12 +1637,12 @@ var FormListItemView = BaseView.extend({
       var html;
       // var errorLoading = this.model.get('fh_error_loading');
       var enabled = true;
-      html = _.template(this.templates.form_button, {
+      html = _.template(this.templates.form_button);
+      this.$el.html(html({
         name: this.model.name,
         enabledClass: enabled ? 'button-main' : '',
         dataClass: 'fetched'
-      });
-      this.$el.html(html);
+      }));
       this.$el.find('button').not('.fh_full_data_loaded');
       return this;
     },
@@ -1739,15 +1739,15 @@ var FieldView = Backbone.View.extend({
         var type = this.getHTMLInputType();
         var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
 
-        var inputEle = _.template(this.input, {
+        var inputEle = _.template(this.input);
+
+        return $(inputEle({
             "fieldId": fieldId,
             "index": index,
             "inputType": type,
             "repeatingClassName": repeatingClassName,
             "value":this.model.getDefaultValue()
-        });
-
-        return $(inputEle);
+        }));
     },
     getHTMLInputType: function() {
         return this.type || "text";
@@ -1772,7 +1772,8 @@ var FieldView = Backbone.View.extend({
         var helpText = this.model.getHelpText();
 
         if (typeof helpText === "string" && helpText.length > 0) {
-            return _.template(this.instructions, {
+            var temp = _.template(this.instructions);
+            return temp({
                 "helpText": helpText
             });
         } else {
@@ -1784,15 +1785,15 @@ var FieldView = Backbone.View.extend({
         var index = this.curRepeat;
         var inputHtml = this.renderInput(index);
 
-        var eleTemplate = _.template(self.options.formView.$el.find("#temp_field_wrapper").html(), {
+        var eleTemplate = _.template(self.options.formView.$el.find("#temp_field_wrapper").html());
+
+        eleTemplate = $(eleTemplate({
             index: index,
             d_index: index + 1,
             required: this.model.isRequired() ? self.requiredClassName : "",
             fieldId: this.model.getFieldId(),
             repeating: this.model.isRepeating()  
-        });
-
-        eleTemplate = $(eleTemplate);
+        }));
         eleTemplate.find('.fh_appform_field_input_container').prepend(inputHtml);
 
         this.$fieldWrapper.append(eleTemplate);
@@ -1808,7 +1809,7 @@ var FieldView = Backbone.View.extend({
         this.maxRepeat = 1;
         this.curRepeat = 0;
 
-        var fieldTemplate = $(_.template(self.options.formView.$el.find("#temp_field_structure").html(), {
+        var fieldTemplate = $(_.template(self.options.formView.$el.find("#temp_field_structure").html())({
             title: this.model.getName(),
             helpText: this.model.getHelpText(),
             required: this.model.isRequired() ? self.requiredClassName : "",
@@ -2263,18 +2264,18 @@ FieldCheckboxView = FieldView.extend({
     var required = this.getFieldRequired(index);
     
     var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
-    checkboxesHtml = _.template(this.checkboxes, {"repeatingClassName": repeatingClassName});
-    checkboxesHtml = $(checkboxesHtml);
+    checkboxesHtml = _.template(this.checkboxes);
+    checkboxesHtml = $(checkboxesHtml({"repeatingClassName": repeatingClassName}));
 
     $.each(subfields, function(i, subfield) {
-      var choice = _.template(self.choice, {
+      var choice = _.template(self.choice);
+      choice = $(choice({
         "fieldId": fieldId,
         "index": index,
         "choice": subfield.label,
         "value": subfield.label,
         "checked": (subfield.checked) ? "checked='checked'" : ""
-      });
-      choice = $(choice);
+      }));
 
       if(subfield.checked === true){
         choice.addClass("active");
@@ -2441,23 +2442,23 @@ FieldGeoView = FieldView.extend({
     },
     renderInput: function(index) {
         var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
-        var html = _.template(this.input, {
+        var html = _.template(this.input);
+
+        return $(html({
             "fieldId": this.model.getFieldId(),
             "index": index,
             "inputType": "text",
             "repeatingClassName": repeatingClassName
-        });
-
-        return $(html);
+        }));
     },
     onElementShow: function(index) {
         var self = this;
         var rmBtn = $(this.renderButton(index, "<i class='icon-remove-circle'></i>&nbsp;Remove Location", "remove"));
         var btnLabel = this.locationUnit === "latlong" ? 'Capture Location (Lat/Lon)' : 'Capture Location (East/North)';
-        btnLabel = _.template(this.buttonHtml, {
+        btnLabel = _.template(this.buttonHtml);
+        var geoButton = $(this.renderButton(index, btnLabel({
             "buttonText": btnLabel
-        });
-        var geoButton = $(this.renderButton(index, btnLabel, "fhgeo"));
+        }), "fhgeo"));
 
         if (!this.readonly) {
             this.getWrapper(index).append(geoButton);
@@ -2583,13 +2584,13 @@ FieldMapView = FieldView.extend({
     FieldView.prototype.initialize.apply(this, arguments);
   },
   renderInput: function(index) {
-    var inputEle = _.template(this.input, {
+    var inputEle = _.template(this.input);
+    return $(inputEle({
       width: this.mapSettings.mapWidth,
       height: this.mapSettings.mapHeight,
       'index': index,
       'id':Math.random()
-    });
-    return $(inputEle);
+    }));
   },
   show: function() {
     this.$el.show();
@@ -2734,19 +2735,19 @@ FieldRadioView = FieldView.extend({
     var choices = this.model.getRadioOption();
     var self = this;
     var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
-    var inputElement = _.template(self.radio, { "repeatingClassName": repeatingClassName});
-    inputElement = $(inputElement);
+    var inputElement = _.template(self.radio);
+    inputElement = $(inputElement({ "repeatingClassName": repeatingClassName}));
 
     var fieldId = this.model.getFieldId();
     $.each(choices, function(i, choice) {
-      var jQObj = _.template(self.choice, {
+      var jQObj = _.template(self.choice);
+
+      jQObj = $(jQObj({
         "fieldId": fieldId,
         "choice": choice.label,
         "value": choice.label,
         "index": index
-      });
-
-      jQObj = $(jQObj);
+      }));
 
       if (choice.checked === true) {
         jQObj.addClass("active");
@@ -2820,13 +2821,13 @@ FieldSelectView = FieldView.extend({
 
     var self=this;
     $.each(choices, function(i, choice) {
-      options += _.template(self.option, {
+      options += _.template(self.option)({
         "value": choice.label,
         "selected": (choice.checked) ? "selected='selected'" : ""
       });
     });
 
-    return $(_.template(this.select, {
+    return $(_.template(this.select)({
       "fieldId":fieldId,
       "index":index,
       "options":options,
@@ -2869,7 +2870,7 @@ FieldSignatureView = FieldView.extend({
         var canvasWidth = winWidth - 2;
         var lineTop = canvasHeight - 20;
 
-        this.$el.append(_.template(this.templates.signaturePad.join(''), {
+        this.$el.append(_.template(this.templates.signaturePad.join(''))({
             "canvasHeight": canvasHeight,
             "canvasWidth": canvasWidth
         }));
@@ -3145,15 +3146,18 @@ FieldTextareaView = FieldView.extend({
 FieldSectionBreak = FieldView.extend({
   className: "fh_appform_section_break panel panel-default",
   templates: {
-      sectionBreak: '<div class="panel-heading"><%= sectionTitle %></div>'
+    sectionBreak: '<div class="panel-heading"><%= sectionTitle %></div>'
   },
-  renderEle:function(){
-    return _.template(this.templates.sectionBreak, {sectionTitle: this.model.getName(), sectionDescription: this.model.getHelpText()});
+  renderEle: function() {
+    return _.template(this.templates.sectionBreak)({
+      sectionTitle: this.model.getName(),
+      sectionDescription: this.model.getHelpText()
+    });
   },
-  renderTitle: function(){
+  renderTitle: function() {
     return "";
   },
-  renderHelpText: function(){
+  renderHelpText: function() {
     return "";
   }
 });
@@ -3162,71 +3166,71 @@ FieldDateTimeView = FieldView.extend({
   inputTime: "<input class='fh_appform_field_input col-xs-12 text-center <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='time'>",
   inputDate: "<input class='fh_appform_field_input col-xs-12 text-center   <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='date'>",
   inputDateTime: "<input class='fh_appform_field_input col-xs-12 text-center   <%= repeatingClassName%>' data-field='<%= fieldId %>' data-index='<%= index %>' type='text'>",
-  renderInput:function(index){
+  renderInput: function(index) {
     var fieldId = this.model.getFieldId();
     var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
 
-    var unit=this.getUnit();
-    var template="";
-    var buttonLabel="";
-    if (unit==="datetime"){
-      template=this.inputDateTime;
-      buttonLabel="<i class='icon-calendar'></i> <i class='icon-time'></i>&nbspGet Current Date & Time";
-    }else if (unit==="date"){
-      template=this.inputDate;
-      buttonLabel="<i class='icon-calendar'></i>&nbspGet Current Date";
-    }else if (unit==="time"){
-      template=this.inputTime;
-      buttonLabel="<i class='icon-time'></i>&nbspGet Current Time";
+    var unit = this.getUnit();
+    var template = "";
+    var buttonLabel = "";
+    if (unit === "datetime") {
+      template = this.inputDateTime;
+      buttonLabel = "<i class='icon-calendar'></i> <i class='icon-time'></i>&nbspGet Current Date & Time";
+    } else if (unit === "date") {
+      template = this.inputDate;
+      buttonLabel = "<i class='icon-calendar'></i>&nbspGet Current Date";
+    } else if (unit === "time") {
+      template = this.inputTime;
+      buttonLabel = "<i class='icon-time'></i>&nbspGet Current Time";
     }
-    var html=_.template(template,{
-      "fieldId":fieldId,
-      "index":index,
+    var html = _.template(template)({
+      "fieldId": fieldId,
+      "index": index,
       "repeatingClassName": repeatingClassName
     });
 
-    if(!this.readonly){
-      html+=this.renderButton(index,buttonLabel,"fhdate");   
+    if (!this.readonly) {
+      html += this.renderButton(index, buttonLabel, "fhdate");
     }
-    
+
 
     return $(html);
   },
-  getUnit:function(){
-    var def=this.model.getFieldDefinition();
+  getUnit: function() {
+    var def = this.model.getFieldDefinition();
     return def.datetimeUnit;
   },
-  onRender:function(){
-    var that=this;
+  onRender: function() {
+    var that = this;
 
-    if(!this.readonly){
-      this.$el.on("click","button",function(){
+    if (!this.readonly) {
+      this.$el.on("click", "button", function() {
         that.action(this);
-      });  
+      });
     }
   },
   action: function(el) {
-    var index=$(el).data().index;
+    var index = $(el).data().index;
     var self = this;
-    var now=new Date();
+    var now = new Date();
     if (self.getUnit() === "datetime") {
-      $('input[data-index="'+index+'"]', this.$el).val(self.getDate(now)+" "+self.getTime(now)).blur();
+      $('input[data-index="' + index + '"]', this.$el).val(self.getDate(now) + " " + self.getTime(now)).blur();
     } else if (self.getUnit() === "date") {
-      $('input[data-index="'+index+'"]', this.$el).val(self.getDate(now)).blur();
+      $('input[data-index="' + index + '"]', this.$el).val(self.getDate(now)).blur();
     } else if (self.getUnit() === "time") {
-      $('input[data-index="'+index+'"]', this.$el).val(self.getTime(now)).blur();
+      $('input[data-index="' + index + '"]', this.$el).val(self.getTime(now)).blur();
     }
   },
-  getDate:function(d){
-    return "YYYY-MM-DD".replace("YYYY",d.getFullYear()).replace("MM",this.twoDigi(d.getMonth()+1)).replace("DD",this.twoDigi(d.getDate()));
+  getDate: function(d) {
+    return "YYYY-MM-DD".replace("YYYY", d.getFullYear()).replace("MM", this.twoDigi(d.getMonth() + 1)).replace("DD", this.twoDigi(d.getDate()));
   },
-  getTime:function(d){
-    return "HH:mm".replace("HH",this.twoDigi(d.getHours())).replace("mm",this.twoDigi(d.getMinutes()));
+  getTime: function(d) {
+    return "HH:mm".replace("HH", this.twoDigi(d.getHours())).replace("mm", this.twoDigi(d.getMinutes()));
   },
-  twoDigi:function(num){
-    if (num<10){
-      return "0"+num.toString();
-    }else{
+  twoDigi: function(num) {
+    if (num < 10) {
+      return "0" + num.toString();
+    } else {
       return num.toString();
     }
   }
@@ -3301,7 +3305,11 @@ var PageView=BaseView.extend({
 
       //Add the section fields
       for(sectionKey in sections){
-        var sectionEl = $(_.template(self.options.formView.$el.find('#temp_page_structure').html(), {"sectionId": sectionKey, title: sections[sectionKey].title, index: sectionIndex}));
+        var sectionEl = $(_.template(self.options.formView.$el.find('#temp_page_structure').html())({
+          "sectionId": sectionKey,
+          title: sections[sectionKey].title,
+          index: sectionIndex
+        }));
         var sectionDivId = '#fh_appform_' + sectionKey + '_body_icon';
         sectionIndex++;
         sectionEl.find('.panel-heading').off('click');
@@ -3552,7 +3560,7 @@ var FormView = BaseView.extend({
 
     //Page views are always added before anything else happens, need to render the form title first
 
-    var formHtml = _.template(self.$el.find('#temp_form_structure').html(), {title: self.model.getName()});
+    var formHtml = _.template(self.$el.find('#temp_form_structure').html())({title: self.model.getName()});
 
     self.$el.append(formHtml);
 
@@ -3609,7 +3617,7 @@ var FormView = BaseView.extend({
     self.fieldViews = fieldViews;
     self.pageViews = pageViews;
     self.pageCount = pageViews.length;
-    var buttonsHtml = _.template(self.$el.find('#temp_form_buttons').html());
+    var buttonsHtml = _.template(self.$el.find('#temp_form_buttons').html())();
     this.$el.find("#fh_appform_container.fh_appform_form_area").append(buttonsHtml);
   },
   checkRules: function(params) {
@@ -4103,7 +4111,7 @@ StepsView = Backbone.View.extend({
 
     displayedPages.forEach(function(pageId, index) {
       var pageModel = self.parentView.getPageViewById(pageId).model;
-      var item = $(_.template(self.templates.step, {
+      var item = $(_.template(self.templates.step)({
           step_name: pageModel.getName(),
           step_num: index + 1,
           index: self.parentView.getPageIndexById(pageId),
@@ -4213,7 +4221,7 @@ var ConfigView = Backbone.View.extend({
             for (var j = 0; j < patterns.length; j++) {
                 var p = patterns[j];
                 if (p.reg.test(log)) {
-                    listStr += _.template($('#temp_config_log_item').html(), {
+                    listStr += _.template($('#temp_config_log_item').html())({
                         logClass: p.classStyle,
                         message: log
                     });
@@ -4221,7 +4229,7 @@ var ConfigView = Backbone.View.extend({
                 }
             }
         }
-        var listGroup = _.template($('#temp_config_log').html(), {
+        var listGroup = _.template($('#temp_config_log').html())({
             listStr: listStr
         });
         return listGroup;
@@ -4255,13 +4263,13 @@ var ConfigView = Backbone.View.extend({
 
         this.$el.append("<div id='fh_appform_templates' style='display:none;'>" + FormTemplates + "</div>");
         //Append Logo
-        this.$el.append(_.template(this.$el.find('#forms-logo-sdk').html()));
+        this.$el.append(_.template(this.$el.find('#forms-logo-sdk').html())());
         var props = $fh.forms.config.getConfig();
 
-        var cameraSettingsHtml = _.template(this.$el.find('#temp_config_camera').html(), props);
-        var submissionSettingsHtml = _.template(this.$el.find('#temp_config_submissions').html(), props);
-        var debuggingSettingsHtml = _.template(this.$el.find('#temp_config_debugging').html(), props);
-        var miscSettingsHtml = _.template(this.$el.find('#temp_config_misc').html(), props);
+        var cameraSettingsHtml = _.template(this.$el.find('#temp_config_camera').html())(props);
+        var submissionSettingsHtml = _.template(this.$el.find('#temp_config_submissions').html())(props);
+        var debuggingSettingsHtml = _.template(this.$el.find('#temp_config_debugging').html())(props);
+        var miscSettingsHtml = _.template(this.$el.find('#temp_config_misc').html())(props);
 
         this.$el.append(miscSettingsHtml);
         this.$el.append(debuggingSettingsHtml);

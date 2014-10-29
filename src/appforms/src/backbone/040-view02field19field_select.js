@@ -13,13 +13,13 @@ FieldSelectView = FieldView.extend({
 
     var self=this;
     $.each(choices, function(i, choice) {
-      options += _.template(self.option, {
+      options += _.template(self.option)({
         "value": choice.label,
         "selected": (choice.checked) ? "selected='selected'" : ""
       });
     });
 
-    return $(_.template(this.select, {
+    return $(_.template(this.select)({
       "fieldId":fieldId,
       "index":index,
       "options":options,

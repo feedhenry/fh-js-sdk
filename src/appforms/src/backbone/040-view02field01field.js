@@ -76,15 +76,15 @@ var FieldView = Backbone.View.extend({
         var type = this.getHTMLInputType();
         var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
 
-        var inputEle = _.template(this.input, {
+        var inputEle = _.template(this.input);
+
+        return $(inputEle({
             "fieldId": fieldId,
             "index": index,
             "inputType": type,
             "repeatingClassName": repeatingClassName,
             "value":this.model.getDefaultValue()
-        });
-
-        return $(inputEle);
+        }));
     },
     getHTMLInputType: function() {
         return this.type || "text";
@@ -109,7 +109,8 @@ var FieldView = Backbone.View.extend({
         var helpText = this.model.getHelpText();
 
         if (typeof helpText === "string" && helpText.length > 0) {
-            return _.template(this.instructions, {
+            var temp = _.template(this.instructions);
+            return temp({
                 "helpText": helpText
             });
         } else {
@@ -121,15 +122,15 @@ var FieldView = Backbone.View.extend({
         var index = this.curRepeat;
         var inputHtml = this.renderInput(index);
 
-        var eleTemplate = _.template(self.options.formView.$el.find("#temp_field_wrapper").html(), {
+        var eleTemplate = _.template(self.options.formView.$el.find("#temp_field_wrapper").html());
+
+        eleTemplate = $(eleTemplate({
             index: index,
             d_index: index + 1,
             required: this.model.isRequired() ? self.requiredClassName : "",
             fieldId: this.model.getFieldId(),
             repeating: this.model.isRepeating()  
-        });
-
-        eleTemplate = $(eleTemplate);
+        }));
         eleTemplate.find('.fh_appform_field_input_container').prepend(inputHtml);
 
         this.$fieldWrapper.append(eleTemplate);
@@ -145,7 +146,7 @@ var FieldView = Backbone.View.extend({
         this.maxRepeat = 1;
         this.curRepeat = 0;
 
-        var fieldTemplate = $(_.template(self.options.formView.$el.find("#temp_field_structure").html(), {
+        var fieldTemplate = $(_.template(self.options.formView.$el.find("#temp_field_structure").html())({
             title: this.model.getName(),
             helpText: this.model.getHelpText(),
             required: this.model.isRequired() ? self.requiredClassName : "",

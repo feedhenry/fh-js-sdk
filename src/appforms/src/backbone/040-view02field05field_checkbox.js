@@ -13,18 +13,18 @@ FieldCheckboxView = FieldView.extend({
     var required = this.getFieldRequired(index);
     
     var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
-    checkboxesHtml = _.template(this.checkboxes, {"repeatingClassName": repeatingClassName});
-    checkboxesHtml = $(checkboxesHtml);
+    checkboxesHtml = _.template(this.checkboxes);
+    checkboxesHtml = $(checkboxesHtml({"repeatingClassName": repeatingClassName}));
 
     $.each(subfields, function(i, subfield) {
-      var choice = _.template(self.choice, {
+      var choice = _.template(self.choice);
+      choice = $(choice({
         "fieldId": fieldId,
         "index": index,
         "choice": subfield.label,
         "value": subfield.label,
         "checked": (subfield.checked) ? "checked='checked'" : ""
-      });
-      choice = $(choice);
+      }));
 
       if(subfield.checked === true){
         choice.addClass("active");

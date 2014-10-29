@@ -9,23 +9,23 @@ FieldGeoView = FieldView.extend({
     },
     renderInput: function(index) {
         var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
-        var html = _.template(this.input, {
+        var html = _.template(this.input);
+
+        return $(html({
             "fieldId": this.model.getFieldId(),
             "index": index,
             "inputType": "text",
             "repeatingClassName": repeatingClassName
-        });
-
-        return $(html);
+        }));
     },
     onElementShow: function(index) {
         var self = this;
         var rmBtn = $(this.renderButton(index, "<i class='icon-remove-circle'></i>&nbsp;Remove Location", "remove"));
         var btnLabel = this.locationUnit === "latlong" ? 'Capture Location (Lat/Lon)' : 'Capture Location (East/North)';
-        btnLabel = _.template(this.buttonHtml, {
+        btnLabel = _.template(this.buttonHtml);
+        var geoButton = $(this.renderButton(index, btnLabel({
             "buttonText": btnLabel
-        });
-        var geoButton = $(this.renderButton(index, btnLabel, "fhgeo"));
+        }), "fhgeo"));
 
         if (!this.readonly) {
             this.getWrapper(index).append(geoButton);

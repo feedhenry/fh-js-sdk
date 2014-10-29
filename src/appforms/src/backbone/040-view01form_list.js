@@ -54,12 +54,12 @@ var FormListView = BaseView.extend({
         } catch (e) {
             msg = "An unexpected error occurred.";
         }
-        var html = _.template(this.templates.error, {
+        var html = _.template(this.templates.error);
+        $('ul', this.$el).append(html({
             name: msg + "<br/>Please Retry Later",
             enabledClass: 'fh_appform_button_cancel', //TODO May not be this class. Double check
             dataClass: 'fetched'
-        });
-        $('ul', this.$el).append(html);
+        }));
 
     },
 
