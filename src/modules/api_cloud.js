@@ -11,11 +11,19 @@ function doCloudCall(opts, success, fail){
   var url = cloud_host.getCloudUrl(opts.path);
   var params = opts.data || {};
   params = fhparams.addFHParams(params);
+  var type = opts.method || "POST";
+  var data;
+  if ("POST" === type.toUpperCase()) {
+    data = JSON.stringify(params);
+  } else {
+    data = params;
+  }
+
   return ajax({
     "url": url,
-    "type": opts.method || "POST",
+    "type": type,
     "dataType": opts.dataType || "json",
-    "data": JSON.stringify(params),
+    "data": data,
     "contentType": opts.contentType || "application/json",
     "timeout": opts.timeout || appProps.timeout,
     "success": success,

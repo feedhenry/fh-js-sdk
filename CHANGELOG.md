@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.4.4 - 2014-10-21 - IR239 - Martin Murphy
+* 8186 - Fix cloud api for GET requests
+
 ## 2.4.3 - 2014-09-23 - IR237 - Niall Donnelly
 * 7986 - Added support for field codes for form fields.
 
