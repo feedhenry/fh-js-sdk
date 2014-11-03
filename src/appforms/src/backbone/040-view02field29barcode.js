@@ -2,12 +2,8 @@ FieldBarcodeView = FieldView.extend({
   type: "barcode",
   input: "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action select col-xs-12' data-index='<%= index %>'  type='<%= inputType %>'>Scan Barcode</button>" +
     "<button data-field='<%= fieldId %>' class='special_button fh_appform_button_action remove col-xs-12' data-index='<%= index %>'  type='<%= inputType %>'><i class='icon-remove-circle'></i>&nbsp;Remove Barcode Entry</button>" +
-    "Barcode <input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' data-bfield='text' type='text' disabled/>" +
-    "Format <input class='fh_appform_field_input' data-field='<%= fieldId %>' data-index='<%= index %>' data-bfield='format' type='text' disabled/>",
-  html5Cam: '<div class="html5Cam">' +
-    '<div class="camActionBar"><button class="camCancel camBtn fh_appform_button_cancel">Cancel</button><button class="camOk camBtn fh_appform_button_action">Ok</button></div>' +
-    '<div class="cam"></div>' +
-    '</div>',
+    "<input class='fh_appform_field_input col-xs-12' data-field='<%= fieldId %>' data-index='<%= index %>' data-bfield='text' type='text' placeholder='Barcode Value' style='margin-top:5px' disabled/>" +
+    "<input class='fh_appform_field_input col-xs-12' data-field='<%= fieldId %>' data-index='<%= index %>' data-bfield='format' type='text' placeholder='Barcode Format' style='margin-top:5px' disabled/>",
   initialize: function() {
     var self = this;
 
@@ -15,7 +11,22 @@ FieldBarcodeView = FieldView.extend({
     FieldView.prototype.initialize.apply(self, arguments);
   },
   contentChanged: function(e) {
+    var self = this;
+    e.preventDefault();
+    var inputTarget = $(e.target);
+    var index = inputTarget.data('index');
+    var wrapperObj = self.getWrapper(index);
+    var barcodeTextEle = wrapperObj.find("input[data-bfield='text']");
+    var barcodeFormatEle = wrapperObj.find("input[data-bfield='format']");
+
+    var result = {
+      text: barcodeTextEle.val(),
+      format: barcodeFormatEle.val()
+    };
+
     //Dont need to do anything when the content changes.
+    self.barcodeObjects[index] = result;
+    self.validateElement(index, result);
   },
   valueFromElement: function(index) {
     var self = this;
@@ -28,8 +39,18 @@ FieldBarcodeView = FieldView.extend({
     var button_remove = wrapperObj.find("button.remove");
 
 
-    var barcodeTextEle = wrapperObj.find("input[data-bfield='text']")[0];
-    var barcodeFormatEle = wrapperObj.find("input[data-bfield='format']")[0];
+    var barcodeTextEle = wrapperObj.find("input[data-bfield='text']");
+    var barcodeFormatEle = wrapperObj.find("input[data-bfield='format']");
+
+    //If it is not a phonegap application, then the scan barcode button should not be shown
+//    if(!self.model.utils.isPhoneGapCamAvailable()){
+//      //Show the input text fields only instead. The user is allowed to enter values manually.
+//      wrapperObj.find("input[data-bfield='text']").attr("disabled", false);
+//      wrapperObj.find("input[data-bfield='format']").attr("disabled", false);
+//      button.hide();
+//      button_remove.hide();
+//      return;
+//    }
 
     button.show();
 
@@ -87,59 +108,22 @@ FieldBarcodeView = FieldView.extend({
     //Capturing a barcode using a webcam and processing
     function webBarcode(){
 
-      //First, render the html5 camera
-      var camObj = $(self.html5Cam);
-      var actionBar = camObj.find('.camActionBar');
-      camObj.css({
-        'position': 'fixed',
-        'top': 0,
-        'bottom': 0,
-        'left': 0,
-        'right': 0,
-        'background': '#000',
-        'z-index': 9999,
-        'height': "50px"
-      });
-      actionBar.css({
-        'text-align': 'center',
-        'padding': '10px',
-        'background': '#999'
-      });
-      actionBar.find('button').css({
-        'width': '80px',
-        'height': '30px',
-        'margin-right': '8px',
-        'font-size': '1.3em'
-      });
-      self.$el.append(camObj);
-      actionBar.find('.camCancel').on('click', function() {
-        self.model.utils.cancelHtml5Camera();
-        camObj.remove();
-      });
-      self.model.utils.initHtml5Camera({}, function(err, video) {
-        if (err) {
-          $fh.forms.log.e(err);
-          camObj.remove();
-        } else {
-          $(video).css('width', '100%');
-          camObj.find('.cam').append(video);
-          actionBar.find('.camOk').on('click', function() {
-            self.model.utils.takePhoto({rawData: true}, function(err, rawImageData) {//The image that comes from the html5 camera is base64
-//              camObj.remove();
-              if (err) {
-                $fh.forms.log.e(err);
-              } else {
-                self.setImage(index, rawImageData.base64);
-                console.log("Got Image: ", rawImageData.base64);
+      //Web barcode decoding is not currently supported.
+      //TODO This feature will be added later.
 
-                self.model.utils.decodeBarcode(rawImageData, function(err, result){
-                  console.log("DECODE QR CODE: ", err, result);
-                });
-              }
-            });
-          });
-        }
-      });
+      var result = {
+        format: "QR_CODE",
+        text: "somebarcode"
+      };
+
+      $fh.forms.log.d("Got Barcode Result: " + JSON.stringify(result));
+      self.barcodeObjects[index] = {
+        text: result.text,
+        format: result.format
+      };
+
+      self.showButton(index,  self.barcodeObjects[index]);
+      $fh.forms.log.e("Web barcode decoding not currently supported");
     }
 
 
@@ -149,8 +133,6 @@ FieldBarcodeView = FieldView.extend({
     } else {
       webBarcode();
     }
-
-
   },
   valuePopulateToElement: function(index, value) {
     var self = this;

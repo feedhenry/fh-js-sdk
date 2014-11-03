@@ -27,8 +27,7 @@ var FieldView = Backbone.View.extend({
       sectionBreak: "icon-minus",
       radio: "icon-circle-blank",
       barcode: "icon-barcode",
-      sliderNumber: "icon-number",
-      sliderOptions: "icon-circle-blank"
+      sliderNumber: "icon-number"
     },
     events: {
         "change": "contentChanged",
@@ -190,7 +189,7 @@ var FieldView = Backbone.View.extend({
     initialize: function(options) {
         this.options = options;
         this.readonly = options.formView.readonly;
-        _.bindAll(this, 'dumpContent', 'clearError', 'onAddInput', 'onRemoveInput');
+        _.bindAll(this, 'dumpContent', 'clearError', 'onAddInput', 'onRemoveInput', 'contentChanged');
 
         
         this.render();

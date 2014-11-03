@@ -18,8 +18,7 @@ var PageView=BaseView.extend({
     "sectionBreak":FieldSectionBreak,
     "url":FieldUrlView,
     "barcode": FieldBarcodeView,
-    "sliderNumber": FieldSliderNumberView,
-    "sliderOptions": FieldSliderOptionsView
+    "sliderNumber": FieldSliderNumberView
   },
   templates : {
     pageTitle: '<div class="fh_appform_page_title text-center"><%= pageTitle %></div>',

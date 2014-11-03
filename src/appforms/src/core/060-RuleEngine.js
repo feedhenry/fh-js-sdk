@@ -1,6 +1,6 @@
 /*! fh-forms - v0.10.0 -  */
 /*! async - v0.2.9 -  */
-/*! 2014-10-22 */
+/*! 2014-11-03 */
 /* This is the prefix file */
 if(appForm){
   appForm.RulesEngine=rulesEngine;
@@ -1075,8 +1075,7 @@ function rulesEngine (formDef) {
         "url": validatorString,
         "sectionBreak": validatorSection,
         "barcode": validatorBarcode,
-        "sliderNumber": validatorNumericString,
-        "sliderOptions": validatorDropDown
+        "sliderNumber": validatorNumericString
       };
 
       var validatorsClientMap = {
@@ -1096,8 +1095,7 @@ function rulesEngine (formDef) {
         "url": validatorString,
         "sectionBreak": validatorSection,
         "barcode": validatorBarcode,
-        "sliderNumber": validatorNumericString,
-        "sliderOptions": validatorDropDown
+        "sliderNumber": validatorNumericString
       };
 
       var fieldValueComparison = {
@@ -1216,9 +1214,6 @@ function rulesEngine (formDef) {
         },
         "sliderNumber": function(fieldValue, testValue, condition){
           return this.numericalComparison(fieldValue, testValue, condition);
-        },
-        "sliderOptions": function(fieldValue, testValue, condition){
-          return this.radio(fieldValue, testValue, condition);
         },
         "comparisonString": function(fieldValue, testValue, condition){
           var valid = true;
@@ -2101,12 +2096,12 @@ function rulesEngine (formDef) {
           return cb(new Error("Expected object but got " + typeof(fieldValue)));
         }
 
-        if(typeof(fieldValue.text) !== "string"){
-          return cb(new Error("Expected text parameter but got " + fieldValue.text));
+        if(typeof(fieldValue.text) !== "string" || fieldValue.text.length === 0){
+          return cb(new Error("Expected text parameter."));
         }
 
-        if(typeof(fieldValue.format) !== "string"){
-          return cb(new Error("Expected format parameter but got " + fieldValue.format));
+        if(typeof(fieldValue.format) !== "string" || fieldValue.format.length === 0){
+          return cb(new Error("Expected format parameter."));
         }
 
         return cb();

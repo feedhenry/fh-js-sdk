@@ -101,7 +101,8 @@ appForm.utils = function (module) {
    * Capturing a barcode using the PhoneGap barcode plugin
    */
   function _phoneGapBarcode(params, cb){
-    if(cordova && cordova.plugins && cordova.plugins.barcodeScanner){
+    //Checking for a cordova barcodeScanner plugin.
+    if(window.cordova && window.cordova.plugins && window.cordova.plugins.barcodeScanner){
       cordova.plugins.barcodeScanner.scan(
         function (result) {
           $fh.forms.log.d("Barcode Found: " + JSON.stringify(result));
@@ -119,18 +120,15 @@ appForm.utils = function (module) {
 
   /**
    * Capturing a barcode using a webcam and image processors.
+   * TODO Not complete yet.
    * @param params
    * @param cb
    * @private
    */
   function _webBarcode(params, cb){
-    //Initialise the web cam
-
-    //take a snapshot
-
-    //Pass to testing functions
-
-    return cb("Not done yet");
+    //TODO Web barcode decoding not supported yet.
+    $fh.forms.log.e("Web Barcode Decoding not supported yet.");
+    return cb("Web Barcode Decoding not supported yet.");
   }
 
   function captureBarcode(params, cb){
