@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.5.0 - 2014-11-03 - IR240 - Niall Donnelly
+* 7890 Added barcode Scanner
+
 ## 2.4.4 - 2014-10-21 - IR239 - Martin Murphy
 * 8186 - Fix cloud api for GET requests
 
