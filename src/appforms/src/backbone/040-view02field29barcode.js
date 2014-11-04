@@ -127,19 +127,7 @@ FieldBarcodeView = FieldView.extend({
 
       //Web barcode decoding is not currently supported.
       //TODO This feature will be added later.
-
-      var result = {
-        format: "QR_CODE",
-        text: "somebarcode"
-      };
-
-      $fh.forms.log.d("Got Barcode Result: " + JSON.stringify(result));
-      self.barcodeObjects[index] = {
-        text: result.text,
-        format: result.format
-      };
-
-      self.showButton(index,  self.barcodeObjects[index]);
+      alert("Barcode Decoding Only Available On-Device");
       $fh.forms.log.e("Web barcode decoding not currently supported");
     }
 
