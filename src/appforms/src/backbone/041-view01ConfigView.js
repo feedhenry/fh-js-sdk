@@ -124,8 +124,6 @@ var ConfigView = Backbone.View.extend({
         this.$el.find('.bootstrap-tagsinput').addClass('fh_appform_field_input');
 
         this.$el.find('.panel-heading').click(function(e) {
-            console.log(e);
-
             var field = $(e.currentTarget).data().field;
             $('#' + field).slideToggle();
             $('#' + field + '-icon').toggleClass('icon-chevron-sign-up');

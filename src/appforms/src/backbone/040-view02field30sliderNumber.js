@@ -69,7 +69,6 @@ FieldSliderNumberView = FieldView.extend({
     }
   },
   contentChanged: function(e){
-    console.log("Content Changed");
     var self = this;
     var fileEle = e.target;
     var filejQ = $(fileEle);

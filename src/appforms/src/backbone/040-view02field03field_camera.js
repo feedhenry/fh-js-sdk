@@ -161,9 +161,7 @@ FieldCameraView = FieldView.extend({
             }
 
             fileObj.off('click');
-            fileObj.on('click', function(e){
-                console.log("File CLicked ", e);
-            });
+            fileObj.on('click', function(e){});
 
             fileObj.off('change');
             fileObj.on('change', function() {

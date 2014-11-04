@@ -13760,7 +13760,6 @@ appForm.utils = function (module) {
       // "image/webp" works in Chrome.
       // Other browsers will fall back to image/png.
       var base64 = canvas.toDataURL('image/png');
-      console.log("base64", base64);
       var imageData = ctx.getImageData(0, 0, params.targetWidth, params.targetHeight);
 
       if(params.cancelHtml5Camera){

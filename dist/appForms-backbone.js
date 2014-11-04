@@ -2196,9 +2196,7 @@ FieldCameraView = FieldView.extend({
             }
 
             fileObj.off('click');
-            fileObj.on('click', function(e){
-                console.log("File CLicked ", e);
-            });
+            fileObj.on('click', function(e){});
 
             fileObj.off('change');
             fileObj.on('change', function() {
@@ -3457,7 +3455,6 @@ FieldSliderNumberView = FieldView.extend({
     }
   },
   contentChanged: function(e){
-    console.log("Content Changed");
     var self = this;
     var fileEle = e.target;
     var filejQ = $(fileEle);
@@ -4515,8 +4512,6 @@ var ConfigView = Backbone.View.extend({
         this.$el.find('.bootstrap-tagsinput').addClass('fh_appform_field_input');
 
         this.$el.find('.panel-heading').click(function(e) {
-            console.log(e);
-
             var field = $(e.currentTarget).data().field;
             $('#' + field).slideToggle();
             $('#' + field + '-icon').toggleClass('icon-chevron-sign-up');
