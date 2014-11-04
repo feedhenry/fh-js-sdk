@@ -67,6 +67,14 @@ FieldBarcodeView = FieldView.extend({
       button.hide();
       button_remove.hide();
     }
+
+    button_remove.off('click');
+
+    button_remove.on('click', function(e){
+      var index = $(e.target).data('index');
+      self.removeBarcode(index);
+    });
+
     button.off('click');
 
     if(self.model.utils.isPhoneGapCamAvailable()){
@@ -75,12 +83,18 @@ FieldBarcodeView = FieldView.extend({
       });
     }
   },
-  setImage: function(index, base64Img) {
-    var wrapper = this.getWrapper(index);
-    var img = wrapper.find('img.imageThumb');
-    img.attr('src', base64Img).show();
-    wrapper.find('button').hide();
-    wrapper.find('.remove').show();
+  removeBarcode: function(index){
+    var self = this;
+
+    if(typeof(index) === "number"){
+      self.barcodeObjects[index] = null;
+      var wrapperObj = self.getWrapper(index);
+      wrapperObj.find("input[data-bfield='text']").val("");
+      wrapperObj.find("input[data-bfield='format']").val("");
+      self.showButton(index, null);
+    } else {
+      $fh.forms.log.e("Error: No index when removing barcode element");
+    }
   },
   //Scanning a barcode from the device.
   scanBarcode: function(e, index){
@@ -96,8 +110,8 @@ FieldBarcodeView = FieldView.extend({
         } else if(result.text && result.format){
           $fh.forms.log.d("Got Barcode Result: " + JSON.stringify(result));
           self.barcodeObjects[index] = {
-            text: result.text,
-            format: result.format
+            text: result.text.toString(),
+            format: result.format.toString()
           };
 
           self.showButton(index,  self.barcodeObjects[index]);

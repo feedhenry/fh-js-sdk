@@ -31,6 +31,7 @@ FieldSliderNumberView = FieldView.extend({
     var defaultValue = self.model.getDefaultValue() || fieldValidation.min || 0;
 
     var params = {
+      enabled: (!self.readonly),
       tooltip: "hide",
       fieldId: fieldId,
       index: index,
@@ -55,6 +56,9 @@ FieldSliderNumberView = FieldView.extend({
 
       if(input.bootstrapSlider){
         input.bootstrapSlider(params);
+        if (this.readonly) {
+
+        }
       } else {
         input.slider(params);
       }

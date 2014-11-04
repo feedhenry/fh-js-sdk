@@ -107,7 +107,7 @@ var ConfigView = Backbone.View.extend({
 
         this.$el.append("<div id='fh_appform_templates' style='display:none;'>" + FormTemplates + "</div>");
         //Append Logo
-        this.$el.append(_.template(this.$el.find('#forms-logo-sdk').html()))();
+        this.$el.append(_.template(this.$el.find('#forms-logo-sdk').html())());
         var props = $fh.forms.config.getConfig();
 
         var cameraSettingsHtml = _.template(this.$el.find('#temp_config_camera').html())( props);
