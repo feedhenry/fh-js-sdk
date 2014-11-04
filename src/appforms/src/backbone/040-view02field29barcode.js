@@ -43,14 +43,15 @@ FieldBarcodeView = FieldView.extend({
     var barcodeFormatEle = wrapperObj.find("input[data-bfield='format']");
 
     //If it is not a phonegap application, then the scan barcode button should not be shown
-//    if(!self.model.utils.isPhoneGapCamAvailable()){
-//      //Show the input text fields only instead. The user is allowed to enter values manually.
-//      wrapperObj.find("input[data-bfield='text']").attr("disabled", false);
-//      wrapperObj.find("input[data-bfield='format']").attr("disabled", false);
-//      button.hide();
-//      button_remove.hide();
-//      return;
-//    }
+    if(!self.model.utils.isPhoneGapCamAvailable()){
+      //Show the input text fields only instead. The user is allowed to enter values manually.
+      wrapperObj.find("input[data-bfield='text']").attr("disabled", false);
+      wrapperObj.find("input[data-bfield='format']").attr("disabled", false);
+      button.text("Barcode Scanning Not Available");
+      button.attr('disabled', true);
+      button_remove.hide();
+      return;
+    }
 
     button.show();
 
@@ -67,10 +68,12 @@ FieldBarcodeView = FieldView.extend({
       button_remove.hide();
     }
     button.off('click');
-    button.on('click', function(e) {
-      self.scanBarcode(e, index);
-    });
 
+    if(self.model.utils.isPhoneGapCamAvailable()){
+      button.on('click', function(e) {
+        self.scanBarcode(e, index);
+      });
+    }
   },
   setImage: function(index, base64Img) {
     var wrapper = this.getWrapper(index);

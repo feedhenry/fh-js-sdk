@@ -3282,14 +3282,15 @@ FieldBarcodeView = FieldView.extend({
     var barcodeFormatEle = wrapperObj.find("input[data-bfield='format']");
 
     //If it is not a phonegap application, then the scan barcode button should not be shown
-//    if(!self.model.utils.isPhoneGapCamAvailable()){
-//      //Show the input text fields only instead. The user is allowed to enter values manually.
-//      wrapperObj.find("input[data-bfield='text']").attr("disabled", false);
-//      wrapperObj.find("input[data-bfield='format']").attr("disabled", false);
-//      button.hide();
-//      button_remove.hide();
-//      return;
-//    }
+    if(!self.model.utils.isPhoneGapCamAvailable()){
+      //Show the input text fields only instead. The user is allowed to enter values manually.
+      wrapperObj.find("input[data-bfield='text']").attr("disabled", false);
+      wrapperObj.find("input[data-bfield='format']").attr("disabled", false);
+      button.text("Barcode Scanning Not Available");
+      button.attr('disabled', true);
+      button_remove.hide();
+      return;
+    }
 
     button.show();
 
@@ -3306,10 +3307,12 @@ FieldBarcodeView = FieldView.extend({
       button_remove.hide();
     }
     button.off('click');
-    button.on('click', function(e) {
-      self.scanBarcode(e, index);
-    });
 
+    if(self.model.utils.isPhoneGapCamAvailable()){
+      button.on('click', function(e) {
+        self.scanBarcode(e, index);
+      });
+    }
   },
   setImage: function(index, base64Img) {
     var wrapper = this.getWrapper(index);
@@ -3435,7 +3438,17 @@ FieldSliderNumberView = FieldView.extend({
 
     wrapperObj.find(".slideValue").html("Selected Value: " + defaultValue);
 
-    input.slider(params);
+    //If the bootstrap plugin does not exist, the input will be type 'range'
+    if(typeof(input.slider) === "function" || typeof(input.bootstrapSlider) === "function"){
+      //If the bootstrap slide is in compatibility mode then use that one instead.
+
+      if(input.bootstrapSlider){
+        input.bootstrapSlider(params);
+      } else {
+        input.slider(params);
+      }
+    }
+
 
     //Listen for slide events
     input.on('slide', self.contentChanged);
@@ -3463,10 +3476,11 @@ FieldSliderNumberView = FieldView.extend({
     var wrapperObj = this.getWrapper(index);
 
     var input = $(wrapperObj.find("input[type='range']"));
-    var value = input.attr('value');
+    var value = input.attr('value') || input.val();
 
     wrapperObj.find(".slideValue").html("Selected Value: " + value);
     self.validateElement(index, value);
+    self.trigger('checkrules');
   },
   getHTMLInputType: function() {
     return "text";

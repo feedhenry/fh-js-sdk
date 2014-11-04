@@ -49,7 +49,17 @@ FieldSliderNumberView = FieldView.extend({
 
     wrapperObj.find(".slideValue").html("Selected Value: " + defaultValue);
 
-    input.slider(params);
+    //If the bootstrap plugin does not exist, the input will be type 'range'
+    if(typeof(input.slider) === "function" || typeof(input.bootstrapSlider) === "function"){
+      //If the bootstrap slide is in compatibility mode then use that one instead.
+
+      if(input.bootstrapSlider){
+        input.bootstrapSlider(params);
+      } else {
+        input.slider(params);
+      }
+    }
+
 
     //Listen for slide events
     input.on('slide', self.contentChanged);
@@ -77,10 +87,11 @@ FieldSliderNumberView = FieldView.extend({
     var wrapperObj = this.getWrapper(index);
 
     var input = $(wrapperObj.find("input[type='range']"));
-    var value = input.attr('value');
+    var value = input.attr('value') || input.val();
 
     wrapperObj.find(".slideValue").html("Selected Value: " + value);
     self.validateElement(index, value);
+    self.trigger('checkrules');
   },
   getHTMLInputType: function() {
     return "text";
