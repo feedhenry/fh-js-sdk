@@ -11,6 +11,7 @@ var Model = function(options){
         '_ludid': null
     };
     this.events = {};
+    this.touch();
 };
 
 utils.extend(Model, Event);
