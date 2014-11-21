@@ -1,3 +1,4 @@
+var model = require("./forms/model");
 var formConfig = require("./forms/config");
 var forms = require("./forms/forms");
 var Form = require("./forms/form");

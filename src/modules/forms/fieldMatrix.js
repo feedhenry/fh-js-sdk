@@ -14,7 +14,7 @@ function getMatrixRows() {
         log.e('matrix rows definition is not found in field definition');
         return null;
     }
-};
+}
 
 function getMatrixCols() {
     var def = this.getFieldDefinition();
@@ -24,9 +24,9 @@ function getMatrixCols() {
         log.e('matrix columns definition is not found in field definition');
         return null;
     }
-};
+}
 
 module.exports = {
     getMatrixRows: getMatrixRows,
     getMatrixCols: getMatrixCols
-}
+};

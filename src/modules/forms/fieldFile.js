@@ -122,9 +122,9 @@ function process_file(params, cb) {
             cb(null, previousFile);
         }
     });
-};
+}
 
 module.exports = {
     checkFileObj: checkFileObj,
     process_file: process_file
-}
+};

@@ -16,12 +16,14 @@ if(document && document.location){
 var stubs = {
     "./localStorage": {
         upsert: function(model, cb){
-            return cb("asd");
+          console.log("NNNNNNNNNNNNNNN");
+            return cb(null, model);
         }
     }
-}
+};
 
-var Model = process.env.LIB_COV ? proxyquire("../../../src-cov/modules/forms/model", stubs) : proxyquire("../../../src/modules/forms/model", stubs);
+
+var Model = proxyquire("../../../src/modules/forms/model", stubs);
 
 
 describe("Form Model", function() {
@@ -64,6 +66,7 @@ describe("Form Model", function() {
         var model = new Model();
         model.set("name", "hello");
         model.saveLocal(function(err, res) {
+            console.log("RESSS", err, res);
             assert(!err);
             assert(res);
             assert(model.getLocalId());

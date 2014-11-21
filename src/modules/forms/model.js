@@ -131,8 +131,7 @@ Model.prototype.loadLocal = function(cb) {
  * @return {[type]}      [description]
  */
 Model.prototype.saveLocal = function(cb) {
-    var localStorage = localStorage;
-    localStorage.upsert(this, cb);
+  localStorage.upsert(this, cb);
 };
 /**
  * Remove current model from local storage store
@@ -150,6 +149,5 @@ Model.prototype.setDataAgent = function(dataAgent) {
     this.dataAgent = dataAgent;
 };
 
-console.log("MODEL ", JSON.stringify(Model));
 
 module.exports = Model;

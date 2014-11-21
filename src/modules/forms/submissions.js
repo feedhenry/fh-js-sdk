@@ -10,7 +10,7 @@ function Submissions() {
         '_ludid': 'submissions_list',
         'submissions': []
     });
-};
+}
 
 utils.extend(Submissions, Model);
 

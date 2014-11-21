@@ -50,6 +50,6 @@ var init = function(params, cb) {
 
         return cb();
     });
-}
+};
 
 module.exports = init;

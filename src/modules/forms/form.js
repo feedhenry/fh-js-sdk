@@ -126,7 +126,7 @@ function Form(params, cb) {
     } else {
         loadFromRemote();
     }
-};
+}
 
 utils.extend(Form, Model);
 

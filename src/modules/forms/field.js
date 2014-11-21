@@ -25,7 +25,7 @@ function Field(opt, form) {
     if (form) {
         this.form = form;
     }
-};
+}
 
 utils.extend(Field, Model);
 utils.extend(Field, fieldCheckboxes);

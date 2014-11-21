@@ -9,7 +9,7 @@ function getCheckBoxOptions() {
     } else {
         throw 'checkbox choice definition is not found in field definition';
     }
-};
+}
 
 function process_checkboxes(params, cb) {
     var inputValue = params.value;
@@ -18,7 +18,7 @@ function process_checkboxes(params, cb) {
     } else {
         cb(null, inputValue);
     }
-};
+}
 
 function convert_checkboxes(value, cb) {
     var rtn = [];
@@ -26,10 +26,10 @@ function convert_checkboxes(value, cb) {
         rtn.push(value[i].selections);
     }
     cb(null, rtn);
-};
+}
 
 module.exports = {
     getCheckBoxOptions: getCheckBoxOptions,
     process_checkboxes: process_checkboxes,
     convert_checkboxes: convert_checkboxes
-}
+};

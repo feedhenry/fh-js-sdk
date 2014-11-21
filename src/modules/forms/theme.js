@@ -6,7 +6,7 @@ function Theme() {
         '_type': 'theme',
         '_ludid': 'theme_object'
     });
-};
+}
 
 utils.extend(Theme, Model);
 

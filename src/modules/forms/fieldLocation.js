@@ -38,8 +38,8 @@ function process_location(params, cb) {
             cb('Invalid subtype type of location field, allowed types: latlong and eastnorth, was: ' + def.locationUnit);
             break;
     }
-};
+}
 
 module.exports = {
     process_location: process_location
-}
+};

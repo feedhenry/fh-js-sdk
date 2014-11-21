@@ -10,7 +10,7 @@ function FileSubmission(fileData) {
         '_type': 'fileSubmission',
         'data': fileData
     });
-};
+}
 
 utils.extend(FileSubmission, Model);
 

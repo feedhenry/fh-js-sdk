@@ -10,7 +10,7 @@ function Config() {
         '_type': 'config',
         "_ludid": "config"
     });
-};
+}
 
 utils.extend(Config, Model);
 

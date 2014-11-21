@@ -111,13 +111,13 @@ Log.prototype.clearLogs = function(cb) {
 };
 Log.prototype.sendLogs = function(cb) {
     var email = config.get("log_email");
-    var config = config.getProps();
+    var configJSON = config.getProps();
     var logs = this.getLogs();
     var params = {
         "type": "email",
         "to": email,
         "subject": "App Forms App Logs",
-        "body": "Configuration:\n" + JSON.stringify(config) + "\n\nApp Logs:\n" + logs.join("\n")
+        "body": "Configuration:\n" + JSON.stringify(configJSON) + "\n\nApp Logs:\n" + logs.join("\n")
     };
     utils.send(params, cb);
 };

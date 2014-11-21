@@ -11,7 +11,7 @@ var _fileSystemAvailable = function() {};
 //placeholder
 function LocalStorage() {
     Store.call(this, 'LocalStorage');
-};
+}
 
 utils.extend(LocalStorage, Store);
 

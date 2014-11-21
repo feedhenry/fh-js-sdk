@@ -9,9 +9,9 @@ if(document && document.location){
   if(document.location.href.indexOf("coverage=1") > -1){
     process.env.LIB_COV = 1;
   }
-}
+};
 
-var utils = process.env.LIB_COV ? require("../../../src-cov/modules/forms/utils") : require("../../../src/modules/forms/utils");
+var utils = require("../../../src/modules/forms/utils");
 
 describe("test forms utils module", function(){
 	it("should extend a function", function(){

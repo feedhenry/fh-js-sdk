@@ -55,7 +55,7 @@ function post(url, body, cb) {
     if (file === false) {
         param.contentType = 'application/json';
     } else {
-        param.contentType = 'multipart/form-data'
+        param.contentType = 'multipart/form-data';
     }
     _ajax(param);
 }
@@ -101,7 +101,7 @@ function uploadFile(url, fileProps, cb) {
     log.d("Beginning file upload ", url, options);
     var ft = new FileTransfer();
     ft.upload(filePath, encodeURI(url), success, fail, options);
-};
+}
 
 function downloadFile(url, fileMetaData, cb) {
     log.d("Phonegap downloadFile ", url, fileMetaData);
@@ -141,7 +141,7 @@ function downloadFile(url, fileMetaData, cb) {
             return cb("No file name associated with the file to download");
         }
     });
-};
+}
 
 module.exports = {
     get: get,

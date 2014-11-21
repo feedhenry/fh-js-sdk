@@ -12,7 +12,7 @@ function FileSubmissionDownload(fileData) {
         '_type': 'fileSubmissionDownload',
         'data': fileData
     });
-};
+}
 
 utils.extend(FileSubmissionDownload, Model);
 

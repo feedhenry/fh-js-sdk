@@ -13,8 +13,8 @@ function getRadioOption() {
     } else {
         log.e('Radio options definition is not found in field definition');
     }
-};
+}
 
 module.exports = {
     getRadioOption: getRadioOption
-}
+};

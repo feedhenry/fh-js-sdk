@@ -11208,6 +11208,7 @@ module.exports = function(opts, success, fail){
   })
 }
 },{"./ajax":20,"./appProps":28,"./fhparams":34,"./handleError":69,"./logger":74,"./waitForCloud":84,"JSON":5}],24:[function(require,module,exports){
+var model = require("./forms/model");
 var formConfig = require("./forms/config");
 var forms = require("./forms/forms");
 var Form = require("./forms/form");
@@ -11540,7 +11541,7 @@ module.exports = {
     log: log,
     init: init
 }
-},{"./forms/config":35,"./forms/form":48,"./forms/forms":53,"./forms/init":54,"./forms/log":56,"./forms/submission":62,"./forms/submissions":63,"./forms/theme":64}],25:[function(require,module,exports){
+},{"./forms/config":35,"./forms/form":48,"./forms/forms":53,"./forms/init":54,"./forms/log":56,"./forms/model":57,"./forms/submission":62,"./forms/submissions":63,"./forms/theme":64}],25:[function(require,module,exports){
 var hashImpl = require("./security/hash");
 
 module.exports = function(p, s, f){
@@ -12018,7 +12019,7 @@ function Config() {
         '_type': 'config',
         "_ludid": "config"
     });
-};
+}
 
 utils.extend(Config, Model);
 
@@ -12364,7 +12365,7 @@ function Field(opt, form) {
     if (form) {
         this.form = form;
     }
-};
+}
 
 utils.extend(Field, Model);
 utils.extend(Field, fieldCheckboxes);
@@ -12539,7 +12540,7 @@ function getCheckBoxOptions() {
     } else {
         throw 'checkbox choice definition is not found in field definition';
     }
-};
+}
 
 function process_checkboxes(params, cb) {
     var inputValue = params.value;
@@ -12548,7 +12549,7 @@ function process_checkboxes(params, cb) {
     } else {
         cb(null, inputValue);
     }
-};
+}
 
 function convert_checkboxes(value, cb) {
     var rtn = [];
@@ -12556,13 +12557,13 @@ function convert_checkboxes(value, cb) {
         rtn.push(value[i].selections);
     }
     cb(null, rtn);
-};
+}
 
 module.exports = {
     getCheckBoxOptions: getCheckBoxOptions,
     process_checkboxes: process_checkboxes,
     convert_checkboxes: convert_checkboxes
-}
+};
 },{}],39:[function(require,module,exports){
 /**
  * extension of Field class to support file field
@@ -12688,12 +12689,12 @@ function process_file(params, cb) {
             cb(null, previousFile);
         }
     });
-};
+}
 
 module.exports = {
     checkFileObj: checkFileObj,
     process_file: process_file
-}
+};
 },{"./config":35,"./localStorage":55,"./log":56,"./model":57}],40:[function(require,module,exports){
 /**
  * extension of Field class to support file field
@@ -12878,11 +12879,11 @@ function process_location(params, cb) {
             cb('Invalid subtype type of location field, allowed types: latlong and eastnorth, was: ' + def.locationUnit);
             break;
     }
-};
+}
 
 module.exports = {
     process_location: process_location
-}
+};
 },{"./config":35,"./log":56,"./model":57}],42:[function(require,module,exports){
 /**
  * extension of Field class to support matrix field
@@ -12900,7 +12901,7 @@ function getMatrixRows() {
         log.e('matrix rows definition is not found in field definition');
         return null;
     }
-};
+}
 
 function getMatrixCols() {
     var def = this.getFieldDefinition();
@@ -12910,12 +12911,12 @@ function getMatrixCols() {
         log.e('matrix columns definition is not found in field definition');
         return null;
     }
-};
+}
 
 module.exports = {
     getMatrixRows: getMatrixRows,
     getMatrixCols: getMatrixCols
-}
+};
 },{"./config":35,"./log":56,"./model":57}],43:[function(require,module,exports){
 /**
  * extension of Field class to support radio field
@@ -12932,11 +12933,11 @@ function getRadioOption() {
     } else {
         log.e('Radio options definition is not found in field definition');
     }
-};
+}
 
 module.exports = {
     getRadioOption: getRadioOption
-}
+};
 },{"./config":35,"./log":56,"./model":57}],44:[function(require,module,exports){
 var Model = require("./model");
 var log = require("./log");
@@ -12950,7 +12951,7 @@ function FileSubmission(fileData) {
         '_type': 'fileSubmission',
         'data': fileData
     });
-};
+}
 
 utils.extend(FileSubmission, Model);
 
@@ -13023,7 +13024,7 @@ function FileSubmissionDownload(fileData) {
         '_type': 'fileSubmissionDownload',
         'data': fileData
     });
-};
+}
 
 utils.extend(FileSubmissionDownload, Model);
 
@@ -13577,7 +13578,7 @@ function Form(params, cb) {
     } else {
         loadFromRemote();
     }
-};
+}
 
 utils.extend(Form, Model);
 
@@ -13965,7 +13966,7 @@ var init = function(params, cb) {
 
         return cb();
     });
-}
+};
 
 module.exports = init;
 },{"../../../libs/async":1,"./config":35,"./forms":53,"./log":56,"./submissions":63,"./theme":64,"./uploadManager":65}],55:[function(require,module,exports){
@@ -13982,7 +13983,7 @@ var _fileSystemAvailable = function() {};
 //placeholder
 function LocalStorage() {
     Store.call(this, 'LocalStorage');
-};
+}
 
 utils.extend(LocalStorage, Store);
 
@@ -14352,13 +14353,13 @@ Log.prototype.clearLogs = function(cb) {
 };
 Log.prototype.sendLogs = function(cb) {
     var email = config.get("log_email");
-    var config = config.getProps();
+    var configJSON = config.getProps();
     var logs = this.getLogs();
     var params = {
         "type": "email",
         "to": email,
         "subject": "App Forms App Logs",
-        "body": "Configuration:\n" + JSON.stringify(config) + "\n\nApp Logs:\n" + logs.join("\n")
+        "body": "Configuration:\n" + JSON.stringify(configJSON) + "\n\nApp Logs:\n" + logs.join("\n")
     };
     utils.send(params, cb);
 };
@@ -14499,8 +14500,7 @@ Model.prototype.loadLocal = function(cb) {
  * @return {[type]}      [description]
  */
 Model.prototype.saveLocal = function(cb) {
-    var localStorage = localStorage;
-    localStorage.upsert(this, cb);
+  localStorage.upsert(this, cb);
 };
 /**
  * Remove current model from local storage store
@@ -14518,7 +14518,6 @@ Model.prototype.setDataAgent = function(dataAgent) {
     this.dataAgent = dataAgent;
 };
 
-console.log("MODEL ", JSON.stringify(Model));
 
 module.exports = Model;
 },{"../../../libs/events":2,"../../../libs/underscore.js":7,"./dataAgent":36,"./localStorage":55,"./utils":67}],58:[function(require,module,exports){
@@ -14540,7 +14539,7 @@ function Page(opt, parentForm) {
     this.fromJSON(opt);
     this.form = parentForm;
     this.initialise();
-};
+}
 
 Page.prototype.initialise = function() {
     var fieldsDef = this.getFieldDef();
@@ -17341,7 +17340,7 @@ function Submissions() {
         '_ludid': 'submissions_list',
         'submissions': []
     });
-};
+}
 
 utils.extend(Submissions, Model);
 
@@ -17652,7 +17651,7 @@ function Theme() {
         '_type': 'theme',
         '_ludid': 'theme_object'
     });
-};
+}
 
 utils.extend(Theme, Model);
 
@@ -18874,7 +18873,7 @@ function post(url, body, cb) {
     if (file === false) {
         param.contentType = 'application/json';
     } else {
-        param.contentType = 'multipart/form-data'
+        param.contentType = 'multipart/form-data';
     }
     _ajax(param);
 }
@@ -18920,7 +18919,7 @@ function uploadFile(url, fileProps, cb) {
     log.d("Beginning file upload ", url, options);
     var ft = new FileTransfer();
     ft.upload(filePath, encodeURI(url), success, fail, options);
-};
+}
 
 function downloadFile(url, fileMetaData, cb) {
     log.d("Phonegap downloadFile ", url, fileMetaData);
@@ -18960,7 +18959,7 @@ function downloadFile(url, fileMetaData, cb) {
             return cb("No file name associated with the file to download");
         }
     });
-};
+}
 
 module.exports = {
     get: get,

@@ -16,7 +16,7 @@ function Page(opt, parentForm) {
     this.fromJSON(opt);
     this.form = parentForm;
     this.initialise();
-};
+}
 
 Page.prototype.initialise = function() {
     var fieldsDef = this.getFieldDef();
