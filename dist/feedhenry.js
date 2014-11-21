@@ -14442,7 +14442,6 @@ Model.prototype.genLocalId = function() {
  * @return {[type]}      [description]
  */
 Model.prototype.refresh = function(fromRemote, cb) {
-    var dataAgent = this.getDataAgent();
     var that = this;
     if (typeof cb === 'undefined') {
         cb = fromRemote;
@@ -14481,7 +14480,6 @@ Model.prototype.attemptRefresh = function(cb) {
  * @return {[type]}      [description]
  */
 Model.prototype.loadLocal = function(cb) {
-    var localStorage = localStorage;
     var that = this;
     localStorage.read(this, function(err, res) {
         if (err) {
@@ -14508,7 +14506,6 @@ Model.prototype.saveLocal = function(cb) {
  * @return {[type]}      [description]
  */
 Model.prototype.clearLocal = function(cb) {
-    var localStorage = localStorage;
     localStorage.removeEntry(this, cb);
 };
 Model.prototype.getDataAgent = function() {
@@ -18757,10 +18754,7 @@ function getTime(timezoneOffset) {
     }
 }
 
-function localId(model) {
-    var props = model.getProps();
-    var _id = props._id;
-    var _type = props._type;
+function localId(_id, _type) {
     var ts = getTime().getTime();
     if (_id && _type) {
         return _id + '_' + _type + '_' + ts;

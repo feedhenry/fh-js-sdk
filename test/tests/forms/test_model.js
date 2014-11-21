@@ -13,11 +13,36 @@ if(document && document.location){
   }
 }
 
+var savedModels = {
+
+}
+
 var stubs = {
     "./localStorage": {
         upsert: function(model, cb){
-          console.log("NNNNNNNNNNNNNNN");
+            var localId = "localIdSet" + Math.floor((Math.random() * 1000000000) + 1);
+            
+            assert.ok(model, "Expected a model to be passed");
+            assert.ok(typeof(cb) === "function", "Expected a callback function");
+            model.set('_ludid', localId);
+            savedModels[localId] = model.toJSON();
             return cb(null, model);
+        },
+        removeEntry: function(model, cb){
+            assert.ok(model, "Expected a model to be passed");
+            assert.ok(model.getLocalId(), "Expected a localId to be set");
+
+            assert.ok(savedModels[model.getLocalId()], "Expected a saved model");
+
+            delete savedModels[model.getLocalId()];
+
+            assert.ok(typeof(cb) === "function", "Expected a callback function");
+            return cb(null);
+        },
+        read: function(model, cb){
+            assert.ok(model, "Expected a model to be passed");
+            assert.ok(model.getLocalId(), "Expected a localId to be set");
+            return cb(null, savedModels[model.getLocalId()] || model);    
         }
     }
 };
@@ -26,7 +51,7 @@ var stubs = {
 var Model = proxyquire("../../../src/modules/forms/model", stubs);
 
 
-describe("Form Model", function() {
+describe("Model", function() {
     it("how to get and set properties", function() {
         var model = new Model();
         model.set("hello", "Model");
@@ -66,7 +91,6 @@ describe("Form Model", function() {
         var model = new Model();
         model.set("name", "hello");
         model.saveLocal(function(err, res) {
-            console.log("RESSS", err, res);
             assert(!err);
             assert(res);
             assert(model.getLocalId());
@@ -98,7 +122,7 @@ describe("Form Model", function() {
 
     it("how to remove model from local storage", function(done) {
         var model = new Model();
-        model.set("name", "hello");
+        model.set("name", "clearhello");
         model.saveLocal(function(err, res) {
             assert(!err);
             assert(res);
@@ -126,23 +150,5 @@ describe("Form Model", function() {
             done();
         });
         model.emit("mockEvent","hello","world");
-    });
-    it ("how to attempt refresh model from remote then local",function(done){
-         var model = forms;
-
-        model.attemptRefresh(function(err,model){
-            assert(!err);
-            assert(model);
-            done();
-        });
-    });
-    it ("attempt refresh could fail if neither remote nor local accessible",function(done){
-        var model = new Model();
-        model.attemptRefresh(function(err,model){
-            assert(err);
-            assert(model);
-            done();
-        });
-        
     });
 });

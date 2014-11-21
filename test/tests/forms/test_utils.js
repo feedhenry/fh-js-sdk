@@ -2,6 +2,7 @@ var chai = require('chai');
 var expect = chai.expect;
 var sinon = require('sinon');
 var sinonChai = require('sinon-chai');
+var assert = chai.assert;
 chai.use(sinonChai);
 
 var process = require("process");
@@ -25,4 +26,8 @@ describe("test forms utils module", function(){
 
 		expect(func1.prototype).to.have.property("function2");
 	});
+	it ("how to generate a local id from a model",function(){
+        var localId=utils.localId("123456", "type1");
+        assert(localId);
+    });
 });

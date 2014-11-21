@@ -18,10 +18,7 @@ function getTime(timezoneOffset) {
     }
 }
 
-function localId(model) {
-    var props = model.getProps();
-    var _id = props._id;
-    var _type = props._type;
+function localId(_id, _type) {
     var ts = getTime().getTime();
     if (_id && _type) {
         return _id + '_' + _type + '_' + ts;
