@@ -11,7 +11,7 @@ module.exports = function(grunt) {
     pkg: pkg,
     meta: {},
     jshint: {
-      all: ['src/feedhenry.js', 'src/modules/forms/*.js', '!src/modules/forms/rulesEngine.js'],
+      all: ['src/feedhenry.js', 'src/modules/forms/*.js', 'test/tests/forms/*.js', 'test/fixtures/*.js', '!src/modules/forms/rulesEngine.js'],
       options: {
         curly: true,
         eqeqeq: true,
@@ -47,6 +47,7 @@ module.exports = function(grunt) {
         src:['src/feedhenry.js'],
         dest: 'dist/feedhenry.js',
         options: {
+          debug: true,
           standalone: 'feedhenry',
           transform: [function(file){
             var data = '';
@@ -80,7 +81,6 @@ module.exports = function(grunt) {
           // Embed source map for tests
           debug: true,
           preBundleCB: function (b) {
-            console.log("ASFSFGASFASFSAF");
             b.plugin(proxyquire.plugin);
           }
         }

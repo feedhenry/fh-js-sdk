@@ -1,9 +1,10 @@
 /**
  * One form contains multiple pages
  */
-var Model = require("./model");
 var log = require("./log");
 var config = require("./config");
+var Model = require("./model");
+
 
 function Page(opt, parentForm) {
     if (typeof opt === 'undefined' || typeof parentForm === 'undefined') {

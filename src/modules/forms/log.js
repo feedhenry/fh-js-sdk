@@ -6,16 +6,17 @@
 
 var utils = require("./utils");
 var config = require("./config");
+var currentLog;
 
-function Log() {
-    console.log("Init Log");
-    this.logs = [];
-    this.isWriting = false;
-    this.moreToWrite = false;
-}
+var Log = {
+    logs: [],
+    isWriting: false,
+    moreToWrite: false
+};
 
-
-Log.prototype.info = function(logLevel, msgs) {
+Log.info = function(logLevel, msgs) {
+     var args = Array.prototype.slice.call(arguments);
+    console.log("LOG: ", args);
     var self = this;
     if (config.get("logger") === true) {
         var levelString = "";
@@ -35,7 +36,7 @@ Log.prototype.info = function(logLevel, msgs) {
         if (curLevel < logLevel) {
             return;
         } else {
-            var args = Array.splice.call(arguments, 0);
+           
             var logs = self.get("logs");
             args.shift();
             var logStr = "";
@@ -49,18 +50,18 @@ Log.prototype.info = function(logLevel, msgs) {
             if (self.isWriting) {
                 self.moreToWrite = true;
             } else {
-                var _recursiveHandler = function() {
-                    if (self.moreToWrite) {
-                        self.moreToWrite = false;
-                        self.write(_recursiveHandler);
-                    }
-                };
-                self.write(_recursiveHandler);
+                // var _recursiveHandler = function() {
+                //     if (self.moreToWrite) {
+                //         self.moreToWrite = false;
+                //         self.write(_recursiveHandler);
+                //     }
+                // };
+                // self.write(_recursiveHandler);
             }
         }
     }
 };
-Log.prototype.wrap = function(msg, levelString) {
+Log.wrap = function(msg, levelString) {
     var now = new Date();
     var dateStr = now.toISOString();
     if (typeof msg === "object") {
@@ -70,38 +71,38 @@ Log.prototype.wrap = function(msg, levelString) {
     return finalMsg;
 };
 
-Log.prototype.write = function(cb) {
-    var self = this;
-    self.isWriting = true;
-    self.saveLocal(function() {
-        self.isWriting = false;
-        cb();
-    });
-};
-Log.prototype.e = function() {
-    var args = Array.splice.call(arguments, 0);
+// Log.write = function(cb) {
+//     var self = this;
+//     self.isWriting = true;
+//     self.saveLocal(function() {
+//         self.isWriting = false;
+//         cb();
+//     });
+// };
+Log.e = function() {
+    var args = Array.prototype.slice.call(arguments);
     args.unshift("error");
     this.info.apply(this, args);
 };
-Log.prototype.w = function() {
-    var args = Array.splice.call(arguments, 0);
+Log.w = function() {
+    var args = Array.prototype.slice.call(arguments);
     args.unshift("warning");
     this.info.apply(this, args);
 };
-Log.prototype.l = function() {
-    var args = Array.splice.call(arguments, 0);
+Log.l = function() {
+    var args = Array.prototype.slice.call(arguments);
     args.unshift("log");
     this.info.apply(this, args);
 };
-Log.prototype.d = function() {
-    var args = Array.splice.call(arguments, 0);
+Log.d = function() {
+    var args = Array.prototype.slice.call(arguments);
     args.unshift("debug");
     this.info.apply(this, args);
 };
-Log.prototype.getLogs = function() {
+Log.getLogs = function() {
     return this.get("logs");
 };
-Log.prototype.clearLogs = function(cb) {
+Log.clearLogs = function(cb) {
     this.set("logs", []);
     this.saveLocal(function() {
         if (cb) {
@@ -109,7 +110,7 @@ Log.prototype.clearLogs = function(cb) {
         }
     });
 };
-Log.prototype.sendLogs = function(cb) {
+Log.sendLogs = function(cb) {
     var email = config.get("log_email");
     var configJSON = config.getProps();
     var logs = this.getLogs();
@@ -122,5 +123,7 @@ Log.prototype.sendLogs = function(cb) {
     utils.send(params, cb);
 };
 
+console.log("Finished Exporting log");
 
-module.exports = new Log();
+
+module.exports = Log;

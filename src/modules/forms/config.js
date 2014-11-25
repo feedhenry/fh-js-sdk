@@ -1,6 +1,7 @@
 var Model = require("./model");
 var utils = require("./utils");
-var log = require("./log");
+
+
 
 var online = true;
 var cloudHost = "notset";
@@ -11,6 +12,8 @@ function Config() {
         "_ludid": "config"
     });
 }
+
+console.log("Starting Config Model Export");
 
 utils.extend(Config, Model);
 
@@ -47,7 +50,7 @@ Config.prototype.refresh = function(fromRemote, cb) {
                 try {
                     configObj = JSON.parse(res);
                 } catch (error) {
-                    $fh.forms.log.e("Invalid json config defintion from remote", error);
+                    console.error("Invalid json config defintion from remote", error);
                     configObj = {};
                     return cb(error, null);
                 }
@@ -65,7 +68,7 @@ Config.prototype.refresh = function(fromRemote, cb) {
     }
     self.loadLocal(function(err, localConfig) {
         if (err) {
-            $fh.forms.log.e("Config loadLocal ", err);
+            console.error("Config loadLocal ", err);
         }
 
         dataAgent.remoteStore.read(self, _handler);
@@ -203,4 +206,6 @@ Config.prototype.isStudioMode = function() {
     return this.get("studioMode", false);
 };
 
-module.exports = Config;
+console.log("Finishe Config Model Export");
+
+module.exports = new Config();

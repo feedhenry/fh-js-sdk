@@ -11218,6 +11218,8 @@ var submission = require("./forms/submission");
 var log = require("./forms/log");
 var init = require("./forms/init");
 
+console.log("INIT FORMS");
+
 var _submissions = null;
 var waitOnSubmission = {};
 var defaultFunction = function(err) {
@@ -12009,7 +12011,8 @@ module.exports = {
 },{"./appProps":28,"./device":32,"./logger":74,"./sdkversion":77}],35:[function(require,module,exports){
 var Model = require("./model");
 var utils = require("./utils");
-var log = require("./log");
+
+
 
 var online = true;
 var cloudHost = "notset";
@@ -12020,6 +12023,8 @@ function Config() {
         "_ludid": "config"
     });
 }
+
+console.log("Starting Config Model Export");
 
 utils.extend(Config, Model);
 
@@ -12056,7 +12061,7 @@ Config.prototype.refresh = function(fromRemote, cb) {
                 try {
                     configObj = JSON.parse(res);
                 } catch (error) {
-                    $fh.forms.log.e("Invalid json config defintion from remote", error);
+                    console.error("Invalid json config defintion from remote", error);
                     configObj = {};
                     return cb(error, null);
                 }
@@ -12074,7 +12079,7 @@ Config.prototype.refresh = function(fromRemote, cb) {
     }
     self.loadLocal(function(err, localConfig) {
         if (err) {
-            $fh.forms.log.e("Config loadLocal ", err);
+            console.error("Config loadLocal ", err);
         }
 
         dataAgent.remoteStore.read(self, _handler);
@@ -12212,23 +12217,25 @@ Config.prototype.isStudioMode = function() {
     return this.get("studioMode", false);
 };
 
-module.exports = Config;
-},{"./log":56,"./model":57,"./utils":67}],36:[function(require,module,exports){
-var Store = require("./store");
-var log = require("./log");
-var config = require("./config");
+console.log("Finishe Config Model Export");
+
+module.exports = new Config();
+},{"./model":57,"./utils":67}],36:[function(require,module,exports){
+
 var storeMbaas = require("./storeMbaas");
 var localStorage = require("./localStorage");
 var utils = require("./utils");
+var Store = require("./store");
+var config = require("./config");
+var log = require("./log");
 
 
 //default data agent uses mbaas as remote store, localstorage as local store
-function DataAgent(remoteStore, localStore) {
-    Store.call(this, 'DataAgent');
-    this.remoteStore = remoteStore;
-    this.localStore = localStore;
-}
-utils.extend(DataAgent, Store);
+var DataAgent = {
+    remoteStore: storeMbaas,
+    localStore: localStorage
+};
+
 /**
  * Read from local store first,
  if not exists, read from remote store and store locally
@@ -12236,7 +12243,8 @@ utils.extend(DataAgent, Store);
  * @param  {Function} cb    (err,res,isFromRemote)
  * @return {[type]}         [description]
  */
-DataAgent.prototype.read = function(model, cb) {
+DataAgent.read = function(model, cb) {
+    console.log("LOG ", log);
     log.d("DataAgent read ", model);
     var that = this;
     this.localStore.read(model, function(err, locRes) {
@@ -12258,7 +12266,7 @@ DataAgent.prototype.read = function(model, cb) {
  * @param  {Function} cb    [description]
  * @return {[type]}         [description]
  */
-DataAgent.prototype.refreshRead = function(model, cb) {
+DataAgent.refreshRead = function(model, cb) {
     log.d("DataAgent refreshRead ", model);
     var that = this;
     this.remoteStore.read(model, function(err, res) {
@@ -12285,7 +12293,7 @@ DataAgent.prototype.refreshRead = function(model, cb) {
  * @param  {Function} cb    [description]
  * @return {[type]}         [description]
  */
-DataAgent.prototype.attemptRead = function(model, cb) {
+DataAgent.attemptRead = function(model, cb) {
     log.d("DataAgent attemptRead ", model);
     var self = this;
 
@@ -12310,7 +12318,7 @@ DataAgent.prototype.attemptRead = function(model, cb) {
  * @param  {Function} cb    [description]
  * @return {[type]}         [description]
  */
-DataAgent.prototype.checkOnlineStatus = function(cb) {
+DataAgent.checkOnlineStatus = function(cb) {
     log.d("DataAgent check online status ");
     var self = this;
 
@@ -13450,13 +13458,15 @@ module.exports = {
     getBasePath: getBasePath
 };
 },{"../../../libs/async":1,"./utils":67}],48:[function(require,module,exports){
-var Model = require("./model");
+
 var Page = require("./page");
 var Field = require("./field");
 var RulesEngine = require("./rulesEngine");
 var utils = require("./utils");
 var log = require("./log");
 var submission = require("./submission");
+var Model = require("./model");
+var forms = require("./forms");
 
 var _forms = {};
 //cache of all forms. single instance for 1 formid
@@ -13777,7 +13787,7 @@ Form.prototype.getRuleEngine = function() {
 
 
 module.exports = Form;
-},{"./field":37,"./log":56,"./model":57,"./page":58,"./rulesEngine":59,"./submission":62,"./utils":67}],49:[function(require,module,exports){
+},{"./field":37,"./forms":53,"./log":56,"./model":57,"./page":58,"./rulesEngine":59,"./submission":62,"./utils":67}],49:[function(require,module,exports){
 var Model = require("./model");
 var log = require("./log");
 var config = require("./config");
@@ -13921,6 +13931,8 @@ var uploadManager = require("./uploadManager");
 var theme = require("./theme");
 var forms = require("./forms");
 var async = require('../../../libs/async');
+
+console.log("INIT CALLED");
 
 var init = function(params, cb) {
     var def = {
@@ -14248,16 +14260,17 @@ module.exports = LocalStorage;
 
 var utils = require("./utils");
 var config = require("./config");
+var currentLog;
 
-function Log() {
-    console.log("Init Log");
-    this.logs = [];
-    this.isWriting = false;
-    this.moreToWrite = false;
-}
+var Log = {
+    logs: [],
+    isWriting: false,
+    moreToWrite: false
+};
 
-
-Log.prototype.info = function(logLevel, msgs) {
+Log.info = function(logLevel, msgs) {
+     var args = Array.prototype.slice.call(arguments);
+    console.log("LOG: ", args);
     var self = this;
     if (config.get("logger") === true) {
         var levelString = "";
@@ -14277,7 +14290,7 @@ Log.prototype.info = function(logLevel, msgs) {
         if (curLevel < logLevel) {
             return;
         } else {
-            var args = Array.splice.call(arguments, 0);
+           
             var logs = self.get("logs");
             args.shift();
             var logStr = "";
@@ -14291,18 +14304,18 @@ Log.prototype.info = function(logLevel, msgs) {
             if (self.isWriting) {
                 self.moreToWrite = true;
             } else {
-                var _recursiveHandler = function() {
-                    if (self.moreToWrite) {
-                        self.moreToWrite = false;
-                        self.write(_recursiveHandler);
-                    }
-                };
-                self.write(_recursiveHandler);
+                // var _recursiveHandler = function() {
+                //     if (self.moreToWrite) {
+                //         self.moreToWrite = false;
+                //         self.write(_recursiveHandler);
+                //     }
+                // };
+                // self.write(_recursiveHandler);
             }
         }
     }
 };
-Log.prototype.wrap = function(msg, levelString) {
+Log.wrap = function(msg, levelString) {
     var now = new Date();
     var dateStr = now.toISOString();
     if (typeof msg === "object") {
@@ -14312,38 +14325,38 @@ Log.prototype.wrap = function(msg, levelString) {
     return finalMsg;
 };
 
-Log.prototype.write = function(cb) {
-    var self = this;
-    self.isWriting = true;
-    self.saveLocal(function() {
-        self.isWriting = false;
-        cb();
-    });
-};
-Log.prototype.e = function() {
-    var args = Array.splice.call(arguments, 0);
+// Log.write = function(cb) {
+//     var self = this;
+//     self.isWriting = true;
+//     self.saveLocal(function() {
+//         self.isWriting = false;
+//         cb();
+//     });
+// };
+Log.e = function() {
+    var args = Array.prototype.slice.call(arguments);
     args.unshift("error");
     this.info.apply(this, args);
 };
-Log.prototype.w = function() {
-    var args = Array.splice.call(arguments, 0);
+Log.w = function() {
+    var args = Array.prototype.slice.call(arguments);
     args.unshift("warning");
     this.info.apply(this, args);
 };
-Log.prototype.l = function() {
-    var args = Array.splice.call(arguments, 0);
+Log.l = function() {
+    var args = Array.prototype.slice.call(arguments);
     args.unshift("log");
     this.info.apply(this, args);
 };
-Log.prototype.d = function() {
-    var args = Array.splice.call(arguments, 0);
+Log.d = function() {
+    var args = Array.prototype.slice.call(arguments);
     args.unshift("debug");
     this.info.apply(this, args);
 };
-Log.prototype.getLogs = function() {
+Log.getLogs = function() {
     return this.get("logs");
 };
-Log.prototype.clearLogs = function(cb) {
+Log.clearLogs = function(cb) {
     this.set("logs", []);
     this.saveLocal(function() {
         if (cb) {
@@ -14351,7 +14364,7 @@ Log.prototype.clearLogs = function(cb) {
         }
     });
 };
-Log.prototype.sendLogs = function(cb) {
+Log.sendLogs = function(cb) {
     var email = config.get("log_email");
     var configJSON = config.getProps();
     var logs = this.getLogs();
@@ -14364,14 +14377,18 @@ Log.prototype.sendLogs = function(cb) {
     utils.send(params, cb);
 };
 
+console.log("Finished Exporting log");
 
-module.exports = new Log();
+
+module.exports = Log;
 },{"./config":35,"./utils":67}],57:[function(require,module,exports){
 var utils = require("./utils");
 var localStorage = require("./localStorage");
 var dataAgent = require("./dataAgent");
 var Event = require('../../../libs/events');
 var _ = require('../../../libs/underscore.js');
+
+console.log("Exporting Model");
 
 var Model = function(options){
     this.props = {
@@ -14383,7 +14400,7 @@ var Model = function(options){
     this.touch();
 };
 
-utils.extend(Model, Event);
+//utils.extend(Model, Event);
 
 Model.prototype.getProps = function() {
     return this.props;
@@ -14515,15 +14532,17 @@ Model.prototype.setDataAgent = function(dataAgent) {
     this.dataAgent = dataAgent;
 };
 
+console.log("EXPORTED MODEL");
 
 module.exports = Model;
 },{"../../../libs/events":2,"../../../libs/underscore.js":7,"./dataAgent":36,"./localStorage":55,"./utils":67}],58:[function(require,module,exports){
 /**
  * One form contains multiple pages
  */
-var Model = require("./model");
 var log = require("./log");
 var config = require("./config");
+var Model = require("./model");
+
 
 function Page(opt, parentForm) {
     if (typeof opt === 'undefined' || typeof parentForm === 'undefined') {

@@ -6,6 +6,8 @@ var theme = require("./theme");
 var forms = require("./forms");
 var async = require('../../../libs/async');
 
+console.log("INIT CALLED");
+
 var init = function(params, cb) {
     var def = {
         'updateForms': true

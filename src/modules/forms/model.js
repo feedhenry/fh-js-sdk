@@ -4,6 +4,8 @@ var dataAgent = require("./dataAgent");
 var Event = require('../../../libs/events');
 var _ = require('../../../libs/underscore.js');
 
+console.log("Exporting Model");
+
 var Model = function(options){
     this.props = {
         '_id': null,
@@ -14,7 +16,7 @@ var Model = function(options){
     this.touch();
 };
 
-utils.extend(Model, Event);
+//utils.extend(Model, Event);
 
 Model.prototype.getProps = function() {
     return this.props;
@@ -146,5 +148,6 @@ Model.prototype.setDataAgent = function(dataAgent) {
     this.dataAgent = dataAgent;
 };
 
+console.log("EXPORTED MODEL");
 
 module.exports = Model;

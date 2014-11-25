@@ -8,6 +8,8 @@ var submission = require("./forms/submission");
 var log = require("./forms/log");
 var init = require("./forms/init");
 
+console.log("INIT FORMS");
+
 var _submissions = null;
 var waitOnSubmission = {};
 var defaultFunction = function(err) {

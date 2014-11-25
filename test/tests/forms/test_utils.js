@@ -1,3 +1,4 @@
+/*jshint expr: true*/
 var chai = require('chai');
 var expect = chai.expect;
 var sinon = require('sinon');
@@ -10,7 +11,7 @@ if(document && document.location){
   if(document.location.href.indexOf("coverage=1") > -1){
     process.env.LIB_COV = 1;
   }
-};
+}
 
 var utils = require("../../../src/modules/forms/utils");
 

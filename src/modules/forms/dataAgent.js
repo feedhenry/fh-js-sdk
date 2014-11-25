@@ -1,18 +1,18 @@
-var Store = require("./store");
-var log = require("./log");
-var config = require("./config");
+
 var storeMbaas = require("./storeMbaas");
 var localStorage = require("./localStorage");
 var utils = require("./utils");
+var Store = require("./store");
+var config = require("./config");
+var log = require("./log");
 
 
 //default data agent uses mbaas as remote store, localstorage as local store
-function DataAgent(remoteStore, localStore) {
-    Store.call(this, 'DataAgent');
-    this.remoteStore = remoteStore;
-    this.localStore = localStore;
-}
-utils.extend(DataAgent, Store);
+var DataAgent = {
+    remoteStore: storeMbaas,
+    localStore: localStorage
+};
+
 /**
  * Read from local store first,
  if not exists, read from remote store and store locally
@@ -20,7 +20,8 @@ utils.extend(DataAgent, Store);
  * @param  {Function} cb    (err,res,isFromRemote)
  * @return {[type]}         [description]
  */
-DataAgent.prototype.read = function(model, cb) {
+DataAgent.read = function(model, cb) {
+    console.log("LOG ", log);
     log.d("DataAgent read ", model);
     var that = this;
     this.localStore.read(model, function(err, locRes) {
@@ -42,7 +43,7 @@ DataAgent.prototype.read = function(model, cb) {
  * @param  {Function} cb    [description]
  * @return {[type]}         [description]
  */
-DataAgent.prototype.refreshRead = function(model, cb) {
+DataAgent.refreshRead = function(model, cb) {
     log.d("DataAgent refreshRead ", model);
     var that = this;
     this.remoteStore.read(model, function(err, res) {
@@ -69,7 +70,7 @@ DataAgent.prototype.refreshRead = function(model, cb) {
  * @param  {Function} cb    [description]
  * @return {[type]}         [description]
  */
-DataAgent.prototype.attemptRead = function(model, cb) {
+DataAgent.attemptRead = function(model, cb) {
     log.d("DataAgent attemptRead ", model);
     var self = this;
 
@@ -94,7 +95,7 @@ DataAgent.prototype.attemptRead = function(model, cb) {
  * @param  {Function} cb    [description]
  * @return {[type]}         [description]
  */
-DataAgent.prototype.checkOnlineStatus = function(cb) {
+DataAgent.checkOnlineStatus = function(cb) {
     log.d("DataAgent check online status ");
     var self = this;
 

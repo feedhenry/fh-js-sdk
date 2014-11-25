@@ -1,3 +1,4 @@
+/*jshint expr: true*/
 var process = require("process");
 if(document && document.location){
   if(document.location.href.indexOf("coverage=1") > -1){

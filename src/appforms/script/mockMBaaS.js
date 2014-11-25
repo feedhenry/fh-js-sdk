@@ -38,221 +38,221 @@ function applyServer(app) {
   app.get("/sys/info/ping", _ping);
 };
 
-function _ping(req, res){
-  console.log("In _ping, ", req.params);
-  res.json("OK");
-}
+// function _ping(req, res){
+//   console.log("In _ping, ", req.params);
+//   res.json("OK");
+// }
 
-function _getConfig(req, res){
-  console.log("In _getConfig, ", req.params);
+// function _getConfig(req, res){
+//   console.log("In _getConfig, ", req.params);
 
-  res.json(config);
-};
-
-
-function _getSubmissionData(req, res){
-  console.log("In _getSubmissionData", req.params);
-  var retVal = {};
-
-  if(req.params.submissionId === "submissionData"){
-    retVal = submissionData;
-  } else if(req.params.submissionId === "submissionFile"){
-    retVal = submissionFile;
-  } else {   //If it is not either of these, send back an error
-    retVal = {error: "No submission matches id: "+ req.params.submissionId }
-  }
-  res.json(retVal);
-};
-
-function _getSubmissionFile(req, res){
-  console.log("In _getSubmissionData", req.params);
-  var fileToRead = req.params.fileId === "photo" ? testPhoto : testFile;
+//   res.json(config);
+// };
 
 
-  var fileStream = fileHandler.createReadStream(fileToRead);
+// function _getSubmissionData(req, res){
+//   console.log("In _getSubmissionData", req.params);
+//   var retVal = {};
 
-  fileStream.pipe(res);
-};
+//   if(req.params.submissionId === "submissionData"){
+//     retVal = submissionData;
+//   } else if(req.params.submissionId === "submissionFile"){
+//     retVal = submissionFile;
+//   } else {   //If it is not either of these, send back an error
+//     retVal = {error: "No submission matches id: "+ req.params.submissionId }
+//   }
+//   res.json(retVal);
+// };
 
-function _postInit(req, res) {
-  console.log("In _postInit, ", req.params);
-  res.json({
-    "status": "ok",
-    "hosts":{
-      "url": ""
-    }
-  });
-}
+// function _getSubmissionFile(req, res){
+//   console.log("In _getSubmissionData", req.params);
+//   var fileToRead = req.params.fileId === "photo" ? testPhoto : testFile;
 
-function _getForms(req, res) {
-  console.log("In _getForms, ", req.params);
-  res.json(getFormsData);
-}
 
-function _postForms(req, res) {
-  console.log("In _postForms, ");
+//   var fileStream = fileHandler.createReadStream(fileToRead);
 
-  setTimeout(function() {
-    res.json({
-      "status": "ok",
-      "body": req.body
-    });
-  }, responseDelay);
-}
+//   fileStream.pipe(res);
+// };
 
-function _getSubmissionStatus(req, res) {
-  console.log("In _getSubmissionStatus, ", req.params);
+// function _postInit(req, res) {
+//   console.log("In _postInit, ", req.params);
+//   res.json({
+//     "status": "ok",
+//     "hosts":{
+//       "url": ""
+//     }
+//   });
+// }
 
-  var responseJSON = {
-    "status": "complete"
-  };
+// function _getForms(req, res) {
+//   console.log("In _getForms, ", req.params);
+//   res.json(getFormsData);
+// }
 
-  if (req.params.submissionId === "submissionStatus") {
-    if (submissionStatusCounter == 0) {
-      responseJSON = {
-        "status": "pending",
-        "pendingFiles": [submissionStatusFileHash]
-      };
-      submissionStatusCounter++;
-    } else {
-      responseJSON = {
-        "status": "complete"
-      };
-    }
-  } else if (req.params.submissionId === "failedFileUpload") {
-    responseJSON = {
-      "status": "pending",
-      "pendingFiles": [failedFileUploadFileHash]
-    }
-  } else if (req.params.submissionId === "submissionError") {
-    responseJSON = {
-      "status": "pending",
-      "pendingFiles": ["filePlaceHolder123456"]
-    }
-  }
+// function _postForms(req, res) {
+//   console.log("In _postForms, ");
 
-  setTimeout(function() {
-    res.json(responseJSON);
-  }, responseDelay);
+//   setTimeout(function() {
+//     res.json({
+//       "status": "ok",
+//       "body": req.body
+//     });
+//   }, responseDelay);
+// }
 
-}
+// function _getSubmissionStatus(req, res) {
+//   console.log("In _getSubmissionStatus, ", req.params);
 
-function _completeSubmission(req, res) {
-  console.log("In _completeSubmission, ", req.params);
-  var resJSON = {
-    "status": "complete"
-  };
-  if (req.params.submissionId === "submissionNotComplete") {
-    resJSON = {
-      "status": "pending",
-      "pendingFiles": ["filePlaceHolder123456"]
-    };
-  } else if (req.params.submissionId === "submissionError") {
-    resJSON = {
-      "status": "error"
-    };
-  } else if (req.params.submissionId == "submissionStatus") {
-    submissionStatusFileHash = "";
-    submissionStatusCounter = 0;
-  }
-  console.log(resJSON);
-  setTimeout(function() {
-    res.json(resJSON);
-  }, responseDelay);
+//   var responseJSON = {
+//     "status": "complete"
+//   };
 
-}
+//   if (req.params.submissionId === "submissionStatus") {
+//     if (submissionStatusCounter == 0) {
+//       responseJSON = {
+//         "status": "pending",
+//         "pendingFiles": [submissionStatusFileHash]
+//       };
+//       submissionStatusCounter++;
+//     } else {
+//       responseJSON = {
+//         "status": "complete"
+//       };
+//     }
+//   } else if (req.params.submissionId === "failedFileUpload") {
+//     responseJSON = {
+//       "status": "pending",
+//       "pendingFiles": [failedFileUploadFileHash]
+//     }
+//   } else if (req.params.submissionId === "submissionError") {
+//     responseJSON = {
+//       "status": "pending",
+//       "pendingFiles": ["filePlaceHolder123456"]
+//     }
+//   }
 
-function _postFormSubmission(req, res) {
-  console.log("In _postFormSubmission, ", req.params);
+//   setTimeout(function() {
+//     res.json(responseJSON);
+//   }, responseDelay);
 
-  var submissionId = "123456";
+// }
 
-  var body = req.body;
-  console.log(body);
+// function _completeSubmission(req, res) {
+//   console.log("In _completeSubmission, ", req.params);
+//   var resJSON = {
+//     "status": "complete"
+//   };
+//   if (req.params.submissionId === "submissionNotComplete") {
+//     resJSON = {
+//       "status": "pending",
+//       "pendingFiles": ["filePlaceHolder123456"]
+//     };
+//   } else if (req.params.submissionId === "submissionError") {
+//     resJSON = {
+//       "status": "error"
+//     };
+//   } else if (req.params.submissionId == "submissionStatus") {
+//     submissionStatusFileHash = "";
+//     submissionStatusCounter = 0;
+//   }
+//   console.log(resJSON);
+//   setTimeout(function() {
+//     res.json(resJSON);
+//   }, responseDelay);
 
-  if (body.testText === "failedFileUpload") {
-    submissionId = "failedFileUpload"
-  } else if (body.testText === "submissionNotComplete") {
-    submissionId = "submissionNotComplete"
-  } else if (body.testText === "submissionError") {
-    submissionId = "submissionError"
-  } else if (body.testText === "submissionStatus") {
-    submissionId = "submissionStatus";
-  } else {
-    submissionId = Math.floor((Math.random() * 1000) + 1).toString();
-  }
+// }
 
-  var body = req.body;
-  var rtn = {
-    "submissionId": submissionId,
-    "ori": body
-  };
-  if (body.outOfDate) {
-    rtn.updatedFormDefinition = allForms['52efeb30538082e229000002'];
-  }
-  setTimeout(function() {
-    console.log("Returning: ", body.testText);
-    console.log("submissionId: ", submissionId);
-    res.json(rtn);
-  }, responseDelay);
+// function _postFormSubmission(req, res) {
+//   console.log("In _postFormSubmission, ", req.params);
 
-}
+//   var submissionId = "123456";
 
-function _getForm(req, res) {
-  console.log("In _getForm, ", req.params);
-  var formId = req.params.formId;
+//   var body = req.body;
+//   console.log(body);
 
-  if (allForms[formId]) {
-    console.log("Form Found");
-    res.json(allForms[formId]);
-  } else {
-    res.status(404).end("Cannot find specified form");
-  }
-}
+//   if (body.testText === "failedFileUpload") {
+//     submissionId = "failedFileUpload"
+//   } else if (body.testText === "submissionNotComplete") {
+//     submissionId = "submissionNotComplete"
+//   } else if (body.testText === "submissionError") {
+//     submissionId = "submissionError"
+//   } else if (body.testText === "submissionStatus") {
+//     submissionId = "submissionStatus";
+//   } else {
+//     submissionId = Math.floor((Math.random() * 1000) + 1).toString();
+//   }
 
-function _appFileSubmissionBase64(req, res) {
-  console.log('In base64FileUploaded');
+//   var body = req.body;
+//   var rtn = {
+//     "submissionId": submissionId,
+//     "ori": body
+//   };
+//   if (body.outOfDate) {
+//     rtn.updatedFormDefinition = allForms['52efeb30538082e229000002'];
+//   }
+//   setTimeout(function() {
+//     console.log("Returning: ", body.testText);
+//     console.log("submissionId: ", submissionId);
+//     res.json(rtn);
+//   }, responseDelay);
 
-  _appFileSubmission(req, res);
-}
+// }
 
-function _appFileSubmission(req, res) {
-  console.log("In _appFileSubmission", req.files, req.params);
-  var resJSON = {
-    "status": 200
-  };
+// function _getForm(req, res) {
+//   console.log("In _getForm, ", req.params);
+//   var formId = req.params.formId;
 
-  if (req.params.submissionId === "failedFileUpload") {
-    resJSON = {
-      "status": "error"
-    };
-    failedFileUploadFileHash = req.params.hashName;
-  } else if (req.params.submissionId == "submissionStatus") {
-    console.log(submissionStatusCounter);
-    if (submissionStatusCounter === 0) {
-      resJSON = {
-        "status": "error"
-      };
-      submissionStatusFileHash = req.params.hashName;
-    } else {
-      resJSON = {
-        "status": "ok"
-      };
-    }
-    submissionStatusCounter = 0;
-  } else if (req.params.submissionId == "submissionError") {
-    resJSON = {
-      "status": "error"
-    };
-    submissionStatusFileHash = req.params.hashName;
-  }
-  console.log(resJSON, req.params.submissionId);
-  setTimeout(function() {
-    res.json(resJSON);
-  }, responseDelay);
-}
+//   if (allForms[formId]) {
+//     console.log("Form Found");
+//     res.json(allForms[formId]);
+//   } else {
+//     res.status(404).end("Cannot find specified form");
+//   }
+// }
 
-function _getTheme(req, res) {
-  console.log("In _getTheme, ", req.params);
-  res.json(theme);
-}
+// function _appFileSubmissionBase64(req, res) {
+//   console.log('In base64FileUploaded');
+
+//   _appFileSubmission(req, res);
+// }
+
+// function _appFileSubmission(req, res) {
+//   console.log("In _appFileSubmission", req.files, req.params);
+//   var resJSON = {
+//     "status": 200
+//   };
+
+//   if (req.params.submissionId === "failedFileUpload") {
+//     resJSON = {
+//       "status": "error"
+//     };
+//     failedFileUploadFileHash = req.params.hashName;
+//   } else if (req.params.submissionId == "submissionStatus") {
+//     console.log(submissionStatusCounter);
+//     if (submissionStatusCounter === 0) {
+//       resJSON = {
+//         "status": "error"
+//       };
+//       submissionStatusFileHash = req.params.hashName;
+//     } else {
+//       resJSON = {
+//         "status": "ok"
+//       };
+//     }
+//     submissionStatusCounter = 0;
+//   } else if (req.params.submissionId == "submissionError") {
+//     resJSON = {
+//       "status": "error"
+//     };
+//     submissionStatusFileHash = req.params.hashName;
+//   }
+//   console.log(resJSON, req.params.submissionId);
+//   setTimeout(function() {
+//     res.json(resJSON);
+//   }, responseDelay);
+// }
+
+// function _getTheme(req, res) {
+//   console.log("In _getTheme, ", req.params);
+//   res.json(theme);
+// }

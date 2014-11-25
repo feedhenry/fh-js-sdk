@@ -1,10 +1,12 @@
-var Model = require("./model");
+
 var Page = require("./page");
 var Field = require("./field");
 var RulesEngine = require("./rulesEngine");
 var utils = require("./utils");
 var log = require("./log");
 var submission = require("./submission");
+var Model = require("./model");
+var forms = require("./forms");
 
 var _forms = {};
 //cache of all forms. single instance for 1 formid
