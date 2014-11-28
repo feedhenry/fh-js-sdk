@@ -22,10 +22,10 @@ FieldGeoView = FieldView.extend({
     onElementShow: function(index) {
         var self = this;
         var rmBtn = $(this.renderButton(index, "<i class='icon-remove-circle'></i>&nbsp;Remove Location", "remove"));
-        var btnLabel = this.locationUnit === "latlong" ? 'Capture Location (Lat/Lon)' : 'Capture Location (East/North)';
-        btnLabel = _.template(this.buttonHtml);
+        var btnLabelText = this.locationUnit === "latlong" ? 'Capture Location (Lat/Lon)' : 'Capture Location (East/North)';
+        var btnLabel = _.template(this.buttonHtml);
         btnLabel = btnLabel({
-            "buttonText": btnLabel
+            "buttonText": btnLabelText
         });
         var geoButton = $(this.renderButton(index, btnLabel, "fhgeo"));
 
