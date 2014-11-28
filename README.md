@@ -27,16 +27,16 @@ The FeedHenry Javascript SDK is built to work with Titanium applications. To get
     };
 
 You can then require the FeedHenry SDK from any JavaScript file in your Titanium project, and use it as normal:
-	
+
   	var $fh = require('feedhenry');
   	$fh.act // ...FeedHenry Calls are now possible
-	
+
 For a practical exampe, see the [FeedHenry Titanium example app](https://github.com/feedhenry-training/fh-titanium-example).
-	
+
 
 ##Building
 
-The JS SDK is now built using [Browserify](http://browserify.org/). 
+The JS SDK is now built using [Browserify](http://browserify.org/).
 
 ### Development
 
@@ -60,7 +60,7 @@ To help debugging, you can run
 grunt local
 ```
 
-This will start mock servers locally and you can go to http://localhost:8200/example/index.html page to debug. You may want to run 
+This will start mock servers locally and you can go to http://localhost:8200/example/index.html page to debug. You may want to run
 
 ```
 grunt watch
@@ -94,3 +94,57 @@ When finish developing and testing, run
 grunt
 ```
 To generate the release builds.
+
+### Updating the AppForms Template App
+
+This process should be changed, however, documenting it here.
+
+Build the js-sdk as above.
+clone the AppForms-Template repo
+
+```
+git clone git@github.com:feedhenry/AppForms-Template.git
+```
+
+switch to the feedhenry3 branch
+
+```
+git checkout feedhenry3
+```
+
+copy the appForms-backbone file generated in the js-sdk to the AppForms-Template
+
+```
+cp fh-js-sdk/dist/appForms-backbone.js AppForms-Template/client/default/lib/appform-backbone.js
+```
+
+install the node modules in the AppForms-Template
+
+```
+cd AppForms-Template
+npm install
+```
+
+and run grunt
+
+```
+grunt
+```
+
+clone the app forms-project-client template app
+
+```
+git clone git://github.com/feedhenry/appforms-project-client.git
+```
+
+copy the resulting lib.min.js to the appforms template
+
+```
+cp AppForms-Template/dist/client/default/lib.min.js appforms-project-client/www/lib.min.js
+```
+
+push the updated changes
+
+```
+git push origin master
+```
