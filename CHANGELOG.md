@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.5.1 - 2014-12-01 - IR242 - Martin Murphy
+* 8319 - fix location button label in apppforms app
+
 ## 2.5.0 - 2014-11-03 - IR240 - Niall Donnelly
 * 7890 Added barcode Scanner
 
