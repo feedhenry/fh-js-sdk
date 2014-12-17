@@ -1,0 +1,16 @@
+{
+  "sent_save_min": 5,
+  "sent_save_max": 1000,
+  "targetWidth": 100,
+  "targetHeight": 100,
+  "quality": 75,
+  "debug_mode": false,
+  "logger" : true,
+  "max_retries" : 2,
+  "timeout" : 7,
+  "log_line_limit": 300,
+  "log_level": 3,
+  "log_levels": ["error", "warning", "log", "debug"],
+  "log_email": "logs.enterpriseplc@feedhenry.com",
+  "config_admin_user": true
+}
