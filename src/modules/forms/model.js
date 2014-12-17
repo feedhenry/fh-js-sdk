@@ -7,16 +7,12 @@ var _ = require('../../../libs/underscore.js');
 console.log("Exporting Model");
 
 var Model = function(options){
-    this.props = {
-        '_id': null,
-        '_type': null,
-        '_ludid': null
-    };
+    this.props = options;
     this.events = {};
     this.touch();
 };
 
-//utils.extend(Model, Event);
+utils.extend(Model, Event);
 
 Model.prototype.getProps = function() {
     return this.props;
@@ -68,12 +64,12 @@ Model.prototype.getLocalUpdateTimeStamp = function() {
 Model.prototype.genLocalId = function() {
     return utils.localId(this);
 };
-/**
- * retrieve model from local or remote with data agent store.
- * @param {boolean} fromRemote optional true--force from remote
- * @param  {Function} cb (err,currentModel)
- * @return {[type]}      [description]
- */
+// *
+//  * retrieve model from local or remote with data agent store.
+//  * @param {boolean} fromRemote optional true--force from remote
+//  * @param  {Function} cb (err,currentModel)
+//  * @return {[type]}      [description]
+ 
 Model.prototype.refresh = function(fromRemote, cb) {
     var that = this;
     if (typeof cb === 'undefined') {
@@ -96,7 +92,6 @@ Model.prototype.refresh = function(fromRemote, cb) {
     }
 };
 Model.prototype.attemptRefresh = function(cb) {
-    var dataAgent = this.getDataAgent();
     var self = this;
     dataAgent.attemptRead(this, function(err, res) {
         if (!err && res) {
@@ -140,12 +135,6 @@ Model.prototype.saveLocal = function(cb) {
  */
 Model.prototype.clearLocal = function(cb) {
     localStorage.removeEntry(this, cb);
-};
-Model.prototype.getDataAgent = function() {
-    return dataAgent;
-};
-Model.prototype.setDataAgent = function(dataAgent) {
-    this.dataAgent = dataAgent;
 };
 
 console.log("EXPORTED MODEL");

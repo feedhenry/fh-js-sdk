@@ -3,7 +3,7 @@ var ajax = require("./ajax");
 var logger = require("./logger");
 var qs = require("./queryMap");
 
-var app_props = null;
+var app_props = {};
 
 var load = function(cb) {
   var doc_url = document.location.href;

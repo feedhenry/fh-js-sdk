@@ -1,10 +1,11 @@
 /*jshint expr: true*/
+var proxyquire = require('proxyquireify')(require);
 var chai = require('chai');
 var expect = chai.expect;
 var assert = chai.assert;
 var sinon = require('sinon');
 var sinonChai = require('sinon-chai');
-var proxyquire = require('proxyquireify')(require);
+
 var _ = require('underscore');
 var fakeLocalStore = require('../../fixtures/local_store.js');
 var fakeMbaasStore = require('../../fixtures/fake_mbaas.js');

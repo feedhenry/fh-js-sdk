@@ -6,6 +6,7 @@
 
 var utils = require("./utils");
 var config = require("./config");
+var localStorage = require('./localStorage');
 var currentLog;
 
 var Log = {
@@ -37,7 +38,7 @@ Log.info = function(logLevel, msgs) {
             return;
         } else {
            
-            var logs = self.get("logs");
+            var logs = self.getLogs();
             args.shift();
             var logStr = "";
             while (args.length > 0) {
@@ -50,13 +51,13 @@ Log.info = function(logLevel, msgs) {
             if (self.isWriting) {
                 self.moreToWrite = true;
             } else {
-                // var _recursiveHandler = function() {
-                //     if (self.moreToWrite) {
-                //         self.moreToWrite = false;
-                //         self.write(_recursiveHandler);
-                //     }
-                // };
-                // self.write(_recursiveHandler);
+                var _recursiveHandler = function() {
+                    if (self.moreToWrite) {
+                        self.moreToWrite = false;
+                        self.write(_recursiveHandler);
+                    }
+                };
+                self.write(_recursiveHandler);
             }
         }
     }
@@ -71,14 +72,14 @@ Log.wrap = function(msg, levelString) {
     return finalMsg;
 };
 
-// Log.write = function(cb) {
-//     var self = this;
-//     self.isWriting = true;
-//     self.saveLocal(function() {
-//         self.isWriting = false;
-//         cb();
-//     });
-// };
+Log.write = function(cb) {
+    var self = this;
+    self.isWriting = true;
+    self.saveLocal(function() {
+        self.isWriting = false;
+        cb();
+    });
+};
 Log.e = function() {
     var args = Array.prototype.slice.call(arguments);
     args.unshift("error");
@@ -95,20 +96,24 @@ Log.l = function() {
     this.info.apply(this, args);
 };
 Log.d = function() {
+	console.log("Debugging");
     var args = Array.prototype.slice.call(arguments);
     args.unshift("debug");
     this.info.apply(this, args);
 };
 Log.getLogs = function() {
-    return this.get("logs");
+    return this.logs || [];
 };
 Log.clearLogs = function(cb) {
-    this.set("logs", []);
+    this.logs = [];
     this.saveLocal(function() {
         if (cb) {
             cb();
         }
     });
+};
+Log.saveLocal = function(cb){
+	localStorage.upsert(this, cb);
 };
 Log.sendLogs = function(cb) {
     var email = config.get("log_email");
@@ -121,6 +126,14 @@ Log.sendLogs = function(cb) {
         "body": "Configuration:\n" + JSON.stringify(configJSON) + "\n\nApp Logs:\n" + logs.join("\n")
     };
     utils.send(params, cb);
+};
+
+Log.getLocalId = function(){
+	return "formsLogs";
+};
+
+Log.getProps = function(){
+	return this.logs || [];
 };
 
 console.log("Finished Exporting log");
