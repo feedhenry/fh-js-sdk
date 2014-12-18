@@ -1,4 +1,3 @@
-
 var storeMbaas = require("./storeMbaas");
 var localStorage = require("./localStorage");
 var utils = require("./utils");
@@ -24,7 +23,7 @@ DataAgent.read = function(model, cb) {
     console.log("LOG ", log);
     log.d("DataAgent read ", model);
     var that = this;
-    this.localStore.read(model, function(err, locRes) {
+    localStorage.read(model, function(err, locRes) {
         if (err || !locRes) {
             //local loading failed
 
@@ -46,7 +45,8 @@ DataAgent.read = function(model, cb) {
 DataAgent.refreshRead = function(model, cb) {
     log.d("DataAgent refreshRead ", model);
     var that = this;
-    this.remoteStore.read(model, function(err, res) {
+    storeMbaas.read(model, function(err, res) {
+        console.log("Mbaas result");
         if (err) {
             log.e("Error reading model from remoteStore ", model, err);
             cb(err);
@@ -56,7 +56,7 @@ DataAgent.refreshRead = function(model, cb) {
             model.fromJSON(res);
             //update local storage for the model
             that.localStore.upsert(model, function() {
-                var args = Array.slice.call(arguments, 0);
+                var args = Array.prototype.slice.call(arguments, 0);
                 args.push(true);
                 cb.apply({}, args);
             });
@@ -110,7 +110,7 @@ DataAgent.checkOnlineStatus = function(cb) {
     }
 
 
-    self.remoteStore.isOnline(function(online) {
+    storeMbaas.isOnline(function(online) {
         if (online === false) {
             $fh.forms.config.offline();
         } else {

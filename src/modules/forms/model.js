@@ -1,13 +1,10 @@
-var utils = require("./utils");
-var localStorage = require("./localStorage");
-var dataAgent = require("./dataAgent");
-var Event = require('../../../libs/events');
-var _ = require('../../../libs/underscore.js');
-
 console.log("Exporting Model");
 
-var Model = function(options){
-    this.props = options;
+var Event = require('../../../libs/events');
+var utils = require("./utils");
+
+var Model = function(options) {
+    this.props = options || {};
     this.events = {};
     this.touch();
 };
@@ -69,7 +66,7 @@ Model.prototype.genLocalId = function() {
 //  * @param {boolean} fromRemote optional true--force from remote
 //  * @param  {Function} cb (err,currentModel)
 //  * @return {[type]}      [description]
- 
+
 Model.prototype.refresh = function(fromRemote, cb) {
     var that = this;
     if (typeof cb === 'undefined') {
@@ -126,7 +123,7 @@ Model.prototype.loadLocal = function(cb) {
  * @return {[type]}      [description]
  */
 Model.prototype.saveLocal = function(cb) {
-  localStorage.upsert(this, cb);
+    localStorage.upsert(this, cb);
 };
 /**
  * Remove current model from local storage store
@@ -140,3 +137,8 @@ Model.prototype.clearLocal = function(cb) {
 console.log("EXPORTED MODEL");
 
 module.exports = Model;
+
+
+var localStorage = require("./localStorage");
+var dataAgent = require("./dataAgent");
+var _ = require('../../../libs/underscore.js');

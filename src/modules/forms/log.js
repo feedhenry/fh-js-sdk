@@ -16,14 +16,14 @@ var Log = {
 };
 
 Log.info = function(logLevel, msgs) {
-     var args = Array.prototype.slice.call(arguments);
-    console.log("LOG: ", args);
+    console.log("LOG INFO");
+
     var self = this;
-    if (config.get("logger") === true) {
+    if (require("./config")().get("logger") === true) {
         var levelString = "";
         var curLevel = config.get("log_level");
         var log_levels = config.get("log_levels");
-        
+
         if (typeof logLevel === "string") {
             levelString = logLevel;
             logLevel = log_levels.indexOf(logLevel.toLowerCase());
@@ -37,7 +37,7 @@ Log.info = function(logLevel, msgs) {
         if (curLevel < logLevel) {
             return;
         } else {
-           
+
             var logs = self.getLogs();
             args.shift();
             var logStr = "";
@@ -96,10 +96,8 @@ Log.l = function() {
     this.info.apply(this, args);
 };
 Log.d = function() {
-	console.log("Debugging");
-    var args = Array.prototype.slice.call(arguments);
-    args.unshift("debug");
-    this.info.apply(this, args);
+    var args = Array.prototype.slice.call(arguments, 0);
+    this.info("debug", args);
 };
 Log.getLogs = function() {
     return this.logs || [];
@@ -112,8 +110,8 @@ Log.clearLogs = function(cb) {
         }
     });
 };
-Log.saveLocal = function(cb){
-	localStorage.upsert(this, cb);
+Log.saveLocal = function(cb) {
+    localStorage.upsert(this, cb);
 };
 Log.sendLogs = function(cb) {
     var email = config.get("log_email");
@@ -128,12 +126,12 @@ Log.sendLogs = function(cb) {
     utils.send(params, cb);
 };
 
-Log.getLocalId = function(){
-	return "formsLogs";
+Log.getLocalId = function() {
+    return "formsLogs";
 };
 
-Log.getProps = function(){
-	return this.logs || [];
+Log.getProps = function() {
+    return this.logs || [];
 };
 
 console.log("Finished Exporting log");

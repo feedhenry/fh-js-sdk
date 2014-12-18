@@ -11,16 +11,16 @@ var savedModels = {
 };
 
 var stubs = {
-    upsert: function(model, cb){
-        var localId = "localIdSet" + Math.floor((Math.random() * 1000000000) + 1);
-        
+    upsert: function(model, cb) {
+        var localId = model.getLocalId() || "localIdSet" + Math.floor((Math.random() * 1000000000) + 1);
+
         assert.ok(model, "Expected a model to be passed");
         assert.ok(typeof(cb) === "function", "Expected a callback function");
         model.set('_ludid', localId);
         savedModels[localId] = model.toJSON();
-        return cb(null, model);
+        return cb(null, model.toJSON());
     },
-    removeEntry: function(model, cb){
+    removeEntry: function(model, cb) {
         assert.ok(model, "Expected a model to be passed");
         assert.ok(model.getLocalId(), "Expected a localId to be set");
 
@@ -31,10 +31,10 @@ var stubs = {
         assert.ok(typeof(cb) === "function", "Expected a callback function");
         return cb(null);
     },
-    read: function(model, cb){
+    read: function(model, cb) {
         assert.ok(model, "Expected a model to be passed");
         assert.ok(model.getLocalId(), "Expected a localId to be set");
-        return cb(null, savedModels[model.getLocalId()] || model);    
+        return cb(null, savedModels[model.getLocalId()] || {});
     }
 };
 

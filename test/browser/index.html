@@ -1,12 +1,14 @@
 <!DOCTYPE html>
 <html lang="en-us">
-  <head>
+
+<head>
     <title>FeedHenry JS SDK Tests</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="./libs/mocha/mocha.css" />
-  </head>
-  <body>
+</head>
+
+<body>
     <div id="mocha"></div>
 
     <!-- load and configure mocha -->
@@ -15,10 +17,10 @@
     <script src="./libs/sinon/sinon-ie.js"></script>
 
     <script>
-      'use strict';
-      mocha.setup('bdd')
-      mocha.slow(1000)
-      mocha.timeout(3000)
+    'use strict';
+    mocha.setup('bdd')
+    mocha.slow(1000)
+    mocha.timeout(3000)
     </script>
 
     <!-- load test suite -->
@@ -26,11 +28,12 @@
 
     <!-- kick of tests -->
     <script>
-      if (window.mochaPhantomJS) {
+    if (window.mochaPhantomJS) {
         window.mochaPhantomJS.run()
-      } else {
+    } else {
         mocha.run()
-      }
+    }
     </script>
-  </body>
+</body>
+
 </html>
