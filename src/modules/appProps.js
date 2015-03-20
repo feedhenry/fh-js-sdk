@@ -9,6 +9,11 @@ var app_props = null;
 var load = function(cb) {
   var doc_url = document.location.href;
   var url_params = qs(doc_url);
+  for(var key in url_params){
+    if(url_params.hasOwnProperty(key)){
+      url_params[key] = url_params[key].replace(/#.*?$/g, '');
+    }
+  }
   
   //default properties
   app_props = {
@@ -24,7 +29,6 @@ var load = function(cb) {
      app_props.host = url_params.url; 
     }
     
-    app_props.host = app_props.host.replace(/#.*?$/g, '');
     app_props.local = !!(url_params.host || url_params.url);
     cb(null, app_props);
   }
