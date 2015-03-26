@@ -711,11 +711,17 @@ var self = {
             self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "create");
           }
         }
+        var existingPendingPreHashes = self.existingPendingPreHashMap(dataSet);
         if (res.update) {
           for (i in res.update) {
-            localDataSet[i].hash = res.update[i].hash;
-            localDataSet[i].data = res.update[i].data;
-            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
+            if(existingPendingPreHashes[i] && existingPendingPreHashes[i].indexOf(res.update[i].hash) > -1){
+              //the returned update data has been updated locally, so it should keep local copy
+              self.consoleLog("skip update from remote for uid :: " + i + " :: hash = " + res.update[i].hash + ' :: data = ' + JSON.stringify(res.update[i].data));
+            } else {
+              localDataSet[i].hash = res.update[i].hash;
+              localDataSet[i].data = res.update[i].data;
+              self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
+            }
           }
         }
         if (res['delete']) {
@@ -747,6 +753,26 @@ var self = {
       self.saveDataSet(dataset_id);
       self.doNotify(dataset_id, dataset.hash, notification, status);
     });
+  },
+
+  existingPendingPreHashMap: function(dataset){
+    var pendingPreHashes = {};
+    var pendings = dataset.pending;
+    if(pendings){
+      for(var pendingHash in pendings){
+        if(pendings.hasOwnProperty(pendingHash)){
+          var pendingRec = pendings[pendingHash];
+          if(pendingRec.uid && pendingRec.preHash){
+            if(pendingPreHashes[pendingRec.uid]){
+              pendingPreHashes[pendingRec.uid].push(pendingRec.preHash);
+            } else {
+              pendingPreHashes[pendingRec.uid] = [pendingRec.preHash];
+            }
+          }
+        }
+      }
+    }
+    return pendingPreHashes;
   },
 
   checkDatasets: function() {
