@@ -89,6 +89,8 @@ var self = {
 
   init_is_called: false,
 
+  change_history_size: 5,
+
   // PUBLIC FUNCTION IMPLEMENTATIONS
   init: function(options) {
     self.consoleLog('sync - init called');
@@ -552,6 +554,19 @@ var self = {
     }
   },
 
+  updateChangeHistory: function(dataset, pending){
+    if(pending.action === 'update'){
+      dataset.changeHistory = dataset.changeHistory || {};
+      dataset.changeHistory[pending.uid] = dataset.changeHistory[pending.uid] || [];
+      if(dataset.changeHistory[pending.uid].indexOf(pending.preHash) === -1){
+        dataset.changeHistory[pending.uid].push(pending.preHash);
+        if(dataset.changeHistory[pending.uid].length > self.change_history_size){
+          dataset.changeHistory[pending.uid].shift();
+        }
+      }
+    }
+  },
+
   syncLoop: function(dataset_id) {
     self.getDataSet(dataset_id, function(dataSet) {
     
@@ -580,6 +595,7 @@ var self = {
             var pending = dataSet.pending;
             var pendingArray = [];
             for(var i in pending ) {
+              self.updateChangeHistory(dataSet, pending[i]);
               // Mark the pending records we are about to submit as inflight and add them to the array for submission
               // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
               // Don't add delayed records
@@ -756,22 +772,7 @@ var self = {
   },
 
   existingPendingPreHashMap: function(dataset){
-    var pendingPreHashes = {};
-    var pendings = dataset.pending;
-    if(pendings){
-      for(var pendingHash in pendings){
-        if(pendings.hasOwnProperty(pendingHash)){
-          var pendingRec = pendings[pendingHash];
-          if(pendingRec.uid && pendingRec.preHash){
-            if(pendingPreHashes[pendingRec.uid]){
-              pendingPreHashes[pendingRec.uid].push(pendingRec.preHash);
-            } else {
-              pendingPreHashes[pendingRec.uid] = [pendingRec.preHash];
-            }
-          }
-        }
-      }
-    }
+    var pendingPreHashes = dataset.changeHistory || {};
     return pendingPreHashes;
   },
 
