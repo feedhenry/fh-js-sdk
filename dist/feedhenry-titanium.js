@@ -8089,7 +8089,7 @@ function getXhr(crossDomain){
   }
   // For Titanium SDK
   if (typeof Titanium !== 'undefined'){
-    var parms = {};
+    var params = {};
     if(ajax.settings && ajax.settings.timeout){
       params.timeout = ajax.settings.timeout;
     }
@@ -8231,7 +8231,7 @@ function doActCall(opts, success, fail){
   params = fhparams.addFHParams(params);
   return ajax({
     "url": url,
-    "tryJSONP": true,
+    "tryJSONP": typeof Titanium === 'undefined',
     "type": "POST",
     "dataType": "json",
     "data": JSON.stringify(params),
@@ -8322,7 +8322,7 @@ module.exports = function(opts, success, fail) {
       ajax({
         "url": path,
         "type": "POST",
-        "tryJSONP": true,
+        "tryJSONP": typeof Titanium === 'undefined',
         "data": JSON.stringify(req),
         "dataType": "json",
         "contentType": "application/json",
@@ -8337,6 +8337,7 @@ module.exports = function(opts, success, fail) {
     }
   });
 }
+
 },{"./ajax":16,"./appProps":"zDENqi","./checkAuth":23,"./constants":24,"./device":25,"./fhparams":27,"./handleError":28,"./logger":33,"./waitForCloud":47,"JSON":3}],19:[function(_dereq_,module,exports){
 var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
@@ -8434,7 +8435,7 @@ module.exports = function(opts, success, fail){
       params = fhparams.addFHParams(params);
       return ajax({
         "url": url,
-        "tryJSONP": true,
+        "tryJSONP": typeof Titanium === 'undefined',
         "type": "POST",
         "dataType": "json",
         "data": JSON.stringify(params),
@@ -8604,7 +8605,7 @@ module.exports = {
 },{"./fhparams":27,"./logger":33,"./queryMap":35,"JSON":3}],24:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.4.4-BUILD-NUMBER",
+  "sdk_version": "2.5.1-BUILD-NUMBER",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit",
   "INTERNAL_CONFIG_LOADED_EVENT": "internalfhconfigloaded",
@@ -8954,7 +8955,7 @@ var loadCloudProps = function(app_props, callback) {
     ajax({
       "url": path,
       "type": "POST",
-      "tryJSONP": true,
+      "tryJSONP": typeof Titanium === 'undefined',
       "dataType": "json",
       "contentType": "application/json",
       "data": JSON.stringify(data),
@@ -9033,6 +9034,7 @@ module.exports = {
   "init": init,
   "loadCloudProps": loadCloudProps
 }
+
 },{"../../libs/generated/lawnchair":2,"./ajax":16,"./appProps":"zDENqi","./constants":24,"./events":26,"./fhparams":27,"./handleError":28,"./lawnchair-ext":31,"./loadScript":32,"./logger":33,"./security/hash":39,"JSON":3}],31:[function(_dereq_,module,exports){
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
 

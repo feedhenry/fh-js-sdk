@@ -53,7 +53,7 @@ module.exports = function(opts, success, fail) {
       ajax({
         "url": path,
         "type": "POST",
-        "tryJSONP": true,
+        "tryJSONP": typeof Titanium === 'undefined',
         "data": JSON.stringify(req),
         "dataType": "json",
         "contentType": "application/json",
