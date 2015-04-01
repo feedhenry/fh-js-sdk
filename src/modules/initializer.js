@@ -75,7 +75,7 @@ var loadCloudProps = function(app_props, callback) {
     ajax({
       "url": path,
       "type": "POST",
-      "tryJSONP": true,
+      "tryJSONP": typeof Titanium === 'undefined',
       "dataType": "json",
       "contentType": "application/json",
       "data": JSON.stringify(data),
