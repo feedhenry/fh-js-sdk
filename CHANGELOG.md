@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+##2.5.2 - 2015-03-26 - Wei Li
+* FHMOBSDK-56 - Fix an issue with the sync framework.
+
 ## 2.5.1 - 2014-12-01 - IR242 - Martin Murphy
 * 8319 - fix location button label in apppforms app
 
