@@ -89,6 +89,8 @@ var self = {
 
   init_is_called: false,
 
+  change_history_size: 5,
+
   // PUBLIC FUNCTION IMPLEMENTATIONS
   init: function(options) {
     self.consoleLog('sync - init called');
@@ -552,6 +554,19 @@ var self = {
     }
   },
 
+  updateChangeHistory: function(dataset, pending){
+    if(pending.action === 'update'){
+      dataset.changeHistory = dataset.changeHistory || {};
+      dataset.changeHistory[pending.uid] = dataset.changeHistory[pending.uid] || [];
+      if(dataset.changeHistory[pending.uid].indexOf(pending.preHash) === -1){
+        dataset.changeHistory[pending.uid].push(pending.preHash);
+        if(dataset.changeHistory[pending.uid].length > self.change_history_size){
+          dataset.changeHistory[pending.uid].shift();
+        }
+      }
+    }
+  },
+
   syncLoop: function(dataset_id) {
     self.getDataSet(dataset_id, function(dataSet) {
     
@@ -580,6 +595,7 @@ var self = {
             var pending = dataSet.pending;
             var pendingArray = [];
             for(var i in pending ) {
+              self.updateChangeHistory(dataSet, pending[i]);
               // Mark the pending records we are about to submit as inflight and add them to the array for submission
               // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
               // Don't add delayed records
@@ -711,11 +727,17 @@ var self = {
             self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "create");
           }
         }
+        var existingPendingPreHashes = self.existingPendingPreHashMap(dataSet);
         if (res.update) {
           for (i in res.update) {
-            localDataSet[i].hash = res.update[i].hash;
-            localDataSet[i].data = res.update[i].data;
-            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
+            if(existingPendingPreHashes[i] && existingPendingPreHashes[i].indexOf(res.update[i].hash) > -1){
+              //the returned update data has been updated locally, so it should keep local copy
+              self.consoleLog("skip update from remote for uid :: " + i + " :: hash = " + res.update[i].hash + ' :: data = ' + JSON.stringify(res.update[i].data));
+            } else {
+              localDataSet[i].hash = res.update[i].hash;
+              localDataSet[i].data = res.update[i].data;
+              self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
+            }
           }
         }
         if (res['delete']) {
@@ -747,6 +769,11 @@ var self = {
       self.saveDataSet(dataset_id);
       self.doNotify(dataset_id, dataset.hash, notification, status);
     });
+  },
+
+  existingPendingPreHashMap: function(dataset){
+    var pendingPreHashes = dataset.changeHistory || {};
+    return pendingPreHashes;
   },
 
   checkDatasets: function() {
