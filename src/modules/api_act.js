@@ -2,7 +2,6 @@ var logger =require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
 var ajax = require("./ajax");
-var JSON = require("JSON");
 var handleError = require("./handleError");
 var appProps = require("./appProps");
 
@@ -23,7 +22,7 @@ function doActCall(opts, success, fail){
     "error": function(req, statusText, error){
       return handleError(fail, req, statusText, error);
     }
-  })
+  });
 }
 
 module.exports = function(opts, success, fail){
@@ -45,5 +44,5 @@ module.exports = function(opts, success, fail){
     } else {
       doActCall(opts, success, fail);
     }
-  })
-}
+  });
+};

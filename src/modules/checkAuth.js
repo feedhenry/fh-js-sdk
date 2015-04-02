@@ -1,6 +1,5 @@
 var logger = require("./logger");
 var queryMap = require("./queryMap");
-var JSON = require("JSON");
 var fhparams = require("./fhparams");
 
 var checkAuth = function(url) {

@@ -1,4 +1,3 @@
-var JSON = require("JSON");
 var actAPI = require("./api_act");
 var cloudAPI = require("./api_cloud");
 var CryptoJS = require("../../libs/generated/crypto");
@@ -115,10 +114,10 @@ var self = {
     }
   },
 
-  manage: function(dataset_id, options, query_params, meta_data, cb) {
+  manage: function(dataset_id, opts, query_params, meta_data, cb) {
     self.consoleLog('manage - START');
 
-    var options = options || {};
+    var options = opts || {};
 
     var doManage = function(dataset) {
       self.consoleLog('doManage dataset :: initialised = ' + dataset.initialised + " :: " + dataset_id + ' :: ' + JSON.stringify(options));
@@ -197,10 +196,14 @@ var self = {
         var res = JSON.parse(JSON.stringify(dataset.data));
         success(res);
       } else {
-        if(failure) failure('no_data');
+        if(failure) {
+          failure('no_data');
+        }
       }
     }, function(code, msg) {
-      if(failure) failure(code, msg);
+      if(failure) {
+        failure(code, msg);
+      }
     });
   },
 
@@ -224,7 +227,9 @@ var self = {
         success(res);
       }
     }, function(code, msg) {
-      if(failure) failure(code, msg);
+      if(failure) {
+        failure(code, msg);
+      }
     });
   },
 
@@ -527,7 +532,9 @@ var self = {
 
         success(obj);
       }, function(code, msg) {
-        if(failure) failure(code, msg);
+        if(failure) {
+          failure(code, msg);
+        }
       });
     }
 
@@ -856,7 +863,7 @@ var self = {
     if(dataset && dataset.config){
       hasCustomSync = dataset.config.has_custom_sync;
     }
-    if( hasCustomSync == true ) {
+    if( hasCustomSync === true ) {
       actAPI({
         'act' : params.dataset_id,
         'req' : params.req
@@ -903,7 +910,9 @@ var self = {
       self.getStorageAdapter(dataset_id, true, function(err, storage){
         storage.save({key:"dataset_" + dataset_id, val:dataset}, function(){
           //save success
-          if(cb) return cb();
+          if(cb) {
+            return cb();
+          }
         });
       });
     });
@@ -922,10 +931,14 @@ var self = {
           dataset.initialised = false;
           self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
           self.consoleLog('load from local storage success for dataset_id :' + dataset_id);
-          if(success) return success(dataset);
+          if(success) {
+            return success(dataset);
+          }
         } else {
           // no data yet, probably first time. failure calback should handle this
-          if(failure) return failure();
+          if(failure) {
+            return failure();
+          }
         }
       });
     });
@@ -933,7 +946,7 @@ var self = {
 
   clearCache: function(dataset_id, cb){
     delete self.datasets[dataset_id];
-    self.notify_callback_map[dataset_id] === null;
+    self.notify_callback_map[dataset_id] = null;
     self.getStorageAdapter(dataset_id, true, function(err, storage){
       storage.remove("dataset_" + dataset_id, function(){
         self.consoleLog('local cache is cleared for dataset : ' + dataset_id);
@@ -1332,9 +1345,9 @@ var self = {
           if(pendingHash){
             //we have current pending in meta data, see if it's resolved
             pendingResolved = false;
-            var resolved = newData.updates.hashes[pendingHash];
-            if(resolved){
-              self.consoleLog("updateMetaFromNewData - Found pendingUid in meta data resolved - resolved = " + JSON.stringify(resolved));
+            var hashresolved = newData.updates.hashes[pendingHash];
+            if(hashresolved){
+              self.consoleLog("updateMetaFromNewData - Found pendingUid in meta data resolved - resolved = " + JSON.stringify(hashresolved));
               //the current pending is resolved in the cloud
               metadata.pendingUid = undefined;
               pendingResolved = true;

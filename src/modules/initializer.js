@@ -6,7 +6,6 @@ var fhparams = require("./fhparams");
 var ajax = require("./ajax");
 var handleError = require("./handleError");
 var logger = require("./logger");
-var JSON = require("JSON");
 var hashFunc = require("./security/hash");
 var appProps = require("./appProps");
 var constants = require("./constants");
@@ -14,8 +13,9 @@ var events = require("./events");
 
 var init = function(cb) {
   appProps.load(function(err, data) {
-    if (err) return cb(err);
-
+    if (err) {
+      return cb(err);
+    }
     // Emit internal config loaded event - SDK will now set appprops
     events.emit(constants.INTERNAL_CONFIG_LOADED_EVENT, null, data);
     return loadCloudProps(data, cb);
@@ -153,4 +153,4 @@ var loadCloudProps = function(app_props, callback) {
 module.exports = {
   "init": init,
   "loadCloudProps": loadCloudProps
-}
+};

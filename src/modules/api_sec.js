@@ -40,4 +40,4 @@ module.exports = function(p, s, f){
       return f('keygen_bad_algorithm:' + p.params.algorithm, {}, p);
     }
   }
-}
+};

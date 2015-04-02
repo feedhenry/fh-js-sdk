@@ -11,7 +11,7 @@ var load = function(cb) {
    We use eval here because Titanium also does require to include third party scripts.
    It bypasses browserify's require, but still triggers when in a Titanium app
    */
-  app_props = eval("require(\"fhconfig\")");
+  app_props = eval("require(\"fhconfig\")"); // jshint ignore:line
   return cb(null, app_props);
 };
 

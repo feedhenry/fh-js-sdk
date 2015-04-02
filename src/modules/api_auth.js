@@ -2,7 +2,6 @@ var logger = require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
 var ajax = require("./ajax");
-var JSON = require("JSON");
 var handleError = require("./handleError");
 var device = require("./device");
 var constants = require("./constants");
@@ -67,4 +66,4 @@ module.exports = function(opts, success, fail) {
       });
     }
   });
-}
+};

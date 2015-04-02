@@ -1,5 +1,3 @@
-var JSON = require("JSON");
-
 module.exports = function(fail, req, resStatus, error){
   var errraw;
   var statusCode = 0;

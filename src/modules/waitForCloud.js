@@ -35,7 +35,7 @@ var ready = function(cb){
             return events.emit(constants.INIT_EVENT, null, {host: getCloudHostUrl()});
           }
         });
-      }
+      };
       if(typeof window.cordova !== "undefined" || typeof window.phonegap !== "undefined"){
         //if we are running inside cordova/phonegap, only init after device is ready to ensure the device id is the right one
         document.addEventListener("deviceready", fhinit, false);
@@ -44,11 +44,11 @@ var ready = function(cb){
       }
     }
   }
-}
+};
 
 var getCloudHost = function(){
   return cloud_host;
-}
+};
 
 var getCloudHostUrl = function(){
   if(typeof cloud_host !== "undefined"){
@@ -57,15 +57,15 @@ var getCloudHostUrl = function(){
   } else {
     return undefined;
   }
-}
+};
 
 var isReady = function(){
   return is_cloud_ready;
-}
+};
 
 var getInitError = function(){
   return init_error;
-}
+};
 
 //for test
 var reset = function(){
@@ -76,7 +76,7 @@ var reset = function(){
   ready(function(){
     
   });
-}
+};
 
 ready(function(error, host){
   if(error){
@@ -97,4 +97,4 @@ module.exports = {
   getCloudHostUrl: getCloudHostUrl,
   getInitError: getInitError,
   reset: reset
-}
+};
