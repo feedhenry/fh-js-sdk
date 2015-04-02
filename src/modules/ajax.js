@@ -273,7 +273,7 @@ function getXhr(crossDomain){
   }
   // For Titanium SDK
   if (typeof Titanium !== 'undefined'){
-    var parms = {};
+    var params = {};
     if(ajax.settings && ajax.settings.timeout){
       params.timeout = ajax.settings.timeout;
     }
