@@ -133,9 +133,9 @@ module.exports = function(grunt) {
               if(file.indexOf("constants.js") >= 0){
                 var version = pkg.version;
                 console.log("found current version = " + version);
-                if(process.env.BUILD_NUMBER){
-                  console.log("found BUILD_NUMBER in process.env " + process.env.BUILD_NUMBER);
-                  version = version.replace(/BUILD\-NUMBER/g, process.env.BUILD_NUMBER);
+                if(process.env.TRAVIS_BUILD_NUMBER){
+                  console.log("found BUILD_NUMBER in process.env " + process.env.TRAVIS_BUILD_NUMBER);
+                  version = version.replace(/BUILD\-NUMBER/g, process.env.TRAVIS_BUILD_NUMBER);
                 }
                 console.log("Version to inject is " + version);
                 t = data.replace("BUILD_VERSION", version);
@@ -162,9 +162,9 @@ module.exports = function(grunt) {
               if(file.indexOf("constants.js") >= 0){
                 var version = pkg.version;
                 console.log("found current version = " + version);
-                if(process.env.BUILD_NUMBER){
-                  console.log("found BUILD_NUMBER in process.env " + process.env.BUILD_NUMBER);
-                  version = version.replace(/BUILD\-NUMBER/g, process.env.BUILD_NUMBER);
+                if(process.env.TRAVIS_BUILD_NUMBER){
+                  console.log("found BUILD_NUMBER in process.env " + process.env.TRAVIS_BUILD_NUMBER);
+                  version = version.replace(/BUILD\-NUMBER/g, process.env.TRAVIS_BUILD_NUMBER);
                 }
                 console.log("Version to inject is " + version);
                 t = data.replace("BUILD_VERSION", version);
@@ -258,7 +258,7 @@ module.exports = function(grunt) {
       }
     },
     zip: {
-      zipall: {
+      project: {
         router: function(filepath) {
           grunt.log.writeln(filepath);
           var filename = path.basename(filepath);
@@ -266,6 +266,24 @@ module.exports = function(grunt) {
         },
         dest: 'dist/fh-starter-project-latest.zip',
         src: ['src/index.html', 'src/fhconfig.json', 'dist/feedhenry.min.js']
+      },
+      sdk: {
+        router: function(filepath) {
+          grunt.log.writeln(filepath);
+          var filename = path.basename(filepath);
+          return 'feedhenry-js/' + filename;
+        },
+        dest: 'dist/feedhenry-js.zip',
+        src:['dist/feedhenry.js', 'dist/feedhenry-forms.js', 'dist/feedhenry.min.js', 'dist/feedhenry-forms.min.js', 'dist/appForms-backbone.js']
+      },
+      titanium: {
+        router: function(filepath) {
+          grunt.log.writeln(filepath);
+          var filename = path.basename(filepath);
+          return 'feedhenry-titanium/' + filename;
+        },
+        dest: 'dist/feedhenry-titanium.zip',
+        src:['dist/feedhenry-titanium.js', 'dist/feedhenry-titanium.min.js']
       }
     },
     shell: {
@@ -363,7 +381,7 @@ module.exports = function(grunt) {
   grunt.registerTask('local', ['start-local-servers', 'connect:server:keepalive']);
 
   //run tests in phatomjs
-  grunt.registerTask('test', ['jshint', 'browserify:dist', 'browserify:require', 'browserify:test', 'connect:server', 'mocha_phantomjs:test']);
+  grunt.registerTask('test', ['jshint:all', 'browserify:dist', 'browserify:require', 'browserify:test', 'connect:server', 'mocha_phantomjs:test']);
 
   grunt.registerTask('concat-forms-backbone', ['jshint', 'replace:forms_templates', 'concat:forms_backbone', 'concat:forms_backboneRequireJS']);
 

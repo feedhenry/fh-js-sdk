@@ -1,7 +1,6 @@
 FeedHenry JavaScript SDK
 ========================
-[![browser support](https://ci.testling.com/feedhenry/fh-js-sdk.png)
-](https://ci.testling.com/feedhenry/fh-js-sdk)
+[![Build Status](https://travis-ci.org/feedhenry/fh-js-sdk.svg?branch=use-travis-ci)](https://travis-ci.org/feedhenry/fh-js-sdk)
 
 The JavaScript SDK allows developers to integrate the FeedHenry Cloud into any web-based solution - desktop websites, mobile websites or a stand-alone JavaScript client.
 
