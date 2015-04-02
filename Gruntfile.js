@@ -363,7 +363,7 @@ module.exports = function(grunt) {
   grunt.registerTask('local', ['start-local-servers', 'connect:server:keepalive']);
 
   //run tests in phatomjs
-  grunt.registerTask('test', ['jshint', 'browserify:dist', 'browserify:require', 'browserify:test', 'connect:server', 'mocha_phantomjs:test']);
+  grunt.registerTask('test', ['jshint:all', 'browserify:dist', 'browserify:require', 'browserify:test', 'connect:server', 'mocha_phantomjs:test']);
 
   grunt.registerTask('concat-forms-backbone', ['jshint', 'replace:forms_templates', 'concat:forms_backbone', 'concat:forms_backboneRequireJS']);
 
