@@ -12,7 +12,6 @@ if(document && document.location){
 var ajax = process.env.LIB_COV? require("../../src-cov/modules/ajax") : require("../../src/modules/ajax");
 var qs = process.env.LIB_COV? require("../../src-cov/modules/queryMap"): require("../../src/modules/queryMap");
 
-
 chai.use(sinonChai);
 
 var fhconfig = {
@@ -163,9 +162,10 @@ describe("test all cloud related", function(){
   });
 
   describe("test auth call", function(){
-    it("auth call should work", function(){
+    it("auth call should work", function(done){
       initFakeServer(server);
-      server.respondWith('POST', /authpolicy/, buildFakeRes({status: "ok"}));
+      server.respondWith('POST', /authpolicy\/auth/, buildFakeRes({status: "ok", sessionToken: 'testSessionToken'}));
+      server.respondWith('POST', /authpolicy\/verifysession/, buildFakeRes({status:"ok", isValid: true}));
 
       var $fh = process.env.LIB_COV? require("../../src-cov/feedhenry") : require("../../src/feedhenry");
       $fh.reset();
@@ -184,6 +184,22 @@ describe("test all cloud related", function(){
 
       expect(success).to.have.been.calledOnce;
       expect(fail).to.have.not.been.called;
+
+      $fh.auth.hasSession(function(err, exists){
+        expect(exists).to.be.ok;
+
+        var verifycb = sinon.spy();
+        $fh.auth.verify(verifycb);
+        server.respond();
+        expect(verifycb).to.have.been.calledWith(null, true);
+
+        $fh.auth.clearSession(function(){
+          $fh.auth.hasSession(function(err, exist){
+            expect(exist).to.be.false;
+            done();
+          });
+        });
+      });
     });
   });
 

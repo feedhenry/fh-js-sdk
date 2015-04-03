@@ -1,5 +1,3 @@
-var Lawnchair = require('../../libs/generated/lawnchair');
-
 var fileStorageAdapter = function (app_props, hashFunc) {
   // private methods
 
@@ -10,8 +8,11 @@ var fileStorageAdapter = function (app_props, hashFunc) {
   }
 
   var fail = function (e, i) {
-    if(console) console.log('error in file system adapter !', e, i);
-    else throw e;
+    if(console) {
+      console.log('error in file system adapter !', e, i);
+    } else {
+      throw e;
+    }
   };
 
 
@@ -37,7 +38,7 @@ var fileStorageAdapter = function (app_props, hashFunc) {
           return cb(filename);
         },function handleError(err){
           return cb(filename);
-        })
+        });
       } else {
         doLog('filenameForKey key=' + key+ ' , Filename: ' + filename);
         return cb(filename);
@@ -47,12 +48,16 @@ var fileStorageAdapter = function (app_props, hashFunc) {
 
   return {
 
-    valid: function () { return !!(window.requestFileSystem) },
+    valid: function () { return !!(window.requestFileSystem); },
 
     init : function (options, callback){
       //calls the parent function fn and applies this scope
-      if(options && 'function' === typeof options.fail ) fail = options.fail;
-      if (callback) this.fn(this.name, callback).call(this, this);
+      if(options && 'function' === typeof options.fail ) {
+        fail = options.fail;
+      }
+      if (callback) {
+        this.fn(this.name, callback).call(this, this);
+      }
     },
 
     keys: function (callback){
@@ -176,12 +181,8 @@ var fileStorageAdapter = function (app_props, hashFunc) {
 
 
   };
-}
-
-var addAdapter = function(app_props, hashFunc){
-  Lawnchair.adapter('localFileStorage', fileStorageAdapter(app_props, hashFunc));
-}
+};
 
 module.exports = {
-  addAdapter: addAdapter
-}
+  fileStorageAdapter: fileStorageAdapter
+};

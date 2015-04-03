@@ -1,6 +1,7 @@
 var logger = require("./logger");
 var queryMap = require("./queryMap");
 var fhparams = require("./fhparams");
+var data = require('./data');
 
 var checkAuth = function(url) {
   if (/\_fhAuthCallback/.test(url)) {
@@ -11,6 +12,7 @@ var checkAuth = function(url) {
         if (qmap['result'] && qmap['result'] === 'success') {
           var sucRes = {'sessionToken': qmap['fh_auth_session'], 'authResponse' : JSON.parse(decodeURIComponent(decodeURIComponent(qmap['authResponse'])))};
           fhparams.setAuthSessionToken(qmap['fh_auth_session']);
+          data.sessionManager.save(qmap['fh_auth_session']);
           window[fhCallback](null, sucRes);
         } else {
           window[fhCallback]({'message':qmap['message']});
@@ -26,8 +28,12 @@ var handleAuthResponse = function(endurl, res, success, fail){
     var onComplete = function(res){
       if(res.sessionToken){
         fhparams.setAuthSessionToken(res.sessionToken);
+        data.sessionManager.save(res.sessionToken, function(){
+          return success(res);
+        });
+      } else {
+        return success(res);
       }
-      success(res);
     };
     //for OAuth, a url will be returned which means the user should be directed to that url to authenticate.
     //we try to use the ChildBrower plugin if it can be found. Otherwise send the url to the success function to allow developer to handle it.

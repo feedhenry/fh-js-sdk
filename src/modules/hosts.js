@@ -85,6 +85,15 @@ CloudHost.prototype.getCloudUrl = function(path){
   return this.cloud_host + "/" + removeStartSlash(path);
 };
 
-
+CloudHost.prototype.getEnv = function(){
+  if(this.app_env){
+    return this.app_env;
+  } else {
+    if(this.cloud_props && this.cloud_props.hosts){
+      this.app_env = this.cloud_props.hosts.environment;
+    }
+  }
+  return this.app_env;
+};
 
 module.exports = CloudHost;

@@ -1,6 +1,4 @@
 var loadScript = require("./loadScript");
-var Lawnchair = require('../../libs/generated/lawnchair');
-var lawnchairext = require('./lawnchair-ext');
 var consts = require("./constants");
 var fhparams = require("./fhparams");
 var ajax = require("./ajax");
@@ -10,6 +8,7 @@ var hashFunc = require("./security/hash");
 var appProps = require("./appProps");
 var constants = require("./constants");
 var events = require("./events");
+var data = require('./data');
 
 var init = function(cb) {
   appProps.load(function(err, data) {
@@ -52,23 +51,7 @@ var loadCloudProps = function(app_props, callback) {
 
 
   //now we have app props, add the fileStorageAdapter
-  lawnchairext.addAdapter(app_props, hashFunc);
-  //dom adapter doens't work on windows phone, so don't specify the adapter if the dom one failed
-  //we specify the order of lawnchair adapters to use, lawnchair will find the right one to use, to keep backward compatibility, keep the order
-  //as dom, webkit-sqlite, localFileStorage, window-name
-  var lcConf = {
-    name: "fh_init_storage",
-    adapter: ["dom", "webkit-sqlite", "window-name"],
-    fail: function(msg, err) {
-      var error_message = 'read/save from/to local storage failed  msg:' + msg + ' err:' + err;
-      return fail(error_message, {});
-    }
-  };
-
-  if (typeof Titanium !== "undefined") {
-    lcConf.adapter = ['titanium'];
-  }
-
+  data.addFileStorageAdapter(app_props, hashFunc);
   var doInit = function(path, appProps, savedHost, storage) {
     var data = fhparams.buildFHParams();
 
@@ -125,7 +108,7 @@ var loadCloudProps = function(app_props, callback) {
   var storage = null;
   var path = app_props.host + consts.boxprefix + "app/init";
   try {
-    storage = new Lawnchair(lcConf, function() {});
+    storage = data.getStorage("fh_init_storage", typeof Titanium !== "undefined"?['titanium']:null);
     storage.get('fh_init', function(storage_res) {
       var savedHost = null;
       if (storage_res && storage_res.value !== null && typeof(storage_res.value) !== "undefined" && storage_res !== "") {

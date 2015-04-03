@@ -12,7 +12,6 @@ module.exports = function(grunt) {
     jshint: {
       all: ['src/modules/**/*.js', 
             '!src/modules/ajax.js',
-            '!src/modules/lawnchair-ext.js',
             'src/appforms/src/core/*.js', 
             'src/appforms/src/backbone/*.js', 
             '!src/appforms/src/core/000*.js',

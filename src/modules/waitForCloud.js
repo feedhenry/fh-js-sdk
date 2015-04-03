@@ -3,7 +3,8 @@ var events = require("./events");
 var CloudHost = require("./hosts");
 var constants = require("./constants");
 var logger = require("./logger");
-
+var data = require('./data');
+var fhparams = require('./fhparams');
 
 //the cloud configurations
 var cloud_host;
@@ -23,17 +24,23 @@ var ready = function(cb){
     if(!is_initialising){
       is_initialising = true;
       var fhinit = function(){
-        initializer.init(function(err, initRes){
-          is_initialising = false;
-          if(err){
-            init_error = err;
-            return events.emit(constants.INIT_EVENT, err);
-          } else {
-            init_error = null;
-            is_cloud_ready = true;
-            cloud_host = new CloudHost(initRes.cloud);
-            return events.emit(constants.INIT_EVENT, null, {host: getCloudHostUrl()});
+        data.sessionManager.read(function(err, session){
+          //load the persisted sessionToken and set it for the session
+          if(session && session.sessionToken){
+            fhparams.setAuthSessionToken(session.sessionToken);
           }
+          initializer.init(function(err, initRes){
+            is_initialising = false;
+            if(err){
+              init_error = err;
+              return events.emit(constants.INIT_EVENT, err);
+            } else {
+              init_error = null;
+              is_cloud_ready = true;
+              cloud_host = new CloudHost(initRes.cloud);
+              return events.emit(constants.INIT_EVENT, null, {host: getCloudHostUrl()});
+            }
+          });
         });
       };
       if(typeof window.cordova !== "undefined" || typeof window.phonegap !== "undefined"){
