@@ -1,0 +1,26 @@
+{
+  "name": "fh-js-sdk",
+  "version": "2.6.1",
+  "dependencies": {
+    "loglevel": {
+      "version": "0.6.0",
+      "from": "loglevel@~0.6.0",
+      "resolved": "https://registry.npmjs.org/loglevel/-/loglevel-0.6.0.tgz"
+    },
+    "process": {
+      "version": "0.6.0",
+      "from": "process@~0.6.0",
+      "resolved": "https://registry.npmjs.org/process/-/process-0.6.0.tgz"
+    },
+    "type-of": {
+      "version": "2.0.1",
+      "from": "type-of@~2.0.1",
+      "resolved": "https://registry.npmjs.org/type-of/-/type-of-2.0.1.tgz"
+    },
+    "underscore": {
+      "version": "1.6.0",
+      "from": "underscore@~1.6.0",
+      "resolved": "https://registry.npmjs.org/underscore/-/underscore-1.6.0.tgz"
+    }
+  }
+}

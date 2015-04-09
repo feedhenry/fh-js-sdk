@@ -141,7 +141,7 @@ module.exports = function(grunt) {
                 console.log("found current version = " + version);
                 if(process.env.TRAVIS_BUILD_NUMBER){
                   console.log("found BUILD_NUMBER in process.env " + process.env.TRAVIS_BUILD_NUMBER);
-                  version = version.replace(/BUILD\-NUMBER/g, process.env.TRAVIS_BUILD_NUMBER);
+                  version = version + '-' + process.env.TRAVIS_BUILD_NUMBER;
                 }
                 console.log("Version to inject is " + version);
                 t = data.replace("BUILD_VERSION", version);
@@ -170,7 +170,7 @@ module.exports = function(grunt) {
                 console.log("found current version = " + version);
                 if(process.env.TRAVIS_BUILD_NUMBER){
                   console.log("found BUILD_NUMBER in process.env " + process.env.TRAVIS_BUILD_NUMBER);
-                  version = version.replace(/BUILD\-NUMBER/g, process.env.TRAVIS_BUILD_NUMBER);
+                  version = version + '-' + process.env.TRAVIS_BUILD_NUMBER;
                 }
                 console.log("Version to inject is " + version);
                 t = data.replace("BUILD_VERSION", version);
@@ -240,7 +240,7 @@ module.exports = function(grunt) {
         replacements: [{
           from: '************TEMPLATES***************',                   // string replacement
           to: function(){
-            return grunt.file.read("src/appforms/src/backbone/040-view00Templates.html", {encoding: 'utf8'}).replace(/(\r\n|\n|\r)/gm,""); 
+            return grunt.file.read("src/appforms/src/backbone/040-view00Templates.html", {encoding: 'utf8'}).replace(/(\r\n|\n|\r)/gm,"");
           }
         }]
       }
@@ -296,14 +296,14 @@ module.exports = function(grunt) {
       jscov: {
         //NOTE: install node-jscoverage first from here: https://github.com/visionmedia/node-jscoverage
         command: 'jscoverage src/ src-cov/ --exclude=appforms',
-        options: { 
+        options: {
           stdout: true
         }
       },
       htmlcov: {
         //NOTE: install jsoncov2htmlcov first from here: https://github.com/plasticine/json2htmlcov
         command: 'json2htmlcov rep/coverage.json > rep/coverage.html',
-        options: {   
+        options: {
           stdout: true
         }
       }

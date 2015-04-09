@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.6.1 - 2015-04-10 - Gerard Ryan
+* FH-137: Remove -BUILD-NUMBER from version
+* Add npm-shrinkwrap.json file to lock dependency versions
+
 ##2.6.0 - 2015-03-26 - Wei Li
 * FHMOBSDK-53 - Fix an issue with local params
 * FHMOBSDK-56 - Fix an issue with the sync framework.
@@ -145,7 +149,7 @@
 
 ## 2.0.7-alpha - 2014-04-25 - IR226 - Wei Li
 
-* Add support for Titanium 
+* Add support for Titanium
 
 ## 2.0.6-alpha - 2014-04-4 - IR226 - Wei Li
 
@@ -158,5 +162,3 @@
 ## 2.0.4 - IR226 - 2014-04-22 - Wei Li
 
 * 6927 - Fix uncaught security execeptions when using JS SDK inside browsers which don't allow saving data
-
-
