@@ -25,6 +25,7 @@ function doCloudCall(opts, success, fail){
     "data": data,
     "contentType": opts.contentType || "application/json",
     "timeout": opts.timeout || appProps.timeout,
+    "headers": fhparams.getFHHeaders(),
     "success": success,
     "error": function(req, statusText, error){
       return handleError(fail, req, statusText, error);

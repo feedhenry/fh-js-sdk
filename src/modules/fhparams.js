@@ -51,18 +51,32 @@ var buildFHParams = function(){
   return fhparams;
 };
 
+//TODO: deprecate this. Move to use headers instead
 var addFHParams = function(params){
   var p = params || {};
   p.__fh = buildFHParams();
   return p;
 };
 
+var getFHHeaders = function(){
+  var headers = {};
+  var params = buildFHParams();
+  for(var name in params){
+    if(params.hasOwnProperty(name)){
+      headers['X-FH-' + name] = params[name];
+    }
+  }
+  return headers;
+};
+
 var setAuthSessionToken = function(sessionToken){
   authSessionToken = sessionToken;
+  defaultParams = null;
 };
 
 module.exports = {
   "buildFHParams": buildFHParams,
   "addFHParams": addFHParams,
-  "setAuthSessionToken":setAuthSessionToken
+  "setAuthSessionToken":setAuthSessionToken,
+  "getFHHeaders": getFHHeaders
 };

@@ -16,6 +16,7 @@ function doActCall(opts, success, fail){
     "type": "POST",
     "dataType": "json",
     "data": JSON.stringify(params),
+    "headers": fhparams.getFHHeaders(),
     "contentType": "application/json",
     "timeout": opts.timeout || appProps.timeout,
     "success": success,
