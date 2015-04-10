@@ -16,7 +16,7 @@ var data = {
     }
     var conf = {
       name: name,
-      adapters: adpts,
+      adapter: adpts,
       fail: function(msg, err){
         var error_message = 'read/save from/to local storage failed  msg:' + msg + ' err:' + err;
         logger.error(error_message, err);

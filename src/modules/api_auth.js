@@ -25,6 +25,7 @@ function callAuthEndpoint(endpoint, data, opts, success, fail){
     "dataType": "json",
     "contentType": "application/json",
     "timeout": opts.timeout || app_props.timeout,
+    "headers": fhparams.getFHHeaders(),
     success: function(res){
       if(success){
         return success(res);
