@@ -14,7 +14,7 @@ var encrypt = function(p, s, f){
   var encrypted = CryptoJS.AES.encrypt(p.params.plaintext, CryptoJS.enc.Hex.parse(p.params.key), {iv: CryptoJS.enc.Hex.parse(p.params.iv)});
   cipher_text = CryptoJS.enc.Hex.stringify(encrypted.ciphertext);
   return s({ciphertext: cipher_text});
-}
+};
 
 var decrypt = function(p, s, f){
   var fields = ['key', 'ciphertext', 'iv'];
@@ -32,9 +32,9 @@ var decrypt = function(p, s, f){
   var decrypted = CryptoJS.AES.decrypt(encodeData, CryptoJS.enc.Hex.parse(p.params.key), {iv: CryptoJS.enc.Hex.parse(p.params.iv)});
   plain_text = decrypted.toString(CryptoJS.enc.Utf8);
   return s({plaintext:plain_text});
-}
+};
 
 module.exports = {
   encrypt: encrypt,
   decrypt: decrypt
-}
+};

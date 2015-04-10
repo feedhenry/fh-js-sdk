@@ -20,6 +20,7 @@ function removeStartSlash(input){
 function CloudHost(cloud_props){
   this.cloud_props = cloud_props;
   this.cloud_host = undefined;
+  this.app_env = null;
   this.isLegacy = false;
 }
 
@@ -54,7 +55,7 @@ CloudHost.prototype.getHost = function(appType){
     }
     return url;
   }
-}
+};
 
 CloudHost.prototype.getActUrl = function(act){
   var app_props = appProps.getAppProps() || {};
@@ -66,7 +67,7 @@ CloudHost.prototype.getActUrl = function(act){
   } else {
     return this.cloud_host + "/cloud/" + act;
   }
-}
+};
 
 CloudHost.prototype.getMBAASUrl = function(service){
   var app_props = appProps.getAppProps() || {};
@@ -74,7 +75,7 @@ CloudHost.prototype.getMBAASUrl = function(service){
     this.getHost(app_props.mode);
   }
   return this.cloud_host + "/mbaas/" + service;
-}
+};
 
 CloudHost.prototype.getCloudUrl = function(path){
   var app_props = appProps.getAppProps() || {};
@@ -82,8 +83,17 @@ CloudHost.prototype.getCloudUrl = function(path){
     this.getHost(app_props.mode);
   }
   return this.cloud_host + "/" + removeStartSlash(path);
-}
+};
 
-
+CloudHost.prototype.getEnv = function(){
+  if(this.app_env){
+    return this.app_env;
+  } else {
+    if(this.cloud_props && this.cloud_props.hosts){
+      this.app_env = this.cloud_props.hosts.environment;
+    }
+  }
+  return this.app_env;
+};
 
 module.exports = CloudHost;

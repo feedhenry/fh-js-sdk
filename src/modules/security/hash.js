@@ -19,6 +19,6 @@ var hash = function(p, s, f){
     return f("hash_unsupported_algorithm: " + p.params.algorithm);
   }
   return s({"hashvalue": hashValue});
-}
+};
 
 module.exports = hash;

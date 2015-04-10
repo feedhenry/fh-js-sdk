@@ -17,8 +17,8 @@ var encrypt = function(p, s, f){
   var ori_text = p.params.plaintext;
   cipher_text = key.encrypt(ori_text);
   return s({ciphertext:cipher_text});
-}
+};
 
 module.exports = {
   encrypt: encrypt
-}
+};

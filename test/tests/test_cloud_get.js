@@ -74,7 +74,9 @@ describe("test all cloud related GETs", function(){
     }, success, fail);
 
     expect(requests).to.have.length.of.at.least(1);
-    var request = requests[0];
+    requests[0].respond(200, { "Content-Type": "application/json" }, JSON.stringify(fhconfig));
+
+    var request = requests[1];
     expect(request.method).to.equal('GET');
 
     expect(request).to.have.property('url');

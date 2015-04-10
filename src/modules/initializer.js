@@ -1,21 +1,20 @@
 var loadScript = require("./loadScript");
-var Lawnchair = require('../../libs/generated/lawnchair');
-var lawnchairext = require('./lawnchair-ext');
 var consts = require("./constants");
 var fhparams = require("./fhparams");
 var ajax = require("./ajax");
 var handleError = require("./handleError");
 var logger = require("./logger");
-var JSON = require("JSON");
 var hashFunc = require("./security/hash");
 var appProps = require("./appProps");
 var constants = require("./constants");
 var events = require("./events");
+var data = require('./data');
 
 var init = function(cb) {
   appProps.load(function(err, data) {
-    if (err) return cb(err);
-
+    if (err) {
+      return cb(err);
+    }
     // Emit internal config loaded event - SDK will now set appprops
     events.emit(constants.INTERNAL_CONFIG_LOADED_EVENT, null, data);
     return loadCloudProps(data, cb);
@@ -52,30 +51,14 @@ var loadCloudProps = function(app_props, callback) {
 
 
   //now we have app props, add the fileStorageAdapter
-  lawnchairext.addAdapter(app_props, hashFunc);
-  //dom adapter doens't work on windows phone, so don't specify the adapter if the dom one failed
-  //we specify the order of lawnchair adapters to use, lawnchair will find the right one to use, to keep backward compatibility, keep the order
-  //as dom, webkit-sqlite, localFileStorage, window-name
-  var lcConf = {
-    name: "fh_init_storage",
-    adapter: ["dom", "webkit-sqlite", "window-name"],
-    fail: function(msg, err) {
-      var error_message = 'read/save from/to local storage failed  msg:' + msg + ' err:' + err;
-      return fail(error_message, {});
-    }
-  };
-
-  if (typeof Titanium !== "undefined") {
-    lcConf.adapter = ['titanium'];
-  }
-
+  data.addFileStorageAdapter(app_props, hashFunc);
   var doInit = function(path, appProps, savedHost, storage) {
     var data = fhparams.buildFHParams();
 
     ajax({
       "url": path,
       "type": "POST",
-      "tryJSONP": true,
+      "tryJSONP": typeof Titanium === 'undefined',
       "dataType": "json",
       "contentType": "application/json",
       "data": JSON.stringify(data),
@@ -125,7 +108,7 @@ var loadCloudProps = function(app_props, callback) {
   var storage = null;
   var path = app_props.host + consts.boxprefix + "app/init";
   try {
-    storage = new Lawnchair(lcConf, function() {});
+    storage = data.getStorage("fh_init_storage", typeof Titanium !== "undefined"?['titanium']:null);
     storage.get('fh_init', function(storage_res) {
       var savedHost = null;
       if (storage_res && storage_res.value !== null && typeof(storage_res.value) !== "undefined" && storage_res !== "") {
@@ -153,4 +136,4 @@ var loadCloudProps = function(app_props, callback) {
 module.exports = {
   "init": init,
   "loadCloudProps": loadCloudProps
-}
+};

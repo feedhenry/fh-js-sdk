@@ -1,4 +1,3 @@
-var JSON = require("JSON");
 var actAPI = require("./api_act");
 var cloudAPI = require("./api_cloud");
 var CryptoJS = require("../../libs/generated/crypto");
@@ -89,6 +88,8 @@ var self = {
 
   init_is_called: false,
 
+  change_history_size: 5,
+
   // PUBLIC FUNCTION IMPLEMENTATIONS
   init: function(options) {
     self.consoleLog('sync - init called');
@@ -113,10 +114,10 @@ var self = {
     }
   },
 
-  manage: function(dataset_id, options, query_params, meta_data, cb) {
+  manage: function(dataset_id, opts, query_params, meta_data, cb) {
     self.consoleLog('manage - START');
 
-    var options = options || {};
+    var options = opts || {};
 
     var doManage = function(dataset) {
       self.consoleLog('doManage dataset :: initialised = ' + dataset.initialised + " :: " + dataset_id + ' :: ' + JSON.stringify(options));
@@ -195,10 +196,14 @@ var self = {
         var res = JSON.parse(JSON.stringify(dataset.data));
         success(res);
       } else {
-        if(failure) failure('no_data');
+        if(failure) {
+          failure('no_data');
+        }
       }
     }, function(code, msg) {
-      if(failure) failure(code, msg);
+      if(failure) {
+        failure(code, msg);
+      }
     });
   },
 
@@ -222,7 +227,9 @@ var self = {
         success(res);
       }
     }, function(code, msg) {
-      if(failure) failure(code, msg);
+      if(failure) {
+        failure(code, msg);
+      }
     });
   },
 
@@ -525,7 +532,9 @@ var self = {
 
         success(obj);
       }, function(code, msg) {
-        if(failure) failure(code, msg);
+        if(failure) {
+          failure(code, msg);
+        }
       });
     }
 
@@ -549,6 +558,19 @@ var self = {
           failure(code, msg);
         }
       });
+    }
+  },
+
+  updateChangeHistory: function(dataset, pending){
+    if(pending.action === 'update'){
+      dataset.changeHistory = dataset.changeHistory || {};
+      dataset.changeHistory[pending.uid] = dataset.changeHistory[pending.uid] || [];
+      if(dataset.changeHistory[pending.uid].indexOf(pending.preHash) === -1){
+        dataset.changeHistory[pending.uid].push(pending.preHash);
+        if(dataset.changeHistory[pending.uid].length > self.change_history_size){
+          dataset.changeHistory[pending.uid].shift();
+        }
+      }
     }
   },
 
@@ -580,6 +602,7 @@ var self = {
             var pending = dataSet.pending;
             var pendingArray = [];
             for(var i in pending ) {
+              self.updateChangeHistory(dataSet, pending[i]);
               // Mark the pending records we are about to submit as inflight and add them to the array for submission
               // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
               // Don't add delayed records
@@ -711,11 +734,17 @@ var self = {
             self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "create");
           }
         }
+        var existingPendingPreHashes = self.existingPendingPreHashMap(dataSet);
         if (res.update) {
           for (i in res.update) {
-            localDataSet[i].hash = res.update[i].hash;
-            localDataSet[i].data = res.update[i].data;
-            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
+            if(existingPendingPreHashes[i] && existingPendingPreHashes[i].indexOf(res.update[i].hash) > -1){
+              //the returned update data has been updated locally, so it should keep local copy
+              self.consoleLog("skip update from remote for uid :: " + i + " :: hash = " + res.update[i].hash + ' :: data = ' + JSON.stringify(res.update[i].data));
+            } else {
+              localDataSet[i].hash = res.update[i].hash;
+              localDataSet[i].data = res.update[i].data;
+              self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
+            }
           }
         }
         if (res['delete']) {
@@ -747,6 +776,11 @@ var self = {
       self.saveDataSet(dataset_id);
       self.doNotify(dataset_id, dataset.hash, notification, status);
     });
+  },
+
+  existingPendingPreHashMap: function(dataset){
+    var pendingPreHashes = dataset.changeHistory || {};
+    return pendingPreHashes;
   },
 
   checkDatasets: function() {
@@ -829,7 +863,7 @@ var self = {
     if(dataset && dataset.config){
       hasCustomSync = dataset.config.has_custom_sync;
     }
-    if( hasCustomSync == true ) {
+    if( hasCustomSync === true ) {
       actAPI({
         'act' : params.dataset_id,
         'req' : params.req
@@ -876,7 +910,9 @@ var self = {
       self.getStorageAdapter(dataset_id, true, function(err, storage){
         storage.save({key:"dataset_" + dataset_id, val:dataset}, function(){
           //save success
-          if(cb) return cb();
+          if(cb) {
+            return cb();
+          }
         });
       });
     });
@@ -895,10 +931,14 @@ var self = {
           dataset.initialised = false;
           self.datasets[dataset_id] = dataset; // TODO: do we need to handle binary data?
           self.consoleLog('load from local storage success for dataset_id :' + dataset_id);
-          if(success) return success(dataset);
+          if(success) {
+            return success(dataset);
+          }
         } else {
           // no data yet, probably first time. failure calback should handle this
-          if(failure) return failure();
+          if(failure) {
+            return failure();
+          }
         }
       });
     });
@@ -906,7 +946,7 @@ var self = {
 
   clearCache: function(dataset_id, cb){
     delete self.datasets[dataset_id];
-    self.notify_callback_map[dataset_id] === null;
+    self.notify_callback_map[dataset_id] = null;
     self.getStorageAdapter(dataset_id, true, function(err, storage){
       storage.remove("dataset_" + dataset_id, function(){
         self.consoleLog('local cache is cleared for dataset : ' + dataset_id);
@@ -1305,9 +1345,9 @@ var self = {
           if(pendingHash){
             //we have current pending in meta data, see if it's resolved
             pendingResolved = false;
-            var resolved = newData.updates.hashes[pendingHash];
-            if(resolved){
-              self.consoleLog("updateMetaFromNewData - Found pendingUid in meta data resolved - resolved = " + JSON.stringify(resolved));
+            var hashresolved = newData.updates.hashes[pendingHash];
+            if(hashresolved){
+              self.consoleLog("updateMetaFromNewData - Found pendingUid in meta data resolved - resolved = " + JSON.stringify(hashresolved));
               //the current pending is resolved in the cloud
               metadata.pendingUid = undefined;
               pendingResolved = true;

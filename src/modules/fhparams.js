@@ -49,20 +49,20 @@ var buildFHParams = function(){
   defaultParams = fhparams;
   logger.debug("fhparams = ", defaultParams);
   return fhparams;
-}
+};
 
 var addFHParams = function(params){
-  var params = params || {};
-  params.__fh = buildFHParams();
-  return params;
-}
+  var p = params || {};
+  p.__fh = buildFHParams();
+  return p;
+};
 
 var setAuthSessionToken = function(sessionToken){
   authSessionToken = sessionToken;
-}
+};
 
 module.exports = {
   "buildFHParams": buildFHParams,
   "addFHParams": addFHParams,
   "setAuthSessionToken":setAuthSessionToken
-}
+};

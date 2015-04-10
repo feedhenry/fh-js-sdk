@@ -2,7 +2,6 @@ var logger =require("./logger");
 var cloud = require("./waitForCloud");
 var fhparams = require("./fhparams");
 var ajax = require("./ajax");
-var JSON = require("JSON");
 var handleError = require("./handleError");
 var consts = require("./constants");
 var appProps = require("./appProps");
@@ -28,7 +27,7 @@ module.exports = function(opts, success, fail){
       params = fhparams.addFHParams(params);
       return ajax({
         "url": url,
-        "tryJSONP": true,
+        "tryJSONP": typeof Titanium === 'undefined',
         "type": "POST",
         "dataType": "json",
         "data": JSON.stringify(params),
@@ -41,4 +40,4 @@ module.exports = function(opts, success, fail){
       });
     }
   });
-} 
+};

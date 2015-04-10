@@ -36,6 +36,6 @@ var aes_keygen = function(p, s, f){
     'secretkey': generateRandomKey(keysize),
     'iv': generateRandomKey(keysize)
   });
-}
+};
 
 module.exports = aes_keygen;

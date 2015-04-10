@@ -55,8 +55,8 @@
     var key = new RSAKeyPair(p.params.key, p.params.key, p.params.modulu);
     var ori_text = p.params.plaintext;
     var input = '';
-    for (var i = ori_text.length - 1; i >= 0; i--) {
-      input += ori_text.charAt(i);
+    for (var j = ori_text.length - 1; j >= 0; j--) {
+      input += ori_text.charAt(j);
     }
     cipher_text = encryptedString(key, input);
     return s({ciphertext: cipher_text});
@@ -86,7 +86,7 @@
     var cipher = fh_cipher.create(fh_cipher.RIJNDAEL, fh_cipher.ENCRYPT, fh_cipher.ECB, fh_cipher.ISO10126);
     cipher_text = __Crypto.base16_encode(cipher.execute(key, data));
     return s({ciphertext: cipher_text});
-  }
+  };
 
   var aes_decrypt = function(p, s, f){
     var fields = ['key', 'ciphertext'];
@@ -110,7 +110,7 @@
     var cipher = fh_cipher.create(fh_cipher.RIJNDAEL, fh_cipher.DECRYPT, fh_cipher.ECB, fh_cipher.ISO10126);
     plain_text = __Crypto.utf82str(cipher.execute(key, data));
     return s({plaintext:plain_text});
-  }
+  };
 
   //override $fh.sec, with legacy implementations
   var $fh = root.$fh || {};
@@ -158,7 +158,7 @@
         return f('keygen_bad_algorithm:' + p.params.algorithm, {}, p);
       }
     }
-  }
+  };
 
   root.$fh = $fh;
 

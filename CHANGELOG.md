@@ -1,5 +1,11 @@
 # Changelog - FeedHenry Javascript SDK
 
+##2.6.0 - 2015-03-26 - Wei Li
+* FHMOBSDK-53 - Fix an issue with local params
+* FHMOBSDK-56 - Fix an issue with the sync framework.
+* FHMOBSDK-57 - New APIs for $fh.auth
+* FHMOBSDK-59 - Fix an issue with Titanium SDK
+
 ## 2.5.1 - 2014-12-01 - IR242 - Martin Murphy
 * 8319 - fix location button label in apppforms app
 

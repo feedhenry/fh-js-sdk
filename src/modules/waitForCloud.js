@@ -3,7 +3,8 @@ var events = require("./events");
 var CloudHost = require("./hosts");
 var constants = require("./constants");
 var logger = require("./logger");
-
+var data = require('./data');
+var fhparams = require('./fhparams');
 
 //the cloud configurations
 var cloud_host;
@@ -23,19 +24,25 @@ var ready = function(cb){
     if(!is_initialising){
       is_initialising = true;
       var fhinit = function(){
-        initializer.init(function(err, initRes){
-          is_initialising = false;
-          if(err){
-            init_error = err;
-            return events.emit(constants.INIT_EVENT, err);
-          } else {
-            init_error = null;
-            is_cloud_ready = true;
-            cloud_host = new CloudHost(initRes.cloud);
-            return events.emit(constants.INIT_EVENT, null, {host: getCloudHostUrl()});
+        data.sessionManager.read(function(err, session){
+          //load the persisted sessionToken and set it for the session
+          if(session && session.sessionToken){
+            fhparams.setAuthSessionToken(session.sessionToken);
           }
+          initializer.init(function(err, initRes){
+            is_initialising = false;
+            if(err){
+              init_error = err;
+              return events.emit(constants.INIT_EVENT, err);
+            } else {
+              init_error = null;
+              is_cloud_ready = true;
+              cloud_host = new CloudHost(initRes.cloud);
+              return events.emit(constants.INIT_EVENT, null, {host: getCloudHostUrl()});
+            }
+          });
         });
-      }
+      };
       if(typeof window.cordova !== "undefined" || typeof window.phonegap !== "undefined"){
         //if we are running inside cordova/phonegap, only init after device is ready to ensure the device id is the right one
         document.addEventListener("deviceready", fhinit, false);
@@ -44,11 +51,11 @@ var ready = function(cb){
       }
     }
   }
-}
+};
 
 var getCloudHost = function(){
   return cloud_host;
-}
+};
 
 var getCloudHostUrl = function(){
   if(typeof cloud_host !== "undefined"){
@@ -57,15 +64,15 @@ var getCloudHostUrl = function(){
   } else {
     return undefined;
   }
-}
+};
 
 var isReady = function(){
   return is_cloud_ready;
-}
+};
 
 var getInitError = function(){
   return init_error;
-}
+};
 
 //for test
 var reset = function(){
@@ -76,7 +83,7 @@ var reset = function(){
   ready(function(){
     
   });
-}
+};
 
 ready(function(error, host){
   if(error){
@@ -97,4 +104,4 @@ module.exports = {
   getCloudHostUrl: getCloudHostUrl,
   getInitError: getInitError,
   reset: reset
-}
+};
