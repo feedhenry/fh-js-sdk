@@ -9,5 +9,9 @@ module.exports = function (onNotification, success, fail) {
     };
   }
 
-  window.push.register(onNotification, success, fail, appProps.getAppProps());
+  if (window.push) {
+    window.push.register(onNotification, success, fail, appProps.getAppProps());
+  } else {
+    fail('push plugin not installed');
+  }
 };
