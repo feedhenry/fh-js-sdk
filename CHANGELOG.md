@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.7.0 - 2015-07-13 - Jason Madigan
+* FHMOBSDK-78 - Add option to allow users to define custom headers to send via $fh.cloud/$fh.act
+
 ## 2.6.1 - 2015-04-10 - Gerard Ryan
 * FH-137: Remove -BUILD-NUMBER from version
 * Add npm-shrinkwrap.json file to lock dependency versions

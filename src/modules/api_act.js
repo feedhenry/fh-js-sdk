@@ -4,19 +4,24 @@ var fhparams = require("./fhparams");
 var ajax = require("./ajax");
 var handleError = require("./handleError");
 var appProps = require("./appProps");
+var _ = require('underscore');
 
 function doActCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
   var url = cloud_host.getActUrl(opts.act);
   var params = opts.req || {};
   params = fhparams.addFHParams(params);
+  var headers = fhparams.getFHHeaders();
+  if (opts.headers) {
+    headers = _.extend(headers, opts.headers);
+  }
   return ajax({
     "url": url,
     "tryJSONP": typeof Titanium === 'undefined',
     "type": "POST",
     "dataType": "json",
     "data": JSON.stringify(params),
-    "headers": fhparams.getFHHeaders(),
+    "headers": headers,
     "contentType": "application/json",
     "timeout": opts.timeout || appProps.timeout,
     "success": success,

@@ -4,6 +4,7 @@ var fhparams = require("./fhparams");
 var ajax = require("./ajax");
 var handleError = require("./handleError");
 var appProps = require("./appProps");
+var _ = require('underscore');
 
 function doCloudCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
@@ -18,6 +19,11 @@ function doCloudCall(opts, success, fail){
     data = params;
   }
 
+  var headers = fhparams.getFHHeaders();
+  if (opts.headers) {
+    headers = _.extend(headers, opts.headers);
+  }
+
   return ajax({
     "url": url,
     "type": type,
@@ -25,7 +31,7 @@ function doCloudCall(opts, success, fail){
     "data": data,
     "contentType": opts.contentType || "application/json",
     "timeout": opts.timeout || appProps.timeout,
-    "headers": fhparams.getFHHeaders(),
+    "headers": headers,
     "success": success,
     "error": function(req, statusText, error){
       return handleError(fail, req, statusText, error);
