@@ -17,7 +17,7 @@ Lawnchair.adapter('indexed-db', (function(){
     init:function(options, callback) {
       this.idb = getIDB();
       this.waiting = [];
-      var request = this.idb.open(this.name, "2.0");
+      var request = this.idb.open(this.name, 2);
       var self = this;
       var cb = self.fn(self.name, callback);
       var win = function(){ return cb.call(self, self); }
@@ -116,7 +116,7 @@ Lawnchair.adapter('indexed-db', (function(){
 
 
     get:function(key, callback) {
-      if(!this.store) {
+      if(!this.store || !this.db) {
         this.waiting.push(function() {
           this.get(key, callback);
         });
