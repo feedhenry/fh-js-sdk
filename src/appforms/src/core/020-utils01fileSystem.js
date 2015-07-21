@@ -289,7 +289,7 @@ appForm.utils = function(module) {
     function _resolveFile(fileName, cb){
       //This is necessary to get the correct uri for apple. The URI in a file object for iphone does not have the file:// prefix.
       //This gives invalid uri errors when trying to resolve.
-      if(fileName.indexOf("file://") === -1 && window.device.platform !== "Win32NT"){
+      if(fileName.indexOf("file://") === -1 && window.device.platform !== "Win32NT" && window.device.platform !== "windows"){
         fileName = "file://" + fileName;
       }
       window.resolveLocalFileSystemURI(fileName, function(fileEntry){
