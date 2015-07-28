@@ -126,8 +126,9 @@ FieldBarcodeView = FieldView.extend({
     function webBarcode(){
 
       //Web barcode decoding is not currently supported.
-      //TODO This feature will be added later.
-      alert("Barcode Decoding Only Available On-Device");
+      //Using A Navigator Alert If Available.
+      $fh.forms.backbone.alert("Barcode Decoding Only Available On-Device");
+
       $fh.forms.log.e("Web barcode decoding not currently supported");
     }
 

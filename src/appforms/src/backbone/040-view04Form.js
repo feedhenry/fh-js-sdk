@@ -252,14 +252,14 @@ var FormView = BaseView.extend({
 
     this.$el.find("button.fh_appform_button_saveDraft").unbind().bind("click", function() {
       if($fh.forms.config.isStudioMode()){//Studio mode does not submit.
-        alert("Please create a project and interact with the form there.");
+        $fh.forms.backbone.alert("Please create a project and interact with the form there.");
       } else {
         self.saveToDraft();
       }
     });
     this.$el.find("button.fh_appform_button_submit").unbind().bind("click", function() {
       if($fh.forms.config.isStudioMode()){//Studio mode does not submit.
-        alert("Please create a project and interact with the form there.");
+        $fh.forms.backbone.alert("Please create a project and interact with the form there.");
       } else {
         self.submit();
       }

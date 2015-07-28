@@ -83,16 +83,19 @@ var ConfigView = Backbone.View.extend({
         var self = this;
         $fh.forms.log.clearLogs(function() {
             self.$el.find("#_logViewDiv").html("");
-            alert("Logs cleared.");
+            $fh.forms.backbone.alert("Logs cleared.");
         });
     },
     sendLogs: function() {
         $fh.forms.log.sendLogs(function(err) {
+            var message;
             if (err) {
-                alert(err);
+                message = err;
             } else {
-                alert("Log has been sent to:" + $fh.forms.config.get("log_email"));
+                message = "Log has been sent to : " + $fh.forms.config.get("log_email");
             }
+
+            $fh.forms.backbone.alert(message);
         });
     },
     closeViewLogs: function() {
@@ -187,7 +190,7 @@ var ConfigView = Backbone.View.extend({
 
             $fh.forms.config.saveConfig(cb);
         } else {
-            alert("Editing config not permitted.");
+            $fh.forms.backbone.alert("Editing config not permitted.");
         }
     }
 });

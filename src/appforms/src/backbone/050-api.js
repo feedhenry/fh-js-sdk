@@ -57,5 +57,12 @@ $fh.forms.renderFormList = function (params, cb) {
   });
 };
 $fh.forms.backbone = {};
+$fh.forms.backbone.alert = function(message){
+  if(navigator && navigator.notification && navigator.notification.alert){
+    navigator.notification.alert(message);
+  } else {
+    alert(message);
+  }
+};
 $fh.forms.backbone.FormView = FormView;
 $fh.forms.backbone.ConfigView=ConfigView;
