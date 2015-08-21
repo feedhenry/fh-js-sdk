@@ -4,7 +4,8 @@ StepsView = Backbone.View.extend({
   templates: {
       table: '<ul class="pagination pagination-lg col-xs-12"></ul>',
       step: '<li data-index="<%= index %>"><span class="number_container text-center" style="width: <%= width %>%;"><%= step_num %></span></li>',
-      page_title: '<div class="col-xs-12 text-center"><h3 class="fh_appform_page_title"></h3></div>'
+      page_title: '<div class="col-xs-12 text-center"><h3 class="fh_appform_page_title"></h3></div>',
+      page_description: '<div class="col-xs-12 text-center"><h3 class="fh_appform_page_description"></h3></div>'
   },
   events: {
     'click li': 'switchPage'
@@ -44,6 +45,7 @@ StepsView = Backbone.View.extend({
 
     this.$el.append(table);
     this.$el.append(self.templates.page_title);
+    this.$el.append(self.templates.page_description);
     return this;
   },
   switchPage: function(e){
@@ -65,6 +67,7 @@ StepsView = Backbone.View.extend({
     var displayIndex = self.parentView.getDisplayIndex();
     var pageModel = self.parentView.pageViews[self.parentView.pageNum].model;
     var pageName = pageModel.getName();
+    var pageDescription = pageModel.getDescription();
 
     self.$el.find('li:eq(' + displayIndex + ')').addClass('active');
 
@@ -73,6 +76,13 @@ StepsView = Backbone.View.extend({
     }
 
     self.$el.find('.fh_appform_page_title').html(pageName);
+
+    if(pageDescription.length > 0){
+      self.$el.find('.fh_appform_page_description').html(pageDescription);
+    } else {
+      //If there is no description, hide it.
+      self.$el.find('.fh_appform_page_description').hide();
+    }
   }
 
 });
