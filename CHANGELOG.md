@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.7.4 - 2015-08-21 - Niall Donnelly
+
+* FH-1707 - Add Page Description Field
+
 ## 2.7.0 - 2015-07-13 - Jason Madigan
 * FHMOBSDK-78 - Add option to allow users to define custom headers to send via $fh.cloud/$fh.act
 
