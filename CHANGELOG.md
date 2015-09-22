@@ -1,4 +1,6 @@
 # Changelog - FeedHenry Javascript SDK
+## 2.7.5 - 2015-09-22 - Wei Li
+* FH-2052 - Make sure it's possible to link the new uid with the old uid for newly created records 
 
 ## 2.7.4 - 2015-08-21 - Niall Donnelly
 

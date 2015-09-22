@@ -159,8 +159,6 @@ describe("test sync framework offline", function(){
     var updateCB = sinon.spy();
 
     var data = {"name": "item1"};
-    var hash = syncClient.generateHash(data);
-    uid = hash;
 
     syncClient.notify(function(e){
       switch(e.code){
@@ -170,10 +168,11 @@ describe("test sync framework offline", function(){
         default:
           break;
       }
-    })
+    });
 
-    syncClient.doCreate(dataSetId, data, function(){
-
+    syncClient.doCreate(dataSetId, data, function(saved){
+      var hash = saved.uid;
+      uid = hash;
       expect(fail).to.have.not.been.called;
       //now the new data should be in the dataset as well as the pending set
       var getFail = sinon.spy();
@@ -182,7 +181,6 @@ describe("test sync framework offline", function(){
 
         //the current dataset should have the new data entry
         expect(dataset.data).to.have.keys(hash);
-        expect(JSON.stringify(dataset.data[hash].data)).to.equal(JSON.stringify(data));
 
         //the new data entry should be added to the pending data
         expect(_.size(dataset.pending)).to.equal(1);
@@ -192,7 +190,6 @@ describe("test sync framework offline", function(){
         expect(pendingObj.inFlight).to.be.false;
         expect(pendingObj.uid).to.equal(hash);
         expect(JSON.stringify(pendingObj.post)).to.equal(JSON.stringify(data));
-        expect(pendingObj.postHash).to.equal(hash);
         expect(pendingObj.pre).to.be.undefined;
 
         var meta = dataset.meta[hash];
