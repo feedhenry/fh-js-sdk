@@ -516,7 +516,7 @@ var self = {
     });
 
     function storePendingObject(obj) {
-      obj.hash = self.generateHash(obj);
+      obj.hash = obj.hash || self.generateHash(obj);
 
       self.getDataSet(dataset_id, function(dataset) {
 
@@ -545,7 +545,10 @@ var self = {
     pendingObj.postHash = self.generateHash(pendingObj.post);
     pendingObj.timestamp = new Date().getTime();
     if( "create" === action ) {
-      pendingObj.uid = pendingObj.postHash;
+      //this hash value will be returned later on when the cloud returns updates. We can then link the old uid
+      //with new uid
+      pendingObj.hash = self.generateHash(pendingObj);
+      pendingObj.uid = pendingObj.hash;
       storePendingObject(pendingObj);
     } else {
       self.read(dataset_id, uid, function(rec) {
