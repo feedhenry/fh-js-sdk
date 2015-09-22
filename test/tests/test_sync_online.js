@@ -166,7 +166,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
         "cuid": "9F3930FE2A434E0BA0AD6F5A40C77CD7",
         "type": "applied",
         "action": "create",
-        "hash": "22870dd40b175292b3e60d63240d57b4b8b5a623",
+        "hash": pendingHash,
         "uid": "533d775a8e8159d9c6000001",
         "msg": "''"
       }
@@ -175,7 +175,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
         "cuid": "9F3930FE2A434E0BA0AD6F5A40C77CD7",
         "type": "applied",
         "action": "create",
-        "hash": "22870dd40b175292b3e60d63240d57b4b8b5a623",
+        "hash": pendingHash,
         "uid": "533d775a8e8159d9c6000001",
         "msg": "''"
       }
@@ -203,10 +203,10 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
         },
         "update": {},
         "delete": {
-            "9cd301d6d51d038249dd7cfaf3ac88e4f76dfeb2": {}
         },
         "hash": "424e4dff5aa27c2fb7bf0fc74d39b94dae4572eb"
-      }
+      };
+      mockRes1.delete[pendingHash] = {};
 
       reqObj1.respond(200, header, JSON.stringify(mockRes1));
       //verify local dataset contains the same data as server
@@ -857,7 +857,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
                       "type": "failed",
                       "action": "create",
                       "hash": pendingObj.hash,
-                      "uid": pendingObj.postHash,
+                      "uid": pendingObj.hash,
                       "msg": "''"
                     }
 
