@@ -2,7 +2,7 @@
 ## 2.7.5 - 2015-10-01 - Brian Gallagher, Evan Shortiss
 * Include the indexed-db adapter in the grunt build and minor updates to the lawnchair adapter
 * Propagate exception if decrypt receives bad data
-
+* Update bower file
 
 ## 2.7.4 - 2015-08-21 - Niall Donnelly
 
