@@ -30,8 +30,12 @@ var decrypt = function(p, s, f){
   var data = CryptoJS.enc.Hex.parse(p.params.ciphertext);
   var encodeData = CryptoJS.enc.Base64.stringify(data);
   var decrypted = CryptoJS.AES.decrypt(encodeData, CryptoJS.enc.Hex.parse(p.params.key), {iv: CryptoJS.enc.Hex.parse(p.params.iv)});
-  plain_text = decrypted.toString(CryptoJS.enc.Utf8);
-  return s({plaintext:plain_text});
+  
+  try {
+    return s({plaintext:decrypted.toString(CryptoJS.enc.Utf8)});
+  } catch (e) {
+    return f(e);
+  }
 };
 
 module.exports = {
