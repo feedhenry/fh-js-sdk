@@ -786,12 +786,15 @@ appForm.models = function (module) {
         'totalSize': self.getTotalSize(),
         'uploaded': self.getUploadedSize(),
         'retryAttempts': self.getRetryAttempts(),
-        'submissionTransferType': self.get('submissionTransferType')
+        'submissionTransferType': self.get('submissionTransferType'),
+        'submissionRemoteId': self.get('submissionId'),
+        'submissionLocalId': self.get('submissionLocalId')
       };
     var progress = self.getCurrentTask();
     if (progress === null) {
       return rtn;
     } else {
+      //Boolean specifying if the submission JSON has been uploaded.
       rtn.formJSON = true;
       rtn.currentFileIndex = progress;
     }

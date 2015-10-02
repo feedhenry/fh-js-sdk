@@ -955,7 +955,7 @@ appForm.models = function(module) {
     });
   };
   Submission.prototype.getRemoteSubmissionId = function() {
-    return this.get("submissionId", "");
+    return this.get("submissionId") || this.get('_id');
   };
   Submission.prototype.setRemoteSubmissionId = function(submissionId){
     if(submissionId){

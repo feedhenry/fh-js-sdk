@@ -47,6 +47,43 @@ describe("submissions model",function(){
     });
 
   });
+  it ("how to get submission using a local id",function(done){
+    var Form = appForm.models.Form;
+    //load form
+    new Form({formId:testData.formId}, function(err, form) {
+      assert(!err);
+      var submission=appForm.models.submission.newInstance(form);
+      var localId=submission.getLocalId();
+      appForm.models.submissions.saveSubmission(submission,function(err){
+        assert(!err);
+        appForm.models.submissions.getSubmissionByLocalId(localId, function(err, submission){
+          assert.ok(!err, "Expected No Error");
+          assert.equal(localId, submission.getLocalId());
+          done();
+        });
+      });
+    });
+  });
+  it ("how to get submission using a remote id",function(done){
+    var Form = appForm.models.Form;
+    //load form
+    new Form({formId:testData.formId}, function(err, form) {
+      assert(!err);
+      var submission=appForm.models.submission.newInstance(form);
+      var testRemoteId = "remote123456";
+      submission.setRemoteSubmissionId(testRemoteId);
+      var localId=submission.getLocalId();
+      appForm.models.submissions.saveSubmission(submission,function(err){
+        assert(!err);
+        appForm.models.submissions.getSubmissionByRemoteId(testRemoteId, function(err, submission){
+          assert.ok(!err, "Expected No Error");
+          assert.equal(localId, submission.getLocalId());
+          assert.equal(testRemoteId, submission.getRemoteSubmissionId());
+          done();
+        });
+      });
+    });
+  });
   it ("how to get submission meta list for a form id",function(){
     var formId=testData.formId;
     var metaList=appForm.models.submissions.findByFormId(formId);

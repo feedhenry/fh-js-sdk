@@ -280,7 +280,7 @@ appForm.utils = function(module) {
             }
             fe.file(function(file) {
                 //issue CB-9403 on file plugin of windows missing fullPath on File, copying it here from FileEntry
-                if (window.device.platform === "windows" && typeof (file.fullPath) === "undefined") {
+                if (window.device && window.device.platform === "windows" && typeof (file.fullPath) === "undefined") {
                     file.fullPath = fe.nativeURL;
                 }
                 cb(null, file);
