@@ -1,4 +1,11 @@
 # Changelog - FeedHenry Javascript SDK
+
+## 2.8.0 - 2015-10-02 - Niall Donnelly/Wei Li/Shannon Poole
+
+* FH-2299 - Added New Submissions Accessor Functions. Added Progress JSON update. - Niall Donnelly
+* FH-2052 - Make sure it's possible to link the new uid with the old uid for newly created records - Wei Li
+* FH-2366 - Stringify payload for PUT, PATCH, and DELETE cloud calls - Shannon Poole
+
 ## 2.7.5 - 2015-10-01 - Brian Gallagher, Evan Shortiss
 * Include the indexed-db adapter in the grunt build and minor updates to the lawnchair adapter
 * Propagate exception if decrypt receives bad data

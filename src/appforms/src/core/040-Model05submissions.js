@@ -103,6 +103,32 @@ appForm.models = function(module) {
     };
     Submissions.prototype.getSubmissionMetaList = Submissions.prototype.getSubmissions;
     //function alias
+
+
+    //Getting A Submission Model By Local ID
+    Submissions.prototype.getSubmissionByLocalId = function(localId, cb){
+        var self = this;
+        $fh.forms.log.d("Submissions getSubmissionByLocalId", localId);
+        var submissionMeta = self.findMetaByLocalId(localId);
+        if(!submissionMeta){
+            return cb("No submissions for localId: " + localId);
+        }
+
+        self.getSubmissionByMeta(submissionMeta, cb);
+    };
+
+    //Getting A Submission Model By Remote ID
+    Submissions.prototype.getSubmissionByRemoteId = function(remoteId, cb){
+        var self = this;
+        $fh.forms.log.d("Submissions getSubmissionByRemoteId", remoteId);
+        var submissionMeta = self.findMetaByRemoteId(remoteId);
+        if(!submissionMeta){
+            return cb("No submissions for remoteId: " + remoteId);
+        }
+
+        self.getSubmissionByMeta(submissionMeta, cb);
+    };
+
     Submissions.prototype.findMetaByLocalId = function(localId) {
         $fh.forms.log.d("Submissions findMetaByLocalId", localId);
         var submissions = this.get('submissions');
@@ -113,7 +139,7 @@ appForm.models = function(module) {
             }
         }
 
-        //$fh.forms.log.e("Submissions findMetaByLocalId: No submissions for localId: ", localId);
+        $fh.forms.log.e("Submissions findMetaByLocalId: No submissions for localId: ", localId);
         return null;
     };
 
