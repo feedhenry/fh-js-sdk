@@ -1,4 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
+
+## 2.7.6 - 2015-10-06 - Shannon Poole
+* FH-2366 - Stringify payload for PUT, PATCH, and DELETE cloud calls
+
 ## 2.7.5 - 2015-10-01 - Brian Gallagher, Evan Shortiss
 * Include the indexed-db adapter in the grunt build and minor updates to the lawnchair adapter
 * Propagate exception if decrypt receives bad data
