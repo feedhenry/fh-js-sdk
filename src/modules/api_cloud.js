@@ -13,7 +13,7 @@ function doCloudCall(opts, success, fail){
   params = fhparams.addFHParams(params);
   var type = opts.method || "POST";
   var data;
-  if ("POST" === type.toUpperCase()) {
+  if (["POST", "PUT", "PATCH", "DELETE"].indexOf(type.toUpperCase()) !== -1) {
     data = JSON.stringify(params);
   } else {
     data = params;
