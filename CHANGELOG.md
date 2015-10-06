@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.9.0 - 2015-10-06 - Niall Donnelly 
+
+* FH-2330 - Added A Global Event Listener For Appforms Models
+
 ## 2.8.0 - 2015-10-02 - Niall Donnelly/Wei Li/Shannon Poole
 
 * FH-2299 - Added New Submissions Accessor Functions. Added Progress JSON update. - Niall Donnelly

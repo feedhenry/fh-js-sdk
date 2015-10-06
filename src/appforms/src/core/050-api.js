@@ -10,6 +10,43 @@ appForm.api = function (module) {
   module.downloadSubmission = downloadSubmission;
   module.init = appForm.init;
   module.log=appForm.models.log;
+  module._events = {};
+
+  //Registering For Global Events
+  module.on = function(name, func, callOnce){
+    if (!module._events[name]) {
+      module._events[name] = [];
+    }
+    if (module._events[name].indexOf(func) < 0) {
+      module._events[name].push({
+        callOnce: callOnce,
+        func: func
+      });
+    }
+  };
+
+  module.once = function(name, func){
+    module.on(name, func, true);
+  };
+
+  //Emitting A Global Event
+  module.emit = function () {
+    var args = Array.prototype.slice.call(arguments, 0);
+    var eventName = args.shift();
+    var funcDetails = module._events[eventName];
+    if (funcDetails && funcDetails.length > 0) {
+      for (var i = 0; i < funcDetails.length; i++) {
+        var functionToCall = funcDetails[i].func;
+        //If the function was not already called, or is not only set to call once, the call the function,
+        //Otherwise, don't call it.
+        if(!funcDetails.called || !funcDetails.callOnce){
+          funcDetails.called = true;
+          functionToCall.apply(this, args);
+        }
+      }
+    }
+  };
+
   var _submissions = null;
   var waitOnSubmission = {};
   var formConfig = appForm.models.config;

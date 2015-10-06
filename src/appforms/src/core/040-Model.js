@@ -30,17 +30,32 @@ appForm.models = function (module) {
     }
   };
 
+  Model.prototype.getType = function(){
+    return this.get('_type');
+  };
+
   Model.prototype.clearEvents = function(){
     this.events = {};
   };
   Model.prototype.emit = function () {
     var args = Array.prototype.slice.call(arguments, 0);
-    var e = args.shift();
-    var funcs = this.events[e];
+    var eventName = args.shift();
+    var funcs = this.events[eventName];
+
+    var globalArgs = args.slice(0);
+
     if (funcs && funcs.length > 0) {
       for (var i = 0; i < funcs.length; i++) {
         var func = funcs[i];
         func.apply(this, args);
+        //Also emitting a global event if the
+        var type = this.getType();
+        if(type){
+          var globalEmitName = this.utils.generateGlobalEventName(type, eventName);
+          globalArgs.unshift(globalEmitName);
+          $fh.forms.emit.apply(this, globalArgs);
+        }
+
       }
     }
   };
