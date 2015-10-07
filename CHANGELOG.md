@@ -1,9 +1,13 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.10.0 - 2015-10-07 - Niall Donnelly 
+
+* FH-2290 - Added Event Driven Approach To $fh.forms.downloadSubmission API.
+
 ## 2.9.0 - 2015-10-06 - Niall Donnelly 
 
 * FH-2330 - Added A Global Event Listener For Appforms Models
-* FH-2340 - Populating the _id parameter for uploaded submissions
+* FH-2340 - Populating the _id parameter for uploaded submissions.
 
 ## 2.8.0 - 2015-10-02 - Niall Donnelly/Wei Li/Shannon Poole
 
