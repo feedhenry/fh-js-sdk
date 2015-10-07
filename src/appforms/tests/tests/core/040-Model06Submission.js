@@ -324,6 +324,8 @@ describe("Submission model", function() {
                 assert.ok(submissionId);
                 assert.ok(submission.getLocalId());
                 assert.ok(submission.getRemoteSubmissionId());
+                //The _id field should be set
+                assert.equal(submission.getRemoteSubmissionId(), submission.get('_id'));
                 done();
             });
             submission.submit(function(err) {

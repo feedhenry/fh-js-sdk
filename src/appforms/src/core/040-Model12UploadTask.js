@@ -660,7 +660,7 @@ appForm.models = function (module) {
         if(_err){
           return cb(_err);
         }
-        model.set('submissionId', submissionId);
+        model.setRemoteSubmissionId(submissionId);
         model.submitted(cb);
       });
     }

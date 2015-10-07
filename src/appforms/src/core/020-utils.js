@@ -5,6 +5,9 @@ appForm.utils = function(module) {
   module.getTime = getTime;
   module.send=send;
   module.isPhoneGap = isPhoneGap;
+  module.generateGlobalEventName = function(type, eventName){
+    return "" + type + ":" + eventName;
+  };
 
   function isPhoneGap() {
     return (typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined");

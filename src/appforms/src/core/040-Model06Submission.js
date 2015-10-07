@@ -458,6 +458,9 @@ appForm.models = function(module) {
   Submission.prototype.getStatus = function() {
     return this.get('status');
   };
+  Submission.prototype.getErrorMessage = function(){
+    return this.get('errorMessage', 'No Error');
+  };
   /**
    * check if a target status is valid
    * @param  {[type]}  targetStatus [description]
@@ -960,6 +963,7 @@ appForm.models = function(module) {
   Submission.prototype.setRemoteSubmissionId = function(submissionId){
     if(submissionId){
       this.set("submissionId", submissionId);
+      this.set("_id", submissionId);
     }
   };
   return module;

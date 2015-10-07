@@ -178,4 +178,70 @@ describe("$fh.forms API", function() {
       done();
     });
   });
+  it("$fh.forms.on function should register a global event emitter", function(done){
+    //First Register A Function to be emitted
+    var modelEventCalled = false;
+    var firstArg = "arg1";
+    var secondArg = "arg2";
+
+    var testModel = new appForm.models.Model({
+      _type: "somemodel"
+    });
+
+    testModel.on('someevent', function(arg1, arg2){
+      modelEventCalled = true;
+      assert.equal(firstArg, arg1);
+      assert.equal(secondArg, arg2);
+      assert.strictEqual(this, testModel);
+    });
+
+    //A Global Monitoring Function
+    var functionToEmit = function(arg1, arg2){
+      assert.equal(firstArg, arg1);
+      assert.equal(secondArg, arg2);
+      assert.equal(true, modelEventCalled);
+      assert.strictEqual(this, testModel);
+      done();
+    };
+
+    appForm.api.on("somemodel:someevent", functionToEmit);
+
+    testModel.emit("someevent", firstArg, secondArg);
+  });
+  it("$fh.forms.once function should register a global event emitter to be called only once", function(done){
+    //First Register A Function to be emitted
+    var modelEventCalled = false;
+    var numTimesGlobalEventCalled = 0;
+    var firstArg = "arg1";
+    var secondArg = "arg2";
+
+    var testModel = new appForm.models.Model({
+      _type: "somemodel"
+    });
+
+    testModel.on('onceevent', function(arg1, arg2){
+      modelEventCalled = true;
+      assert.equal(firstArg, arg1);
+      assert.equal(secondArg, arg2);
+      assert.strictEqual(this, testModel);
+    });
+
+    //A Global Monitoring Function
+    var functionToEmitOnce = function(arg1, arg2){
+      numTimesGlobalEventCalled++;
+      assert.equal(1, numTimesGlobalEventCalled);
+      assert.equal(firstArg, arg1);
+      assert.equal(secondArg, arg2);
+      //The third argument should not exist
+      assert.equal(undefined, arguments[2]);
+      assert.equal(true, modelEventCalled);
+      assert.strictEqual(this, testModel);
+      done();
+    };
+
+    appForm.api.once("somemodel:onceevent", functionToEmitOnce);
+
+    testModel.emit("onceevent", firstArg, secondArg);
+    testModel.emit("onceevent", firstArg, secondArg, "someotherarg");
+  });
 });
