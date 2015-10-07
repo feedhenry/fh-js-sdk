@@ -963,6 +963,7 @@ appForm.models = function(module) {
   Submission.prototype.setRemoteSubmissionId = function(submissionId){
     if(submissionId){
       this.set("submissionId", submissionId);
+      this.set("_id", submissionId);
     }
   };
   return module;

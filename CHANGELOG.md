@@ -3,6 +3,7 @@
 ## 2.9.0 - 2015-10-06 - Niall Donnelly 
 
 * FH-2330 - Added A Global Event Listener For Appforms Models
+* FH-2340 - Populating the _id parameter for uploaded submissions
 
 ## 2.8.0 - 2015-10-02 - Niall Donnelly/Wei Li/Shannon Poole
 
