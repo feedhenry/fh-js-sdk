@@ -150,8 +150,34 @@ describe("$fh.forms API", function() {
       assert.ok(submission);
       console.log("Submission Data: ", submission);
       assert.ok(submission.getRemoteSubmissionId().length > 0);
-      done();
+      submission.clearLocal(function(err){
+        assert.ok(!err, "Expected No Error When Clearing Submission");
+        done(err);
+      });
     });
+  });
+  it("$fh.forms.downloadSubmission No Callback. Global Event Listener Instead", function(done){
+    this.timeout(3000);
+    var submissionId = "submissionData";
+    var downloadSubmission = appForm.api.downloadSubmission;
+    
+    appForm.api.once('submission:error', function(err){
+      assert.ok(!err, "Expected No Error " + err);
+      done(err);
+    });
+    
+    appForm.api.once('submission:downloaded', function(remoteSubmissionId){
+      assert.equal("submissionData", remoteSubmissionId);
+      assert.equal("submissionData", this.getRemoteSubmissionId());
+      //Clearing Out The Submission.
+      this.clearLocal(function(err){
+        assert.ok(!err, "Expected No Error When Clearing Submission");
+        done(err);
+      });
+    });
+
+    //In this case, the submission is queued for download, but does not wait for a download to complete.
+    downloadSubmission({submissionId: submissionId});
   });
   it("$fh.forms.downloadSubmission with files", function(done){
     this.timeout(10000);

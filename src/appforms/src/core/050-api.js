@@ -33,14 +33,15 @@ appForm.api = function (module) {
   module.emit = function () {
     var args = Array.prototype.slice.call(arguments, 0);
     var eventName = args.shift();
-    var funcDetails = module._events[eventName];
-    if (funcDetails && funcDetails.length > 0) {
-      for (var i = 0; i < funcDetails.length; i++) {
-        var functionToCall = funcDetails[i].func;
+    var funcDetailsArray = module._events[eventName];
+    if (funcDetailsArray && funcDetailsArray.length > 0) {
+      for (var i = 0; i < funcDetailsArray.length; i++) {
+        var functionDetails = funcDetailsArray[i];
+        var functionToCall = funcDetailsArray[i].func;
         //If the function was not already called, or is not only set to call once, the call the function,
         //Otherwise, don't call it.
-        if(!funcDetails.called || !funcDetails.callOnce){
-          funcDetails.called = true;
+        if(!functionDetails.called || !functionDetails.callOnce){
+          functionDetails.called = true;
           functionToCall.apply(this, args);
         }
       }
@@ -276,13 +277,18 @@ appForm.api = function (module) {
      * @param {function} cb (err, downloadTask)
      * */
     function downloadSubmission(params, cb) {
+      $fh.forms.log.d("downloadSubmission called", params);
       params = params ? params : {};
-      //cb = cb ? cb : defaultFunction;
-      var submissionToDownload = null;
+      var waitCallbackPassed = typeof(cb) === "function";
+      cb = typeof(cb) === "function" ? cb : function(){};
 
-      if(typeof(cb) !== 'function'){
-        return null;
+      //There should be a submission id to download.
+      if(!params.submissionId){
+        $fh.forms.log.e("No submissionId passed to download a submission");
+        return cb("No submissionId passed to download a submission");
       }
+
+      var submissionToDownload = null;
 
       function finishSubmissionDownload(err) {
         err = typeof(err) === "string" && err.length === 24 ? null : err;
@@ -305,64 +311,65 @@ appForm.api = function (module) {
         }
       }
 
-      $fh.forms.log.d("downloadSubmission called", params);
+      $fh.forms.log.d("downloadSubmission SubmissionId exists" + params.submissionId);
+      var submissionAlreadySaved = appForm.models.submissions.findMetaByRemoteId(params.submissionId);
 
-      if (params.submissionId) {
-        $fh.forms.log.d("downloadSubmission SubmissionId exists" + params.submissionId);
-        var submissionAlreadySaved = appForm.models.submissions.findMetaByRemoteId(params.submissionId);
+      if (submissionAlreadySaved === null) {
 
-        if (submissionAlreadySaved === null) {
+        $fh.forms.log.d("downloadSubmission submission does not exist, downloading", params);
+        submissionToDownload = new appForm.models.submission.newInstance(null, {
+          submissionId: params.submissionId
+        });
 
-          $fh.forms.log.d("downloadSubmission submission does not exist, downloading", params);
-          submissionToDownload = new appForm.models.submission.newInstance(null, {
-            submissionId: params.submissionId
-          });
+        submissionToDownload.on('error', finishSubmissionDownload);
 
-          submissionToDownload.on('error', finishSubmissionDownload);
+        submissionToDownload.on('downloaded', finishSubmissionDownload);
 
-          submissionToDownload.on('downloaded', finishSubmissionDownload);
+        if (typeof(params.updateFunction) === 'function') {
+          submissionToDownload.on('progress', params.updateFunction);
+        }
 
-          if (typeof(params.updateFunction) === 'function') {
-            submissionToDownload.on('progress', params.updateFunction);
+        //If there is no callback function, then just trigger the download.
+        //Users can register global listeners for submission downloads events now.
+        if(typeof(cb) === "function"){
+          if(waitOnSubmission[params.submissionId]){
+            waitOnSubmission[params.submissionId].push(cb);
+          } else {
+            waitOnSubmission[params.submissionId] = [];
+            waitOnSubmission[params.submissionId].push(cb);
           }
+        }
 
-          
+        submissionToDownload.download(function(err) {
+          if (err) {
+            $fh.forms.log.e("Error queueing submission for download " + err);
+            return cb(err);
+          }
+        });
+      } else {
+        $fh.forms.log.d("downloadSubmission submission exists", params);
+
+        //Submission was created, but not finished downloading
+        if (submissionAlreadySaved.status !== "downloaded" && submissionAlreadySaved.status !== "submitted") {
           if(typeof(cb) === "function"){
             if(waitOnSubmission[params.submissionId]){
-              waitOnSubmission[params.submissionId].push(cb);  
+              waitOnSubmission[params.submissionId].push(cb);
             } else {
-               waitOnSubmission[params.submissionId] = [];
-               waitOnSubmission[params.submissionId].push(cb);  
-            }  
+              waitOnSubmission[params.submissionId] = [];
+              waitOnSubmission[params.submissionId].push(cb);
+            }
           }
-
-          submissionToDownload.download(function(err) {
-            if (err) {
-              $fh.forms.log.e("Error queueing submission for download " + err);
+        } else {
+          appForm.models.submissions.getSubmissionByMeta(submissionAlreadySaved, function(err, submission){
+            if(err){
               return cb(err);
             }
+
+            //If the submission has already been downloaded - emit the downloaded event again
+            submission.emit('downloaded', submission.getRemoteSubmissionId());
+            return cb(undefined, submission);
           });
-        } else {
-          $fh.forms.log.d("downloadSubmission submission exists", params);
-
-          //Submission was created, but not finished downloading
-          if (submissionAlreadySaved.status !== "downloaded" && submissionAlreadySaved.status !== "submitted") {
-            if(typeof(cb) === "function"){
-              if(waitOnSubmission[params.submissionId]){
-                waitOnSubmission[params.submissionId].push(cb);  
-              } else {
-                 waitOnSubmission[params.submissionId] = [];
-                 waitOnSubmission[params.submissionId].push(cb);  
-              }  
-            }
-          } else {
-            appForm.models.submissions.getSubmissionByMeta(submissionAlreadySaved, cb);
-          }
-
         }
-      } else {
-        $fh.forms.log.e("No submissionId passed to download a submission");
-        return cb("No submissionId passed to download a submission");
       }
     }
   return module;
