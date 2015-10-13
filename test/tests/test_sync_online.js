@@ -1049,5 +1049,50 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
 
   });
 
+  it("test uid change", function(done){
+    syncClient.doCreate(dataSetId, {name: "item17"}, function(created){
+      var olduid = created.uid;
+      syncClient.doRead(dataSetId, olduid, function(data){
+        expect(data).not.to.be.null;
+        expect(data.data.name).to.equal('item17');
 
+        syncClient.getDataset(dataSetId, function(dataset){
+          var pendings = dataset.pending;
+          expect(_.size(pendings)).to.equal(1);
+          onSync(function(){
+            var reqObj = requests[0];
+            var reqBody = JSON.parse(reqObj.requestBody);
+
+            var mockRes1 = {
+              "updates": {
+                "applied": {
+                }
+              }
+            }
+
+            mockRes1.updates.applied[olduid] = {
+              "hash": olduid,
+              "uid": "newuid",
+              "action": "create",
+              "type": "applied",
+              "msg": ""
+            }
+
+            reqObj.respond(200, header, JSON.stringify(mockRes1));
+
+            syncClient.doRead(dataSetId, 'newuid', function(data){
+              expect(data).not.to.be.null;
+              expect(data.data.name).to.equal('item17');
+
+              syncClient.doRead(dataSetId, olduid, function(data){
+                expect(data).not.to.be.null;
+                expect(data.data.name).to.equal('item17');
+                done();
+              });
+            });
+          });
+        });  
+      });
+    });
+  });
 });
