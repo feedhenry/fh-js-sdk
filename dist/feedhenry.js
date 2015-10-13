@@ -4778,119 +4778,6 @@ Lawnchair.adapter('memory', (function(){
     }
 /////
 })());
-Lawnchair.adapter('titanium', (function(global){
-
-    return {
-        // boolean; true if the adapter is valid for the current environment
-        valid: function() {
-            return typeof Titanium !== 'undefined';
-        },
-
-        // constructor call and callback. 'name' is the most common option
-        init: function( options, callback ) {
-          if (callback){
-            return this.fn('init', callback).call(this)
-          }
-        },
-
-        // returns all the keys in the store
-        keys: function( callback ) {
-          if (callback) {
-            return this.fn('keys', callback).call(this, Titanium.App.Properties.listProperties());
-          }
-          return this;
-        },
-
-        // save an object
-        save: function( obj, callback ) {
-            var saveRes = Titanium.App.Properties.setObject(obj.key, obj);
-            if (callback) {
-              return this.fn('save', callback).call(this, saveRes);
-            }
-            return this;
-        },
-
-        // batch save array of objs
-        batch: function( objs, callback ) {
-            var me = this;
-            var saved = [];
-            for ( var i = 0, il = objs.length; i < il; i++ ) {
-                me.save( objs[i], function( obj ) {
-                    saved.push( obj );
-                    if ( saved.length === il && callback ) {
-                        me.lambda( callback ).call( me, saved );
-                    }
-                });
-            }
-            return this;
-        },
-
-        // retrieve obj (or array of objs) and apply callback to each
-        get: function( key /* or array */, callback ) {
-            var me = this;
-            if ( this.isArray( key ) ) {
-                var values = [];
-                for ( var i = 0, il = key.length; i < il; i++ ) {
-                    me.get( key[i], function( result ) {
-                        if ( result ) values.push( result );
-                        if ( values.length === il && callback ) {
-                            me.lambda( callback ).call( me, values );
-                        }
-                    });
-                }
-            } else {
-                return this.fn('init', callback).call(this, Titanium.App.Properties.getObject(key));
-            }
-            return this;
-        },
-
-        // check if an obj exists in the collection
-        exists: function( key, callback ) {
-            if (callback){
-              if (Titanium.App.Properties.getObject(key)){
-                return callback(this, true);
-              }else{
-                return callback(this, false);
-              }
-            }
-
-            return this;
-        },
-
-        // returns all the objs to the callback as an array
-        all: function( callback ) {
-            var me = this;
-            if ( callback ) {
-                this.keys(function( keys ) {
-                    if ( !keys.length ) {
-                        me.fn( me.name, callback ).call( me, [] );
-                    } else {
-                        me.get( keys, function( values ) {
-                            me.fn( me.name, callback ).call( me, values );
-                        });
-                    }
-                });
-            }
-            return this;
-        },
-
-        // remove a doc or collection of em
-        remove: function( key /* or object */, callback ) {
-            var me = this;
-            Titanium.App.Properties.removeProperty(key);
-            if (callback) {
-              return this.fn('remove', callback).call(this);
-            }
-            return this;
-        },
-
-        // destroy everything
-        nuke: function( callback ) {
-            // nah, lets not do that
-        }
-    };
-}(this)));
-
 ; browserify_shim__define__module__export__(typeof Lawnchair != "undefined" ? Lawnchair : window.Lawnchair);
 
 }).call(global, undefined, undefined, undefined, undefined, function defineExport(ex) { module.exports = ex; });
@@ -12238,9 +12125,7 @@ var self = {
   notify_callback_map : {},
 
   init_is_called: false,
-
-  change_history_size: 5,
-
+  
   //this is used to map the temp data uid (created on client) to the real uid (created in the cloud)
   uid_map: {},
 
@@ -12730,19 +12615,6 @@ var self = {
     }
   },
 
-  updateChangeHistory: function(dataset, pending){
-    if(pending.action === 'update'){
-      dataset.changeHistory = dataset.changeHistory || {};
-      dataset.changeHistory[pending.uid] = dataset.changeHistory[pending.uid] || [];
-      if(dataset.changeHistory[pending.uid].indexOf(pending.preHash) === -1){
-        dataset.changeHistory[pending.uid].push(pending.preHash);
-        if(dataset.changeHistory[pending.uid].length > self.change_history_size){
-          dataset.changeHistory[pending.uid].shift();
-        }
-      }
-    }
-  },
-
   syncLoop: function(dataset_id) {
     self.getDataSet(dataset_id, function(dataSet) {
     
@@ -12771,7 +12643,6 @@ var self = {
             var pending = dataSet.pending;
             var pendingArray = [];
             for(var i in pending ) {
-              self.updateChangeHistory(dataSet, pending[i]);
               // Mark the pending records we are about to submit as inflight and add them to the array for submission
               // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
               // Don't add delayed records
@@ -12896,6 +12767,10 @@ var self = {
         'dataset_id': dataset_id,
         'req': syncRecParams
       }, function(res) {
+        self.consoleLog('syncRecords Res before applying pending changes :: ' + JSON.stringify(res));
+        self.applyPendingChangesToRecords(dataSet, res);
+        self.consoleLog('syncRecords Res after apply pending changes :: ' + JSON.stringify(res));
+
         var i;
 
         if (res.create) {
@@ -12904,17 +12779,12 @@ var self = {
             self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "create");
           }
         }
-        var existingPendingPreHashes = self.existingPendingPreHashMap(dataSet);
+        
         if (res.update) {
           for (i in res.update) {
-            if(existingPendingPreHashes[i] && existingPendingPreHashes[i].indexOf(res.update[i].hash) > -1){
-              //the returned update data has been updated locally, so it should keep local copy
-              self.consoleLog("skip update from remote for uid :: " + i + " :: hash = " + res.update[i].hash + ' :: data = ' + JSON.stringify(res.update[i].data));
-            } else {
-              localDataSet[i].hash = res.update[i].hash;
-              localDataSet[i].data = res.update[i].data;
-              self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
-            }
+            localDataSet[i].hash = res.update[i].hash;
+            localDataSet[i].data = res.update[i].data;
+            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
           }
         }
         if (res['delete']) {
@@ -12946,6 +12816,26 @@ var self = {
       self.saveDataSet(dataset_id);
       self.doNotify(dataset_id, dataset.hash, notification, status);
     });
+  },
+
+  applyPendingChangesToRecords: function(dataset, records){
+    var pendings = dataset.pending;
+    for(var pendingUid in pendings){
+      if(pendings.hasOwnProperty(pendingUid)){
+        var pendingObj = pendings[pendingUid];
+        var uid = pendingObj.uid;
+        //if the records contain any thing about the data records that are currently in pendings,
+        //it means there are local changes that haven't been applied to the cloud yet,
+        //so remove those records from the response to make sure the local data will not be overridden
+        var keys = ['create', 'update', 'delete'];
+        for(var i = 0; i<keys.length;i++){
+          var type = keys[i];
+          if(records[type] && records[type][uid]){
+            delete records[type][uid];
+          }
+        }
+      }
+    }
   },
 
   checkUidChanges: function(dataset, appliedUpdates){
@@ -12993,11 +12883,6 @@ var self = {
         }
       }
     }
-  },
-
-  existingPendingPreHashMap: function(dataset){
-    var pendingPreHashes = dataset.changeHistory || {};
-    return pendingPreHashes;
   },
 
   checkDatasets: function() {

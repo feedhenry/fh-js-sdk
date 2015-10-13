@@ -87,9 +87,7 @@ var self = {
   notify_callback_map : {},
 
   init_is_called: false,
-
-  change_history_size: 5,
-
+  
   //this is used to map the temp data uid (created on client) to the real uid (created in the cloud)
   uid_map: {},
 
@@ -579,19 +577,6 @@ var self = {
     }
   },
 
-  updateChangeHistory: function(dataset, pending){
-    if(pending.action === 'update'){
-      dataset.changeHistory = dataset.changeHistory || {};
-      dataset.changeHistory[pending.uid] = dataset.changeHistory[pending.uid] || [];
-      if(dataset.changeHistory[pending.uid].indexOf(pending.preHash) === -1){
-        dataset.changeHistory[pending.uid].push(pending.preHash);
-        if(dataset.changeHistory[pending.uid].length > self.change_history_size){
-          dataset.changeHistory[pending.uid].shift();
-        }
-      }
-    }
-  },
-
   syncLoop: function(dataset_id) {
     self.getDataSet(dataset_id, function(dataSet) {
     
@@ -620,7 +605,6 @@ var self = {
             var pending = dataSet.pending;
             var pendingArray = [];
             for(var i in pending ) {
-              self.updateChangeHistory(dataSet, pending[i]);
               // Mark the pending records we are about to submit as inflight and add them to the array for submission
               // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
               // Don't add delayed records
@@ -745,6 +729,10 @@ var self = {
         'dataset_id': dataset_id,
         'req': syncRecParams
       }, function(res) {
+        self.consoleLog('syncRecords Res before applying pending changes :: ' + JSON.stringify(res));
+        self.applyPendingChangesToRecords(dataSet, res);
+        self.consoleLog('syncRecords Res after apply pending changes :: ' + JSON.stringify(res));
+
         var i;
 
         if (res.create) {
@@ -753,17 +741,12 @@ var self = {
             self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "create");
           }
         }
-        var existingPendingPreHashes = self.existingPendingPreHashMap(dataSet);
+        
         if (res.update) {
           for (i in res.update) {
-            if(existingPendingPreHashes[i] && existingPendingPreHashes[i].indexOf(res.update[i].hash) > -1){
-              //the returned update data has been updated locally, so it should keep local copy
-              self.consoleLog("skip update from remote for uid :: " + i + " :: hash = " + res.update[i].hash + ' :: data = ' + JSON.stringify(res.update[i].data));
-            } else {
-              localDataSet[i].hash = res.update[i].hash;
-              localDataSet[i].data = res.update[i].data;
-              self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
-            }
+            localDataSet[i].hash = res.update[i].hash;
+            localDataSet[i].data = res.update[i].data;
+            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
           }
         }
         if (res['delete']) {
@@ -795,6 +778,26 @@ var self = {
       self.saveDataSet(dataset_id);
       self.doNotify(dataset_id, dataset.hash, notification, status);
     });
+  },
+
+  applyPendingChangesToRecords: function(dataset, records){
+    var pendings = dataset.pending;
+    for(var pendingUid in pendings){
+      if(pendings.hasOwnProperty(pendingUid)){
+        var pendingObj = pendings[pendingUid];
+        var uid = pendingObj.uid;
+        //if the records contain any thing about the data records that are currently in pendings,
+        //it means there are local changes that haven't been applied to the cloud yet,
+        //so remove those records from the response to make sure the local data will not be overridden
+        var keys = ['create', 'update', 'delete'];
+        for(var i = 0; i<keys.length;i++){
+          var type = keys[i];
+          if(records[type] && records[type][uid]){
+            delete records[type][uid];
+          }
+        }
+      }
+    }
   },
 
   checkUidChanges: function(dataset, appliedUpdates){
@@ -842,11 +845,6 @@ var self = {
         }
       }
     }
-  },
-
-  existingPendingPreHashMap: function(dataset){
-    var pendingPreHashes = dataset.changeHistory || {};
-    return pendingPreHashes;
   },
 
   checkDatasets: function() {

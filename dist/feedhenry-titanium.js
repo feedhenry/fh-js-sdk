@@ -1,3 +1,15 @@
+if (typeof Titanium !== 'undefined'){
+  if (typeof window === 'undefined'){
+    window = { top : {}, location : { protocol : '', href : '' } };
+  }
+  if (typeof document === 'undefined'){
+    document = { location : { href : '', search : '' } };
+  }
+  if (typeof navigator === 'undefined'){
+    navigator = { userAgent : 'Titanium' };
+  }
+}
+
 !function(e){if("object"==typeof exports)module.exports=e();else if("function"==typeof define&&define.amd)define(e);else{var f;"undefined"!=typeof window?f=window:"undefined"!=typeof global?f=global:"undefined"!=typeof self&&(f=self),f.feedhenry=e()}}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(_dereq_,module,exports){
 (function (global){
 ;__browserify_shim_require__=_dereq_;(function browserifyShim(module, exports, _dereq_, define, browserify_shim__define__module__export__) {
@@ -12128,9 +12140,7 @@ var self = {
   notify_callback_map : {},
 
   init_is_called: false,
-
-  change_history_size: 5,
-
+  
   //this is used to map the temp data uid (created on client) to the real uid (created in the cloud)
   uid_map: {},
 
@@ -12620,19 +12630,6 @@ var self = {
     }
   },
 
-  updateChangeHistory: function(dataset, pending){
-    if(pending.action === 'update'){
-      dataset.changeHistory = dataset.changeHistory || {};
-      dataset.changeHistory[pending.uid] = dataset.changeHistory[pending.uid] || [];
-      if(dataset.changeHistory[pending.uid].indexOf(pending.preHash) === -1){
-        dataset.changeHistory[pending.uid].push(pending.preHash);
-        if(dataset.changeHistory[pending.uid].length > self.change_history_size){
-          dataset.changeHistory[pending.uid].shift();
-        }
-      }
-    }
-  },
-
   syncLoop: function(dataset_id) {
     self.getDataSet(dataset_id, function(dataSet) {
     
@@ -12661,7 +12658,6 @@ var self = {
             var pending = dataSet.pending;
             var pendingArray = [];
             for(var i in pending ) {
-              self.updateChangeHistory(dataSet, pending[i]);
               // Mark the pending records we are about to submit as inflight and add them to the array for submission
               // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
               // Don't add delayed records
@@ -12786,6 +12782,10 @@ var self = {
         'dataset_id': dataset_id,
         'req': syncRecParams
       }, function(res) {
+        self.consoleLog('syncRecords Res before applying pending changes :: ' + JSON.stringify(res));
+        self.applyPendingChangesToRecords(dataSet, res);
+        self.consoleLog('syncRecords Res after apply pending changes :: ' + JSON.stringify(res));
+
         var i;
 
         if (res.create) {
@@ -12794,17 +12794,12 @@ var self = {
             self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "create");
           }
         }
-        var existingPendingPreHashes = self.existingPendingPreHashMap(dataSet);
+        
         if (res.update) {
           for (i in res.update) {
-            if(existingPendingPreHashes[i] && existingPendingPreHashes[i].indexOf(res.update[i].hash) > -1){
-              //the returned update data has been updated locally, so it should keep local copy
-              self.consoleLog("skip update from remote for uid :: " + i + " :: hash = " + res.update[i].hash + ' :: data = ' + JSON.stringify(res.update[i].data));
-            } else {
-              localDataSet[i].hash = res.update[i].hash;
-              localDataSet[i].data = res.update[i].data;
-              self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
-            }
+            localDataSet[i].hash = res.update[i].hash;
+            localDataSet[i].data = res.update[i].data;
+            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
           }
         }
         if (res['delete']) {
@@ -12838,26 +12833,47 @@ var self = {
     });
   },
 
+  applyPendingChangesToRecords: function(dataset, records){
+    var pendings = dataset.pending;
+    for(var pendingUid in pendings){
+      if(pendings.hasOwnProperty(pendingUid)){
+        var pendingObj = pendings[pendingUid];
+        var uid = pendingObj.uid;
+        //if the records contain any thing about the data records that are currently in pendings,
+        //it means there are local changes that haven't been applied to the cloud yet,
+        //so remove those records from the response to make sure the local data will not be overridden
+        var keys = ['create', 'update', 'delete'];
+        for(var i = 0; i<keys.length;i++){
+          var type = keys[i];
+          if(records[type] && records[type][uid]){
+            delete records[type][uid];
+          }
+        }
+      }
+    }
+  },
+
   checkUidChanges: function(dataset, appliedUpdates){
-    if(appliedUpdates && appliedUpdates.length > 0){
+    if(appliedUpdates){
       var new_uids = {};
       var changeUidsCount = 0;
       for(var update in appliedUpdates){
         if(appliedUpdates.hasOwnProperty(update)){
-          var action = appliedUpdates[update].action;
+          var applied_update = appliedUpdates[update];
+          var action = applied_update.action;
           if(action && action === 'create'){
             //we are receving the results of creations, at this point, we will have the old uid(the hash) and the real uid generated by the cloud
-            var newUid = update.uid;
-            var oldUid = update.hash;
+            var newUid = applied_update.uid;
+            var oldUid = applied_update.hash;
             changeUidsCount++;
             //remember the mapping
             self.uid_map[oldUid] = newUid;
             new_uids[oldUid] = newUid;
             //update the data uid in the dataset
-            var record = dataset[oldUid];
+            var record = dataset.data[oldUid];
             if(record){
-              dataset[newUid] = record;
-              delete dataset[oldUid];
+              dataset.data[newUid] = record;
+              delete dataset.data[oldUid];
             }
 
             //update the old uid in meta data
@@ -12882,11 +12898,6 @@ var self = {
         }
       }
     }
-  },
-
-  existingPendingPreHashMap: function(dataset){
-    var pendingPreHashes = dataset.changeHistory || {};
-    return pendingPreHashes;
   },
 
   checkDatasets: function() {
@@ -13534,7 +13545,9 @@ module.exports = {
   checkHasCustomSync: self.checkHasCustomSync,
   clearCache: self.clearCache
 };
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":24,"./api_cloud":26}],"zDENqi":[function(_dereq_,module,exports){
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":24,"./api_cloud":26}],"./appProps":[function(_dereq_,module,exports){
+module.exports=_dereq_('zDENqi');
+},{}],"zDENqi":[function(_dereq_,module,exports){
 var consts = _dereq_("../constants");
 var ajax = _dereq_("../ajax");
 var logger = _dereq_("../logger");
@@ -13566,11 +13579,7 @@ module.exports = {
   setAppProps: setAppProps
 };
 
-},{"../ajax":23,"../constants":32,"../logger":42,"../queryMap":44}],"./modules/appProps":[function(_dereq_,module,exports){
-module.exports=_dereq_('zDENqi');
-},{}],"./cookies":[function(_dereq_,module,exports){
-module.exports=_dereq_('RdeKcl');
-},{}],"RdeKcl":[function(_dereq_,module,exports){
+},{"../ajax":23,"../constants":32,"../logger":42,"../queryMap":44}],"RdeKcl":[function(_dereq_,module,exports){
 module.exports = {
   readCookieValue  : function (cookie_name) {
     if (typeof Titanium !== 'undefined'){
@@ -13585,6 +13594,8 @@ module.exports = {
     }
   }
 };
+},{}],"./cookies":[function(_dereq_,module,exports){
+module.exports=_dereq_('RdeKcl');
 },{}],55:[function(_dereq_,module,exports){
 module.exports = {
   createUUID : function () {
