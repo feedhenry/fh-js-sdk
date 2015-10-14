@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.6.2 - 2015-10-14 - Niall Donnelly 
+
+* FH-2290 - Fixed File Extension For Cached Files
+
 ##2.6.0 - 2015-03-26 - Wei Li
 * FHMOBSDK-53 - Fix an issue with local params
 * FHMOBSDK-56 - Fix an issue with the sync framework.
