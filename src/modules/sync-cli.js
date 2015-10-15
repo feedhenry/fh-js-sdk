@@ -775,18 +775,12 @@ var self = {
         if(records.create){
           var creates = records.create;
           if(creates && creates[uid]){
-            //the record only exists remotely, which means it could be deleted locally
-            pendingObj.pre  = creates[uid].data;
-            pendingObj.preHash = creates[uid].hash;
             delete creates[uid];
           }
         }
         if(records.update){
           var updates = records.update;
           if(updates && updates[uid]){
-            //the value changed remotly, update the pre value in pending
-            pendingObj.pre  = updates[uid].data;
-            pendingObj.preHash = updates[uid].hash;
             delete updates[uid];
           }
         }
