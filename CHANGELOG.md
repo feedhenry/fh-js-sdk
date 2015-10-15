@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.10.1 - 2015-10-14 - Niall Donnelly 
+
+* FH-2290 - Fixed File Extension For Cached Files
+
 ## 2.10.0 - 2015-10-07 - Niall Donnelly 
 
 * FH-2290 - Added Event Driven Approach To $fh.forms.downloadSubmission API.
