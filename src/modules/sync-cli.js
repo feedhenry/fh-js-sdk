@@ -772,23 +772,28 @@ var self = {
         //it means there are local changes that haven't been applied to the cloud yet,
         //so update the pre value of each pending record to relect the latest status from cloud
         //and remove them from the response
-        var keys = ['create', 'update', 'delete'];
-        for(var i = 0; i<keys.length;i++){
-          var type = keys[i];
-          if(records[type] && records[type][uid]){
-            var cloudRecord = records[type][uid];
-            if(type === 'create'){
-              //the record only exists remotely, which means it could be deleted locally
-              pendingObj.pre  = cloudRecord.data;
-              pendingObj.preHash = cloudRecord.hash;
-            } else if(type === 'update'){
-              //the value changed remotly, update the pre value in pending
-              pendingObj.pre  = cloudRecord.data;
-              pendingObj.preHash = cloudRecord.hash;
-            } else if(type === 'delete'){
-              //the value is created locally, noting to do
-            }
-            delete records[type][uid];
+        if(records.create){
+          var creates = records.create;
+          if(creates && creates[uid]){
+            //the record only exists remotely, which means it could be deleted locally
+            pendingObj.pre  = creates[uid].data;
+            pendingObj.preHash = creates[uid].hash;
+            delete creates[uid];
+          }
+        }
+        if(records.update){
+          var updates = records.update;
+          if(updates && updates[uid]){
+            //the value changed remotly, update the pre value in pending
+            pendingObj.pre  = updates[uid].data;
+            pendingObj.preHash = updates[uid].hash;
+            delete updates[uid];
+          }
+        }
+        if(records['delete']){
+          var deletes = records['delete'];
+          if(deletes && deletes[uid]){
+            delete deletes[uid];
           }
         }
       }
