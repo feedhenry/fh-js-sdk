@@ -12813,18 +12813,12 @@ var self = {
         if(records.create){
           var creates = records.create;
           if(creates && creates[uid]){
-            //the record only exists remotely, which means it could be deleted locally
-            pendingObj.pre  = creates[uid].data;
-            pendingObj.preHash = creates[uid].hash;
             delete creates[uid];
           }
         }
         if(records.update){
           var updates = records.update;
           if(updates && updates[uid]){
-            //the value changed remotly, update the pre value in pending
-            pendingObj.pre  = updates[uid].data;
-            pendingObj.preHash = updates[uid].hash;
             delete updates[uid];
           }
         }
@@ -19623,9 +19617,14 @@ appForm.models.Field = function (module) {
         //Submitting an existing file already saved, no need to save.
         return cb(null, previousFile);
       }
+      //If the value has no extension and there is a previous, then it is the same file -- just the hashed version.
+      if(fileType === "application/octet-stream"){
+        return cb(null, previousFile);
+      }
     }
 
-    var rtnJSON = {
+    //The file to be submitted is new
+    previousFile =  {
       'fileName': fileName,
       'fileSize': file.size,
       'fileType': fileType,
@@ -19635,15 +19634,13 @@ appForm.models.Field = function (module) {
       'contentType': 'binary'
     };
 
-    //The file to be submitted is new
-    previousFile = rtnJSON;
-
     var name = fileName + new Date().getTime() + Math.ceil(Math.random() * 100000);
     appForm.utils.md5(name, function (err, res) {
       hashName = res;
       if (err) {
         hashName = name;
       }
+
       hashName = 'filePlaceHolder' + hashName;
 
       if(fileName.length === 0){

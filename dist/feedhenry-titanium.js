@@ -12828,18 +12828,12 @@ var self = {
         if(records.create){
           var creates = records.create;
           if(creates && creates[uid]){
-            //the record only exists remotely, which means it could be deleted locally
-            pendingObj.pre  = creates[uid].data;
-            pendingObj.preHash = creates[uid].hash;
             delete creates[uid];
           }
         }
         if(records.update){
           var updates = records.update;
           if(updates && updates[uid]){
-            //the value changed remotly, update the pre value in pending
-            pendingObj.pre  = updates[uid].data;
-            pendingObj.preHash = updates[uid].hash;
             delete updates[uid];
           }
         }
@@ -13393,7 +13387,7 @@ module.exports = {
   setAppProps: setAppProps
 };
 
-},{"../ajax":23,"../constants":32,"../logger":42,"../queryMap":44}],"./appProps":[function(_dereq_,module,exports){
+},{"../ajax":23,"../constants":32,"../logger":42,"../queryMap":44}],"./modules/appProps":[function(_dereq_,module,exports){
 module.exports=_dereq_('zDENqi');
 },{}],"./cookies":[function(_dereq_,module,exports){
 module.exports=_dereq_('RdeKcl');

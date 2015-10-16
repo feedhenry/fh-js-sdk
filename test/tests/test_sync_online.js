@@ -332,10 +332,6 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
                   };
                   reqObj3.respond(200, header, JSON.stringify(mockCloudData));
 
-                  //making sure the delayed pending record has the correct pre data, 
-                  //it shouldn't be "item1_updat_failed" as cloud returns collision
-                  expect(_.values(dataset.pending)[0].pre.name).to.equal("item1");
-                  expect(_.values(dataset.pending)[0].preHash).to.equal(prehash);
                   expect(_.values(dataset.pending)[0].post.name).to.equal("item1_updated");
 
                   onSync(function(){
