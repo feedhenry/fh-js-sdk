@@ -1,7 +1,11 @@
 # Changelog - FeedHenry Javascript SDK
 
-## 2.10.1 - 2015-10-14 - Niall Donnelly 
+## 2.11.0 - 2015-10-15 - Wei Li
+* RHMAP-2455 - Fix a few issues with the sync framework
+  * Make sure the user changes are not reverted if cloud is slow to response
+  * Remove some of the unused code to make the sync client simpler 
 
+## 2.10.1 - 2015-10-14 - Niall Donnelly 
 * FH-2290 - Fixed File Extension For Cached Files
 
 ## 2.10.0 - 2015-10-07 - Niall Donnelly 

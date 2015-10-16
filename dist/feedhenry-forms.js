@@ -5938,7 +5938,604 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-},{"util/":15}],5:[function(_dereq_,module,exports){
+},{"util/":6}],5:[function(_dereq_,module,exports){
+module.exports = function isBuffer(arg) {
+  return arg && typeof arg === 'object'
+    && typeof arg.copy === 'function'
+    && typeof arg.fill === 'function'
+    && typeof arg.readUInt8 === 'function';
+}
+},{}],6:[function(_dereq_,module,exports){
+(function (process,global){
+// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+var formatRegExp = /%[sdj%]/g;
+exports.format = function(f) {
+  if (!isString(f)) {
+    var objects = [];
+    for (var i = 0; i < arguments.length; i++) {
+      objects.push(inspect(arguments[i]));
+    }
+    return objects.join(' ');
+  }
+
+  var i = 1;
+  var args = arguments;
+  var len = args.length;
+  var str = String(f).replace(formatRegExp, function(x) {
+    if (x === '%%') return '%';
+    if (i >= len) return x;
+    switch (x) {
+      case '%s': return String(args[i++]);
+      case '%d': return Number(args[i++]);
+      case '%j':
+        try {
+          return JSON.stringify(args[i++]);
+        } catch (_) {
+          return '[Circular]';
+        }
+      default:
+        return x;
+    }
+  });
+  for (var x = args[i]; i < len; x = args[++i]) {
+    if (isNull(x) || !isObject(x)) {
+      str += ' ' + x;
+    } else {
+      str += ' ' + inspect(x);
+    }
+  }
+  return str;
+};
+
+
+// Mark that a method should not be used.
+// Returns a modified function which warns once by default.
+// If --no-deprecation is set, then it is a no-op.
+exports.deprecate = function(fn, msg) {
+  // Allow for deprecating things in the process of starting up.
+  if (isUndefined(global.process)) {
+    return function() {
+      return exports.deprecate(fn, msg).apply(this, arguments);
+    };
+  }
+
+  if (process.noDeprecation === true) {
+    return fn;
+  }
+
+  var warned = false;
+  function deprecated() {
+    if (!warned) {
+      if (process.throwDeprecation) {
+        throw new Error(msg);
+      } else if (process.traceDeprecation) {
+        console.trace(msg);
+      } else {
+        console.error(msg);
+      }
+      warned = true;
+    }
+    return fn.apply(this, arguments);
+  }
+
+  return deprecated;
+};
+
+
+var debugs = {};
+var debugEnviron;
+exports.debuglog = function(set) {
+  if (isUndefined(debugEnviron))
+    debugEnviron = process.env.NODE_DEBUG || '';
+  set = set.toUpperCase();
+  if (!debugs[set]) {
+    if (new RegExp('\\b' + set + '\\b', 'i').test(debugEnviron)) {
+      var pid = process.pid;
+      debugs[set] = function() {
+        var msg = exports.format.apply(exports, arguments);
+        console.error('%s %d: %s', set, pid, msg);
+      };
+    } else {
+      debugs[set] = function() {};
+    }
+  }
+  return debugs[set];
+};
+
+
+/**
+ * Echos the value of a value. Trys to print the value out
+ * in the best way possible given the different types.
+ *
+ * @param {Object} obj The object to print out.
+ * @param {Object} opts Optional options object that alters the output.
+ */
+/* legacy: obj, showHidden, depth, colors*/
+function inspect(obj, opts) {
+  // default options
+  var ctx = {
+    seen: [],
+    stylize: stylizeNoColor
+  };
+  // legacy...
+  if (arguments.length >= 3) ctx.depth = arguments[2];
+  if (arguments.length >= 4) ctx.colors = arguments[3];
+  if (isBoolean(opts)) {
+    // legacy...
+    ctx.showHidden = opts;
+  } else if (opts) {
+    // got an "options" object
+    exports._extend(ctx, opts);
+  }
+  // set default options
+  if (isUndefined(ctx.showHidden)) ctx.showHidden = false;
+  if (isUndefined(ctx.depth)) ctx.depth = 2;
+  if (isUndefined(ctx.colors)) ctx.colors = false;
+  if (isUndefined(ctx.customInspect)) ctx.customInspect = true;
+  if (ctx.colors) ctx.stylize = stylizeWithColor;
+  return formatValue(ctx, obj, ctx.depth);
+}
+exports.inspect = inspect;
+
+
+// http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
+inspect.colors = {
+  'bold' : [1, 22],
+  'italic' : [3, 23],
+  'underline' : [4, 24],
+  'inverse' : [7, 27],
+  'white' : [37, 39],
+  'grey' : [90, 39],
+  'black' : [30, 39],
+  'blue' : [34, 39],
+  'cyan' : [36, 39],
+  'green' : [32, 39],
+  'magenta' : [35, 39],
+  'red' : [31, 39],
+  'yellow' : [33, 39]
+};
+
+// Don't use 'blue' not visible on cmd.exe
+inspect.styles = {
+  'special': 'cyan',
+  'number': 'yellow',
+  'boolean': 'yellow',
+  'undefined': 'grey',
+  'null': 'bold',
+  'string': 'green',
+  'date': 'magenta',
+  // "name": intentionally not styling
+  'regexp': 'red'
+};
+
+
+function stylizeWithColor(str, styleType) {
+  var style = inspect.styles[styleType];
+
+  if (style) {
+    return '\u001b[' + inspect.colors[style][0] + 'm' + str +
+           '\u001b[' + inspect.colors[style][1] + 'm';
+  } else {
+    return str;
+  }
+}
+
+
+function stylizeNoColor(str, styleType) {
+  return str;
+}
+
+
+function arrayToHash(array) {
+  var hash = {};
+
+  array.forEach(function(val, idx) {
+    hash[val] = true;
+  });
+
+  return hash;
+}
+
+
+function formatValue(ctx, value, recurseTimes) {
+  // Provide a hook for user-specified inspect functions.
+  // Check that value is an object with an inspect function on it
+  if (ctx.customInspect &&
+      value &&
+      isFunction(value.inspect) &&
+      // Filter out the util module, it's inspect function is special
+      value.inspect !== exports.inspect &&
+      // Also filter out any prototype objects using the circular check.
+      !(value.constructor && value.constructor.prototype === value)) {
+    var ret = value.inspect(recurseTimes, ctx);
+    if (!isString(ret)) {
+      ret = formatValue(ctx, ret, recurseTimes);
+    }
+    return ret;
+  }
+
+  // Primitive types cannot have properties
+  var primitive = formatPrimitive(ctx, value);
+  if (primitive) {
+    return primitive;
+  }
+
+  // Look up the keys of the object.
+  var keys = Object.keys(value);
+  var visibleKeys = arrayToHash(keys);
+
+  if (ctx.showHidden) {
+    keys = Object.getOwnPropertyNames(value);
+  }
+
+  // IE doesn't make error fields non-enumerable
+  // http://msdn.microsoft.com/en-us/library/ie/dww52sbt(v=vs.94).aspx
+  if (isError(value)
+      && (keys.indexOf('message') >= 0 || keys.indexOf('description') >= 0)) {
+    return formatError(value);
+  }
+
+  // Some type of object without properties can be shortcutted.
+  if (keys.length === 0) {
+    if (isFunction(value)) {
+      var name = value.name ? ': ' + value.name : '';
+      return ctx.stylize('[Function' + name + ']', 'special');
+    }
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    }
+    if (isDate(value)) {
+      return ctx.stylize(Date.prototype.toString.call(value), 'date');
+    }
+    if (isError(value)) {
+      return formatError(value);
+    }
+  }
+
+  var base = '', array = false, braces = ['{', '}'];
+
+  // Make Array say that they are Array
+  if (isArray(value)) {
+    array = true;
+    braces = ['[', ']'];
+  }
+
+  // Make functions say that they are functions
+  if (isFunction(value)) {
+    var n = value.name ? ': ' + value.name : '';
+    base = ' [Function' + n + ']';
+  }
+
+  // Make RegExps say that they are RegExps
+  if (isRegExp(value)) {
+    base = ' ' + RegExp.prototype.toString.call(value);
+  }
+
+  // Make dates with properties first say the date
+  if (isDate(value)) {
+    base = ' ' + Date.prototype.toUTCString.call(value);
+  }
+
+  // Make error with message first say the error
+  if (isError(value)) {
+    base = ' ' + formatError(value);
+  }
+
+  if (keys.length === 0 && (!array || value.length == 0)) {
+    return braces[0] + base + braces[1];
+  }
+
+  if (recurseTimes < 0) {
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    } else {
+      return ctx.stylize('[Object]', 'special');
+    }
+  }
+
+  ctx.seen.push(value);
+
+  var output;
+  if (array) {
+    output = formatArray(ctx, value, recurseTimes, visibleKeys, keys);
+  } else {
+    output = keys.map(function(key) {
+      return formatProperty(ctx, value, recurseTimes, visibleKeys, key, array);
+    });
+  }
+
+  ctx.seen.pop();
+
+  return reduceToSingleString(output, base, braces);
+}
+
+
+function formatPrimitive(ctx, value) {
+  if (isUndefined(value))
+    return ctx.stylize('undefined', 'undefined');
+  if (isString(value)) {
+    var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '')
+                                             .replace(/'/g, "\\'")
+                                             .replace(/\\"/g, '"') + '\'';
+    return ctx.stylize(simple, 'string');
+  }
+  if (isNumber(value))
+    return ctx.stylize('' + value, 'number');
+  if (isBoolean(value))
+    return ctx.stylize('' + value, 'boolean');
+  // For some reason typeof null is "object", so special case here.
+  if (isNull(value))
+    return ctx.stylize('null', 'null');
+}
+
+
+function formatError(value) {
+  return '[' + Error.prototype.toString.call(value) + ']';
+}
+
+
+function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
+  var output = [];
+  for (var i = 0, l = value.length; i < l; ++i) {
+    if (hasOwnProperty(value, String(i))) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+          String(i), true));
+    } else {
+      output.push('');
+    }
+  }
+  keys.forEach(function(key) {
+    if (!key.match(/^\d+$/)) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+          key, true));
+    }
+  });
+  return output;
+}
+
+
+function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
+  var name, str, desc;
+  desc = Object.getOwnPropertyDescriptor(value, key) || { value: value[key] };
+  if (desc.get) {
+    if (desc.set) {
+      str = ctx.stylize('[Getter/Setter]', 'special');
+    } else {
+      str = ctx.stylize('[Getter]', 'special');
+    }
+  } else {
+    if (desc.set) {
+      str = ctx.stylize('[Setter]', 'special');
+    }
+  }
+  if (!hasOwnProperty(visibleKeys, key)) {
+    name = '[' + key + ']';
+  }
+  if (!str) {
+    if (ctx.seen.indexOf(desc.value) < 0) {
+      if (isNull(recurseTimes)) {
+        str = formatValue(ctx, desc.value, null);
+      } else {
+        str = formatValue(ctx, desc.value, recurseTimes - 1);
+      }
+      if (str.indexOf('\n') > -1) {
+        if (array) {
+          str = str.split('\n').map(function(line) {
+            return '  ' + line;
+          }).join('\n').substr(2);
+        } else {
+          str = '\n' + str.split('\n').map(function(line) {
+            return '   ' + line;
+          }).join('\n');
+        }
+      }
+    } else {
+      str = ctx.stylize('[Circular]', 'special');
+    }
+  }
+  if (isUndefined(name)) {
+    if (array && key.match(/^\d+$/)) {
+      return str;
+    }
+    name = JSON.stringify('' + key);
+    if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
+      name = name.substr(1, name.length - 2);
+      name = ctx.stylize(name, 'name');
+    } else {
+      name = name.replace(/'/g, "\\'")
+                 .replace(/\\"/g, '"')
+                 .replace(/(^"|"$)/g, "'");
+      name = ctx.stylize(name, 'string');
+    }
+  }
+
+  return name + ': ' + str;
+}
+
+
+function reduceToSingleString(output, base, braces) {
+  var numLinesEst = 0;
+  var length = output.reduce(function(prev, cur) {
+    numLinesEst++;
+    if (cur.indexOf('\n') >= 0) numLinesEst++;
+    return prev + cur.replace(/\u001b\[\d\d?m/g, '').length + 1;
+  }, 0);
+
+  if (length > 60) {
+    return braces[0] +
+           (base === '' ? '' : base + '\n ') +
+           ' ' +
+           output.join(',\n  ') +
+           ' ' +
+           braces[1];
+  }
+
+  return braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
+}
+
+
+// NOTE: These type checking functions intentionally don't use `instanceof`
+// because it is fragile and can be easily faked with `Object.create()`.
+function isArray(ar) {
+  return Array.isArray(ar);
+}
+exports.isArray = isArray;
+
+function isBoolean(arg) {
+  return typeof arg === 'boolean';
+}
+exports.isBoolean = isBoolean;
+
+function isNull(arg) {
+  return arg === null;
+}
+exports.isNull = isNull;
+
+function isNullOrUndefined(arg) {
+  return arg == null;
+}
+exports.isNullOrUndefined = isNullOrUndefined;
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+exports.isNumber = isNumber;
+
+function isString(arg) {
+  return typeof arg === 'string';
+}
+exports.isString = isString;
+
+function isSymbol(arg) {
+  return typeof arg === 'symbol';
+}
+exports.isSymbol = isSymbol;
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+exports.isUndefined = isUndefined;
+
+function isRegExp(re) {
+  return isObject(re) && objectToString(re) === '[object RegExp]';
+}
+exports.isRegExp = isRegExp;
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+exports.isObject = isObject;
+
+function isDate(d) {
+  return isObject(d) && objectToString(d) === '[object Date]';
+}
+exports.isDate = isDate;
+
+function isError(e) {
+  return isObject(e) &&
+      (objectToString(e) === '[object Error]' || e instanceof Error);
+}
+exports.isError = isError;
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+exports.isFunction = isFunction;
+
+function isPrimitive(arg) {
+  return arg === null ||
+         typeof arg === 'boolean' ||
+         typeof arg === 'number' ||
+         typeof arg === 'string' ||
+         typeof arg === 'symbol' ||  // ES6 symbol
+         typeof arg === 'undefined';
+}
+exports.isPrimitive = isPrimitive;
+
+exports.isBuffer = _dereq_('./support/isBuffer');
+
+function objectToString(o) {
+  return Object.prototype.toString.call(o);
+}
+
+
+function pad(n) {
+  return n < 10 ? '0' + n.toString(10) : n.toString(10);
+}
+
+
+var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+              'Oct', 'Nov', 'Dec'];
+
+// 26 Feb 16:19:34
+function timestamp() {
+  var d = new Date();
+  var time = [pad(d.getHours()),
+              pad(d.getMinutes()),
+              pad(d.getSeconds())].join(':');
+  return [d.getDate(), months[d.getMonth()], time].join(' ');
+}
+
+
+// log is just a thin wrapper to console.log that prepends a timestamp
+exports.log = function() {
+  console.log('%s - %s', timestamp(), exports.format.apply(exports, arguments));
+};
+
+
+/**
+ * Inherit the prototype methods from one constructor into another.
+ *
+ * The Function.prototype.inherits from lang.js rewritten as a standalone
+ * function (not on Function.prototype). NOTE: If this file is to be loaded
+ * during bootstrapping this function needs to be rewritten using some native
+ * functions as prototype setup using normal JavaScript does not work as
+ * expected during bootstrapping (see mirror.js in r114903).
+ *
+ * @param {function} ctor Constructor function which needs to inherit the
+ *     prototype.
+ * @param {function} superCtor Constructor function to inherit prototype from.
+ */
+exports.inherits = _dereq_('inherits');
+
+exports._extend = function(origin, add) {
+  // Don't do anything if add isn't an object
+  if (!add || !isObject(add)) return origin;
+
+  var keys = Object.keys(add);
+  var i = keys.length;
+  while (i--) {
+    origin[keys[i]] = add[keys[i]];
+  }
+  return origin;
+};
+
+function hasOwnProperty(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
+}
+
+}).call(this,_dereq_("/Users/weili/work/fh/eng/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
+},{"./support/isBuffer":5,"/Users/weili/work/fh/eng/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":10,"inherits":9}],7:[function(_dereq_,module,exports){
 (function (global){
 /*global window, global*/
 var util = _dereq_("util")
@@ -6027,7 +6624,7 @@ function assert(expression) {
 }
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"assert":4,"util":15}],6:[function(_dereq_,module,exports){
+},{"assert":4,"util":17}],8:[function(_dereq_,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -6087,8 +6684,10 @@ EventEmitter.prototype.emit = function(type) {
       er = arguments[1];
       if (er instanceof Error) {
         throw er; // Unhandled 'error' event
+      } else {
+        throw TypeError('Uncaught, unspecified "error" event.');
       }
-      throw TypeError('Uncaught, unspecified "error" event.');
+      return false;
     }
   }
 
@@ -6173,10 +6772,7 @@ EventEmitter.prototype.addListener = function(type, listener) {
                     'leak detected. %d listeners added. ' +
                     'Use emitter.setMaxListeners() to increase limit.',
                     this._events[type].length);
-      if (typeof console.trace === 'function') {
-        // not supported in IE 10
-        console.trace();
-      }
+      console.trace();
     }
   }
 
@@ -6330,7 +6926,7 @@ function isUndefined(arg) {
   return arg === void 0;
 }
 
-},{}],7:[function(_dereq_,module,exports){
+},{}],9:[function(_dereq_,module,exports){
 if (typeof Object.create === 'function') {
   // implementation from standard node.js 'util' module
   module.exports = function inherits(ctor, superCtor) {
@@ -6355,7 +6951,7 @@ if (typeof Object.create === 'function') {
   }
 }
 
-},{}],8:[function(_dereq_,module,exports){
+},{}],10:[function(_dereq_,module,exports){
 // shim for using process in browser
 
 var process = module.exports = {};
@@ -6410,7 +7006,7 @@ process.chdir = function (dir) {
     throw new Error('process.chdir is not supported');
 };
 
-},{}],9:[function(_dereq_,module,exports){
+},{}],11:[function(_dereq_,module,exports){
 (function (global){
 /*! http://mths.be/punycode v1.2.4 by @mathias */
 ;(function(root) {
@@ -6921,7 +7517,7 @@ process.chdir = function (dir) {
 }(this));
 
 }).call(this,typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{}],10:[function(_dereq_,module,exports){
+},{}],12:[function(_dereq_,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7007,7 +7603,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],11:[function(_dereq_,module,exports){
+},{}],13:[function(_dereq_,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -7094,13 +7690,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],12:[function(_dereq_,module,exports){
+},{}],14:[function(_dereq_,module,exports){
 'use strict';
 
 exports.decode = exports.parse = _dereq_('./decode');
 exports.encode = exports.stringify = _dereq_('./encode');
 
-},{"./decode":10,"./encode":11}],13:[function(_dereq_,module,exports){
+},{"./decode":12,"./encode":13}],15:[function(_dereq_,module,exports){
 /*jshint strict:true node:true es5:true onevar:true laxcomma:true laxbreak:true eqeqeq:true immed:true latedef:true*/
 (function () {
   "use strict";
@@ -7733,604 +8329,11 @@ function parseHost(host) {
 
 }());
 
-},{"punycode":9,"querystring":12}],14:[function(_dereq_,module,exports){
-module.exports = function isBuffer(arg) {
-  return arg && typeof arg === 'object'
-    && typeof arg.copy === 'function'
-    && typeof arg.fill === 'function'
-    && typeof arg.readUInt8 === 'function';
-}
-},{}],15:[function(_dereq_,module,exports){
-(function (process,global){
-// Copyright Joyent, Inc. and other Node contributors.
-//
-// Permission is hereby granted, free of charge, to any person obtaining a
-// copy of this software and associated documentation files (the
-// "Software"), to deal in the Software without restriction, including
-// without limitation the rights to use, copy, modify, merge, publish,
-// distribute, sublicense, and/or sell copies of the Software, and to permit
-// persons to whom the Software is furnished to do so, subject to the
-// following conditions:
-//
-// The above copyright notice and this permission notice shall be included
-// in all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-// USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-var formatRegExp = /%[sdj%]/g;
-exports.format = function(f) {
-  if (!isString(f)) {
-    var objects = [];
-    for (var i = 0; i < arguments.length; i++) {
-      objects.push(inspect(arguments[i]));
-    }
-    return objects.join(' ');
-  }
-
-  var i = 1;
-  var args = arguments;
-  var len = args.length;
-  var str = String(f).replace(formatRegExp, function(x) {
-    if (x === '%%') return '%';
-    if (i >= len) return x;
-    switch (x) {
-      case '%s': return String(args[i++]);
-      case '%d': return Number(args[i++]);
-      case '%j':
-        try {
-          return JSON.stringify(args[i++]);
-        } catch (_) {
-          return '[Circular]';
-        }
-      default:
-        return x;
-    }
-  });
-  for (var x = args[i]; i < len; x = args[++i]) {
-    if (isNull(x) || !isObject(x)) {
-      str += ' ' + x;
-    } else {
-      str += ' ' + inspect(x);
-    }
-  }
-  return str;
-};
-
-
-// Mark that a method should not be used.
-// Returns a modified function which warns once by default.
-// If --no-deprecation is set, then it is a no-op.
-exports.deprecate = function(fn, msg) {
-  // Allow for deprecating things in the process of starting up.
-  if (isUndefined(global.process)) {
-    return function() {
-      return exports.deprecate(fn, msg).apply(this, arguments);
-    };
-  }
-
-  if (process.noDeprecation === true) {
-    return fn;
-  }
-
-  var warned = false;
-  function deprecated() {
-    if (!warned) {
-      if (process.throwDeprecation) {
-        throw new Error(msg);
-      } else if (process.traceDeprecation) {
-        console.trace(msg);
-      } else {
-        console.error(msg);
-      }
-      warned = true;
-    }
-    return fn.apply(this, arguments);
-  }
-
-  return deprecated;
-};
-
-
-var debugs = {};
-var debugEnviron;
-exports.debuglog = function(set) {
-  if (isUndefined(debugEnviron))
-    debugEnviron = process.env.NODE_DEBUG || '';
-  set = set.toUpperCase();
-  if (!debugs[set]) {
-    if (new RegExp('\\b' + set + '\\b', 'i').test(debugEnviron)) {
-      var pid = process.pid;
-      debugs[set] = function() {
-        var msg = exports.format.apply(exports, arguments);
-        console.error('%s %d: %s', set, pid, msg);
-      };
-    } else {
-      debugs[set] = function() {};
-    }
-  }
-  return debugs[set];
-};
-
-
-/**
- * Echos the value of a value. Trys to print the value out
- * in the best way possible given the different types.
- *
- * @param {Object} obj The object to print out.
- * @param {Object} opts Optional options object that alters the output.
- */
-/* legacy: obj, showHidden, depth, colors*/
-function inspect(obj, opts) {
-  // default options
-  var ctx = {
-    seen: [],
-    stylize: stylizeNoColor
-  };
-  // legacy...
-  if (arguments.length >= 3) ctx.depth = arguments[2];
-  if (arguments.length >= 4) ctx.colors = arguments[3];
-  if (isBoolean(opts)) {
-    // legacy...
-    ctx.showHidden = opts;
-  } else if (opts) {
-    // got an "options" object
-    exports._extend(ctx, opts);
-  }
-  // set default options
-  if (isUndefined(ctx.showHidden)) ctx.showHidden = false;
-  if (isUndefined(ctx.depth)) ctx.depth = 2;
-  if (isUndefined(ctx.colors)) ctx.colors = false;
-  if (isUndefined(ctx.customInspect)) ctx.customInspect = true;
-  if (ctx.colors) ctx.stylize = stylizeWithColor;
-  return formatValue(ctx, obj, ctx.depth);
-}
-exports.inspect = inspect;
-
-
-// http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
-inspect.colors = {
-  'bold' : [1, 22],
-  'italic' : [3, 23],
-  'underline' : [4, 24],
-  'inverse' : [7, 27],
-  'white' : [37, 39],
-  'grey' : [90, 39],
-  'black' : [30, 39],
-  'blue' : [34, 39],
-  'cyan' : [36, 39],
-  'green' : [32, 39],
-  'magenta' : [35, 39],
-  'red' : [31, 39],
-  'yellow' : [33, 39]
-};
-
-// Don't use 'blue' not visible on cmd.exe
-inspect.styles = {
-  'special': 'cyan',
-  'number': 'yellow',
-  'boolean': 'yellow',
-  'undefined': 'grey',
-  'null': 'bold',
-  'string': 'green',
-  'date': 'magenta',
-  // "name": intentionally not styling
-  'regexp': 'red'
-};
-
-
-function stylizeWithColor(str, styleType) {
-  var style = inspect.styles[styleType];
-
-  if (style) {
-    return '\u001b[' + inspect.colors[style][0] + 'm' + str +
-           '\u001b[' + inspect.colors[style][1] + 'm';
-  } else {
-    return str;
-  }
-}
-
-
-function stylizeNoColor(str, styleType) {
-  return str;
-}
-
-
-function arrayToHash(array) {
-  var hash = {};
-
-  array.forEach(function(val, idx) {
-    hash[val] = true;
-  });
-
-  return hash;
-}
-
-
-function formatValue(ctx, value, recurseTimes) {
-  // Provide a hook for user-specified inspect functions.
-  // Check that value is an object with an inspect function on it
-  if (ctx.customInspect &&
-      value &&
-      isFunction(value.inspect) &&
-      // Filter out the util module, it's inspect function is special
-      value.inspect !== exports.inspect &&
-      // Also filter out any prototype objects using the circular check.
-      !(value.constructor && value.constructor.prototype === value)) {
-    var ret = value.inspect(recurseTimes, ctx);
-    if (!isString(ret)) {
-      ret = formatValue(ctx, ret, recurseTimes);
-    }
-    return ret;
-  }
-
-  // Primitive types cannot have properties
-  var primitive = formatPrimitive(ctx, value);
-  if (primitive) {
-    return primitive;
-  }
-
-  // Look up the keys of the object.
-  var keys = Object.keys(value);
-  var visibleKeys = arrayToHash(keys);
-
-  if (ctx.showHidden) {
-    keys = Object.getOwnPropertyNames(value);
-  }
-
-  // IE doesn't make error fields non-enumerable
-  // http://msdn.microsoft.com/en-us/library/ie/dww52sbt(v=vs.94).aspx
-  if (isError(value)
-      && (keys.indexOf('message') >= 0 || keys.indexOf('description') >= 0)) {
-    return formatError(value);
-  }
-
-  // Some type of object without properties can be shortcutted.
-  if (keys.length === 0) {
-    if (isFunction(value)) {
-      var name = value.name ? ': ' + value.name : '';
-      return ctx.stylize('[Function' + name + ']', 'special');
-    }
-    if (isRegExp(value)) {
-      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
-    }
-    if (isDate(value)) {
-      return ctx.stylize(Date.prototype.toString.call(value), 'date');
-    }
-    if (isError(value)) {
-      return formatError(value);
-    }
-  }
-
-  var base = '', array = false, braces = ['{', '}'];
-
-  // Make Array say that they are Array
-  if (isArray(value)) {
-    array = true;
-    braces = ['[', ']'];
-  }
-
-  // Make functions say that they are functions
-  if (isFunction(value)) {
-    var n = value.name ? ': ' + value.name : '';
-    base = ' [Function' + n + ']';
-  }
-
-  // Make RegExps say that they are RegExps
-  if (isRegExp(value)) {
-    base = ' ' + RegExp.prototype.toString.call(value);
-  }
-
-  // Make dates with properties first say the date
-  if (isDate(value)) {
-    base = ' ' + Date.prototype.toUTCString.call(value);
-  }
-
-  // Make error with message first say the error
-  if (isError(value)) {
-    base = ' ' + formatError(value);
-  }
-
-  if (keys.length === 0 && (!array || value.length == 0)) {
-    return braces[0] + base + braces[1];
-  }
-
-  if (recurseTimes < 0) {
-    if (isRegExp(value)) {
-      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
-    } else {
-      return ctx.stylize('[Object]', 'special');
-    }
-  }
-
-  ctx.seen.push(value);
-
-  var output;
-  if (array) {
-    output = formatArray(ctx, value, recurseTimes, visibleKeys, keys);
-  } else {
-    output = keys.map(function(key) {
-      return formatProperty(ctx, value, recurseTimes, visibleKeys, key, array);
-    });
-  }
-
-  ctx.seen.pop();
-
-  return reduceToSingleString(output, base, braces);
-}
-
-
-function formatPrimitive(ctx, value) {
-  if (isUndefined(value))
-    return ctx.stylize('undefined', 'undefined');
-  if (isString(value)) {
-    var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '')
-                                             .replace(/'/g, "\\'")
-                                             .replace(/\\"/g, '"') + '\'';
-    return ctx.stylize(simple, 'string');
-  }
-  if (isNumber(value))
-    return ctx.stylize('' + value, 'number');
-  if (isBoolean(value))
-    return ctx.stylize('' + value, 'boolean');
-  // For some reason typeof null is "object", so special case here.
-  if (isNull(value))
-    return ctx.stylize('null', 'null');
-}
-
-
-function formatError(value) {
-  return '[' + Error.prototype.toString.call(value) + ']';
-}
-
-
-function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
-  var output = [];
-  for (var i = 0, l = value.length; i < l; ++i) {
-    if (hasOwnProperty(value, String(i))) {
-      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
-          String(i), true));
-    } else {
-      output.push('');
-    }
-  }
-  keys.forEach(function(key) {
-    if (!key.match(/^\d+$/)) {
-      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
-          key, true));
-    }
-  });
-  return output;
-}
-
-
-function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
-  var name, str, desc;
-  desc = Object.getOwnPropertyDescriptor(value, key) || { value: value[key] };
-  if (desc.get) {
-    if (desc.set) {
-      str = ctx.stylize('[Getter/Setter]', 'special');
-    } else {
-      str = ctx.stylize('[Getter]', 'special');
-    }
-  } else {
-    if (desc.set) {
-      str = ctx.stylize('[Setter]', 'special');
-    }
-  }
-  if (!hasOwnProperty(visibleKeys, key)) {
-    name = '[' + key + ']';
-  }
-  if (!str) {
-    if (ctx.seen.indexOf(desc.value) < 0) {
-      if (isNull(recurseTimes)) {
-        str = formatValue(ctx, desc.value, null);
-      } else {
-        str = formatValue(ctx, desc.value, recurseTimes - 1);
-      }
-      if (str.indexOf('\n') > -1) {
-        if (array) {
-          str = str.split('\n').map(function(line) {
-            return '  ' + line;
-          }).join('\n').substr(2);
-        } else {
-          str = '\n' + str.split('\n').map(function(line) {
-            return '   ' + line;
-          }).join('\n');
-        }
-      }
-    } else {
-      str = ctx.stylize('[Circular]', 'special');
-    }
-  }
-  if (isUndefined(name)) {
-    if (array && key.match(/^\d+$/)) {
-      return str;
-    }
-    name = JSON.stringify('' + key);
-    if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
-      name = name.substr(1, name.length - 2);
-      name = ctx.stylize(name, 'name');
-    } else {
-      name = name.replace(/'/g, "\\'")
-                 .replace(/\\"/g, '"')
-                 .replace(/(^"|"$)/g, "'");
-      name = ctx.stylize(name, 'string');
-    }
-  }
-
-  return name + ': ' + str;
-}
-
-
-function reduceToSingleString(output, base, braces) {
-  var numLinesEst = 0;
-  var length = output.reduce(function(prev, cur) {
-    numLinesEst++;
-    if (cur.indexOf('\n') >= 0) numLinesEst++;
-    return prev + cur.replace(/\u001b\[\d\d?m/g, '').length + 1;
-  }, 0);
-
-  if (length > 60) {
-    return braces[0] +
-           (base === '' ? '' : base + '\n ') +
-           ' ' +
-           output.join(',\n  ') +
-           ' ' +
-           braces[1];
-  }
-
-  return braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
-}
-
-
-// NOTE: These type checking functions intentionally don't use `instanceof`
-// because it is fragile and can be easily faked with `Object.create()`.
-function isArray(ar) {
-  return Array.isArray(ar);
-}
-exports.isArray = isArray;
-
-function isBoolean(arg) {
-  return typeof arg === 'boolean';
-}
-exports.isBoolean = isBoolean;
-
-function isNull(arg) {
-  return arg === null;
-}
-exports.isNull = isNull;
-
-function isNullOrUndefined(arg) {
-  return arg == null;
-}
-exports.isNullOrUndefined = isNullOrUndefined;
-
-function isNumber(arg) {
-  return typeof arg === 'number';
-}
-exports.isNumber = isNumber;
-
-function isString(arg) {
-  return typeof arg === 'string';
-}
-exports.isString = isString;
-
-function isSymbol(arg) {
-  return typeof arg === 'symbol';
-}
-exports.isSymbol = isSymbol;
-
-function isUndefined(arg) {
-  return arg === void 0;
-}
-exports.isUndefined = isUndefined;
-
-function isRegExp(re) {
-  return isObject(re) && objectToString(re) === '[object RegExp]';
-}
-exports.isRegExp = isRegExp;
-
-function isObject(arg) {
-  return typeof arg === 'object' && arg !== null;
-}
-exports.isObject = isObject;
-
-function isDate(d) {
-  return isObject(d) && objectToString(d) === '[object Date]';
-}
-exports.isDate = isDate;
-
-function isError(e) {
-  return isObject(e) &&
-      (objectToString(e) === '[object Error]' || e instanceof Error);
-}
-exports.isError = isError;
-
-function isFunction(arg) {
-  return typeof arg === 'function';
-}
-exports.isFunction = isFunction;
-
-function isPrimitive(arg) {
-  return arg === null ||
-         typeof arg === 'boolean' ||
-         typeof arg === 'number' ||
-         typeof arg === 'string' ||
-         typeof arg === 'symbol' ||  // ES6 symbol
-         typeof arg === 'undefined';
-}
-exports.isPrimitive = isPrimitive;
-
-exports.isBuffer = _dereq_('./support/isBuffer');
-
-function objectToString(o) {
-  return Object.prototype.toString.call(o);
-}
-
-
-function pad(n) {
-  return n < 10 ? '0' + n.toString(10) : n.toString(10);
-}
-
-
-var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
-              'Oct', 'Nov', 'Dec'];
-
-// 26 Feb 16:19:34
-function timestamp() {
-  var d = new Date();
-  var time = [pad(d.getHours()),
-              pad(d.getMinutes()),
-              pad(d.getSeconds())].join(':');
-  return [d.getDate(), months[d.getMonth()], time].join(' ');
-}
-
-
-// log is just a thin wrapper to console.log that prepends a timestamp
-exports.log = function() {
-  console.log('%s - %s', timestamp(), exports.format.apply(exports, arguments));
-};
-
-
-/**
- * Inherit the prototype methods from one constructor into another.
- *
- * The Function.prototype.inherits from lang.js rewritten as a standalone
- * function (not on Function.prototype). NOTE: If this file is to be loaded
- * during bootstrapping this function needs to be rewritten using some native
- * functions as prototype setup using normal JavaScript does not work as
- * expected during bootstrapping (see mirror.js in r114903).
- *
- * @param {function} ctor Constructor function which needs to inherit the
- *     prototype.
- * @param {function} superCtor Constructor function to inherit prototype from.
- */
-exports.inherits = _dereq_('inherits');
-
-exports._extend = function(origin, add) {
-  // Don't do anything if add isn't an object
-  if (!add || !isObject(add)) return origin;
-
-  var keys = Object.keys(add);
-  var i = keys.length;
-  while (i--) {
-    origin[keys[i]] = add[keys[i]];
-  }
-  return origin;
-};
-
-function hasOwnProperty(obj, prop) {
-  return Object.prototype.hasOwnProperty.call(obj, prop);
-}
-
-}).call(this,_dereq_("/Users/spoole/Documents/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js"),typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-},{"./support/isBuffer":14,"/Users/spoole/Documents/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":8,"inherits":7}],16:[function(_dereq_,module,exports){
+},{"punycode":11,"querystring":14}],16:[function(_dereq_,module,exports){
+module.exports=_dereq_(5)
+},{}],17:[function(_dereq_,module,exports){
+module.exports=_dereq_(6)
+},{"./support/isBuffer":16,"/Users/weili/work/fh/eng/fh-sdks/fh-js-sdk/node_modules/browserify/node_modules/insert-module-globals/node_modules/process/browser.js":10,"inherits":9}],18:[function(_dereq_,module,exports){
 /*
  * loglevel - https://github.com/pimterry/loglevel
  *
@@ -8529,7 +8532,7 @@ function hasOwnProperty(obj, prop) {
     }));
 })();
 
-},{}],17:[function(_dereq_,module,exports){
+},{}],19:[function(_dereq_,module,exports){
 var toString = Object.prototype.toString
 
 module.exports = function(val){
@@ -8560,7 +8563,7 @@ module.exports = function(val){
   return typeof val
 }
 
-},{}],18:[function(_dereq_,module,exports){
+},{}],20:[function(_dereq_,module,exports){
 //     Underscore.js 1.6.0
 //     http://underscorejs.org
 //     (c) 2009-2014 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
@@ -9905,7 +9908,7 @@ module.exports = function(val){
   }
 }).call(this);
 
-},{}],19:[function(_dereq_,module,exports){
+},{}],21:[function(_dereq_,module,exports){
 var constants = _dereq_("./modules/constants");
 var events = _dereq_("./modules/events");
 var logger = _dereq_("./modules/logger");
@@ -10039,7 +10042,7 @@ fh.reset = cloud.reset;
 //So, we assign $fh to the window name space directly here. (otherwise, we have to fork the grunt browserify plugin, then fork browerify and the dependent umd module, really not worthing the effort).
 window.$fh = fh;
 module.exports = fh;
-},{"./modules/ajax":21,"./modules/api_act":22,"./modules/api_auth":23,"./modules/api_cloud":24,"./modules/api_hash":25,"./modules/api_mbaas":26,"./modules/api_push":27,"./modules/api_sec":28,"./modules/appProps":29,"./modules/constants":31,"./modules/device":34,"./modules/events":35,"./modules/fhparams":36,"./modules/logger":42,"./modules/sync-cli":50,"./modules/waitForCloud":52}],20:[function(_dereq_,module,exports){
+},{"./modules/ajax":23,"./modules/api_act":24,"./modules/api_auth":25,"./modules/api_cloud":26,"./modules/api_hash":27,"./modules/api_mbaas":28,"./modules/api_push":29,"./modules/api_sec":30,"./modules/appProps":31,"./modules/constants":33,"./modules/device":36,"./modules/events":37,"./modules/fhparams":38,"./modules/logger":44,"./modules/sync-cli":52,"./modules/waitForCloud":54}],22:[function(_dereq_,module,exports){
 var urlparser = _dereq_('url');
 
 var XDomainRequestWrapper = function(xdr){
@@ -10111,7 +10114,7 @@ XDomainRequestWrapper.prototype.getResponseHeader = function(n){
 
 module.exports = XDomainRequestWrapper;
 
-},{"url":13}],21:[function(_dereq_,module,exports){
+},{"url":15}],23:[function(_dereq_,module,exports){
 //a shameless copy from https://github.com/ForbesLindesay/ajax/blob/master/index.js.
 //it has the same methods and config options as jQuery/zeptojs but very light weight. see http://api.jquery.com/jQuery.ajax/
 //a few small changes are made for supporting IE 8 and other features:
@@ -10513,7 +10516,7 @@ function extend(target) {
   return target
 }
 
-},{"./XDomainRequestWrapper":20,"./events":35,"./logger":42,"type-of":17}],22:[function(_dereq_,module,exports){
+},{"./XDomainRequestWrapper":22,"./events":37,"./logger":44,"type-of":19}],24:[function(_dereq_,module,exports){
 var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -10568,7 +10571,7 @@ module.exports = function(opts, success, fail){
     }
   });
 };
-},{"./ajax":21,"./appProps":29,"./fhparams":36,"./handleError":37,"./logger":42,"./waitForCloud":52,"underscore":18}],23:[function(_dereq_,module,exports){
+},{"./ajax":23,"./appProps":31,"./fhparams":38,"./handleError":39,"./logger":44,"./waitForCloud":54,"underscore":20}],25:[function(_dereq_,module,exports){
 var logger = _dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -10696,7 +10699,7 @@ auth.verify = function(cb){
 };
 
 module.exports = auth;
-},{"./ajax":21,"./appProps":29,"./checkAuth":30,"./constants":31,"./data":33,"./device":34,"./fhparams":36,"./handleError":37,"./logger":42,"./waitForCloud":52}],24:[function(_dereq_,module,exports){
+},{"./ajax":23,"./appProps":31,"./checkAuth":32,"./constants":33,"./data":35,"./device":36,"./fhparams":38,"./handleError":39,"./logger":44,"./waitForCloud":54}],26:[function(_dereq_,module,exports){
 var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -10755,7 +10758,7 @@ module.exports = function(opts, success, fail){
     }
   });
 };
-},{"./ajax":21,"./appProps":29,"./fhparams":36,"./handleError":37,"./logger":42,"./waitForCloud":52,"underscore":18}],25:[function(_dereq_,module,exports){
+},{"./ajax":23,"./appProps":31,"./fhparams":38,"./handleError":39,"./logger":44,"./waitForCloud":54,"underscore":20}],27:[function(_dereq_,module,exports){
 var hashImpl = _dereq_("./security/hash");
 
 module.exports = function(p, s, f){
@@ -10767,7 +10770,7 @@ module.exports = function(p, s, f){
   params.params = p;
   hashImpl(params, s, f);
 };
-},{"./security/hash":48}],26:[function(_dereq_,module,exports){
+},{"./security/hash":50}],28:[function(_dereq_,module,exports){
 var logger =_dereq_("./logger");
 var cloud = _dereq_("./waitForCloud");
 var fhparams = _dereq_("./fhparams");
@@ -10812,7 +10815,7 @@ module.exports = function(opts, success, fail){
     }
   });
 };
-},{"./ajax":21,"./appProps":29,"./constants":31,"./fhparams":36,"./handleError":37,"./logger":42,"./waitForCloud":52}],27:[function(_dereq_,module,exports){
+},{"./ajax":23,"./appProps":31,"./constants":33,"./fhparams":38,"./handleError":39,"./logger":44,"./waitForCloud":54}],29:[function(_dereq_,module,exports){
 var logger = _dereq_("./logger");
 var appProps = _dereq_("./appProps");
 
@@ -10830,7 +10833,7 @@ module.exports = function (onNotification, success, fail) {
     fail('push plugin not installed');
   }
 };
-},{"./appProps":29,"./logger":42}],28:[function(_dereq_,module,exports){
+},{"./appProps":31,"./logger":44}],30:[function(_dereq_,module,exports){
 var keygen = _dereq_("./security/aes-keygen");
 var aes = _dereq_("./security/aes-node");
 var rsa = _dereq_("./security/rsa-node");
@@ -10874,7 +10877,7 @@ module.exports = function(p, s, f){
     }
   }
 };
-},{"./security/aes-keygen":46,"./security/aes-node":47,"./security/hash":48,"./security/rsa-node":49}],29:[function(_dereq_,module,exports){
+},{"./security/aes-keygen":48,"./security/aes-node":49,"./security/hash":50,"./security/rsa-node":51}],31:[function(_dereq_,module,exports){
 var consts = _dereq_("./constants");
 var ajax = _dereq_("./ajax");
 var logger = _dereq_("./logger");
@@ -10959,7 +10962,7 @@ module.exports = {
   setAppProps: setAppProps
 };
 
-},{"./ajax":21,"./constants":31,"./logger":42,"./queryMap":44,"underscore":18}],30:[function(_dereq_,module,exports){
+},{"./ajax":23,"./constants":33,"./logger":44,"./queryMap":46,"underscore":20}],32:[function(_dereq_,module,exports){
 var logger = _dereq_("./logger");
 var queryMap = _dereq_("./queryMap");
 var fhparams = _dereq_("./fhparams");
@@ -11072,10 +11075,10 @@ module.exports = {
   "handleAuthResponse": handleAuthResponse
 };
 
-},{"./data":33,"./fhparams":36,"./logger":42,"./queryMap":44}],31:[function(_dereq_,module,exports){
+},{"./data":35,"./fhparams":38,"./logger":44,"./queryMap":46}],33:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.7.5",
+  "sdk_version": "2.11.0",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit",
   "INTERNAL_CONFIG_LOADED_EVENT": "internalfhconfigloaded",
@@ -11084,7 +11087,7 @@ module.exports = {
   "SESSION_TOKEN_KEY_NAME":"sessionToken"
 };
 
-},{}],32:[function(_dereq_,module,exports){
+},{}],34:[function(_dereq_,module,exports){
 module.exports = {
   readCookieValue  : function (cookie_name) {
     var name_str = cookie_name + "=";
@@ -11109,7 +11112,7 @@ module.exports = {
   }
 };
 
-},{}],33:[function(_dereq_,module,exports){
+},{}],35:[function(_dereq_,module,exports){
 var Lawnchair = _dereq_('../../libs/generated/lawnchair');
 var lawnchairext = _dereq_('./lawnchair-ext');
 var logger = _dereq_('./logger');
@@ -11174,7 +11177,7 @@ var data = {
 };
 
 module.exports = data;
-},{"../../libs/generated/lawnchair":2,"./constants":31,"./lawnchair-ext":40,"./logger":42}],34:[function(_dereq_,module,exports){
+},{"../../libs/generated/lawnchair":2,"./constants":33,"./lawnchair-ext":42,"./logger":44}],36:[function(_dereq_,module,exports){
 var cookies = _dereq_("./cookies");
 var uuidModule = _dereq_("./uuid");
 var logger = _dereq_("./logger");
@@ -11244,14 +11247,14 @@ module.exports = {
     return destination;
   }
 };
-},{"./cookies":32,"./logger":42,"./platformsMap":43,"./uuid":51}],35:[function(_dereq_,module,exports){
+},{"./cookies":34,"./logger":44,"./platformsMap":45,"./uuid":53}],37:[function(_dereq_,module,exports){
 var EventEmitter = _dereq_('events').EventEmitter;
 
 var emitter = new EventEmitter();
 emitter.setMaxListeners(0);
 
 module.exports = emitter;
-},{"events":6}],36:[function(_dereq_,module,exports){
+},{"events":8}],38:[function(_dereq_,module,exports){
 var device = _dereq_("./device");
 var sdkversion = _dereq_("./sdkversion");
 var appProps = _dereq_("./appProps");
@@ -11335,7 +11338,7 @@ module.exports = {
   "getFHHeaders": getFHHeaders
 };
 
-},{"./appProps":29,"./device":34,"./logger":42,"./sdkversion":45}],37:[function(_dereq_,module,exports){
+},{"./appProps":31,"./device":36,"./logger":44,"./sdkversion":47}],39:[function(_dereq_,module,exports){
 module.exports = function(fail, req, resStatus, error){
   var errraw;
   var statusCode = 0;
@@ -11360,7 +11363,7 @@ module.exports = function(fail, req, resStatus, error){
   }
 };
 
-},{}],38:[function(_dereq_,module,exports){
+},{}],40:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
 var appProps = _dereq_("./appProps");
 
@@ -11460,7 +11463,7 @@ CloudHost.prototype.getEnv = function(){
 };
 
 module.exports = CloudHost;
-},{"./appProps":29,"./constants":31}],39:[function(_dereq_,module,exports){
+},{"./appProps":31,"./constants":33}],41:[function(_dereq_,module,exports){
 var loadScript = _dereq_("./loadScript");
 var consts = _dereq_("./constants");
 var fhparams = _dereq_("./fhparams");
@@ -11601,7 +11604,7 @@ module.exports = {
   "loadCloudProps": loadCloudProps
 };
 
-},{"./ajax":21,"./appProps":29,"./constants":31,"./data":33,"./events":35,"./fhparams":36,"./handleError":37,"./loadScript":41,"./logger":42,"./security/hash":48}],40:[function(_dereq_,module,exports){
+},{"./ajax":23,"./appProps":31,"./constants":33,"./data":35,"./events":37,"./fhparams":38,"./handleError":39,"./loadScript":43,"./logger":44,"./security/hash":50}],42:[function(_dereq_,module,exports){
 var fileStorageAdapter = function (app_props, hashFunc) {
   // private methods
 
@@ -11790,7 +11793,7 @@ var fileStorageAdapter = function (app_props, hashFunc) {
 module.exports = {
   fileStorageAdapter: fileStorageAdapter
 };
-},{}],41:[function(_dereq_,module,exports){
+},{}],43:[function(_dereq_,module,exports){
 module.exports = function (url, callback) {
   var script;
   var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement;
@@ -11813,7 +11816,7 @@ module.exports = function (url, callback) {
   head.insertBefore(script, head.firstChild);
 };
 
-},{}],42:[function(_dereq_,module,exports){
+},{}],44:[function(_dereq_,module,exports){
 var console = _dereq_('console');
 var log = _dereq_('loglevel');
 
@@ -11837,7 +11840,7 @@ log.setLevel('info');
  * Use either string or integer value
  */
 module.exports = log;
-},{"console":5,"loglevel":16}],43:[function(_dereq_,module,exports){
+},{"console":7,"loglevel":18}],45:[function(_dereq_,module,exports){
 module.exports = [
   {
     "destination" :"ipad",
@@ -11865,7 +11868,7 @@ module.exports = [
   }
 ];
 
-},{}],44:[function(_dereq_,module,exports){
+},{}],46:[function(_dereq_,module,exports){
 module.exports = function(url) {
   var qmap = {};
   var i = url.split("?");
@@ -11881,7 +11884,7 @@ module.exports = function(url) {
   }
   return qmap;
 };
-},{}],45:[function(_dereq_,module,exports){
+},{}],47:[function(_dereq_,module,exports){
 var constants = _dereq_("./constants");
 
 module.exports = function() {
@@ -11894,7 +11897,7 @@ module.exports = function() {
   return type + "/" + constants.sdk_version;
 };
 
-},{"./constants":31}],46:[function(_dereq_,module,exports){
+},{"./constants":33}],48:[function(_dereq_,module,exports){
 var rsa = _dereq_("../../../libs/rsa");
 var SecureRandom = rsa.SecureRandom;
 var byte2Hex = rsa.byte2Hex;
@@ -11936,7 +11939,7 @@ var aes_keygen = function(p, s, f){
 };
 
 module.exports = aes_keygen;
-},{"../../../libs/rsa":3}],47:[function(_dereq_,module,exports){
+},{"../../../libs/rsa":3}],49:[function(_dereq_,module,exports){
 var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 var encrypt = function(p, s, f){
@@ -11982,7 +11985,7 @@ module.exports = {
   decrypt: decrypt
 };
 
-},{"../../../libs/generated/crypto":1}],48:[function(_dereq_,module,exports){
+},{"../../../libs/generated/crypto":1}],50:[function(_dereq_,module,exports){
 var CryptoJS = _dereq_("../../../libs/generated/crypto");
 
 
@@ -12007,7 +12010,7 @@ var hash = function(p, s, f){
 };
 
 module.exports = hash;
-},{"../../../libs/generated/crypto":1}],49:[function(_dereq_,module,exports){
+},{"../../../libs/generated/crypto":1}],51:[function(_dereq_,module,exports){
 var rsa = _dereq_("../../../libs/rsa");
 var RSAKey = rsa.RSAKey;
 
@@ -12032,7 +12035,7 @@ var encrypt = function(p, s, f){
 module.exports = {
   encrypt: encrypt
 };
-},{"../../../libs/rsa":3}],50:[function(_dereq_,module,exports){
+},{"../../../libs/rsa":3}],52:[function(_dereq_,module,exports){
 var actAPI = _dereq_("./api_act");
 var cloudAPI = _dereq_("./api_cloud");
 var CryptoJS = _dereq_("../../libs/generated/crypto");
@@ -12123,7 +12126,8 @@ var self = {
 
   init_is_called: false,
 
-  change_history_size: 5,
+  //this is used to map the temp data uid (created on client) to the real uid (created in the cloud)
+  uid_map: {},
 
   // PUBLIC FUNCTION IMPLEMENTATIONS
   init: function(options) {
@@ -12242,6 +12246,15 @@ var self = {
     });
   },
 
+  getUID: function(oldOrNewUid){
+    var uid = self.uid_map[oldOrNewUid];
+    if(uid){
+      return uid;
+    } else {
+      return oldOrNewUid;
+    }
+  },
+
   create: function(dataset_id, data, success, failure) {
     if(data == null){
       if(failure){
@@ -12253,6 +12266,7 @@ var self = {
 
   read: function(dataset_id, uid, success, failure) {
     self.getDataSet(dataset_id, function(dataset) {
+      uid = self.getUID(uid);
       var rec = dataset.data[uid];
       if (!rec) {
         failure("unknown_uid");
@@ -12269,10 +12283,12 @@ var self = {
   },
 
   update: function(dataset_id, uid, data, success, failure) {
+    uid = self.getUID(uid);
     self.addPendingObj(dataset_id, uid, data, "update", success, failure);
   },
 
   'delete': function(dataset_id, uid, success, failure) {
+    uid = self.getUID(uid);
     self.addPendingObj(dataset_id, uid, null, "delete", success, failure);
   },
 
@@ -12551,7 +12567,7 @@ var self = {
     });
 
     function storePendingObject(obj) {
-      obj.hash = self.generateHash(obj);
+      obj.hash = obj.hash || self.generateHash(obj);
 
       self.getDataSet(dataset_id, function(dataset) {
 
@@ -12580,7 +12596,10 @@ var self = {
     pendingObj.postHash = self.generateHash(pendingObj.post);
     pendingObj.timestamp = new Date().getTime();
     if( "create" === action ) {
-      pendingObj.uid = pendingObj.postHash;
+      //this hash value will be returned later on when the cloud returns updates. We can then link the old uid
+      //with new uid
+      pendingObj.hash = self.generateHash(pendingObj);
+      pendingObj.uid = pendingObj.hash;
       storePendingObject(pendingObj);
     } else {
       self.read(dataset_id, uid, function(rec) {
@@ -12593,19 +12612,6 @@ var self = {
           failure(code, msg);
         }
       });
-    }
-  },
-
-  updateChangeHistory: function(dataset, pending){
-    if(pending.action === 'update'){
-      dataset.changeHistory = dataset.changeHistory || {};
-      dataset.changeHistory[pending.uid] = dataset.changeHistory[pending.uid] || [];
-      if(dataset.changeHistory[pending.uid].indexOf(pending.preHash) === -1){
-        dataset.changeHistory[pending.uid].push(pending.preHash);
-        if(dataset.changeHistory[pending.uid].length > self.change_history_size){
-          dataset.changeHistory[pending.uid].shift();
-        }
-      }
     }
   },
 
@@ -12637,7 +12643,6 @@ var self = {
             var pending = dataSet.pending;
             var pendingArray = [];
             for(var i in pending ) {
-              self.updateChangeHistory(dataSet, pending[i]);
               // Mark the pending records we are about to submit as inflight and add them to the array for submission
               // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
               // Don't add delayed records
@@ -12664,16 +12669,13 @@ var self = {
                     for (var up in updates) {
                       rec = updates[up];
                       acknowledgements.push(rec);
-                      if( dataSet.pending[up] && dataSet.pending[up].inFlight && !dataSet.pending[up].crashed ) {
+                      if( dataSet.pending[up] && dataSet.pending[up].inFlight) {
                         delete dataSet.pending[up];
                         self.doNotify(dataset_id, rec.uid, notification, rec);
                       }
                     }
                   }
                 }
-
-                // Check to see if any new pending records need to be updated to reflect the current state of play.
-                self.updatePendingFromNewData(dataset_id, dataSet, res);
 
                 // Check to see if any previously crashed inflight records can now be resolved
                 self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);
@@ -12684,31 +12686,17 @@ var self = {
                 //Check meta data as well to make sure it contains the correct info
                 self.updateMetaFromNewData(dataset_id, dataSet, res);
 
-                // Update the new dataset with details of any inflight updates which we have not received a response on
-                self.updateNewDataFromInFlight(dataset_id, dataSet, res);
-
-                // Update the new dataset with details of any pending updates
-                self.updateNewDataFromPending(dataset_id, dataSet, res);
-
-
-
-                if (res.records) {
-                  // Full Dataset returned
-                  dataSet.data = res.records;
-                  dataSet.hash = res.hash;
-
-                  self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'full dataset');
-                }
 
                 if (res.updates) {
                   var acknowledgements = [];
+                  self.checkUidChanges(dataSet, res.updates.applied);
                   processUpdates(res.updates.applied, self.notifications.REMOTE_UPDATE_APPLIED, acknowledgements);
                   processUpdates(res.updates.failed, self.notifications.REMOTE_UPDATE_FAILED, acknowledgements);
                   processUpdates(res.updates.collisions, self.notifications.COLLISION_DETECTED, acknowledgements);
                   dataSet.acknowledgements = acknowledgements;
                 }
 
-                if (!res.records && res.hash && res.hash !== dataSet.hash) {
+                if (res.hash && res.hash !== dataSet.hash) {
                   self.consoleLog("Local dataset stale - syncing records :: local hash= " + dataSet.hash + " - remoteHash=" + res.hash);
                   // Different hash value returned - Sync individual records
                   self.syncRecords(dataset_id);
@@ -12761,6 +12749,10 @@ var self = {
         'dataset_id': dataset_id,
         'req': syncRecParams
       }, function(res) {
+        self.consoleLog('syncRecords Res before applying pending changes :: ' + JSON.stringify(res));
+        self.applyPendingChangesToRecords(dataSet, res);
+        self.consoleLog('syncRecords Res after apply pending changes :: ' + JSON.stringify(res));
+
         var i;
 
         if (res.create) {
@@ -12769,17 +12761,12 @@ var self = {
             self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "create");
           }
         }
-        var existingPendingPreHashes = self.existingPendingPreHashMap(dataSet);
+        
         if (res.update) {
           for (i in res.update) {
-            if(existingPendingPreHashes[i] && existingPendingPreHashes[i].indexOf(res.update[i].hash) > -1){
-              //the returned update data has been updated locally, so it should keep local copy
-              self.consoleLog("skip update from remote for uid :: " + i + " :: hash = " + res.update[i].hash + ' :: data = ' + JSON.stringify(res.update[i].data));
-            } else {
-              localDataSet[i].hash = res.update[i].hash;
-              localDataSet[i].data = res.update[i].data;
-              self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
-            }
+            localDataSet[i].hash = res.update[i].hash;
+            localDataSet[i].data = res.update[i].data;
+            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
           }
         }
         if (res['delete']) {
@@ -12813,9 +12800,83 @@ var self = {
     });
   },
 
-  existingPendingPreHashMap: function(dataset){
-    var pendingPreHashes = dataset.changeHistory || {};
-    return pendingPreHashes;
+  applyPendingChangesToRecords: function(dataset, records){
+    var pendings = dataset.pending;
+    for(var pendingUid in pendings){
+      if(pendings.hasOwnProperty(pendingUid)){
+        var pendingObj = pendings[pendingUid];
+        var uid = pendingObj.uid;
+        //if the records contain any thing about the data records that are currently in pendings,
+        //it means there are local changes that haven't been applied to the cloud yet,
+        //so update the pre value of each pending record to relect the latest status from cloud
+        //and remove them from the response
+        if(records.create){
+          var creates = records.create;
+          if(creates && creates[uid]){
+            delete creates[uid];
+          }
+        }
+        if(records.update){
+          var updates = records.update;
+          if(updates && updates[uid]){
+            delete updates[uid];
+          }
+        }
+        if(records['delete']){
+          var deletes = records['delete'];
+          if(deletes && deletes[uid]){
+            delete deletes[uid];
+          }
+        }
+      }
+    }
+  },
+
+  checkUidChanges: function(dataset, appliedUpdates){
+    if(appliedUpdates){
+      var new_uids = {};
+      var changeUidsCount = 0;
+      for(var update in appliedUpdates){
+        if(appliedUpdates.hasOwnProperty(update)){
+          var applied_update = appliedUpdates[update];
+          var action = applied_update.action;
+          if(action && action === 'create'){
+            //we are receving the results of creations, at this point, we will have the old uid(the hash) and the real uid generated by the cloud
+            var newUid = applied_update.uid;
+            var oldUid = applied_update.hash;
+            changeUidsCount++;
+            //remember the mapping
+            self.uid_map[oldUid] = newUid;
+            new_uids[oldUid] = newUid;
+            //update the data uid in the dataset
+            var record = dataset.data[oldUid];
+            if(record){
+              dataset.data[newUid] = record;
+              delete dataset.data[oldUid];
+            }
+
+            //update the old uid in meta data
+            var metaData = dataset.meta[oldUid];
+            if(metaData) {
+              dataset.meta[newUid] = metaData;
+              delete dataset.meta[oldUid];
+            }
+          }
+        }
+      }
+      if(changeUidsCount > 0){
+        //we need to check all existing pendingRecords and update their UIDs if they are still the old values
+        for(var pending in dataset.pending){
+          if(dataset.pending.hasOwnProperty(pending)){
+            var pendingObj = dataset.pending[pending];
+            var pendingRecordUid = pendingObj.uid;
+            if(new_uids[pendingRecordUid]){
+              pendingObj.uid = new_uids[pendingRecordUid];
+            }
+          }
+        }
+      }
+    }
   },
 
   checkDatasets: function() {
@@ -13024,7 +13085,6 @@ var self = {
           self.consoleLog('updating an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));
           // We are trying to update an existing pending record
           previousPendingUid = dataset.meta[uid].pendingUid;
-          dataset.meta[uid].previousPendingUid = previousPendingUid;
           previousPending = pending[previousPendingUid];
           if(previousPending) {
             if(!previousPending.inFlight){
@@ -13055,7 +13115,6 @@ var self = {
           self.consoleLog('Deleting an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));
           // We are trying to delete an existing pending record
           previousPendingUid = dataset.meta[uid].pendingUid;
-          dataset.meta[uid].previousPendingUid = previousPendingUid;
           previousPending = pending[previousPendingUid];
           if( previousPending ) {
             if(!previousPending.inFlight){
@@ -13094,146 +13153,6 @@ var self = {
     }
   },
 
-  updatePendingFromNewData: function(dataset_id, dataset, newData) {
-    var pending = dataset.pending;
-    var newRec;
-
-    if( pending && newData.records) {
-      for( var pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          var pendingRec = pending[pendingHash];
-
-          dataset.meta[pendingRec.uid] = dataset.meta[pendingRec.uid] || {};
-
-          if( pendingRec.inFlight === false ) {
-            // Pending record that has not been submitted
-            self.consoleLog('updatePendingFromNewData - Found Non inFlight record -> action=' + pendingRec.action +' :: uid=' + pendingRec.uid  + ' :: hash=' + pendingRec.hash);
-            if( pendingRec.action === "update" || pendingRec.action === "delete") {
-              // Update the pre value of pending record to reflect the latest data returned from sync.
-              // This will prevent a collision being reported when the pending record is sent.
-              newRec = newData.records[pendingRec.uid];
-              if( newRec ) {
-                self.consoleLog('updatePendingFromNewData - Updating pre values for existing pending record ' + pendingRec.uid);
-                pendingRec.pre = newRec.data;
-                pendingRec.preHash = newRec.hash;
-              }
-              else {
-                // The update/delete may be for a newly created record in which case the uid will have changed.
-                var previousPendingUid = dataset.meta[pendingRec.uid].previousPendingUid;
-                var previousPending = pending[previousPendingUid];
-                if( previousPending ) {
-                  if( newData && newData.updates &&  newData.updates.applied && newData.updates.applied[previousPending.hash] ) {
-                    // There is an update in from a previous pending action
-                    var newUid = newData.updates.applied[previousPending.hash].uid;
-                    newRec = newData.records[newUid];
-                    if( newRec ) {
-                      self.consoleLog('updatePendingFromNewData - Updating pre values for existing pending record which was previously a create ' + pendingRec.uid + ' ==> ' + newUid);
-                      pendingRec.pre = newRec.data;
-                      pendingRec.preHash = newRec.hash;
-                      pendingRec.uid = newUid;
-                    }
-                  }
-                }
-              }
-            }
-
-            if( pendingRec.action === "create" ) {
-              if( newData && newData.updates &&  newData.updates.applied && newData.updates.applied[pendingHash] ) {
-                self.consoleLog('updatePendingFromNewData - Found an update for a pending create ' + JSON.stringify(newData.updates.applied[pendingHash]));
-                newRec = newData.records[newData.updates.applied[pendingHash].uid];
-                if( newRec ) {
-                  self.consoleLog('updatePendingFromNewData - Changing pending create to an update based on new record  ' + JSON.stringify(newRec));
-
-                  // Set up the pending create as an update
-                  pendingRec.action = "update";
-                  pendingRec.pre = newRec.data;
-                  pendingRec.preHash = newRec.hash;
-                  pendingRec.uid = newData.updates.applied[pendingHash].uid;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-
-  updateNewDataFromInFlight: function(dataset_id, dataset, newData) {
-    var pending = dataset.pending;
-
-    if( pending && newData.records) {
-      for( var pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          var pendingRec = pending[pendingHash];
-
-          if( pendingRec.inFlight ) {
-            var updateReceivedForPending = (newData && newData.updates &&  newData.updates.hashes && newData.updates.hashes[pendingHash]) ? true : false;
-
-            self.consoleLog('updateNewDataFromInFlight - Found inflight pending Record - action = ' + pendingRec.action + ' :: hash = ' + pendingHash + ' :: updateReceivedForPending=' + updateReceivedForPending);
-
-            if( ! updateReceivedForPending ) {
-              var newRec = newData.records[pendingRec.uid];
-
-              if( pendingRec.action === "update" && newRec) {
-                // Modify the new Record to have the updates from the pending record so the local dataset is consistent
-                newRec.data = pendingRec.post;
-                newRec.hash = pendingRec.postHash;
-              }
-              else if( pendingRec.action === "delete" && newRec) {
-                // Remove the record from the new dataset so the local dataset is consistent
-                delete newData.records[pendingRec.uid];
-              }
-              else if( pendingRec.action === "create" ) {
-                // Add the pending create into the new dataset so it is not lost from the UI
-                self.consoleLog('updateNewDataFromInFlight - re adding pending create to incomming dataset');
-                var newPendingCreate = {
-                  data: pendingRec.post,
-                  hash: pendingRec.postHash
-                };
-                newData.records[pendingRec.uid] = newPendingCreate;
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-
-  updateNewDataFromPending: function(dataset_id, dataset, newData) {
-    var pending = dataset.pending;
-
-    if( pending && newData.records) {
-      for( var pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          var pendingRec = pending[pendingHash];
-
-          if( pendingRec.inFlight === false ) {
-            self.consoleLog('updateNewDataFromPending - Found Non inFlight record -> action=' + pendingRec.action +' :: uid=' + pendingRec.uid  + ' :: hash=' + pendingRec.hash);
-            var newRec = newData.records[pendingRec.uid];
-            if( pendingRec.action === "update" && newRec) {
-              // Modify the new Record to have the updates from the pending record so the local dataset is consistent
-              newRec.data = pendingRec.post;
-              newRec.hash = pendingRec.postHash;
-            }
-            else if( pendingRec.action === "delete" && newRec) {
-              // Remove the record from the new dataset so the local dataset is consistent
-              delete newData.records[pendingRec.uid];
-            }
-            else if( pendingRec.action === "create" ) {
-              // Add the pending create into the new dataset so it is not lost from the UI
-              self.consoleLog('updateNewDataFromPending - re adding pending create to incomming dataset');
-              var newPendingCreate = {
-                data: pendingRec.post,
-                hash: pendingRec.postHash
-              };
-              newData.records[pendingRec.uid] = newPendingCreate;
-            }
-          }
-        }
-      }
-    }
-  },
-
   updateCrashedInFlightFromNewData: function(dataset_id, dataset, newData) {
     var updateNotifications = {
       applied: self.notifications.REMOTE_UPDATE_APPLIED,
@@ -13258,32 +13177,8 @@ var self = {
 
               // Check if the updates received contain any info about the crashed in flight update
               var crashedUpdate = newData.updates.hashes[pendingHash];
-              if( crashedUpdate ) {
-                // We have found an update on one of our in flight crashed records
-
-                resolvedCrashes[crashedUpdate.uid] = crashedUpdate;
-
-                self.consoleLog('updateCrashedInFlightFromNewData - Resolving status for crashed inflight pending record ' + JSON.stringify(crashedUpdate));
-
-                if( crashedUpdate.type === 'failed' ) {
-                  // Crashed update failed - revert local dataset
-                  if( crashedUpdate.action === 'create' ) {
-                    self.consoleLog('updateCrashedInFlightFromNewData - Deleting failed create from dataset');
-                    delete dataset.data[crashedUpdate.uid];
-                  }
-                  else if ( crashedUpdate.action === 'update' || crashedUpdate.action === 'delete' ) {
-                    self.consoleLog('updateCrashedInFlightFromNewData - Reverting failed ' + crashedUpdate.action + ' in dataset');
-                    dataset.data[crashedUpdate.uid] = {
-                      data : pendingRec.pre,
-                      hash : pendingRec.preHash
-                    };
-                  }
-                }
-
-                delete pending[pendingHash];
-                self.doNotify(dataset_id, crashedUpdate.uid, updateNotifications[crashedUpdate.type], crashedUpdate);
-              }
-              else {
+              if( !crashedUpdate ) {
+                //TODO: review this - why we need to wait?
                 // No word on our crashed update - increment a counter to reflect another sync that did not give us
                 // any update on our crashed record.
                 if( pendingRec.crashedCount ) {
@@ -13315,15 +13210,9 @@ var self = {
           if( pendingRec.inFlight && pendingRec.crashed) {
             if( pendingRec.crashedCount > dataset.config.crashed_count_wait ) {
               self.consoleLog('updateCrashedInFlightFromNewData - Crashed inflight pending record has reached crashed_count_wait limit : ' + JSON.stringify(pendingRec));
-              if( dataset.config.resend_crashed_updates ) {
-                self.consoleLog('updateCrashedInFlightFromNewData - Retryig crashed inflight pending record');
-                pendingRec.crashed = false;
-                pendingRec.inFlight = false;
-              }
-              else {
-                self.consoleLog('updateCrashedInFlightFromNewData - Deleting crashed inflight pending record');
-                delete pending[pendingHash];
-              }
+              self.consoleLog('updateCrashedInFlightFromNewData - Retryig crashed inflight pending record');
+              pendingRec.crashed = false;
+              pendingRec.inFlight = false;
             }
           }
         }
@@ -13362,21 +13251,9 @@ var self = {
         if(meta.hasOwnProperty(uid)){
           var metadata = meta[uid];
           var pendingHash = metadata.pendingUid;
-          var previousPendingHash = metadata.previousPendingUid;
-          self.consoleLog("updateMetaFromNewData - Found metadata with uid = " + uid + " :: pendingHash = " + pendingHash + " :: previousPendingHash =" + previousPendingHash);
-          var previousPendingResolved = true;
+          self.consoleLog("updateMetaFromNewData - Found metadata with uid = " + uid + " :: pendingHash = " + pendingHash);
           var pendingResolved = true;
-          if(previousPendingHash){
-            //we have previous pending in meta data, see if it's resolved
-            previousPendingResolved = false;
-            var resolved = newData.updates.hashes[previousPendingHash];
-            if(resolved){
-              self.consoleLog("updateMetaFromNewData - Found previousPendingUid in meta data resolved - resolved = " + JSON.stringify(resolved));
-              //the previous pending is resolved in the cloud
-              metadata.previousPendingUid = undefined;
-              previousPendingResolved = true;
-            }
-          }
+  
           if(pendingHash){
             //we have current pending in meta data, see if it's resolved
             pendingResolved = false;
@@ -13389,7 +13266,7 @@ var self = {
             }
           }
 
-          if(previousPendingResolved && pendingResolved){
+          if(pendingResolved){
             self.consoleLog("updateMetaFromNewData - both previous and current pendings are resolved for meta data with uid " + uid + ". Delete it.");
             //all pendings are resolved, the entry can be removed from meta data
             delete meta[uid];
@@ -13463,7 +13340,7 @@ module.exports = {
   checkHasCustomSync: self.checkHasCustomSync,
   clearCache: self.clearCache
 };
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":22,"./api_cloud":24}],51:[function(_dereq_,module,exports){
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":24,"./api_cloud":26}],53:[function(_dereq_,module,exports){
 module.exports = {
   createUUID : function () {
     //from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript
@@ -13480,7 +13357,7 @@ module.exports = {
   }
 };
 
-},{}],52:[function(_dereq_,module,exports){
+},{}],54:[function(_dereq_,module,exports){
 var initializer = _dereq_("./initializer");
 var events = _dereq_("./events");
 var CloudHost = _dereq_("./hosts");
@@ -13588,8 +13465,8 @@ module.exports = {
   getInitError: getInitError,
   reset: reset
 };
-},{"./appProps":29,"./constants":31,"./data":33,"./events":35,"./fhparams":36,"./hosts":38,"./initializer":39,"./logger":42}]},{},[19])
-(19)
+},{"./appProps":31,"./constants":33,"./data":35,"./events":37,"./fhparams":38,"./hosts":40,"./initializer":41,"./logger":44}]},{},[21])
+(21)
 });
 ;
 (function(root) {
@@ -15778,6 +15655,9 @@ appForm.utils = function(module) {
   module.getTime = getTime;
   module.send=send;
   module.isPhoneGap = isPhoneGap;
+  module.generateGlobalEventName = function(type, eventName){
+    return "" + type + ":" + eventName;
+  };
 
   function isPhoneGap() {
     return (typeof window.Phonegap !== "undefined" || typeof window.cordova !== "undefined");
@@ -16136,7 +16016,7 @@ appForm.utils = function(module) {
             }
             fe.file(function(file) {
                 //issue CB-9403 on file plugin of windows missing fullPath on File, copying it here from FileEntry
-                if (window.device.platform === "windows" && typeof (file.fullPath) === "undefined") {
+                if (window.device && window.device.platform === "windows" && typeof (file.fullPath) === "undefined") {
                     file.fullPath = fe.nativeURL;
                 }
                 cb(null, file);
@@ -17164,17 +17044,32 @@ appForm.models = function (module) {
     }
   };
 
+  Model.prototype.getType = function(){
+    return this.get('_type');
+  };
+
   Model.prototype.clearEvents = function(){
     this.events = {};
   };
   Model.prototype.emit = function () {
     var args = Array.prototype.slice.call(arguments, 0);
-    var e = args.shift();
-    var funcs = this.events[e];
+    var eventName = args.shift();
+    var funcs = this.events[eventName];
+
+    var globalArgs = args.slice(0);
+
     if (funcs && funcs.length > 0) {
       for (var i = 0; i < funcs.length; i++) {
         var func = funcs[i];
         func.apply(this, args);
+        //Also emitting a global event if the
+        var type = this.getType();
+        if(type){
+          var globalEmitName = this.utils.generateGlobalEventName(type, eventName);
+          globalArgs.unshift(globalEmitName);
+          $fh.forms.emit.apply(this, globalArgs);
+        }
+
       }
     }
   };
@@ -18212,6 +18107,32 @@ appForm.models = function(module) {
     };
     Submissions.prototype.getSubmissionMetaList = Submissions.prototype.getSubmissions;
     //function alias
+
+
+    //Getting A Submission Model By Local ID
+    Submissions.prototype.getSubmissionByLocalId = function(localId, cb){
+        var self = this;
+        $fh.forms.log.d("Submissions getSubmissionByLocalId", localId);
+        var submissionMeta = self.findMetaByLocalId(localId);
+        if(!submissionMeta){
+            return cb("No submissions for localId: " + localId);
+        }
+
+        self.getSubmissionByMeta(submissionMeta, cb);
+    };
+
+    //Getting A Submission Model By Remote ID
+    Submissions.prototype.getSubmissionByRemoteId = function(remoteId, cb){
+        var self = this;
+        $fh.forms.log.d("Submissions getSubmissionByRemoteId", remoteId);
+        var submissionMeta = self.findMetaByRemoteId(remoteId);
+        if(!submissionMeta){
+            return cb("No submissions for remoteId: " + remoteId);
+        }
+
+        self.getSubmissionByMeta(submissionMeta, cb);
+    };
+
     Submissions.prototype.findMetaByLocalId = function(localId) {
         $fh.forms.log.d("Submissions findMetaByLocalId", localId);
         var submissions = this.get('submissions');
@@ -18222,7 +18143,7 @@ appForm.models = function(module) {
             }
         }
 
-        //$fh.forms.log.e("Submissions findMetaByLocalId: No submissions for localId: ", localId);
+        $fh.forms.log.e("Submissions findMetaByLocalId: No submissions for localId: ", localId);
         return null;
     };
 
@@ -18877,6 +18798,9 @@ appForm.models = function(module) {
   Submission.prototype.getStatus = function() {
     return this.get('status');
   };
+  Submission.prototype.getErrorMessage = function(){
+    return this.get('errorMessage', 'No Error');
+  };
   /**
    * check if a target status is valid
    * @param  {[type]}  targetStatus [description]
@@ -19374,11 +19298,12 @@ appForm.models = function(module) {
     });
   };
   Submission.prototype.getRemoteSubmissionId = function() {
-    return this.get("submissionId", "");
+    return this.get("submissionId") || this.get('_id');
   };
   Submission.prototype.setRemoteSubmissionId = function(submissionId){
     if(submissionId){
       this.set("submissionId", submissionId);
+      this.set("_id", submissionId);
     }
   };
   return module;
@@ -19692,9 +19617,14 @@ appForm.models.Field = function (module) {
         //Submitting an existing file already saved, no need to save.
         return cb(null, previousFile);
       }
+      //If the value has no extension and there is a previous, then it is the same file -- just the hashed version.
+      if(fileType === "application/octet-stream"){
+        return cb(null, previousFile);
+      }
     }
 
-    var rtnJSON = {
+    //The file to be submitted is new
+    previousFile =  {
       'fileName': fileName,
       'fileSize': file.size,
       'fileType': fileType,
@@ -19704,15 +19634,13 @@ appForm.models.Field = function (module) {
       'contentType': 'binary'
     };
 
-    //The file to be submitted is new
-    previousFile = rtnJSON;
-
     var name = fileName + new Date().getTime() + Math.ceil(Math.random() * 100000);
     appForm.utils.md5(name, function (err, res) {
       hashName = res;
       if (err) {
         hashName = name;
       }
+
       hashName = 'filePlaceHolder' + hashName;
 
       if(fileName.length === 0){
@@ -21069,7 +20997,7 @@ appForm.models = function (module) {
         if(_err){
           return cb(_err);
         }
-        model.set('submissionId', submissionId);
+        model.setRemoteSubmissionId(submissionId);
         model.submitted(cb);
       });
     }
@@ -21195,12 +21123,15 @@ appForm.models = function (module) {
         'totalSize': self.getTotalSize(),
         'uploaded': self.getUploadedSize(),
         'retryAttempts': self.getRetryAttempts(),
-        'submissionTransferType': self.get('submissionTransferType')
+        'submissionTransferType': self.get('submissionTransferType'),
+        'submissionRemoteId': self.get('submissionId'),
+        'submissionLocalId': self.get('submissionLocalId')
       };
     var progress = self.getCurrentTask();
     if (progress === null) {
       return rtn;
     } else {
+      //Boolean specifying if the submission JSON has been uploaded.
       rtn.formJSON = true;
       rtn.currentFileIndex = progress;
     }
@@ -21389,6 +21320,44 @@ appForm.api = function (module) {
   module.downloadSubmission = downloadSubmission;
   module.init = appForm.init;
   module.log=appForm.models.log;
+  module._events = {};
+
+  //Registering For Global Events
+  module.on = function(name, func, callOnce){
+    if (!module._events[name]) {
+      module._events[name] = [];
+    }
+    if (module._events[name].indexOf(func) < 0) {
+      module._events[name].push({
+        callOnce: callOnce,
+        func: func
+      });
+    }
+  };
+
+  module.once = function(name, func){
+    module.on(name, func, true);
+  };
+
+  //Emitting A Global Event
+  module.emit = function () {
+    var args = Array.prototype.slice.call(arguments, 0);
+    var eventName = args.shift();
+    var funcDetailsArray = module._events[eventName];
+    if (funcDetailsArray && funcDetailsArray.length > 0) {
+      for (var i = 0; i < funcDetailsArray.length; i++) {
+        var functionDetails = funcDetailsArray[i];
+        var functionToCall = funcDetailsArray[i].func;
+        //If the function was not already called, or is not only set to call once, the call the function,
+        //Otherwise, don't call it.
+        if(!functionDetails.called || !functionDetails.callOnce){
+          functionDetails.called = true;
+          functionToCall.apply(this, args);
+        }
+      }
+    }
+  };
+
   var _submissions = null;
   var waitOnSubmission = {};
   var formConfig = appForm.models.config;
@@ -21618,13 +21587,18 @@ appForm.api = function (module) {
      * @param {function} cb (err, downloadTask)
      * */
     function downloadSubmission(params, cb) {
+      $fh.forms.log.d("downloadSubmission called", params);
       params = params ? params : {};
-      //cb = cb ? cb : defaultFunction;
-      var submissionToDownload = null;
+      var waitCallbackPassed = typeof(cb) === "function";
+      cb = typeof(cb) === "function" ? cb : function(){};
 
-      if(typeof(cb) !== 'function'){
-        return null;
+      //There should be a submission id to download.
+      if(!params.submissionId){
+        $fh.forms.log.e("No submissionId passed to download a submission");
+        return cb("No submissionId passed to download a submission");
       }
+
+      var submissionToDownload = null;
 
       function finishSubmissionDownload(err) {
         err = typeof(err) === "string" && err.length === 24 ? null : err;
@@ -21647,64 +21621,65 @@ appForm.api = function (module) {
         }
       }
 
-      $fh.forms.log.d("downloadSubmission called", params);
+      $fh.forms.log.d("downloadSubmission SubmissionId exists" + params.submissionId);
+      var submissionAlreadySaved = appForm.models.submissions.findMetaByRemoteId(params.submissionId);
 
-      if (params.submissionId) {
-        $fh.forms.log.d("downloadSubmission SubmissionId exists" + params.submissionId);
-        var submissionAlreadySaved = appForm.models.submissions.findMetaByRemoteId(params.submissionId);
+      if (submissionAlreadySaved === null) {
 
-        if (submissionAlreadySaved === null) {
+        $fh.forms.log.d("downloadSubmission submission does not exist, downloading", params);
+        submissionToDownload = new appForm.models.submission.newInstance(null, {
+          submissionId: params.submissionId
+        });
 
-          $fh.forms.log.d("downloadSubmission submission does not exist, downloading", params);
-          submissionToDownload = new appForm.models.submission.newInstance(null, {
-            submissionId: params.submissionId
-          });
+        submissionToDownload.on('error', finishSubmissionDownload);
 
-          submissionToDownload.on('error', finishSubmissionDownload);
+        submissionToDownload.on('downloaded', finishSubmissionDownload);
 
-          submissionToDownload.on('downloaded', finishSubmissionDownload);
+        if (typeof(params.updateFunction) === 'function') {
+          submissionToDownload.on('progress', params.updateFunction);
+        }
 
-          if (typeof(params.updateFunction) === 'function') {
-            submissionToDownload.on('progress', params.updateFunction);
+        //If there is no callback function, then just trigger the download.
+        //Users can register global listeners for submission downloads events now.
+        if(typeof(cb) === "function"){
+          if(waitOnSubmission[params.submissionId]){
+            waitOnSubmission[params.submissionId].push(cb);
+          } else {
+            waitOnSubmission[params.submissionId] = [];
+            waitOnSubmission[params.submissionId].push(cb);
           }
+        }
 
-          
+        submissionToDownload.download(function(err) {
+          if (err) {
+            $fh.forms.log.e("Error queueing submission for download " + err);
+            return cb(err);
+          }
+        });
+      } else {
+        $fh.forms.log.d("downloadSubmission submission exists", params);
+
+        //Submission was created, but not finished downloading
+        if (submissionAlreadySaved.status !== "downloaded" && submissionAlreadySaved.status !== "submitted") {
           if(typeof(cb) === "function"){
             if(waitOnSubmission[params.submissionId]){
-              waitOnSubmission[params.submissionId].push(cb);  
+              waitOnSubmission[params.submissionId].push(cb);
             } else {
-               waitOnSubmission[params.submissionId] = [];
-               waitOnSubmission[params.submissionId].push(cb);  
-            }  
+              waitOnSubmission[params.submissionId] = [];
+              waitOnSubmission[params.submissionId].push(cb);
+            }
           }
-
-          submissionToDownload.download(function(err) {
-            if (err) {
-              $fh.forms.log.e("Error queueing submission for download " + err);
+        } else {
+          appForm.models.submissions.getSubmissionByMeta(submissionAlreadySaved, function(err, submission){
+            if(err){
               return cb(err);
             }
+
+            //If the submission has already been downloaded - emit the downloaded event again
+            submission.emit('downloaded', submission.getRemoteSubmissionId());
+            return cb(undefined, submission);
           });
-        } else {
-          $fh.forms.log.d("downloadSubmission submission exists", params);
-
-          //Submission was created, but not finished downloading
-          if (submissionAlreadySaved.status !== "downloaded" && submissionAlreadySaved.status !== "submitted") {
-            if(typeof(cb) === "function"){
-              if(waitOnSubmission[params.submissionId]){
-                waitOnSubmission[params.submissionId].push(cb);  
-              } else {
-                 waitOnSubmission[params.submissionId] = [];
-                 waitOnSubmission[params.submissionId].push(cb);  
-              }  
-            }
-          } else {
-            appForm.models.submissions.getSubmissionByMeta(submissionAlreadySaved, cb);
-          }
-
         }
-      } else {
-        $fh.forms.log.e("No submissionId passed to download a submission");
-        return cb("No submissionId passed to download a submission");
       }
     }
   return module;

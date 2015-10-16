@@ -88,7 +88,8 @@ var self = {
 
   init_is_called: false,
 
-  change_history_size: 5,
+  //this is used to map the temp data uid (created on client) to the real uid (created in the cloud)
+  uid_map: {},
 
   // PUBLIC FUNCTION IMPLEMENTATIONS
   init: function(options) {
@@ -207,6 +208,15 @@ var self = {
     });
   },
 
+  getUID: function(oldOrNewUid){
+    var uid = self.uid_map[oldOrNewUid];
+    if(uid){
+      return uid;
+    } else {
+      return oldOrNewUid;
+    }
+  },
+
   create: function(dataset_id, data, success, failure) {
     if(data == null){
       if(failure){
@@ -218,6 +228,7 @@ var self = {
 
   read: function(dataset_id, uid, success, failure) {
     self.getDataSet(dataset_id, function(dataset) {
+      uid = self.getUID(uid);
       var rec = dataset.data[uid];
       if (!rec) {
         failure("unknown_uid");
@@ -234,10 +245,12 @@ var self = {
   },
 
   update: function(dataset_id, uid, data, success, failure) {
+    uid = self.getUID(uid);
     self.addPendingObj(dataset_id, uid, data, "update", success, failure);
   },
 
   'delete': function(dataset_id, uid, success, failure) {
+    uid = self.getUID(uid);
     self.addPendingObj(dataset_id, uid, null, "delete", success, failure);
   },
 
@@ -564,19 +577,6 @@ var self = {
     }
   },
 
-  updateChangeHistory: function(dataset, pending){
-    if(pending.action === 'update'){
-      dataset.changeHistory = dataset.changeHistory || {};
-      dataset.changeHistory[pending.uid] = dataset.changeHistory[pending.uid] || [];
-      if(dataset.changeHistory[pending.uid].indexOf(pending.preHash) === -1){
-        dataset.changeHistory[pending.uid].push(pending.preHash);
-        if(dataset.changeHistory[pending.uid].length > self.change_history_size){
-          dataset.changeHistory[pending.uid].shift();
-        }
-      }
-    }
-  },
-
   syncLoop: function(dataset_id) {
     self.getDataSet(dataset_id, function(dataSet) {
     
@@ -605,7 +605,6 @@ var self = {
             var pending = dataSet.pending;
             var pendingArray = [];
             for(var i in pending ) {
-              self.updateChangeHistory(dataSet, pending[i]);
               // Mark the pending records we are about to submit as inflight and add them to the array for submission
               // Don't re-add previous inFlight pending records who whave crashed - i.e. who's current state is unknown
               // Don't add delayed records
@@ -632,16 +631,13 @@ var self = {
                     for (var up in updates) {
                       rec = updates[up];
                       acknowledgements.push(rec);
-                      if( dataSet.pending[up] && dataSet.pending[up].inFlight && !dataSet.pending[up].crashed ) {
+                      if( dataSet.pending[up] && dataSet.pending[up].inFlight) {
                         delete dataSet.pending[up];
                         self.doNotify(dataset_id, rec.uid, notification, rec);
                       }
                     }
                   }
                 }
-
-                // Check to see if any new pending records need to be updated to reflect the current state of play.
-                self.updatePendingFromNewData(dataset_id, dataSet, res);
 
                 // Check to see if any previously crashed inflight records can now be resolved
                 self.updateCrashedInFlightFromNewData(dataset_id, dataSet, res);
@@ -652,31 +648,17 @@ var self = {
                 //Check meta data as well to make sure it contains the correct info
                 self.updateMetaFromNewData(dataset_id, dataSet, res);
 
-                // Update the new dataset with details of any inflight updates which we have not received a response on
-                self.updateNewDataFromInFlight(dataset_id, dataSet, res);
-
-                // Update the new dataset with details of any pending updates
-                self.updateNewDataFromPending(dataset_id, dataSet, res);
-
-
-
-                if (res.records) {
-                  // Full Dataset returned
-                  dataSet.data = res.records;
-                  dataSet.hash = res.hash;
-
-                  self.doNotify(dataset_id, res.hash, self.notifications.DELTA_RECEIVED, 'full dataset');
-                }
 
                 if (res.updates) {
                   var acknowledgements = [];
+                  self.checkUidChanges(dataSet, res.updates.applied);
                   processUpdates(res.updates.applied, self.notifications.REMOTE_UPDATE_APPLIED, acknowledgements);
                   processUpdates(res.updates.failed, self.notifications.REMOTE_UPDATE_FAILED, acknowledgements);
                   processUpdates(res.updates.collisions, self.notifications.COLLISION_DETECTED, acknowledgements);
                   dataSet.acknowledgements = acknowledgements;
                 }
 
-                if (!res.records && res.hash && res.hash !== dataSet.hash) {
+                if (res.hash && res.hash !== dataSet.hash) {
                   self.consoleLog("Local dataset stale - syncing records :: local hash= " + dataSet.hash + " - remoteHash=" + res.hash);
                   // Different hash value returned - Sync individual records
                   self.syncRecords(dataset_id);
@@ -729,6 +711,10 @@ var self = {
         'dataset_id': dataset_id,
         'req': syncRecParams
       }, function(res) {
+        self.consoleLog('syncRecords Res before applying pending changes :: ' + JSON.stringify(res));
+        self.applyPendingChangesToRecords(dataSet, res);
+        self.consoleLog('syncRecords Res after apply pending changes :: ' + JSON.stringify(res));
+
         var i;
 
         if (res.create) {
@@ -737,17 +723,12 @@ var self = {
             self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "create");
           }
         }
-        var existingPendingPreHashes = self.existingPendingPreHashMap(dataSet);
+        
         if (res.update) {
           for (i in res.update) {
-            if(existingPendingPreHashes[i] && existingPendingPreHashes[i].indexOf(res.update[i].hash) > -1){
-              //the returned update data has been updated locally, so it should keep local copy
-              self.consoleLog("skip update from remote for uid :: " + i + " :: hash = " + res.update[i].hash + ' :: data = ' + JSON.stringify(res.update[i].data));
-            } else {
-              localDataSet[i].hash = res.update[i].hash;
-              localDataSet[i].data = res.update[i].data;
-              self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
-            }
+            localDataSet[i].hash = res.update[i].hash;
+            localDataSet[i].data = res.update[i].data;
+            self.doNotify(dataset_id, i, self.notifications.RECORD_DELTA_RECEIVED, "update");
           }
         }
         if (res['delete']) {
@@ -781,9 +762,83 @@ var self = {
     });
   },
 
-  existingPendingPreHashMap: function(dataset){
-    var pendingPreHashes = dataset.changeHistory || {};
-    return pendingPreHashes;
+  applyPendingChangesToRecords: function(dataset, records){
+    var pendings = dataset.pending;
+    for(var pendingUid in pendings){
+      if(pendings.hasOwnProperty(pendingUid)){
+        var pendingObj = pendings[pendingUid];
+        var uid = pendingObj.uid;
+        //if the records contain any thing about the data records that are currently in pendings,
+        //it means there are local changes that haven't been applied to the cloud yet,
+        //so update the pre value of each pending record to relect the latest status from cloud
+        //and remove them from the response
+        if(records.create){
+          var creates = records.create;
+          if(creates && creates[uid]){
+            delete creates[uid];
+          }
+        }
+        if(records.update){
+          var updates = records.update;
+          if(updates && updates[uid]){
+            delete updates[uid];
+          }
+        }
+        if(records['delete']){
+          var deletes = records['delete'];
+          if(deletes && deletes[uid]){
+            delete deletes[uid];
+          }
+        }
+      }
+    }
+  },
+
+  checkUidChanges: function(dataset, appliedUpdates){
+    if(appliedUpdates){
+      var new_uids = {};
+      var changeUidsCount = 0;
+      for(var update in appliedUpdates){
+        if(appliedUpdates.hasOwnProperty(update)){
+          var applied_update = appliedUpdates[update];
+          var action = applied_update.action;
+          if(action && action === 'create'){
+            //we are receving the results of creations, at this point, we will have the old uid(the hash) and the real uid generated by the cloud
+            var newUid = applied_update.uid;
+            var oldUid = applied_update.hash;
+            changeUidsCount++;
+            //remember the mapping
+            self.uid_map[oldUid] = newUid;
+            new_uids[oldUid] = newUid;
+            //update the data uid in the dataset
+            var record = dataset.data[oldUid];
+            if(record){
+              dataset.data[newUid] = record;
+              delete dataset.data[oldUid];
+            }
+
+            //update the old uid in meta data
+            var metaData = dataset.meta[oldUid];
+            if(metaData) {
+              dataset.meta[newUid] = metaData;
+              delete dataset.meta[oldUid];
+            }
+          }
+        }
+      }
+      if(changeUidsCount > 0){
+        //we need to check all existing pendingRecords and update their UIDs if they are still the old values
+        for(var pending in dataset.pending){
+          if(dataset.pending.hasOwnProperty(pending)){
+            var pendingObj = dataset.pending[pending];
+            var pendingRecordUid = pendingObj.uid;
+            if(new_uids[pendingRecordUid]){
+              pendingObj.uid = new_uids[pendingRecordUid];
+            }
+          }
+        }
+      }
+    }
   },
 
   checkDatasets: function() {
@@ -992,7 +1047,6 @@ var self = {
           self.consoleLog('updating an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));
           // We are trying to update an existing pending record
           previousPendingUid = dataset.meta[uid].pendingUid;
-          dataset.meta[uid].previousPendingUid = previousPendingUid;
           previousPending = pending[previousPendingUid];
           if(previousPending) {
             if(!previousPending.inFlight){
@@ -1023,7 +1077,6 @@ var self = {
           self.consoleLog('Deleting an existing pending record for dataset :: ' + JSON.stringify(dataset.data[uid]));
           // We are trying to delete an existing pending record
           previousPendingUid = dataset.meta[uid].pendingUid;
-          dataset.meta[uid].previousPendingUid = previousPendingUid;
           previousPending = pending[previousPendingUid];
           if( previousPending ) {
             if(!previousPending.inFlight){
@@ -1062,146 +1115,6 @@ var self = {
     }
   },
 
-  updatePendingFromNewData: function(dataset_id, dataset, newData) {
-    var pending = dataset.pending;
-    var newRec;
-
-    if( pending && newData.records) {
-      for( var pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          var pendingRec = pending[pendingHash];
-
-          dataset.meta[pendingRec.uid] = dataset.meta[pendingRec.uid] || {};
-
-          if( pendingRec.inFlight === false ) {
-            // Pending record that has not been submitted
-            self.consoleLog('updatePendingFromNewData - Found Non inFlight record -> action=' + pendingRec.action +' :: uid=' + pendingRec.uid  + ' :: hash=' + pendingRec.hash);
-            if( pendingRec.action === "update" || pendingRec.action === "delete") {
-              // Update the pre value of pending record to reflect the latest data returned from sync.
-              // This will prevent a collision being reported when the pending record is sent.
-              newRec = newData.records[pendingRec.uid];
-              if( newRec ) {
-                self.consoleLog('updatePendingFromNewData - Updating pre values for existing pending record ' + pendingRec.uid);
-                pendingRec.pre = newRec.data;
-                pendingRec.preHash = newRec.hash;
-              }
-              else {
-                // The update/delete may be for a newly created record in which case the uid will have changed.
-                var previousPendingUid = dataset.meta[pendingRec.uid].previousPendingUid;
-                var previousPending = pending[previousPendingUid];
-                if( previousPending ) {
-                  if( newData && newData.updates &&  newData.updates.applied && newData.updates.applied[previousPending.hash] ) {
-                    // There is an update in from a previous pending action
-                    var newUid = newData.updates.applied[previousPending.hash].uid;
-                    newRec = newData.records[newUid];
-                    if( newRec ) {
-                      self.consoleLog('updatePendingFromNewData - Updating pre values for existing pending record which was previously a create ' + pendingRec.uid + ' ==> ' + newUid);
-                      pendingRec.pre = newRec.data;
-                      pendingRec.preHash = newRec.hash;
-                      pendingRec.uid = newUid;
-                    }
-                  }
-                }
-              }
-            }
-
-            if( pendingRec.action === "create" ) {
-              if( newData && newData.updates &&  newData.updates.applied && newData.updates.applied[pendingHash] ) {
-                self.consoleLog('updatePendingFromNewData - Found an update for a pending create ' + JSON.stringify(newData.updates.applied[pendingHash]));
-                newRec = newData.records[newData.updates.applied[pendingHash].uid];
-                if( newRec ) {
-                  self.consoleLog('updatePendingFromNewData - Changing pending create to an update based on new record  ' + JSON.stringify(newRec));
-
-                  // Set up the pending create as an update
-                  pendingRec.action = "update";
-                  pendingRec.pre = newRec.data;
-                  pendingRec.preHash = newRec.hash;
-                  pendingRec.uid = newData.updates.applied[pendingHash].uid;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-
-  updateNewDataFromInFlight: function(dataset_id, dataset, newData) {
-    var pending = dataset.pending;
-
-    if( pending && newData.records) {
-      for( var pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          var pendingRec = pending[pendingHash];
-
-          if( pendingRec.inFlight ) {
-            var updateReceivedForPending = (newData && newData.updates &&  newData.updates.hashes && newData.updates.hashes[pendingHash]) ? true : false;
-
-            self.consoleLog('updateNewDataFromInFlight - Found inflight pending Record - action = ' + pendingRec.action + ' :: hash = ' + pendingHash + ' :: updateReceivedForPending=' + updateReceivedForPending);
-
-            if( ! updateReceivedForPending ) {
-              var newRec = newData.records[pendingRec.uid];
-
-              if( pendingRec.action === "update" && newRec) {
-                // Modify the new Record to have the updates from the pending record so the local dataset is consistent
-                newRec.data = pendingRec.post;
-                newRec.hash = pendingRec.postHash;
-              }
-              else if( pendingRec.action === "delete" && newRec) {
-                // Remove the record from the new dataset so the local dataset is consistent
-                delete newData.records[pendingRec.uid];
-              }
-              else if( pendingRec.action === "create" ) {
-                // Add the pending create into the new dataset so it is not lost from the UI
-                self.consoleLog('updateNewDataFromInFlight - re adding pending create to incomming dataset');
-                var newPendingCreate = {
-                  data: pendingRec.post,
-                  hash: pendingRec.postHash
-                };
-                newData.records[pendingRec.uid] = newPendingCreate;
-              }
-            }
-          }
-        }
-      }
-    }
-  },
-
-  updateNewDataFromPending: function(dataset_id, dataset, newData) {
-    var pending = dataset.pending;
-
-    if( pending && newData.records) {
-      for( var pendingHash in pending ) {
-        if( pending.hasOwnProperty(pendingHash) ) {
-          var pendingRec = pending[pendingHash];
-
-          if( pendingRec.inFlight === false ) {
-            self.consoleLog('updateNewDataFromPending - Found Non inFlight record -> action=' + pendingRec.action +' :: uid=' + pendingRec.uid  + ' :: hash=' + pendingRec.hash);
-            var newRec = newData.records[pendingRec.uid];
-            if( pendingRec.action === "update" && newRec) {
-              // Modify the new Record to have the updates from the pending record so the local dataset is consistent
-              newRec.data = pendingRec.post;
-              newRec.hash = pendingRec.postHash;
-            }
-            else if( pendingRec.action === "delete" && newRec) {
-              // Remove the record from the new dataset so the local dataset is consistent
-              delete newData.records[pendingRec.uid];
-            }
-            else if( pendingRec.action === "create" ) {
-              // Add the pending create into the new dataset so it is not lost from the UI
-              self.consoleLog('updateNewDataFromPending - re adding pending create to incomming dataset');
-              var newPendingCreate = {
-                data: pendingRec.post,
-                hash: pendingRec.postHash
-              };
-              newData.records[pendingRec.uid] = newPendingCreate;
-            }
-          }
-        }
-      }
-    }
-  },
-
   updateCrashedInFlightFromNewData: function(dataset_id, dataset, newData) {
     var updateNotifications = {
       applied: self.notifications.REMOTE_UPDATE_APPLIED,
@@ -1226,32 +1139,8 @@ var self = {
 
               // Check if the updates received contain any info about the crashed in flight update
               var crashedUpdate = newData.updates.hashes[pendingHash];
-              if( crashedUpdate ) {
-                // We have found an update on one of our in flight crashed records
-
-                resolvedCrashes[crashedUpdate.uid] = crashedUpdate;
-
-                self.consoleLog('updateCrashedInFlightFromNewData - Resolving status for crashed inflight pending record ' + JSON.stringify(crashedUpdate));
-
-                if( crashedUpdate.type === 'failed' ) {
-                  // Crashed update failed - revert local dataset
-                  if( crashedUpdate.action === 'create' ) {
-                    self.consoleLog('updateCrashedInFlightFromNewData - Deleting failed create from dataset');
-                    delete dataset.data[crashedUpdate.uid];
-                  }
-                  else if ( crashedUpdate.action === 'update' || crashedUpdate.action === 'delete' ) {
-                    self.consoleLog('updateCrashedInFlightFromNewData - Reverting failed ' + crashedUpdate.action + ' in dataset');
-                    dataset.data[crashedUpdate.uid] = {
-                      data : pendingRec.pre,
-                      hash : pendingRec.preHash
-                    };
-                  }
-                }
-
-                delete pending[pendingHash];
-                self.doNotify(dataset_id, crashedUpdate.uid, updateNotifications[crashedUpdate.type], crashedUpdate);
-              }
-              else {
+              if( !crashedUpdate ) {
+                //TODO: review this - why we need to wait?
                 // No word on our crashed update - increment a counter to reflect another sync that did not give us
                 // any update on our crashed record.
                 if( pendingRec.crashedCount ) {
@@ -1283,15 +1172,9 @@ var self = {
           if( pendingRec.inFlight && pendingRec.crashed) {
             if( pendingRec.crashedCount > dataset.config.crashed_count_wait ) {
               self.consoleLog('updateCrashedInFlightFromNewData - Crashed inflight pending record has reached crashed_count_wait limit : ' + JSON.stringify(pendingRec));
-              if( dataset.config.resend_crashed_updates ) {
-                self.consoleLog('updateCrashedInFlightFromNewData - Retryig crashed inflight pending record');
-                pendingRec.crashed = false;
-                pendingRec.inFlight = false;
-              }
-              else {
-                self.consoleLog('updateCrashedInFlightFromNewData - Deleting crashed inflight pending record');
-                delete pending[pendingHash];
-              }
+              self.consoleLog('updateCrashedInFlightFromNewData - Retryig crashed inflight pending record');
+              pendingRec.crashed = false;
+              pendingRec.inFlight = false;
             }
           }
         }
@@ -1330,21 +1213,9 @@ var self = {
         if(meta.hasOwnProperty(uid)){
           var metadata = meta[uid];
           var pendingHash = metadata.pendingUid;
-          var previousPendingHash = metadata.previousPendingUid;
-          self.consoleLog("updateMetaFromNewData - Found metadata with uid = " + uid + " :: pendingHash = " + pendingHash + " :: previousPendingHash =" + previousPendingHash);
-          var previousPendingResolved = true;
+          self.consoleLog("updateMetaFromNewData - Found metadata with uid = " + uid + " :: pendingHash = " + pendingHash);
           var pendingResolved = true;
-          if(previousPendingHash){
-            //we have previous pending in meta data, see if it's resolved
-            previousPendingResolved = false;
-            var resolved = newData.updates.hashes[previousPendingHash];
-            if(resolved){
-              self.consoleLog("updateMetaFromNewData - Found previousPendingUid in meta data resolved - resolved = " + JSON.stringify(resolved));
-              //the previous pending is resolved in the cloud
-              metadata.previousPendingUid = undefined;
-              previousPendingResolved = true;
-            }
-          }
+  
           if(pendingHash){
             //we have current pending in meta data, see if it's resolved
             pendingResolved = false;
@@ -1357,7 +1228,7 @@ var self = {
             }
           }
 
-          if(previousPendingResolved && pendingResolved){
+          if(pendingResolved){
             self.consoleLog("updateMetaFromNewData - both previous and current pendings are resolved for meta data with uid " + uid + ". Delete it.");
             //all pendings are resolved, the entry can be removed from meta data
             delete meta[uid];

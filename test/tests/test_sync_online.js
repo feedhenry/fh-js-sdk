@@ -88,14 +88,20 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
       var mockHash = "97d170e1550eee4afc0af065b78cda302a97674c";
       reqObj.respond(200, header, JSON.stringify({
         "hash": mockHash,
-        "records": {},
         "updates": {}
       }));
+
+      var syncRecorsReq = requests[1];
+      reqBody = JSON.parse(syncRecorsReq.requestBody);
+      expect(reqBody.fn).to.equal("syncRecords");
+      syncRecorsReq.respond(200, header, JSON.stringify({
+        "hash": mockHash
+      }));
+
 
       //server turned empty dataset, then the client dataset should be empty as well
       syncClient.getDataset(dataSetId, function(dataset){
         expect(dataset.data).is.empty;
-        expect(dataset.hash).to.equal(mockHash);
         done();
       });
     });
@@ -119,7 +125,6 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
       //server returned empty dataset, then the client dataset should be empty as well
       syncClient.getDataset(dataSetId, function(dataset){
         expect(dataset.data).is.empty;
-        expect(dataset.hash).to.equal(mockHash);
 
         //now add a new record
         
@@ -285,15 +290,12 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
 
 
                   var mockRes = {
-                    "hash": "424e4dff5aa27c2fb7bf0fc74d39b94dae4572eb",
+                    "hash": "424e4dff5aa27c2fb7bf0fc74d39b94dae4572ee",
                     "updates": {
                       "hashes": {
                       },
                       "collisions": {
                       }
-                    }, 
-                    "records": {
-
                     }
                   }
 
@@ -308,31 +310,39 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
                     "msg": "''"
                   }
                   
-                  mockRes.records[uid] = {
-                    data: predata,
-                    hash: prehash
-                  }
+                  // mockRes.records[uid] = {
+                  //   data: predata,
+                  //   hash: prehash
+                  // }
 
 
                   reqObj2.respond(200, header, JSON.stringify(mockRes));
 
                   expect(_.size(dataset.pending)).to.equal(1);
 
-                  //making sure the delayed pending record has the correct pre data, 
-                  //it shouldn't be "item1_updat_failed" as cloud returns collision
-                  expect(_.values(dataset.pending)[0].pre.name).to.equal("item1");
-                  expect(_.values(dataset.pending)[0].preHash).to.equal(prehash);
+                  var reqObj3 = requests[3];
+                  var mockCloudData = {
+                    "hash": "424e4dff5aa27c2fb7bf0fc74d39b94dae4572eb",
+                    "update": {
+                      "533d775a8e8159d9c6000001" :{
+                        data: pre,
+                        hash: prehash
+                      }
+                    }
+                  };
+                  reqObj3.respond(200, header, JSON.stringify(mockCloudData));
+
                   expect(_.values(dataset.pending)[0].post.name).to.equal("item1_updated");
 
                   onSync(function(){
-                    expect(requests.length).to.equal(4);
-                    var reqObj3 = requests[3];
-                    var reqBody3 = JSON.parse(reqObj3.requestBody);
+                    expect(requests.length).to.equal(5);
+                    var reqObj4 = requests[4];
+                    var reqBody4 = JSON.parse(reqObj4.requestBody);
 
-                    expect(reqBody3.pending.length).to.equal(1);
-                    var pendingHash = reqBody3.pending[0].hash;
+                    expect(reqBody4.pending.length).to.equal(1);
+                    var pendingHash = reqBody4.pending[0].hash;
                    
-                    var prehash = reqBody3.pending[0].preHash;
+                    var prehash = reqBody4.pending[0].preHash;
 
                     var mockRes = {
                       "hash": "932b0b7e6862d4634dc6f418da717c78c1a1d742",
@@ -342,7 +352,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
                         "applied": {
                         }
                       }
-                    }
+                    };
 
                      mockRes.updates.hashes[pendingHash] = mockRes.updates.applied[pendingHash] = {
                       "cuid": "9F3930FE2A434E0BA0AD6F5A40C77CD7",
@@ -351,26 +361,26 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
                       "hash": pendingHash,
                       "uid": "533d775a8e8159d9c6000001",
                       "msg": "''"
-                    }
+                    };
 
-                    reqObj3.respond(200, header, JSON.stringify(mockRes));
+                    reqObj4.respond(200, header, JSON.stringify(mockRes));
 
                     //should start syncRecords
-                    expect(requests.length).to.equal(5);
+                    expect(requests.length).to.equal(6);
 
-                    var reqObj4 = requests[4];
+                    var reqObj5 = requests[5];
                     var mockRes1 = {
                         "create": {},
                         "update": {
                           '533d775a8e8159d9c6000001': {
-                            "data": reqBody3.pending[0].post,
-                            "hash": reqBody3.pending[0].postHash
+                            "data": reqBody4.pending[0].post,
+                            "hash": reqBody4.pending[0].postHash
                           }
                         },
                         "delete": {},
                         "hash": "932b0b7e6862d4634dc6f418da717c78c1a1d742"
-                    }
-                    reqObj4.respond(200, header, JSON.stringify(mockRes1));
+                    };
+                    reqObj5.respond(200, header, JSON.stringify(mockRes1));
 
                     expect(dataset.hash).to.equal("932b0b7e6862d4634dc6f418da717c78c1a1d742");
                     expect(_.size(dataset.pending)).to.equal(0);
@@ -543,19 +553,6 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
                 },
                 "applied": {
                 }
-            },
-            records: {
-              "533d775a8e8159d9c6000005": {
-                "data": {
-                  "cuid": "9F3930FE2A434E0BA0AD6F5A40C77CD7",
-                  "type": "applied",
-                  "action": "create",
-                  "hash": pendingHash,
-                  "uid": "533d775a8e8159d9c6000005",
-                  "msg": "''"
-                },
-                "hash": pendingHash
-              }
             }
           }
 
@@ -583,8 +580,8 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
             var pending = dataset.pending;
             expect(_.size(pending)).to.equal(1);
             var pendingObj = _.values(pending)[0];
-            expect(pendingObj.preHash).to.equal(pendingHash);
             expect(pendingObj.uid).to.equal("533d775a8e8159d9c6000005");
+            expect(pendingObj.post.name).to.equal("item4_updated");
             done();
           });
         });
@@ -594,16 +591,19 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
 
   it("test create pending data", function(done){
     var record = {name:"item5"};
-    onSync(function(){
-      var reqObj = requests[0];
-      var reqBody = JSON.parse(reqObj.requestBody);
+    syncClient.doCreate(dataSetId, record, function(res){
 
-      syncClient.doCreate(dataSetId, record, function(res){
+      onSync(function(){
+
+        var reqObj = requests[0];
+        var reqBody = JSON.parse(reqObj.requestBody);
+
         //at this point, there is one pending create, 
         syncClient.getDataset(dataSetId, function(dataset){
           var pendings = dataset.pending;
           console.log("pending", pendings);
           var pendingObj = _.values(pendings)[0];
+          expect(_.size(pendings)).to.equal(1);
           expect(pendingObj.action).to.equal("create");
           var pendingHash = pendingObj.hash;
           var mockRes = {
@@ -612,21 +612,8 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
                 },
                 "applied": {
                 }
-            },
-            records: {
-              "533d775a8e8159d9c6000006": {
-                "data": {
-                  "cuid": "9F3930FE2A434E0BA0AD6F5A40C77CD7",
-                  "type": "applied",
-                  "action": "create",
-                  "hash": pendingHash,
-                  "uid": "533d775a8e8159d9c6000006",
-                  "msg": "''"
-                },
-                "hash": pendingHash
-              }
             }
-          }
+          };
 
           mockRes.updates.hashes[pendingHash] = {
             "cuid": "9F3930FE2A434E0BA0AD6F5A40C77CD7",
@@ -635,7 +622,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
             "hash": pendingHash,
             "uid": "533d775a8e8159d9c6000006",
             "msg": "''"
-          }
+          };
 
           mockRes.updates.applied[pendingHash] = {
             "cuid": "9F3930FE2A434E0BA0AD6F5A40C77CD7",
@@ -644,12 +631,11 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
             "hash": pendingHash,
             "uid": "533d775a8e8159d9c6000006",
             "msg": "''"
-          }
+          };
 
           reqObj.respond(200, header, JSON.stringify(mockRes));
 
-          expect(pendingObj.action).to.equal("update");
-
+          expect(dataset.pending[pendingHash]).to.be.undefined;
           done();
 
         });
@@ -863,7 +849,8 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
 
                     reqObj4.respond(200, header, JSON.stringify(mockRes4));
 
-                    expect(dataset.data[pendingObj.uid]).to.be.empty;
+                    //local change should be kept, will be updated during next syncRecords call
+                    expect(dataset.data[pendingObj.uid]).not.to.be.empty;
 
                     done();
                   });
@@ -923,8 +910,8 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
             }
 
             reqObj1.respond(200, header, JSON.stringify(mockRes1));
-
-            expect(dataset.data[uid].data.name).to.equal("item14");
+            //local change should be kept, will be updated during next syncRecords call
+            expect(dataset.data[uid].data.name).to.equal("item15");
 
             done();
 
@@ -960,8 +947,8 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
               }
 
               reqObj1.respond(200, header, JSON.stringify(mockRes1));
-
-              expect(_.size(pendings)).to.equal(0);
+              
+              expect(_.size(pendings)).to.equal(1);
 
               done();
 
@@ -1049,5 +1036,50 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
 
   });
 
+  it("test uid change", function(done){
+    syncClient.doCreate(dataSetId, {name: "item17"}, function(created){
+      var olduid = created.uid;
+      syncClient.doRead(dataSetId, olduid, function(data){
+        expect(data).not.to.be.null;
+        expect(data.data.name).to.equal('item17');
 
+        syncClient.getDataset(dataSetId, function(dataset){
+          var pendings = dataset.pending;
+          expect(_.size(pendings)).to.equal(1);
+          onSync(function(){
+            var reqObj = requests[0];
+            var reqBody = JSON.parse(reqObj.requestBody);
+
+            var mockRes1 = {
+              "updates": {
+                "applied": {
+                }
+              }
+            }
+
+            mockRes1.updates.applied[olduid] = {
+              "hash": olduid,
+              "uid": "newuid",
+              "action": "create",
+              "type": "applied",
+              "msg": ""
+            }
+
+            reqObj.respond(200, header, JSON.stringify(mockRes1));
+
+            syncClient.doRead(dataSetId, 'newuid', function(data){
+              expect(data).not.to.be.null;
+              expect(data.data.name).to.equal('item17');
+
+              syncClient.doRead(dataSetId, olduid, function(data){
+                expect(data).not.to.be.null;
+                expect(data.data.name).to.equal('item17');
+                done();
+              });
+            });
+          });
+        });  
+      });
+    });
+  });
 });
