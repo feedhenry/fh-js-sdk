@@ -1506,9 +1506,6 @@
     file: function(p, s, f) {
       f('file_nosupport');
     },
-    push: function(p, s, f) {
-      f('push_nosupport');
-    },
     env: function(p, s, f) {
       s({
         height: window.innerHeight,
@@ -1896,10 +1893,6 @@
     handleargs(arguments, {
       act: 'upload'
     }, $fh.__dest__.file);
-  };
-
-  $fh.push = function() {
-    handleargs(arguments, {}, $fh.__dest__.push);
   };
 
   // new functions
