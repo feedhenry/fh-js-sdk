@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.12.0 - 2015-11-24 - Erik Jan de Wit
+* RHMAP-2970 - Removed api override
+
 ## 2.11.0 - 2015-10-15 - Wei Li
 * RHMAP-2455 - Fix a few issues with the sync framework
   * Make sure the user changes are not reverted if cloud is slow to response
