@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.13.0 - 2015-12-02 - Erik Jan de Wit
+* RHMAP-2970 - Wait for cloud to be ready before registering push
+
 ## 2.12.0 - 2015-11-24 - Erik Jan de Wit
 * RHMAP-2970 - Removed api override
 
