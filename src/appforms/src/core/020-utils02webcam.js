@@ -24,10 +24,18 @@ appForm.utils = function (module) {
     checkEnv();
     _html5Camera(params, cb);
   }
+
   function cancelHtml5Camera() {
-    if (localMediaStream) {
-      localMediaStream.stop();
-      localMediaStream = null;
+    if (localMediaStream){
+      if (localMediaStream.stop) {
+        localMediaStream.stop();
+        localMediaStream = null;
+      } else{
+        var tracks = localMediaStream.getTracks();
+        if(tracks && tracks.length!==0){
+          tracks[0].stop();
+        }
+      }
     }
   }
   function takePhoto(params, cb) {
