@@ -1,4 +1,6 @@
 # Changelog - FeedHenry Javascript SDK
+## 2.13.2 - 2015-12-04 - Wei Li
+* RHMAP-3240 - Make sure the media stream is reset after camera is closed in the browsers.
 
 ## 2.13.1 - 2015-12-04 - Wojciech Trocki
 * RHMAP-3240 - Photo Capture on Forms is broken in Preview in Studio
