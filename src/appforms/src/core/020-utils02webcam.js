@@ -29,13 +29,13 @@ appForm.utils = function (module) {
     if (localMediaStream){
       if (localMediaStream.stop) {
         localMediaStream.stop();
-        localMediaStream = null;
       } else{
         var tracks = localMediaStream.getTracks();
         if(tracks && tracks.length!==0){
           tracks[0].stop();
         }
       }
+      localMediaStream = null;
     }
   }
   function takePhoto(params, cb) {
