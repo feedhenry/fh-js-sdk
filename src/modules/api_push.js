@@ -16,6 +16,7 @@ module.exports = function (onNotification, success, fail, config) {
     } else {
       if (window.push) {
         var props = appProps.getAppProps();
+        props.pushServerURL = props.host + '/api/v2/ag-push';
         if (config) {
           for(var key in config) {
             props[key] = config[key];
