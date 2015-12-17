@@ -13,7 +13,7 @@ if (document && document.location) {
 var $fh = process.env.LIB_COV? require("../../src-cov/feedhenry") : require("../../src/feedhenry");
 
 describe("test push wrapper", function() {
-  
+
   it("should invoke wrapped push", function() {
     //given
     var success = sinon.spy();
@@ -25,7 +25,7 @@ describe("test push wrapper", function() {
 
     //when
     $fh.push(function() {}, success, fail);
-    
+
     //then
     expect(success).to.have.been.calledOnce;
     expect(fail).to.have.not.been.called;
@@ -36,13 +36,28 @@ describe("test push wrapper", function() {
     var success = sinon.spy();
     var fail = sinon.spy();
     delete window.push;
-    
+
     //when
     $fh.push(function() {}, success, fail);
-    
+
     //then
     expect(fail).to.have.been.calledOnce;
     expect(success).to.have.not.been.called;
   });
-  
+
+  it("should append config to the appConfig", function() {
+    //given
+    var config = null;
+    window.push = {};
+    window.push.register = function(onNotification, successHandler, errorHandler, pushConfig) {
+      config = pushConfig;
+    };
+
+    //when
+    $fh.push(function() {}, function() {}, null, {alias : 'test'});
+
+    //then
+    expect(config).to.have.property('alias').and.equal('test');
+  });
+
 });

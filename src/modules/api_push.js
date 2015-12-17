@@ -2,7 +2,7 @@ var logger = require("./logger");
 var appProps = require("./appProps");
 var cloud = require("./waitForCloud");
 
-module.exports = function (onNotification, success, fail) {
+module.exports = function (onNotification, success, fail, config) {
   if (!fail) {
     fail = function (msg, error) {
       logger.debug(msg + ":" + JSON.stringify(error));
@@ -15,7 +15,13 @@ module.exports = function (onNotification, success, fail) {
       return fail(err.message, err);
     } else {
       if (window.push) {
-        window.push.register(onNotification, success, fail, appProps.getAppProps());
+        var props = appProps.getAppProps();
+        if (config) {
+          for(var key in config) {
+            props[key] = config[key];
+          }
+        }
+        window.push.register(onNotification, success, fail, props);
       } else {
         fail('push plugin not installed');
       }
