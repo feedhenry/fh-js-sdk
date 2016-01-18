@@ -14,7 +14,7 @@ function callAuthEndpoint(endpoint, data, opts, success, fail){
   var path = app_props.host + constants.boxprefix + "admin/authpolicy/" + endpoint;
 
   if (app_props.local) {
-    path = constants.boxprefix + "admin/authpolicy/" + endpoint;
+    path = cloud.getCloudHostUrl() + constants.boxprefix + "admin/authpolicy/" + endpoint;
   }
 
   ajax({
