@@ -1,4 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
+## 2.14.0 - 2016-02-26 - Niall Donnelly
+
+* RHMAP-2950 - Added A Read Only Field To Forms Apps
+
 ## 2.13.2 - 2015-12-04 - Wei Li
 * RHMAP-3240 - Make sure the media stream is reset after camera is closed in the browsers.
 
@@ -14,16 +18,16 @@
 ## 2.11.0 - 2015-10-15 - Wei Li
 * RHMAP-2455 - Fix a few issues with the sync framework
   * Make sure the user changes are not reverted if cloud is slow to response
-  * Remove some of the unused code to make the sync client simpler 
+  * Remove some of the unused code to make the sync client simpler
 
-## 2.10.1 - 2015-10-14 - Niall Donnelly 
+## 2.10.1 - 2015-10-14 - Niall Donnelly
 * FH-2290 - Fixed File Extension For Cached Files
 
-## 2.10.0 - 2015-10-07 - Niall Donnelly 
+## 2.10.0 - 2015-10-07 - Niall Donnelly
 
 * FH-2290 - Added Event Driven Approach To $fh.forms.downloadSubmission API.
 
-## 2.9.0 - 2015-10-06 - Niall Donnelly 
+## 2.9.0 - 2015-10-06 - Niall Donnelly
 
 * FH-2330 - Added A Global Event Listener For Appforms Models
 * FH-2340 - Populating the _id parameter for uploaded submissions.

@@ -27,7 +27,8 @@ var FieldView = Backbone.View.extend({
       sectionBreak: "icon-minus",
       radio: "icon-circle-blank",
       barcode: "icon-barcode",
-      sliderNumber: "icon-number"
+      sliderNumber: "icon-number",
+      readOnly: "icon-comment"
     },
     events: {
         "change": "contentChanged",
@@ -111,7 +112,7 @@ var FieldView = Backbone.View.extend({
             d_index: index + 1,
             required: this.model.isRequired() ? self.requiredClassName : "",
             fieldId: this.model.getFieldId(),
-            repeating: this.model.isRepeating()  
+            repeating: this.model.isRepeating()
         });
 
         eleTemplate = $(eleTemplate);
@@ -147,7 +148,7 @@ var FieldView = Backbone.View.extend({
         this.$fh_appform_fieldActionBar = $(fieldTemplate[1]);
 
         if(this.readonly){
-            this.$fh_appform_fieldActionBar.hide();   
+            this.$fh_appform_fieldActionBar.hide();
         }
 
         if (this.model.isRepeating()) {
@@ -191,7 +192,7 @@ var FieldView = Backbone.View.extend({
         this.readonly = options.formView.readonly;
         _.bindAll(this, 'dumpContent', 'clearError', 'onAddInput', 'onRemoveInput', 'contentChanged');
 
-        
+
         this.render();
     },
 
@@ -254,9 +255,9 @@ var FieldView = Backbone.View.extend({
         wrapperObj.find(this.errMessageContainer).addClass(this.errorClassName);
 
         if(wrapperObj.find("input[type='checkbox']").length === 0){
-            wrapperObj.find("input,textarea,select").addClass(this.errorClassName);    
+            wrapperObj.find("input,textarea,select").addClass(this.errorClassName);
         }
-        
+
     },
     contentChanged: function(e) {
         this.options.formView.markFormEdited();

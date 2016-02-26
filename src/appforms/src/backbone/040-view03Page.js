@@ -18,7 +18,8 @@ var PageView=BaseView.extend({
     "sectionBreak":FieldSectionBreak,
     "url":FieldUrlView,
     "barcode": FieldBarcodeView,
-    "sliderNumber": FieldSliderNumberView
+    "sliderNumber": FieldSliderNumberView,
+    "readOnly": FieldReadOnlyView
   },
   templates : {
     pageTitle: '<div class="fh_appform_page_title text-center"><%= pageTitle %></div>',
@@ -55,7 +56,7 @@ var PageView=BaseView.extend({
         $('#' + fieldTarget).slideToggle(600);
         $('#' + fieldTarget + "_icon").toggleClass('icon-chevron-sign-up');
         $('#' + fieldTarget + "_icon").toggleClass('icon-chevron-sign-down');
-      } 
+      }
     }
 
     if(sections != null){
@@ -63,7 +64,7 @@ var PageView=BaseView.extend({
       var sectionIndex = 0;
 
       var sectionGroup = $('<div class="panel-group" id="accordion"></div>');
-      
+
 
       //Add the section fields
       for(sectionKey in sections){
@@ -82,7 +83,7 @@ var PageView=BaseView.extend({
           if($(e.target).data()){
             if($(e.target).data().field){
               toggleSection($(e.target).data().field);
-            }  
+            }
           }
         });
         sectionGroup.append(sectionEl);
@@ -99,8 +100,8 @@ var PageView=BaseView.extend({
                 model: field,
                 formView: self.options.formView,
                 sectionName: sectionKey
-              });  
-            } 
+              });
+            }
           } else {
             $fh.forms.log.w('FIELD NOT SUPPORTED:' + fieldType);
           }
