@@ -1,6 +1,6 @@
 /*! fh-forms - v1.3.0 -  */
 /*! async - v0.2.9 -  */
-/*! 2016-02-25 */
+/*! 2016-02-29 */
 /* This is the prefix file */
 if(appForm){
   appForm.RulesEngine=rulesEngine;
@@ -1077,6 +1077,7 @@ function rulesEngine (formDef) {
       "barcode": validatorBarcode,
       "sliderNumber": validatorNumericString,
       "readOnly": function(){
+        //readonly fields need no validation. Values are ignored.
         return true;
       }
     };
@@ -1100,6 +1101,7 @@ function rulesEngine (formDef) {
       "barcode": validatorBarcode,
       "sliderNumber": validatorNumericString,
       "readOnly": function(){
+        //readonly fields need no validation. Values are ignored.
         return true;
       }
     };
@@ -1708,6 +1710,8 @@ function rulesEngine (formDef) {
       previousFieldValues = previousFieldValues || null;
       countSubmittedValues(submittedField, function (err, numSubmittedValues) {
         if (err) return cb(err);
+        //Marking the visibility of the field on the definition.
+        fieldDef.visible = visible;
         async.series({
           valuesSubmitted: async.apply(checkValueSubmitted, submittedField, fieldDef, visible),
           repeats: async.apply(checkRepeat, numSubmittedValues, fieldDef, visible),
@@ -1962,6 +1966,7 @@ function rulesEngine (formDef) {
 
     function validatorCheckboxes(fieldValue, fieldDefinition, previousFieldValues, cb) {
       var minVal;
+
       if (fieldDefinition && fieldDefinition.fieldOptions && fieldDefinition.fieldOptions.validation) {
         minVal = fieldDefinition.fieldOptions.validation.min;
       }
@@ -1971,7 +1976,7 @@ function rulesEngine (formDef) {
       }
 
       if (minVal) {
-        if (fieldValue.selections === null || fieldValue.selections === undefined || fieldValue.selections.length < minVal) {
+        if (fieldValue.selections === null || fieldValue.selections === undefined || fieldValue.selections.length < minVal && fieldDefinition.visible) {
           var len;
           if (fieldValue.selections) {
             len = fieldValue.selections.length;
