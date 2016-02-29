@@ -1693,7 +1693,8 @@ var FieldView = Backbone.View.extend({
       sectionBreak: "icon-minus",
       radio: "icon-circle-blank",
       barcode: "icon-barcode",
-      sliderNumber: "icon-number"
+      sliderNumber: "icon-number",
+      readOnly: "icon-comment"
     },
     events: {
         "change": "contentChanged",
@@ -1777,7 +1778,7 @@ var FieldView = Backbone.View.extend({
             d_index: index + 1,
             required: this.model.isRequired() ? self.requiredClassName : "",
             fieldId: this.model.getFieldId(),
-            repeating: this.model.isRepeating()  
+            repeating: this.model.isRepeating()
         });
 
         eleTemplate = $(eleTemplate);
@@ -1813,7 +1814,7 @@ var FieldView = Backbone.View.extend({
         this.$fh_appform_fieldActionBar = $(fieldTemplate[1]);
 
         if(this.readonly){
-            this.$fh_appform_fieldActionBar.hide();   
+            this.$fh_appform_fieldActionBar.hide();
         }
 
         if (this.model.isRepeating()) {
@@ -1857,7 +1858,7 @@ var FieldView = Backbone.View.extend({
         this.readonly = options.formView.readonly;
         _.bindAll(this, 'dumpContent', 'clearError', 'onAddInput', 'onRemoveInput', 'contentChanged');
 
-        
+
         this.render();
     },
 
@@ -1920,9 +1921,9 @@ var FieldView = Backbone.View.extend({
         wrapperObj.find(this.errMessageContainer).addClass(this.errorClassName);
 
         if(wrapperObj.find("input[type='checkbox']").length === 0){
-            wrapperObj.find("input,textarea,select").addClass(this.errorClassName);    
+            wrapperObj.find("input,textarea,select").addClass(this.errorClassName);
         }
-        
+
     },
     contentChanged: function(e) {
         this.options.formView.markFormEdited();
@@ -2033,6 +2034,7 @@ var FieldView = Backbone.View.extend({
     }
 
 });
+
 FieldCameraView = FieldView.extend({
     input: "<img class='imageThumb' width='100%' data-field='<%= fieldId %>' data-index='<%= index %>'  type='<%= inputType %>'>",
     html5Cam: '<div class="html5Cam">' +
@@ -3493,6 +3495,28 @@ FieldSliderNumberView = FieldView.extend({
     return "text";
   }
 });
+FieldReadOnlyView = FieldView.extend({
+  type: "readOnly",
+  readOnlyElement: '<div class="fh_appform_field_input"> </div>',
+  readOnlySingleField: '<%= text %> <br/>',
+  renderInput: function(){
+    var self = this;
+    var readOnlyEl = $(this.readOnlyElement);
+
+    var options = this.model.getCheckBoxOptions();
+
+    var singleTemplate = _.template(self.readOnlySingleField);
+
+    _.each(options, function(option){
+        readOnlyEl.append(singleTemplate({
+          text: option.label
+        }));
+    });
+
+    return readOnlyEl;
+  }
+});
+
 var PageView=BaseView.extend({
 
   viewMap: {
@@ -3513,7 +3537,8 @@ var PageView=BaseView.extend({
     "sectionBreak":FieldSectionBreak,
     "url":FieldUrlView,
     "barcode": FieldBarcodeView,
-    "sliderNumber": FieldSliderNumberView
+    "sliderNumber": FieldSliderNumberView,
+    "readOnly": FieldReadOnlyView
   },
   templates : {
     pageTitle: '<div class="fh_appform_page_title text-center"><%= pageTitle %></div>',
@@ -3550,7 +3575,7 @@ var PageView=BaseView.extend({
         $('#' + fieldTarget).slideToggle(600);
         $('#' + fieldTarget + "_icon").toggleClass('icon-chevron-sign-up');
         $('#' + fieldTarget + "_icon").toggleClass('icon-chevron-sign-down');
-      } 
+      }
     }
 
     if(sections != null){
@@ -3558,7 +3583,7 @@ var PageView=BaseView.extend({
       var sectionIndex = 0;
 
       var sectionGroup = $('<div class="panel-group" id="accordion"></div>');
-      
+
 
       //Add the section fields
       for(sectionKey in sections){
@@ -3577,7 +3602,7 @@ var PageView=BaseView.extend({
           if($(e.target).data()){
             if($(e.target).data().field){
               toggleSection($(e.target).data().field);
-            }  
+            }
           }
         });
         sectionGroup.append(sectionEl);
@@ -3594,8 +3619,8 @@ var PageView=BaseView.extend({
                 model: field,
                 formView: self.options.formView,
                 sectionName: sectionKey
-              });  
-            } 
+              });
+            }
           } else {
             $fh.forms.log.w('FIELD NOT SUPPORTED:' + fieldType);
           }
@@ -3686,6 +3711,7 @@ var PageView=BaseView.extend({
   }
 
 });
+
 var FormView = BaseView.extend({
   "pageNum": 0,
   "pageCount": 0,
@@ -3998,7 +4024,7 @@ var FormView = BaseView.extend({
     var nextButton = this.$el.find("button.fh_appform_button_next").parent();
     var submitButton = this.$el.find(" button.fh_appform_button_submit").parent();
     var saveDraftButton = this.$el.find("button.fh_appform_button_saveDraft").parent();
-    
+
 
     if (displayedIndex === 0 && displayedIndex === displayedPages - 1) {
         prevButton.hide();
@@ -4006,9 +4032,9 @@ var FormView = BaseView.extend({
         saveDraftButton.show();
         submitButton.show();
         if(this.readonly){
-          this.$el.find("#fh_appform_navigation_buttons").hide();  
+          this.$el.find("#fh_appform_navigation_buttons").hide();
         }
-        
+
     } else if (displayedIndex === 0) {
         prevButton.hide();
         nextButton.show();
@@ -4111,7 +4137,7 @@ var FormView = BaseView.extend({
     this.steps.activePageChange(this);
     this.checkPages();
     if(scroll){
-      this.scrollToTop();  
+      this.scrollToTop();
     }
   },
   goToPage: function(pageNum, scroll){
@@ -4120,7 +4146,7 @@ var FormView = BaseView.extend({
       this.displayCurrentPage(scroll);
     } else {
       $fh.forms.log.e("Error switching page: Invalid argument ", pageNum);
-    }     
+    }
   },
   nextPage: function() {
     this.pageNum = this.getNextPageIndex(this.pageNum);
@@ -4134,7 +4160,7 @@ var FormView = BaseView.extend({
     //Positioning the window to the top of the form container
     $('html, body').animate({
           scrollTop: 0
-    }, 500, function() { 
+    }, 500, function() {
         window.scrollTo(0, 0);
     });
   },
@@ -4142,7 +4168,7 @@ var FormView = BaseView.extend({
     var self = this;
     if(this.pageNum <= 0){ // Already at the first page, exiting the form. Up to the client what to do with this result.
       return false;
-    } 
+    }
     self.prevPage();
     return true;
   },
@@ -4190,9 +4216,9 @@ var FormView = BaseView.extend({
         if (err) {
           $fh.forms.log.e(err);
         } else {
-          self.formEdited = false;  
+          self.formEdited = false;
         }
-        
+
         if(typeof(cb) === "function"){
           cb(err);
         }
@@ -4214,7 +4240,8 @@ var FormView = BaseView.extend({
       fieldId = fieldView.model.getFieldId();
       var fieldType = fieldView.model.getType();
 
-      if (fieldType !== "sectionBreak") {
+      //Don't want any value from readOnly fields or section breaks.
+      if (fieldType !== "sectionBreak" && fieldType !== "readOnly") {
         for (var j = 0; j < val.length; j++) {
           var v = val[j];
           tmpObj.push({
@@ -4274,6 +4301,7 @@ var FormView = BaseView.extend({
     }
   }
 });
+
 var FromJsonView = BaseView.extend({
     events: {
         'click button#convert': 'convert'

@@ -310,7 +310,7 @@ var FormView = BaseView.extend({
     var nextButton = this.$el.find("button.fh_appform_button_next").parent();
     var submitButton = this.$el.find(" button.fh_appform_button_submit").parent();
     var saveDraftButton = this.$el.find("button.fh_appform_button_saveDraft").parent();
-    
+
 
     if (displayedIndex === 0 && displayedIndex === displayedPages - 1) {
         prevButton.hide();
@@ -318,9 +318,9 @@ var FormView = BaseView.extend({
         saveDraftButton.show();
         submitButton.show();
         if(this.readonly){
-          this.$el.find("#fh_appform_navigation_buttons").hide();  
+          this.$el.find("#fh_appform_navigation_buttons").hide();
         }
-        
+
     } else if (displayedIndex === 0) {
         prevButton.hide();
         nextButton.show();
@@ -423,7 +423,7 @@ var FormView = BaseView.extend({
     this.steps.activePageChange(this);
     this.checkPages();
     if(scroll){
-      this.scrollToTop();  
+      this.scrollToTop();
     }
   },
   goToPage: function(pageNum, scroll){
@@ -432,7 +432,7 @@ var FormView = BaseView.extend({
       this.displayCurrentPage(scroll);
     } else {
       $fh.forms.log.e("Error switching page: Invalid argument ", pageNum);
-    }     
+    }
   },
   nextPage: function() {
     this.pageNum = this.getNextPageIndex(this.pageNum);
@@ -446,7 +446,7 @@ var FormView = BaseView.extend({
     //Positioning the window to the top of the form container
     $('html, body').animate({
           scrollTop: 0
-    }, 500, function() { 
+    }, 500, function() {
         window.scrollTo(0, 0);
     });
   },
@@ -454,7 +454,7 @@ var FormView = BaseView.extend({
     var self = this;
     if(this.pageNum <= 0){ // Already at the first page, exiting the form. Up to the client what to do with this result.
       return false;
-    } 
+    }
     self.prevPage();
     return true;
   },
@@ -502,9 +502,9 @@ var FormView = BaseView.extend({
         if (err) {
           $fh.forms.log.e(err);
         } else {
-          self.formEdited = false;  
+          self.formEdited = false;
         }
-        
+
         if(typeof(cb) === "function"){
           cb(err);
         }
@@ -526,7 +526,8 @@ var FormView = BaseView.extend({
       fieldId = fieldView.model.getFieldId();
       var fieldType = fieldView.model.getType();
 
-      if (fieldType !== "sectionBreak") {
+      //Don't want any value from readOnly fields or section breaks.
+      if (fieldType !== "sectionBreak" && fieldType !== "readOnly") {
         for (var j = 0; j < val.length; j++) {
           var v = val[j];
           tmpObj.push({

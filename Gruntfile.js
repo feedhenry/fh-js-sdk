@@ -10,10 +10,10 @@ module.exports = function(grunt) {
     pkg: pkg,
     meta: {},
     jshint: {
-      all: ['src/modules/**/*.js', 
+      all: ['src/modules/**/*.js',
             '!src/modules/ajax.js',
-            'src/appforms/src/core/*.js', 
-            'src/appforms/src/backbone/*.js', 
+            'src/appforms/src/core/*.js',
+            'src/appforms/src/backbone/*.js',
             '!src/appforms/src/core/000*.js',
             '!src/appforms/src/core/060*.js',
             '!src/appforms/src/core/999*.js',
