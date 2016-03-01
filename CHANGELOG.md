@@ -1,4 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
+## 2.14.1 - 2016-02-26 - Niall Donnelly
+
+* RHMAP-3874 - Update Rules Engine For Appforms.
+
 ## 2.14.0 - 2016-02-26 - Niall Donnelly
 
 * RHMAP-2950 - Added A Read Only Field To Forms Apps
