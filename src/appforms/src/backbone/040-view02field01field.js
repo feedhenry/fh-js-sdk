@@ -342,7 +342,9 @@ var FieldView = Backbone.View.extend({
 
         for (var i = 0; i < value.length; i++) {
             var v = value[i];
-            this.valuePopulateToElement(i, v);
+            if(v !== null && typeof(v) !== "undefined"){
+              this.valuePopulateToElement(i, v);
+            }
         }
     },
     valuePopulateToElement: function(index, value) {

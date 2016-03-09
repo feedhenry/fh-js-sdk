@@ -38,7 +38,7 @@ describe("Model", function() {
         var model = new appForm.models.Model();
         model.set("name", "hello");
         model.saveLocal(function(err, res) {
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             assert(res);
             assert(model.getLocalId());
             done();
@@ -49,7 +49,7 @@ describe("Model", function() {
         var model = new appForm.models.Model();
         model.set("name", "hello");
         model.saveLocal(function(err, res) {
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             assert(res);
             assert(model.getLocalId());
             var key = model.getLocalId();
@@ -57,7 +57,7 @@ describe("Model", function() {
             model1.setLocalId(key);
 
             model1.loadLocal(function(err, res) {
-                assert(!err);
+                assert(!err, "Expected no error: " + err);
                 assert(res);
                 assert(model1.get("name") == "hello");
                 done();
@@ -70,17 +70,17 @@ describe("Model", function() {
         var model = new appForm.models.Model();
         model.set("name", "hello");
         model.saveLocal(function(err, res) {
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             assert(res);
             assert(model.getLocalId());
             model.clearLocal(function(err) {
-                assert(!err);
+                assert(!err, "Expected no error: " + err);
                 var key = model.getLocalId();
                 var model1 = new appForm.models.Model();
                 model1.setLocalId(key);
 
                 model1.loadLocal(function(err, res) {
-                    assert(!err);
+                    assert(!err, "Expected no error: " + err);
                     assert(res);
                     assert(model1.get("name") == undefined);
                     done();
@@ -101,7 +101,7 @@ describe("Model", function() {
          var model = appForm.models.forms;
 
         model.attemptRefresh(function(err,model){
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             assert(model);
             done();
         });

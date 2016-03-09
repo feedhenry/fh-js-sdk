@@ -9,7 +9,7 @@ describe("Theme model", function(done) {
     var theme = appForm.models.theme;
 
     theme.refresh(true, function(err, theme){
-      assert(!err);
+      assert(!err, "Expected no error: " + err);
       assert(theme.get("name") === testData.themeName);
       done();
     });

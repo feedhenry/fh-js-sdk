@@ -10,7 +10,7 @@ describe("Local Storage store", function() {
         var model = new Model();
         appForm.stores.localStorage.create(model, function(err, res) {
 
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             assert(res);
             done();
         });
@@ -23,7 +23,7 @@ describe("Local Storage store", function() {
     
         appForm.stores.localStorage.create(model, function(err, res) {
             appForm.stores.localStorage.read(model, function(err, res) {
-                assert(!err);
+                assert(!err, "Expected no error: " + err);
                 var model1 = new Model();
                 model1.fromJSONStr(res);
                 assert(model1.get("hello") == "world");
@@ -39,7 +39,7 @@ describe("Local Storage store", function() {
         model.setLocalId("unknownkey");
         appForm.stores.localStorage.read(model, function(err, res) {
 
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             assert(res == null);
             done();
         });
@@ -50,10 +50,10 @@ describe("Local Storage store", function() {
         model.set("hello", "world");
         appForm.stores.localStorage.create(model, function(err, res) {
             appForm.stores.localStorage.removeEntry(model, function(err, res) {
-                assert(!err);
+                assert(!err, "Expected no error: " + err);
                 assert(res == null);
                 appForm.stores.localStorage.read(model, function(err, res) {
-                    assert(!err);
+                    assert(!err, "Expected no error: " + err);
                     assert(res == null);
                     done();
                 });
@@ -68,7 +68,7 @@ describe("Local Storage store", function() {
         var model = new Model();
         model.setLocalId("unknownkey");
         appForm.stores.localStorage.removeEntry(model, function(err, res) {
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             assert(!res);
             done();
         });
@@ -89,7 +89,7 @@ describe("Fallback use $fh data / how to forcely use $fh data", function() {
         var Model = appForm.models.Model;
         var model = new Model();
         appForm.stores.localStorage.create(model, function(err, res) {
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             assert(res);
             done();
         });
@@ -100,7 +100,7 @@ describe("Fallback use $fh data / how to forcely use $fh data", function() {
         model.set("hello", "world");
         appForm.stores.localStorage.create(model, function(err, res) {
             appForm.stores.localStorage.read(model, function(err, res) {
-                assert(!err);
+                assert(!err, "Expected no error: " + err);
                 var model1 = new Model();
                 model1.fromJSONStr(res);
                 assert(model1.get("hello") == "world");
@@ -114,7 +114,7 @@ describe("Fallback use $fh data / how to forcely use $fh data", function() {
         var model = new Model();
         model.setLocalId("unknownkey");
         appForm.stores.localStorage.read(model, function(err, res) {
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             assert(res == null);
             done();
         });
@@ -128,11 +128,11 @@ describe("Fallback use $fh data / how to forcely use $fh data", function() {
           assert.ok(res);
 
             appForm.stores.localStorage.removeEntry(model, function(err, res) {
-                assert(!err);
+                assert(!err, "Expected no error: " + err);
                 assert(res==null);
 
                 appForm.stores.localStorage.removeEntry(model, function(err, res) {
-                    assert(!err);
+                    assert(!err, "Expected no error: " + err);
                     assert(res == null);
                     done();
                 });
@@ -147,7 +147,7 @@ describe("Fallback use $fh data / how to forcely use $fh data", function() {
         var model = new Model();
         model.setLocalId("unknownkey");
         appForm.stores.localStorage.removeEntry(model, function(err, res) {
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             assert(!res);
             done();
         });

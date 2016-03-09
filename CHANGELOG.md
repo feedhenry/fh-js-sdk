@@ -1,4 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
+
+## 2.14.2 - 2016-03-09 - Niall Donnelly
+
+* RHMAP-4862 - Removing field values if the field entry is not defined.
+
 ## 2.14.1 - 2016-02-26 - Niall Donnelly
 
 * RHMAP-3874 - Update Rules Engine For Appforms.
