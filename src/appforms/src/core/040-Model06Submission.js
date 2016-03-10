@@ -620,12 +620,6 @@ appForm.models = function(module) {
         }
       }
 
-      //No input value passed. The existing value should be cleared.
-      //No need to process the input.
-      if(!inputValue && params.previousValue){
-
-      }
-
       fieldModel.processInput(params, function(err, result) {
         if (err) {
           return cb(err);

@@ -11090,7 +11090,7 @@ module.exports = {
 },{"./data":33,"./fhparams":36,"./logger":42,"./queryMap":44}],31:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.14.0",
+  "sdk_version": "2.14.2",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit",
   "INTERNAL_CONFIG_LOADED_EVENT": "internalfhconfigloaded",
@@ -15750,7 +15750,8 @@ appForm.utils = function(module) {
         readAsBase64Encoded: readAsBase64Encoded,
         readAsFile: readAsFile,
         fileToBase64: fileToBase64,
-        getBasePath: getBasePath
+        getBasePath: getBasePath,
+        clearFileSystem: clearFileSystem
     };
     var fileSystemAvailable = false;
     var _requestFileSystem = function() {
@@ -15932,6 +15933,33 @@ appForm.utils = function(module) {
             });
         });
     }
+
+
+    /**
+     * clearFileSystem - Clearing All Of The Files In the file system.
+     *
+     * @param  {type} cb       description
+     * @return {type}          description
+     */
+    function clearFileSystem(cb){
+      function gotFS(fileSystem) {
+          var reader = fileSystem.root.createReader();
+          reader.readEntries(gotList, cb);
+      }
+
+      function gotList(entries) {
+          async.forEachSeries(entries, function(entry, cb){
+            if(entry.isDirectory){
+              entry.removeRecursively(cb, cb);
+            } else {
+              entry.remove(cb, cb);
+            }
+          }, cb);
+      }
+
+      _requestFileSystem(PERSISTENT, 0, gotFS, cb);
+    }
+
     /**
      * Read a file as text
      * @param  {[type]}   fileName [description]
@@ -15954,7 +15982,7 @@ appForm.utils = function(module) {
                     try {
                         text = decodeURIComponent(text);
                     } catch (e) {
-                        
+
                     }
                     return cb(null, text);
                 };
@@ -16112,6 +16140,7 @@ appForm.utils = function(module) {
     _checkEnv();
     return module;
 }(appForm.utils || {});
+
 appForm.utils = function (module) {
   module.takePhoto = takePhoto;
   module.isPhoneGapCamAvailable = isPhoneGapAvailable;
@@ -18554,7 +18583,7 @@ appForm.models = function(module) {
       } else {
         self.emit('validationerror', validation);
         cb(null, validation.valid);
-      }  
+      }
     });
   };
 
@@ -18568,8 +18597,9 @@ appForm.models = function(module) {
     $fh.forms.log.d("Submission submit: ");
     var targetStatus = 'pending';
     var validateResult = true;
-    
+
     this.set('timezoneOffset', appForm.utils.getTime(true));
+    this.pruneNullValues();
     that.performValidation(function(err, res){
       if (err) {
         $fh.forms.log.e("Submission submit validateForm: Error validating form ", err);
@@ -18593,7 +18623,7 @@ appForm.models = function(module) {
           that.emit('validationerror', validation);
           cb('Validation error');
         }
-      }  
+      }
     });
   };
   Submission.prototype.getUploadTask = function(cb) {
@@ -18701,6 +18731,7 @@ appForm.models = function(module) {
     var targetStatus = 'downloaded';
 
     that.set('downloadedDate', appForm.utils.getTime());
+    that.pruneNullValues();
     that.changeStatus(targetStatus, function(err) {
       if (err) {
         $fh.forms.log.e("Error setting downloaded status " + err);
@@ -18711,6 +18742,25 @@ appForm.models = function(module) {
         cb(null, that);
       }
     });
+  };
+
+
+  /**
+   * Submission.prototype.pruneNullValues - Pruning null values from the submission
+   *
+   * @return {type}  description
+   */
+  Submission.prototype.pruneNullValues = function(){
+    var formFields = this.getFormFields();
+
+    for(var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++){
+      formFields[formFieldIndex].fieldValues = formFields[formFieldIndex].fieldValues || [];
+      formFields[formFieldIndex].fieldValues = formFields[formFieldIndex].fieldValues.filter(function(fieldValue){
+        return fieldValue !== null && typeof(fieldValue) !== "undefined";
+      });
+    }
+
+    this.setFormFields(formFields);
   };
   //joint form id and submissions timestamp.
   Submission.prototype.genLocalId = function() {
@@ -18883,9 +18933,9 @@ appForm.models = function(module) {
     for (var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++) {
       var tmpFieldValues = formFields[formFieldIndex].fieldValues || [];
       for (var fieldValIndex = 0; fieldValIndex < tmpFieldValues.length; fieldValIndex++) {
-        if(tmpFieldValues[fieldValIndex].fileName){
+        if(tmpFieldValues[fieldValIndex] && tmpFieldValues[fieldValIndex].fileName){
           submissionFiles.push(tmpFieldValues[fieldValIndex]);
-        } else if(tmpFieldValues[fieldValIndex].hashName){
+        } else if(tmpFieldValues[fieldValIndex] && tmpFieldValues[fieldValIndex].hashName){
           submissionFiles.push(tmpFieldValues[fieldValIndex]);
         }
       }
@@ -18911,64 +18961,88 @@ appForm.models = function(module) {
     var that = this;
     var fieldId = params.fieldId;
     var inputValue = params.value;
+    var index = params.index === undefined ? -1 : params.index;
 
-    if(inputValue !== null && typeof(inputValue) !== 'undefined'){
-      var index = params.index === undefined ? -1 : params.index;
-      this.getForm(function(err, form) {
-        var fieldModel = form.getFieldModelById(fieldId);
-        if (that.transactionMode) {
-          if (!that.tmpFields[fieldId]) {
-            that.tmpFields[fieldId] = [];
-          }
+    if(!fieldId){
+      return cb("Invalid parameters. fieldId is required");
+    }
 
-          params.isStore = false;//Don't store the files until the transaction is complete
-          fieldModel.processInput(params, function(err, result) {
-            if (err) {
-              return cb(err);
-            } else {
-              if (index > -1) {
-                that.tmpFields[fieldId][index] = result;
-              } else {
-                that.tmpFields[fieldId].push(result);
-              }
+    //Transaction entries are not saved to memory, they are only saved when the transaction has completed.
+    function processTransaction(form, fieldModel){
+      if (!that.tmpFields[fieldId]) {
+        that.tmpFields[fieldId] = [];
+      }
 
-              return cb(null, result);
-            }
-          });
+      params.isStore = false;//Don't store the files until the transaction is complete
+      fieldModel.processInput(params, function(err, result) {
+        if (err) {
+          return cb(err);
         } else {
-          var target = that.getInputValueObjectById(fieldId);
-
-          //File already exists for this input, overwrite rather than create a new file
-          if(target.fieldValues[index]){
-            if(typeof(target.fieldValues[index].hashName) === "string"){
-              params.previousFile = target.fieldValues[index];
-            }
+          if (index > -1) {
+            that.tmpFields[fieldId][index] = result;
+          } else {
+            that.tmpFields[fieldId].push(result);
           }
 
-
-          fieldModel.processInput(params, function(err, result) {
-            if (err) {
-              return cb(err);
-            } else {
-              if (index > -1) {
-                target.fieldValues[index] = result;
-              } else {
-                target.fieldValues.push(result);
-              }
-
-              if(typeof(result.hashName) === "string"){
-                that.pushFile(result.hashName);
-              }
-
-              return cb(null, result);
-            }
-          });
+          return cb(null, result);
         }
       });
-    } else {
-      $fh.forms.log.e("addInputValue: Input value was null. Params: " + fieldId);
-      return cb(null, {});
     }
+
+    //Direct entries are saved immediately to local storage when they are input.
+    function processDirectStore(form, fieldModel){
+      var target = that.getInputValueObjectById(fieldId);
+
+      //File already exists for this input, overwrite rather than create a new file
+      //If pushing the value to the end of the list, then there will be no previous value
+      if(index > -1 && target.fieldValues[index]){
+        if(typeof(target.fieldValues[index].hashName) === "string"){
+          params.previousFile = target.fieldValues[index];
+        } else {
+          params.previousValue = target.fieldValues[index];
+        }
+      }
+
+      //No input value passed. The existing value should be cleared.
+      //No need to process the input.
+      if(!inputValue && params.previousValue){
+
+      }
+
+      fieldModel.processInput(params, function(err, result) {
+        if (err) {
+          return cb(err);
+        } else {
+          if (index > -1) {
+            target.fieldValues[index] = result;
+          } else {
+            target.fieldValues.push(result);
+          }
+
+          if(result && typeof(result.hashName) === "string"){
+            that.pushFile(result.hashName);
+          }
+
+          return cb(null, result);
+        }
+      });
+    }
+
+    function gotForm(err, form) {
+      var fieldModel = form.getFieldModelById(fieldId);
+
+      if(!fieldModel){
+        return cb("No field model found for fieldId " + fieldId);
+      }
+
+      if (that.transactionMode) {
+        processTransaction(form, fieldModel);
+      } else {
+        processDirectStore(form, fieldModel);
+      }
+    }
+
+    this.getForm(gotForm);
   };
   Submission.prototype.pushFile = function(hashName){
     var subFiles = this.get('filesInSubmission', []);
@@ -19075,34 +19149,45 @@ appForm.models = function(module) {
    * remove an input value from submission
    * @param  {[type]} fieldId field id
    * @param  {[type]} index (optional) the position of the value will be removed if it is repeated field.
+   * @param  {function} [Optional callback]
    * @return {[type]}         [description]
    */
-  Submission.prototype.removeFieldValue = function(fieldId, index) {
+  Submission.prototype.removeFieldValue = function(fieldId, index, callback) {
+    callback = callback || function(){};
     var self = this;
     var targetArr = [];
-    var valRemoved = {};
+    var valsRemoved = {};
     if (this.transactionMode) {
       targetArr = this.tmpFields.fieldId;
     } else {
-      targetArr = this.getInputValueObjectById(fieldId).fieldId;
+      targetArr = this.getInputValueObjectById(fieldId).fieldValues;
     }
+    //If no index is supplied, all values are removed.
     if (typeof index === 'undefined') {
-      valRemoved = targetArr.splice(0, targetArr.length);
+      valsRemoved = targetArr.splice(0, targetArr.length);
     } else {
       if (targetArr.length > index) {
-        valRemoved = targetArr.splice(index, 1);
+        valsRemoved = targetArr.splice(index, 1, null);
       }
     }
 
-    if(typeof(valRemoved.hashName) === "string"){
-      appForm.stores.localStorage.removeEntry(valRemoved.hashName, function(err){
-        if(err){
-          $fh.forms.log.e("Error removing file: ", err);
-        } else {
-          self.removeFileValue(valRemoved.hashName);
-        }
-      });
-    }
+    //Clearing up any files from local storage.
+    async.forEach(valsRemoved, function(valRemoved, cb){
+      if(valRemoved && valRemoved.hashName){
+        appForm.stores.localStorage.removeEntry(valRemoved.hashName, function(err){
+          if(err){
+            $fh.forms.log.e("Error removing file: ", err, valRemoved);
+          } else {
+            self.removeFileValue(valRemoved.hashName);
+          }
+          return cb(null, valRemoved);
+        });
+      } else {
+        return cb();
+      }
+    }, function(err){
+      callback(err);
+    });
   };
   Submission.prototype.getInputValueObjectById = function(fieldId) {
     var formFields = this.getFormFields();
@@ -19180,18 +19265,24 @@ appForm.models = function(module) {
     });
   };
 
+
+  /**
+   * Submission.prototype.getFormFields - Get the form field input values
+   *
+   * @return {type}                   description
+   */
   Submission.prototype.getFormFields = function(){
-    var formFields = this.get("formFields", []);
+    return this.get("formFields", []);
+  };
 
-    //Removing null values
-    for(var formFieldIndex = 0; formFieldIndex < formFields.length; formFieldIndex++){
-      formFields[formFieldIndex].fieldValues = formFields[formFieldIndex].fieldValues || [];
-      formFields[formFieldIndex].fieldValues = formFields[formFieldIndex].fieldValues.filter(function(fieldValue){
-        return fieldValue !== null && typeof(fieldValue) !== "undefined";
-      });
-    }
-
-    return formFields;
+  /**
+   * Submission.prototype.getFormFields - Set the form field input values
+   *
+   * @param  {boolean} includeNullValues flag on whether to include null values or not.
+   * @return {type}                   description
+   */
+  Submission.prototype.setFormFields = function(values){
+    return this.get("formFields", values);
   };
 
   Submission.prototype.getFileFieldsId = function(cb){
@@ -19322,6 +19413,7 @@ appForm.models = function(module) {
   };
   return module;
 }(appForm.models || {});
+
 /**
  * Field model for form
  * @param  {[type]} module [description]
