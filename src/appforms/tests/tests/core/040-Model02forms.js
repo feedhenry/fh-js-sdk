@@ -3,7 +3,7 @@ describe("forms model",function(){
         var formsModel=appForm.models.forms;
         var timeStamp1=formsModel.getLocalUpdateTimeStamp();
         formsModel.refresh(function(err,model){
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             var timeStamp2=model.getLocalUpdateTimeStamp();
             assert(timeStamp1!=timeStamp2);
             done();
@@ -13,7 +13,7 @@ describe("forms model",function(){
         var formsModel=appForm.models.forms;
         var timeStamp1=formsModel.getLocalUpdateTimeStamp();
         formsModel.refresh(true, function(err,model){
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             var timeStamp2=model.getLocalUpdateTimeStamp();
             assert(timeStamp1!=timeStamp2);
             done();
@@ -30,7 +30,7 @@ describe("forms model",function(){
 
     it ("how to test if a form model object is up to date / should check if a form is up to date",function(done){
         var form=new appForm.models.Form({formId:testData.formId,fromRemote:true},function(err){
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             var formsModel=appForm.models.forms;
 
             assert (!formsModel.isFormUpdated(form));

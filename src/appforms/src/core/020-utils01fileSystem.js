@@ -8,7 +8,8 @@ appForm.utils = function(module) {
         readAsBase64Encoded: readAsBase64Encoded,
         readAsFile: readAsFile,
         fileToBase64: fileToBase64,
-        getBasePath: getBasePath
+        getBasePath: getBasePath,
+        clearFileSystem: clearFileSystem
     };
     var fileSystemAvailable = false;
     var _requestFileSystem = function() {
@@ -190,6 +191,33 @@ appForm.utils = function(module) {
             });
         });
     }
+
+
+    /**
+     * clearFileSystem - Clearing All Of The Files In the file system.
+     *
+     * @param  {type} cb       description
+     * @return {type}          description
+     */
+    function clearFileSystem(cb){
+      function gotFS(fileSystem) {
+          var reader = fileSystem.root.createReader();
+          reader.readEntries(gotList, cb);
+      }
+
+      function gotList(entries) {
+          async.forEachSeries(entries, function(entry, cb){
+            if(entry.isDirectory){
+              entry.removeRecursively(cb, cb);
+            } else {
+              entry.remove(cb, cb);
+            }
+          }, cb);
+      }
+
+      _requestFileSystem(PERSISTENT, 0, gotFS, cb);
+    }
+
     /**
      * Read a file as text
      * @param  {[type]}   fileName [description]
@@ -212,7 +240,7 @@ appForm.utils = function(module) {
                     try {
                         text = decodeURIComponent(text);
                     } catch (e) {
-                        
+
                     }
                     return cb(null, text);
                 };

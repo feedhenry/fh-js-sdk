@@ -1,11 +1,18 @@
 describe("$fh.forms API", function() {
+  after(function(done){
+    if (appForm.utils.fileSystem.isFileSystemAvailable()) {
+      appForm.utils.fileSystem.clearFileSystem(done, done);
+    } else {
+      done();
+    }
+  });
   it("$fh.forms.getForms", function(done) {
     var getForms = appForm.api.getForms;
 
     getForms({
       "fromRemote": true
     }, function(err, foundForms) {
-      assert(!err);
+      assert(!err, "Expected no error: " + err);
 
       assert(foundForms.get("_type") === "forms");
       assert(Array.isArray(foundForms.getFormsList()));
@@ -19,7 +26,7 @@ describe("$fh.forms API", function() {
     getForm({
       "formId": testData.formId
     }, function(err, foundForm) {
-      assert(!err);
+      assert(!err, "Expected no error: " + err);
 
       assert(foundForm.get("_type") === "form");
       assert(foundForm.getName() === testData.formName);
@@ -32,7 +39,7 @@ describe("$fh.forms API", function() {
     getTheme({
       "fromRemote": true
     }, function(err, theme) {
-      assert(!err);
+      assert(!err, "Expected no error: " + err);
 
       assert(theme.get("name") === testData.themeName);
       done();
@@ -45,7 +52,7 @@ describe("$fh.forms API", function() {
       "fromRemote": true,
       "css" : true
     }, function(err, themeCSS) {
-      assert(!err);
+      assert(!err, "Expected no error: " + err);
 
       assert(typeof(themeCSS) === "string");
       done();
@@ -58,14 +65,14 @@ describe("$fh.forms API", function() {
     var form = new Form({
       formId: testData.formId
     }, function(err, form) {
-      assert(!err);
+      assert(!err, "Expected no error: " + err);
       var submission = appForm.models.submission.newInstance(form);
 
       submission.saveDraft(function(err) {
-        assert(!err);
+        assert(!err, "Expected no error: " + err);
 
         getSubmissions({}, function(err, submissions) {
-          assert(!err);
+          assert(!err, "Expected no error: " + err);
 
           assert(submissions);
           assert(submissions.get("_type") === "submissions");
@@ -82,13 +89,13 @@ describe("$fh.forms API", function() {
     this.timeout(10000);
 
     forms.refresh(true, function(err, forms) {
-      assert(!err);
+      assert(!err, "Expected no error: " + err);
 
       var form = new Form({
         "formId": testData.formId,
         "fromRemote": false
       }, function(err, form) {
-        assert(!err);
+        assert(!err, "Expected no error: " + err);
 
         //Create submission
         var newSubmission = form.newSubmission();
@@ -126,17 +133,15 @@ describe("$fh.forms API", function() {
           done();
         });
 
+        newSubmission.on("error", function(err) {
+          assert.ok(!err);
+          done();
+        });
+
         submitForm(newSubmission, function(err, uploadTask) {
-          assert(!err);
+          assert(!err, "Expected no error: " + err);
           assert.ok(uploadTask);
 
-          uploadTask.uploadTick(function(err) {
-            assert.ok(!err);
-
-            uploadTask.uploadTick(function(err) {
-              assert.ok(!err);
-            });
-          });
         });
       });
     });
@@ -160,12 +165,12 @@ describe("$fh.forms API", function() {
     this.timeout(3000);
     var submissionId = "submissionData";
     var downloadSubmission = appForm.api.downloadSubmission;
-    
+
     appForm.api.once('submission:error', function(err){
       assert.ok(!err, "Expected No Error " + err);
       done(err);
     });
-    
+
     appForm.api.once('submission:downloaded', function(remoteSubmissionId){
       assert.equal("submissionData", remoteSubmissionId);
       assert.equal("submissionData", this.getRemoteSubmissionId());

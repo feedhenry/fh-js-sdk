@@ -1,11 +1,18 @@
 describe("Submission model", function() {
+    before(function(done){
+      if (appForm.utils.fileSystem.isFileSystemAvailable()) {
+        appForm.utils.fileSystem.clearFileSystem(done, done);
+      } else {
+        done();
+      }
+    });
     it("how to create new submission from a form", function(done) {
         var Form = appForm.models.Form;
         //load form
         var form = new Form({
             formId: testData.formId
         }, function(err, form) {
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             var submission = appForm.models.submission.newInstance(form);
             var localId = submission.getLocalId();
             assert(submission.getStatus() == "new");
@@ -21,13 +28,13 @@ describe("Submission model", function() {
         var form = new Form({
             formId: testData.formId
         }, function(err, form) {
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             var submission = appForm.models.submission.newInstance(form);
             var localId = submission.getLocalId();
             submission.saveDraft(function(err) {
-                assert(!err);
+                assert(!err, "Expected no error: " + err);
                 appForm.models.submission.fromLocal(localId, function(err, submission1) {
-                    assert(!err);
+                    assert(!err, "Expected no error: " + err);
                     assert(submission1.get("formId") == submission.get("formId"));
                     assert(submission1.getStatus() == "draft");
                     done();
@@ -43,11 +50,11 @@ describe("Submission model", function() {
         var form = new Form({
             formId: testData.formId
         }, function(err, form) {
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             var submission = appForm.models.submission.newInstance(form);
             var localId = submission.getLocalId();
             submission.saveDraft(function(err) {
-                assert(!err);
+                assert(!err, "Expected no error: " + err);
 
                 submission.submitted(function(err) {
                   assert(err);
@@ -63,12 +70,12 @@ describe("Submission model", function() {
         var form = new Form({
             formId: testData.formId
         }, function(err, form) {
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             var submission = appForm.models.submission.newInstance(form);
             var localId = submission.getLocalId();
 
             submission.saveDraft(function(err) {
-                assert(!err);
+                assert(!err, "Expected no error: " + err);
                 var localId = submission.getLocalId();
                 var meta = appForm.models.submissions.findMetaByLocalId(localId);
                 assert(meta._ludid == localId);
@@ -98,7 +105,7 @@ describe("Submission model", function() {
             // debugger;
             var localId = meta._ludid;
             appForm.models.submission.fromLocal(localId, function(err, submission) {
-                assert(!err);
+                assert(!err, "Expected no error: " + err);
                 var ts1 = submission.addComment("hello world");
                 var ts2 = submission.addComment("test", "testerName");
                 var comments = submission.getComments();
@@ -135,7 +142,7 @@ describe("Submission model", function() {
             var form = new Form({
                 formId: testData.formId
             }, function(err, form) {
-                assert(!err);
+                assert(!err, "Expected no error: " + err);
                 submission = appForm.models.submission.newInstance(form);
                 var localId = submission.getLocalId();
                 assert(submission.getStatus() == "new");
@@ -144,12 +151,247 @@ describe("Submission model", function() {
                 done();
             });
         });
+
+        it("Removing an input value from a submission", function(done){
+          async.waterfall([
+            function createForm(cb){
+               var Form = appForm.models.Form;
+                //load form
+                var form = new Form({
+                    formId: testData.formId
+                }, function(err, form) {
+                    assert(!err, "Expected no error " + err);
+                    cb(err, form);
+                });
+            },
+            function addValue(form, cb){
+              var submission = appForm.models.submission.newInstance(form);
+
+              submission.addInputValue({
+                  fieldId: testData.fieldId,
+                  value: 40
+              }, function(err) {
+                  assert(!err, "Expected no error: " + err);
+                  cb(err, form, submission);
+              });
+            },
+            function verifyValueAdded(form, submission, cb){
+              submission.getInputValueByFieldId(testData.fieldId, function(err, values) {
+                  assert.equal(40, values[0]);
+
+                  cb(err, form, submission);
+              });
+            },
+            function removeValue(form, submission, cb){
+              submission.removeFieldValue(testData.fieldId, 0);
+
+              //The value should now have been removed.
+              submission.getInputValueByFieldId(testData.fieldId, function(err, values) {
+                  assert.equal(undefined, values[0]);
+
+                  cb(err);
+              });
+            }
+          ], done);
+        });
+
+        it("Removing a file input value from a submission", function(done){
+          var fileName = "myfiletosave2.txt";
+          var fileSystem = appForm.utils.fileSystem;
+          async.waterfall([
+              function createForm(cb){
+                 var Form = appForm.models.Form;
+                  //load form
+                  var form = new Form({
+                      formId: "testfileformid"
+                  }, function(err, form) {
+                      assert(!err, "Expected no error " + err);
+                      cb(err, form);
+                  });
+              },
+              function createTextFile(form, cb){
+                  fileSystem.save(fileName, "This param could be string, json object or File object", function(err) {
+                      assert.ok(!err, "Expected no error " + err);
+                      cb(err, form);
+                  });
+              },
+              function readTextFile(form, cb){
+                  fileSystem.readAsFile(fileName, function(err, file){
+                      assert.ok(!err, "Expected no error " + err);
+                      assert.ok(file instanceof File, "Expected a file instance.");
+                      cb(err, form, file);
+                  });
+              },
+              function createSubmission(form, file, cb){
+                  var submission = appForm.models.submission.newInstance(form);
+
+                  //Add a file value
+                  submission.addInputValue({
+                      fieldId: 'filefieldid',
+                      value: file
+                  }, function(err){
+                      assert.ok(!err, "Expected no error " + err);
+
+                      cb(err, form, file, submission);
+                  });
+              },
+              function checkFileValue(form, file, submission, cb){
+                  //The file value should have been set in the submission
+                  var inputValues = submission.getInputValueByFieldId('filefieldid', function(err, fileValues){
+                    assert.ok(!err, "Expected No Error " + err);
+
+                    assert.equal(fileName, fileValues[0].fileName);
+                    assert.ok(fileValues[0].hashName, "Expected A File Hash Name");
+                    cb(err, form, file, submission, fileValues[0].hashName);
+                  });
+              },
+              function addAnotherFile(form, file, submission, hashName, cb){
+                submission.addInputValue({
+                    fieldId: 'filefieldid',
+                    value: file
+                }, function(err){
+                    assert.ok(!err, "Expected no error " + err);
+
+                    cb(err, form, file, submission, hashName);
+                });
+              },
+              function checkMultipleFileValues(form, file, submission, hashName, cb){
+                  //The file value should have been set in the submission
+                  var inputValues = submission.getInputValueByFieldId('filefieldid', function(err, fileValues){
+                    assert.ok(!err, "Expected No Error " + err);
+
+                    assert.equal(fileName, fileValues[1].fileName);
+                    assert.ok(fileValues[1].hashName, "Expected A File Hash Name");
+                    assert.notEqual(hashName, fileValues[1].hashName);
+                    cb(err, form, file, submission, hashName, fileValues[1].hashName);
+                  });
+              },
+              function removeFileValue(form, file, submission, hashName1, hashName2, cb){
+                //Remove a file value
+                submission.removeFieldValue('filefieldid', 0, function(err){
+                  assert.ok(!err, "Expected No Error");
+
+                  cb(err, form, submission, hashName1, hashName2);
+                });
+              },
+              function checkValueRemoved(form, submission, hashName1, hashName2, cb){
+                var inputValues = submission.getInputValueByFieldId('filefieldid', function(err, fileValues){
+                  assert.ok(!err, "Expected No Error " + err);
+
+                  assert.equal(undefined, fileValues[0]);
+                  assert.equal(hashName2, fileValues[1].hashName);
+                  cb(err, submission, hashName1, hashName2);
+                });
+              },
+              function removeOtherFile(submission, hashName1, hashName2, cb){
+                submission.removeFieldValue('filefieldid', 1, function(err){
+                  assert.ok(!err, "Expected No Error");
+
+                  cb(err, submission, hashName1, hashName2);
+                });
+              },
+              function checkValueRemoved(submission, hashName1, hashName2, cb){
+                var inputValues = submission.getInputValueByFieldId('filefieldid', function(err, fileValues){
+                  assert.ok(!err, "Expected No Error " + err);
+
+                  assert.equal(undefined, fileValues[0]);
+                  assert.equal(undefined, fileValues[1]);
+                  cb(err, submission, hashName1, hashName2);
+                });
+              },
+              //Cached Files should have been removed.
+              function checkFileRemoved(submission, hashName1, hashName2, cb){
+                fileSystem.readAsFile(hashName1, function(err, file1){
+                    assert.equal(err.name, "NotFoundError");
+                    assert.ok(!file1, "Expected No File");
+
+                    fileSystem.readAsFile(hashName2, function(err, file2){
+                      assert.equal(err.name, "NotFoundError");
+                      assert.ok(!file2, "Expected No File");
+                      cb();
+                    });
+                });
+              }
+          ], done);
+        });
+
+        it("When adding a null value to a field, any existing file entry is kept", function(done){
+            var fileName = "myfiletosave.txt";
+            var fileSystem = appForm.utils.fileSystem;
+            async.waterfall([
+                function createForm(cb){
+                   var Form = appForm.models.Form;
+                    //load form
+                    var form = new Form({
+                        formId: "testfileformid"
+                    }, function(err, form) {
+                        assert(!err, "Expected no error " + err);
+                        cb(err, form);
+                    });
+                },
+                function createTextFile(form, cb){
+                    fileSystem.save(fileName, "This param could be string, json object or File object", function(err) {
+                        assert.ok(!err, "Expected no error " + err);
+                        cb(err, form);
+                    });
+                },
+                function readTextFile(form, cb){
+                    fileSystem.readAsFile(fileName, function(err, file){
+                        assert.ok(!err, "Expected no error " + err);
+                        assert.ok(file instanceof File, "Expected a file instance.");
+                        cb(err, form, file);
+                    });
+                },
+                function createSubmission(form, file, cb){
+                    var submission = appForm.models.submission.newInstance(form);
+
+                    //Add a file value
+                    submission.addInputValue({
+                        fieldId: 'filefieldid',
+                        value: file
+                    }, function(err){
+                        assert.ok(!err, "Expected no error " + err);
+
+                        cb(err, form, file, submission);
+                    });
+                },
+                function checkFileValue(form, file, submission, cb){
+                    //The file value should have been set in the submission
+                    var inputValues = submission.getInputValueByFieldId('filefieldid', function(err, fileValues){
+                      assert.ok(!err, "Expected No Error " + err);
+
+                      assert.equal(fileName, fileValues[0].fileName);
+                      cb(err, form, file, submission);
+                    });
+                },
+                function addNullValue(form, file, submission, cb){
+                  //Add a file value
+                  submission.addInputValue({
+                      fieldId: 'filefieldid',
+                      value: null
+                  }, function(err){
+                      assert.ok(!err, "Expected no error " + err);
+
+                      cb(err, form, file, submission);
+                  });
+                },
+                function checkForExistingValue(form, file, submission, cb){
+                  var inputValues = submission.getInputValueByFieldId('filefieldid', function(err, fileValues){
+                    assert.ok(!err, "Expected No Error " + err);
+
+                    assert.equal(fileName, fileValues[0].fileName);
+                    cb(err);
+                  });
+                }
+            ], done);
+        });
+
         it("how to add user input value to submission model", function() {
             submission.addInputValue({
                 fieldId: testData.fieldId,
                 value: 40
             }, function(err) {
-                assert(!err)
+                assert(!err, "Expected no error: " + err);
             });
             submission.getInputValueByFieldId(testData.fieldId, function(err, res) {
                 assert(res[0] == 40);
@@ -160,12 +402,12 @@ describe("Submission model", function() {
                 fieldId: testData.fieldId,
                 value: 40
             }, function(err) {
-                assert(!err)
+                assert(!err, "Expected no error: " + err);
             });
             submission.reset();
             submission.getInputValueByFieldId(testData.fieldId, function(err, res) {
-                assert(!err);
-                assert(res.length == 0);
+                assert(!err, "Expected no error: " + err);
+                assert(res.length === 0);
             });
         });
 
@@ -175,11 +417,12 @@ describe("Submission model", function() {
             fieldId: testData.fieldId,
             value: null
           }, function(err) {
-            assert(!err)
+            assert(!err, "Expected no error: " + err);
           });
           submission.getInputValueByFieldId(testData.fieldId, function(err, res) {
-            assert(!err);
-            assert(res.length === 0);
+            assert(!err, "Expected no error: " + err);
+            assert(res.length === 1);
+            assert.equal(null, res[0]);
           });
         });
 
@@ -189,26 +432,26 @@ describe("Submission model", function() {
                 fieldId: testData.fieldId,
                 value: 40
             }, function(err) {
-                assert(!err)
+                assert(!err, "Expected no error: " + err);
             });
             submission.startInputTransaction();
             submission.addInputValue({
                 fieldId: testData.fieldId,
                 value: 50
             }, function(err) {
-                assert(!err)
+                assert(!err, "Expected no error: " + err);
             });
             submission.addInputValue({
                 fieldId: testData.fieldId,
                 value: 60
             }, function(err) {
-                assert(!err)
+                assert(!err, "Expected no error: " + err);
             });
             submission.addInputValue({
                 fieldId: testData.fieldId,
                 value: 35
             }, function(err) {
-                assert(!err)
+                assert(!err, "Expected no error: " + err);
             });
             submission.endInputTransaction(true);
             submission.getInputValueByFieldId(testData.fieldId, function(err, res) {
@@ -230,26 +473,26 @@ describe("Submission model", function() {
                 fieldId: testData.fieldId,
                 value: 40
             }, function(err) {
-                assert(!err)
+                assert(!err, "Expected no error: " + err);
             });
             submission.startInputTransaction();
             submission.addInputValue({
                 fieldId: testData.fieldId,
                 value: 50
             }, function(err) {
-                assert(!err)
+                assert(!err, "Expected no error: " + err);
             });
             submission.addInputValue({
                 fieldId: testData.fieldId,
                 value: 60
             }, function(err) {
-                assert(!err)
+                assert(!err, "Expected no error: " + err);
             });
             submission.addInputValue({
                 fieldId: testData.fieldId,
                 value: 35
             }, function(err) {
-                assert(!err)
+                assert(!err, "Expected no error: " + err);
             });
             submission.endInputTransaction(false);
             submission.getInputValueByFieldId(testData.fieldId, function(err, res) {
@@ -283,16 +526,16 @@ describe("Submission model", function() {
             var submission = form.newSubmission();
             this.timeout(20000);
             submission.on("submit", function(err) {
-                assert(!err);
+                assert(!err, "Expected no error: " + err);
 
                 submission.upload(function(err, uploadTask) {
-                    assert(!err);
+                    assert(!err, "Expected no error: " + err);
                     assert(uploadTask);
                     assert(appForm.models.uploadManager.timer);
                     assert(appForm.models.uploadManager.hasTask());
 
                     submission.getUploadTask(function(err, task) {
-                        assert(!err);
+                        assert(!err, "Expected no error: " + err);
                         assert(task);
                         done();
                     });
@@ -301,7 +544,7 @@ describe("Submission model", function() {
 
             submission.submit(function(err) {
                if(err) console.log(err);
-               assert(!err);
+               assert(!err, "Expected no error: " + err);
             });
         });
         it("how to monitor if a submission is submitted", function(done) {
@@ -310,7 +553,7 @@ describe("Submission model", function() {
 
             submission.on("submit", function() {
                 submission.upload(function(err, uploadTask) {
-                    assert(!err);
+                    assert(!err, "Expected no error: " + err);
                     assert(uploadTask);
                 });
             });
@@ -329,7 +572,7 @@ describe("Submission model", function() {
                 done();
             });
             submission.submit(function(err) {
-                assert(!err);
+                assert(!err, "Expected no error: " + err);
             });
         });
     });

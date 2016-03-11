@@ -1,7 +1,7 @@
 describe("Ajax", function() {
     it("should do a GET request", function(done) {
         appForm.web.ajax.get('mbaas/forms/fdsfas', function(err, res) {
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             assert(res);
             assert(res.forms);
             assert(res.forms.length > 0);
@@ -21,7 +21,7 @@ describe("Ajax", function() {
 
     it("should do a POST request", function(done) {
         appForm.web.ajax.post('mbaas/forms/fdsfas', { "Name": "Foo", "Id": 1234, "Rank": 7 }, function(err, res) {
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             assert(res);
             var response = res;
             assert(response.body);

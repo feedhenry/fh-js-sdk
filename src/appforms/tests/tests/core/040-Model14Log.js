@@ -15,7 +15,7 @@ describe("Log model", function() {
   });
   it ("should solve asynchours IO issue",function(done){
     appForm.models.log.clearLogs(function(err){
-      assert(!err);
+      assert(!err, "Expected no error: " + err);
 
       for (var i=0;i<100;i++){
         appForm.models.log.l("information");

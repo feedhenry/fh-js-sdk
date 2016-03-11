@@ -18,7 +18,7 @@ describe("Form model", function() {
                 fromRemote: true
             }, function(err, form) {
                 console.log("FINISHED", err, form);
-                assert(!err);
+                assert(!err, "Expected no error: " + err);
                 assert(form);
                 assert(form.get("_id") == testData.formId);
                 assert(form.getLastUpdate());
@@ -40,7 +40,7 @@ describe("Form model", function() {
         var form = new Form({
             formId: testData.formId
         }, function(err, form) {
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             assert(form);
             assert(form.get("_id") == testData.formId);
             assert(form.getLastUpdate());
@@ -153,7 +153,7 @@ describe("Form model", function() {
                 formId: testData.formId,
                 fromRemote: true
             }, function(err, form2) {
-                assert(!err);
+                assert(!err, "Expected no error: " + err);
                 assert(form1 === form2);
                 done();
             });
@@ -171,7 +171,7 @@ describe("Form model", function() {
                 formId: testData.formId,
                 fromRemote: false
             }, function(err, form2) {
-                assert(!err);
+                assert(!err, "Expected no error: " + err);
                 assert(form1 != form2);
                 done();
             });
@@ -188,7 +188,7 @@ describe("Form model", function() {
                 "rawMode":true,
                 "rawData":formJSON
              },function(err,form){
-                assert(!err);
+                assert(!err, "Expected no error: " + err);
                 assert(form);
                 assert(form.getPageModelList());
                 done();
