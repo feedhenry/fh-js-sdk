@@ -7,6 +7,9 @@
   <div class="fh_appform_form_title col-xs-12 text-center">
     <%= title%>
   </div>
+  <div class="fh_appform_page_title col-xs-12 text-center">
+    <%= description%>
+  </div>
 </div>
 </script>
 
@@ -27,7 +30,7 @@
   <div class="btn-group">
     <button class="fh_appform_button_submit fh_appform_button_action btn btn-primary">Submit</button>
   </div>
-  
+
 </div>
 </script>
 
@@ -43,7 +46,7 @@
 </script>
 <script type="text/template" id="temp_field_structure">
 <div class="fh_appform_input_wrapper col-xs-12">
-  
+
 
   <% if(repeating === true){ %>
     <div class="fh_appform_field_title col-xs-12">
@@ -56,7 +59,7 @@
       <%= title %>
     </div>
   <% } %>
-  
+
 
   <% if(helpText){ %>
     <p class="fh_appform_field_instructions col-xs-12">
@@ -77,7 +80,7 @@
       <%=d_index%>.
     </div>
   <% } %>
-  
+
   <div class="fh_appform_field_input_container repeating <%= repeating === true ? \"col-xs-10\" : \"col-xs-12\"%>" >
     <div class="fh_appform_field_error_container col-xs-12 fh_appform_hidden">
     </div>
@@ -91,7 +94,7 @@
     <h3 class="panel-title fh_appform_section_title"><i id="camera-settings-body-icon" class="pull-right icon-chevron-sign-down" > </i>Camera Settings</h3>
   </div>
   <div class="panel-body" id="camera-settings-body">
-    <div class="col-xs-12 fh_appform_section_area"> 
+    <div class="col-xs-12 fh_appform_section_area">
       <div class="form-group fh_appform_field_area">
         <label class="fh_appform_field_title col-xs-12" for="targetWidth">Width (px)</label>
         <input type="number" class="form-control fh_appform_field_input text-center" id="targetWidth" value="<%= targetWidth %>" data-key="targetWidth">
@@ -115,7 +118,7 @@
     <h3 class="panel-title fh_appform_section_title"><i id="submission-settings-body-icon" class="pull-right icon-chevron-sign-down" > </i>Submission Settings</h3>
   </div>
   <div class="panel-body" id="submission-settings-body">
-    <div class="col-xs-12 fh_appform_section_area"> 
+    <div class="col-xs-12 fh_appform_section_area">
       <div class="form-group fh_appform_field_area">
         <label class="fh_appform_field_title col-xs-12" for="max_retries">Max Retries</label>
         <input type="number" class="form-control fh_appform_field_input text-center" id="max_retries" value="<%= max_retries %>" data-key="max_retries">
@@ -132,7 +135,7 @@
           <%}%>
         </select>
       </div>
-    </div>  
+    </div>
   </div>
 </div>
 <div class="modal fade" id="logsModal" tabindex="-1" role="dialog" aria-labelledby="logsModalLabel" aria-hidden="true">
@@ -153,7 +156,7 @@
 
 <script type="text/template" id="temp_config_log">
 <ul class="list-group col-xs-12">
-  <%= listStr%>  
+  <%= listStr%>
 </ul>
 </script>
 
@@ -224,6 +227,3 @@
   </div>
 </div>
 </script>
-
-
-

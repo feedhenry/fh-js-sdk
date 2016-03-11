@@ -632,5 +632,58 @@
       }
     },
     "lastUpdatedTimestamp": 1409137112893
+  },
+  "testfileformid": {
+    "updatedBy": "testing-admin@example.com",
+    "name": "test file form",
+    "description": "Form used to test file fields",
+    "_id": "testfileformid",
+    "subscribers": [],
+    "pageRules": [],
+    "fieldRules": [],
+    "pages": [
+      {
+        "_id": "53fdb9c22ab6c0b02a98c301",
+        "fields": [
+          {
+            "required": false,
+            "type": "file",
+            "name": "Attach Files",
+            "_id": "filefieldid",
+            "repeating": true,
+            "fieldOptions": {
+              "definition": {
+                "minRepeat": 1,
+                "maxRepeat": 5
+              }
+            }
+          },
+          {
+            "required": false,
+            "type": "photo",
+            "name": "Photo",
+            "helpText": "Instructions",
+            "_id": "photofieldid",
+            "repeating": true
+          }
+        ]
+      }
+    ],
+    "lastUpdated": "2014-08-27T10:58:32.893Z",
+    "dateCreated": "2014-08-27T10:58:10.240Z",
+    "pageRef": {
+      "53fdb9c22ab6c0b02a98c301": 0
+    },
+    "fieldRef": {
+      "filefieldid": {
+        "page": 0,
+        "field": 0
+      },
+      "photofieldid": {
+        "page": 0,
+        "field": 1
+      }
+    },
+    "lastUpdatedTimestamp": 1409137112893
   }
 }

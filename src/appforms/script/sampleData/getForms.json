@@ -31,7 +31,13 @@
       "lastUpdated" : "2014-08-27T10:58:32.893Z",
       "lastUpdatedTimestamp" : 1409137112893
     }
-  }
-
-  ]
+  }, {
+    "testfileformid" : {
+      "_id": "testfileformid",
+      "name": "test file form",
+      "description": "Form used to test file fields",
+      "lastUpdated" : "2014-08-27T10:58:32.893Z",
+      "lastUpdatedTimestamp" : 1409137112893
+    }
+  }]
 }

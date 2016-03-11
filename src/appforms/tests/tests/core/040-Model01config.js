@@ -14,7 +14,7 @@ describe("Config module",function(){
 
     it ("config should be init before usage. config should get data from mbaas.",function(done){
         config().init({},function(err,returnedConfig){
-            assert(!err);
+            assert(!err, "Expected no error: " + err);
             assert(config().get("log_email","logs.enterpriseplc@feedhenry.com"));
             done();
         });

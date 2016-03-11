@@ -125,7 +125,7 @@ var FormView = BaseView.extend({
 
     //Page views are always added before anything else happens, need to render the form title first
 
-    var formHtml = _.template(self.$el.find('#temp_form_structure').html())( {title: self.model.getName()});
+    var formHtml = _.template(self.$el.find('#temp_form_structure').html())( {title: self.model.getName(), description: self.model.getDescription()});
 
     self.$el.append(formHtml);
 
@@ -187,10 +187,10 @@ var FormView = BaseView.extend({
   },
   checkRules: function(params) {
     var self = this;
-    var submission = self.submission;
     params = params || {};
 
     function checkSubmissionRules() {
+      var submission = self.submission;
       submission.checkRules(function(err, res) {
         if (err) {
           console.error(err);
@@ -212,13 +212,9 @@ var FormView = BaseView.extend({
       });
     }
 
-    if (params.initialising) {
+    self.populateFieldViewsToSubmission(function() {
       checkSubmissionRules();
-    } else {
-      self.populateFieldViewsToSubmission(false, function() {
-        checkSubmissionRules();
-      });
-    }
+    });
   },
   performRuleAction: function(type, targetId, action) {
     var target = null;
@@ -545,7 +541,15 @@ var FormView = BaseView.extend({
       var value = item.value;
       var index = item.index;
 
-      if (value !== null || typeof(value) !== 'undefined') {
+      if(value === null || typeof(value) === 'undefined'){
+        //If the value is null, ensure that the value is removed from the submission.
+        submission.removeFieldValue(fieldId, index);
+        $fh.forms.log.e("Input value for fieldId " + fieldId + " was not defined");
+        count--;
+        if (count === 0) {
+          cb();
+        }
+      } else {
         submission.addInputValue({
           fieldId: fieldId,
           value: value,
@@ -560,12 +564,6 @@ var FormView = BaseView.extend({
             cb();
           }
         });
-      } else {
-        $fh.forms.log.e("Input value for fieldId " + fieldId + " was not defined");
-        count--;
-        if (count === 0) {
-          cb();
-        }
       }
     }
   },

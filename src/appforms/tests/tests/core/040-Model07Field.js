@@ -59,13 +59,13 @@ describe("Field Model", function() {
             var fileFieldId = testData.fieldIdFile;
             var fileField = form.getFieldModelById(fileFieldId);
             appForm.utils.fileSystem.save("myTestFile.txt", "hello this is a test", function(err, res) {
-                assert(!err);
+                assert(!err, "Expected no error: " + err);
                 appForm.utils.fileSystem.readAsFile("myTestFile.txt", function(err, file) {
-                    assert(!err);
+                    assert(!err, "Expected no error: " + err);
                     fileField.processInput({
                         value: file
                     }, function(err, json) {
-                        assert(!err);
+                        assert(!err, "Expected no error: " + err);
                         assert(json.fileName);
                         assert(json.fileSize);
                         assert(json.fileType);
