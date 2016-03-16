@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.14.3 - 2016-03-16 - Wei Li, Brian Leathem
+* Make sure $fh.auth is calling the cloud app for local development
+* Added a check if the uid === 0 when retrieving the uid from the uid_map 
+
 ## 2.14.2 - 2016-03-09 - Niall Donnelly
 
 * RHMAP-4862 - Removing field values if the field entry is not defined.
@@ -9,7 +13,6 @@
 * RHMAP-3874 - Update Rules Engine For Appforms.
 
 ## 2.14.0 - 2016-02-26 - Niall Donnelly
-
 * RHMAP-2950 - Added A Read Only Field To Forms Apps
 
 ## 2.13.2 - 2015-12-04 - Wei Li
