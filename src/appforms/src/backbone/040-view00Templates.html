@@ -37,7 +37,7 @@
 <script type="text/template" id="temp_page_structure">
 <div id="fh_appform_<%= sectionId %>" class="fh_appform_section_area panel panel-default">
   <div class="panel-heading text-center col-xs-12 fh_appform_section_title" data-field="fh_appform_<%= sectionId %>_body">
-    <i id="fh_appform_<%= sectionId %>_body_icon" class="pull-right <%= index === 0 ? \"icon-chevron-sign-down\" : \"icon-chevron-sign-up\"%> section_icon" ></i><%=title%>
+    <i id="fh_appform_<%= sectionId %>_body_icon" class="pull-right <%= index === 0 ? \"icon-chevron-sign-down\" : \"icon-chevron-sign-up\"%> section_icon" ></i><%=title%> <div><%=description%></div>
   </div>
 
   <div id="fh_appform_<%= sectionId %>_body" class="panel-body col-xs-12" style="<%= index === 0 ? \"\" : \"display:none;\"%>">

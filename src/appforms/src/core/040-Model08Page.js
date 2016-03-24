@@ -84,6 +84,7 @@ appForm.models = function (module) {
         currentSection = "sectionBreak" + i;
         sectionList[currentSection] = sectionList[currentSection] ? sectionList[currentSection] : {fields: []};
         sectionList[currentSection].title = fieldModel.get('name', "Section " + (i+1));
+        sectionList[currentSection].description = fieldModel.get('helpText', "Section " + (i+1));
         sectionList[currentSection].fields.push(fieldModel);
       }
     }
