@@ -27,7 +27,7 @@ module.exports = function(opts, success, fail){
       params = fhparams.addFHParams(params);
       return ajax({
         "url": url,
-        "tryJSONP": typeof Titanium === 'undefined',
+        "tryJSONP": true,
         "type": "POST",
         "dataType": "json",
         "data": JSON.stringify(params),

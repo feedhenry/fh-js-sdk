@@ -17,7 +17,7 @@ function doActCall(opts, success, fail){
   }
   return ajax({
     "url": url,
-    "tryJSONP": typeof Titanium === 'undefined',
+    "tryJSONP": true,
     "type": "POST",
     "dataType": "json",
     "data": JSON.stringify(params),
