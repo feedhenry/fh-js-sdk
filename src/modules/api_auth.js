@@ -20,7 +20,7 @@ function callAuthEndpoint(endpoint, data, opts, success, fail){
   ajax({
     "url": path,
     "type": "POST",
-    "tryJSONP": typeof Titanium === 'undefined',
+    "tryJSONP": true,
     "data": JSON.stringify(data),
     "dataType": "json",
     "contentType": "application/json",
