@@ -115,8 +115,8 @@ appForm.models.Field = function (module) {
             $fh.forms.log.e("Error reading file " + name, err);
           }
 
-          if(file && file.fullPath){
-            meta.data = file.fullPath;
+          if(file && file.localURL){
+            meta.data = file.localURL;
           } else {
             meta.data = "file-not-found";
           }
