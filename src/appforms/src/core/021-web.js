@@ -2,7 +2,7 @@ appForm.web = function (module) {
 
   module.uploadFile = function(url, fileProps, cb){
     $fh.forms.log.d("Phonegap uploadFile ", url, fileProps);
-    var filePath = fileProps.fullPath;
+    var filePath = fileProps.localURL;
 
     if(!$fh.forms.config.isOnline()){
       $fh.forms.log.e("Phonegap uploadFile. Not Online.", url, fileProps);
