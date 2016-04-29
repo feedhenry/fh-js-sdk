@@ -2040,9 +2040,9 @@
               when: position.timestamp
             };
             s(resdata);
-          }, function() {
+          }, function(err) {
             f('error_geo', {}, p);
-          })
+          }, { timeout: 30000, enableHighAccuracy: true })
         };
         if (p.interval > 0) {
           var internalWatcher = navigator.geolocation.watchPosition(function(position) {
