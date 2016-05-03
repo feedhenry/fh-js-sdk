@@ -77,10 +77,10 @@ appForm.models.Field = function (module) {
       var count = value.length;
       for (var i = 0; i < value.length; i++) {
         var meta = value[i];
-        _loadImage(meta, function () {
+        _loadImage(meta, function (err, data) {
           count--;
           if (count === 0) {
-            cb(null, value);
+            cb(null, [data]);
           }
         });
       }
