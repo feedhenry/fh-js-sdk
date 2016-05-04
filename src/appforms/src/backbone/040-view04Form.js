@@ -189,31 +189,25 @@ var FormView = BaseView.extend({
     var self = this;
     params = params || {};
 
-    function checkSubmissionRules() {
-      var submission = self.submission;
-      submission.checkRules(function(err, res) {
-        if (err) {
-          console.error(err);
-        } else {
-          var actions = res.actions;
-          var targetId;
-          for (targetId in actions.pages) {
-            self.pageViewStatus[targetId] = actions.pages[targetId];
-          }
-
-          var fields = actions.fields;
-
-          for (targetId in fields) {
-            self.performRuleAction("field", targetId, fields[targetId]["action"]);
-          }
+    var submission = self.submission;
+    submission.checkRules(function(err, res) {
+      if (err) {
+        console.error(err);
+      } else {
+        var actions = res.actions;
+        var targetId;
+        for (targetId in actions.pages) {
+          self.pageViewStatus[targetId] = actions.pages[targetId];
         }
-        self.checkPages();
-        self.steps.activePageChange(self);
-      });
-    }
 
-    self.populateFieldViewsToSubmission(function() {
-      checkSubmissionRules();
+        var fields = actions.fields;
+
+        for (targetId in fields) {
+          self.performRuleAction("field", targetId, fields[targetId]["action"]);
+        }
+      }
+      self.checkPages();
+      self.steps.activePageChange(self);
     });
   },
   performRuleAction: function(type, targetId, action) {
