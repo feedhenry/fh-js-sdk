@@ -1,8 +1,12 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.14.5 - 2016-05-05 - Niall Donnelly
+
+* RHMAP-4758 - Added appforms rules engine update for blank option in dropdown fields.
+
 ## 2.14.3 - 2016-03-16 - Wei Li, Brian Leathem
 * Make sure $fh.auth is calling the cloud app for local development
-* Added a check if the uid === 0 when retrieving the uid from the uid_map 
+* Added a check if the uid === 0 when retrieving the uid from the uid_map
 
 ## 2.14.2 - 2016-03-09 - Niall Donnelly
 
