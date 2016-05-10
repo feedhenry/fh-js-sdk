@@ -6,6 +6,7 @@ tmp/*
 *~
 .fhclocal/
 src/appforms/dist/
+dist/
 test/sync/testServer
 src/modules-cov/*
 src-cov/*
