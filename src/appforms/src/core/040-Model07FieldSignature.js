@@ -77,10 +77,10 @@ appForm.models.Field = function (module) {
       var count = value.length;
       for (var i = 0; i < value.length; i++) {
         var meta = value[i];
-        _loadImage(meta, function () {
+        _loadImage(meta, function (err, data) {
           count--;
           if (count === 0) {
-            cb(null, value);
+            cb(null, [data]);
           }
         });
       }
@@ -115,8 +115,8 @@ appForm.models.Field = function (module) {
             $fh.forms.log.e("Error reading file " + name, err);
           }
 
-          if(file && file.fullPath){
-            meta.data = file.fullPath;
+          if(file && file.localURL){
+            meta.data = file.localURL;
           } else {
             meta.data = "file-not-found";
           }

@@ -72,7 +72,7 @@ appForm.utils = function(module) {
             }
 
             _getFileEntry("dummy.txt",0, {}, function(err, fileEntry){
-              var sPath = fileEntry.fullPath.replace("dummy.txt", "");
+              var sPath = fileEntry.localURL.replace("dummy.txt", "");
               fileEntry.remove();
               return cb(null, sPath);
             });
@@ -126,7 +126,7 @@ appForm.utils = function(module) {
               //So if the thing to save is a file, and it is in phonegap, use the copyTo functions instead.
               fileEntry.getParent(function(parentDir){
                 //Get the file entry for the file input
-                _resolveFile(saveObj.fullPath, function(err, fileToCopy){
+                _resolveFile(saveObj.localURL, function(err, fileToCopy){
                   if(err){
                     return cb(err);
                   }
@@ -307,10 +307,6 @@ appForm.utils = function(module) {
                 return cb(err);
             }
             fe.file(function(file) {
-                //issue CB-9403 on file plugin of windows missing fullPath on File, copying it here from FileEntry
-                if (window.device && window.device.platform === "windows" && typeof (file.fullPath) === "undefined") {
-                    file.fullPath = fe.nativeURL;
-                }
                 cb(null, file);
             }, function(e) {
                 cb(e);
@@ -324,7 +320,7 @@ appForm.utils = function(module) {
       if(fileName.indexOf("file://") === -1 && window.device.platform !== "Win32NT" && window.device.platform !== "windows"){
         fileName = "file://" + fileName;
       }
-      window.resolveLocalFileSystemURI(fileName, function(fileEntry){
+      window.resolveLocalFileSystemURL(fileName, function(fileEntry){
         return cb(null, fileEntry);
       }, function(err){
         return cb(err);
