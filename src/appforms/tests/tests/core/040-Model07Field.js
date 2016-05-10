@@ -78,11 +78,5 @@ describe("Field Model", function() {
             });
         });
     });
-    // describe ("Matrix",function(){
-    //     it ("get matrix rows and columns",function(){
-    //         var matrixFieldModel=form.getFieldModelById("527d4539639f521e0a00000b");
-    //         assert(matrixFieldModel.getMatrixRows().length>0);
-    //         assert(matrixFieldModel.getMatrixCols().length>0);
-    //     });
-    // });
+
 });
