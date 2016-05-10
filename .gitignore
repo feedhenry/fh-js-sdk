@@ -6,6 +6,8 @@ tmp/*
 *~
 .fhclocal/
 src/appforms/dist/
+dist/
+libs/generated/lawnchair.js
 test/sync/testServer
 src/modules-cov/*
 src-cov/*
