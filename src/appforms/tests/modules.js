@@ -43,6 +43,7 @@
   "060-RuleEngine"
  ],
  backbone:[
+  "040-view06Steps"
  ]
 };
 

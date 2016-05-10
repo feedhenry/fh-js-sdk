@@ -32,18 +32,19 @@ StepsView = Backbone.View.extend({
       width = 100 / displayedPages.length;
     }
 
-    displayedPages.forEach(function(pageId, index) {
-      var pageModel = self.parentView.getPageViewById(pageId).model;
-      var item = $(_.template(self.templates.step)( {
-          step_name: pageModel.getName(),
-          step_num: index + 1,
-          index: self.parentView.getPageIndexById(pageId),
-          width: width
-      }));
-      $(table).append(item);
-    });
-
-    this.$el.append(table);
+    if (displayedPages.length > 1 ) {
+      displayedPages.forEach(function(pageId, index) {
+        var pageModel = self.parentView.getPageViewById(pageId).model;
+        var item = $(_.template(self.templates.step)( {
+            step_name: pageModel.getName(),
+            step_num: index + 1,
+            index: self.parentView.getPageIndexById(pageId),
+            width: width
+        }));
+        $(table).append(item);
+      });
+      this.$el.append(table);
+    }
     this.$el.append(self.templates.page_title);
     this.$el.append(self.templates.page_description);
     return this;
@@ -71,11 +72,14 @@ StepsView = Backbone.View.extend({
 
     self.$el.find('li:eq(' + displayIndex + ')').addClass('active');
 
-    if(pageName.length === 0){
-      pageName = "Page " + (displayIndex + 1);
+    var hasCustomPageName = pageName.length !== 0;
+    var displayedPages = this.parentView.getDisplayedPages();
+    if (displayedPages.length > 1 || hasCustomPageName) {
+      if (!hasCustomPageName){
+        pageName = "Page " + (displayIndex + 1);
+      }
+      self.$el.find('.fh_appform_page_title').html(pageName);
     }
-
-    self.$el.find('.fh_appform_page_title').html(pageName);
 
     if(pageDescription.length > 0){
       self.$el.find('.fh_appform_page_description').html(pageDescription);

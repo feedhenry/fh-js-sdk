@@ -10744,7 +10744,7 @@ function doActCall(opts, success, fail){
   }
   return ajax({
     "url": url,
-    "tryJSONP": typeof Titanium === 'undefined',
+    "tryJSONP": true,
     "type": "POST",
     "dataType": "json",
     "data": JSON.stringify(params),
@@ -10802,7 +10802,7 @@ function callAuthEndpoint(endpoint, data, opts, success, fail){
   ajax({
     "url": path,
     "type": "POST",
-    "tryJSONP": typeof Titanium === 'undefined',
+    "tryJSONP": true,
     "data": JSON.stringify(data),
     "dataType": "json",
     "contentType": "application/json",
@@ -11008,7 +11008,7 @@ module.exports = function(opts, success, fail){
       params = fhparams.addFHParams(params);
       return ajax({
         "url": url,
-        "tryJSONP": typeof Titanium === 'undefined',
+        "tryJSONP": true,
         "type": "POST",
         "dataType": "json",
         "data": JSON.stringify(params),
@@ -11216,7 +11216,7 @@ module.exports = {
 },{"./data":31,"./fhparams":34,"./logger":40,"./queryMap":42}],30:[function(_dereq_,module,exports){
 module.exports = {
   "boxprefix": "/box/srv/1.1/",
-  "sdk_version": "2.14.4",
+  "sdk_version": "2.15.0",
   "config_js": "fhconfig.json",
   "INIT_EVENT": "fhinit",
   "INTERNAL_CONFIG_LOADED_EVENT": "internalfhconfigloaded",
@@ -11637,7 +11637,7 @@ var loadCloudProps = function(app_props, callback) {
     ajax({
       "url": path,
       "type": "POST",
-      "tryJSONP": typeof Titanium === 'undefined',
+      "tryJSONP": true,
       "dataType": "json",
       "contentType": "application/json",
       "data": JSON.stringify(data),
@@ -13454,7 +13454,7 @@ module.exports = {
   clearCache: self.clearCache
 };
 
-},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":22,"./api_cloud":24}],"./modules/appProps":[function(_dereq_,module,exports){
+},{"../../libs/generated/crypto":1,"../../libs/generated/lawnchair":2,"./api_act":22,"./api_cloud":24}],"./appProps":[function(_dereq_,module,exports){
 module.exports=_dereq_('zDENqi');
 },{}],"zDENqi":[function(_dereq_,module,exports){
 var consts = _dereq_("../constants");
