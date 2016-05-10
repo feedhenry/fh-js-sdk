@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.15.1 - 2016-05-10 - Erik Jan de Wit
+
+* RHMAP-6428 - Saving to draft removed pictures.
+
 ## 2.14.5 - 2016-05-05 - Niall Donnelly
 
 * RHMAP-4758 - Added appforms rules engine update for blank option in dropdown fields.
