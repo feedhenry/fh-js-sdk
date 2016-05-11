@@ -4,6 +4,7 @@ fhc-debug.log
 node_modules/
 tmp/*
 *~
+*.swp
 .fhclocal/
 src/appforms/dist/
 dist/
