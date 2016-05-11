@@ -5,16 +5,12 @@ FieldSelectView = FieldView.extend({
   renderInput: function(index) {
     var self=this;
     var fieldId=this.model.getFieldId();
-    var choices = this.model.get('fieldOptions');
-    choices = choices.definition.options;
+    var dropdownOptions = this.model.getDropdownOptions ? this.model.getDropdownOptions() : [];
     var options="";
-    var selectHtml = "";
-    var html = "";
     var repeatingClassName = this.model.isRepeating() ? this.repeatingClassName : this.nonRepeatingClassName;
 
-
     var optionTemplate = _.template(self.option);
-    $.each(choices, function(i, choice) {
+    $.each(dropdownOptions, function(i, choice) {
 
       options += optionTemplate({
         "value": choice.label,

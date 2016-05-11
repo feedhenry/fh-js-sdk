@@ -3,6 +3,7 @@ require.config({
   paths: {
     'jquery': '/app/libs/jquery',
     'underscore': 'vendor/underscore',
+    'async': 'vendor/async',
     'mocha': 'vendor/mocha',
     'chai': 'vendor/chai',
     'chai-jquery': 'libs/chai-jquery',

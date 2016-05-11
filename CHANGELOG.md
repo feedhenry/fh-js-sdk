@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.15.3 - 2016-05-10 - Niall Donnelly
+
+* RHMAP-4759 - Added blank option to dropdown field
+
 ## 2.15.1 - 2016-05-10 - Erik Jan de Wit
 
 * RHMAP-6428 - Saving to draft removed pictures.

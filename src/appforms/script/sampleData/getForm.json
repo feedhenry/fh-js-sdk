@@ -264,6 +264,60 @@
             "helpText": "afasdf",
             "_id": "52cfc47c8a31bc1524000006",
             "repeating": true
+          },
+          {
+            "required": true,
+            "type": "dropdown",
+            "name": "Dropdown",
+            "fieldCode": null,
+            "_id": "dropdownnoblank",
+            "adminOnly": false,
+            "fieldOptions": {
+              "validation": {
+                "validateImmediately": true
+              },
+              "definition": {
+                "options": [
+                  {
+                    "label": "Option 1",
+                    "checked": false
+                  },
+                  {
+                    "label": "Option 2",
+                    "checked": false
+                  }
+                ],
+                "include_blank_option": false
+              }
+            },
+            "repeating": false
+          },
+          {
+            "required": true,
+            "type": "dropdown",
+            "name": "Dropdown",
+            "fieldCode": null,
+            "_id": "dropdownwithblank",
+            "adminOnly": false,
+            "fieldOptions": {
+              "validation": {
+                "validateImmediately": true
+              },
+              "definition": {
+                "options": [
+                  {
+                    "label": "Option 1",
+                    "checked": false
+                  },
+                  {
+                    "label": "Option 2",
+                    "checked": false
+                  }
+                ],
+                "include_blank_option": true
+              }
+            },
+            "repeating": false
           }
         ]
       }
@@ -333,6 +387,14 @@
       "52cfc47c8a31bc1524000006": {
         "page": 0,
         "field": 14
+      },
+      "dropdownnoblank": {
+        "page": 0,
+        "field": 15
+      },
+      "dropdownwithblank": {
+        "page": 0,
+        "field": 16
       }
     },
     "lastUpdatedTimestamp": 1389347964168,

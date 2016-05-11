@@ -1,29 +1,52 @@
 var assert = chai.assert;
-var fieldView;
-var fieldModel;
+
 
 describe("Backbone - Field View", function() {
-    it("create & render FieldView", function(done) {
 
+    before(function(done){
+        var self = this;
         var Form = appForm.models.Form;
         new Form({
             formId: "527d4539639f521e0a000004",
             fromRemote: true
-        }, function(err, f) {
-            form = f;
-            fieldModel = form.getFieldModelById("527d4539639f521e0a000006");
-            assert(fieldModel);
+        }, function(err, form) {
+            assert.ok(!err, "Expected No Error");
+            assert.ok(form, "Expected a form  model");
 
-            
-            
-            // create backbone field View
-            fieldView = new FieldView({ //required params
-                parentEl: $("<div></div>"),
-                parentView: null,
-                model: fieldModel
+            self.form = form;
+
+            self.formView = new FormView({
+                parentEl: $("<div></div>")
             });
-            assert.ok(fieldView);
-            done();
+
+            self.formView.loadForm({
+                form: form
+            }, function(err){
+                assert.ok(!err, "Expected no error");
+                self.formView.render();
+
+
+                done();
+            });
         });
+    });
+
+    it("create & render FieldView", function(done) {
+        var fieldView;
+        var fieldModel;
+
+        fieldModel = this.form.getFieldModelById("52cfc0a78a31bc1524000003");
+        assert(fieldModel, "Expected a field model");
+
+        // create backbone field View
+        fieldView = new FieldView({
+            parentEl: $("<div></div>"),
+            formView: this.formView,
+            model: fieldModel
+        });
+
+        assert.ok(fieldView, "Expected a field view to be created");
+
+        done();
     });
 });
