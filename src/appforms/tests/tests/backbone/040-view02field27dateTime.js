@@ -36,15 +36,7 @@ describe("Backbone - DateTime Field View", function() {
 
     assert.ok(dateTimeFieldDateModel, "Expected a date field");
 
-
-    // create backbone dropdown field View
-    var parentView = new Backbone.View();
-    new FieldDateTimeView({
-      parentEl: parentView.$el,
-      formView: this.formView,
-      model: dateTimeFieldDateModel
-    });
-
+    var parentView = createParentView(dateTimeFieldDateModel, this.formView);
     assert.equal(1, parentView.$el.find('input[type="date"]').length, "Expected a date field view to be rendered");
   });
 
@@ -53,15 +45,7 @@ describe("Backbone - DateTime Field View", function() {
 
     assert.ok(dateTimeTimeFieldModel, "Expected a time field");
 
-
-    // create backbone dropdown field View
-    var parentView = new Backbone.View();
-    new FieldDateTimeView({
-      parentEl: parentView.$el,
-      formView: this.formView,
-      model: dateTimeTimeFieldModel
-    });
-
+    var parentView = createParentView(dateTimeTimeFieldModel, this.formView);
     assert.equal(1, parentView.$el.find('input[type="time"]').length, "Expected a time field view to be rendered");
   });
 
@@ -71,15 +55,7 @@ describe("Backbone - DateTime Field View", function() {
     assert.ok(dateTimeTimeFieldModel, "Expected a datetime field with no format");
     assert.ok(!dateTimeTimeFieldModel.getFieldDefinition().dateTimeFormat, "Expected no format");
 
-
-    // create backbone dropdown field View
-    var parentView = new Backbone.View();
-    new FieldDateTimeView({
-      parentEl: parentView.$el,
-      formView: this.formView,
-      model: dateTimeTimeFieldModel
-    });
-
+    var parentView = createParentView(dateTimeTimeFieldModel, this.formView);
     assert.equal(1, parentView.$el.find('input[type="text"][placeholder="YYYY-MM-DD HH:mm:ss"]').length, "Expected a time field view to be rendered with default dateTimeFormat");
     done();
   });
@@ -91,16 +67,19 @@ describe("Backbone - DateTime Field View", function() {
     var format = dateTimeTimeFieldModel.getFieldDefinition().dateTimeFormat;
     assert.ok(format, "Expected a format");
 
-
-    // create backbone dropdown field View
-    var parentView = new Backbone.View();
-    new FieldDateTimeView({
-      parentEl: parentView.$el,
-      formView: this.formView,
-      model: dateTimeTimeFieldModel
-    });
-
+    var parentView = createParentView(dateTimeTimeFieldModel, this.formView);
     assert.equal(1, parentView.$el.find('input[type="text"][placeholder="' + format + '"]').length, "Expected a time field view to be rendered with default dateTimeFormat");
     done();
   });
 });
+
+// create backbone dropdown field View
+function createParentView(dateFieldModel, formView) {
+    var parentView = new Backbone.View();
+    new FieldDateTimeView({
+      parentEl: parentView.$el,
+      formView: formView,
+      model: dateFieldModel
+    });
+    return parentView
+}
