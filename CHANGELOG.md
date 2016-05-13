@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.16.0 - 2016-05-13 - Niall Donnelly
+
+* RHMAP-4770 - Added dateTime custom format rendering and validation.
+
 ## 2.15.3 - 2016-05-10 - Niall Donnelly
 
 * RHMAP-4759 - Added blank option to dropdown field

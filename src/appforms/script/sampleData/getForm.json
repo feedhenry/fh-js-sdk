@@ -747,5 +747,117 @@
       }
     },
     "lastUpdatedTimestamp": 1409137112893
+  },
+  "testdatetimeform" :   {
+    "_id": "testdatetimeform",
+    "updatedBy": "user@example.com",
+    "name": "Date Time Form",
+    "createdBy": "testing-admin@example.com",
+    "description": "das",
+    "dataTargets": [],
+    "subscribers": [],
+    "pageRules": [],
+    "fieldRules": [],
+    "pages": [
+      {
+        "_id": "5734b98de8155e525e4733e2",
+        "fields": [
+          {
+            "required": true,
+            "type": "dateTime",
+            "name": "datetime",
+            "fieldCode": null,
+            "_id": "datetimefieldwithformat",
+            "adminOnly": false,
+            "fieldOptions": {
+              "validation": {
+                "validateImmediately": true
+              },
+              "definition": {
+                "datetimeUnit": "datetime",
+                "dateTimeFormat": "DD-MM-YYYY HH:mm"
+              }
+            },
+            "repeating": false
+          },
+          {
+            "required": true,
+            "type": "dateTime",
+            "name": "date",
+            "fieldCode": null,
+            "_id": "dateonlyfield",
+            "adminOnly": false,
+            "fieldOptions": {
+              "validation": {
+                "validateImmediately": true
+              },
+              "definition": {
+                "datetimeUnit": "date"
+              }
+            },
+            "repeating": false
+          },
+          {
+            "required": true,
+            "type": "dateTime",
+            "name": "time",
+            "fieldCode": null,
+            "_id": "timeonlyfield",
+            "adminOnly": false,
+            "fieldOptions": {
+              "validation": {
+                "validateImmediately": true
+              },
+              "definition": {
+                "datetimeUnit": "time"
+              }
+            },
+            "repeating": false
+          },
+          {
+            "required": true,
+            "type": "dateTime",
+            "name": "datetime",
+            "fieldCode": null,
+            "_id": "datetimefieldnoformat",
+            "adminOnly": false,
+            "fieldOptions": {
+              "validation": {
+                "validateImmediately": true
+              },
+              "definition": {
+                "datetimeUnit": "datetime"
+              }
+            },
+            "repeating": false
+          }
+        ]
+      }
+    ],
+    "lastUpdated": "2016-05-13T08:10:34.234Z",
+    "dateCreated": "2016-05-12T17:31:22.084Z",
+    "lastDataRefresh": "2016-05-13T08:10:34.234Z",
+    "pageRef": {
+      "5734b98de8155e525e4733e2": 0
+    },
+    "fieldRef": {
+      "datetimefieldwithformat": {
+        "page": 0,
+        "field": 0
+      },
+      "dateonlyfield": {
+        "page": 0,
+        "field": 1
+      },
+      "timeonlyfield": {
+        "page": 0,
+        "field": 2
+      },
+      "datetimefieldnoformat": {
+        "page": 0,
+        "field": 3
+      }
+    },
+    "lastUpdatedTimestamp": 1463127034234
   }
 }
