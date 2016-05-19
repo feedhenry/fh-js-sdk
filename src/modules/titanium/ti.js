@@ -1,14 +1,14 @@
-if (typeof Titanium !== 'undefined'){
-  if (typeof window === 'undefined'){
-    window = { top : {}, location : { protocol : '', href : '' } };
+if (typeof Titanium !== 'undefined') {
+  if (typeof window === 'undefined') {
+    window = { top: {}, location: { protocol: '', href: '' } };
   }
-  if (typeof document === 'undefined'){
-    document = { location : { href : '', search : '' } };
+  if (typeof document === 'undefined') {
+    document = { location: { href: '', search: '' } };
   }
-  if (typeof navigator === 'undefined'){
-    navigator = { userAgent : 'Titanium' };
+  if (typeof navigator === 'undefined') {
+    navigator = { userAgent: 'Titanium' };
   }
-  
+
   window.push = {
     register: function (onNotification, success, fail, config) {
       var push = require('AeroGearPush').init(config);
@@ -18,10 +18,10 @@ if (typeof Titanium !== 'undefined'){
           alias: config.alias
         },
         onReceive: function (event) {
-		  onNotification(event);
+          onNotification(event);
         },
         onTokenSuccess: function () {
-        	success();
+          success();
         }
       });
     }
