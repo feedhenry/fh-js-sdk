@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.15.4 - 2016-05-12 - Erik Jan de Wit
+
+* Added titanium lawn chair storage adaptor
+
 ## 2.16.0 - 2016-05-13 - Niall Donnelly
 
 * RHMAP-4770 - Added dateTime custom format rendering and validation.
