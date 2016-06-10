@@ -217,29 +217,36 @@ appForm.models = function(module) {
 
     this.set('timezoneOffset', appForm.utils.getTime(true));
     this.pruneNullValues();
-    that.performValidation(function(err, res){
+    this.pruneRemovedFields(function(err) {
       if (err) {
-        $fh.forms.log.e("Submission submit validateForm: Error validating form ", err);
+        $fh.forms.log.e("Submission submit validateForm: Error removing deleted fields from submission ", err);
         cb(err);
       } else {
-        $fh.forms.log.d("Submission submit: validateForm. Completed result", res);
-        var validation = res.validation;
-        if (validation.valid) {
-          $fh.forms.log.d("Submission submit: validateForm. Completed Form Valid", res);
-          that.set('submitDate', new Date());
-          that.changeStatus(targetStatus, function(error) {
-            if (error) {
-              cb(error);
+        that.performValidation(function(err, res) {
+          if (err) {
+            $fh.forms.log.e("Submission submit validateForm: Error validating form ", err);
+            cb(err);
+          } else {
+            $fh.forms.log.d("Submission submit: validateForm. Completed result", res);
+            var validation = res.validation;
+            if (validation.valid) {
+              $fh.forms.log.d("Submission submit: validateForm. Completed Form Valid", res);
+              that.set('submitDate', new Date());
+              that.changeStatus(targetStatus, function(error) {
+                if (error) {
+                  cb(error);
+                } else {
+                  that.emit('submit');
+                  cb(null, null);
+                }
+              });
             } else {
-              that.emit('submit');
-              cb(null, null);
+              $fh.forms.log.d("Submission submit: validateForm. Completed Validation error", res);
+              that.emit('validationerror', validation);
+              cb('Validation error');
             }
-          });
-        } else {
-          $fh.forms.log.d("Submission submit: validateForm. Completed Validation error", res);
-          that.emit('validationerror', validation);
-          cb('Validation error');
-        }
+          }
+        });
       }
     });
   };
@@ -379,6 +386,43 @@ appForm.models = function(module) {
 
     this.setFormFields(formFields);
   };
+
+  /**
+   * Submission.prototype.pruneRemovedFields - Pruning fields that have been deleted or removed from the form
+   *
+   * @return {type}  description
+   */
+  Submission.prototype.pruneRemovedFields = function(cb) {
+    var that = this;
+    var formFields = this.getFormFields();
+    var newFields = [];
+    var filesTobeRemoved = [];
+    this.getForm(function(err, form) {
+      if (err) {
+        return cb(err);
+      }
+      //Loop and push matching fields
+      _.each(formFields, function(field) {
+        var fieldId = field.fieldId;
+        if (form.fields.hasOwnProperty(fieldId)) {
+          newFields.push(field);
+        } else {
+          //Only push field ID
+          filesTobeRemoved.push(fieldId);
+        }
+      });
+
+      //Delete files any left over files.
+      async.forEach(filesTobeRemoved, function(fieldId, callback) {
+        that.removeFieldValue(fieldId, null, callback);
+      }, function(err) {
+        //Update new set of formFields after deleting files
+        that.set('formFields', newFields);
+        cb(err);
+      });
+    });
+  };
+
   //joint form id and submissions timestamp.
   Submission.prototype.genLocalId = function() {
     var lid = appForm.utils.localId(this);
