@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.16.1 - 2016-06-10 - Alan Moran
+
+* RHMAP-7618 - Client Form App - Submissions stuck in review when field is deleted from server side
+
 ## 2.15.4 - 2016-05-12 - Erik Jan de Wit
 
 * Added titanium lawn chair storage adaptor
