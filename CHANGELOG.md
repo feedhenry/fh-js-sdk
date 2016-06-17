@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 3.0.0 - 2016-06-22 - Julio César Sánchez
+
+* RHMAP-4978 - Allow users of the JS SDK to manually perform fhinit
+
 ## 2.17.4 - 2016-11-09 - Niall Donnelly
 
 * Added getUID function to public $fh.sync API.

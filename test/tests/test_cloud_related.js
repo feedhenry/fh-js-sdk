@@ -57,6 +57,8 @@ var initFakeServer = function(server){
 describe("test all cloud related", function(){
 
   var server;
+  var initSuccess = sinon.spy();
+  var initFail = sinon.spy();
 
   beforeEach(function () { server = sinon.fakeServer.create(); });
   afterEach(function () { server.restore(); });
@@ -69,6 +71,7 @@ describe("test all cloud related", function(){
 
       initFakeServer(server);
       var $fh = process.env.LIB_COV? require("../../src-cov/feedhenry") : require("../../src/feedhenry");
+      $fh.init(initSuccess,initFail);
       //at this point, $fh is already initialised (and failed), it will not emit another fhinit event 
       //until another call to any $fh cloud APIs, so for testing, call reset which will force it to re-intialise again.
       $fh.reset();
@@ -112,6 +115,7 @@ describe("test all cloud related", function(){
 
       var $fh = process.env.LIB_COV? require("../../src-cov/feedhenry") : require("../../src/feedhenry");
       $fh.reset();
+      $fh.init(initSuccess,initFail);
 
       $fh.fh_timeout = 30000;
 
@@ -145,6 +149,7 @@ describe("test all cloud related", function(){
 
       var $fh = process.env.LIB_COV? require("../../src-cov/feedhenry") : require("../../src/feedhenry");
       $fh.reset();
+      $fh.init(initSuccess,initFail);
 
       $fh.cloud({
         path: 'test/echo',
@@ -169,6 +174,7 @@ describe("test all cloud related", function(){
 
       var $fh = process.env.LIB_COV? require("../../src-cov/feedhenry") : require("../../src/feedhenry");
       $fh.reset();
+      $fh.init(initSuccess,initFail);
 
       var success = sinon.spy();
       var fail = sinon.spy();
@@ -210,6 +216,7 @@ describe("test all cloud related", function(){
 
       var $fh = process.env.LIB_COV? require("../../src-cov/feedhenry") : require("../../src/feedhenry");
       $fh.reset();
+      $fh.init(initSuccess,initFail);
 
       var success = sinon.spy();
       var fail = sinon.spy();

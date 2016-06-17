@@ -63,10 +63,14 @@ describe("test all cloud related GETs", function(){
   it("should work with cloud GET call", function(){
     var success = sinon.spy();
     var fail = sinon.spy();
+    var initSuccess = sinon.spy();
+    var initFail = sinon.spy();
 
     var $fh = process.env.LIB_COV? require("../../src-cov/feedhenry") : require("../../src/feedhenry");
 
     $fh.reset();
+    $fh.init(initSuccess,initFail);
+
     $fh.cloud({
       path: 'test/echo',
       method: 'GET',

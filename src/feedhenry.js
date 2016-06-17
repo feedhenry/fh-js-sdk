@@ -46,18 +46,18 @@ var once = function(type, listener) {
   }
 };
 
-//Legacy shim. Init hapens based on fhconfig.json or, for v2, global var called fh_app_props which is injected as part of the index.html wrapper
-var init = function(opts, success, fail) {
-  logger.warn("$fh.init will be deprecated soon");
+var init = function(success, fail) {
+  if(typeof window.cordova !== "undefined" || typeof window.phonegap !== "undefined"){
+    //if we are running inside cordova/phonegap, only init after device is ready to ensure the device id is the right one
+    document.addEventListener("deviceready", cloud.fhinit, false);
+  } else {
+    cloud.fhinit();
+  }
   cloud.ready(function(err, host) {
-    if (err) {
-      if (typeof fail === "function") {
-        return fail(err);
-      }
-    } else {
-      if (typeof success === "function") {
-        success(host.host);
-      }
+    if (err && typeof fail === "function") {
+      return fail(err);
+    } else if (!err && typeof success === "function"){
+      return success();
     }
   });
 };
