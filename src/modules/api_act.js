@@ -10,7 +10,6 @@ function doActCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
   var url = cloud_host.getActUrl(opts.act);
   var params = opts.req || {};
-  params = fhparams.addFHParams(params);
   var headers = fhparams.getFHHeaders();
   if (opts.headers) {
     headers = _.extend(headers, opts.headers);
