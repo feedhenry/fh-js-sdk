@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.16.2 - 2016-07-28 - Wei Li
+* RHMAP-5793 - Decode the parameters in the url query string.
+
 ## 2.16.1 - 2016-06-10 - Alan Moran
 
 * RHMAP-7618 - Client Form App - Submissions stuck in review when field is deleted from server side
