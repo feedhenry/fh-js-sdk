@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.16.3 - 2016-08-12 - Niall Donnelly
+* RHMAP-9444 - Applying field and page rules whenever a field value changes.
+
 ## 2.16.2 - 2016-07-28 - Wei Li
 * RHMAP-5793 - Decode the parameters in the url query string.
 
