@@ -26,7 +26,16 @@ FieldBarcodeView = FieldView.extend({
 
     //Dont need to do anything when the content changes.
     self.barcodeObjects[index] = result;
-    self.validateElement(index, result);
+
+    self.updateOrRemoveValue({
+      fieldId: self.model.getFieldId(),
+      index: index,
+      value: result,
+      isStore: true
+    }, function() {
+      self.validateElement(index, result);
+      self.checkRules();
+    });
   },
   valueFromElement: function(index) {
     var self = this;

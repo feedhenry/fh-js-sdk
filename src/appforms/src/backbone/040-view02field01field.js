@@ -211,6 +211,7 @@ var FieldView = Backbone.View.extend({
         } while (parent);
         return view;
     },
+    validate: function () {},
     validateElement: function(index, element, cb) {
         var self = this;
         var fieldId = self.model.getFieldId();
@@ -237,16 +238,13 @@ var FieldView = Backbone.View.extend({
             }
         });
     },
-    validate: function(e) {
+    setValueToSubmission: function(params, cb) {
         var self = this;
-        this.options.formView.markFormEdited();
-        var currentTarget = $(e.currentTarget);
-        var target = $(e.target);
-
-        var index = currentTarget.data().index || target.data().index;
-        var val = self.valueFromElement(index);
-        self.validateElement(index, val);
-        self.trigger("checkrules");
+        //Adding the field value to the submission.
+        self.options.formView.addFieldInputValue(params, cb);
+    },
+    removeValueFromSubmission: function(params) {
+        this.options.formView.removeFieldInputValue(params);
     },
     setErrorText: function(index, text) {
         var wrapperObj = this.getWrapper(index);
@@ -257,12 +255,43 @@ var FieldView = Backbone.View.extend({
         if(wrapperObj.find("input[type='checkbox']").length === 0){
             wrapperObj.find("input,textarea,select").addClass(this.errorClassName);
         }
-
     },
+    //The content of the field has changed, ensure the new value is persisted to the submission
     contentChanged: function(e) {
-        this.options.formView.markFormEdited();
+        var self = this;
         e.preventDefault();
-        this.validate(e);
+        self.options.formView.markFormEdited();
+        var currentTarget = $(e.currentTarget);
+        var target = $(e.target);
+        var index = currentTarget.data().index || target.data().index;
+        var val = self.valueFromElement(index);
+
+        self.validateElement(index, val);
+
+        self.updateOrRemoveValue({
+            index: index,
+            value: val,
+            isStore: true,
+            fieldId: self.model.getFieldId()
+        }, function() {
+            //Value has been persisted, now check for any rule changes.
+            self.checkRules();
+        });
+    },
+
+    checkRules: function() {
+        this.trigger('checkrules');
+    },
+
+    updateOrRemoveValue: function(params, cb) {
+        var self = this;
+        //Ensuring that if the field value was removed from the element, that it is removed from the submission also
+        if(!params.value) {
+            self.removeValueFromSubmission(params);
+            return cb();
+        } else {
+            self.setValueToSubmission(params, cb);
+        }
     },
 
     isRequired: function() {

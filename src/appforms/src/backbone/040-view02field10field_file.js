@@ -9,30 +9,44 @@ FieldFileView = FieldView.extend({
         self.fileObjs = [];
         FieldView.prototype.initialize.apply(self, arguments);
     },
+    //The file has changed, make sure the file is validated and saved to the submission.
     contentChanged: function(e) {
         var self = this;
         var fileEle = e.target;
         var filejQ = $(fileEle);
         var index = filejQ.data().index;
         var file = fileEle.files ? fileEle.files[0] : null;
-        if (file) {
-            self.validateElement(index, file, function(err) {
-                //File Needs to be validated.
-                if (!err) { //Validation of file is valid
-                    var fileObj = {
-                        "fileName": file.name,
-                        "fileSize": file.size,
-                        "fileType": file.type
-                    };
-                    self.showButton(index, fileObj);
-                } else {
-                    filejQ.val("");
-                    self.showButton(index, null);
-                }
-            });
-        } else { //user cancelled file selection
+
+        self.updateOrRemoveValue({
+            fieldId: self.model.getFieldId(),
+            value: file,
+            isStore: true,
+            index: index
+        }, function() {
+          self.checkRules();
+          if (file) {
+            self.validateAndUpdateButtons(index, file);
+          } else { //user cancelled file selection
             self.showButton(index, null);
+          }
+        });
+    },
+    validateAndUpdateButtons: function(index, file) {
+      var self = this;
+      self.validateElement(index, file, function(err) {
+        //File Needs to be validated.
+        if (!err) { //Validation of file is valid
+          var fileObj = {
+            "fileName": file.name,
+            "fileSize": file.size,
+            "fileType": file.type
+          };
+          self.showButton(index, fileObj);
+        } else {
+          filejQ.val("");
+          self.showButton(index, null);
         }
+      });
     },
     valueFromElement: function(index) {
         var wrapperObj = this.getWrapper(index);
