@@ -87,7 +87,18 @@
 
     ],
     "fieldRules": [
-
+      {
+        "type": "hide",
+        "_id": "57adaea2c94486873bb29789",
+        "targetField": ["52cfc0a78a31bc1524000004"],
+        "ruleConditionalStatements": [{
+          "sourceField": "52cfc0a78a31bc1524000003",
+          "restriction": "is",
+          "sourceValue": "hideparagraph"
+        }],
+        "ruleConditionalOperator": "and",
+        "relationType": "and"
+      }
     ],
     "pages": [
       {

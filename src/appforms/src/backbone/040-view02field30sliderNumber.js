@@ -93,9 +93,16 @@ FieldSliderNumberView = FieldView.extend({
     var input = $(wrapperObj.find("input[type='range']"));
     var value = input.attr('value') || input.val();
 
-    wrapperObj.find(".slideValue").html("Selected Value: " + value);
-    self.validateElement(index, value);
-    self.trigger('checkrules');
+    self.updateOrRemoveValue({
+      fieldId: self.model.getFieldId(),
+      index: index,
+      value: value,
+      isStore: true
+    }, function() {
+      wrapperObj.find(".slideValue").html("Selected Value: " + value);
+      self.validateElement(index, value);
+      self.checkRules();
+    });
   },
   getHTMLInputType: function() {
     return "text";
