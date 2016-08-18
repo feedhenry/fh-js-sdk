@@ -33,7 +33,7 @@ You can then require the FeedHenry SDK from any JavaScript file in your Titanium
 For a practical exampe, see the [FeedHenry Titanium example app](https://github.com/feedhenry-training/fh-titanium-example).
 
 
-##Building
+## Building
 
 The JS SDK is now built using [Browserify](http://browserify.org/).
 
@@ -146,4 +146,39 @@ push the updated changes
 
 ```
 git push origin master
+```
+
+## Releasing
+
+Our SDK is release on [npmjs](https://www.npmjs.com/package/fh-js-sdk). To do a release follow those steps:
+
+### Prepare release
+* Update ```package.json```, ```npm-shrinkwrap.json```, ``` ``` file with the new version number.
+* Update ```CHANGELOG.md``` with some JIRA link
+* Do a PR, make sure Travis build passed. Merge.
+* Tag the repository with the new version number:
+
+```
+git tag -s -a {VERSION} -m 'version {VERSION}'   // e.g. {VERSION} format is  '2.17.0'
+```
+
+* Push the new release tag on GitHub:
+
+```
+git push origin {TAG}
+```
+
+* [Travis build](.travis.yml#L12-L18) will generate a relase for you in release tab.
+
+### Publish to npmjs
+* Login to npm as `feedhenry` or make sure your own login is part of the collaborator list in [fh-js-sdk in npmjs.org](https://www.npmjs.com/package/fh-js-sdk)
+
+```
+npm login
+```
+
+* Publish:
+
+```
+npm publish
 ```
