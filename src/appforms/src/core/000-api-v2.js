@@ -2089,4 +2089,4 @@
 
   root.$fh = $fh;
 
-})(this);
+})(window || this);
