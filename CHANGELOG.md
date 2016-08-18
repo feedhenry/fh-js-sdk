@@ -1,4 +1,6 @@
 # Changelog - FeedHenry Javascript SDK
+## 2.17.0 - 2016-08-18 - Erik Jan de Wit
+* Use window object instead of this
 
 ## 2.16.3 - 2016-08-12 - Niall Donnelly
 * RHMAP-9444 - Applying field and page rules whenever a field value changes.
