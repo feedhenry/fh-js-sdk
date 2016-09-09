@@ -46,7 +46,7 @@ var ajax = module.exports = function (options) {
 
   if (!settings.crossDomain) {
     settings.crossDomain = /^([\w-]+:)?\/\/([^\/]+)/.test(settings.url) && (RegExp.$1 != window.location.protocol || RegExp.$2 != window.location.host)
-  } 
+  }
 
   var dataType = settings.dataType,
     hasPlaceholder = /=\?/.test(settings.url)
@@ -98,7 +98,15 @@ var ajax = module.exports = function (options) {
           logger.debug("retry ajax call with jsonp")
           settings.type = "GET";
           settings.dataType = "jsonp";
-          settings.data = "_jsonpdata=" + settings.data;
+
+          if (settings.data) {
+            settings.data = "_jsonpdata=" + JSON.stringify(
+              require("./fhparams").addFHParams(JSON.parse(settings.data))
+            );
+          } else {
+            settings.data = "_jsonpdata=" + settings.data;
+          }
+
           return ajax(settings);
         }
       }

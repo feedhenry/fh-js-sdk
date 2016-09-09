@@ -10,7 +10,6 @@ function doCloudCall(opts, success, fail){
   var cloud_host = cloud.getCloudHost();
   var url = cloud_host.getCloudUrl(opts.path);
   var params = opts.data || {};
-  params = fhparams.addFHParams(params);
   var type = opts.method || "POST";
   var data;
   if (["POST", "PUT", "PATCH", "DELETE"].indexOf(type.toUpperCase()) !== -1) {
