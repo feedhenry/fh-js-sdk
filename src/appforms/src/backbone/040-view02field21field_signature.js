@@ -22,9 +22,6 @@ FieldSignatureView = FieldView.extend({
         }
 
     },
-    validate: function(e) {
-        this.trigger("checkrules");
-    },
     showSignatureCapture: function(index) {
         var self = this;
         var winHeight = $(window).height();
@@ -91,8 +88,17 @@ FieldSignatureView = FieldView.extend({
         });
     },
     setSignature: function(index, base64Img) {
+        var self = this;
         var wrapper = this.getWrapper(index);
-        wrapper.find("img.sigImage").attr("src", base64Img);
+
+        self.updateOrRemoveValue({
+            fieldId: self.model.getFieldId(),
+            index: index,
+            isStore: true,
+            value: base64Img
+        }, function() {
+            wrapper.find("img.sigImage").attr("src", base64Img);
+        });
     },
     valueFromElement: function(index) {
         var wrapper = this.getWrapper(index);

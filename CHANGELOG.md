@@ -1,4 +1,12 @@
 # Changelog - FeedHenry Javascript SDK
+## 2.17.1 - 2016-08-18 - Erik Jan de Wit
+* Use window object instead of this
+
+## 2.16.3 - 2016-08-12 - Niall Donnelly
+* RHMAP-9444 - Applying field and page rules whenever a field value changes.
+
+## 2.16.2 - 2016-07-28 - Wei Li
+* RHMAP-5793 - Decode the parameters in the url query string.
 
 ## 2.16.1 - 2016-06-10 - Alan Moran
 

@@ -501,6 +501,13 @@ var FormView = BaseView.extend({
       });
     });
   },
+  addFieldInputValue: function(params, cb) {
+    cb = cb || function() {};
+    this.submission.addInputValue(params, cb);
+  },
+  removeFieldInputValue: function(params) {
+    this.submission.removeFieldValue(params.fieldId, params.index);
+  },
   populateFieldViewsToSubmission: function(isStore, cb) {
     if (typeof cb === "undefined") {
       cb = isStore;

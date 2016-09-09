@@ -15,7 +15,7 @@ var load = function(cb) {
   for(var key in url_params){
     if(url_params.hasOwnProperty(key) ){
       if(key.indexOf('fh_') === 0){
-        url_props[key.substr(3)] = url_params[key]; 
+        url_props[key.substr(3)] = decodeURI(url_params[key]); 
       }
     }
   }
