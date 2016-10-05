@@ -1208,7 +1208,7 @@ appForm.models = function(module) {
             formField = {
               fieldId: field._id,
               fieldValues: []
-              //Utility funtion to update the value
+              //Utility function to update the value
             };
             formFields.push(formField);
           }
@@ -1219,6 +1219,18 @@ appForm.models = function(module) {
           //TODO Repeating Fields.
           field.updateValue = function() {
             this.values[0] = this.value;
+
+          };
+
+          // updates value of file type fields
+          field.addFileValue = function(cb) {
+            var params = {
+              fieldId: this._id,
+              value: this.value
+            };
+            self.addInputValue(params, function(err, result) {
+              cb(err, result);
+            });
           };
 
           return field;
