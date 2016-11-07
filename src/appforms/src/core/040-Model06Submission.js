@@ -1094,7 +1094,7 @@ appForm.models = function(module) {
 
       self.submissionState.pages = _.map(self.submissionState.pages, function(page) {
         page.fields = _.map(page.fields, function(field) {
-          var formField = _.find(formFields, {_id: field._id});
+          var formField = _.findWhere(formFields, {fieldId: field._id});
 
           if (!formField) {
             formField = {
@@ -1111,7 +1111,6 @@ appForm.models = function(module) {
           //TODO Repeating Fields.
           field.updateValue = function() {
             this.values[0] = this.value;
-
           };
 
           // updates value of file type fields
@@ -1134,6 +1133,7 @@ appForm.models = function(module) {
       return cb(undefined, self.submissionState);
     });
   };
+
 
   Submission.prototype.getRemoteSubmissionId = function() {
     return this.get("submissionId") || this.get('_id');
