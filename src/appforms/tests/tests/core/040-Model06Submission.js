@@ -1017,4 +1017,128 @@ describe("Submission model", function() {
     });
 
   });
+
+  describe("Full Submission State", function() {
+    var testForm = {
+      "_id": "form1234",
+      "description": "Small Form",
+      "name": "Small Form",
+      "updatedBy": "testing-admin@example.com",
+      "pages": [
+        {
+          "_id": "52dfd909a926eb2e3f000001",
+          "name": "A Page",
+          "fields": [
+            {
+              "fieldOptions": {
+                "definition": {
+                  "defaultValue": ""
+                }
+              },
+              "required": false,
+              "type": "text",
+              "name": "Text",
+              "helpText": "Text",
+              "_id": "52dfd93ee02b762d3f000001",
+              "repeating": false
+            },
+            {
+              "required": false,
+              "type": "file",
+              "name": "File",
+              "helpText": "File",
+              "_id": "52dfd93ee02b762d3f000002",
+              "repeating": false
+            }
+          ]
+        }
+      ],
+      "lastUpdated": "2014-01-22T16:51:53.725Z",
+      "dateCreated": "2014-01-22T14:43:21.806Z",
+      "pageRef": {
+        "52dfd909a926eb2e3f000001": 0
+      },
+      "fieldRef": {
+        "52dfd93ee02b762d3f000001": {
+          "page": 0,
+          "field": 0
+        },
+        "52dfd93ee02b762d3f000002": {
+          "page": 0,
+          "field": 1
+        }
+      }
+    };
+
+    beforeEach(function(done) {
+      var self = this;
+      var Form = appForm.models.Form;
+      //load form with a text and file field.
+      new Form({
+        formId: "form1234",
+        rawMode: true,
+        rawData: testForm
+      }, function(err, form) {
+        assert(!err, "Expected no error: " + err);
+        self.submission = appForm.models.submission.newInstance(form);
+        done();
+      });
+    });
+
+    it("Initialising A Full Submission State", function(done) {
+      //It should build the full submission state.
+      var self = this;
+
+      self.submission.buildFullSubmissionState(function(err, submissionState) {
+        assert.ok(!err, "Expected no error when building submission state " + err);
+        assert.ok(submissionState, "Expected a submission state");
+
+        //The state should be initialised with the field state with empty field values
+        assert.equal(testForm.pages[0]._id, submissionState.pages[0]._id);
+
+        assert.equal(testForm.pages[0].fields[0]._id, submissionState.pages[0].fields[0]._id);
+        assert.ok(submissionState.pages[0].fields[0].values instanceof Array, "Expected text field values to be an array");
+        assert.strictEqual(self.submission.getFormFields()[0].fieldValues, submissionState.pages[0].fields[0].values, "Expected the same array for state values and the submission fieldValues");
+        done();
+      });
+    });
+
+    it("Initialise A Full Submission State With Data", function(done) {
+      var self = this;
+      var testValue = "mytestvalue";
+      self.submission.addInputValue({
+        fieldId: "52dfd93ee02b762d3f000001",
+        value: testValue
+      }, function(err) {
+        assert.ok(!err, "Expected no error when adding a test value");
+
+        self.submission.buildFullSubmissionState(function(err, submissionState) {
+          assert.ok(!err, "Expected no error when building submission state " + err);
+          assert.ok(submissionState, "Expected a submission state");
+
+          assert.strictEqual(testValue, submissionState.pages[0].fields[0].values[0], "Expected the same array for state values and the submission fieldValues");
+          done();
+        });
+      });
+    });
+
+    it("Adding a value to the submission state", function(done) {
+      var self = this;
+
+      var testValue = "anothertestvalue";
+
+      self.submission.buildFullSubmissionState(function(err, submissionState) {
+        assert.ok(!err, "Expected no error when building submission state " + err);
+        assert.ok(submissionState, "Expected a submission state");
+
+        //The state should be initialised with the field state with empty field values
+        submissionState.pages[0].fields[0].value = testValue;
+        submissionState.pages[0].fields[0].updateValue();
+        assert.strictEqual(testValue, self.submission.getFormFields()[0].fieldValues[0], "Expected the same array for state values and the submission fieldValues");
+        done();
+      });
+    });
+
+  });
+
 });
