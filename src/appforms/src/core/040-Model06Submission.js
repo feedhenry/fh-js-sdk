@@ -110,6 +110,9 @@ appForm.models = function(module) {
       this.set('filesInSubmission', []);
       this.set('deviceId', appForm.config.get('deviceId'));
       this.transactionMode = false;
+
+      //Applying default values from the form definition.
+      this.applyDefaultValues(form);
     } else {
       this.set('appId', appForm.config.get('appId'));
       if(params.submissionId){
@@ -420,6 +423,39 @@ appForm.models = function(module) {
         that.set('formFields', newFields);
         cb(err);
       });
+    });
+  };
+
+
+  /**
+   *
+   * Applying default values to a submission based on the form assigned to it.
+   *
+   * @param form - The form model to apply default values from
+   */
+  Submission.prototype.applyDefaultValues = function(form) {
+    var formFields = this.getFormFields();
+
+    //Have the form, need to apply default values to each of the fields.
+    _.each(form.fields, function(field, fieldId) {
+      var defaultValue = field.getDefaultValue();
+
+      //No default values for this field, don't need to do anything.
+      if(!defaultValue) {
+        return;
+      }
+
+      var formFieldEntry = _.findWhere(formFields, {fieldId: fieldId});
+
+      //If there is already an entry for this field, don't apply default values
+      //Otherwise, create a new entry and add the default values.
+      if(!formFieldEntry) {
+        formFields.push({
+          fieldId: fieldId,
+          fieldValues: [defaultValue]
+        });
+      }
+
     });
   };
 
