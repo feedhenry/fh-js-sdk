@@ -1,4 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
+
+## 2.17.2 - 2016-11-08 - Niall Donnelly
+* RHMAP-10243 - Applying default values to new submissions.
+
 ## 2.17.1 - 2016-08-18 - Erik Jan de Wit
 * Use window object instead of this
 

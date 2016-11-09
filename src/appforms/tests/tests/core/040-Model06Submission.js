@@ -99,6 +99,134 @@ describe("Submission model", function() {
 
         });
     });
+
+  it("A new submission should have default values set", function (done) {
+    var Form = appForm.models.Form;
+    var testDefaultValueForm = {
+      "_id": "58218fde6ec6d6aa36746758",
+      "name": "Test Default Value Form",
+      "createdBy": "testing-admin@example.com",
+      "pages": [{
+        "_id": "58218fde6ec6d6aa36746757",
+        "fields": [{
+          "required": true,
+          "type": "radio",
+          "name": "Rad",
+          "fieldCode": null,
+          "_id": "58218ffd6ec6d6aa36746759",
+          "adminOnly": false,
+          "fieldOptions": {
+            "validation": {"validateImmediately": true},
+            "definition": {
+              "options": [{"label": "Rad 1", "checked": false}, {
+                "label": "Rad 2",
+                "checked": false
+              }, {"checked": true, "name": "", "label": "Rad 3"}]
+            }
+          },
+          "repeating": false
+        }, {
+          "required": true,
+          "type": "dropdown",
+          "name": "Dropdown",
+          "_id": "58218ffd6ec6d6aa3674675a",
+          "adminOnly": false,
+          "fieldOptions": {
+            "definition": {
+              "options": [{"label": "Drop 1", "checked": false}, {"label": "Drop 2", "checked": true}],
+              "include_blank_option": false
+            }
+          },
+          "repeating": false
+        }, {
+          "required": true,
+          "type": "checkboxes",
+          "name": "Check",
+          "fieldCode": null,
+          "_id": "58218ffd6ec6d6aa3674675b",
+          "adminOnly": false,
+          "fieldOptions": {
+            "definition": {"options": [{"label": "Check 1", "checked": true}, {"label": "Check 2", "checked": true}]}
+          },
+          "repeating": false
+        }, {
+          "required": true,
+          "type": "text",
+          "name": "Text Field",
+          "_id": "53146c1f04e694ec1ad715b6",
+          "repeating": false,
+          "fieldOptions": {
+            definition: {defaultValue: "somedefaulttext"}
+          }
+        }, {
+          "required": true,
+          "type": "number",
+          "name": "Number Field",
+          "_id": "53146c1f04e694ec1ad71123",
+          "repeating": false,
+          "fieldOptions": {
+          }
+        }]
+      }],
+      "pageRef": {"58218fde6ec6d6aa36746757": 0},
+      "fieldRef": {
+        "58218ffd6ec6d6aa36746759": {"page": 0, "field": 0},
+        "58218ffd6ec6d6aa3674675a": {"page": 0, "field": 1},
+        "58218ffd6ec6d6aa3674675b": {"page": 0, "field": 2},
+        "53146c1f04e694ec1ad715b6": {"page": 0, "field": 3},
+        "53146c1f04e694ec1ad71123": {"page": 0, "field": 4}
+      }
+    };
+
+
+    new Form({
+      formId: "58218fde6ec6d6aa36746758",
+      rawMode: true,
+      rawData: testDefaultValueForm
+    }, function(err, formModel){
+      assert.ok(!err, "Expected no error when initialising the form " + err);
+
+      //Creating a new submission based on the form model
+      var submission = formModel.newSubmission();
+
+      //The default values should be set for the different field types.
+      var formFields = submission.getFormFields();
+
+      //The radio field should have the checked option added to the submission by default
+      var formField = _.findWhere(formFields, {fieldId: "58218ffd6ec6d6aa36746759"});
+
+      assert.ok(formField, "Expected a submission entry for the radio field.");
+      assert.equal("Rad 3", formField.fieldValues[0]);
+
+      //The dropdown field should have the checked option added to the submission by default
+      formField = _.findWhere(formFields, {fieldId: "58218ffd6ec6d6aa3674675a"});
+
+      assert.ok(formField, "Expected a submission entry for the dropdown field.");
+      assert.equal("Drop 2", formField.fieldValues[0]);
+
+      //The checkboxes field should have the checked options added to the submission by default
+      formField = _.findWhere(formFields, {fieldId: "58218ffd6ec6d6aa3674675b"});
+
+      assert.ok(formField, "Expected a submission entry for the checkbox field.");
+      //The checkbox entries are arrays as they can have multiple values.
+      assert.equal("Check 1", formField.fieldValues[0][0]);
+      assert.equal("Check 2", formField.fieldValues[0][1]);
+
+
+      //The text field should have the default value option added to the submission by default
+      formField = _.findWhere(formFields, {fieldId: "53146c1f04e694ec1ad715b6"});
+
+      assert.ok(formField, "Expected a submission entry for the text field.");
+      assert.equal("somedefaulttext", formField.fieldValues[0]);
+
+      //The number field should not have an entry as it has no default value.
+      formField = _.findWhere(formFields, {fieldId: "53146c1f04e694ec1ad71123"});
+
+      assert.ok(!formField, "Expected no submission entry for the number field.");
+      done();
+    });
+  });
+
     describe("comment", function() {
         it("how to add a comment to a submission with or without a user", function(done) {
             var meta = appForm.models.submissions.findByFormId(testData.formId)[0];

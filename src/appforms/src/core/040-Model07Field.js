@@ -92,16 +92,78 @@ appForm.models = function (module) {
   */
   Field.prototype.getDefaultValue = function () {
     var def = this.getFieldDefinition();
-    if (def) {
+
+    //If the field is a multichoice field, then the selected option will be set in the options list.
+    if(this.isMultiChoiceField()) {
+      return this.getDefaultMultiValue();
+    } else {
       return def.defaultValue;
     }
-    return "";
+  };
+
+  /**
+   * Function to get the selected values for a multichoice fields
+   */
+  Field.prototype.getDefaultMultiValue = function() {
+    var fieldDefinition = this.getFieldDefinition();
+
+    if(!fieldDefinition.options) {
+      return null;
+    }
+
+    var selectedOptions = _.filter(fieldDefinition.options, function(option) {
+      return option.checked;
+    });
+
+    //No default options were selected.
+    if(_.isEmpty(selectedOptions)) {
+      return null;
+    }
+
+    selectedOptions = _.pluck(selectedOptions, 'label');
+
+    //Checkbox fields can have multiple inputs per field entry.
+    if(this.isCheckboxField()) {
+      return selectedOptions;
+    } else {
+      return _.first(selectedOptions);
+    }
   };
 
   Field.prototype.isAdminField = function(){
     return this.get("adminOnly");
   };
 
+  /**
+   * Checking if a field is a checkbox, radio or dropdown field type.
+   */
+  Field.prototype.isMultiChoiceField = function() {
+    return this.isCheckboxField() || this.isRadioField() || this.isDropdownField();
+  };
+
+  /**
+   * Checking if a field is a checkboxes field type
+   * @returns {boolean}
+   */
+  Field.prototype.isCheckboxField = function() {
+    return this.get('type') === 'checkboxes';
+  };
+
+  /**
+   * Checking if a field is a Radio field type
+   * @returns {boolean}
+   */
+  Field.prototype.isRadioField = function() {
+    return this.get('type') === 'radio';
+  };
+
+  /**
+   * Checking if a field is a Dropdown field type
+   * @returns {boolean}
+   */
+  Field.prototype.isDropdownField = function() {
+    return this.get('type') === 'dropdown';
+  };
 
   /**
      * Process an input value. convert to submission format. run field.validate before this
