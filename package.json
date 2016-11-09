@@ -3,6 +3,7 @@
   "version": "2.17.5",
   "description": "feedhenry js sdk",
   "main": "dist/feedhenry.js",
+  "types": "./fh-js-sdk.d.ts",
   "browser": {
     "JSON": "./libs/json2.js"
   },
