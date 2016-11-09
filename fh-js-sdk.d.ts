@@ -1,76 +1,259 @@
+/** @module fh-js-sdk */
 declare module 'fh-js-sdk' {
 
+    /**
+     * Interface for the object with the metadata added by the FH SDK for each cloud request.
+     * 
+     * @interface FHParams
+     */
+    export interface FHParams {
+        appid: string;
+        appkey: string;
+        projectid: string;
+        cuid: string;
+        destination: string;
+        sdk_version: string;
+        connectiontag: string;
+    }
+
+    /**
+     * Interface for the data provided within a PushNotificationCallback argument.
+     * 
+     * @interface PushNotificationData
+     */
     export interface PushNotificationData {
-        alert: String;
-        sound: String;
-        badge: String;
-        coldstart: Boolean;
+        alert: string;
+        sound: string;
+        badge: string;
+        coldstart: boolean;
         payload: {};
     }
 
+    /**
+     * Interface for the configuration object provided to the push command.
+     * 
+     * @interface PushConfig
+     */
     export interface PushConfig {
-        alias: String;
-        categories: Array<String>;
+        alias: string;
+        categories: Array<string>;
     }
 
+    /**
+     * Interface for the options object provided to the mbaas command.
+     * 
+     * @interface MBaasOptions
+     */
     export interface MBaasOptions {
-        service: String;
+        service: string;
         params: {};
-        timeout: Number;
+        timeout: number;
     }
     
+    /**
+     * Interface for the callback used on notifications in the push command.
+     * 
+     * @interface PushNotificationCallback
+     */
     export interface PushNotificationCallback {
         (e: PushNotificationData):void;
     }
 
+    /**
+     * Interface for the default success callback used within the SDK.
+     * 
+     * @interface SuccessCallback
+     */
     export interface SuccessCallback {
         (res: {}):void
     }
 
+    /**
+     * Interface for the default callback used within the SDK.
+     * 
+     * @interface FailureCallback
+     */
     export interface FailureCallback {
-        (msg: String, error: {}):void;
+        (msg: string, error: {}):void;
     }
 
     /**
+     * Initializes the client SDKs.
+     * 
+     * @param {Object} options
+     * @param {Function} success - A callback function to be run on success.
+     * @param {Function} failure - A callback function to be run on failure.
+     * 
+     * @returns {Function}
+     */
+    export function init(options: {}, success: SuccessCallback, failure: FailureCallback):any;
+
+    /**
+     * Deprecated - Use $fh.cloud instead
+     * 
+     * @param {Object} options
+     * @param {Function} success - A callback function to be run on success.
+     * @param {Function} failure - A callback function to be run on failure.
+     * 
+     * @returns {String} - The Cloud Host URL
+     */
+    export function act(options: {}, success: SuccessCallback, failure: Function):string;
+
+    /**
+     * Authenticate and optionally authorise a user via access rights management.
+     * 
+     * @param {Object} options
+     * @param {Function} success - A callback function to be run on success.
+     * @param {Function} failure - A callback function to be run on failure.
+     */
+    export function auth(options: {}, success: SuccessCallback, failure: FailureCallback);
+
+    /**
+     * Call any cloud URLs which have been defined in the Cloud App using AJAX.
+     * 
+     * @param {Object} options
+     * @param {Function} success - A callback function to be run on success.
+     * @param {Function} failure - A callback function to be run on failure.
+     */
+    export function cloud(options: {}, success: SuccessCallback, failure: FailureCallback);
+
+    /**
+     * Key pair generation and data encryption and decryption.
+     * 
+     * @param {Object} options
+     * @param {Function} success - A callback function to be run on success.
+     * @param {Function} failure - A callback function to be run on failure.
+     */
+    export function sec(options: {}, success: SuccessCallback, failure: Function);
+
+    /**
+     * Generate hash value of a string.
+     * 
+     * @param {Object} options
+     * @param {Function} success - A callback function to be run on success.
+     * @param {Function} failure - A callback function to be run on failure.
+     */
+    export function hash(options: {}, success: SuccessCallback, failure: Function);
+
+    /**
+     * Register with the server to start receiving push notifications.
+     * 
+     * @param {Function} onNotification - A handler for incoming notifications.
+     * @param {Function} regSuccessHandler - A callback invoked upon successful registration.
+     * @param {Function} regErrorHandler - A callback invoked if the registration fails due to an error, which is then passed as a String argument.
+     * @param {Object} pushConfig
+     * @param {String} [pushConfig.alias] - A user-specific identifier
+     * @param {Array} [pushConfig.categories] - A list of categories.
+     */
+    export function push(onNotification: PushNotificationCallback, regSuccessHandler: () => void, regErrorHandler: Function, pushConfig: PushConfig);
+
+    /**
+     * Call MBaaS service endpoints.
+     * 
+     * @param {Object} options
+     * @param {String} options.service - The mbaas service name.
+     * @param {Object} options.params - JSON object to send to the mbaas service.
+     * @param {Number} [options.timeout=60000] - Timeout value specified in milliseconds. 
+     */
+    export function mbaas(options: MBaasOptions, success: SuccessCallback, failure: FailureCallback);
+
+    /**
+     * Get the URL of the cloud app that the current client app is communicating with.
+     * 
+     * @returns {String}
+     */
+    export function getCloudURL():string;
+
+    /**
+     * Return the metadata added by the FH SDK for each cloud request.
+     * 
+     * @returns {Object}
+     */
+    export function getFHParams():FHParams;
+
+    /**
+     * @returns {Object}
+     */
+    export function getFHHeaders();
+
+    /**
+     * @param {String} type
+     * @param {Function} listener
+     */
+    export function addListener(type: string, listener: Function);
+
+    /**
+     * @param {String} type
+     * @param {Function} listener
+     */
+    export function on(type: string, listener: Function);
+
+    /**
+     * @param {String} type
+     * @param {Function} listener
+     */
+    export function once(type: string, listener: Function);
+
+    /**
      * Sync namespace
+     * 
      * @namespace sync
      */
     export namespace sync {
 
-       interface NotificationData {
-            dataset_id: String;
-            uid: String;
-            message?: String;
-            code: String;
+        /**
+         * Interface for the data provided in the NotifyCallback in the notify function.
+         * 
+         * @interface NotificationData
+         */
+        interface NotificationData {
+            dataset_id: string;
+            uid: string;
+            message?: string;
+            code: string;
         }
-
-        interface InitOptions {
-            sync_frequency?: Number;
-            auto_sync_local_updates?: Boolean;
-            notify_client_storage_failed?: Boolean;
-            notify_sync_started?: Boolean;
-            notify_sync_complete?: Boolean;
-            notify_offline_update?: Boolean;
-            notify_collision_detected?: Boolean;
-            notify_local_update_applied?: Boolean;
-            notify_remote_update_failed?: Boolean;
-            notify_remote_update_applied?: Boolean;
-            notify_delta_received?: Boolean;
-            notify_record_delta_received?: Boolean;
-            notify_sync_failed?: Boolean;
-            do_console_log?: Boolean;
-            crashed_count_wait?: Number;
-            resend_crashed_updates?: Boolean;
-            sync_active?: Boolean;
-            storage_strategy?: String;
-            file_system_quota?: Number;
-            has_custom_sync?: Boolean;
-            icloud_backup?: Boolean;
-        }
-
-        type NotifyCallback = (data: NotificationData) => void
 
         /**
+         * Interface for the options object provided to the init function.
+         * 
+         * @interface InitOptions
+         */
+        interface InitOptions {
+            sync_frequency?: number;
+            auto_sync_local_updates?: boolean;
+            notify_client_storage_failed?: boolean;
+            notify_sync_started?: boolean;
+            notify_sync_complete?: boolean;
+            notify_offline_update?: boolean;
+            notify_collision_detected?: boolean;
+            notify_local_update_applied?: boolean;
+            notify_remote_update_failed?: boolean;
+            notify_remote_update_applied?: boolean;
+            notify_delta_received?: boolean;
+            notify_record_delta_received?: boolean;
+            notify_sync_failed?: boolean;
+            do_console_log?: boolean;
+            crashed_count_wait?: number;
+            resend_crashed_updates?: boolean;
+            sync_active?: boolean;
+            storage_strategy?: string;
+            file_system_quota?: number;
+            has_custom_sync?: boolean;
+            icloud_backup?: boolean;
+        }
+
+        /**
+         * Interface for the callback used in the notify function.
+         * 
+         * @interface NotifyCallback
+         */
+        interface NotifyCallback { 
+            (data: NotificationData):void
+        }
+
+        /**
+         * Initialize the client data sync service.
+         * 
          * @param {Object} options
          * @param {Number} [options.sync_frequency=10] - How often to synchronize data with the cloud, in seconds. 
          * @param {Boolean} [options.auto_sync_local_updates=true] - Should local changes be synchronized to the cloud immediately, or should they wait for the next synchronization interval.
@@ -97,193 +280,108 @@ declare module 'fh-js-sdk' {
         function init(options: InitOptions);
 
         /**
+         * Register a callback function to be invoked when the sync service has notifications to communicate to the client.
+         * 
          * @param {Function} callback
          */
         function notify(callback: NotifyCallback);
 
         /**
+         * Put a dataset under the management of the sync service.
+         * 
          * @param {String} dataset_id
          * @param {Object} options
          * @param {Object} query_params
          * @param {Object} meta_data
          * @param {Function} callback
          */
-        function manage(dataset_id: String, options: {}, query_params: {}, meta_data: {}, callback: () => void);
+        function manage(dataset_id: string, options: {}, query_params: {}, meta_data: {}, callback: () => void);
 
         /**
+         * Get a list of the records for the dataset.
+         * 
          * @param {String} dataset_id
          * @param {Function} success
          * @param {Function} failure
          */
-        function doList(dataset_id: String, success: SuccessCallback, failure: FailureCallback);
+        function doList(dataset_id: string, success: SuccessCallback, failure: FailureCallback);
 
         /**
+         * Update the data associated with the unique id.
+         * 
          * @param {String} dataset_id
          * @param {Object} data
          * @param {Function} success
          * @param {Function} failure
          */
-        function doCreate(dataset_id: String, data: {}, success: SuccessCallback, failure: FailureCallback);
+        function doCreate(dataset_id: string, data: {}, success: SuccessCallback, failure: FailureCallback);
 
         /**
+         * Read a single data record.
+         * 
          * @param {String} dataset_id
          * @param {String} uid
          * @param {Function} success
          * @param {Function} failure
          */
-        function doRead(dataset_id: String, uid: String, success: SuccessCallback, failure: FailureCallback);
+        function doRead(dataset_id: string, uid: string, success: SuccessCallback, failure: FailureCallback);
 
         /**
+         * Update the data associated with the unique id.
+         * 
          * @param {String} dataset_id
          * @param {String} uid
          * @param {Object} data
          * @param {Function} success
          * @param {Function} failure
          */
-        function doUpdate(dataset_id: String, uid: String, data: {}, success: SuccessCallback, failure: FailureCallback);
+        function doUpdate(dataset_id: string, uid: string, data: {}, success: SuccessCallback, failure: FailureCallback);
 
         /**
+         * Delete the data associated with the unique id.
+         * 
          * @param {String} dataset_id
          * @param {String} uid
          * @param {Function} success
          * @param {Function} failure
          */
-        function doDelete(dataset_id: String, uid: String, success: SuccessCallback, failure: FailureCallback);
+        function doDelete(dataset_id: string, uid: string, success: SuccessCallback, failure: FailureCallback);
 
         /**
+         * Start the sync loop if `sync_active` option is set to false.
+         * 
          * @param {String} dataset_id
          * @param {Function} success
          * @param {Function} failure
          */
-        function startSync(dataset_id: String, success: SuccessCallback, failure: Function):void;
+        function startSync(dataset_id: string, success: SuccessCallback, failure: Function):void;
 
         /**
+         * Stop the sync loop for a dataset.
+         * 
          * @param {String} dataset_id
          * @param {Function} success
          * @param {Function} failure
          */
-        function stopSync(dataset_id: String, success: SuccessCallback, failure: Function):void;
+        function stopSync(dataset_id: string, success: SuccessCallback, failure: Function):void;
 
         /**
+         * Run the sync loop almost immediately (within next 500 ms) if `sync_active` is true.
+         * 
          * @param {String} dataset_id
          * @param {Function} success
          * @param {Function} failure
          */
-        function doSync(dataset_id: String, success: SuccessCallback, failure: Function):void;
+        function doSync(dataset_id: string, success: SuccessCallback, failure: Function):void;
 
         /**
+         * Run the sync loop almost immediately (within next 500 ms) even if `sync_active` is false.
+         * 
          * @param {String} dataset_id
          * @param {Function} success
          * @param {Function} failure
          */
-        function forceSync(dataset_id: String, success: SuccessCallback, failure: Function):void;
+        function forceSync(dataset_id: string, success: SuccessCallback, failure: Function):void;
     }
-
-    export interface FHParams {
-        appid: String;
-        appkey: String;
-        projectid: String;
-        cuid: String;
-        destination: String;
-        sdk_version: String;
-        connectiontag: String;
-    }
-
-    /**
-     * @param {Object} options
-     * @param {Function} success - A callback function to be run on success.
-     * @param {Function} failure - A callback function to be run on failure.
-     * 
-     * @return {Function}
-     */
-    export function init(options: {}, success: SuccessCallback, failure: FailureCallback):any;
-
-    /**
-     * @param {Object} options
-     * @param {Function} success - A callback function to be run on success.
-     * @param {Function} failure - A callback function to be run on failure.
-     * 
-     * @return {String} - The Cloud Host URL
-     */
-    export function act(options: {}, success: SuccessCallback, failure: Function):String;
-
-    /**
-     * @param {Object} options
-     * @param {Function} success - A callback function to be run on success.
-     * @param {Function} failure - A callback function to be run on failure.
-     */
-    export function auth(options: {}, success: SuccessCallback, failure: FailureCallback);
-
-    /**
-     * @param {Object} options
-     * @param {Function} success - A callback function to be run on success.
-     * @param {Function} failure - A callback function to be run on failure.
-     */
-    export function cloud(options: {}, success: SuccessCallback, failure: FailureCallback);
-
-    /**
-     * @param {Object} options
-     * @param {Function} success - A callback function to be run on success.
-     * @param {Function} failure - A callback function to be run on failure.
-     */
-    export function sec(options: {}, success: SuccessCallback, failure: Function);
-
-    /**
-     * @param {Object} options
-     * @param {Function} success - A callback function to be run on success.
-     * @param {Function} failure - A callback function to be run on failure.
-     */
-    export function hash(options: {}, success: SuccessCallback, failure: Function);
-
-    /**
-     * @param {Function} onNotification - A handler for incoming notifications.
-     * @param {Function} regSuccessHandler - A callback invoked upon successful registration.
-     * @param {Function} regErrorHandler - A callback invoked if the registration fails due to an error, which is then passed as a String argument.
-     * @param {Object} pushConfig
-     * @param {String} [pushConfig.alias] - A user-specific identifier
-     * @param {Array} [pushConfig.categories] - A list of categories.
-     */
-    export function push(onNotification: PushNotificationCallback, regSuccessHandler: () => void, regErrorHandler: Function, pushConfig: PushConfig);
-
-    /**
-     * @param {Object} options
-     * @param {String} options.service - The mbaas service name.
-     * @param {Object} options.params - JSON object to send to the mbaas service.
-     * @param {Number} [options.timeout=60000] - Timeout value specified in milliseconds. 
-     */
-    export function mbaas(options: MBaasOptions, success: SuccessCallback, failure: FailureCallback);
-
-    /**
-     * 
-     */
-    export function getCloudURL():String;
-
-    /**
-     * 
-     */
-    export function getFHParams():FHParams;
-
-    /**
-     * 
-     */
-    export function getFHHeaders();
-
-    /**
-     * @param {String|Symbol} type
-     * @param {Function} listener
-     */
-    export function addListener(type: String, listener: Function);
-
-    /**
-     * @param {String|Symbol} type
-     * @param {Function} listener
-     */
-    export function on(type: String, listener: Function);
-
-    /**
-     * @param {String|Symbol} type
-     * @param {Function} listener
-     */
-    export function once(type: String, listener: Function);
 }
 
