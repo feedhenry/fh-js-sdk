@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.17.3 - 2016-11-09 - Niall Donnelly
+
+* Added pre-publish script to package.json to generate the dist folder.
+
 ## 2.17.2 - 2016-11-08 - Niall Donnelly
 * RHMAP-10243 - Applying default values to new submissions.
 
