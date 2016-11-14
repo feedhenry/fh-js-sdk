@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.17.4 - 2016-11-09 - Niall Donnelly
+
+* Added getUID function to public $fh.sync API.
+
 ## 2.17.3 - 2016-11-09 - Niall Donnelly
 
 * Added pre-publish script to package.json to generate the dist folder.
