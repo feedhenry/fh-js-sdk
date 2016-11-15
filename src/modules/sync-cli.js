@@ -1278,6 +1278,7 @@ module.exports = {
   manage: self.manage,
   notify: self.notify,
   doList: self.list,
+  getUID: self.getUID,
   doCreate: self.create,
   doRead: self.read,
   doUpdate: self.update,
