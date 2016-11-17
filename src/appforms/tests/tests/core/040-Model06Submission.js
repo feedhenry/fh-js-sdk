@@ -741,4 +741,280 @@ describe("Submission model", function() {
         });
       });
     });
+
+  describe("Submissions values should be removed from hidden fields", function() {
+
+    var testHidingFieldsForm = {
+      "_id":"582dbc9009ce8d9c6e63f532",
+      "name":"hiddenvalue",
+      "pageRules":[
+        {
+          "type":"skip",
+          "_id":"582dbe8209ce8d9c6e63f538",
+          "targetPage":[
+            "582dbce709ce8d9c6e63f535"
+          ],
+          "ruleConditionalStatements":[
+            {
+              "sourceField":"582dbce709ce8d9c6e63f533",
+              "restriction":"is",
+              "sourceValue":"hidepage",
+              "_id":"582dbe8209ce8d9c6e63f539"
+            }
+          ],
+          "ruleConditionalOperator":"and",
+          "relationType":"and"
+        }
+      ],
+      "fieldRules":[
+        {
+          "type":"hide",
+          "_id":"582dbda67ae62c9b6e4afedc",
+          "targetField":[
+            "582dbce709ce8d9c6e63f534"
+          ],
+          "ruleConditionalStatements":[
+            {
+              "sourceField":"582dbce709ce8d9c6e63f533",
+              "restriction":"is",
+              "sourceValue":"hidenumber",
+              "_id":"582dbda67ae62c9b6e4afedd"
+            }
+          ],
+          "ruleConditionalOperator":"and",
+          "relationType":"and"
+        },
+        {
+          "type":"hide",
+          "_id":"582dbda67ae62c9b6e4afede",
+          "targetField":[
+            "582dbce709ce8d9c6e63f537"
+          ],
+          "ruleConditionalStatements":[
+            {
+              "sourceField":"582dbce709ce8d9c6e63f533",
+              "restriction":"is",
+              "sourceValue":"hidefile",
+              "_id":"582dbda67ae62c9b6e4afedf"
+            }
+          ],
+          "ruleConditionalOperator":"and",
+          "relationType":"and"
+        }
+      ],
+      "pages":[
+        {
+          "_id":"582dbc9009ce8d9c6e63f531",
+          "name":"Page 1",
+          "fields":[
+            {
+              "required":true,
+              "type":"text",
+              "name":"Text",
+              "_id":"582dbce709ce8d9c6e63f533",
+              "adminOnly":false,
+              "fieldOptions":{
+                "validation":{
+                  "validateImmediately":true
+                }
+              },
+              "repeating":false,
+              "dataSourceType":"static"
+            },
+            {
+              "required":true,
+              "type":"number",
+              "name":"Number",
+              "_id":"582dbce709ce8d9c6e63f534",
+              "adminOnly":false,
+              "fieldOptions":{
+                "validation":{
+                  "validateImmediately":true
+                }
+              },
+              "repeating":false,
+              "dataSourceType":"static"
+            }
+          ]
+        },
+        {
+          "name":"Page 2",
+          "_id":"582dbce709ce8d9c6e63f535",
+          "fields":[
+            {
+              "required":true,
+              "type":"text",
+              "name":"Text 2",
+              "_id":"582dbce709ce8d9c6e63f536",
+              "adminOnly":false,
+              "fieldOptions":{
+                "validation":{
+                  "validateImmediately":true
+                }
+              },
+              "repeating":false,
+              "dataSourceType":"static"
+            },
+            {
+              "required":true,
+              "type":"file",
+              "name":"File",
+              "_id":"582dbce709ce8d9c6e63f537",
+              "adminOnly":false,
+              "fieldOptions":{
+                "validation":{
+                  "validateImmediately":true
+                }
+              },
+              "repeating":false,
+              "dataSourceType":"static"
+            }
+          ]
+        }
+      ],
+      "lastUpdated":"2016-11-17T14:28:18.397Z",
+      "dateCreated":"2016-11-17T14:20:00.607Z",
+      "lastDataRefresh":"2016-11-17T14:28:18.397Z",
+      "pageRef":{
+        "582dbc9009ce8d9c6e63f531":0,
+        "582dbce709ce8d9c6e63f535":1
+      },
+      "fieldRef":{
+        "582dbce709ce8d9c6e63f533":{
+          "page":0,
+          "field":0
+        },
+        "582dbce709ce8d9c6e63f534":{
+          "page":0,
+          "field":1
+        },
+        "582dbce709ce8d9c6e63f536":{
+          "page":1,
+          "field":0
+        },
+        "582dbce709ce8d9c6e63f537":{
+          "page":1,
+          "field":1
+        }
+      },
+      "lastUpdatedTimestamp":1479392898397
+    };
+
+    function getFormSubmission(cb) {
+      new appForm.models.Form({
+        formId: "582dbc9009ce8d9c6e63f532",
+        rawMode: true,
+        rawData: testHidingFieldsForm
+      }, function(err, form) {
+        assert.ok(!err, "Expected no error getting a form", err);
+
+        cb(err, form.newSubmission());
+      });
+    }
+
+    function addValue(fieldId, value, submission, cb) {
+
+      //Adding a value for the number field.
+      submission.addInputValue({
+        fieldId: fieldId,
+        value: value
+      }, function(err) {
+        assert.ok(!err, "Expected no error when adding a value", err);
+
+        return cb(err, submission);
+      });
+    }
+
+    it("Hiding a field should remove a field value", function(done) {
+
+      async.waterfall([
+        async.apply(getFormSubmission),
+        //Adding a number value to the number field. This should be removed after hiding.
+        async.apply(addValue, "582dbce709ce8d9c6e63f534", 22),
+        //Using the hidenumber value to hide the number field on page 2
+        async.apply(addValue, "582dbce709ce8d9c6e63f533", "hidenumber"),
+        function (submission, cb) {
+          //The number value should still be there - users may unhide the field at any point when editing the form.
+          assert.equal(22, submission.getFormFields()[0].fieldValues[0]);
+          cb(null, submission);
+        },
+        function submitForm(submission, cb) {
+          submission.submit(function(err) {
+            assert.ok(err, "Expected an error as the submission is not complete");
+
+            //The hidden number field should have been removed
+            var numberFieldValues = _.findWhere(submission.getFormFields(), {fieldId: "582dbce709ce8d9c6e63f534"});
+
+            assert.equal(0, numberFieldValues.fieldValues.length);
+
+            //The text field should be there.
+            var textFieldValues = _.findWhere(submission.getFormFields(), {fieldId: "582dbce709ce8d9c6e63f533"});
+
+            assert.equal("hidenumber", textFieldValues.fieldValues[0]);
+            cb();
+          });
+        }
+      ], done);
+    });
+
+    it("Hiding a Page should remove values in all fields in that page", function(done) {
+      var textValue = "sometextvalue";
+      var fileName = "testhiddenfieldfile.txt";
+      var fileSystem = appForm.utils.fileSystem;
+
+      async.waterfall([
+        function createTextFile(cb){
+          fileSystem.save(fileName, "This file is going to be removed", function(err) {
+            assert.ok(!err, "Expected no error " + err);
+            cb(err);
+          });
+        },
+        async.apply(getFormSubmission),
+        async.apply(addValue, "582dbce709ce8d9c6e63f536", textValue),
+        function readTextFile(submission, cb){
+          fileSystem.readAsFile(fileName, function(err, file){
+            assert.ok(!err, "Expected no error " + err);
+            assert.ok(file instanceof File, "Expected a file instance.");
+            cb(err, submission, file);
+          });
+        },
+        function(submission, file, cb) {
+          addValue("582dbce709ce8d9c6e63f537", file, submission, cb);
+        },
+        function (submission, cb) {
+          //The number value should still be there - users may unhide the field at any point when editing the form.
+          var formFields = submission.getFormFields();
+          assert.equal(textValue, formFields[0].fieldValues[0]);
+
+          //Expecting a file value to be saved
+          assert.ok(formFields[1].fieldValues[0].hashName, "Expected A File Hash Name");
+
+          cb(null, submission);
+        },
+        //Applying a value to the text field to hide the page
+        async.apply(addValue, "582dbce709ce8d9c6e63f533", "hidepage"),
+        function submitForm(submission, cb) {
+          submission.submit(function(err) {
+            assert.ok(err, "Expected an error as the submission is not complete");
+
+            var formFields = submission.getFormFields();
+            //The hidden text field in the hidden page should be empty.
+            var textFieldValues = _.findWhere(formFields, {fieldId: "582dbce709ce8d9c6e63f536"});
+            assert.equal(0, textFieldValues.fieldValues.length);
+
+            //The hidden file field values should be removed.
+            var fileFieldValues =  _.findWhere(formFields, {fieldId: "582dbce709ce8d9c6e63f537"});
+            assert.equal(0, fileFieldValues.fieldValues.length);
+
+            //The text field on page 1 should be there.
+            var originalTextField = _.findWhere(submission.getFormFields(), {fieldId: "582dbce709ce8d9c6e63f533"});
+            assert.equal("hidepage", originalTextField.fieldValues[0]);
+
+            cb();
+          });
+        }
+      ], done);
+    });
+
+  });
 });

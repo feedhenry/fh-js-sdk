@@ -208,50 +208,122 @@ appForm.models = function(module) {
   };
 
   /**
+   * Function for removing any values from a submisson that in hidden fields.
+   *
+   * @param {function} cb  -- Callback function
+   */
+  Submission.prototype.removeHiddenFieldValues = function(cb) {
+    var self = this;
+    async.waterfall([
+      function checkSubmissionRules(callback) {
+        self.checkRules(callback);
+      },
+      function getForm(ruleState, callback) {
+        self.getForm(function(err, formModel) {
+          return callback(err, ruleState, formModel);
+        });
+      },
+      function pruneHiddenFields(ruleState, formModel, callback) {
+        //Getting hidden pages and fields.
+
+        var actions = ruleState.actions;
+
+        var ruleTypes = ["fields", "pages"];
+
+        //For page and field rule actions, find the hidden fields.
+        var allHiddenFieldIds = _.map(ruleTypes, function(ruleType) {
+          var fieldIds = [];
+
+          var hidden = _.map(actions[ruleType] || {}, function(ruleAction, fieldOrPageId) {
+            if (ruleAction.action === 'hide') {
+              return fieldOrPageId;
+            } else {
+              return null;
+            }
+          });
+
+          //If it is a hidden page, need to check for all fields that are in the page.
+          //All of these fields are considered hidden.
+          if(ruleType === 'pages') {
+            fieldIds = _.map(hidden, function(pageId) {
+              var pageModel = formModel.getPageModelById(pageId) || {};
+
+              return pageModel.fieldsIds;
+            });
+          } else {
+            fieldIds = hidden;
+          }
+
+          return _.compact(_.flatten(fieldIds));
+        });
+
+        allHiddenFieldIds = _.flatten(allHiddenFieldIds);
+
+        //Now remove any values from from the submission containing hidden fields
+        async.forEachSeries(allHiddenFieldIds, function(fieldId, cb) {
+          self.removeFieldValue(fieldId, null, cb);
+        }, function(err){
+          if(err) {
+            $fh.forms.log.e("Error removing fields", err);
+          }
+
+          return callback(err);
+        });
+
+      }
+    ], cb);
+  };
+
+  /**
    * submit current submission to remote
    * @param  {Function} cb [description]
    * @return {[type]}      [description]
    */
   Submission.prototype.submit = function(cb) {
-    var that = this;
+    var self = this;
     $fh.forms.log.d("Submission submit: ");
     var targetStatus = 'pending';
-    var validateResult = true;
 
-    this.set('timezoneOffset', appForm.utils.getTime(true));
-    this.pruneNullValues();
-    this.pruneRemovedFields(function(err) {
-      if (err) {
-        $fh.forms.log.e("Submission submit validateForm: Error removing deleted fields from submission ", err);
-        cb(err);
-      } else {
-        that.performValidation(function(err, res) {
+    self.set('timezoneOffset', appForm.utils.getTime(true));
+    self.pruneNullValues();
+
+    async.waterfall([
+      function(callback) {
+        self.removeHiddenFieldValues(callback);
+      },
+      function(callback) {
+        self.pruneRemovedFields(callback);
+      },
+      function(callback) {
+        self.performValidation(function(err, validationResult) {
           if (err) {
             $fh.forms.log.e("Submission submit validateForm: Error validating form ", err);
-            cb(err);
-          } else {
-            $fh.forms.log.d("Submission submit: validateForm. Completed result", res);
-            var validation = res.validation;
-            if (validation.valid) {
-              $fh.forms.log.d("Submission submit: validateForm. Completed Form Valid", res);
-              that.set('submitDate', new Date());
-              that.changeStatus(targetStatus, function(error) {
-                if (error) {
-                  cb(error);
-                } else {
-                  that.emit('submit');
-                  cb(null, null);
-                }
-              });
-            } else {
-              $fh.forms.log.d("Submission submit: validateForm. Completed Validation error", res);
-              that.emit('validationerror', validation);
-              cb('Validation error');
-            }
           }
+
+          return callback(err, validationResult);
         });
+      },
+      function(validationResult, callback) {
+        $fh.forms.log.d("Submission submit: validateForm. Completed result", validationResult);
+        var validation = validationResult.validation || {};
+        if (validation.valid) {
+          $fh.forms.log.d("Submission submit: validateForm. Completed Form Valid", validationResult);
+          self.set('submitDate', new Date());
+          self.changeStatus(targetStatus, function(error) {
+            if (error) {
+              callback(error);
+            } else {
+              self.emit('submit');
+              callback(null, null);
+            }
+          });
+        } else {
+          $fh.forms.log.d("Submission submit: validateForm. Completed Validation error", validationResult);
+          self.emit('validationerror', validation);
+          callback('Validation error');
+        }
       }
-    });
+    ], cb);
   };
   Submission.prototype.getUploadTask = function(cb) {
     var taskId = this.getUploadTaskId();
@@ -854,7 +926,7 @@ appForm.models = function(module) {
       targetArr = this.getInputValueObjectById(fieldId).fieldValues;
     }
     //If no index is supplied, all values are removed.
-    if (typeof index === 'undefined') {
+    if (index === null || typeof index === 'undefined') {
       valsRemoved = targetArr.splice(0, targetArr.length);
     } else {
       if (targetArr.length > index) {
