@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.17.6 - 2016-11-23 - Alan Moran
+
+* Allow $fh.auth to work from studio preview
+
 ## 2.17.4 - 2016-11-09 - Niall Donnelly
 
 * Added getUID function to public $fh.sync API.
