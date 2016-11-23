@@ -17,6 +17,12 @@ function callAuthEndpoint(endpoint, data, opts, success, fail){
     path = cloud.getCloudHostUrl() + constants.boxprefix + "admin/authpolicy/" + endpoint;
   }
 
+  // Detect if app is being previewed in the studio
+  // If so, don't use cloud host URL as $fh.auth will get 404
+  if(app_props.studio){
+    path = document.location.origin + constants.boxprefix + "admin/authpolicy/" + endpoint;
+  }
+
   ajax({
     "url": path,
     "type": "POST",
@@ -62,7 +68,7 @@ var auth = function(opts, success, fail) {
       req.clientToken = opts.clientToken;
       var cloudHost = cloud.getCloudHost();
       if(cloudHost.getEnv()){
-        req.environment = cloudHost.getEnv(); 
+        req.environment = cloudHost.getEnv();
       }
       if (opts.endRedirectUrl) {
         req.endRedirectUrl = opts.endRedirectUrl;
