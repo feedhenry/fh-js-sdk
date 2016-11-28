@@ -40,17 +40,17 @@ var load = function(cb) {
   }
 
   var config_url = url_params.fhconfig || consts.config_js;
-  ajax({
+  //fh v2 only
+  if(window.fh_app_props) {
+    return setProps(window.fh_app_props);
+  }
+  var ajaxOpts = {
     url: config_url,
     dataType: "json",
     success: function(data) {
       logger.debug("fhconfig = " + JSON.stringify(data));
       //when load the config file on device, because file:// protocol is used, it will never call fail call back. The success callback will be called but the data value will be null.
       if (null == data) {
-        //fh v2 only
-        if(window.fh_app_props){
-          return setProps(window.fh_app_props);
-        }
         return cb(new Error("app_config_missing"));
       } else {
 
@@ -58,14 +58,11 @@ var load = function(cb) {
       }
     },
     error: function(req, statusText, error) {
-      //fh v2 only
-      if(window.fh_app_props){
-        return setProps(window.fh_app_props);
-      }
       logger.error(consts.config_js + " Not Found");
       cb(new Error("app_config_missing"));
     }
-  });
+  };
+  ajax(ajaxOpts);
 };
 
 var setAppProps = function(props) {
