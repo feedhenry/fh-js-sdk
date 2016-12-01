@@ -1,9 +1,9 @@
-// Type definitions for fh-js-sdk 2.17.5
-// Project: fh-js-sdk
+// Type definitions for fh-js-sdk 2.18.0
+// Project: https://github.com/feedhenry/fh-js-sdk
 // Definitions by: Aiden Keating <akeating@redhat.com>
 
-/** @module fh-js-sdk */
-declare module 'fh-js-sdk' {
+/** @module FeedHenry */
+declare module FeedHenry {
 
     /**
      * Interface for the object with the metadata added by the FH SDK for each cloud request.
@@ -11,13 +11,13 @@ declare module 'fh-js-sdk' {
      * @type FHParams
      */
     export interface FHParams {
-        appid?:string;
-        appkey?:string;
-        projectid?:string;
-        cuid?:string;
-        destination?:string;
-        sdk_version?:string;
-        connectiontag?:string;
+        appid?: string;
+        appkey?: string;
+        projectid?: string;
+        cuid?: string;
+        destination?: string;
+        sdk_version?: string;
+        connectiontag?: string;
     }
 
     /**
@@ -26,32 +26,84 @@ declare module 'fh-js-sdk' {
      * @type PushNotificationData
      */
     export interface PushNotificationData {
-        alert:string;
-        sound:string;
-        badge:string;
-        coldstart:boolean;
-        payload:{};
+        alert: string;
+        sound: string;
+        badge: string;
+        coldstart: boolean;
+        payload: {};
     }
 
     /**
      * Interface for the configuration object provided to the push command.
      * 
-     * @type PushConfig
+     * @type PushOptions
      */
-    export interface PushConfig {
-        alias:string;
-        categories:Array<string>;
+    export interface PushOptions {
+        alias: string;
+        categories: string[];
     }
 
     /**
      * Interface for the default error object used with the error callback in the SDK.
      * 
-     * @type FailureCallbackError
+     * @type DefaultCallbackError
      */
-    export interface FailureCallbackError {
-        status:number;
-        message:string;
-        error:any;
+    export interface DefaultCallbackError {
+        status: number;
+        message: string;
+        error: any;
+    }
+
+    /**
+     * Interface for the options provided to the auth function.
+     * 
+     * @type AuthOptions
+     */
+    export interface AuthOptions {
+        policyId: string;
+        clientToken: string; 
+        endRedirectUrl?: string; 
+        params?: any;
+    }
+
+    /**
+     * Interface for the options provided to the cloud function.
+     * 
+     * @type CloudOptions
+     */
+    export interface CloudOptions {
+        path: string;
+        method?: string;
+        contentType?: string;
+        data?: any;
+        timeout?: number;
+    }
+
+    /**
+     * Interface for the options provided to the sec function.
+     * 
+     * @type SecOptions
+     */
+    export interface SecOptions {
+        act: "encrypt" | "decrypt" | "keygen";
+        params: {algorithm: "AES"|"RSA";
+            keysize?: 128 | 256 | 1024 | 2048;
+            plaintext?: string;
+            ciphertext?: string;
+            key?: string;
+            iv?: string
+        }
+    }
+
+    export interface HashOptions {
+        text: string;
+        algorithm?: "MD5" | "SHA1" | "SHA256" | "SHA512";
+    }
+
+    export interface MbaasOptions {
+        service: string;
+        params: any;
+        timeout: number;
     }
 
     /**
@@ -63,7 +115,7 @@ declare module 'fh-js-sdk' {
      * 
      * @returns {Function}
      */
-    export function init(options:any, success:(host:string) => void, failure:(error:any) => void);
+    export function init(options: any, success: (host: string) => void, failure: (error: any) => void);
 
     /**
      * Deprecated - Use $fh.cloud instead
@@ -74,9 +126,7 @@ declare module 'fh-js-sdk' {
      * 
      * @returns {String} - The Cloud Host URL
      */
-    export function act(options:{}, 
-        success:(data:any, status:any, xhr:XMLHttpRequest) => void, 
-        failure:(message:string, error:FailureCallbackError) => void);
+    export function act(options: {}, success: (data: any, status: any, xhr: XMLHttpRequest) => void, failure: (message: string, error: DefaultCallbackError) => void);
 
     /**
      * Authenticate and optionally authorise a user via access rights management.
@@ -85,9 +135,7 @@ declare module 'fh-js-sdk' {
      * @param {Function} success - A callback function to be run on success.
      * @param {Function} failure - A callback function to be run on failure.
      */
-    export function auth(options:{policyId:string, clientToken:string, endRedirectUrl?:string, params?:any}, 
-        success:(data:any, status:any, xhr:XMLHttpRequest) => void, 
-        failure:(message:string, error:FailureCallbackError) => void);
+    export function auth(options: AuthOptions, success: (data:any, status:any, xhr:XMLHttpRequest) => void, failure: (message:string, error: DefaultCallbackError) => void);
 
     /**
      * Call any cloud URLs which have been defined in the Cloud App using AJAX.
@@ -96,9 +144,7 @@ declare module 'fh-js-sdk' {
      * @param {Function} success - A callback function to be run on success.
      * @param {Function} failure - A callback function to be run on failure.
      */
-    export function cloud(options:{path:string, method?:string, contentType?:string, data?:any, timeout?:number}, 
-        success:(data:any, status:any, xhr:XMLHttpRequest) => void, 
-        failure:(message:string, error:FailureCallbackError) => void);
+    export function cloud(options: CloudOptions, success: (data: any, status: any, xhr: XMLHttpRequest) => void, failure: (message: string, error: DefaultCallbackError) => void);
 
     /**
      * Key pair generation and data encryption and decryption.
@@ -106,23 +152,27 @@ declare module 'fh-js-sdk' {
      * @param {Object} options
      * @param {String} options.act - One of 'hash'|'encrypt'|'decrypt'|'keygen'.
      * @param {Object} options.params - Options for the chosen act.
+     * @param {String} options.params.algorithm - One of 'AES'|'RSA' (RSA only supports encrypt act).
+     * @param {String} [options.params.keysize] - Required for keygen act.
+     * @param {String} [options.params.plaintext] - Required for encrypt act.
+     * @param {String} [options.params.key] - Required for AES encrypt and decrypt.
+     * @param {String} [options.params.iv] - Initialization vector. Required for AES encrypt and decrypt acts.
+     * @param {String} [options.params.ciphertext] - Required for AES decrypt act.
      * @param {Function} success - A callback function to be run on success.
      * @param {Function} failure - A callback function to be run on failure.
      */
-    export function sec(options:{act:"hash"|"encrypt"|"decrypt"|"keygen", params:any}, 
-        success:Function, failure:(message:string, 
-        error:any, params:any) => void);
+    export function sec(options: SecOptions, success: Function, failure: (message: string, error: any, params: any) => void);
 
     /**
      * Generate hash value of a string.
      * 
      * @param {Object} options
+     * @param {String} options.text - String to hash.
+     * @param {String} [options.algorithm=MD5] - Hashing algorithm.
      * @param {Function} success - A callback function to be run on success.
      * @param {Function} failure - A callback function to be run on failure.
      */
-    export function hash(options:{text:string, algorithm?:string}, 
-        success:(hash:{hashvalue:string}) => void, 
-        failure: (err:string, options?:any, params?:any) => void);
+    export function hash(options: HashOptions, success: (hash: {hashvalue: string}) => void, failure: (err: string, options?: any, params?: any) => void);
 
     /**
      * Register with the server to start receiving push notifications.
@@ -134,7 +184,7 @@ declare module 'fh-js-sdk' {
      * @param {String} [pushConfig.alias] - A user-specific identifier
      * @param {Array} [pushConfig.categories] - A list of categories.
      */
-    export function push(onNotification:(e:PushNotificationData) => void, regSuccessHandler:() => void, regErrorHandler:(err:string) => void, pushConfig?:PushConfig);
+    export function push(onNotification: (e: PushNotificationData) => void, regSuccessHandler: () => void, regErrorHandler: (err: string) => void, pushConfig?: PushOptions);
 
     /**
      * Call MBaaS service endpoints.
@@ -144,23 +194,21 @@ declare module 'fh-js-sdk' {
      * @param {Object} options.params - JSON object to send to the mbaas service.
      * @param {Number} [options.timeout=60000] - Timeout value specified in milliseconds. 
      */
-    export function mbaas(options:{service:string, params:any, timeout:number}, 
-        success:(data:any, status:any, xhr:XMLHttpRequest) => void, 
-        failure:(message:string, error:FailureCallbackError) => void);
+    export function mbaas(options: MbaasOptions, success: (data: any, status: any, xhr: XMLHttpRequest) => void, failure: (message: string, error: DefaultCallbackError) => void);
 
     /**
      * Get the URL of the cloud app that the current client app is communicating with.
      * 
      * @returns {String}
      */
-    export function getCloudURL():string;
+    export function getCloudURL(): string;
 
     /**
      * Return the metadata added by the FH SDK for each cloud request.
      * 
      * @returns {Object}
      */
-    export function getFHParams():FHParams;
+    export function getFHParams(): FHParams;
 
     /**
      * @returns {Object}
@@ -207,9 +255,9 @@ declare module 'fh-js-sdk' {
         /**
          * Interface for the options object provided to the init function.
          * 
-         * @interface SyncDefaults
+         * @interface SyncOptions
          */
-        interface SyncDefaults {
+        interface SyncOptions {
             sync_frequency?: number;
             auto_sync_local_updates?: boolean;
             notify_client_storage_failed?: boolean;
@@ -227,7 +275,7 @@ declare module 'fh-js-sdk' {
             crashed_count_wait?: number;
             resend_crashed_updates?: boolean;
             sync_active?: boolean;
-            storage_strategy?: string;
+            storage_strategy?: "html5-filesystem" | "dom" | "webkit-sqlite" | "indexed-db";
             file_system_quota?: number;
             has_custom_sync?: boolean;
             icloud_backup?: boolean;
@@ -268,7 +316,7 @@ declare module 'fh-js-sdk' {
          * @param {Boolean} [options.has_custom_sync=null] - If the app has legacy custom cloud sync function (the app implemented the data CRUDL operations in main.js file in FH V2 apps), it should be set to true. If set to false, the default mbaas sync implementation will be used. When set to null or undefined, a check will be performed to determine which implementation to use.
          * @param {Boolean} [options.icloud_backup=false] - iOS only. If set to true, the file will be backed by iCloud.
          */
-        function init(options: SyncDefaults);
+        function init(options: SyncOptions);
 
         /**
          * Register a callback function to be invoked when the sync service has notifications to communicate to the client.
@@ -307,7 +355,7 @@ declare module 'fh-js-sdk' {
          * @param {Object} meta_data
          * @param {Function} callback
          */
-        function manage(datasetId:string, options:SyncDefaults, query_params:any, meta_data:any, callback:() => void);
+        function manage(datasetId: string, options: SyncOptions, query_params: {}, meta_data: {}, callback: () => void);
 
         /**
          * Get a list of the records for the dataset.
@@ -316,7 +364,7 @@ declare module 'fh-js-sdk' {
          * @param {Function} success
          * @param {Function} failure
          */
-        function doList(datasetId:string, success:(dataset:any) => void, failure:(err:string, datasetId:string) => void);
+        function doList(datasetId: string, success: (dataset: any) => void, failure: (err: string, datasetId: string) => void);
 
         /**
          * Update the data associated with the unique id.
@@ -324,9 +372,9 @@ declare module 'fh-js-sdk' {
          * @param {String} datasetId
          * @param {Object} data
          * @param {Function} success
-         * @param {Function} failure
+         * @param {Function} [failure]
          */
-        function doCreate(datasetId:string, data:any, success:(obj:any) => void, failure?:(err:string, datasetId:string) => void);
+        function doCreate(datasetId: string, data: any, success: (obj: any) => void, failure?: (err: string, datasetId: string) => void);
 
         /**
          * Read a single data record.
@@ -336,7 +384,7 @@ declare module 'fh-js-sdk' {
          * @param {Function} success
          * @param {Function} failure
          */
-        function doRead(datasetId:string, uid:string, success:(record:any) => void, failure?:(err:string, datasetId:string) => void);
+        function doRead(datasetId: string, uid: string, success: (record: any) => void, failure?: (err: string, datasetId: string) => void);
 
         /**
          * Update the data associated with the unique id.
@@ -347,7 +395,7 @@ declare module 'fh-js-sdk' {
          * @param {Function} success
          * @param {Function} failure
          */
-        function doUpdate(datasetId:string, uid:string, data:any, success:(obj:any) => void, failure?:(err:string, datasetId:string) => void);
+        function doUpdate(datasetId: string, uid: string, data: any, success: (obj: any) => void, failure?: (err: string, datasetId: string) => void);
 
         /**
          * Delete the data associated with the unique id.
@@ -357,7 +405,7 @@ declare module 'fh-js-sdk' {
          * @param {Function} success
          * @param {Function} failure
          */
-        function doDelete(datasetId:string, uid:string, success:(obj:any) => void, failure?:(err:string, datasetId:string) => void);
+        function doDelete(datasetId: string, uid: string, success: (obj: any) => void, failure?: (err: string, datasetId: string) => void);
 
         /**
          * Start the sync loop if `sync_active` option is set to false.
@@ -366,34 +414,34 @@ declare module 'fh-js-sdk' {
          * @param {Function} success
          * @param {Function} failure
          */
-        function startSync(datasetId: string, success:() => void, failure: Function);
+        function startSync(datasetId: string, success: () => void, failure: Function);
 
         /**
          * Stop the sync loop for a dataset.
          * 
          * @param {String} datasetId
-         * @param {Function} success
-         * @param {Function} failure
+         * @param {Function} [success]
+         * @param {Function} [failure]
          */
-        function stopSync(datasetId:string, success?:() => void, failure?:(err:string, datasetId:string) => void);
+        function stopSync(datasetId: string, success?: () => void, failure?: (err: string, datasetId: string) => void);
 
         /**
          * Run the sync loop almost immediately (within next 500 ms) if `sync_active` is true.
          * 
          * @param {String} datasetId
-         * @param {Function} success
-         * @param {Function} failure
+         * @param {Function} [success]
+         * @param {Function} [failure]
          */
-        function doSync(datasetId:string, success?:() => void, failure?:(err:string, datasetId:string) => void);
+        function doSync(datasetId: string, success?: () => void, failure?: (err: string, datasetId: string) => void);
 
         /**
          * Run the sync loop almost immediately (within next 500 ms) even if `sync_active` is false.
          * 
          * @param {String} datasetId
-         * @param {Function} success
-         * @param {Function} failure
+         * @param {Function} [success]
+         * @param {Function} [failure]
          */
-        function forceSync(datasetId:string, success?:() => void, failure?:(err:string, datasetId:string) => void);
+        function forceSync(datasetId: string, success?: () => void, failure?: (err: string, datasetId: string) => void);
 
         /**
          * List collisions in sync
@@ -402,7 +450,7 @@ declare module 'fh-js-sdk' {
          * @param {Function} success
          * @param {Function} failure
          */
-        function listCollisions(datasetId:string, success:(res:any) => void, failure:(msg:string, err:any) => void);
+        function listCollisions(datasetId: string, success: (res: any) => void, failure: (msg: string, err: any) => void);
 
         /**
          * Remove a collision in sync
@@ -412,92 +460,96 @@ declare module 'fh-js-sdk' {
          * @param {Function} success
          * @param {Function} failure
          */
-        function removeCollision(datasetId:string, collisionHash:string, success:(res:any) => void, failure:(msg:string, err:any) => void);
+        function removeCollision(datasetId: string, collisionHash: string, success: (res: any) => void, failure: (msg: string, err: any) => void);
 
         /**
          * @param {String} datasetId
          * @param {Function} callback
          */
-        function getPending(datasetId:string, callback: () => void);
+        function getPending(datasetId: string, callback: () => void);
 
         /**
          * @param {String} datasetId
          * @param {Function} callback
          */
-        function clearPending(datasetId:string, callback: () => void);
+        function clearPending(datasetId: string, callback: () => void);
 
         /**
          * @param {String} datasetId
          * @param {Function} success
          * @param {Function} failure
          */
-        function getDataSet(datasetId:string, success:(dataset:any) => void, failure:(err:string, datasetId:string) => void);
+        function getDataSet(datasetId: string, success: (dataset: any) => void, failure: (err: string, datasetId: string) => void);
 
         /**
          * @param {String} datasetId
          * @param {Function} success
          * @param {Function} failure
          */
-        function getQueryParams(datasetId:string, success:(queryParams:any) => void, failure:(err:string, datasetId:string) => void);
+        function getQueryParams(datasetId: string, success: (queryParams: any) => void, failure: (err: string, datasetId: string) => void);
 
         /**
          * @param {String} datasetId
          * @param {Function} success
          * @param {Function} failure
          */
-        function setQueryParams(datasetId:string, success:(queryParams:any) => void, failure:(err:string, datasetId:string) => void);
+        function setQueryParams(datasetId: string, success: (queryParams: any) => void, failure: (err: string, datasetId: string) => void);
 
         /**
          * @param {String} datasetId
          * @param {Function} success
          * @param {Function} failure
          */
-        function getMetaData(datasetId:string, success:(queryParams:any) => void, failure:(err:string, datasetId:string) => void);
+        function getMetaData(datasetId: string, success: (queryParams: any) => void, failure: (err: string, datasetId: string) => void);
 
         /**
          * @param {String} datasetId
          * @param {Function} success
          * @param {Function} failure
          */
-        function setMetaData(datasetId:string, metaData:any, success:(metaData:any) => void, failure:(err:string, datasetId:string) => void);
+        function setMetaData(datasetId: string, metaData: any, success: (metaData: any) => void, failure: (err: string, datasetId: string) => void);
 
         /**
          * @param {String} datasetId
          * @param {Function} success
          * @param {Function} failure
          */
-        function getConfig(datasetId:string, success:(config:any) => void, failure:(err:string, datasetId:string) => void);
+        function getConfig(datasetId: string, success: (config: any) => void, failure: (err: string, datasetId: string) => void);
 
         /**
          * @param {String} datasetId
          * @param {Function} success
          * @param {Function} failure
          */
-        function setConfig(datasetId:string, config:any, success:(config:any) => void, failure:(err:string, datasetId:string) => void);
+        function setConfig(datasetId: string, config: any, success: (config: any) => void, failure: (err: string, datasetId: string) => void);
 
         /**
-         * @returns {String}
+         * Produces a SHA1 hash of the provided object (sorted before hash) or string.
+         * 
+         * @param {Object|String} toHash - Object to hash
+         * @returns {String} - SHA1 hash of the provided string or object.
          */
-        function generateHash({}):string;
+        function generateHash(toHash: {} | string): string;
 
         /**
          * @param {String} datasetId
          * @param {Function} success
          * @param {Function} failure
          */
-        function loadDataSet(datasetId:string, success:(dataset:any) => void, failure:() => void);
+        function loadDataSet(datasetId: string, success: (dataset: any) => void, failure: () => void);
 
         /**
          * @param {String} datasetId
          * @param {Function} callback
          */
-        function checkHasCustomSync(datasetId:string, callback:() => void);
+        function checkHasCustomSync(datasetId: string, callback: () => void);
 
         /**
          * @param {String} datasetId
          * @param {Function} callback
          */
-        function clearCache(datasetId:string, callback?:() => void);
+        function clearCache(datasetId: string, callback?: () => void);
     }
 }
 
+export = FeedHenry;
