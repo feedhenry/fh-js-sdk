@@ -35,7 +35,7 @@ var load = function(cb) {
      app_props.host = url_params.url; 
     }
     
-    app_props.local = !!(url_props.host || url_params.url);
+    app_props.local = !!(url_props.host || url_params.url || (props.local && props.host));
     cb(null, app_props);
   }
 
