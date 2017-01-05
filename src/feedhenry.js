@@ -1,3 +1,12 @@
+if ("function" !== typeof Array.prototype.forEach) {
+  // IE8 doesn't have forEach
+  Array.prototype.forEach = function (iter) {
+    var i;
+    for (i = 0; i < this.length; i += 1) {
+      iter.apply(this, [this[i], i, this]);
+    }
+  };
+}
 var constants = require("./modules/constants");
 var events = require("./modules/events");
 var logger = require("./modules/logger");

@@ -242,7 +242,7 @@ ajax.JSONP = function (options) {
     abortTimeout = undefined;
     //todo: remove script
     //$(script).remove()
-    delete window[callbackName]
+    window[callbackName] = undefined; // IE8 won't allow delete here
     ajaxSuccess(data, xhr, options)
   }
 
