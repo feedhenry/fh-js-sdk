@@ -648,8 +648,14 @@ var self = {
                 //Check meta data as well to make sure it contains the correct info
                 self.updateMetaFromNewData(dataset_id, dataSet, res);
 
-
                 if (res.updates) {
+                  // Handle failed sync records
+                  // Don't delete pending key, mark dataset as crashed and don't reset hashes
+                  if(res.updates.failed){
+                    self.consoleLog("Some updates have failed to apply ::records= " + JSON.stringify(res.updates.failed, null, 2));
+                    self.markInFlightAsCrashed(dataSet);
+                  }
+
                   var acknowledgements = [];
                   self.checkUidChanges(dataSet, res.updates.applied);
                   processUpdates(res.updates.applied, self.notifications.REMOTE_UPDATE_APPLIED, acknowledgements);
