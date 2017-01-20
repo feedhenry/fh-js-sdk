@@ -70,6 +70,43 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
     syncClient.stopSync(dataSetId, done, done);
   });
 
+  describe("test doCloudCall", function() {
+    var params = {
+      dataset_id: 'test_dataset_id',
+      req: {}
+    };
+    it("success called for 200 response", function(done) {
+      syncClient.doCloudCall(params, function success() {
+        return done();
+      }, function failure(msg, err) {
+        console.error(err);
+        throw 'failure called instead of success - ' + msg;
+      });
+      requests[0].respond(200, {}, '');
+    });
+
+    it("failure called for 500 response", function(done) {
+      syncClient.doCloudCall(params, function success() {
+        throw 'success called instead of failure';
+      }, function failure(msg, err) {
+        return done();
+      });
+      requests[0].respond(500, {}, '');
+    });
+
+    it("failure called for exception during xhr", function(done) {
+      xhr.onCreate = function() {
+        throw 'Deliberate Exception being thrown in xhr.onCreate';
+      };
+      syncClient.doCloudCall(params, function success() {
+        throw 'success called instead of failure for exception';
+      }, function failure(msg, err) {
+        expect(msg).to.equal('Exception in doCloudCall - Deliberate Exception being thrown in xhr.onCreate');
+        return done();
+      });
+    });
+  });
+
   it("load initial dataset from remote", function(done){
     //since we want to check what requests have been sent and their data,
     //we turn off sync and use forceSync to control sync loop
