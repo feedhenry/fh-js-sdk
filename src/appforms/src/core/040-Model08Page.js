@@ -2,6 +2,7 @@
  * One form contains multiple pages
  */
 appForm.models = function (module) {
+
   var Model = appForm.models.Model;
   function Page(opt, parentForm) {
     if (typeof opt === 'undefined' || typeof parentForm === 'undefined') {
@@ -50,12 +51,23 @@ appForm.models = function (module) {
     }
     return false;
   };
+
+
+  /**
+   * Getting a list of sections for this page if the page contains any section breaks.
+   *
+   *
+   * @returns {*}
+   */
   Page.prototype.getSections=function(){ //Checking for any sections
     var sectionList={};
-    var currentSection = null;
+    var currentSectionId = null;
     var sectionBreaksExist = this.checkForSectionBreaks();
     var insertSectionBreak = false;
 
+    var pageId = this.get("_id");
+
+    //If there is a single section break in the page, then we need to render section breaks.
     if(sectionBreaksExist){
       //If there are section breaks, the first field in the form must be a section break. If not, add a placeholder
       var firstField = this.form.getFieldModelById(this.fieldsIds[0]);
@@ -64,28 +76,30 @@ appForm.models = function (module) {
         insertSectionBreak = true;
       }
     } else {
+      //No section breaks exist in the page, so no need to render any section breaks.
+      //We can just render the fields.
       return null;
     }
 
-    for (var i=0;i<this.fieldsIds.length;i++){
-      var fieldModel = this.form.getFieldModelById(this.fieldsIds[i]);
+    //Iterating through the fields in the page and building a list of section breaks as required.
+    for (var fieldModelIndex = 0; fieldModelIndex < this.fieldsIds.length; fieldModelIndex++){
+      var fieldModel = this.form.getFieldModelById(this.fieldsIds[fieldModelIndex]);
 
-      if(insertSectionBreak && i === 0){ //Adding a first section.
-        currentSection = "sectionBreak" + i;
-        sectionList[currentSection] = sectionList[currentSection] ? sectionList[currentSection] : {fields: []};
-        sectionList[currentSection].title = "Section " + (i+1);
+      if(insertSectionBreak && fieldModelIndex === 0){ //Adding a first section.
+        currentSectionId = "sectionBreak" + pageId + "0";
+        sectionList[currentSectionId] = sectionList[currentSectionId] ? sectionList[currentSectionId] : {fields: []};
+        sectionList[currentSectionId].title = "Section " + (fieldModelIndex+1);
       }
 
-      if(currentSection !== null && fieldModel.getType() !== "sectionBreak"){
-        sectionList[currentSection].fields.push(fieldModel);
+      if(currentSectionId !== null && fieldModel.getType() !== "sectionBreak"){
+        sectionList[currentSectionId].fields.push(fieldModel);
       }
 
       if(fieldModel.getType() === "sectionBreak"){
-        currentSection = "sectionBreak" + i;
-        sectionList[currentSection] = sectionList[currentSection] ? sectionList[currentSection] : {fields: []};
-        sectionList[currentSection].title = fieldModel.get('name', "Section " + (i+1));
-        sectionList[currentSection].description = fieldModel.get('helpText', "Section " + (i+1));
-        sectionList[currentSection].fields.push(fieldModel);
+        currentSectionId = fieldModel.get('_id');
+        sectionList[currentSectionId] = sectionList[currentSectionId] ? sectionList[currentSectionId] : {fields: []};
+        sectionList[currentSectionId].title = fieldModel.get('name', "Section " + (fieldModelIndex+1));
+        sectionList[currentSectionId].description = fieldModel.get('helpText', "Section " + (fieldModelIndex+1));
       }
     }
 
