@@ -1,25 +1,23 @@
 Lawnchair.adapter('html5-filesystem', (function(global){
-
-  var FileError = global.FileError;
-
+  
   var fail = function( e ) {
     var msg;
     var show = true;
-    switch (e.code) {
-      case FileError.QUOTA_EXCEEDED_ERR:
+    switch (e.name) {
+      case "QuotaExceededError":
         msg = 'QUOTA_EXCEEDED_ERR';
         break;
-      case FileError.NOT_FOUND_ERR:
+      case "NotFoundError":
         msg = 'NOT_FOUND_ERR';
         show = false;
         break;
-      case FileError.SECURITY_ERR:
+      case "SecurityError":
         msg = 'SECURITY_ERR';
         break;
-      case FileError.INVALID_MODIFICATION_ERR:
+      case "InvalidModificationError":
         msg = 'INVALID_MODIFICATION_ERR';
         break;
-      case FileError.INVALID_STATE_ERR:
+      case "InvalidStateError":
         msg = 'INVALID_STATE_ERR';
         break;
       default:
