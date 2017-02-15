@@ -1,30 +1,7 @@
 Lawnchair.adapter('html5-filesystem', (function(global){
   
   var fail = function( e ) {
-    var msg;
-    var show = true;
-    switch (e.name) {
-      case "QuotaExceededError":
-        msg = 'QUOTA_EXCEEDED_ERR';
-        break;
-      case "NotFoundError":
-        msg = 'NOT_FOUND_ERR';
-        show = false;
-        break;
-      case "SecurityError":
-        msg = 'SECURITY_ERR';
-        break;
-      case "InvalidModificationError":
-        msg = 'INVALID_MODIFICATION_ERR';
-        break;
-      case "InvalidStateError":
-        msg = 'INVALID_STATE_ERR';
-        break;
-      default:
-        msg = 'Unknown Error';
-        break;
-    };
-    if ( console && show ) console.error( e, msg );
+    if ( console ) console.error(e, e.name);
   };
 
   var ls = function( reader, callback, entries ) {
