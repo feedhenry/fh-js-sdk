@@ -7,6 +7,7 @@ FieldMapView = FieldView.extend({
     this.mapData = [];
     this.markers = [];
     this.allMapInitFunc = [];
+    this.loadingIntervals = [];
     this.mapSettings = {
       mapWidth: '100%',
       mapHeight: '300px',
@@ -61,50 +62,116 @@ FieldMapView = FieldView.extend({
       }
     }
   },
+  getPosition: function(cb) {
+
+    if(!navigator || !navigator.geolocation || !navigator.geolocation.getCurrentPosition) {
+      return cb(new Error("No Location Available"));
+    }
+
+    /**
+     *
+     * A location was found.
+     *
+     * @param position (See https://github.com/apache/cordova-plugin-geolocation/tree/rel/2.4.0#position)
+     */
+    function handleLocationSuccess(position) {
+      return cb(null, position);
+    }
+
+    /**
+     *
+     * Handling the error case from getting a location
+     *
+     * @param {PositionError} error
+     * @param {string}        error.code    - The Location Error Code
+     * @param {string}        error.message - The Location Error Message
+     */
+    function handleLocationError(error) {
+      return cb(error);
+    }
+
+    navigator.geolocation.getCurrentPosition(handleLocationSuccess, handleLocationError, { timeout: 20000, enableHighAccuracy: true });
+  },
+  stopLoadingText: function(index) {
+    clearInterval(this.loadingIntervals[index]);
+  },
+  startLoadingText: function(index) {
+    var wrapperObj = this.getWrapper(index);
+    var mapCanvas = $(wrapperObj.find('.fh_map_canvas')[0]);
+    mapCanvas.html("Getting Position ");
+
+    this.stopLoadingText(index);
+
+    this.loadingIntervals[index] = setInterval(function() {
+      mapCanvas.html(mapCanvas.html() + ".");
+    }, 1000);
+  },
   onElementShow: function(index) {
     var wrapperObj = this.getWrapper(index);
     var self = this;
 
     var mapCanvas = wrapperObj.find('.fh_map_canvas')[0];
 
-    if($fh.geo){
-      $fh.geo({
-        interval: 0
-      }, function(geoRes) {
-        // Override with geo, otherwise use defaults
-        var location = {
-          lat: geoRes.lat,
-          lon: geoRes.lon
-        };
-        $fh.map({
-          target: mapCanvas,
-          lon: location.lon,
-          lat: location.lat,
-          zoom: self.mapSettings.defaultZoom,
-          draggable: !self.readonly
-        }, function(res) {
-          self.maps[index] = res.map;
+    self.startLoadingText(index);
 
-          var marker = new google.maps.Marker({
-            position: self.maps[index].getCenter(),
-            map: self.maps[index],
-            draggable: !self.readonly,
-            animation: google.maps.Animation.DROP,
-            title: 'Drag this to set position'
-          });
-          self.markers[index] = marker;
-          self.mapData[index] = {
-            'lat': marker.getPosition().lat(),
-            'long': marker.getPosition().lng(),
-            'zoom': self.mapSettings.defaultZoom
-          };
-          self.onMapInit(index);
-        }, function(err) {
-          $fh.forms.log.e("Error getting map: ", err);
-          self.onMapInit(index);
+    self.getPosition(function(err, position) {
+      if(err) {
+        $fh.forms.log.e("Error getting location: ", err.message);
+        self.setErrorText(index, err.message);
+      } else {
+        self.clearError(index);
+      }
+
+      self.stopLoadingText(index);
+      position = position || {};
+      var coordinates = position.coords || {};
+
+      var location = {
+        lat: coordinates.latitude || self.mapSettings.location.lon,
+        lon: coordinates.longitude || self.mapSettings.location.lat
+      };
+
+      /**
+       * Handling a successful map rendering
+       *
+       * @param mapResponse
+       */
+      function handleMapRenderSuccess(mapResponse) {
+        self.maps[index] = mapResponse.map;
+
+        var marker = new google.maps.Marker({
+          position: self.maps[index].getCenter(),
+          map: self.maps[index],
+          draggable: !self.readonly,
+          animation: google.maps.Animation.DROP,
+          title: 'Drag this to set position'
         });
-      });
-    }
+        self.markers[index] = marker;
+        self.mapData[index] = {
+          'lat': marker.getPosition().lat(),
+          'long': marker.getPosition().lng(),
+          'zoom': self.mapSettings.defaultZoom
+        };
+        self.onMapInit(index);
+      }
+
+      /**
+       * Handling Error Rendering Map
+       * @param {string} errorMessage
+       */
+      function handleMapRenderError(errorMessage) {
+        $fh.forms.log.e("Error getting map: ", errorMessage);
+        self.setErrorText(index, errorMessage);
+      }
+
+      $fh.map({
+        target: mapCanvas,
+        lon: location.lon,
+        lat: location.lat,
+        zoom: self.mapSettings.defaultZoom,
+        draggable: !self.readonly
+      }, handleMapRenderSuccess, handleMapRenderError);
+    });
   },
   mapResize: function() {
     var self = this;
