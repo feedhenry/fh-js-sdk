@@ -1165,6 +1165,84 @@ appForm.models = function(module) {
       });
     });
   };
+
+  /**
+   * Function to build the full state of the form.
+   *
+   * This makes it easier for users to integrage the submission state into external applications
+   *
+   * TODO Apply Default Values
+   * TODO Repeating Fields
+   * TODO Applying Rule Values
+   *
+   * This includes:
+   *
+   *   - The current state of all pages and fields. (Whether they are hidden by rules)
+   *   - The current values in the field
+   *
+   */
+  Submission.prototype.buildFullSubmissionState = function(cb) {
+    var self = this;
+
+    //If there is already an active submission state, then there is no need to build it again
+    if (self.submissionState) {
+      return cb(undefined, self.submissionState);
+    }
+
+    //Getting the current values in the submission
+    var formFields = self.getFormFields();
+
+    self.getForm(function(err, form) {
+      if(err) {
+        return cb(err);
+      }
+
+      //Need to merge the form definition with the current value of the submissions.
+      self.submissionState = form.toJSON();
+
+      self.submissionState.pages = _.map(self.submissionState.pages, function(page) {
+        page.fields = _.map(page.fields, function(field) {
+          var formField = _.findWhere(formFields, {fieldId: field._id});
+
+          if (!formField) {
+            formField = {
+              fieldId: field._id,
+              fieldValues: []
+              //Utility function to update the value
+            };
+            formFields.push(formField);
+          }
+
+          field.values = formField.fieldValues;
+
+          //Function for updating a value in a field.
+          //TODO Repeating Fields.
+          field.updateValue = function() {
+            this.values[0] = this.value;
+          };
+
+          // updates value of file type fields
+          field.addFileValue = function(cb) {
+            var params = {
+              fieldId: this._id,
+              value: this.value
+            };
+            self.addInputValue(params, function(err, result) {
+              cb(err, result);
+            });
+          };
+
+          return field;
+        });
+
+        return page;
+      });
+
+      return cb(undefined, self.submissionState);
+    });
+  };
+
+
   Submission.prototype.getRemoteSubmissionId = function() {
     return this.get("submissionId") || this.get('_id');
   };
