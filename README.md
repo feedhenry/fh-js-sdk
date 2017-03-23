@@ -182,3 +182,13 @@ npm login
 ```
 npm publish
 ```
+
+### Generate API doc
+The documentation is generated from `fh-js-sdk.d.ts`. 
+The generated doc is comitted in `doc/` folder and deployed to `gh-pages` so that feedhenry.org and portal documentation can pick it up from a published location.
+
+To publish doc, run the command:
+```
+npm run doc
+```
+Go to [gh-pages](https://github.com/feedhenry/fh-js-sdk/tree/gh-pages) and see recent commit for the publication.

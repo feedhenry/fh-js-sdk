@@ -1,0 +1,250 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>fh-js-sdk</title>
+	<meta name="description" content="">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="assets/js/search.js" data-base=".">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="index.html" class="title">fh-js-sdk</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-only-exported" />
+							<label class="tsd-widget" for="tsd-filter-only-exported">Only exported</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<ul class="tsd-breadcrumb">
+				<li>
+					<a href="globals.html">Globals</a>
+				</li>
+			</ul>
+			<h1> fh-js-sdk</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<div class="tsd-panel tsd-typography">
+				<h1 id="feedhenry-javascript-sdk">FeedHenry JavaScript SDK</h1>
+				<p><a href="https://travis-ci.org/feedhenry/fh-js-sdk"><img src="https://travis-ci.org/feedhenry/fh-js-sdk.svg?branch=use-travis-ci" alt="Build Status"></a></p>
+				<p>The JavaScript SDK allows developers to integrate the FeedHenry Cloud into any web-based solution - desktop websites, mobile websites or a stand-alone JavaScript client.</p>
+				<p>The API is provided in the $fh namespace and uses a common convention for most functions, which takes the format:</p>
+				<pre><code><span class="hljs-meta"><span class="hljs-meta-keyword">$fh</span>.doSomething(parameterObject, successFunction, failureFunction)</span>
+</code></pre><p>Where parameterObject is an ordinary JavaScript object. The successFunction callback is called if the operation was successful and the failureFunction callback is called if the operation fails. All of these arguments are optional. If there is only one function, it is taken as the success function.</p>
+				<p>The successFunction callback is called with one argument, a result object, which is again an ordinary JavaScript object. The failureFunction callback is called with two arguments: an error code string, and an object containing additional error properties (if any).</p>
+				<p>Detailed documentation for the JavaScript SDK&#39;s API can be found here: <a href="http://docs.feedhenry.com/v3/api/app_api">http://docs.feedhenry.com/v3/api/app_api</a></p>
+				<h2 id="using-with-titanium-applications">Using with Titanium Applications</h2>
+				<p>The FeedHenry Javascript SDK is built to work with Titanium applications. To get started, you need to first include the FeedHenry JS SDK, <code>feedhenry.js</code> in your Resources folder, at the root level. You also need to include a <code>fhconfig.js</code> file, which sets configuration properties for initializing the JS SDK. This file is a little different than normal, it should take the format of:</p>
+				<pre><code><span class="hljs-keyword">module</span>.<span class="hljs-keyword">exports</span> = {
+ <span class="hljs-string">"appid"</span>:<span class="hljs-string">"yourAppIdHere"</span>,
+ <span class="hljs-string">"appkey"</span>:<span class="hljs-string">"yourAppKeyHere"</span>,
+ <span class="hljs-string">"connectiontag"</span>:<span class="hljs-string">"yourConnectionTagHere"</span>,
+ <span class="hljs-string">"host"</span>:<span class="hljs-string">"https://YourHost.feedhenry.com"</span>,
+ <span class="hljs-string">"projectid"</span>:<span class="hljs-string">"yourProjectIdHere"</span>
+};
+</code></pre><p>You can then require the FeedHenry SDK from any JavaScript file in your Titanium project, and use it as normal:</p>
+				<pre><code>  <span class="hljs-built_in">var</span> $fh = <span class="hljs-keyword">require</span>(<span class="hljs-string">'feedhenry'</span>);
+  $fh.act <span class="hljs-comment">// ...FeedHenry Calls are now possible</span>
+</code></pre><p>For a practical exampe, see the <a href="https://github.com/feedhenry-training/fh-titanium-example">FeedHenry Titanium example app</a>.</p>
+				<h2 id="building">Building</h2>
+				<p>The JS SDK is now built using <a href="http://browserify.org/">Browserify</a>.</p>
+				<h3 id="development">Development</h3>
+				<p>Because of Browserify, you can write any new functions as normal node modules, and use node&#39;s &quot;require&quot; to load any other modules, or to be consumed by other modules.</p>
+				<h3 id="testing">Testing</h3>
+				<p>Write your tests in test/tests directory. Add the tests to test/browser/suite.js file and run</p>
+				<pre><code>grunt <span class="hljs-built_in">test</span>
+</code></pre><p>This will use mocha and phatomjs to run the tests.</p>
+				<p>In fact, if your module and test don&#39;t require a browser environment, you can just run them purely in node. (You may need to add a new grunt task to run them).</p>
+				<p>To help debugging, you can run</p>
+				<pre><code>grunt <span class="hljs-keyword">local</span>
+</code></pre><p>This will start mock servers locally and you can go to <a href="http://localhost:8200/example/index.html">http://localhost:8200/example/index.html</a> page to debug. You may want to run</p>
+				<pre><code><span class="hljs-attribute">grunt watch</span>
+</code></pre><p>In another terminal window to auto generate the combined js sdk file.</p>
+				<h3 id="testling">Testling</h3>
+				<p>For browser compatibility testing, we use <a href="https://ci.testling.com/">Testling</a>. The project page is here: <a href="https://ci.testling.com/feedhenry/fh-js-sdk">https://ci.testling.com/feedhenry/fh-js-sdk</a>.</p>
+				<p>You can also run testling locally:</p>
+				<pre><code>npm <span class="hljs-keyword">install</span> -g testling
+testling
+</code></pre><p>If testling can not find any browser locally, you either need to add browser paths to your PATH environment variable, or use</p>
+				<pre><code><span class="hljs-attribute">testling -u</span>
+</code></pre><p>and copy the url to a browser.</p>
+				<h3 id="build">Build</h3>
+				<p>When finish developing and testing, run</p>
+				<pre><code><span class="hljs-attribute">grunt</span>
+</code></pre><p>To generate the release builds.</p>
+				<h3 id="updating-the-appforms-template-app">Updating the AppForms Template App</h3>
+				<p>This process should be changed, however, documenting it here.</p>
+				<p>Build the js-sdk as above.
+				clone the AppForms-Template repo</p>
+				<pre><code>git <span class="hljs-keyword">clone</span> <span class="hljs-title">git</span>@github.com:feedhenry/AppForms-Template.git
+</code></pre><p>switch to the feedhenry3 branch</p>
+				<pre><code>git checkout feedhe<span class="hljs-symbol">nry3</span>
+</code></pre><p>copy the appForms-backbone file generated in the js-sdk to the AppForms-Template</p>
+				<pre><code>cp fh-js-sdk/dist/appForms-backbone.js AppForms-Template/client/default/<span class="hljs-class"><span class="hljs-keyword">lib</span>/<span class="hljs-title">appform</span>-<span class="hljs-title">backbone</span>.<span class="hljs-title">js</span></span>
+</code></pre><p>install the node modules in the AppForms-Template</p>
+				<pre><code><span class="hljs-built_in">cd</span> AppForms-Template
+npm install
+</code></pre><p>and run grunt</p>
+				<pre><code><span class="hljs-attribute">grunt</span>
+</code></pre><p>clone the app forms-project-client template app</p>
+				<pre><code>git <span class="hljs-keyword">clone</span> <span class="hljs-title">git</span>://github.com/feedhenry/appforms-project-client.git
+</code></pre><p>copy the resulting lib.min.js to the appforms template</p>
+				<pre><code>cp AppForms-Template/dist/client/default/<span class="hljs-class"><span class="hljs-keyword">lib</span>.<span class="hljs-title">min</span>.<span class="hljs-title">js</span> <span class="hljs-title">appforms</span>-<span class="hljs-title">project</span>-<span class="hljs-title">client</span>/<span class="hljs-title">www</span>/<span class="hljs-title">lib</span>.<span class="hljs-title">min</span>.<span class="hljs-title">js</span></span>
+</code></pre><p>push the updated changes</p>
+				<pre><code>git <span class="hljs-built_in">push</span> <span class="hljs-built_in">origin</span> master
+</code></pre><h2 id="releasing">Releasing</h2>
+				<p>Our SDK is release on <a href="https://www.npmjs.com/package/fh-js-sdk">npmjs</a>. To do a release follow those steps:</p>
+				<h3 id="prepare-release">Prepare release</h3>
+				<ul>
+					<li>Update <code>package.json</code>, <code>npm-shrinkwrap.json</code>, <code> </code> file with the new version number.</li>
+					<li>Update <code>CHANGELOG.md</code> with some JIRA link</li>
+					<li>Do a PR, make sure Travis build passed. Merge.</li>
+					<li>Tag the repository with the new version number:</li>
+				</ul>
+				<pre><code>git <span class="hljs-keyword">tag</span> <span class="hljs-title">-s</span> -a {<span class="hljs-keyword">VERSION</span>} -m '<span class="hljs-keyword">version</span> {<span class="hljs-keyword">VERSION</span>}'   // e.g. {<span class="hljs-keyword">VERSION</span>} format is  '<span class="hljs-number">2.17</span>.<span class="hljs-number">0</span>'
+</code></pre><ul>
+					<li>Push the new release tag on GitHub:</li>
+				</ul>
+				<pre><code>git <span class="hljs-built_in">push</span> <span class="hljs-built_in">origin</span> {TAG}
+</code></pre><ul>
+					<li><a href=".travis.yml#L12-L18">Travis build</a> will generate a relase for you in release tab.</li>
+				</ul>
+				<h3 id="publish-to-npmjs">Publish to npmjs</h3>
+				<ul>
+					<li>Login to npm as <code>feedhenry</code> or make sure your own login is part of the collaborator list in <a href="https://www.npmjs.com/package/fh-js-sdk">fh-js-sdk in npmjs.org</a></li>
+				</ul>
+				<pre><code><span class="hljs-built_in">npm</span> login
+</code></pre><ul>
+					<li>Publish:</li>
+				</ul>
+				<pre><code><span class="hljs-built_in">npm</span> publish
+</code></pre><h3 id="generate-api-doc">Generate API doc</h3>
+				<p>The documentation is generated from <code>fh-js-sdk.d.ts</code>.
+				The generated doc is comitted in <code>doc/</code> folder and deployed to <code>gh-pages</code> so that feedhenry.org and portal documentation can pick it up from a published location.</p>
+				<p>To publish doc, run the command:</p>
+				<pre><code>npm <span class="hljs-keyword">run</span><span class="bash"> doc</span>
+</code></pre><p>Go to <a href="https://github.com/feedhenry/fh-js-sdk/tree/gh-pages">gh-pages</a> and see recent commit for the publication.</p>
+			</div>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class="globals  ">
+						<a href="globals.html"><em>Globals</em></a>
+					</li>
+					<li class=" tsd-kind-external-module">
+						<a href="modules/_fh_js_sdk_d_.html">"fh-<wbr>js-<wbr>sdk.d"</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-module"><span class="tsd-kind-icon">Module</span></li>
+				<li class="tsd-kind-object-literal"><span class="tsd-kind-icon">Object literal</span></li>
+				<li class="tsd-kind-variable"><span class="tsd-kind-icon">Variable</span></li>
+				<li class="tsd-kind-function"><span class="tsd-kind-icon">Function</span></li>
+				<li class="tsd-kind-function tsd-has-type-parameter"><span class="tsd-kind-icon">Function with type parameter</span></li>
+				<li class="tsd-kind-index-signature"><span class="tsd-kind-icon">Index signature</span></li>
+				<li class="tsd-kind-type-alias"><span class="tsd-kind-icon">Type alias</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-enum"><span class="tsd-kind-icon">Enumeration</span></li>
+				<li class="tsd-kind-enum-member"><span class="tsd-kind-icon">Enumeration member</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-enum"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-enum"><span class="tsd-kind-icon">Method</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-interface"><span class="tsd-kind-icon">Interface</span></li>
+				<li class="tsd-kind-interface tsd-has-type-parameter"><span class="tsd-kind-icon">Interface with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-interface"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-interface"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-interface"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-index-signature tsd-parent-kind-interface"><span class="tsd-kind-icon">Index signature</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
+				<li class="tsd-kind-class tsd-has-type-parameter"><span class="tsd-kind-icon">Class with type parameter</span></li>
+				<li class="tsd-kind-constructor tsd-parent-kind-class"><span class="tsd-kind-icon">Constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class"><span class="tsd-kind-icon">Property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class"><span class="tsd-kind-icon">Method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class"><span class="tsd-kind-icon">Accessor</span></li>
+				<li class="tsd-kind-index-signature tsd-parent-kind-class"><span class="tsd-kind-icon">Index signature</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-constructor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited constructor</span></li>
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-inherited"><span class="tsd-kind-icon">Inherited accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-protected"><span class="tsd-kind-icon">Protected accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private property</span></li>
+				<li class="tsd-kind-method tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private method</span></li>
+				<li class="tsd-kind-accessor tsd-parent-kind-class tsd-is-private"><span class="tsd-kind-icon">Private accessor</span></li>
+			</ul>
+			<ul class="tsd-legend">
+				<li class="tsd-kind-property tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static property</span></li>
+				<li class="tsd-kind-call-signature tsd-parent-kind-class tsd-is-static"><span class="tsd-kind-icon">Static method</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="http://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="assets/js/main.js"></script>
+<script>if (location.protocol == 'file:') document.write('<script src="assets/js/search.js"><' + '/script>');</script>
+</body>
+</html>
