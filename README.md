@@ -14,24 +14,6 @@ The successFunction callback is called with one argument, a result object, which
 
 Detailed documentation for the JavaScript SDK's API can be found here: http://docs.feedhenry.com/v3/api/app_api
 
-## Using with Titanium Applications
-The FeedHenry Javascript SDK is built to work with Titanium applications. To get started, you need to first include the FeedHenry JS SDK, `feedhenry.js` in your Resources folder, at the root level. You also need to include a `fhconfig.js` file, which sets configuration properties for initializing the JS SDK. This file is a little different than normal, it should take the format of:
-
-    module.exports = {
-     "appid":"yourAppIdHere",
-     "appkey":"yourAppKeyHere",
-     "connectiontag":"yourConnectionTagHere",
-     "host":"https://YourHost.feedhenry.com",
-     "projectid":"yourProjectIdHere"
-    };
-
-You can then require the FeedHenry SDK from any JavaScript file in your Titanium project, and use it as normal:
-
-  	var $fh = require('feedhenry');
-  	$fh.act // ...FeedHenry Calls are now possible
-
-For a practical exampe, see the [FeedHenry Titanium example app](https://github.com/feedhenry-training/fh-titanium-example).
-
 
 ## Building
 
