@@ -123,7 +123,8 @@ var self = {
     var doManage = function(dataset) {
       self.consoleLog('doManage dataset :: initialised = ' + dataset.initialised + " :: " + dataset_id + ' :: ' + JSON.stringify(options));
 
-      var datasetConfig = self.setOptions(options);
+      var currentDatasetCfg = (dataset.config) ? dataset.config : self.config;
+      var datasetConfig = self.setOptions(currentDatasetCfg, options);
 
       dataset.query_params = query_params || dataset.query_params || {};
       dataset.meta_data = meta_data || dataset.meta_data || {};
@@ -175,13 +176,13 @@ var self = {
     });
   },
 
-  setOptions: function(options) {
+  setOptions: function(config, options) {
     // Make sure config is initialised
-    if( ! self.config ) {
-      self.config = JSON.parse(JSON.stringify(self.defaults));
+    if( ! config ) {
+      config = JSON.parse(JSON.stringify(self.defaults));
     }
 
-    var datasetConfig = JSON.parse(JSON.stringify(self.config));
+    var datasetConfig = JSON.parse(JSON.stringify(config));
     var optionsIn = JSON.parse(JSON.stringify(options));
     for (var k in optionsIn) {
       datasetConfig[k] = optionsIn[k];
@@ -425,7 +426,7 @@ var self = {
     var dataset = self.datasets[dataset_id];
 
     if (dataset) {
-      var fullConfig = self.setOptions(config);
+      var fullConfig = self.setOptions(dataset.config, config);
       dataset.config = fullConfig;
       self.saveDataSet(dataset_id);
       if( success ) {
