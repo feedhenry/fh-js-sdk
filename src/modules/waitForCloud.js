@@ -17,39 +17,12 @@ var init_error = null;
 var ready = function(cb){
   if(is_cloud_ready){
     return cb(null, {host: getCloudHostUrl()});
-  } else {
+  } else if (is_initialising){
     events.once(constants.INIT_EVENT, function(err, host){
       return cb(err, host);
     });
-    if(!is_initialising){
-      is_initialising = true;
-      var fhinit = function(){
-        data.sessionManager.read(function(err, session){
-          //load the persisted sessionToken and set it for the session
-          if(session && session.sessionToken){
-            fhparams.setAuthSessionToken(session.sessionToken);
-          }
-          initializer.init(function(err, initRes){
-            is_initialising = false;
-            if(err){
-              init_error = err;
-              return events.emit(constants.INIT_EVENT, err);
-            } else {
-              init_error = null;
-              is_cloud_ready = true;
-              cloud_host = new CloudHost(initRes.cloud);
-              return events.emit(constants.INIT_EVENT, null, {host: getCloudHostUrl()});
-            }
-          });
-        });
-      };
-      if(typeof window.cordova !== "undefined" || typeof window.phonegap !== "undefined"){
-        //if we are running inside cordova/phonegap, only init after device is ready to ensure the device id is the right one
-        document.addEventListener("deviceready", fhinit, false);
-      } else {
-        fhinit();
-      }
-    }
+  } else {
+    return cb(new Error("SDK not initialized"));
   }
 };
 
@@ -85,6 +58,28 @@ var reset = function(){
   });
 };
 
+var fhinit = function(){
+  is_initialising = true;
+  data.sessionManager.read(function(err, session){
+    //load the persisted sessionToken and set it for the session
+    if(session && session.sessionToken){
+      fhparams.setAuthSessionToken(session.sessionToken);
+    }
+    initializer.init(function(err, initRes){
+      is_initialising = false;
+      if(err){
+        init_error = err;
+        return events.emit(constants.INIT_EVENT, err);
+      } else {
+        init_error = null;
+        is_cloud_ready = true;
+        cloud_host = new CloudHost(initRes.cloud);
+        return events.emit(constants.INIT_EVENT, null, {host: getCloudHostUrl()});
+      }
+    });
+  });
+};
+
 ready(function(error, host){
   if(error){
     if(error.message !== "app_config_missing"){
@@ -103,5 +98,6 @@ module.exports = {
   getCloudHost: getCloudHost,
   getCloudHostUrl: getCloudHostUrl,
   getInitError: getInitError,
-  reset: reset
+  reset: reset,
+  fhinit: fhinit
 };

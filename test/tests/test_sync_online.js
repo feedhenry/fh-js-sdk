@@ -31,10 +31,15 @@ var onSync = function(cb){
 }
 
 describe("test sync framework online with fake XMLHttpRequest", function(){
+  
+  var cloud = require("../../src/modules/waitForCloud");
+  cloud.fhinit();
+  
   this.timeout(10000);
   var header = { "Content-Type": "application/json" };
   var xhr, requests;
   before(function(done){
+
     syncClient.init({
       do_console_log: true,
       sync_frequency: 1,
