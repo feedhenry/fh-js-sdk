@@ -118,6 +118,12 @@ var self = {
   manage: function(dataset_id, opts, query_params, meta_data, cb) {
     self.consoleLog('manage - START');
 
+    // Currently we do not enforce the rule that init() funciton should be called before manage().
+    // We need this check to guard against self.config undefined
+    if (!self.config){
+      self.config = JSON.parse(JSON.stringify(self.defaults));
+    }
+
     var options = opts || {};
 
     var doManage = function(dataset) {
@@ -176,10 +182,20 @@ var self = {
     });
   },
 
+  /**
+   * Sets options for passed in config, if !config then options will be applied to default config.
+   * @param {Object} config - config to which options will be applied
+   * @param {Object} options - options to be applied to the config
+   */
   setOptions: function(config, options) {
     // Make sure config is initialised
     if( ! config ) {
       config = JSON.parse(JSON.stringify(self.defaults));
+    }
+
+    //
+    if( ! self.config ) {
+      self.config = JSON.parse(JSON.stringify(self.defaults));
     }
 
     var datasetConfig = JSON.parse(JSON.stringify(config));
