@@ -15,9 +15,9 @@ module.exports = {
     } else {
       var _mock_uuid_cookie_name = "mock_uuid";
       var uuid = cookies.readCookieValue(_mock_uuid_cookie_name);
-      if(null == uuid){
-          uuid = uuidModule.createUUID();
-          cookies.createCookie(_mock_uuid_cookie_name, uuid);
+      if(!uuid){
+        uuid = uuidModule.createUUID();
+        cookies.createCookie(_mock_uuid_cookie_name, uuid);
       }
       return uuid;
     }
