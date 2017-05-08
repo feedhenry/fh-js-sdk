@@ -1,6 +1,6 @@
 {
   "name": "fh-js-sdk",
-  "version": "2.18.4",
+  "version": "2.18.5",
   "dependencies": {
     "loglevel": {
       "version": "0.6.0",
