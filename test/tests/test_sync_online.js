@@ -15,8 +15,8 @@ chai.use(sinonChai);
 
 //work around phantomjs's issue: https://github.com/ariya/phantomjs/issues/10647
 var fakeNavigator = {};
-for (var i in navigator) { 
-    fakeNavigator[i] = navigator[i];
+for (var i in navigator) {
+  fakeNavigator[i] = navigator[i];
 }
 fakeNavigator.onLine = true;
 navigator = fakeNavigator;
@@ -54,14 +54,14 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
       requests.push(req);
     }
 
-    
+
 
     syncClient.manage(dataSetId, {"has_custom_sync": false}, {}, {}, function(){
       syncClient.clearPending(dataSetId, function(){
-        done(); 
+        done();
       });
     });
-    
+
   });
 
   afterEach(function(done){
@@ -164,17 +164,17 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
         expect(dataset.data).is.empty;
 
         //now add a new record
-        
+
         var fail = sinon.spy();
         syncClient.doCreate(dataSetId, record, function(){
-          //try to create the same record multiple times will generate the same hash, 
+          //try to create the same record multiple times will generate the same hash,
           //which will only create one pending request
           //syncClient.doCreate(dataSetId, record, function(){
-            expect(fail).to.have.not.been.called;
-            //force sync and check the request params
-            onSync(function(){
-              checkUpdateRequest();
-            });
+          expect(fail).to.have.not.been.called;
+          //force sync and check the request params
+          onSync(function(){
+            checkUpdateRequest();
+          });
           //}, fail);
 
         }, fail);
@@ -197,10 +197,10 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
       var mockRes = {
         "hash": "424e4dff5aa27c2fb7bf0fc74d39b94dae4572eb",
         "updates": {
-            "hashes": {
-            },
-            "applied": {
-            }
+          "hashes": {
+          },
+          "applied": {
+          }
         }
       }
 
@@ -224,7 +224,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
 
       reqObj.respond(200, header, JSON.stringify(mockRes));
       //the sync client should try to syncRecords immediately
-      
+
       expect(requests.length).to.equal(3);
       var reqObj1 = requests[2];
       var reqBody1 = JSON.parse(reqObj1.requestBody);
@@ -235,13 +235,13 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
 
       var mockRes1 = {
         "create": {
-            "533d775a8e8159d9c6000001": {
-                "data": {
-                    "name": "item1",
-                    "created": 1396537178817
-                },
-                "hash": "9cd301d6d51d038249dd7cfaf3ac88e4f76dfeb2"
-            }
+          "533d775a8e8159d9c6000001": {
+            "data": {
+              "name": "item1",
+              "created": 1396537178817
+            },
+            "hash": "9cd301d6d51d038249dd7cfaf3ac88e4f76dfeb2"
+          }
         },
         "update": {},
         "delete": {
@@ -261,7 +261,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
         expect(dataset.hash).to.equal("424e4dff5aa27c2fb7bf0fc74d39b94dae4572eb");
         done();
       });
-      
+
     }
   });
 
@@ -337,8 +337,8 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
                   }
 
                   //we deliberately return collision here. Then the crashed pending record should be resolved, and the delay pending
-                  //record should have the initial value as the pre data 
-                   mockRes.updates.hashes[pendingHash] = mockRes.updates.collisions[pendingHash] = {
+                  //record should have the initial value as the pre data
+                  mockRes.updates.hashes[pendingHash] = mockRes.updates.collisions[pendingHash] = {
                     "cuid": "9F3930FE2A434E0BA0AD6F5A40C77CD7",
                     "type": "collision",
                     "action": "update",
@@ -346,7 +346,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
                     "uid": "533d775a8e8159d9c6000001",
                     "msg": "''"
                   }
-                  
+
                   // mockRes.records[uid] = {
                   //   data: predata,
                   //   hash: prehash
@@ -378,7 +378,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
 
                     expect(reqBody4.pending.length).to.equal(1);
                     var pendingHash = reqBody4.pending[0].hash;
-                   
+
                     var prehash = reqBody4.pending[0].preHash;
 
                     var mockRes = {
@@ -391,7 +391,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
                       }
                     };
 
-                     mockRes.updates.hashes[pendingHash] = mockRes.updates.applied[pendingHash] = {
+                    mockRes.updates.hashes[pendingHash] = mockRes.updates.applied[pendingHash] = {
                       "cuid": "9F3930FE2A434E0BA0AD6F5A40C77CD7",
                       "type": "applied",
                       "action": "update",
@@ -407,15 +407,15 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
 
                     var reqObj5 = requests[5];
                     var mockRes1 = {
-                        "create": {},
-                        "update": {
-                          '533d775a8e8159d9c6000001': {
-                            "data": reqBody4.pending[0].post,
-                            "hash": reqBody4.pending[0].postHash
-                          }
-                        },
-                        "delete": {},
-                        "hash": "932b0b7e6862d4634dc6f418da717c78c1a1d742"
+                      "create": {},
+                      "update": {
+                        '533d775a8e8159d9c6000001': {
+                          "data": reqBody4.pending[0].post,
+                          "hash": reqBody4.pending[0].postHash
+                        }
+                      },
+                      "delete": {},
+                      "hash": "932b0b7e6862d4634dc6f418da717c78c1a1d742"
                     };
                     reqObj5.respond(200, header, JSON.stringify(mockRes1));
 
@@ -474,8 +474,8 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
         create: {
           "533d77a38e8159d9c6000003": {
             "data": {
-                "name": "item2",
-                "created": 1396537250692
+              "name": "item2",
+              "created": 1396537250692
             },
             "hash": "9f37f46126a1c18ff3b13de06d8fc6a8f4fd1167"
           }
@@ -517,11 +517,11 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
             var pendingHash = reqBody.pending[0].hash;
 
             var mockRes = {
-                "hash": "f9f17defccf22d9bf1d0fb73e1f6af6b67c266e8",
-                "updates": {
-                  "hashes": {},
-                  "applied": {}
-                }
+              "hash": "f9f17defccf22d9bf1d0fb73e1f6af6b67c266e8",
+              "updates": {
+                "hashes": {},
+                "applied": {}
+              }
             }
 
             mockRes.updates.hashes[pendingHash] = mockRes.updates.applied[pendingHash] = {
@@ -536,7 +536,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
             reqObj.respond(200, header, JSON.stringify(mockRes));
 
             expect(requests.length).to.equal(2);
-            
+
             var reqObj1 = requests[1];
             var reqBody1 = JSON.parse(reqObj1.requestBody);
             expect(reqBody1.fn).to.equal("syncRecords");
@@ -555,8 +555,8 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
             syncClient.getDataset(dataSetId, function(dataset){
               expect(dataset.hash).to.equal("f9f17defccf22d9bf1d0fb73e1f6af6b67c266e8");
               //The tests are running in sequential, there was one record created in a previous test create test.
-              //this record is a new record created in "test remote data change". 
-              //So after this one is deleted, there is still one left int the local dataset. 
+              //this record is a new record created in "test remote data change".
+              //So after this one is deleted, there is still one left int the local dataset.
               //We are not resetting local datasets after every test.
               expect(_.size(dataset.data)).to.equal(1);
               expect(_.size(dataset.pending)).to.equal(0);
@@ -586,10 +586,10 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
           var mockRes = {
             "hash": "424e4dff5aa27c2fb7bf0fc74d39b944823234832",
             "updates": {
-                "hashes": {
-                },
-                "applied": {
-                }
+              "hashes": {
+              },
+              "applied": {
+              }
             }
           }
 
@@ -635,7 +635,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
         var reqObj = requests[0];
         var reqBody = JSON.parse(reqObj.requestBody);
 
-        //at this point, there is one pending create, 
+        //at this point, there is one pending create,
         syncClient.getDataset(dataSetId, function(dataset){
           var pendings = dataset.pending;
           console.log("pending", pendings);
@@ -645,10 +645,10 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
           var pendingHash = pendingObj.hash;
           var mockRes = {
             "updates": {
-                "hashes": {
-                },
-                "applied": {
-                }
+              "hashes": {
+              },
+              "applied": {
+              }
             }
           };
 
@@ -695,27 +695,27 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
         }
 
         reqObj.respond(200, header, JSON.stringify(mockRes));
-        
+
         syncClient.getDataset(dataSetId, function(dataset){
           expect(dataset.data[pendingObj.uid].data.name).to.equal("item7");
-          
+
           syncClient.clearPending(dataSetId, function(){
             syncClient.doUpdate(dataSetId, res.uid, {name:"item8"}, function(){
               onSync(function(){
                 var reqObj1 = requests[1];
                 var reqBody1 = JSON.parse(reqObj1.requestBody);
                 var pendingObj1 = reqBody1.pending[0];
-                
+
                 var mockRes1 = {
                   records : {
 
                   }
                 }
                 mockRes1.records[pendingObj1.uid] = {
-                   data: {
-                     name: "item9"
-                   },
-                   hash: "424e4dff5aa27c2fb7bf0fc74d39b944823asdfhfj"
+                  data: {
+                    name: "item9"
+                  },
+                  hash: "424e4dff5aa27c2fb7bf0fc74d39b944823asdfhfj"
                 }
                 reqObj1.respond(200, header, JSON.stringify(mockRes1));
                 //This is to test the remote data should be updated with in flight changes. At this point, there is a in flight update for the uid, and it has not yet been applied to the cloud.
@@ -728,17 +728,17 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
                       var reqObj2 = requests[2];
                       var reqBody2 = JSON.parse(reqObj2.requestBody);
                       var pendingObj2 = reqBody2.pending[0];
-                      
+
                       var mockRes2 = {
                         records : {
 
                         }
                       }
                       mockRes2.records[pendingObj2.uid] = {
-                         data: {
-                           name: "item10"
-                         },
-                         hash: "424e4dff5aa27c2fb7bf0fc74d39b94482adfesfef"
+                        data: {
+                          name: "item10"
+                        },
+                        hash: "424e4dff5aa27c2fb7bf0fc74d39b94482adfesfef"
                       }
                       reqObj2.respond(200, header, JSON.stringify(mockRes1));
 
@@ -806,14 +806,14 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
       var createRecord = {name:'item13'};
       syncClient.doCreate(dataSetId, createRecord, function(){
         onSync(function(){
-           var reqObj = requests[0];
-           var reqBody = JSON.parse(reqObj.requestBody);
-           reqObj.respond(500, header, null);
+          var reqObj = requests[0];
+          var reqBody = JSON.parse(reqObj.requestBody);
+          reqObj.respond(500, header, null);
 
-           syncClient.getDataset(dataSetId, function(dataset){
+          syncClient.getDataset(dataSetId, function(dataset){
             expect(_.size(dataset.pending)).to.equal(1);
             var pendingObj = _.values(dataset.pending)[0];
-            
+
             expect(pendingObj.crashed).to.be.true;
 
             onSync(function(){
@@ -823,17 +823,17 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
               //this time return success but without updates of the crashed records
               var mockRes = {
                 "updates": {
-                    "hashes": {
-                    },
-                    "applied": {
-                    }
+                  "hashes": {
+                  },
+                  "applied": {
+                  }
                 }
               }
 
               reqObj1.respond(200, header, JSON.stringify(mockRes));
 
               expect(pendingObj.crashedCount).to.equal(1);
-              
+
               //do another one
               onSync(function(){
                 var reqObj2 = requests[2];
@@ -842,10 +842,10 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
                 //this time return success but without updates of the crashed records
                 var mockRes2 = {
                   "updates": {
-                      "hashes": {
-                      },
-                      "applied": {
-                      }
+                    "hashes": {
+                    },
+                    "applied": {
+                    }
                   }
                 }
 
@@ -895,7 +895,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
 
               });
             });
-           });
+          });
         });
       });
     });
@@ -984,7 +984,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
               }
 
               reqObj1.respond(200, header, JSON.stringify(mockRes1));
-              
+
               expect(_.size(pendings)).to.equal(1);
 
               done();
@@ -1031,7 +1031,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
     reqObj.respond(200, header, JSON.stringify({}));
     expect(success).to.have.been.called;
     expect(success).to.have.been.calledWith({});
-    
+
     done();
   });
 
@@ -1092,7 +1092,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
                 "applied": {
                 }
               }
-            }
+            };
 
             mockRes1.updates.applied[olduid] = {
               "hash": olduid,
@@ -1100,7 +1100,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
               "action": "create",
               "type": "applied",
               "msg": ""
-            }
+            };
 
             reqObj.respond(200, header, JSON.stringify(mockRes1));
 
@@ -1115,7 +1115,7 @@ describe("test sync framework online with fake XMLHttpRequest", function(){
               });
             });
           });
-        });  
+        });
       });
     });
   });

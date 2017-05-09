@@ -14,8 +14,8 @@ chai.use(sinonChai);
 
 //work around phantomjs's issue: https://github.com/ariya/phantomjs/issues/10647
 var fakeNavigator = {};
-for (var i in navigator) { 
-    fakeNavigator[i] = navigator[i];
+for (var i in navigator) {
+  fakeNavigator[i] = navigator[i];
 }
 fakeNavigator.onLine = true;
 navigator = fakeNavigator;
@@ -203,7 +203,6 @@ describe("test sync framework offline", function(){
           expect(updateCB).to.have.been.calledWith(dataSetId, null, "local_update_applied", "create");
           done();
         }, 1);
-        
       }, getFail);
 
     }, fail);
@@ -268,7 +267,7 @@ describe("test sync framework offline", function(){
     }, fail);
   });
 
-  it("sync.doList success", function(done){ 
+  it("sync.doList success", function(done){
     var fail = sinon.spy();
 
     syncClient.doList(dataSetId, function(data){
@@ -356,7 +355,6 @@ describe("test sync framework offline", function(){
           done();
         }, 1001);
       });
-      
     }, 1001);
   });
 
