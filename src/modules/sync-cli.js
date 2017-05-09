@@ -193,10 +193,6 @@ var self = {
       config = JSON.parse(JSON.stringify(self.defaults));
     }
 
-    //
-    if( ! self.config ) {
-      self.config = JSON.parse(JSON.stringify(self.defaults));
-    }
 
     var datasetConfig = JSON.parse(JSON.stringify(config));
     var optionsIn = JSON.parse(JSON.stringify(options));
