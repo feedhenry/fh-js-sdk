@@ -8,7 +8,6 @@ var api_act = require("./modules/api_act");
 var api_auth = require("./modules/api_auth");
 var api_sec = require("./modules/api_sec");
 var api_hash = require("./modules/api_hash");
-var api_sync = require("./modules/sync-cli");
 var api_mbaas = require("./modules/api_mbaas");
 var api_cloud = require("./modules/api_cloud");
 var api_push = require("./modules/api_push");
@@ -69,10 +68,13 @@ fh.auth = api_auth;
 fh.cloud = api_cloud;
 fh.sec = api_sec;
 fh.hash = api_hash;
-fh.sync = api_sync;
 fh.push = api_push;
 fh.ajax = fh.__ajax = ajax;
 fh.mbaas = api_mbaas;
+
+// Mount sync to fh namespace
+require("fh-sync-js");
+
 fh._getDeviceId = device.getDeviceId;
 fh.fh_timeout = 60000; //keep backward compatible
 
