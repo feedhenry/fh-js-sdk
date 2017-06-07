@@ -3,9 +3,9 @@
   "version": "2.18.6",
   "dependencies": {
     "fh-sync-js": {
-      "version": "1.0.0-pre2",
-      "from": "fh-sync-js@1.0.0-pre2",
-      "resolved": "https://registry.npmjs.org/fh-sync-js/-/fh-sync-js-1.0.0-pre2.tgz",
+      "version": "1.0.0-pre3",
+      "from": "fh-sync-js@1.0.0-pre3",
+      "resolved": "https://registry.npmjs.org/fh-sync-js/-/fh-sync-js-1.0.0-pre3.tgz",
       "dependencies": {
         "type-of": {
           "version": "2.0.1",

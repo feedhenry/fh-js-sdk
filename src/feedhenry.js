@@ -14,6 +14,7 @@ var api_push = require("./modules/api_push");
 var fhparams = require("./modules/fhparams");
 var appProps = require("./modules/appProps");
 var device = require("./modules/device");
+var syncCloudHandler = require("./modules/sync_cloud_handler");
 
 var defaultFail = function(msg, error) {
   logger.error(msg + ":" + JSON.stringify(error));
@@ -73,7 +74,8 @@ fh.ajax = fh.__ajax = ajax;
 fh.mbaas = api_mbaas;
 
 // Mount sync to fh namespace
-require("fh-sync-js");
+fh.sync = require("fh-sync-js");
+fh.sync.setCloudHandler(syncCloudHandler);
 
 fh._getDeviceId = device.getDeviceId;
 fh.fh_timeout = 60000; //keep backward compatible
