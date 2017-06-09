@@ -6,10 +6,8 @@ module.exports = function (params, success, failure) {
         'method': 'post',
         'data': params.req
     }, function (res) {
-        callbackCalled = true;
         success(res);
     }, function (msg, err) {
-        callbackCalled = true;
         failure(msg, err);
     });
 };

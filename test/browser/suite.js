@@ -1,3 +1,4 @@
+require("../tests/test_sync.js");
 require("../tests/test_ajax.js");
 require("../tests/test_sec.js");
 require("../tests/test_cloud_related.js");
