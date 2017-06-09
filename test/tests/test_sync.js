@@ -27,7 +27,8 @@ var onSync = function(cb){
 describe("test sync framework cloud handler", function(){
   this.timeout(10000);
   var header = { "Content-Type": "application/json" };
-  var xhr, requests;
+  var xhr;
+  var requests;
   before(function(done){
     syncClient.init({
       do_console_log: true,

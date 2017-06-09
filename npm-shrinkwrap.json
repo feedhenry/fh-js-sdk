@@ -1,52 +1,37 @@
 {
   "name": "fh-js-sdk",
-  "version": "2.18.6",
+  "version": "2.19.0-rc1",
   "dependencies": {
     "fh-sync-js": {
-      "version": "1.0.0-pre4",
-      "from": "fh-sync-js@1.0.0-pre4",
-      "resolved": "https://registry.npmjs.org/fh-sync-js/-/fh-sync-js-1.0.0-pre4.tgz",
+      "version": "1.0.3",
+      "from": "fh-sync-js@1.0.3",
+      "resolved": "https://registry.npmjs.org/fh-sync-js/-/fh-sync-js-1.0.3.tgz",
       "dependencies": {
-        "type-of": {
-          "version": "2.0.1",
-          "from": "https://registry.npmjs.org/type-of/-/type-of-2.0.1.tgz",
-          "resolved": "https://registry.npmjs.org/type-of/-/type-of-2.0.1.tgz"
-        },
-        "loglevel": {
-          "version": "0.6.0",
-          "from": "https://registry.npmjs.org/loglevel/-/loglevel-0.6.0.tgz",
-          "resolved": "https://registry.npmjs.org/loglevel/-/loglevel-0.6.0.tgz"
-        },
-        "underscore": {
-          "version": "1.6.0",
-          "from": "https://registry.npmjs.org/underscore/-/underscore-1.6.0.tgz",
-          "resolved": "https://registry.npmjs.org/underscore/-/underscore-1.6.0.tgz"
-        },
-        "process": {
-          "version": "0.6.0",
-          "from": "https://registry.npmjs.org/process/-/process-0.6.0.tgz",
-          "resolved": "https://registry.npmjs.org/process/-/process-0.6.0.tgz"
+        "uuid": {
+          "version": "3.0.1",
+          "from": "https://registry.npmjs.org/uuid/-/uuid-3.0.1.tgz",
+          "resolved": "https://registry.npmjs.org/uuid/-/uuid-3.0.1.tgz"
         }
       }
     },
     "loglevel": {
       "version": "0.6.0",
-      "from": "https://registry.npmjs.org/loglevel/-/loglevel-0.6.0.tgz",
+      "from": "loglevel@>=0.6.0 <0.7.0",
       "resolved": "https://registry.npmjs.org/loglevel/-/loglevel-0.6.0.tgz"
     },
     "process": {
       "version": "0.6.0",
-      "from": "https://registry.npmjs.org/process/-/process-0.6.0.tgz",
+      "from": "process@>=0.6.0 <0.7.0",
       "resolved": "https://registry.npmjs.org/process/-/process-0.6.0.tgz"
     },
     "type-of": {
       "version": "2.0.1",
-      "from": "https://registry.npmjs.org/type-of/-/type-of-2.0.1.tgz",
+      "from": "type-of@>=2.0.1 <2.1.0",
       "resolved": "https://registry.npmjs.org/type-of/-/type-of-2.0.1.tgz"
     },
     "underscore": {
       "version": "1.6.0",
-      "from": "https://registry.npmjs.org/underscore/-/underscore-1.6.0.tgz",
+      "from": "underscore@>=1.6.0 <1.7.0",
       "resolved": "https://registry.npmjs.org/underscore/-/underscore-1.6.0.tgz"
     }
   }
