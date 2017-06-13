@@ -65,12 +65,12 @@
     "type-of": "~2.0.1",
     "loglevel": "~0.6.0",
     "underscore": "~1.6.0",
-    "process": "~0.6.0"
+    "process": "~0.6.0",
+    "browserify-shim": "3.3.2"
   },
   "devDependencies": {
     "async": "0.2.10",
     "browserify": "3.46.1",
-    "browserify-shim": "3.3.2",
     "chai": "1.9.0",
     "express": "3.4.8",
     "grunt": "0.4.2",
