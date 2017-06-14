@@ -236,9 +236,9 @@ declare module FeedHenry {
     /**
      * Sync namespace
      * 
-     * @namespace Sync
+     * @namespace sync
      */
-    export namespace Sync {
+    export namespace sync {
 
         /**
          * Interface for the data provided in the NotifyCallback in the notify function.
