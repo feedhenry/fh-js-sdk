@@ -5,9 +5,5 @@ module.exports = function (params, success, failure) {
         'path': '/mbaas/sync/' + params.dataset_id,
         'method': 'post',
         'data': params.req
-    }, function (res) {
-        success(res);
-    }, function (msg, err) {
-        failure(msg, err);
-    });
+    }, success, failure);
 };
