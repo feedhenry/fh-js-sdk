@@ -10,7 +10,6 @@ tmp/*
 src/appforms/dist/
 dist/
 libs/generated/lawnchair.js
-test/sync/testServer
 src/modules-cov/*
 src-cov/*
 src/appforms/tests/feedhenry.js

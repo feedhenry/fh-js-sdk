@@ -192,3 +192,7 @@ To publish doc, run the command:
 npm run doc
 ```
 Go to [gh-pages](https://github.com/feedhenry/fh-js-sdk/tree/gh-pages) and see recent commit for the publication.
+
+### Sync client development
+
+Sync client development should be done in [fh-sync-js repository] (https://github.com/feedhenry/fh-sync-js)

@@ -232,7 +232,7 @@ declare module FeedHenry {
      * @param {Function} listener
      */
     export function once(type: string, listener: Function);
-
+    
     /**
      * Sync namespace
      * 
