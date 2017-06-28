@@ -721,7 +721,7 @@ appForm.models = function(module) {
    * 1. onblur (field value)
    * 2. onsubmit (whole submission json)
    *
-   * @param {[type]} params   {"fieldId","value","index":optional}
+   * @param {[type]} params   {"fieldId", "value", "index":optional, "sectionIndex":optional}
    * @param {} cb(err,res) callback function when finished
    * @return true / error message
    */
@@ -731,6 +731,10 @@ appForm.models = function(module) {
     var fieldId = params.fieldId;
     var inputValue = params.value;
     var index = params.index === undefined ? -1 : params.index;
+    var sectionIndex = params.sectionIndex ? params.sectionIndex : 0;
+
+    //concat. of fieldId and index in the section - this will provide unique mapping for fields
+    var fieldIdentifier = fieldId + ':' + sectionIndex;
 
     if(!fieldId){
       return cb("Invalid parameters. fieldId is required");
@@ -738,8 +742,8 @@ appForm.models = function(module) {
 
     //Transaction entries are not saved to memory, they are only saved when the transaction has completed.
     function processTransaction(form, fieldModel){
-      if (!that.tmpFields[fieldId]) {
-        that.tmpFields[fieldId] = [];
+      if (!that.tmpFields[fieldIdentifier]) {
+        that.tmpFields[fieldIdentifier] = [];
       }
 
       params.isStore = false;//Don't store the files until the transaction is complete
@@ -748,11 +752,10 @@ appForm.models = function(module) {
           return cb(err);
         } else {
           if (index > -1) {
-            that.tmpFields[fieldId][index] = result;
+            that.tmpFields[fieldIdentifier][index] = result;
           } else {
-            that.tmpFields[fieldId].push(result);
+            that.tmpFields[fieldIdentifier].push(result);
           }
-
           return cb(null, result);
         }
       });
@@ -760,7 +763,7 @@ appForm.models = function(module) {
 
     //Direct entries are saved immediately to local storage when they are input.
     function processDirectStore(form, fieldModel){
-      var target = that.getInputValueObjectById(fieldId);
+      var target = that.getInputValueObjectById(fieldId, sectionIndex);
 
       //File already exists for this input, overwrite rather than create a new file
       //If pushing the value to the end of the list, then there will be no previous value
@@ -807,6 +810,7 @@ appForm.models = function(module) {
 
     this.getForm(gotForm);
   };
+
   Submission.prototype.pushFile = function(hashName){
     var subFiles = this.get('filesInSubmission', []);
     if(typeof(hashName) === "string"){
@@ -816,6 +820,7 @@ appForm.models = function(module) {
       }
     }
   };
+
   Submission.prototype.removeFileValue = function(hashName){
     var subFiles = this.get('filesInSubmission', []);
     if(typeof(hashName) === "string" && subFiles.indexOf(hashName) > -1){
@@ -823,14 +828,22 @@ appForm.models = function(module) {
       this.set('filesInSubmission', subFiles);
     }
   };
-  Submission.prototype.getInputValueByFieldId = function(fieldId, cb) {
+
+  Submission.prototype.getInputValueByFieldId = function(fieldId, sectionIndex, cb) {
+    //Back compatibility
+    if(!cb && _.isFunction(sectionIndex)){
+      cb = sectionIndex;
+      sectionIndex = 0;
+    }
+
     var self = this;
-    var values = this.getInputValueObjectById(fieldId).fieldValues;
+    var values = this.getInputValueObjectById(fieldId, sectionIndex).fieldValues;
     this.getForm(function(err, form) {
       var fieldModel = form.getFieldModelById(fieldId);
       fieldModel.convertSubmission(values, cb);
     });
   };
+
   /**
    * Reset submission
    * @return {[type]} [description]
@@ -872,19 +885,19 @@ appForm.models = function(module) {
   Submission.prototype.endInputTransaction = function(succeed) {
     this.transactionMode = false;
     var tmpFields = {};
-    var fieldId = "";
+    var fieldIdentifier = "";
     var valIndex = 0;
     var valArr = [];
     var val = "";
     if (succeed) {
       tmpFields = this.tmpFields;
-      for (fieldId in tmpFields) {
-        var target = this.getInputValueObjectById(fieldId);
-        valArr = tmpFields[fieldId];
+      for (fieldIdentifier in tmpFields) {
+        var target = this.getInputValueObjectById(fieldIdentifier.split(':')[0]);
+        valArr = tmpFields[fieldIdentifier];
         for (valIndex = 0; valIndex < valArr.length; valIndex++) {
           val = valArr[valIndex];
           target.fieldValues.push(val);
-          if(typeof(val.hashName) === "string"){
+          if (typeof(val.hashName) === "string") {
             this.pushFile(val.hashName);
           }
         }
@@ -894,8 +907,8 @@ appForm.models = function(module) {
       //clear any files set as part of the transaction
       tmpFields = this.tmpFields;
       this.tmpFields = {};
-      for (fieldId in tmpFields) {
-        valArr = tmpFields[fieldId];
+      for (fieldIdentifier in tmpFields) {
+        valArr = tmpFields[fieldIdentifier];
         for (valIndex = 0; valIndex < valArr.length; valIndex++) {
           val = valArr[valIndex];
           if(typeof(val.hashName) === "string"){
@@ -952,28 +965,34 @@ appForm.models = function(module) {
       callback(err);
     });
   };
-  Submission.prototype.getInputValueObjectById = function(fieldId) {
+
+  Submission.prototype.getInputValueObjectById = function(fieldId, sectionIndex) {
     var formFields = this.getFormFields();
+
     for (var i = 0; i < formFields.length; i++) {
       var formField = formFields[i];
 
-      if(formField.fieldId._id){
-        if (formField.fieldId._id === fieldId) {
-          return formField;
+        if (formField.fieldId._id) {
+          if (formField.fieldId._id === fieldId && (!formField.sectionIndex || formField.sectionIndex === sectionIndex)) {
+            return formField;
+          }
+        } else {
+          if (formField.fieldId === fieldId && (!formField.sectionIndex ||formField.sectionIndex === sectionIndex)) {
+            return formField;
+          }
         }
-      } else {
-        if (formField.fieldId === fieldId) {
-          return formField;
-        }
-      }
+
     }
     var newField = {
       'fieldId': fieldId,
-      'fieldValues': []
+      'fieldValues': [],
+      'sectionIndex': sectionIndex || 0
     };
+
     formFields.push(newField);
     return newField;
   };
+
   /**
    * get form model related to this submission.
    * @return {[type]} [description]
@@ -1174,5 +1193,6 @@ appForm.models = function(module) {
       this.set("_id", submissionId);
     }
   };
+
   return module;
 }(appForm.models || {});

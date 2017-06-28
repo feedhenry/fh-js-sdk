@@ -1,6 +1,7 @@
 /**
  * One form contains multiple pages
  */
+
 appForm.models = function (module) {
 
   var Model = appForm.models.Model;
@@ -32,9 +33,7 @@ appForm.models = function (module) {
   Page.prototype.getFieldDef=function(){
     return this.get("fields",[]);
   };
-  Page.prototype.getFieldDef=function(){
-      return this.get("fields",[]);
-  };
+
   Page.prototype.getFieldModelList=function(){
       var list=[];
       for (var i=0;i<this.fieldsIds.length;i++){
@@ -105,6 +104,7 @@ appForm.models = function (module) {
 
     return sectionList;
   };
+
   Page.prototype.getFieldModelById=function(fieldId){
     return this.form.getFieldModelById(fieldId);
   };
