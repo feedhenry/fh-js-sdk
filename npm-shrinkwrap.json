@@ -1,19 +1,7 @@
 {
   "name": "fh-js-sdk",
-  "version": "2.19.0",
+  "version": "2.21.0-alpha.01",
   "dependencies": {
-    "fh-sync-js": {
-      "version": "1.0.3",
-      "from": "fh-sync-js@1.0.3",
-      "resolved": "https://registry.npmjs.org/fh-sync-js/-/fh-sync-js-1.0.3.tgz",
-      "dependencies": {
-        "uuid": {
-          "version": "3.0.1",
-          "from": "https://registry.npmjs.org/uuid/-/uuid-3.0.1.tgz",
-          "resolved": "https://registry.npmjs.org/uuid/-/uuid-3.0.1.tgz"
-        }
-      }
-    },
     "acorn": {
       "version": "4.0.13",
       "from": "acorn@>=4.0.3 <5.0.0",
@@ -315,6 +303,18 @@
       "version": "0.1.5",
       "from": "exposify@>=0.1.2 <0.2.0",
       "resolved": "https://registry.npmjs.org/exposify/-/exposify-0.1.5.tgz"
+    },
+    "fh-sync-js": {
+      "version": "1.0.3",
+      "from": "fh-sync-js@1.0.3",
+      "resolved": "https://registry.npmjs.org/fh-sync-js/-/fh-sync-js-1.0.3.tgz",
+      "dependencies": {
+        "uuid": {
+          "version": "3.0.1",
+          "from": "https://registry.npmjs.org/uuid/-/uuid-3.0.1.tgz",
+          "resolved": "https://registry.npmjs.org/uuid/-/uuid-3.0.1.tgz"
+        }
+      }
     },
     "find-parent-dir": {
       "version": "0.2.1",
