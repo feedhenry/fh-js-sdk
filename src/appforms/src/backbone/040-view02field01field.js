@@ -173,7 +173,6 @@ var FieldView = Backbone.View.extend({
         var submission = this.options.formView.getSubmission();
         if (submission) {
             this.submission = submission;
-            //todo mogrodni
             this.submission.getInputValueByFieldId(this.model.get('_id'), 0, function(err, res) {
                 self.value(res);
             });
