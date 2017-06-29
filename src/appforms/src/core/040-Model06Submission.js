@@ -733,7 +733,8 @@ appForm.models = function(module) {
     var index = params.index === undefined ? -1 : params.index;
     var sectionIndex = params.sectionIndex ? params.sectionIndex : 0;
 
-    //concat. of fieldId and index in the section - this will provide unique mapping for fields
+    // concat. of fieldId and index in the section - this will provide unique mapping for fields
+    // additional identifier for a field as in case of repeating sections fieldId is no longer sufficient
     var fieldIdentifier = fieldId + ':' + sectionIndex;
 
     if(!fieldId){
@@ -829,6 +830,12 @@ appForm.models = function(module) {
     }
   };
 
+  /**
+   * Returns input value for a field with a given id
+   * @param {string} fieldId - id of the field
+   * @param {number} sectionIndex - optional section id in case field is in repeating section
+   * @param cb
+   */
   Submission.prototype.getInputValueByFieldId = function(fieldId, sectionIndex, cb) {
     //Back compatibility
     if(!cb && _.isFunction(sectionIndex)){
@@ -885,7 +892,11 @@ appForm.models = function(module) {
   Submission.prototype.endInputTransaction = function(succeed) {
     this.transactionMode = false;
     var tmpFields = {};
+
+    // additional identifier for a field as in case of repeating sections fieldId is no longer sufficient
+    // used as a key on tmpFields, also used in processTransaction submission.addinputvalue().processTransaction()
     var fieldIdentifier = "";
+
     var valIndex = 0;
     var valArr = [];
     var val = "";
@@ -966,21 +977,28 @@ appForm.models = function(module) {
     });
   };
 
+  /**
+   * Returns object representing the field along with its values.
+   * @param {string} fieldId - id of the field
+   * @param {number} sectionIndex - optional section id in case field is in repeating section
+   * @returns {object} field definition with input values and section index
+   */
   Submission.prototype.getInputValueObjectById = function(fieldId, sectionIndex) {
     var formFields = this.getFormFields();
 
     for (var i = 0; i < formFields.length; i++) {
       var formField = formFields[i];
 
-        if (formField.fieldId._id) {
-          if (formField.fieldId._id === fieldId && (!formField.sectionIndex || formField.sectionIndex === sectionIndex)) {
-            return formField;
-          }
-        } else {
-          if (formField.fieldId === fieldId && (!formField.sectionIndex ||formField.sectionIndex === sectionIndex)) {
-            return formField;
-          }
-        }
+      //field is matching another field if their section index is the same or if it is missing section index(older entries).
+      var sectionIndexOk = !formField.sectionIndex || formField.sectionIndex === sectionIndex;
+
+      if (formField.fieldId._id && (formField.fieldId._id === fieldId) && sectionIndexOk) {
+        return formField;
+      }
+      else if (formField.fieldId === fieldId && sectionIndexOk) {
+        return formField;
+      }
+
 
     }
     var newField = {
