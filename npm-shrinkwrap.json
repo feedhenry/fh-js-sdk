@@ -1,6 +1,6 @@
 {
   "name": "fh-js-sdk",
-  "version": "2.19.1-rc1",
+  "version": "2.19.0",
   "dependencies": {
     "fh-sync-js": {
       "version": "1.0.3",
