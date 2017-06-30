@@ -152,6 +152,12 @@ declare module FeedHenry {
        * @param {Function} callback A callback that is invoked once the token validity is determined, or if an error occurs
        */
       export function verify(callback: (err: any, isValid: boolean) => void)
+
+      /**
+       * Delete the locally stored session token. Will also request that the RHMAP server revoke it
+       * @param callback 
+       */
+      export function clearSession(callback: (err: any) => void)
     }
 
     /**
