@@ -1,6 +1,6 @@
-/*! fh-forms - v1.11.1 -  */
+/*! fh-forms - v1.13.0 -  */
 /*! async - v0.2.9 -  */
-/*! 2017-01-03 */
+/*! 2017-06-30 */
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
   (function() {
 
@@ -85,6 +85,10 @@
       var pageRulePredicateMap = {};
       var pageRuleSubjectMap = {};
       var submissionFieldsMap = {};
+
+      //Mapping fieldId to their section Ids if a field is contained in a section
+      var fieldSectionMapping = {};
+
       var validatorsMap = {
         "text": validatorString,
         "textarea": validatorString,
@@ -322,6 +326,14 @@
         return !!pageRuleSubjectMap[pageId];
       };
 
+      /**
+       *
+       * Builds two field maps, both indexed by the field ID.
+       *
+       * - One for all of the fields (fieldMap)
+       * - One for just the required fields (requiredFieldMap)
+       *
+       */
       function buildFieldMap() {
         // Iterate over all fields in form definition & build fieldMap
         _.each(definition.pages, function(page) {
@@ -345,7 +357,8 @@
             if (field.required) {
               requiredFieldMap[field._id] = {
                 field: field,
-                submitted: false,
+                //Validation details for each section index
+                sections: {},
                 validated: false,
                 valueRequired: field.required
               };
@@ -355,6 +368,13 @@
         });
       }
 
+      /**
+       *
+       * Building a map of all of the field targets of different field rules.
+       *
+       * This makes it easier to check if any field is the target of a field rule.
+       *
+       */
       function buildFieldRuleMaps() {
         // Iterate over all rules in form definition & build ruleSubjectMap
         _.each(definition.fieldRules, function(rule) {
@@ -380,6 +400,13 @@
         });
       }
 
+      /**
+       *
+       * Building a map of all of the page targets of different page rules.
+       *
+       * This makes it easier to check if any page is the target of a page rule.
+       *
+       */
       function buildPageRuleMap() {
         // Iterate over all rules in form definition & build ruleSubjectMap
         _.each(definition.pageRules, function(rule) {
@@ -406,6 +433,12 @@
         });
       }
 
+      /**
+       *
+       * Building an index of all of the values made for the submission
+       *
+       * @returns {*}
+       */
       function buildSubmissionFieldsMap() {
         submissionRequiredFieldsMap = JSON.parse(JSON.stringify(requiredFieldMap)); // clone the map for use with this submission
         submissionFieldsMap = {}; // start with empty map, rulesEngine can be called with multiple submissions
@@ -418,6 +451,10 @@
             return;
           }
 
+          //The section index should be part of the field input, however for backwards compatibility, it should
+          //default to 0
+          formField.sectionIndex = formField.sectionIndex || 0;
+
           /**
            * If the field passed in a submission is an admin field, then return an error.
            */
@@ -426,15 +463,28 @@
             return;
           }
 
-          submissionFieldsMap[formField.fieldId] = formField;
+          //Including the section index the the submission field map. Otherwise submissions with the same field ID but different
+          //section Indexes would overwrite eachother.
+          //This also has an impact when considering the rules. If a rule sources its value from a field in a repeating section and targets a
+          //value in the same section, then the value has to come from the same section index.
+          submissionFieldsMap[formField.fieldId] = submissionFieldsMap[formField.fieldId] || {};
+          submissionFieldsMap[formField.fieldId][formField.sectionIndex] = formField;
         });
         return error;
       }
 
+      /**
+       *
+       * Initialising the rules engine for a single form.
+       *
+       * This builds up the metadata required to process all rules.
+       *
+       */
       function init() {
         if (initialised) {
           return;
         }
+        buildSectionMap();
         buildFieldMap();
         buildFieldRuleMaps();
         buildPageRuleMap();
@@ -442,12 +492,86 @@
         initialised = true;
       }
 
+      /**
+       *
+       * Processing a single
+       *
+       * @param {Object} formSubmission - The full JSON definition of the form.
+       * @returns {*}
+       */
       function initSubmission(formSubmission) {
+
+        //Ensuring that the form metadata has been initialised first.
         init();
+
         submission = formSubmission;
         return buildSubmissionFieldsMap();
       }
 
+      /**
+       *
+       * Getting all of the fields that are in a section
+       *
+       * @param {string} sectionId
+       */
+      function getSectionFields(sectionId) {
+        var allSectionFields = _.map(fieldSectionMapping, function(_sectionId, fieldId) {
+          return sectionId === _sectionId ? fieldMap[fieldId] : null;
+        });
+
+        return _.compact(allSectionFields);
+      }
+
+      /**
+       *
+       * Checking for too many repeating sections passed.
+       *
+       * @param {object} validationResponse - The full validation response to update
+       * @param {function} callback - Used because it is part of an async.waterfall in the validateForm function
+       */
+      function checkForTooManyRepeatingSections(validationResponse, callback) {
+        var repeatingSections = getAllRepeatingSections();
+
+        //For each of the repeating sections, check that no values have been submitted with an index too large.
+        _.each(repeatingSections, function(repeatingSection) {
+          var maxRepeat = getSectionMaxRepeat(repeatingSection._id);
+
+          //All of the fields assigned to the repeating section
+          var allSectionFields = getSectionFields(repeatingSection._id);
+
+          //For each of these fields, check that there isn't a section index larger than the max number of section repetitions
+          _.each(allSectionFields, function(sectionField) {
+            var invalidFieldValues = _.filter(submissionFieldsMap[sectionField._id], function(sectionValues, sectionIndex) {
+              return parseInt(sectionIndex) >= maxRepeat;
+            });
+
+            //For each of the invalid field entries, assign the correct messages
+            return _.each(invalidFieldValues, function(invalidFieldValue) {
+              var resField = {};
+              resField.fieldId = invalidFieldValue.fieldId;
+              resField.valid = false;
+              resField.fieldErrorMessage = ["Expected a maximum of " + maxRepeat + " sections but got " + (invalidFieldValue.sectionIndex + 1) + "."];
+              resField.sectionId = fieldSectionMapping[invalidFieldValue.fieldId];
+              resField.sectionIndex = invalidFieldValue.sectionIndex;
+
+              assignValidationResponse(repeatingSection._id, invalidFieldValue.sectionIndex, validationResponse.validation, resField);
+              validationResponse.validation.valid = false;
+            });
+          });
+        });
+
+        callback(undefined, validationResponse);
+      }
+
+      /**
+       *
+       * Getting previous values for a single field from a previous submission
+       *
+       * @param {object} submittedField - The field submitted
+       * @param {object|null} previousSubmission - Full JSON definition of the previous submission to get the values from
+       * @param {function} cb
+       * @returns {*}
+       */
       function getPreviousFieldValues(submittedField, previousSubmission, cb) {
         if (previousSubmission && previousSubmission.formFields) {
           async.filter(previousSubmission.formFields, function(formField, cb) {
@@ -464,16 +588,31 @@
         }
       }
 
+      /**
+       *
+       * Validating a full submission against a form definition
+       *
+       * @param {object} submission - The full JSON definition of the submission.
+       * @param {object} [previousSubmission] - Optional previous submission if values need to be compared.
+       * @param {function} cb
+       * @returns {*}
+       */
       function validateForm(submission, previousSubmission, cb) {
         if ("function" === typeof previousSubmission) {
           cb = previousSubmission;
           previousSubmission = null;
         }
+
+        //Ensuring the form metadata is initialised
         init();
+
+        //Initialising the submission metatadata for validation
         var err = initSubmission(submission);
         if (err) {
           return cb(err);
         }
+
+        //All of the steps required to validate the submission against the form definition
         async.waterfall([
           function(cb) {
             var response = {
@@ -482,9 +621,13 @@
               }
             };
 
+            //First, validate each of the fields in the passed submission
             validateSubmittedFields(response, previousSubmission, cb);
           },
-          checkIfRequiredFieldsNotSubmitted
+          //Now check if any required fields were not submitted
+          checkIfRequiredFieldsNotSubmitted,
+          //Now check if too many repeating section field values were passed for any repeating section
+          checkForTooManyRepeatingSections
         ], function(err, results) {
           if (err) {
             return cb(err);
@@ -494,93 +637,218 @@
         });
       }
 
-      function validateSubmittedFields(res, previousSubmission, cb) {
-        // for each field, call validateField
+      /**
+       *
+       * Validating the submitted fields for a single submission
+       *
+       * @param {object} validationResponse - The full validation response
+       * @param {object|null} previousSubmission - A previous submission to compare against
+       * @param {function} cb
+       */
+      function validateSubmittedFields(validationResponse, previousSubmission, cb) {
+
+        // for each field, validate that the submitted values are valid
         async.each(submission.formFields, function(submittedField, callback) {
           var fieldID = submittedField.fieldId;
           var fieldDef = fieldMap[fieldID];
+
+          //The section index is used to ensure that comparisons are made against the correct section index.
+          //This is used when comparing rule source field values targeting fields in the same section
+          //It is also used when assigning error messages to the validationResponse
+          var sectionIndex = submittedField.sectionIndex || 0;
 
           getPreviousFieldValues(submittedField, previousSubmission, function(err, previousFieldValues) {
             if (err) {
               return callback(err);
             }
+
+            //Validing the submitted field against the field definition
             getFieldValidationStatus(submittedField, fieldDef, previousFieldValues, function(err, fieldRes) {
               if (err) {
                 return callback(err);
               }
 
               if (!fieldRes.valid) {
-                res.validation.valid = false; // indicate invalid form if any fields invalid
-                res.validation[fieldID] = fieldRes; // add invalid field info to validate form result
+                validationResponse.validation.valid = false; // indicate invalid form if any fields invalid
+                assignValidationResponse(fieldID, sectionIndex, validationResponse.validation, fieldRes);
               }
 
               return callback();
             });
-
           });
         }, function(err) {
-          if (err) {
-            return cb(err);
-          }
-          return cb(undefined, res);
+          return cb(err, validationResponse);
         });
       }
 
-      function checkIfRequiredFieldsNotSubmitted(res, cb) {
+      /**
+       *
+       * Building a map of all of the sections along with the fields contained in them
+       *
+       */
+      function buildSectionMap() {
+        var sectionId = null;
+
+        _.each(definition.pages, function(page) {
+
+          //Resetting the section ID. Sections never cross pages.
+          sectionId = null;
+
+          _.each(page.fields, function(field) {
+            if (field.type === "sectionBreak") {
+              //If the field is a section break, then we are starting a new section
+              sectionId = field._id;
+            } else if (field.type !== "pageBreak") {
+              //It's not a page or section break field.
+              //Assign the section id to the section map
+              fieldSectionMapping[field._id] = sectionId;
+            }
+          });
+        });
+      }
+
+      /**
+       *
+       * Assiging a field validation response to the correct section index
+       *
+       * @param {string} fieldId
+       * @param {number} sectionIndex
+       * @param {object} globalValidationResponse
+       * @param {object} fieldValidationResponse
+       */
+      function assignValidationResponse(fieldId, sectionIndex, globalValidationResponse, fieldValidationResponse) {
+        globalValidationResponse[fieldId] = globalValidationResponse[fieldId] || {sections: {}};
+        globalValidationResponse[fieldId].sections[sectionIndex] = fieldValidationResponse;
+
+        //For backwards compatiblility, the section 0 validation response is assigned field validation response
+        if (sectionIndex === 0) {
+          _.defaults(globalValidationResponse[fieldId], globalValidationResponse[fieldId].sections[0]);
+        }
+      }
+
+      /**
+       *
+       * Getting the minimum number of repetitions for a field in a repeating section
+       *
+       * @param fieldId
+       * @returns {number}
+       */
+      function getSectionMinRepeat(fieldId) {
+        //If the field is in a repeating section, need to check each repeating section
+        var sectionId = fieldSectionMapping[fieldId];
+        var section = sectionId ? fieldMap[sectionId] : null;
+
+        //The field is in a repeating section.
+        return section && section.repeating && section.fieldOptions.definition.minRepeat ? section.fieldOptions.definition.minRepeat : 1;
+      }
+
+      /**
+       *
+       * Getting all repeating sections belonging to this form.
+       *
+       * @returns {Array}
+       */
+      function getAllRepeatingSections() {
+        return _.filter(fieldMap, function(field) {
+          return field.type === "sectionBreak" && field.fieldOptions && field.fieldOptions.definition && field.fieldOptions.definition.maxRepeat;
+        });
+      }
+
+      /**
+       *
+       * Getting the maximum number of times that a section can repeat.
+       *
+       * @param {string} sectionId
+       * @returns {number} - the number of times a section repeats.
+       */
+      function getSectionMaxRepeat(sectionId) {
+        var section = fieldMap[sectionId];
+
+        return section && section.repeating && section.fieldOptions.definition.maxRepeat ? section.fieldOptions.definition.maxRepeat : 1;
+      }
+
+
+      /**
+       *
+       * Checking for any required fields that were not submitted.
+       *
+       * @param {object} validationResponse - The validation response to update with any errors.
+       * @param {function} cb
+       */
+      function checkIfRequiredFieldsNotSubmitted(validationResponse, cb) {
+
+        //For each of the required fields, check that the fields have submission values
         async.each(Object.keys(submissionRequiredFieldsMap), function(requiredFieldId, cb) {
-          var resField = {};
           var requiredField = submissionRequiredFieldsMap[requiredFieldId];
 
-          if (!requiredField.submitted) {
-            isFieldVisible(requiredFieldId, true, function(err, visible) {
-              if (err) {
-                return cb(err);
-              }
+          //The minimum number of times a section must repeat, means that the required fields in the section must have valid entries for each
+          //repetition of the field.
+          var minRepeat = getSectionMinRepeat(requiredFieldId);
 
-              if (visible && requiredField.valueRequired) { // we only care about required fields if they are visible
-                resField.fieldId = requiredFieldId;
-                resField.valid = false;
-                resField.fieldErrorMessage = ["Required Field Not Submitted"];
-                res.validation[requiredFieldId] = resField;
-                res.validation.valid = false;
-              }
-              return cb();
-            });
-          } else { // was included in submission
-            return cb();
-          }
+          async.each(_.range(minRepeat), function(sectionIndex, sectionCb) {
+            var isSubmitted = requiredField && requiredField.sections && requiredField.sections[sectionIndex] && requiredField.sections[sectionIndex].submitted;
+
+            if (!isSubmitted) {
+              //Checking if the field for this section index is visible.
+              //This can change based on the section index as rules within the section may source
+              //their values from within the repeating section.
+              isFieldVisible(requiredFieldId, true, sectionIndex, function(err, visible) {
+                var fieldValidationDetails = {};
+                if (err) {
+                  return sectionCb(err);
+                }
+
+                if (visible && requiredField.valueRequired) { // we only care about required fields if they are visible
+                  fieldValidationDetails.fieldId = requiredFieldId;
+                  fieldValidationDetails.valid = false;
+                  fieldValidationDetails.fieldErrorMessage = ["Required Field Not Submitted"];
+                  fieldValidationDetails.sectionId = fieldSectionMapping[requiredFieldId];
+                  fieldValidationDetails.sectionIndex = sectionIndex;
+
+                  assignValidationResponse(requiredFieldId, sectionIndex, validationResponse.validation, fieldValidationDetails);
+                  validationResponse.validation.valid = false;
+                }
+                return sectionCb();
+              });
+            } else { // was included in submission
+              return sectionCb();
+            }
+          }, cb);
         }, function(err) {
-          if (err) {
-            return cb(err);
-          }
-
-          return cb(undefined, res);
+          return cb(err, validationResponse);
         });
       }
 
-      /*
+      /**
        * validate only field values on validation (no rules, no repeat checking)
        *     res:
        *     "validation":{
-       *             "fieldId":{
-       *                 "fieldId":"",
-       *                 "valid":true,
-       *                 "errorMessages":[
-       *                     "length should be 3 to 5",
-       *                     "should not contain dammit"
-       *                 ]
-       *             }
-       *         }
+     *             "fieldId":{
+     *                 "fieldId":"",
+     *                 "valid":true,
+     *                 "errorMessages":[
+     *                     "length should be 3 to 5",
+     *                     "should not contain dammit"
+     *                 ]
+     *             }
+     *         }
        */
-      function validateField(fieldId, submission, cb) {
+      function validateField(fieldId, submission, sectionIndex, cb) {
         init();
+
+        if (_.isFunction(sectionIndex)) {
+          cb = sectionIndex;
+          sectionIndex = 0;
+        }
+
         var err = initSubmission(submission);
         if (err) {
           return cb(err);
         }
 
-        var submissionField = submissionFieldsMap[fieldId];
+        var submissionField = submissionFieldsMap[fieldId][sectionIndex];
         var fieldDef = fieldMap[fieldId];
+
         getFieldValidationStatus(submissionField, fieldDef, null, function(err, res) {
           if (err) {
             return cb(err);
@@ -588,7 +856,8 @@
           var ret = {
             validation: {}
           };
-          ret.validation[fieldId] = res;
+
+          assignValidationResponse(fieldId, sectionIndex, ret.validation, res);
           return cb(undefined, ret);
         });
       }
@@ -608,10 +877,16 @@
        *         }
        *     }
        */
-      function validateFieldValue(fieldId, inputValue, valueIndex, cb) {
+      function validateFieldValue(fieldId, inputValue, valueIndex, sectionIndex, cb) {
         if ("function" === typeof valueIndex) {
           cb = valueIndex;
           valueIndex = 0;
+          sectionIndex = 0;
+        }
+
+        if (_.isFunction(sectionIndex)) {
+          cb = sectionIndex;
+          sectionIndex = 0;
         }
 
         init();
@@ -632,11 +907,13 @@
 
         if (validation && false === validation.validateImmediately) {
           var ret = {
-            validation: {}
+            validation: {valid: true}
           };
-          ret.validation[fieldId] = {
+
+          assignValidationResponse(fieldId, sectionIndex, ret.validation, {
             "valid": true
-          };
+          });
+
           return cb(undefined, ret);
         }
 
@@ -676,23 +953,26 @@
           if (msg) {
             messages.errorMessages.push(msg);
           }
-          return createValidatorResponse(fieldId, messages, function(err, res) {
+          return createValidatorResponse(fieldId, messages, sectionIndex, function(err, res) {
             if (err) {
               return cb(err);
             }
             var ret = {
               validation: {}
             };
-            ret.validation[fieldId] = res;
+
+            assignValidationResponse(fieldId, sectionIndex, ret.validation, res);
+
             return cb(undefined, ret);
           });
         }
       }
 
-      function createValidatorResponse(fieldId, messages, cb) {
+      function createValidatorResponse(fieldId, messages, sectionIndex, cb) {
         // intentionally not checking err here, used further down to get validation errors
         var res = {};
         res.fieldId = fieldId;
+        res.sectionIndex = sectionIndex;
         res.errorMessages = messages.errorMessages || [];
         res.fieldErrorMessage = messages.fieldErrorMessage || [];
         async.some(res.errorMessages, function(item, cb) {
@@ -705,15 +985,19 @@
       }
 
       function getFieldValidationStatus(submittedField, fieldDef, previousFieldValues, cb) {
-        isFieldVisible(fieldDef._id, true, function(err, visible) {
+        var sectionIndex = submittedField.sectionIndex || 0;
+
+        isFieldVisible(fieldDef._id, true, sectionIndex, function(err, visible) {
           if (err) {
             return cb(err);
           }
+
           validateFieldInternal(submittedField, fieldDef, previousFieldValues, visible, function(err, messages) {
             if (err) {
               return cb(err);
             }
-            createValidatorResponse(submittedField.fieldId, messages, cb);
+
+            createValidatorResponse(submittedField.fieldId, messages, sectionIndex, cb);
           });
         });
       }
@@ -740,6 +1024,7 @@
       }
 
       function validateFieldInternal(submittedField, fieldDef, previousFieldValues, visible, cb) {
+
         previousFieldValues = previousFieldValues || null;
         countSubmittedValues(submittedField, function(err, numSubmittedValues) {
           if (err) {
@@ -820,20 +1105,21 @@
                 return cb(undefined, "Expected max of " + fieldDefinition.fieldOptions.definition.maxRepeat + " values for field " + fieldDefinition.name + " but got " + numSubmittedValues);
               }
             }
-          } else {
-            if (numSubmittedValues > 1) {
-              return cb(undefined, "Should not have multiple values for non-repeating field");
-            }
+          } else if (numSubmittedValues > 1) {
+            return cb(undefined, "Should not have multiple values for non-repeating field");
           }
 
           return cb(undefined, null);
         }
 
         function checkValues(submittedField, fieldDefinition, previousFieldValues, cb) {
+          var sectionIndex = submittedField.sectionIndex || 0;
+
           getValidatorFunction(fieldDefinition.type, function(err, validator) {
             if (err) {
               return cb(err);
             }
+
             async.map(submittedField.fieldValues, function(fieldValue, cb) {
               if (fieldEmpty(fieldValue)) {
                 return cb(undefined, null);
@@ -846,8 +1132,12 @@
                     errorMessage = null;
                   }
 
-                  if (submissionRequiredFieldsMap[fieldDefinition._id]) { // set to true if at least one value
-                    submissionRequiredFieldsMap[fieldDefinition._id].submitted = true;
+                  submissionRequiredFieldsMap[fieldDefinition._id] = submissionRequiredFieldsMap[fieldDefinition._id] || {sections: {}};
+                  submissionRequiredFieldsMap[fieldDefinition._id].sections[sectionIndex] = submissionRequiredFieldsMap[fieldDefinition._id].sections[sectionIndex] || {};
+                  var sectionValues = submissionRequiredFieldsMap[fieldDefinition._id].sections[sectionIndex];
+
+                  if (sectionValues) { // set to true if at least one value
+                    sectionValues.submitted = true;
                   }
 
                   return cb(undefined, errorMessage);
@@ -1136,13 +1426,11 @@
           } else {
             return cb(new Error("Invalid object for latitude longitude submission"));
           }
+        } else if (fieldValue.zone && fieldValue.eastings && fieldValue.northings) {
+          //Zone must be 3 characters, eastings 6 and northings 9
+          return validateNorthingsEastings(fieldValue, cb);
         } else {
-          if (fieldValue.zone && fieldValue.eastings && fieldValue.northings) {
-            //Zone must be 3 characters, eastings 6 and northings 9
-            return validateNorthingsEastings(fieldValue, cb);
-          } else {
-            return cb(new Error("Invalid object for northings easting submission. Zone, Eastings and Northings elements are required"));
-          }
+          return cb(new Error("Invalid object for northings easting submission. Zone, Eastings and Northings elements are required"));
         }
 
         function validateNorthingsEastings(fieldValue, cb) {
@@ -1404,7 +1692,77 @@
         return cb(new Error("Should not submit section field: " + fieldDefinition.name));
       }
 
-      function rulesResult(rules, cb) {
+      /**
+       *
+       * Checking a single rule conditional statement to determine of the rule is active.
+       *
+       * @param {string} fieldId
+       * @param {number} sectionIndex
+       * @param {Array} predicateMapQueries
+       * @param {Array} predicateMapPassed
+       * @param {object} ruleConditionalStatement
+       * @param {function} cbPredicates
+       * @returns {*}
+       */
+      function checkSingleRuleConditionalStatement(fieldId, sectionIndex, predicateMapQueries, predicateMapPassed, ruleConditionalStatement, cbPredicates) {
+        var field = fieldMap[ruleConditionalStatement.sourceField];
+        var passed = false;
+        var submissionValues = [];
+        var condition;
+        var testValue;
+
+        //Getting the section ID for the target field. The field may be in a repeating section
+        var sectionIdForTargetField = fieldSectionMapping[fieldId];
+
+        var sectionIdForSourceField = fieldSectionMapping[ruleConditionalStatement.sourceField];
+
+        //The fields are in the same section if and only if the sectionIds are the same OR neither are in a section
+        var sameSection = sectionIdForTargetField === sectionIdForSourceField;
+
+        var sourceFieldValues = submissionFieldsMap[ruleConditionalStatement.sourceField];
+
+        var sourceFieldValue;
+        //For repeating sections, if a source field for a rule conditional statement is outside the section of the target field, the source value has to come from the first section
+        if (!sameSection) {
+          sourceFieldValue = sourceFieldValues && sourceFieldValues[0] ? sourceFieldValues[0] : null;
+        } else {
+          sourceFieldValue = sourceFieldValues && sourceFieldValues[sectionIndex] ? sourceFieldValues[sectionIndex] : null;
+        }
+
+        if (sourceFieldValue && sourceFieldValue.fieldValues) {
+          submissionValues = sourceFieldValue.fieldValues;
+          condition = ruleConditionalStatement.restriction;
+          testValue = ruleConditionalStatement.sourceValue;
+
+          // Validate rule predicates on the first entry only.
+          passed = isConditionActive(field, submissionValues[0], testValue, condition);
+        }
+
+        predicateMapQueries.push({
+          "field": field,
+          "sectionIndex": sectionIndex,
+          "submissionValues": submissionValues,
+          "condition": condition,
+          "testValue": testValue,
+          "passed": passed
+        });
+
+        if (passed) {
+          predicateMapPassed.push(field);
+        }
+        return cbPredicates();
+      }
+
+      /**
+       *
+       * Processing all of the rules that target a single field/page to check if the rule is active or not.
+       *
+       * @param {string|null} fieldId - The ID of the field being checked. If it is null then it is a page rule being checked.
+       * @param {Array} rules
+       * @param {number} sectionIndex
+       * @param {function} cb
+       */
+      function rulesResult(fieldId, rules, sectionIndex, cb) {
         var visible = true;
 
         // Iterate over each rule that this field is a predicate of
@@ -1412,33 +1770,7 @@
           // For each rule, iterate over the predicate fields and evaluate the rule
           var predicateMapQueries = [];
           var predicateMapPassed = [];
-          async.each(rule.ruleConditionalStatements, function(ruleConditionalStatement, cbPredicates) {
-            var field = fieldMap[ruleConditionalStatement.sourceField];
-            var passed = false;
-            var submissionValues = [];
-            var condition;
-            var testValue;
-            if (submissionFieldsMap[ruleConditionalStatement.sourceField] && submissionFieldsMap[ruleConditionalStatement.sourceField].fieldValues) {
-              submissionValues = submissionFieldsMap[ruleConditionalStatement.sourceField].fieldValues;
-              condition = ruleConditionalStatement.restriction;
-              testValue = ruleConditionalStatement.sourceValue;
-
-              // Validate rule predicates on the first entry only.
-              passed = isConditionActive(field, submissionValues[0], testValue, condition);
-            }
-            predicateMapQueries.push({
-              "field": field,
-              "submissionValues": submissionValues,
-              "condition": condition,
-              "testValue": testValue,
-              "passed": passed
-            });
-
-            if (passed) {
-              predicateMapPassed.push(field);
-            }
-            return cbPredicates();
-          }, function(err) {
+          async.each(rule.ruleConditionalStatements, async.apply(checkSingleRuleConditionalStatement, fieldId, sectionIndex, predicateMapQueries, predicateMapPassed), function(err) {
             if (err) {
               cbRule(err);
             }
@@ -1451,7 +1783,7 @@
             /**
              * If any rule condition that targets the field/page hides that field/page, then the page is hidden.
              * Hiding the field/page takes precedence over any show. This will maintain consistency.
-             * E.g. if x is y then hide p1,p2 takes precedence over if x is z then show p1, p2
+             * E.g. if x is y then hide p1,p2 takes precedence over if x is y then show p1, p2
              */
             if (rulesPassed(rule.ruleConditionalOperator, predicateMapPassed, predicateMapQueries)) {
               visible = (rule.type === "show") && visible;
@@ -1462,24 +1794,37 @@
             return cbRule();
           });
         }, function(err) {
-          if (err) {
-            return cb(err);
-          }
-
-          return cb(undefined, visible);
+          return cb(err, visible);
         });
       }
 
       function isPageVisible(pageId, cb) {
         init();
         if (isPageRuleSubject(pageId)) { // if the page is the target of a rule
-          return rulesResult(pageRuleSubjectMap[pageId], cb); // execute page rules
+          return rulesResult(null, pageRuleSubjectMap[pageId], 0, cb); // execute page rules
         } else {
           return cb(undefined, true); // if page is not subject of any rule then must be visible
         }
       }
 
-      function isFieldVisible(fieldId, checkContainingPage, cb) {
+      /**
+       *
+       * Checking to see if the field is visible for a section
+       *
+       * @param fieldId
+       * @param checkContainingPage
+       * @param [sectionIndex]
+       * @param cb
+       * @returns {*}
+       */
+      function isFieldVisible(fieldId, checkContainingPage, sectionIndex, cb) {
+
+        //Keeping backwards compatiblity
+        if (_.isFunction(sectionIndex)) {
+          cb = sectionIndex;
+          sectionIndex = 0;
+        }
+
         /*
          * fieldId = Id of field to check for rule predicate references
          * checkContainingPage = if true check page containing field, and return false if the page is hidden
@@ -1512,7 +1857,7 @@
             }
 
             if (isFieldRuleSubject(fieldId)) { // If the field is the subject of a rule it may have been hidden
-              return rulesResult(fieldRuleSubjectMap[fieldId], cb); // execute field rules
+              return rulesResult(fieldId, fieldRuleSubjectMap[fieldId], sectionIndex, cb); // execute field rules
             } else {
               return cb(undefined, true); // if not subject of field rules then can't be hidden
             }
@@ -1549,16 +1894,22 @@
           function(cb) {
             actions.fields = {};
             async.eachSeries(Object.keys(fieldRuleSubjectMap), function(fieldId, cb) {
-              isFieldVisible(fieldId, false, function(err, fieldVisible) {
-                if (err) {
-                  return cb(err);
-                }
-                actions.fields[fieldId] = {
-                  targetId: fieldId,
-                  action: (fieldVisible ? "show" : "hide")
-                };
-                return cb();
-              });
+
+              var minRepeat = getSectionMinRepeat(fieldId);
+
+              async.each(_.range(minRepeat), function(sectionIndex, sectionCb) {
+                isFieldVisible(fieldId, false, sectionIndex, function(err, fieldVisible) {
+                  if (err) {
+                    return cb(err);
+                  }
+                  actions.fields[fieldId] = {
+                    targetId: fieldId,
+                    sectionIndex: sectionIndex,
+                    action: (fieldVisible ? "show" : "hide")
+                  };
+                  return sectionCb();
+                });
+              }, cb);
             }, cb);
           },
           function(cb) {
@@ -1587,6 +1938,16 @@
         });
       }
 
+      /**
+       *
+       * Checking to see if a rule condition is active.
+       *
+       * @param {object} field - JSON definition of the field
+       * @param {*} fieldValue - The value obtained for the field from the submission
+       * @param {*} testValue - The value to compare against to see if the condition is active.
+       * @param {string} condition - The condition to compare the values (E.g. "is equal to")
+       * @returns {*}
+       */
       function isConditionActive(field, fieldValue, testValue, condition) {
 
         var fieldType = field.type;
@@ -2763,6 +3124,10 @@
   process.removeListener = noop;
   process.removeAllListeners = noop;
   process.emit = noop;
+  process.prependListener = noop;
+  process.prependOnceListener = noop;
+
+  process.listeners = function (name) { return [] }
 
   process.binding = function (name) {
     throw new Error('process.binding is not supported');
