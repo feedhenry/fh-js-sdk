@@ -721,9 +721,11 @@ appForm.models = function(module) {
    * 1. onblur (field value)
    * 2. onsubmit (whole submission json)
    *
-   * @param {[type]} params   {"fieldId", "value", "index":optional, "sectionIndex":optional}
-   * @param {} cb(err,res) callback function when finished
-   * @return true / error message
+   * @param {object} params   {"fieldId", "value", "index":optional, "sectionIndex":optional}
+   * @param {string}  params.fieldId - if of the field
+   * @param {string}  params.value - value for the field
+   * @param {number}  [params.index] - field index for repeating fields.
+   * @param {number}  [params.sectionIndex] - Section index for a field in a repeating section.
    */
   Submission.prototype.addInputValue = function(params, cb) {
     $fh.forms.log.d("Adding input value: ", JSON.stringify(params || {}));
@@ -833,8 +835,8 @@ appForm.models = function(module) {
   /**
    * Returns input value for a field with a given id
    * @param {string} fieldId - id of the field
-   * @param {number} sectionIndex - optional section id in case field is in repeating section
-   * @param cb
+   * @param {number} [sectionIndex] - optional section id in case field is in repeating section
+   * @param {function} cb - callback
    */
   Submission.prototype.getInputValueByFieldId = function(fieldId, sectionIndex, cb) {
     //Back compatibility

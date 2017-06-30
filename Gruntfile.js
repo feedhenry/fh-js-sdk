@@ -19,8 +19,7 @@ module.exports = function(grunt) {
             '!src/appforms/src/core/999*.js',
             '!src/appforms/src/backbone/000*.js',
             '!src/appforms/src/backbone/001*.js',
-            '!src/appforms/src/backbone/999*.js'
-        ],
+            '!src/appforms/src/backbone/999*.js'],
       options: {
         curly: true,
         eqeqeq: true,
