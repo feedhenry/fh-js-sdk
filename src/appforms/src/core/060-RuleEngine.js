@@ -354,7 +354,9 @@
 
             fieldMap[field._id] = field;
 
-            if (field.required) {
+            //Section/Page Breaks are not considered to be required as they are
+            //structural fields only
+            if (field.required && field.type !== "sectionBreak" && field.type !== "pageBreak") {
               requiredFieldMap[field._id] = {
                 field: field,
                 //Validation details for each section index
