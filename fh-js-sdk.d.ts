@@ -149,7 +149,7 @@ declare module FeedHenry {
 
       /**
        * Verifies if the locally stored session token will be accepted by RHMAP servers
-       * @param callback A callback that is invoked once the token validity is determined, or if an error occurs
+       * @param {Function} callback A callback that is invoked once the token validity is determined, or if an error occurs
        */
       export function verify(callback: (err: any, isValid: boolean) => void)
     }
