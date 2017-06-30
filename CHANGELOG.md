@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.20.0 - 2017-06-30
+
+* RHMAP-4738 - Upgraded the rules engine to validate repeating sections.
+
 ## 2.19.0 - 2017-06-29
 
 * RHMAP-16063 fix Client apps with disabled connection tags still working and the cloud calls not fail
