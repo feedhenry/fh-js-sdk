@@ -7,7 +7,7 @@ declare module FeedHenry {
 
     /**
      * Interface for the object with the metadata added by the FH SDK for each cloud request.
-     * 
+     *
      * @type FHParams
      */
     export interface FHParams {
@@ -22,7 +22,7 @@ declare module FeedHenry {
 
     /**
      * Interface for the data provided within a PushNotificationCallback argument.
-     * 
+     *
      * @type PushNotificationData
      */
     export interface PushNotificationData {
@@ -35,7 +35,7 @@ declare module FeedHenry {
 
     /**
      * Interface for the configuration object provided to the push command.
-     * 
+     *
      * @type PushOptions
      */
     export interface PushOptions {
@@ -45,7 +45,7 @@ declare module FeedHenry {
 
     /**
      * Interface for the default error object used with the error callback in the SDK.
-     * 
+     *
      * @type DefaultCallbackError
      */
     export interface DefaultCallbackError {
@@ -56,19 +56,19 @@ declare module FeedHenry {
 
     /**
      * Interface for the options provided to the auth function.
-     * 
+     *
      * @type AuthOptions
      */
     export interface AuthOptions {
         policyId: string;
-        clientToken: string; 
-        endRedirectUrl?: string; 
+        clientToken: string;
+        endRedirectUrl?: string;
         params?: any;
     }
 
     /**
      * Interface for the options provided to the cloud function.
-     * 
+     *
      * @type CloudOptions
      */
     export interface CloudOptions {
@@ -81,7 +81,7 @@ declare module FeedHenry {
 
     /**
      * Interface for the options provided to the sec function.
-     * 
+     *
      * @type SecOptions
      */
     export interface SecOptions {
@@ -108,29 +108,29 @@ declare module FeedHenry {
 
     /**
      * Initializes the client SDKs.
-     * 
+     *
      * @param {Object} options
      * @param {Function} success - A callback function to be run on success.
      * @param {Function} failure - A callback function to be run on failure.
-     * 
+     *
      * @returns {Function}
      */
     export function init(options: any, success: (host: string) => void, failure: (error: any) => void);
 
     /**
      * Deprecated - Use $fh.cloud instead
-     * 
+     *
      * @param {Object} options
      * @param {Function} success - A callback function to be run on success.
      * @param {Function} failure - A callback function to be run on failure.
-     * 
+     *
      * @returns {String} - The Cloud Host URL
      */
     export function act(options: {}, success: (data: any, status: any, xhr: XMLHttpRequest) => void, failure: (message: string, error: DefaultCallbackError) => void);
 
     /**
      * Authenticate and optionally authorise a user via access rights management.
-     * 
+     *
      * @param {Object} options
      * @param {Function} success - A callback function to be run on success.
      * @param {Function} failure - A callback function to be run on failure.
@@ -138,8 +138,31 @@ declare module FeedHenry {
     export function auth(options: AuthOptions, success: (data:any, status:any, xhr:XMLHttpRequest) => void, failure: (message:string, error: DefaultCallbackError) => void);
 
     /**
+     * Authenticate an existing session that is stored on device or verify one exists
+     */
+    export namespace auth {
+      /**
+       * Determines if a locally stored session token exists
+       * @param {Function} callback A callback that is invoked once the token existence is determined, or if an error occurs
+       */
+      export function hasSession(callback: (err: any, hasSession: boolean) => void)
+
+      /**
+       * Verifies if the locally stored session token will be accepted by RHMAP servers
+       * @param {Function} callback A callback that is invoked once the token validity is determined, or if an error occurs
+       */
+      export function verify(callback: (err: any, isValid: boolean) => void)
+
+      /**
+       * Delete the locally stored session token. Will also request that the RHMAP server revoke it
+       * @param callback 
+       */
+      export function clearSession(callback: (err: any) => void)
+    }
+
+    /**
      * Call any cloud URLs which have been defined in the Cloud App using AJAX.
-     * 
+     *
      * @param {Object} options
      * @param {Function} success - A callback function to be run on success.
      * @param {Function} failure - A callback function to be run on failure.
@@ -148,7 +171,7 @@ declare module FeedHenry {
 
     /**
      * Key pair generation and data encryption and decryption.
-     * 
+     *
      * @param {Object} options
      * @param {String} options.act - One of 'hash'|'encrypt'|'decrypt'|'keygen'.
      * @param {Object} options.params - Options for the chosen act.
@@ -165,7 +188,7 @@ declare module FeedHenry {
 
     /**
      * Generate hash value of a string.
-     * 
+     *
      * @param {Object} options
      * @param {String} options.text - String to hash.
      * @param {String} [options.algorithm=MD5] - Hashing algorithm.
@@ -176,7 +199,7 @@ declare module FeedHenry {
 
     /**
      * Register with the server to start receiving push notifications.
-     * 
+     *
      * @param {Function} onNotification - A handler for incoming notifications.
      * @param {Function} regSuccessHandler - A callback invoked upon successful registration.
      * @param {Function} regErrorHandler - A callback invoked if the registration fails due to an error, which is then passed as a String argument.
@@ -188,24 +211,24 @@ declare module FeedHenry {
 
     /**
      * Call MBaaS service endpoints.
-     * 
+     *
      * @param {Object} options
      * @param {String} options.service - The mbaas service name.
      * @param {Object} options.params - JSON object to send to the mbaas service.
-     * @param {Number} [options.timeout=60000] - Timeout value specified in milliseconds. 
+     * @param {Number} [options.timeout=60000] - Timeout value specified in milliseconds.
      */
     export function mbaas(options: MbaasOptions, success: (data: any, status: any, xhr: XMLHttpRequest) => void, failure: (message: string, error: DefaultCallbackError) => void);
 
     /**
      * Get the URL of the cloud app that the current client app is communicating with.
-     * 
+     *
      * @returns {String}
      */
     export function getCloudURL(): string;
 
     /**
      * Return the metadata added by the FH SDK for each cloud request.
-     * 
+     *
      * @returns {Object}
      */
     export function getFHParams(): FHParams;
@@ -232,17 +255,17 @@ declare module FeedHenry {
      * @param {Function} listener
      */
     export function once(type: string, listener: Function);
-    
+
     /**
      * Sync namespace
-     * 
+     *
      * @namespace sync
      */
     export namespace sync {
 
         /**
          * Interface for the data provided in the NotifyCallback in the notify function.
-         * 
+         *
          * @interface NotificationData
          */
         interface NotificationData {
@@ -254,7 +277,7 @@ declare module FeedHenry {
 
         /**
          * Interface for the options object provided to the init function.
-         * 
+         *
          * @interface SyncOptions
          */
         interface SyncOptions {
@@ -283,18 +306,18 @@ declare module FeedHenry {
 
         /**
          * Interface for the callback used in the notify function.
-         * 
+         *
          * @interface NotifyCallback
          */
-        interface NotifyCallback { 
+        interface NotifyCallback {
             (data: NotificationData)
         }
 
         /**
          * Initialize the client data sync service.
-         * 
+         *
          * @param {Object} options
-         * @param {Number} [options.sync_frequency=10] - How often to synchronize data with the cloud, in seconds. 
+         * @param {Number} [options.sync_frequency=10] - How often to synchronize data with the cloud, in seconds.
          * @param {Boolean} [options.auto_sync_local_updates=true] - Should local changes be synchronized to the cloud immediately, or should they wait for the next synchronization interval.
          * @param {Boolean} [options.notify_client_storage_failed=true] - Should a notification event be triggered when loading or saving to client storage fails.
          * @param {Boolean} [options.notify_sync_started=true] - Should a notification event be triggered when a synchronization cycle with the server has been started.
@@ -320,17 +343,17 @@ declare module FeedHenry {
 
         /**
          * Register a callback function to be invoked when the sync service has notifications to communicate to the client.
-         * 
+         *
          * @param {Function} callback
          */
         function notify(callback: NotifyCallback);
 
         /**
          * Put a dataset under the management of the sync service.
-         * 
+         *
          * @param {String} datasetId
          * @param {Object} options
-         * @param {Number} [options.sync_frequency=10] - How often to synchronize data with the cloud, in seconds. 
+         * @param {Number} [options.sync_frequency=10] - How often to synchronize data with the cloud, in seconds.
          * @param {Boolean} [options.auto_sync_local_updates=true] - Should local changes be synchronized to the cloud immediately, or should they wait for the next synchronization interval.
          * @param {Boolean} [options.notify_client_storage_failed=true] - Should a notification event be triggered when loading or saving to client storage fails.
          * @param {Boolean} [options.notify_sync_started=true] - Should a notification event be triggered when a synchronization cycle with the server has been started.
@@ -359,7 +382,7 @@ declare module FeedHenry {
 
         /**
          * Get a list of the records for the dataset.
-         * 
+         *
          * @param {String} datasetId
          * @param {Function} success
          * @param {Function} failure
@@ -368,7 +391,7 @@ declare module FeedHenry {
 
         /**
          * Update the data associated with the unique id.
-         * 
+         *
          * @param {String} datasetId
          * @param {Object} data
          * @param {Function} success
@@ -378,7 +401,7 @@ declare module FeedHenry {
 
         /**
          * Read a single data record.
-         * 
+         *
          * @param {String} datasetId
          * @param {String} uid
          * @param {Function} success
@@ -388,7 +411,7 @@ declare module FeedHenry {
 
         /**
          * Update the data associated with the unique id.
-         * 
+         *
          * @param {String} datasetId
          * @param {String} uid
          * @param {Object} data
@@ -399,7 +422,7 @@ declare module FeedHenry {
 
         /**
          * Delete the data associated with the unique id.
-         * 
+         *
          * @param {String} datasetId
          * @param {String} uid
          * @param {Function} success
@@ -409,7 +432,7 @@ declare module FeedHenry {
 
         /**
          * Start the sync loop if `sync_active` option is set to false.
-         * 
+         *
          * @param {String} datasetId
          * @param {Function} success
          * @param {Function} failure
@@ -418,7 +441,7 @@ declare module FeedHenry {
 
         /**
          * Stop the sync loop for a dataset.
-         * 
+         *
          * @param {String} datasetId
          * @param {Function} [success]
          * @param {Function} [failure]
@@ -427,7 +450,7 @@ declare module FeedHenry {
 
         /**
          * Run the sync loop almost immediately (within next 500 ms) if `sync_active` is true.
-         * 
+         *
          * @param {String} datasetId
          * @param {Function} [success]
          * @param {Function} [failure]
@@ -436,7 +459,7 @@ declare module FeedHenry {
 
         /**
          * Run the sync loop almost immediately (within next 500 ms) even if `sync_active` is false.
-         * 
+         *
          * @param {String} datasetId
          * @param {Function} [success]
          * @param {Function} [failure]
@@ -445,7 +468,7 @@ declare module FeedHenry {
 
         /**
          * List collisions in sync
-         * 
+         *
          * @param {String} datasetId
          * @param {Function} success
          * @param {Function} failure
@@ -454,7 +477,7 @@ declare module FeedHenry {
 
         /**
          * Remove a collision in sync
-         * 
+         *
          * @param {String} datasetId
          * @param {String} collisionHash
          * @param {Function} success
@@ -525,7 +548,7 @@ declare module FeedHenry {
 
         /**
          * Produces a SHA1 hash of the provided object (sorted before hash) or string.
-         * 
+         *
          * @param {Object|String} toHash - Object to hash
          * @returns {String} - SHA1 hash of the provided string or object.
          */
