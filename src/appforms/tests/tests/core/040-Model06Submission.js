@@ -1238,11 +1238,21 @@ describe("Submission model", function() {
           sectionIndex: 5
         };
 
+        var params_3 = {
+          fieldId: "field1_section2_page1_id",
+          value: "field1_section2_page1_value_index_7",
+          sectionIndex: 7
+        };
+
         submission.addInputValue(params, function(err, result) {
           assert.ok(!err);
         });
 
         submission.addInputValue(params_2, function(err, result) {
+          assert.ok(!err);
+        });
+
+        submission.addInputValue(params_3, function(err, result) {
           assert.ok(!err);
         });
 
@@ -1256,7 +1266,15 @@ describe("Submission model", function() {
         chai.expect(field_2.fieldValues[0]).to.equal(params_2.value);
         chai.expect(field_2.sectionIndex).to.equal(5);
 
-
+        var field_3 = submission.getInputValueObjectById(params_3.fieldId, params_3.sectionIndex);
+        chai.expect(field_3.sectionIndex).to.exist;
+        chai.expect(field_3.fieldValues[0]).to.equal(params_3.value);
+        chai.expect(field_3.sectionIndex).to.equal(7);
+        
+        
+        
+        
+        //make sure 1st field didnt get overwritten
         field = submission.getInputValueObjectById(params.fieldId, params.sectionIndex);
         chai.expect(field.sectionIndex).to.exist;
         chai.expect(field.fieldValues[0]).to.equal(params.value);
