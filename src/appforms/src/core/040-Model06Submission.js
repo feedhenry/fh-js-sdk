@@ -987,13 +987,16 @@ appForm.models = function(module) {
    * @returns {object} field definition with input values and section index
    */
   Submission.prototype.getInputValueObjectById = function(fieldId, sectionIndex) {
+    if (_.isUndefined(sectionIndex)) {
+      sectionIndex = 0;
+    }
     var formFields = this.getFormFields();
 
     for (var i = 0; i < formFields.length; i++) {
       var formField = formFields[i];
 
       //field is matching another field if their section index is the same or if it is missing section index(older entries).
-      var sectionIndexOk = (!formField.sectionIndex && formField.sectionIndex !== 0)|| (formField.sectionIndex === sectionIndex);
+      var sectionIndexOk = _.isUndefined(formField.sectionIndex) || formField.sectionIndex === sectionIndex;
 
       if (formField.fieldId._id && (formField.fieldId._id === fieldId) && sectionIndexOk) {
         return formField;
