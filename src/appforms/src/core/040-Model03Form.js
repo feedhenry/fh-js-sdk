@@ -237,6 +237,11 @@ appForm.models = function (module) {
       this.pages.push(pageModel);
     }
   };
+  /**
+   * Find page number for a given field
+   * @param fieldId - an id of the field.
+   * @returns {*}
+   */
   Form.prototype.getPageNumberByFieldId = function(fieldId){
     if(fieldId){
       return this.getFieldRef()[fieldId].page;
@@ -244,6 +249,7 @@ appForm.models = function (module) {
       return null;
     }
   };
+
   Form.prototype.getPageModelList = function () {
     return this.pages;
   };
@@ -271,6 +277,7 @@ appForm.models = function (module) {
   Form.prototype.getFieldModelById = function (fieldId) {
     return this.fields[fieldId];
   };
+
   /**
    * Finding a field model by the Field Code specified in the studio if it exists
    * Otherwise return null;

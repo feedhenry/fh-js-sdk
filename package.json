@@ -1,6 +1,6 @@
 {
   "name": "fh-js-sdk",
-  "version": "2.20.0",
+  "version": "2.21.0",
   "description": "feedhenry js sdk",
   "main": "dist/feedhenry.js",
   "types": "./fh-js-sdk.d.ts",
