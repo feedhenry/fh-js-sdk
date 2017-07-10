@@ -1,6 +1,6 @@
 {
   "name": "fh-js-sdk",
-  "version": "2.21.0-alpha.01",
+  "version": "2.21.0",
   "dependencies": {
     "acorn": {
       "version": "4.0.13",
