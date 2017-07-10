@@ -905,7 +905,8 @@ appForm.models = function(module) {
     if (succeed) {
       tmpFields = this.tmpFields;
       for (fieldIdentifier in tmpFields) {
-        var target = this.getInputValueObjectById(fieldIdentifier.split(':')[0]);
+        var fieldIdentifierSplit = fieldIdentifier.split(':');
+        var target = this.getInputValueObjectById(fieldIdentifierSplit[0], parseInt(fieldIdentifierSplit[1]));
         valArr = tmpFields[fieldIdentifier];
         for (valIndex = 0; valIndex < valArr.length; valIndex++) {
           val = valArr[valIndex];
@@ -992,7 +993,7 @@ appForm.models = function(module) {
       var formField = formFields[i];
 
       //field is matching another field if their section index is the same or if it is missing section index(older entries).
-      var sectionIndexOk = !formField.sectionIndex || formField.sectionIndex === sectionIndex;
+      var sectionIndexOk = (!formField.sectionIndex && formField.sectionIndex !== 0)|| (formField.sectionIndex === sectionIndex);
 
       if (formField.fieldId._id && (formField.fieldId._id === fieldId) && sectionIndexOk) {
         return formField;

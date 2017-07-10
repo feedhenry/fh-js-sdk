@@ -1259,17 +1259,17 @@ describe("Submission model", function() {
         var field = submission.getInputValueObjectById(params.fieldId, params.sectionIndex);
         chai.expect(field.sectionIndex).to.exist;
         chai.expect(field.fieldValues[0]).to.equal(params.value);
-        chai.expect(field.sectionIndex).to.equal(3);
+        chai.expect(field.sectionIndex).to.equal(params.sectionIndex);
 
         var field_2 = submission.getInputValueObjectById(params_2.fieldId, params_2.sectionIndex);
         chai.expect(field_2.sectionIndex).to.exist;
         chai.expect(field_2.fieldValues[0]).to.equal(params_2.value);
-        chai.expect(field_2.sectionIndex).to.equal(5);
+        chai.expect(field_2.sectionIndex).to.equal(params_2.sectionIndex);
 
         var field_3 = submission.getInputValueObjectById(params_3.fieldId, params_3.sectionIndex);
         chai.expect(field_3.sectionIndex).to.exist;
         chai.expect(field_3.fieldValues[0]).to.equal(params_3.value);
-        chai.expect(field_3.sectionIndex).to.equal(7);
+        chai.expect(field_3.sectionIndex).to.equal(params_3.sectionIndex);
         
         
         
@@ -1278,12 +1278,85 @@ describe("Submission model", function() {
         field = submission.getInputValueObjectById(params.fieldId, params.sectionIndex);
         chai.expect(field.sectionIndex).to.exist;
         chai.expect(field.fieldValues[0]).to.equal(params.value);
-        chai.expect(field.sectionIndex).to.equal(3);
+        chai.expect(field.sectionIndex).to.equal(params.sectionIndex);
 
         done();
       });
     });
 
+    it("should add input values for a fields in a section with a different section index in transaction", function(done) {
+      var Form = appForm.models.Form;
+
+      new Form({
+        formId: "repeatingSectionFormId",
+        rawMode: true,
+        rawData: repeatingSectionForm
+      }, function(err, formModel) {
+        assert.ok(!err, "Expected no error when initialising the form " + err);
+
+        //Creating a new submission based on the form model
+        var submission = formModel.newSubmission();
+
+        var params = {
+          fieldId: "field1_section2_page1_id",
+          value: "field1_section2_page1_value",
+          sectionIndex: 0
+        };
+        var params_2 = {
+          fieldId: "field1_section2_page1_id",
+          value: "field1_section2_page1_value_index_5",
+          sectionIndex: 5
+        };
+
+        var params_3 = {
+          fieldId: "field1_section2_page1_id",
+          value: "field1_section2_page1_value_index_7",
+          sectionIndex: 7
+        };
+        submission.reset();
+        submission.startInputTransaction();
+
+        submission.addInputValue(params, function(err, result) {
+          assert.ok(!err);
+        });
+
+        submission.addInputValue(params_2, function(err, result) {
+          assert.ok(!err);
+        });
+
+        submission.addInputValue(params_3, function(err, result) {
+          assert.ok(!err);
+        });
+
+        submission.endInputTransaction(true);
+
+        var field = submission.getInputValueObjectById(params.fieldId, params.sectionIndex);
+        chai.expect(field.sectionIndex).to.exist;
+        chai.expect(field.fieldValues[0]).to.equal(params.value);
+        chai.expect(field.sectionIndex).to.equal(params.sectionIndex);
+
+        var field_2 = submission.getInputValueObjectById(params_2.fieldId, params_2.sectionIndex);
+        chai.expect(field_2.sectionIndex).to.exist;
+        chai.expect(field_2.fieldValues[0]).to.equal(params_2.value);
+        chai.expect(field_2.sectionIndex).to.equal(params_2.sectionIndex);
+
+        var field_3 = submission.getInputValueObjectById(params_3.fieldId, params_3.sectionIndex);
+        chai.expect(field_3.sectionIndex).to.exist;
+        chai.expect(field_3.fieldValues[0]).to.equal(params_3.value);
+        chai.expect(field_3.sectionIndex).to.equal(params_3.sectionIndex);
+
+
+
+
+        //make sure 1st field didnt get overwritten
+        field = submission.getInputValueObjectById(params.fieldId, params.sectionIndex);
+        chai.expect(field.sectionIndex).to.exist;
+        chai.expect(field.fieldValues[0]).to.equal(params.value);
+        chai.expect(field.sectionIndex).to.equal(params.sectionIndex);
+
+        done();
+      });
+    });
 
   });
 });
