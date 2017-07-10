@@ -1214,6 +1214,58 @@ describe("Submission model", function() {
       });
     });
 
+    it("should add input values for a fields in a section with a different section index", function(done) {
+      var Form = appForm.models.Form;
+
+      new Form({
+        formId: "repeatingSectionFormId",
+        rawMode: true,
+        rawData: repeatingSectionForm
+      }, function(err, formModel) {
+        assert.ok(!err, "Expected no error when initialising the form " + err);
+
+        //Creating a new submission based on the form model
+        var submission = formModel.newSubmission();
+
+        var params = {
+          fieldId: "field1_section2_page1_id",
+          value: "field1_section2_page1_value",
+          sectionIndex: 3
+        };
+        var params_2 = {
+          fieldId: "field1_section2_page1_id",
+          value: "field1_section2_page1_value_index_5",
+          sectionIndex: 5
+        };
+
+        submission.addInputValue(params, function(err, result) {
+          assert.ok(!err);
+        });
+
+        submission.addInputValue(params_2, function(err, result) {
+          assert.ok(!err);
+        });
+
+        var field = submission.getInputValueObjectById(params.fieldId, params.sectionIndex);
+        chai.expect(field.sectionIndex).to.exist;
+        chai.expect(field.fieldValues[0]).to.equal(params.value);
+        chai.expect(field.sectionIndex).to.equal(3);
+
+        var field_2 = submission.getInputValueObjectById(params_2.fieldId, params_2.sectionIndex);
+        chai.expect(field_2.sectionIndex).to.exist;
+        chai.expect(field_2.fieldValues[0]).to.equal(params_2.value);
+        chai.expect(field_2.sectionIndex).to.equal(5);
+
+
+        field = submission.getInputValueObjectById(params.fieldId, params.sectionIndex);
+        chai.expect(field.sectionIndex).to.exist;
+        chai.expect(field.fieldValues[0]).to.equal(params.value);
+        chai.expect(field.sectionIndex).to.equal(3);
+
+        done();
+      });
+    });
+
 
   });
 });
