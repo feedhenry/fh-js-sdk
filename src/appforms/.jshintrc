@@ -10,7 +10,8 @@
     "Class": false,
     "Constants": true,
     "Highcharts": false,
-    "moment": false
+    "moment": false,
+    "mocha": true
   },
   "eqeqeq": false,
   "eqnull": true,

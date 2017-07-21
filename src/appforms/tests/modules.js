@@ -27,6 +27,7 @@
   "040-Model06Submission",
   "040-Model07Field",
   "040-Model07FieldRadio",
+  "040-Model07FieldSections",
   "040-Model07FieldSelect",
   "040-Model07FieldCheckBox",
   "040-Model07FieldFile",
