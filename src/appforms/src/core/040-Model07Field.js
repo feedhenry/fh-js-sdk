@@ -166,6 +166,14 @@ appForm.models = function (module) {
   };
 
   /**
+   * Checking if a field is a section break field type
+   * @returns {boolean}
+   */
+  Field.prototype.isSectionBreak = function() {
+    return this.get('type') === 'sectionBreak';
+  };
+
+  /**
      * Process an input value. convert to submission format. run field.validate before this
      * @param  {[type]} params {"value", "isStore":optional}
      * @param {cb} cb(err,res)
@@ -230,6 +238,44 @@ appForm.models = function (module) {
       this.emit('hidden');
     }
   };
+
+  /**
+   * Returns the section id if the field is contained within a section,
+   * if the field is a section break this will return its own fieldId,
+   * if the field is not in a section this will return null
+   * @returns {string} sectionId || null
+   */
+  Field.prototype.getSectionId = function() {
+    var self = this;
+    var fieldId = self.getFieldId();
+
+    var fieldType = self.getType();
+    if (fieldType === "sectionBreak"){
+      return fieldId;
+    }
+
+    var form = self.form;
+
+    var fieldRef = form ? form.getFieldRef()[fieldId] : null;
+    if (!fieldRef || !fieldRef.field || fieldRef.fieldRef === 0){
+      return null;
+    }
+
+    var page = form.pages[fieldRef.page];
+
+    var sectionId = null;
+
+    page.fieldsIds.some(function (pageFieldId){
+      var fieldModel = page.getFieldModelById(pageFieldId);
+      if (fieldModel.isSectionBreak()) {
+        sectionId = pageFieldId;
+      }
+      return pageFieldId === fieldId;
+    });
+
+    return sectionId;
+  };
+
   module.Field = Field;
   return module;
 }(appForm.models || {});
