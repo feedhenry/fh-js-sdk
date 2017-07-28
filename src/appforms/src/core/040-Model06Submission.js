@@ -942,15 +942,22 @@ appForm.models = function(module) {
    * @param  {function} [Optional callback]
    * @return {[type]}         [description]
    */
-  Submission.prototype.removeFieldValue = function(fieldId, index, callback) {
+  Submission.prototype.removeFieldValue = function(fieldId, index, sectionIndex, callback) {
+    //Back compatibility
+    if(!callback && _.isFunction(sectionIndex)){
+      callback = sectionIndex;
+      sectionIndex = 0;
+    }
+
     callback = callback || function(){};
     var self = this;
     var targetArr = [];
     var valsRemoved = {};
     if (this.transactionMode) {
-      targetArr = this.tmpFields.fieldId;
+      // field identifier, check function addInputValue() for more information.
+      targetArr = this.tmpFields[fieldId + ':' + sectionIndex];
     } else {
-      targetArr = this.getInputValueObjectById(fieldId).fieldValues;
+      targetArr = this.getInputValueObjectById(fieldId, sectionIndex).fieldValues;
     }
     //If no index is supplied, all values are removed.
     if (index === null || typeof index === 'undefined') {
@@ -1217,6 +1224,38 @@ appForm.models = function(module) {
       this.set("_id", submissionId);
     }
   };
+
+  /**
+   * Removes field values for fields within the section and at given sectionIndex
+   * @param sectionId
+   * @param sectionIndex
+   * @param callback
+   */
+  Submission.prototype.removeSection = function(sectionId, sectionIndex, callback) {
+    var self = this;
+    callback = callback || function() {};
+    var removeError = null;
+
+    async.waterfall([
+      function(removeCallback) {
+        self.getForm(removeCallback);
+      },
+      function(form, removeCallback) {
+        var fieldsInSection = form.getFieldsInSection(sectionId);
+        async.forEachSeries(
+          fieldsInSection, function(fieldDef, eachCb) {
+            self.removeFieldValue(fieldDef._id, null, sectionIndex, eachCb);
+          }, function(err) {
+            removeCallback(err);
+          });
+      },
+      function(removeCallback) {
+        self.pruneRemovedFields(removeCallback);
+      }
+    ], callback);
+  };
+
+
 
   return module;
 }(appForm.models || {});

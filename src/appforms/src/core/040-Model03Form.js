@@ -356,5 +356,34 @@ appForm.models = function (module) {
       return this.rulesEngine;
     }
   };
+
+  /**
+   * Returns fields contained within the section
+   * @param {String} sectionId - id of the section
+   * @returns {Array} an array of fields within the section
+   */
+  Form.prototype.getFieldsInSection = function(sectionId) {
+    var self = this;
+    var pageNo = self.getPageNumberByFieldId(sectionId);
+    var page = self.pages[pageNo];
+
+    var fieldsDef = page.getFieldDef();
+    var fieldsInSection = [];
+
+    var indexOfSection = null;
+    for (var i = 0; i < fieldsDef.length; i++) {
+      var field = fieldsDef[i];
+      if (field._id === sectionId) {
+        indexOfSection = i;
+      } else if (i > indexOfSection && field.type !== 'sectionBreak') {
+        fieldsInSection.push(field);
+      } else if (i > indexOfSection && field.type === 'sectionBreak') {
+        break;
+      }
+    }
+
+    return fieldsInSection;
+  };
+
   return module;
 }(appForm.models || {});
