@@ -253,6 +253,10 @@ module.exports = function(grunt) {
         options: {
           spawn: false
         }
+      },
+      appforms: {
+        files: ['src/appforms/src/**/**/*'],
+        tasks: ['appforms']
       }
     },
     uglify: {
@@ -405,4 +409,6 @@ module.exports = function(grunt) {
   grunt.registerTask('coverage', ['shell:jscov', 'browserify:require_cov', 'browserify:test_cov', 'connect:server', 'mocha_phantomjs:test_coverage', 'shell:htmlcov']);
 
   grunt.registerTask('default', 'jshint concat-core-sdk concat:forms_appFormsTest test titanium uglify:dist zip');
+
+  grunt.registerTask('appforms', ['replace:forms_templates', 'concat:forms_backbone', 'concat:forms_backboneRequireJS','concat:forms_core', 'concat:forms_sdk','concat:forms_core_no_v2' ]);
 };
