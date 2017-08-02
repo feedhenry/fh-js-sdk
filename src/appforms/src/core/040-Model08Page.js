@@ -99,6 +99,9 @@ appForm.models = function (module) {
         sectionList[currentSectionId] = sectionList[currentSectionId] ? sectionList[currentSectionId] : {fields: []};
         sectionList[currentSectionId].title = fieldModel.get('name', "Section " + (fieldModelIndex+1));
         sectionList[currentSectionId].description = fieldModel.get('helpText', "Section " + (fieldModelIndex+1));
+        sectionList[currentSectionId].repeating = fieldModel.isRepeating();
+        sectionList[currentSectionId].minRepeat = fieldModel.getMinRepeat();
+        sectionList[currentSectionId].maxRepeat = fieldModel.getMaxRepeat();
       }
     }
 
