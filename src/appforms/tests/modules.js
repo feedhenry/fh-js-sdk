@@ -70,6 +70,7 @@ var modules = {
     "040-view02field29barcode",
     "040-view02field30sliderNumber",
     "040-view02field31readOnly",
+    "040-view02section",
     "040-view03Page",
     "040-view04Form",
     "040-view05fromJson",
