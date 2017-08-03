@@ -530,7 +530,8 @@ var FormView = BaseView.extend({
           tmpObj.push({
             id: fieldId,
             value: v,
-            index: j
+            index: j,
+            sectionIndex: fieldView.options.sectionIndex
           });
         }
       }
@@ -541,10 +542,11 @@ var FormView = BaseView.extend({
       fieldId = item.id;
       var value = item.value;
       var index = item.index;
+      var sectionIndex = item.sectionIndex;
 
       if(value === null || typeof(value) === 'undefined'){
         //If the value is null, ensure that the value is removed from the submission.
-        submission.removeFieldValue(fieldId, index);
+        submission.removeFieldValue(fieldId, index, sectionIndex);
         $fh.forms.log.e("Input value for fieldId " + fieldId + " was not defined");
         count--;
         if (count === 0) {
@@ -555,7 +557,8 @@ var FormView = BaseView.extend({
           fieldId: fieldId,
           value: value,
           index: index,
-          isStore: isStore
+          isStore: isStore,
+          sectionIndex: sectionIndex
         }, function(err, res) {
           if (err) {
             console.error(err);
