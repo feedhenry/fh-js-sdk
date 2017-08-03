@@ -137,7 +137,7 @@ var SectionView=Backbone.View.extend({
         $fh.forms.log.l("*- "+fieldType);
 
         if(fieldType !== "sectionBreak"){
-            self.options.parentView.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
+            self.options.parentView.fieldViews[field.get('_id') + '_' + index] = new self.viewMap[fieldType]({
             parentEl: sectionEl.find('.panel-body'),
             parentView: self,
             model: field,
