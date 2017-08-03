@@ -18,6 +18,7 @@ FieldBarcodeView = FieldView.extend({
     var wrapperObj = self.getWrapper(index);
     var barcodeTextEle = wrapperObj.find("input[data-bfield='text']");
     var barcodeFormatEle = wrapperObj.find("input[data-bfield='format']");
+    var sectionIndex = self.options.sectionIndex;
 
     var result = {
       text: barcodeTextEle.val(),
@@ -31,7 +32,8 @@ FieldBarcodeView = FieldView.extend({
       fieldId: self.model.getFieldId(),
       index: index,
       value: result,
-      isStore: true
+      isStore: true,
+      sectionIndex:sectionIndex
     }, function() {
       self.validateElement(index, result);
       self.checkRules();

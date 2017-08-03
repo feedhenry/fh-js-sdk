@@ -265,6 +265,7 @@ var FieldView = Backbone.View.extend({
         var target = $(e.target);
         var index = currentTarget.data().index || target.data().index;
         var val = self.valueFromElement(index);
+        var sectionIndex = self.options.sectionIndex;
 
         self.validateElement(index, val);
 
@@ -272,7 +273,8 @@ var FieldView = Backbone.View.extend({
             index: index,
             value: val,
             isStore: true,
-            fieldId: self.model.getFieldId()
+            fieldId: self.model.getFieldId(),
+            sectionIndex:sectionIndex
         }, function() {
             //Value has been persisted, now check for any rule changes.
             self.checkRules();
