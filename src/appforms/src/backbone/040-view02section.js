@@ -100,7 +100,7 @@ var SectionView=Backbone.View.extend({
 
     var self = this;
 
-    var title = self.options.title + ' - ' + (self.options.repeating ? index + 1 : '');
+    var title = self.options.title + (self.options.repeating ? (' - ' + (index + 1)) : '');
 
     //Add the section fields
     var sectionEl = $(_.template(self.options.formView.$el.find('#temp_section_structure').html())( {
