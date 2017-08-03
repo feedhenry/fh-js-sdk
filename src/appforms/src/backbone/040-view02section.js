@@ -175,7 +175,7 @@ var SectionView=Backbone.View.extend({
     for (var i = 0; i < this.secMaxRepeat; i++) {
       this.addSection();
     }
-    for (var i = this.secInitialRepeat; i < this.secMaxRepeat; i++) {
+    for (i = this.secInitialRepeat; i < this.secMaxRepeat; i++) {
       this.hideSection();
     }
 
