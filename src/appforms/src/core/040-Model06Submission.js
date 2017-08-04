@@ -988,6 +988,23 @@ appForm.models = function(module) {
   };
 
   /**
+   * Remove form field completaly from submission - needed for repeating sections.
+   */
+  Submission.prototype.removeFormField = function(fieldId, sectionIndex) {
+    // remove it completely from submission - needed for repeating sections
+    if (this.transactionMode) {
+      delete this.tmpFields[fieldId + ':' + sectionIndex];
+    } else {
+      var formField = this.getInputValueObjectById(fieldId, sectionIndex);
+      var formFields = this.getFormFields();
+      var index = formFields.indexOf(formField);
+      if (index > -1) {
+        formFields.splice(index, 1);
+      }
+    }
+  };
+
+  /**
    * Returns object representing the field along with its values.
    * @param {string} fieldId - id of the field
    * @param {number} sectionIndex - optional section id in case field is in repeating section

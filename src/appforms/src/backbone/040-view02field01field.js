@@ -173,7 +173,7 @@ var FieldView = Backbone.View.extend({
         var submission = this.options.formView.getSubmission();
         if (submission) {
             this.submission = submission;
-            this.submission.getInputValueByFieldId(this.model.get('_id'), function(err, res) {
+            this.submission.getInputValueByFieldId(this.model.get('_id'), this.options.sectionIndex, function(err, res) {
                 self.value(res);
             });
         }
