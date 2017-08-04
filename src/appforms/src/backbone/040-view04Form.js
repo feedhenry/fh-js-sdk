@@ -209,20 +209,19 @@ var FormView = BaseView.extend({
         var fields = actions.fields;
 
         for (targetId in fields) {
-          self.performRuleAction("field", targetId, fields[targetId]["action"]);
+          self.performRuleAction("field", fields[targetId].targetId, fields[targetId]["action"], fields[targetId].sectionIndex);
         }
       }
       self.checkPages();
       self.steps.activePageChange(self);
     });
   },
-  performRuleAction: function(type, targetId, action) {
+  performRuleAction: function(type, targetId, action, sectionIndex) {
     var target = null;
     if (type === "field") {
-      target = this.getFieldViewById(targetId);
+      target = this.getFieldViewById(targetId, sectionIndex);
     }
     if (target === null) {
-      console.error("cannot find target with id:" + targetId);
       return;
     }
     switch (action) {
@@ -287,11 +286,12 @@ var FormView = BaseView.extend({
     }
     return null;
   },
-  getFieldViewById: function(fieldId) {
+  getFieldViewById: function(fieldId, sectionIndex) {
     for (var i = 0; i < this.fieldViews.length; i++) {
       var fieldView = this.fieldViews[i];
       var pId = fieldView.model.getFieldId();
-      if (pId === fieldId) {
+      var sId = fieldView.options.sectionIndex;
+      if (pId === fieldId && sId === sectionIndex) {
         return fieldView;
       }
     }
