@@ -1,7 +1,7 @@
 var SectionView=Backbone.View.extend({
 
-  addInputButtonClass: ".fh_appform_addSectionBtn",
-  removeInputButtonClass: ".fh_appform_removeSectionBtn",
+  addSectionButtonClass: ".fh_appform_addSectionBtn",
+  removeSectionButtonClass: ".fh_appform_removeSectionBtn",
 
   viewMap: {
     "text": FieldTextView,
@@ -30,15 +30,15 @@ var SectionView=Backbone.View.extend({
     var secMaxRepeat = this.secMaxRepeat;
     var minRepeat = this.secInitialRepeat;
     if (curNum < secMaxRepeat) {
-      this.$sec_fh_appform_fieldActionBar.find(this.addInputButtonClass).show();
+      this.$sec_fh_appform_fieldActionBar.find(this.addSectionButtonClass).show();
     } else {
-      this.$sec_fh_appform_fieldActionBar.find(this.addInputButtonClass).hide();
+      this.$sec_fh_appform_fieldActionBar.find(this.addSectionButtonClass).hide();
     }
 
     if (curNum > minRepeat) {
-      this.$sec_fh_appform_fieldActionBar.find(this.removeInputButtonClass).show();
+      this.$sec_fh_appform_fieldActionBar.find(this.removeSectionButtonClass).show();
     } else {
-      this.$sec_fh_appform_fieldActionBar.find(this.removeInputButtonClass).hide();
+      this.$sec_fh_appform_fieldActionBar.find(this.removeSectionButtonClass).hide();
     }
   },
 
@@ -49,27 +49,8 @@ var SectionView=Backbone.View.extend({
     this.renderSection(index);
 
     this.secCurRepeat++;
-  },
 
-  showSection: function() {
-    var self = this;
-    var secCurRepeat = this.secCurRepeat;
-    var nextIndex = secCurRepeat;
-    var sectionWrapper = $(self.sectionWrapper[0]);
-    var nextSection = sectionWrapper.find('#fh_appform_' + self.options.sectionKey + '_' + nextIndex);
-    nextSection.show();
-    this.secCurRepeat++;
-
-  },
-
-  hideSection: function() {
-    var self = this;
-    var secCurRepeat = this.secCurRepeat;
-    var lastIndex = secCurRepeat - 1;
-    var sectionWrapper = $(self.sectionWrapper[0]);
-    var lastSection = sectionWrapper.find('#fh_appform_' + self.options.sectionKey + '_' + lastIndex);
-    lastSection.hide();
-    this.secCurRepeat--;
+    this.options.formView.getFieldViews();
   },
 
   removeSection: function() {
@@ -79,7 +60,20 @@ var SectionView=Backbone.View.extend({
     var sectionWrapper = $(self.sectionWrapper[0]);
     var lastSection = sectionWrapper.find('#fh_appform_' + self.options.sectionKey + '_' + lastIndex);
     lastSection.remove();
+
+    self.options.fields.forEach(function(field){
+      var fieldType = field.getType();
+      if (self.viewMap[fieldType]) {
+        if(fieldType !== "sectionBreak"){
+          self.options.formView.submission.removeFieldValue(field.get('_id'), null, lastIndex);
+          self.options.formView.submission.removeFormField(field.get('_id'), lastIndex);
+          delete self.options.parentView.fieldViews[field.get('_id') + '_' + lastIndex];
+        }
+      }
+    });
+
     this.secCurRepeat--;
+    this.options.formView.getFieldViews();
   },
 
   initialize: function(options) {
@@ -172,22 +166,19 @@ var SectionView=Backbone.View.extend({
     this.options.parentEl.append(this.sectionWrapper);
 
 
-    for (var i = 0; i < this.secMaxRepeat; i++) {
+    for (var i = 0; i < this.secInitialRepeat; i++) {
       this.addSection();
-    }
-    for (i = this.secInitialRepeat; i < this.secMaxRepeat; i++) {
-      this.hideSection();
     }
 
     this.$sec_fh_appform_fieldActionBar = $(this.sectionWrapper[0]).find('.fh_appform_section_button_bar');
 
-    this.$sec_fh_appform_fieldActionBar.find('.fh_appform_addSectionBtn').unbind().bind('click', function() {
-      self.showSection();
+    this.$sec_fh_appform_fieldActionBar.find(this.addSectionButtonClass).unbind().bind('click', function() {
+      self.addSection();
       self.checkActionBar();
     });
 
-    this.$sec_fh_appform_fieldActionBar.find('.fh_appform_removeSectionBtn').unbind().bind('click', function() {
-      self.hideSection();
+    this.$sec_fh_appform_fieldActionBar.find(this.removeSectionButtonClass).unbind().bind('click', function() {
+      self.removeSection();
       self.checkActionBar();
     });
 

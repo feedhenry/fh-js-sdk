@@ -165,25 +165,31 @@ var FormView = BaseView.extend({
       });
       pageViews.push(pageView);
     }
+    
+    self.pageViews = pageViews;
+    self.pageCount = pageViews.length;
+
+    this.getFieldViews();
+
+    var buttonsHtml = _.template(self.$el.find('#temp_form_buttons').html())();
+    this.$el.find("#fh_appform_container.fh_appform_form_area").append(buttonsHtml);
+  },
+  getFieldViews: function() {
     var fieldViews = [];
-    for (i = 0; i < pageViews.length; i++) {
-      pageView = pageViews[i];
+    for (i = 0; i < this.pageViews.length; i++) {
+      pageView = this.pageViews[i];
       var pageFieldViews = pageView.fieldViews;
       for (var key in pageFieldViews) {
         var fView = pageFieldViews[key];
         fieldViews.push(fView);
-        fView.on("checkrules", self.checkRules);
-        if (self.readonly) {
+        fView.on("checkrules", this.checkRules);
+        if (this.readonly) {
           fView.$el.find("input,button,textarea,select").attr("disabled", "disabled");
         }
       }
     }
 
-    self.fieldViews = fieldViews;
-    self.pageViews = pageViews;
-    self.pageCount = pageViews.length;
-    var buttonsHtml = _.template(self.$el.find('#temp_form_buttons').html())();
-    this.$el.find("#fh_appform_container.fh_appform_form_area").append(buttonsHtml);
+    this.fieldViews = fieldViews;
   },
   checkRules: function(params) {
     var self = this;
@@ -506,7 +512,7 @@ var FormView = BaseView.extend({
     this.submission.addInputValue(params, cb);
   },
   removeFieldInputValue: function(params) {
-    this.submission.removeFieldValue(params.fieldId, params.index);
+    this.submission.removeFieldValue(params.fieldId, params.index, params.sectionIndex);
   },
   populateFieldViewsToSubmission: function(isStore, cb) {
     if (typeof cb === "undefined") {
