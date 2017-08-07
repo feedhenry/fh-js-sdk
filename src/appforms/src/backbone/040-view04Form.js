@@ -69,32 +69,38 @@ var FormView = BaseView.extend({
     var firstView = null;
     var invalidFieldId = null;
     var invalidPageNum = null;
+    var invalidSectionIndex = null;
+
+    function checkResult(result, fieldId, v) {
+      result.errorMessages = result.errorMessages || [];
+      result.fieldErrorMessage = result.fieldErrorMessage || [];
+      if (!result.valid) {
+        if(invalidFieldId === null){
+          invalidFieldId = fieldId;
+          invalidPageNum = self.form.getPageNumberByFieldId(invalidFieldId);
+          invalidSectionIndex = v.options.sectionIndex;
+        }
+        for (var i = 0; i < result.errorMessages.length; i++) {
+          if (result.errorMessages[i]) {
+            v.setErrorText(i, result.errorMessages[i]);
+          }
+        }
+
+        for (i = 0; i < result.fieldErrorMessage.length; i++) {
+          if (result.fieldErrorMessage[i]) {
+            v.setErrorText(i, result.fieldErrorMessage[i]);
+          }
+        }
+      }
+    }
 
     //Clear validate errors
 
     self.fieldViews.forEach(function(v) {
         var fieldId = v.model.getFieldId();
-        if(res.hasOwnProperty(fieldId)){
-          var result = res[fieldId];
-          result.errorMessages = result.errorMessages || [];
-          result.fieldErrorMessage = result.fieldErrorMessage || [];
-          if (!result.valid) {
-            if(invalidFieldId === null){
-              invalidFieldId = fieldId;
-              invalidPageNum = self.form.getPageNumberByFieldId(invalidFieldId);
-            }
-            for (var i = 0; i < result.errorMessages.length; i++) {
-              if (result.errorMessages[i]) {
-                v.setErrorText(i, result.errorMessages[i]);
-              }
-            }
-
-            for (i = 0; i < result.fieldErrorMessage.length; i++) {
-              if (result.fieldErrorMessage[i]) {
-                v.setErrorText(i, result.fieldErrorMessage[i]);
-              }
-            }
-          }
+        if(res.hasOwnProperty(fieldId) && res[fieldId].sections.hasOwnProperty(v.options.sectionIndex || 0)){
+          checkResult(res[fieldId], fieldId, v);
+          checkResult(res[fieldId].sections[v.options.sectionIndex || 0], fieldId, v);
         }
     });
 
@@ -102,10 +108,11 @@ var FormView = BaseView.extend({
       var displayedIndex = this.getDisplayIndex(invalidPageNum) + 1;
       self.goToPage(invalidPageNum, false);
 
-      self.pageViews[invalidPageNum].expandSection(invalidFieldId);
+      self.pageViews[invalidPageNum].expandSection(invalidFieldId, invalidSectionIndex);
 
+      var dataField = invalidFieldId + (invalidSectionIndex ? ('_' + invalidSectionIndex) : '');
       $('html, body').animate({
-          scrollTop: $("[data-field='" + invalidFieldId + "']").offset().top - 100
+          scrollTop: $("[data-field='" + dataField + "']").offset().top - 100
       }, 1000);
 
 
@@ -173,6 +180,8 @@ var FormView = BaseView.extend({
 
     var buttonsHtml = _.template(self.$el.find('#temp_form_buttons').html())();
     this.$el.find("#fh_appform_container.fh_appform_form_area").append(buttonsHtml);
+
+    this.checkRules();
   },
   getFieldViews: function() {
     var fieldViews = [];

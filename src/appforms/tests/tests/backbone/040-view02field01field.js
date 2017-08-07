@@ -80,7 +80,7 @@ describe("Backbone - Field View", function() {
         var self = this;
         var testValue = 'hideparagraph';
         var paragraphFieldId = "52cfc0a78a31bc1524000004";
-        var paragraphFieldIdSelector = 'div[data-field="' + paragraphFieldId +'"]';
+        var paragraphFieldIdSelector = 'div[data-field="' + paragraphFieldId +'_0"]';
 
         //The field should be present
         var visibleField = this.formView.$el.find(paragraphFieldIdSelector);

@@ -111,7 +111,7 @@ var PageView=BaseView.extend({
     }
   },
 
-  expandSection: function(fieldId){
+  expandSection: function(fieldId, sectionIndex){
     var sections = this.model.getSections();
     var sectionFound = false;
     var sectionId = "";
@@ -125,11 +125,12 @@ var PageView=BaseView.extend({
     }
 
     if(sectionFound){
-      $("#fh_appform_" + sectionId + "_body").slideDown(20);
-      $("#fh_appform_" + sectionId + "_body_icon").removeClass('icon-minus');
+      var sectionIdentifier = sectionId + (sectionIndex >= 0 ? ('_' + sectionIndex) : '');
+      $("#fh_appform_" + sectionIdentifier + "_body").slideDown(20);
+      $("#fh_appform_" + sectionIdentifier + "_body_icon").removeClass('icon-minus');
 
-      if(!$("#fh_appform_" + sectionId + "_body_icon").hasClass('icon-plus')){
-         $("#fh_appform_" + sectionId + "_body_icon").addClass('icon-plus');
+      if(!$("#fh_appform_" + sectionIdentifier + "_body_icon").hasClass('icon-plus')){
+         $("#fh_appform_" + sectionIdentifier + "_body_icon").addClass('icon-plus');
       }
     }
   },
