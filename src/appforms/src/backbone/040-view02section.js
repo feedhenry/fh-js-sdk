@@ -51,6 +51,7 @@ var SectionView=Backbone.View.extend({
     this.secCurRepeat++;
 
     this.options.formView.getFieldViews();
+    this.options.formView.checkRules();
   },
 
   removeSection: function() {

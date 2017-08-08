@@ -1897,14 +1897,15 @@
             actions.fields = {};
             async.eachSeries(Object.keys(fieldRuleSubjectMap), function(fieldId, cb) {
 
-              var minRepeat = getSectionMinRepeat(fieldId);
+              var sectionId = fieldSectionMapping[fieldId];
+              var maxRepeat = getSectionMaxRepeat(sectionId);
 
-              async.each(_.range(minRepeat), function(sectionIndex, sectionCb) {
+              async.each(_.range(maxRepeat), function(sectionIndex, sectionCb) {
                 isFieldVisible(fieldId, false, sectionIndex, function(err, fieldVisible) {
                   if (err) {
                     return cb(err);
                   }
-                  actions.fields[fieldId] = {
+                  actions.fields[fieldId + '_' + sectionIndex] = {
                     targetId: fieldId,
                     sectionIndex: sectionIndex,
                     action: (fieldVisible ? "show" : "hide")

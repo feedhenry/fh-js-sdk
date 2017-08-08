@@ -85,6 +85,31 @@ appForm.models = function(module) {
     }
   }
 
+  function getSectionMap(formModel) {
+    var sectionMap = {};
+    var section = null;
+
+    _.each(formModel.pages, function(page) {
+
+      //Resetting the section ID. Sections never cross pages.
+      section = null;
+
+      _.each(page.fieldsIds, function(fieldId) {
+        var field = formModel.fields[fieldId];
+        if (field.props.type === "sectionBreak") {
+          //If the field is a section break, then we are starting a new section
+          section = field;
+        } else if (field.props.type !== "pageBreak") {
+          //It's not a page or section break field.
+          //Assign the section id to the section map
+          sectionMap[field.props._id] = section;
+        }
+      });
+    });
+
+    return sectionMap;
+  }
+
   function Submission(form, params) {
     params = params || {};
     $fh.forms.log.d("Submission: ", params);
@@ -230,13 +255,18 @@ appForm.models = function(module) {
 
         var ruleTypes = ["fields", "pages"];
 
+        var sectionMap = getSectionMap(formModel);
+
         //For page and field rule actions, find the hidden fields.
         var allHiddenFieldIds = _.map(ruleTypes, function(ruleType) {
           var fieldIds = [];
 
           var hidden = _.map(actions[ruleType] || {}, function(ruleAction, fieldOrPageId) {
             if (ruleAction.action === 'hide') {
-              return fieldOrPageId;
+              return {
+                id: ruleAction.targetId,
+                sectionIndex: ruleAction.sectionIndex
+              };
             } else {
               return null;
             }
@@ -245,10 +275,36 @@ appForm.models = function(module) {
           //If it is a hidden page, need to check for all fields that are in the page.
           //All of these fields are considered hidden.
           if(ruleType === 'pages') {
-            fieldIds = _.map(hidden, function(pageId) {
-              var pageModel = formModel.getPageModelById(pageId) || {};
+            fieldIds = _.map(hidden, function(page) {
+              if (!page) {
+                return [];
+              }
 
-              return pageModel.fieldsIds;
+              var pageModel = formModel.getPageModelById(page.id) || {};
+
+              if (!pageModel.fieldsIds) {
+                return [];
+              }
+
+              var fields = pageModel.fieldsIds.map(function(fieldId) {
+                var section = sectionMap[fieldId];
+
+                if (section && section.props.repeating) {
+                  var maxRepeat = section.props.fieldOptions.definition.maxRepeat;
+                  return _.range(maxRepeat).map(function(index) {
+                    return {
+                      id: fieldId,
+                      sectionIndex: index
+                    };
+                  });
+                } else {
+                  return [{
+                    id: fieldId
+                  }];
+                }
+              });
+
+              return _.flatten(fields);
             });
           } else {
             fieldIds = hidden;
@@ -260,8 +316,8 @@ appForm.models = function(module) {
         allHiddenFieldIds = _.flatten(allHiddenFieldIds);
 
         //Now remove any values from from the submission containing hidden fields
-        async.forEachSeries(allHiddenFieldIds, function(fieldId, cb) {
-          self.removeFieldValue(fieldId, null, cb);
+        async.forEachSeries(allHiddenFieldIds, function(field, cb) {
+          self.removeFieldValue(field.id, null, field.sectionIndex, cb);
         }, function(err){
           if(err) {
             $fh.forms.log.e("Error removing fields", err);
