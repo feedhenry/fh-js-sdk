@@ -161,7 +161,7 @@ var FieldView = Backbone.View.extend({
         }
 
         this.$el.append(fieldTemplate);
-        this.$el.attr("data-field", this.model.getFieldId());
+        this.$el.attr("data-field", this.model.getFieldId() + (this.options.sectionIndex >= 0 ? ('_' + this.options.sectionIndex) : ''));
 
         this.options.parentEl.append(this.$el);
 

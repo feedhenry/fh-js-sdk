@@ -42,7 +42,7 @@ var SectionView=Backbone.View.extend({
     }
   },
 
-  addSection: function() {
+  addSection: function(checkRules) {
     var self = this;
     var index = this.secCurRepeat;
 
@@ -51,7 +51,10 @@ var SectionView=Backbone.View.extend({
     this.secCurRepeat++;
 
     this.options.formView.getFieldViews();
-    this.options.formView.checkRules();
+
+    if (checkRules) {
+      this.options.formView.checkRules();
+    }
   },
 
   removeSection: function() {
@@ -174,7 +177,7 @@ var SectionView=Backbone.View.extend({
     this.$sec_fh_appform_fieldActionBar = $(this.sectionWrapper[0]).find('.fh_appform_section_button_bar');
 
     this.$sec_fh_appform_fieldActionBar.find(this.addSectionButtonClass).unbind().bind('click', function() {
-      self.addSection();
+      self.addSection(true);
       self.checkActionBar();
     });
 
