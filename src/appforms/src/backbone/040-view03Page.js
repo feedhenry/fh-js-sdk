@@ -61,7 +61,7 @@ var PageView=BaseView.extend({
 
     if(sections != null){
       var sectionKey;
-      var sectionIndex = 0;
+      var index = 0;
 
       var sectionGroup = $('<div class="panel-group" id="accordion"></div>');
 
@@ -76,7 +76,7 @@ var PageView=BaseView.extend({
           sectionKey: sectionKey,
           title: sections[sectionKey].title,
           description: sections[sectionKey].description,
-          sectionIndex: sectionIndex,
+          index: index,
           repeating: sections[sectionKey].repeating,
           minRepeat: sections[sectionKey].minRepeat,
           maxRepeat: sections[sectionKey].maxRepeat,
@@ -84,7 +84,7 @@ var PageView=BaseView.extend({
           parentView: self
         });
 
-        sectionIndex++;
+        index++;
       }
 
       this.$el.append(sectionGroup);
