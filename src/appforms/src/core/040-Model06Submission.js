@@ -286,25 +286,19 @@ appForm.models = function(module) {
                 return [];
               }
 
-              var fields = pageModel.fieldsIds.map(function(fieldId) {
-                var section = sectionMap[fieldId];
+              var formFields = self.getFormFields();
 
-                if (section && section.props.repeating) {
-                  var maxRepeat = section.props.fieldOptions.definition.maxRepeat;
-                  return _.range(maxRepeat).map(function(index) {
-                    return {
-                      id: fieldId,
-                      sectionIndex: index
-                    };
-                  });
-                } else {
-                  return [{
-                    id: fieldId
-                  }];
-                }
+              formFields = formFields.filter(function(field) {
+                return pageModel.fieldsIds.find(function(fieldId) {
+                  return fieldId === field.fieldId;
+                });
               });
 
-              return _.flatten(fields);
+              formFields.forEach(function(field) {
+                field.id = field.fieldId;
+              });
+
+              return formFields;
             });
           } else {
             fieldIds = hidden;
