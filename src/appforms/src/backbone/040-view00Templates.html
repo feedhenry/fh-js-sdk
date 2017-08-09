@@ -50,10 +50,10 @@
 <script type="text/template" id="temp_section_structure">
   <div id="fh_appform_<%= sectionId %>_<%= sectionIndex %>" class="fh_appform_section_area panel panel-default">
     <div class="panel-heading text-center col-xs-12 fh_appform_section_title" data-field="fh_appform_<%= sectionId %>_<%= sectionIndex %>_body">
-      <i id="fh_appform_<%= sectionId %>_<%= sectionIndex %>_body_icon" class="pull-right <%= index === 0 ? \"icon-chevron-sign-down\" : \"icon-chevron-sign-up\"%> section_icon" ></i><%=title%> <div><%=description%></div>
+      <i id="fh_appform_<%= sectionId %>_<%= sectionIndex %>_body_icon" class="pull-right <%= expand ? \"icon-chevron-sign-down\" : \"icon-chevron-sign-up\"%> section_icon" ></i><%=title%> <div><%=description%></div>
     </div>
 
-    <div id="fh_appform_<%= sectionId %>_<%= sectionIndex %>_body" class="panel-body col-xs-12" style="<%= index === 0 ? \"\" : \"display:none;\"%>">
+    <div id="fh_appform_<%= sectionId %>_<%= sectionIndex %>_body" class="panel-body col-xs-12" style="<%= expand ? \"\" : \"display:none;\"%>">
     </div>
   </div>
 </script>
