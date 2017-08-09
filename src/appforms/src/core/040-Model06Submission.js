@@ -255,8 +255,6 @@ appForm.models = function(module) {
 
         var ruleTypes = ["fields", "pages"];
 
-        var sectionMap = getSectionMap(formModel);
-
         //For page and field rule actions, find the hidden fields.
         var allHiddenFieldIds = _.map(ruleTypes, function(ruleType) {
           var fieldIds = [];
@@ -1089,6 +1087,29 @@ appForm.models = function(module) {
 
     formFields.push(newField);
     return newField;
+  };
+
+  /**
+   * Returns submission values for fields in section identified with id and index.
+   * @param {string} sectionId
+   * @param {number} sectionIndex
+   * @returns {[object]}
+   */
+  Submission.prototype.getSectionValues = function(sectionId, sectionIndex, cb) {
+    var self = this;
+    if (_.isUndefined(sectionIndex)) {
+      sectionIndex = 0;
+    }
+    var formFields = this.getFormFields();
+    this.getForm(function(err, formModel) {
+      var sectionMap = getSectionMap(formModel);
+      var sectionFields = formFields.filter(function(field) {
+        var sectionOk = sectionMap[field.fieldId] && sectionMap[field.fieldId].props._id === sectionId;
+        return sectionOk && field.sectionIndex === sectionIndex;
+      });
+
+      cb(null, sectionFields);
+    });
   };
 
   /**
