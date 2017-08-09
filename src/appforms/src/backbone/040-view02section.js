@@ -42,11 +42,11 @@ var SectionView=Backbone.View.extend({
     }
   },
 
-  addSection: function(checkRules) {
+  addSection: function(checkRules, expand) {
     var self = this;
     var index = this.secCurRepeat;
 
-    this.renderSection(index);
+    this.renderSection(index, expand);
 
     this.secCurRepeat++;
 
@@ -82,11 +82,12 @@ var SectionView=Backbone.View.extend({
 
   initialize: function(options) {
     this.options = options;
+    this.readonly = options.formView.readonly;
 
     this.render();
   },
 
-  renderSection: function(index) {
+  renderSection: function(index, expandSection) {
 
     function toggleSection(fieldTarget){
       if(fieldTarget){
@@ -99,13 +100,14 @@ var SectionView=Backbone.View.extend({
     var self = this;
 
     var title = self.options.title + (self.options.repeating ? (' - ' + (index + 1)) : '');
+    var expand = (self.options.index === 0 && index === 0) || expandSection;
 
     //Add the section fields
     var sectionEl = $(_.template(self.options.formView.$el.find('#temp_section_structure').html())( {
       sectionId: self.options.sectionKey,
       title: title,
       description: self.options.description,
-      index: self.options.sectionIndex,
+      expand: expand,
       sectionIndex: index,
       repeating: self.options.repeating
     }));
@@ -174,10 +176,31 @@ var SectionView=Backbone.View.extend({
       this.addSection();
     }
 
+    var submission = this.options.formView.getSubmission();
+    if (submission) {
+      var fields = submission.getFormFields();
+      var maxSectionIndex = this.secInitialRepeat - 1;
+      fields.forEach(function(field) {
+        var fieldBelongsToThisSection = self.options.fields.find(function(f) {
+          return f.get('_id') === field.fieldId;
+        });
+        if (fieldBelongsToThisSection && field.sectionIndex > maxSectionIndex && field.fieldValues.length > 0) {
+          maxSectionIndex = field.sectionIndex;
+        }
+      });
+      for (var j = this.secInitialRepeat; j <= maxSectionIndex; j++) {
+        this.addSection();
+      }
+    }
+
     this.$sec_fh_appform_fieldActionBar = $(this.sectionWrapper[0]).find('.fh_appform_section_button_bar');
 
+    if (this.readonly) {
+      this.$sec_fh_appform_fieldActionBar.hide();
+    }
+
     this.$sec_fh_appform_fieldActionBar.find(this.addSectionButtonClass).unbind().bind('click', function() {
-      self.addSection(true);
+      self.addSection(true, true);
       self.checkActionBar();
     });
 
