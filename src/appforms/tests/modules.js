@@ -43,7 +43,8 @@ var modules = {
     "040-Model12UploadTask",
     "040-Model14Log",
     "050-api",
-    "060-RuleEngine"
+    "060-RuleEngine",
+    "070-RepeatingSections"
   ],
   backbone: [
     "040-view00BaseView",
