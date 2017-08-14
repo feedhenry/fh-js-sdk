@@ -23,62 +23,64 @@ describe('Backbone - Repeating Sections', function() {
     });
   }
 
-  before(function(done) {
-    function createForm(cb) {
-      var testFormDefinition = {
-        "_id": "bb-rs-1",
-        "name": "Test Repeating Sections",
-        "createdBy": "testing-admin@example.com",
-        "pages": [{
-          "_id": "bb-rs-2",
-          "fields": [{
-            "required": true,
-            "type": "sectionBreak",
-            "name": "SectionBreak",
-            "_id": "bb-rs-3",
-            "repeating": true,
-            "fieldOptions": {
-              "definition": {
-                "maxRepeat": 3,
-                "minRepeat": 1
-              }
+  function createForm(minRepeat, cb) {
+    var testFormDefinition = {
+      "_id": "bb-rs-1",
+      "name": "Test Repeating Sections",
+      "createdBy": "testing-admin@example.com",
+      "pages": [{
+        "_id": "bb-rs-2",
+        "fields": [{
+          "required": true,
+          "type": "sectionBreak",
+          "name": "SectionBreak",
+          "_id": "bb-rs-3",
+          "repeating": true,
+          "fieldOptions": {
+            "definition": {
+              "maxRepeat": 3,
+              "minRepeat": minRepeat
             }
-          }, {
-            "required": true,
-            "type": "text",
-            "name": "Text Field",
-            "_id": "bb-rs-4",
-            "repeating": false,
-            "fieldOptions": {}
-          }]
-        }],
-        "pageRef": {"bb-rs-2": 0},
-        "fieldRef": {
-          "bb-rs-3": {"page": 0, "field": 0},
-          "bb-rs-4": {"page": 0, "field": 1}
-        }
-      };
+          }
+        }, {
+          "required": true,
+          "type": "text",
+          "name": "Text Field",
+          "_id": "bb-rs-4",
+          "repeating": false,
+          "fieldOptions": {}
+        }]
+      }],
+      "pageRef": {"bb-rs-2": 0},
+      "fieldRef": {
+        "bb-rs-3": {"page": 0, "field": 0},
+        "bb-rs-4": {"page": 0, "field": 1}
+      }
+    };
 
-      var Form = appForm.models.Form;
-      new Form({
-        formId: "bb-rs-1",
-        rawMode: true,
-        rawData: testFormDefinition
-      }, function(err, formModel) {
-        assert.ok(!err, "Expected no error when initialising the form " + err);
+    var Form = appForm.models.Form;
+    new Form({
+      formId: "bb-rs-1",
+      rawMode: true,
+      rawData: testFormDefinition
+    }, function(err, formModel) {
+      assert.ok(!err, "Expected no error when initialising the form " + err);
 
-        form = formModel;
-        cb();
-      });
-    }
+      form = formModel;
+      cb();
+    });
+  }
 
+  before(function(done) {
     function createSubmission(cb) {
       submission = form.newSubmission();
       submission.addInputValue({ fieldId: 'bb-rs-4', value: 'test1', sectionIndex: 1 }, cb);
     }
 
     async.series([
-      createForm,
+      function(cb) {
+        createForm(1, cb);
+      },
       createSubmission,
       function(cb) {
         createFormView(false, cb);
@@ -130,6 +132,25 @@ describe('Backbone - Repeating Sections', function() {
       assert.equal(sectionButtonsDisplay, 'none');
       done();
     });
-  })
+  });
+
+  it('should show an error for repeating section', function(done) {
+    async.series([
+      function(cb) {
+        createForm(2, cb);
+      },
+      function(cb) {
+        createFormView(false, cb);
+      },
+      function(cb) {
+        formView.$el.find('#fh_appform_bb-rs-3_0 input').val('test');
+        formView.$el.find('.fh_appform_button_submit').click();
+        var error = formView.$el.find('#fh_appform_bb-rs-3_1 .fh_appform_field_error');
+        assert.ok(error, 'Expected error for second repeating section');
+
+        cb();
+      }
+    ], done);
+  });
 
 });
