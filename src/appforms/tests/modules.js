@@ -76,7 +76,8 @@ var modules = {
     "040-view04Form",
     "040-view05fromJson",
     "040-view06Sections",
-    "040-view06Steps"
+    "040-view06Steps",
+    "050-repeatingSections"
   ]
 };
 
