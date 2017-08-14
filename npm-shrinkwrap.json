@@ -305,9 +305,9 @@
       "resolved": "https://registry.npmjs.org/exposify/-/exposify-0.1.5.tgz"
     },
     "fh-sync-js": {
-      "version": "1.0.3",
-      "from": "fh-sync-js@1.0.3",
-      "resolved": "https://registry.npmjs.org/fh-sync-js/-/fh-sync-js-1.0.3.tgz",
+      "version": "1.1.1",
+      "from": "fh-sync-js@1.1.1",
+      "resolved": "https://registry.npmjs.org/fh-sync-js/-/fh-sync-js-1.1.1.tgz",
       "dependencies": {
         "uuid": {
           "version": "3.0.1",
