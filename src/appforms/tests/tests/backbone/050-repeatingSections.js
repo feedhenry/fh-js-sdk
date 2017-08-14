@@ -94,6 +94,36 @@ describe('Backbone - Repeating Sections', function() {
     assert.equal(sectionButtonsDisplay, '');
   });
 
+  it('should have +/- buttons for repeating sections', function() {
+    var sections = formView.$el.find('input.fh_appform_field_input');
+    assert.equal(sections.length, 2);
+
+    var addSectionButton = formView.$el.find('.fh_appform_addSectionBtn');
+    var removeSectionButton = formView.$el.find('.fh_appform_removeSectionBtn');
+
+    assert.equal(addSectionButton.css('display'), 'inline-block');
+    assert.equal(removeSectionButton.css('display'), 'inline-block');
+
+    addSectionButton.click();
+    assert.equal(formView.$el.find('input.fh_appform_field_input').length, 3);
+
+    assert.equal(addSectionButton.css('display'), 'none');
+    assert.equal(removeSectionButton.css('display'), 'inline-block');
+
+    removeSectionButton.click();
+    assert.equal(formView.$el.find('input.fh_appform_field_input').length, 2);
+
+    removeSectionButton.click();
+    assert.equal(formView.$el.find('input.fh_appform_field_input').length, 1);
+
+    assert.equal(addSectionButton.css('display'), 'inline-block');
+    assert.equal(removeSectionButton.css('display'), 'none');
+
+    addSectionButton.click();
+    var value = formView.$el.find('#fh_appform_bb-rs-3_1 input').val();
+    assert.equal(value, '');
+  });
+
   it('should hide add/remove buttons in submitted form', function(done) {
     createFormView(true, function() {
       var sectionButtonsDisplay = formView.$el.find('.fh_appform_section_button_bar').css('display');
