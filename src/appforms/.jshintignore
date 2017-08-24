@@ -4,3 +4,6 @@ src/backbone/000-closureStart.js
 src/backbone/000-closureStartRequireJS.js
 src/backbone/999-closureEnd.js
 src/backbone/999-closureEndRequireJS.js
+src/core/000-api-v2.js
+src/core/020-utils01fileSystem.js
+src/core/060-RuleEngine.js
