@@ -299,8 +299,8 @@ var FormView = BaseView.extend({
     for (var i = 0; i < this.fieldViews.length; i++) {
       var fieldView = this.fieldViews[i];
       var pId = fieldView.model.getFieldId();
-      var sId = fieldView.options.sectionIndex;
-      if (pId === fieldId && sId === sectionIndex) {
+      var fieldSectionIndex = fieldView.options.sectionIndex ? fieldView.options.sectionIndex : 0;
+      if (pId === fieldId && fieldSectionIndex === sectionIndex) {
         return fieldView;
       }
     }
