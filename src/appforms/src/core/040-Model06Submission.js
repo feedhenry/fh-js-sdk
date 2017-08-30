@@ -1090,6 +1090,19 @@ appForm.models = function(module) {
   };
 
   /**
+   * Returns submission values for field.
+   * If the field is in repeating section, get values for all repeating sections.
+   * @param {string} fieldId
+   * @returns {[object]}
+   */
+  Submission.prototype.getFieldValues = function(fieldId) {
+    var formFields = this.getFormFields();
+    return formFields.filter(function(field) {
+      return field.fieldId === fieldId;
+    });
+  };
+
+  /**
    * Returns submission values for fields in section identified with id and index.
    * @param {string} sectionId
    * @param {number} sectionIndex
@@ -1263,17 +1276,21 @@ appForm.models = function(module) {
   };
 
   Submission.prototype.getInputValueArray = function(fieldIds) {
+    var self = this;
     var rtn = [];
     for (var i = 0; i< fieldIds.length; i++) {
-      var  fieldId = fieldIds[i];
-      var inputValue = this.getInputValueObjectById(fieldId);
-      for (var j = 0; j < inputValue.fieldValues.length; j++) {
-        var tmpObj = inputValue.fieldValues[j];
-        if (tmpObj) {
-          tmpObj.fieldId = fieldId;
-          rtn.push(tmpObj);
+      var fieldId = fieldIds[i];
+      var formFields = this.getFieldValues(fieldId);
+      formFields.forEach(function(formField) {
+        var inputValue = self.getInputValueObjectById(formField.fieldId, formField.sectionIndex);
+        for (var j = 0; j < inputValue.fieldValues.length; j++) {
+          var tmpObj = inputValue.fieldValues[j];
+          if (tmpObj) {
+            tmpObj.fieldId = fieldId;
+            rtn.push(tmpObj);
+          }
         }
-      }
+      });
     }
     return rtn;
   };
