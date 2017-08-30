@@ -1098,7 +1098,11 @@ appForm.models = function(module) {
   Submission.prototype.getFieldValues = function(fieldId) {
     var formFields = this.getFormFields();
     return formFields.filter(function(field) {
-      return field.fieldId === fieldId;
+      if (field.fieldId._id) {
+        return field.fieldId._id === fieldId;
+      } else {
+        return field.fieldId === fieldId;
+      }
     });
   };
 
@@ -1286,7 +1290,7 @@ appForm.models = function(module) {
       var fieldId = fieldIds[i];
       var formFields = this.getFieldValues(fieldId);
       formFields.forEach(function(formField) {
-        var inputValue = self.getInputValueObjectById(formField.fieldId, formField.sectionIndex);
+        var inputValue = self.getInputValueObjectById(fieldId, formField.sectionIndex);
         for (var j = 0; j < inputValue.fieldValues.length; j++) {
           var tmpObj = inputValue.fieldValues[j];
           if (tmpObj) {
