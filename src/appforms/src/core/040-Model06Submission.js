@@ -1239,9 +1239,9 @@ appForm.models = function(module) {
           return cb(err);
         }
         if(fieldDetails.fieldId){
-          var tmpObj = self.getInputValueObjectById(fieldDetails.fieldId).fieldValues[fieldDetails.valueIndex];
+          var tmpObj = self.getInputValueObjectById(fieldDetails.fieldId, fieldDetails.sectionIndex).fieldValues[fieldDetails.valueIndex];
           tmpObj.localURI = newLocalFileURI;
-          self.getInputValueObjectById(fieldDetails.fieldId).fieldValues[fieldDetails.valueIndex] = tmpObj;
+          self.getInputValueObjectById(fieldDetails.fieldId, fieldDetails.sectionIndex).fieldValues[fieldDetails.valueIndex] = tmpObj;
           self.saveLocal(cb);
         } else {
           $fh.forms.log.e("No file field matches the placeholder name " + fileDetails.fileName);
@@ -1260,16 +1260,20 @@ appForm.models = function(module) {
     self.getFileFieldsId(function(err, fieldIds){
       for (var i = 0; i< fieldIds.length; i++) {
         var fieldId = fieldIds[i];
-        var inputValue = self.getInputValueObjectById(fieldId);
-        for (var j = 0; j < inputValue.fieldValues.length; j++) {
-          var tmpObj = inputValue.fieldValues[j];
-          if (tmpObj) {
-            if(tmpObj.fileName !== null && tmpObj.fileName === filePlaceholderName){
-              fieldDetails.fieldId = fieldId;
-              fieldDetails.valueIndex = j;
+        var formFields = self.getFieldValues(fieldId);
+        formFields.forEach(function(formField) {
+          var inputValue = self.getInputValueObjectById(formField.fieldId, formField.sectionIndex);
+          for (var j = 0; j < inputValue.fieldValues.length; j++) {
+            var tmpObj = inputValue.fieldValues[j];
+            if (tmpObj) {
+              if(tmpObj.fileName !== null && tmpObj.fileName === filePlaceholderName){
+                fieldDetails.fieldId = fieldId;
+                fieldDetails.valueIndex = j;
+                fieldDetails.sectionIndex = formField.sectionIndex;
+              }
             }
           }
-        }
+        });
       }
       return cb(null, fieldDetails);
     });
