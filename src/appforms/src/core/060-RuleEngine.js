@@ -1306,6 +1306,10 @@
 
         //Finding the selected option
         var found = _.find(fieldDefinition.fieldOptions.definition.options, function(dropdownOption) {
+          //fieldValue needs to be escaped here in order to match the label (label is already escaped)
+          fieldValue = _.escape(fieldValue);
+          // label needs to be escaped again here because the '&' character is not escaped
+          dropdownOption.label = _.escape(dropdownOption.label);
           return dropdownOption.label === fieldValue;
         });
 
@@ -1343,6 +1347,8 @@
         }
 
         async.some(fieldDefinition.fieldOptions.definition.options, function(dropdownOption, cb) {
+          //fieldValue needs to be escaped here in order to match the label (label is already escaped)
+          fieldValue = _.escape(fieldValue);
           return cb(dropdownOption.label === fieldValue);
         }, function(found) {
           if (!found) {
@@ -1395,6 +1401,8 @@
               return cb(new Error("Expected checkbox submission to be string but got " + typeof(selection)));
             }
 
+            //selection needs to be escaped here
+            selection = _.escape(selection);
             if (optionsInCheckbox.indexOf(selection) === -1) {
               return cb(new Error("Checkbox Option " + selection + " does not exist in the field."));
             }
