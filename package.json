@@ -48,11 +48,12 @@
   },
   "scripts": {
     "test": "grunt test",
-    "prepublish": "grunt concat-core-sdk",
+    "prepublish": "npm run snyk-protect; grunt concat-core-sdk",
     "doc:clean": "rimraf doc",
     "doc:generate": "typedoc --includeDeclarations --excludeExternals --out doc ./fh-js-sdk.d.ts",
     "doc:gh-pages": "touch doc/.nojekyll; git add doc/.*; git add doc/*; git commit -m 'Publishing to gh-pages'; git push origin :gh-pages --force ; git subtree push --prefix doc origin gh-pages",
-    "doc": "npm run doc:clean && npm run doc:generate && npm run doc:gh-pages"
+    "doc": "npm run doc:clean && npm run doc:generate && npm run doc:gh-pages",
+    "snyk-protect": "snyk protect"
   },
   "repository": {
     "type": "git",
@@ -63,12 +64,13 @@
   "gitHead": "251a1f88a39f59f2652552ae245893a833faee71",
   "dependencies": {
     "fh-sync-js": "1.1.1",
-    "browserify": "3.46.1",
-    "browserify-shim": "~3.3.2",
+    "browserify": "12.0.0",
+    "browserify-shim": "~3.4.1",
     "loglevel": "~0.6.0",
     "process": "~0.6.0",
     "type-of": "~2.0.1",
-    "underscore": "~1.6.0"
+    "underscore": "~1.6.0",
+    "snyk": "^1.42.6"
   },
   "devDependencies": {
     "async": "0.2.10",
@@ -99,5 +101,6 @@
     "sinon-chai": "2.5.0",
     "through": "2.3.4",
     "typedoc": "0.5.8"
-  }
+  },
+  "snyk": true
 }
