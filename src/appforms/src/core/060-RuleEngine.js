@@ -1320,7 +1320,6 @@
         var found = _.find(fieldDefinition.fieldOptions.definition.options, function(dropdownOption) {
           //check if fieldValue and the label need to be escaped
           isSafeString(fieldValue) ? null : fieldValue = _.escape(fieldValue);
-          isSafeString(dropdownOption.label) ? null : dropdownOption.label = _.escape(dropdownOption.label);
           return dropdownOption.label === fieldValue;
         });
 
@@ -1360,7 +1359,6 @@
         async.some(fieldDefinition.fieldOptions.definition.options, function(dropdownOption, cb) {
           //check if fieldValue and the label need to be escaped
           isSafeString(fieldValue) ? null : fieldValue = _.escape(fieldValue);
-          isSafeString(dropdownOption.label) ? null : dropdownOption.label = _.escape(dropdownOption.label);
           return cb(dropdownOption.label === fieldValue);
         }, function(found) {
           if (!found) {
