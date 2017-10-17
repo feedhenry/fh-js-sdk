@@ -1282,6 +1282,18 @@
         }
       }
 
+      /**
+      * isSafeString - Checks if special characters in strings have already been escaped.
+      *
+      * @param  {string} str               The string to check.
+      * @return {boolean}
+      */
+      function isSafeString(str) {
+        var escape = ['&amp;', '&lt;', '&gt;', '&quot;', '&#x27;', '&#96;'];
+        if (escape.some(function (specialChar) { return str.indexOf(specialChar) >= 0; })) {
+          return true;
+        }
+      }
 
       /**
        * validatorDropDown - Validator function for dropdown fields.
@@ -1306,10 +1318,8 @@
 
         //Finding the selected option
         var found = _.find(fieldDefinition.fieldOptions.definition.options, function(dropdownOption) {
-          //fieldValue needs to be escaped here in order to match the label (label is already escaped)
-          fieldValue = _.escape(fieldValue);
-          // label needs to be escaped again here because the '&' character is not escaped
-          dropdownOption.label = _.escape(dropdownOption.label);
+          //check if fieldValue and the label need to be escaped
+          isSafeString(fieldValue) ? null : fieldValue = _.escape(fieldValue);
           return dropdownOption.label === fieldValue;
         });
 
@@ -1347,8 +1357,8 @@
         }
 
         async.some(fieldDefinition.fieldOptions.definition.options, function(dropdownOption, cb) {
-          //fieldValue needs to be escaped here in order to match the label (label is already escaped)
-          fieldValue = _.escape(fieldValue);
+          //check if fieldValue and the label need to be escaped
+          isSafeString(fieldValue) ? null : fieldValue = _.escape(fieldValue);
           return cb(dropdownOption.label === fieldValue);
         }, function(found) {
           if (!found) {
