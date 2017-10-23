@@ -1290,7 +1290,9 @@
       */
       function isSafeString(str) {
         var escape = ['&amp;', '&lt;', '&gt;', '&quot;', '&#x27;', '&#96;'];
-        if (escape.some(function (specialChar) { return str.indexOf(specialChar) >= 0; })) {
+        if (typeof str !== "string" || (escape.some(function(specialChar) {
+          return str.indexOf(specialChar) >= 0;
+        }))) {
           return true;
         }
       }
@@ -1320,6 +1322,7 @@
         var found = _.find(fieldDefinition.fieldOptions.definition.options, function(dropdownOption) {
           //check if fieldValue and the label need to be escaped
           isSafeString(fieldValue) ? null : fieldValue = _.escape(fieldValue);
+          dropdownOption.label = _.escape(dropdownOption.label);
           return dropdownOption.label === fieldValue;
         });
 
@@ -1359,6 +1362,7 @@
         async.some(fieldDefinition.fieldOptions.definition.options, function(dropdownOption, cb) {
           //check if fieldValue and the label need to be escaped
           isSafeString(fieldValue) ? null : fieldValue = _.escape(fieldValue);
+          dropdownOption.label = _.escape(dropdownOption.label);
           return cb(dropdownOption.label === fieldValue);
         }, function(found) {
           if (!found) {
@@ -1413,6 +1417,9 @@
 
             //selection needs to be escaped here
             selection = _.escape(selection);
+            for (var i = 0; i < optionsInCheckbox.length; i++) {
+              optionsInCheckbox[i] = _.escape(optionsInCheckbox[i]);
+            }
             if (optionsInCheckbox.indexOf(selection) === -1) {
               return cb(new Error("Checkbox Option " + selection + " does not exist in the field."));
             }
