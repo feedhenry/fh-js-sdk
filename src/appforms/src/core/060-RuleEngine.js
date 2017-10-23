@@ -1282,6 +1282,18 @@
         }
       }
 
+      /**
+      * isSafeString - Checks if special characters in strings have already been escaped.
+      *
+      * @param  {string} str               The string to check.
+      * @return {boolean}
+      */
+      function isSafeString(str) {
+        var escape = ['&amp;', '&lt;', '&gt;', '&quot;', '&#x27;', '&#96;'];
+        if (escape.some(function (specialChar) { return str.indexOf(specialChar) >= 0; })) {
+          return true;
+        }
+      }
 
       /**
        * validatorDropDown - Validator function for dropdown fields.
@@ -1306,6 +1318,8 @@
 
         //Finding the selected option
         var found = _.find(fieldDefinition.fieldOptions.definition.options, function(dropdownOption) {
+          //check if fieldValue and the label need to be escaped
+          isSafeString(fieldValue) ? null : fieldValue = _.escape(fieldValue);
           return dropdownOption.label === fieldValue;
         });
 
@@ -1343,6 +1357,8 @@
         }
 
         async.some(fieldDefinition.fieldOptions.definition.options, function(dropdownOption, cb) {
+          //check if fieldValue and the label need to be escaped
+          isSafeString(fieldValue) ? null : fieldValue = _.escape(fieldValue);
           return cb(dropdownOption.label === fieldValue);
         }, function(found) {
           if (!found) {
@@ -1395,6 +1411,8 @@
               return cb(new Error("Expected checkbox submission to be string but got " + typeof(selection)));
             }
 
+            //selection needs to be escaped here
+            selection = _.escape(selection);
             if (optionsInCheckbox.indexOf(selection) === -1) {
               return cb(new Error("Checkbox Option " + selection + " does not exist in the field."));
             }

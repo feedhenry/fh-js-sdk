@@ -1028,7 +1028,11 @@ appForm.models = function(module) {
           return cb(null, valRemoved);
         });
       } else {
-        return cb();
+        //defer to stop calling callbacks iteratively as this will quickly overflow the stack
+        // More info: https://github.com/caolan/async/blob/master/intro.md#synchronous-iteration-functions
+          async.setImmediate(function() {
+            return cb();
+          });
       }
     }, function(err){
       callback(err);
