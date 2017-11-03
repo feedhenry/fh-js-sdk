@@ -1,7 +1,7 @@
 var SectionView=Backbone.View.extend({
 
-  addSectionButtonClass: ".fh_appform_addSectionBtn",
-  removeSectionButtonClass: ".fh_appform_removeSectionBtn",
+  addSectionButtonClass: ".fh_appform_button_addSection",
+  removeSectionButtonClass: ".fh_appform_button_removeSection",
 
   viewMap: {
     "text": FieldTextView,

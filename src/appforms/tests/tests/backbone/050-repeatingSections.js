@@ -220,8 +220,8 @@ describe('Backbone - Repeating Sections', function() {
     var sections = formView.$el.find('input.fh_appform_field_input');
     assert.equal(sections.length, 2);
 
-    var addSectionButton = formView.$el.find('.fh_appform_addSectionBtn');
-    var removeSectionButton = formView.$el.find('.fh_appform_removeSectionBtn');
+    var addSectionButton = formView.$el.find('.fh_appform_button_addSection');
+    var removeSectionButton = formView.$el.find('.fh_appform_button_removeSection');
 
     assert.equal(addSectionButton.css('display'), 'inline-block');
     assert.equal(removeSectionButton.css('display'), 'inline-block');
