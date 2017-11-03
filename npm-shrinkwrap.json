@@ -1,6 +1,6 @@
 {
   "name": "fh-js-sdk",
-  "version": "2.23.0-RHMAP-1557.1",
+  "version": "2.23.0-RHMAP-1557.2",
   "dependencies": {
     "browserify": {
       "version": "3.46.1",

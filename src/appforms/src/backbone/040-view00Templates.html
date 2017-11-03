@@ -37,11 +37,11 @@
 <script type="text/template" id="temp_page_structure">
   <div id="fh_appform_<%= sectionId %>" class="panel">
     <div class="sections"></div>
-
+    
     <% if(repeating){ %>
       <div class="fh_appform_section_button_bar" >
-        <button class="fh_appform_removeSectionBtn special_button fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5">-</button>
-        <button class="special_button fh_appform_addSectionBtn fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5 pull-right">+</button>
+        <button class=" special_button fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5 fh_appform_button_removeSection">Remove Section</button>
+        <button class="special_button fh_appform_button_action btn btn-primary col-xs-offset-1 col-xs-5 pull-right fh_appform_button_addSection ">Add Section</button>
       </div>
     <% } %>
   </div>
