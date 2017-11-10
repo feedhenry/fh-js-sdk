@@ -87,6 +87,7 @@ FieldSliderNumberView = FieldView.extend({
     var fileEle = e.target;
     var filejQ = $(fileEle);
     var index = filejQ.data().index;
+    var sectionIndex = self.options.sectionIndex;
 
     var wrapperObj = this.getWrapper(index);
 
@@ -97,7 +98,8 @@ FieldSliderNumberView = FieldView.extend({
       fieldId: self.model.getFieldId(),
       index: index,
       value: value,
-      isStore: true
+      isStore: true,
+      sectionIndex:sectionIndex
     }, function() {
       wrapperObj.find(".slideValue").html("Selected Value: " + value);
       self.validateElement(index, value);

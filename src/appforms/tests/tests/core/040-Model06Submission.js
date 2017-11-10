@@ -1358,5 +1358,71 @@ describe("Submission model", function() {
       });
     });
 
+    it('should have getSectionValues API', function(done) {
+      var testFormDefinition = {
+        "_id": "core-rs-1",
+        "name": "Test Repeating Sections",
+        "createdBy": "testing-admin@example.com",
+        "pages": [{
+          "_id": "core-rs-2",
+          "fields": [{
+            "required": true,
+            "type": "sectionBreak",
+            "name": "SectionBreak",
+            "_id": "core-rs-3",
+            "repeating": true,
+            "fieldOptions": {
+              "definition": {
+                "maxRepeat": 3,
+                "minRepeat": 1
+              }
+            }
+          }, {
+            "required": true,
+            "type": "text",
+            "name": "Text Field",
+            "_id": "core-rs-4",
+            "repeating": false,
+            "fieldOptions": {}
+          }]
+        }],
+        "pageRef": {"core-rs-2": 0},
+        "fieldRef": {
+          "core-rs-3": {"page": 0, "field": 0},
+          "core-rs-4": {"page": 0, "field": 1}
+        }
+      };
+
+      var Form = appForm.models.Form;
+
+      new Form({
+        formId: "core-rs-1",
+        rawMode: true,
+        rawData: testFormDefinition
+      }, function(err, formModel) {
+        assert.ok(!err, "Expected no error when initialising the form " + err);
+
+        //Creating a new submission based on the form model
+        var submission = formModel.newSubmission();
+
+        var params = {
+          fieldId: "core-rs-4",
+          value: "test",
+          sectionIndex: 1
+        };
+
+        submission.addInputValue(params, function(err, result) {
+          assert.ok(!err);
+
+          submission.getSectionValues('core-rs-3', 1, function(err, res) {
+            assert.equal(res.length, 1);
+            assert.equal(res[0].fieldValues[0], 'test')
+
+            done();
+          });
+        });
+      });
+    });
+
   });
 });

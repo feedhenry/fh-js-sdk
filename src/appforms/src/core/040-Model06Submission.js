@@ -85,6 +85,31 @@ appForm.models = function(module) {
     }
   }
 
+  function getSectionMap(formModel) {
+    var sectionMap = {};
+    var section = null;
+
+    _.each(formModel.pages, function(page) {
+
+      //Resetting the section ID. Sections never cross pages.
+      section = null;
+
+      _.each(page.fieldsIds, function(fieldId) {
+        var field = formModel.fields[fieldId];
+        if (field.props.type === "sectionBreak") {
+          //If the field is a section break, then we are starting a new section
+          section = field;
+        } else if (field.props.type !== "pageBreak") {
+          //It's not a page or section break field.
+          //Assign the section id to the section map
+          sectionMap[field.props._id] = section;
+        }
+      });
+    });
+
+    return sectionMap;
+  }
+
   function Submission(form, params) {
     params = params || {};
     $fh.forms.log.d("Submission: ", params);
@@ -236,7 +261,10 @@ appForm.models = function(module) {
 
           var hidden = _.map(actions[ruleType] || {}, function(ruleAction, fieldOrPageId) {
             if (ruleAction.action === 'hide') {
-              return fieldOrPageId;
+              return {
+                id: ruleAction.targetId,
+                sectionIndex: ruleAction.sectionIndex
+              };
             } else {
               return null;
             }
@@ -245,10 +273,30 @@ appForm.models = function(module) {
           //If it is a hidden page, need to check for all fields that are in the page.
           //All of these fields are considered hidden.
           if(ruleType === 'pages') {
-            fieldIds = _.map(hidden, function(pageId) {
-              var pageModel = formModel.getPageModelById(pageId) || {};
+            fieldIds = _.map(hidden, function(page) {
+              if (!page) {
+                return [];
+              }
 
-              return pageModel.fieldsIds;
+              var pageModel = formModel.getPageModelById(page.id) || {};
+
+              if (!pageModel.fieldsIds) {
+                return [];
+              }
+
+              var formFields = self.getFormFields();
+
+              formFields = formFields.filter(function(field) {
+                return pageModel.fieldsIds.find(function(fieldId) {
+                  return fieldId === field.fieldId;
+                });
+              });
+
+              formFields.forEach(function(field) {
+                field.id = field.fieldId;
+              });
+
+              return formFields;
             });
           } else {
             fieldIds = hidden;
@@ -260,8 +308,8 @@ appForm.models = function(module) {
         allHiddenFieldIds = _.flatten(allHiddenFieldIds);
 
         //Now remove any values from from the submission containing hidden fields
-        async.forEachSeries(allHiddenFieldIds, function(fieldId, cb) {
-          self.removeFieldValue(fieldId, null, cb);
+        async.forEachSeries(allHiddenFieldIds, function(field, cb) {
+          self.removeFieldValue(field.id, null, field.sectionIndex, cb);
         }, function(err){
           if(err) {
             $fh.forms.log.e("Error removing fields", err);
@@ -992,6 +1040,23 @@ appForm.models = function(module) {
   };
 
   /**
+   * Remove form field completaly from submission - needed for repeating sections.
+   */
+  Submission.prototype.removeFormField = function(fieldId, sectionIndex) {
+    // remove it completely from submission - needed for repeating sections
+    if (this.transactionMode) {
+      delete this.tmpFields[fieldId + ':' + sectionIndex];
+    } else {
+      var formField = this.getInputValueObjectById(fieldId, sectionIndex);
+      var formFields = this.getFormFields();
+      var index = formFields.indexOf(formField);
+      if (index > -1) {
+        formFields.splice(index, 1);
+      }
+    }
+  };
+
+  /**
    * Returns object representing the field along with its values.
    * @param {string} fieldId - id of the field
    * @param {number} sectionIndex - optional section id in case field is in repeating section
@@ -1026,6 +1091,46 @@ appForm.models = function(module) {
 
     formFields.push(newField);
     return newField;
+  };
+
+  /**
+   * Returns submission values for field.
+   * If the field is in repeating section, get values for all repeating sections.
+   * @param {string} fieldId
+   * @returns {[object]}
+   */
+  Submission.prototype.getFieldValues = function(fieldId) {
+    var formFields = this.getFormFields();
+    return formFields.filter(function(field) {
+      if (field.fieldId._id) {
+        return field.fieldId._id === fieldId;
+      } else {
+        return field.fieldId === fieldId;
+      }
+    });
+  };
+
+  /**
+   * Returns submission values for fields in section identified with id and index.
+   * @param {string} sectionId
+   * @param {number} sectionIndex
+   * @returns {[object]}
+   */
+  Submission.prototype.getSectionValues = function(sectionId, sectionIndex, cb) {
+    var self = this;
+    if (_.isUndefined(sectionIndex)) {
+      sectionIndex = 0;
+    }
+    var formFields = this.getFormFields();
+    this.getForm(function(err, formModel) {
+      var sectionMap = getSectionMap(formModel);
+      var sectionFields = formFields.filter(function(field) {
+        var sectionOk = sectionMap[field.fieldId] && sectionMap[field.fieldId].props._id === sectionId;
+        return sectionOk && field.sectionIndex === sectionIndex;
+      });
+
+      cb(null, sectionFields);
+    });
   };
 
   /**
@@ -1142,9 +1247,9 @@ appForm.models = function(module) {
           return cb(err);
         }
         if(fieldDetails.fieldId){
-          var tmpObj = self.getInputValueObjectById(fieldDetails.fieldId).fieldValues[fieldDetails.valueIndex];
+          var tmpObj = self.getInputValueObjectById(fieldDetails.fieldId, fieldDetails.sectionIndex).fieldValues[fieldDetails.valueIndex];
           tmpObj.localURI = newLocalFileURI;
-          self.getInputValueObjectById(fieldDetails.fieldId).fieldValues[fieldDetails.valueIndex] = tmpObj;
+          self.getInputValueObjectById(fieldDetails.fieldId, fieldDetails.sectionIndex).fieldValues[fieldDetails.valueIndex] = tmpObj;
           self.saveLocal(cb);
         } else {
           $fh.forms.log.e("No file field matches the placeholder name " + fileDetails.fileName);
@@ -1163,33 +1268,41 @@ appForm.models = function(module) {
     self.getFileFieldsId(function(err, fieldIds){
       for (var i = 0; i< fieldIds.length; i++) {
         var fieldId = fieldIds[i];
-        var inputValue = self.getInputValueObjectById(fieldId);
-        for (var j = 0; j < inputValue.fieldValues.length; j++) {
-          var tmpObj = inputValue.fieldValues[j];
-          if (tmpObj) {
-            if(tmpObj.fileName !== null && tmpObj.fileName === filePlaceholderName){
-              fieldDetails.fieldId = fieldId;
-              fieldDetails.valueIndex = j;
+        var formFields = self.getFieldValues(fieldId);
+        formFields.forEach(function(formField) {
+          var inputValue = self.getInputValueObjectById(formField.fieldId, formField.sectionIndex);
+          for (var j = 0; j < inputValue.fieldValues.length; j++) {
+            var tmpObj = inputValue.fieldValues[j];
+            if (tmpObj) {
+              if(tmpObj.fileName !== null && tmpObj.fileName === filePlaceholderName){
+                fieldDetails.fieldId = fieldId;
+                fieldDetails.valueIndex = j;
+                fieldDetails.sectionIndex = formField.sectionIndex;
+              }
             }
           }
-        }
+        });
       }
       return cb(null, fieldDetails);
     });
   };
 
   Submission.prototype.getInputValueArray = function(fieldIds) {
+    var self = this;
     var rtn = [];
     for (var i = 0; i< fieldIds.length; i++) {
-      var  fieldId = fieldIds[i];
-      var inputValue = this.getInputValueObjectById(fieldId);
-      for (var j = 0; j < inputValue.fieldValues.length; j++) {
-        var tmpObj = inputValue.fieldValues[j];
-        if (tmpObj) {
-          tmpObj.fieldId = fieldId;
-          rtn.push(tmpObj);
+      var fieldId = fieldIds[i];
+      var formFields = this.getFieldValues(fieldId);
+      formFields.forEach(function(formField) {
+        var inputValue = self.getInputValueObjectById(fieldId, formField.sectionIndex);
+        for (var j = 0; j < inputValue.fieldValues.length; j++) {
+          var tmpObj = inputValue.fieldValues[j];
+          if (tmpObj) {
+            tmpObj.fieldId = fieldId;
+            rtn.push(tmpObj);
+          }
         }
-      }
+      });
     }
     return rtn;
   };
