@@ -54,7 +54,7 @@ FieldCheckboxView = FieldView.extend({
       selections: []
     };
     var wrapperObj=this.getWrapper(index);
-    var checked=wrapperObj.find("button.option-checked");
+    var checked=wrapperObj.find("i.icon-check").parent();
     checked.each(function(){
       value.selections.push($(this).val());
     });
