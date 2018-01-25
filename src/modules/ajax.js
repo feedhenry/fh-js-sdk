@@ -76,6 +76,16 @@ var ajax = module.exports = function (options) {
     baseHeaders['Content-Type'] = (settings.contentType || 'application/x-www-form-urlencoded')
   settings.headers = extend(baseHeaders, settings.headers || {})
 
+  if (typeof Titanium !== 'undefined') {
+    xhr.onerror  = function(){
+      if (!abortTimeout){
+        return;
+      }
+      clearTimeout(abortTimeout);
+      ajaxError(null, 'error', xhr, settings);
+    };
+  }
+
   xhr.onreadystatechange = function () {
 
     if (xhr.readyState == 4) {
@@ -268,6 +278,14 @@ function getXhr(crossDomain){
   //for IE8 only. Need to make sure it's not used when running inside Cordova.
   if(isIE() && (crossDomain === true) && typeof window.XDomainRequest !== "undefined" && typeof window.cordova === "undefined"){
     xhr = new XDomainRequestWrapper(new XDomainRequest());
+  }
+  // For Titanium SDK
+  if (typeof Titanium !== 'undefined'){
+    var params = {};
+    if(ajax.settings && ajax.settings.timeout){
+      params.timeout = ajax.settings.timeout;
+    }
+    xhr = Titanium.Network.createHTTPClient(params);
   }
 
   return xhr;
