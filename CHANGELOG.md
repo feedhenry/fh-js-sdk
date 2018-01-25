@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.24.0 - 2018-01-25
+* Added `headers` parameter to CloudOptions
+
 ## 2.20.0 - 2017-06-30
 
 * RHMAP-4738 - Upgraded the rules engine to validate repeating sections.
