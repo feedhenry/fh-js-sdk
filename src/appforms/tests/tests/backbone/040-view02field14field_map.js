@@ -154,7 +154,7 @@ describe("Backbone Map View", function() {
     });
 
     mapView.getPosition(function(err, position) {
-      chai.expect(position).to.be.an('null');
+      chai.expect(position).to.be.an('undefined');
       chai.expect(err).to.deep.equal(mockError);
 
       done();

@@ -1,4 +1,4 @@
-SectionView=BaseView.extend({
+SectionsView=BaseView.extend({
 
   initialize: function(options) {
     this.options = options;

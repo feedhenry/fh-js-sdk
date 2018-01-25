@@ -1,5 +1,48 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.24.0 - 2018-01-25
+* Added `headers` parameter to CloudOptions
+
+## 2.20.0 - 2017-06-30
+
+* RHMAP-4738 - Upgraded the rules engine to validate repeating sections.
+
+## 2.19.0 - 2017-06-29
+
+* RHMAP-16063 fix Client apps with disabled connection tags still working and the cloud calls not fail
+* Fix sync namespace to user lowercase name
+* Add browserify-shim as a dependency
+* Move fh-js-sdk to use upstream sync client
+
+## 2.18.5 - 2017-05-08
+
+* Recreate mock_uuid cookie if blank string
+* RHMAP-15272 - fh-wfm-sync does not allow overwriting sync options per dataset
+* FH-2763 - Write JavaScript documentation (JSDoc) for the public API in fh-js-sdk
+
+## 2.18.4 - 2017-02-20
+
+* RHMAP-13542 - Cannot Submit Map Location Data in Android Apps Built Using Android Form Builder
+
+## 2.18.3 - 2017-02-16
+
+* RAINCATCH-570 - update to the new browser api
+
+## 2.18.2 - 2017-02-03
+
+* RHMAP-12426 - Bug when section break component is used more than 10 times in an form with pages
+
+## 2.18.1 - 2017-01-04
+
+* RHMAP-12719 - Add an exception handler around doCloudCall so any exceptions can call the failure callback
+* RHMAP-11544 - Forms - "Blank" Dropdown options pass the required validation
+* fhconfig.json with local:true and host will skip FH.init for local dev
+* RHMAP-7811 - Add declaration file for TypeScript
+
+## 2.17.5 - 2016-11-18
+
+* RHMAP-11349 Stop submitting value in hidden field
+
 ## 2.17.4 - 2016-11-09 - Niall Donnelly
 
 * Added getUID function to public $fh.sync API.

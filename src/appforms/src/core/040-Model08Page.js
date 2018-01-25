@@ -1,6 +1,7 @@
 /**
  * One form contains multiple pages
  */
+
 appForm.models = function (module) {
 
   var Model = appForm.models.Model;
@@ -32,9 +33,7 @@ appForm.models = function (module) {
   Page.prototype.getFieldDef=function(){
     return this.get("fields",[]);
   };
-  Page.prototype.getFieldDef=function(){
-      return this.get("fields",[]);
-  };
+
   Page.prototype.getFieldModelList=function(){
       var list=[];
       for (var i=0;i<this.fieldsIds.length;i++){
@@ -100,11 +99,15 @@ appForm.models = function (module) {
         sectionList[currentSectionId] = sectionList[currentSectionId] ? sectionList[currentSectionId] : {fields: []};
         sectionList[currentSectionId].title = fieldModel.get('name', "Section " + (fieldModelIndex+1));
         sectionList[currentSectionId].description = fieldModel.get('helpText', "Section " + (fieldModelIndex+1));
+        sectionList[currentSectionId].repeating = fieldModel.isRepeating();
+        sectionList[currentSectionId].minRepeat = fieldModel.getMinRepeat();
+        sectionList[currentSectionId].maxRepeat = fieldModel.getMaxRepeat();
       }
     }
 
     return sectionList;
   };
+
   Page.prototype.getFieldModelById=function(fieldId){
     return this.form.getFieldModelById(fieldId);
   };

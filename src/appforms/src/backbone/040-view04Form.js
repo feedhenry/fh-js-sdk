@@ -69,32 +69,38 @@ var FormView = BaseView.extend({
     var firstView = null;
     var invalidFieldId = null;
     var invalidPageNum = null;
+    var invalidSectionIndex = null;
+
+    function checkResult(result, fieldId, v) {
+      result.errorMessages = result.errorMessages || [];
+      result.fieldErrorMessage = result.fieldErrorMessage || [];
+      if (!result.valid) {
+        if(invalidFieldId === null){
+          invalidFieldId = fieldId;
+          invalidPageNum = self.form.getPageNumberByFieldId(invalidFieldId);
+          invalidSectionIndex = v.options.sectionIndex;
+        }
+        for (var i = 0; i < result.errorMessages.length; i++) {
+          if (result.errorMessages[i]) {
+            v.setErrorText(i, result.errorMessages[i]);
+          }
+        }
+
+        for (i = 0; i < result.fieldErrorMessage.length; i++) {
+          if (result.fieldErrorMessage[i]) {
+            v.setErrorText(i, result.fieldErrorMessage[i]);
+          }
+        }
+      }
+    }
 
     //Clear validate errors
 
     self.fieldViews.forEach(function(v) {
         var fieldId = v.model.getFieldId();
-        if(res.hasOwnProperty(fieldId)){
-          var result = res[fieldId];
-          result.errorMessages = result.errorMessages || [];
-          result.fieldErrorMessage = result.fieldErrorMessage || [];
-          if (!result.valid) {
-            if(invalidFieldId === null){
-              invalidFieldId = fieldId;
-              invalidPageNum = self.form.getPageNumberByFieldId(invalidFieldId);
-            }
-            for (var i = 0; i < result.errorMessages.length; i++) {
-              if (result.errorMessages[i]) {
-                v.setErrorText(i, result.errorMessages[i]);
-              }
-            }
-
-            for (i = 0; i < result.fieldErrorMessage.length; i++) {
-              if (result.fieldErrorMessage[i]) {
-                v.setErrorText(i, result.fieldErrorMessage[i]);
-              }
-            }
-          }
+        if(res.hasOwnProperty(fieldId) && res[fieldId].sections.hasOwnProperty(v.options.sectionIndex || 0)){
+          checkResult(res[fieldId], fieldId, v);
+          checkResult(res[fieldId].sections[v.options.sectionIndex || 0], fieldId, v);
         }
     });
 
@@ -102,10 +108,11 @@ var FormView = BaseView.extend({
       var displayedIndex = this.getDisplayIndex(invalidPageNum) + 1;
       self.goToPage(invalidPageNum, false);
 
-      self.pageViews[invalidPageNum].expandSection(invalidFieldId);
+      self.pageViews[invalidPageNum].expandSection(invalidFieldId, invalidSectionIndex);
 
+      var dataField = invalidFieldId + (invalidSectionIndex ? ('_' + invalidSectionIndex) : '');
       $('html, body').animate({
-          scrollTop: $("[data-field='" + invalidFieldId + "']").offset().top - 100
+          scrollTop: $("[data-field='" + dataField + "']").offset().top - 100
       }, 1000);
 
 
@@ -165,25 +172,33 @@ var FormView = BaseView.extend({
       });
       pageViews.push(pageView);
     }
+    
+    self.pageViews = pageViews;
+    self.pageCount = pageViews.length;
+
+    this.getFieldViews();
+
+    var buttonsHtml = _.template(self.$el.find('#temp_form_buttons').html())();
+    this.$el.find("#fh_appform_container.fh_appform_form_area").append(buttonsHtml);
+
+    this.checkRules();
+  },
+  getFieldViews: function() {
     var fieldViews = [];
-    for (i = 0; i < pageViews.length; i++) {
-      pageView = pageViews[i];
+    for (i = 0; i < this.pageViews.length; i++) {
+      pageView = this.pageViews[i];
       var pageFieldViews = pageView.fieldViews;
       for (var key in pageFieldViews) {
         var fView = pageFieldViews[key];
         fieldViews.push(fView);
-        fView.on("checkrules", self.checkRules);
-        if (self.readonly) {
+        fView.on("checkrules", this.checkRules);
+        if (this.readonly) {
           fView.$el.find("input,button,textarea,select").attr("disabled", "disabled");
         }
       }
     }
 
-    self.fieldViews = fieldViews;
-    self.pageViews = pageViews;
-    self.pageCount = pageViews.length;
-    var buttonsHtml = _.template(self.$el.find('#temp_form_buttons').html())();
-    this.$el.find("#fh_appform_container.fh_appform_form_area").append(buttonsHtml);
+    this.fieldViews = fieldViews;
   },
   checkRules: function(params) {
     var self = this;
@@ -203,20 +218,19 @@ var FormView = BaseView.extend({
         var fields = actions.fields;
 
         for (targetId in fields) {
-          self.performRuleAction("field", targetId, fields[targetId]["action"]);
+          self.performRuleAction("field", fields[targetId].targetId, fields[targetId]["action"], fields[targetId].sectionIndex);
         }
       }
       self.checkPages();
       self.steps.activePageChange(self);
     });
   },
-  performRuleAction: function(type, targetId, action) {
+  performRuleAction: function(type, targetId, action, sectionIndex) {
     var target = null;
     if (type === "field") {
-      target = this.getFieldViewById(targetId);
+      target = this.getFieldViewById(targetId, sectionIndex);
     }
     if (target === null) {
-      console.error("cannot find target with id:" + targetId);
       return;
     }
     switch (action) {
@@ -281,11 +295,12 @@ var FormView = BaseView.extend({
     }
     return null;
   },
-  getFieldViewById: function(fieldId) {
+  getFieldViewById: function(fieldId, sectionIndex) {
     for (var i = 0; i < this.fieldViews.length; i++) {
       var fieldView = this.fieldViews[i];
       var pId = fieldView.model.getFieldId();
-      if (pId === fieldId) {
+      var fieldSectionIndex = fieldView.options.sectionIndex ? fieldView.options.sectionIndex : 0;
+      if (pId === fieldId && fieldSectionIndex === sectionIndex) {
         return fieldView;
       }
     }
@@ -506,7 +521,7 @@ var FormView = BaseView.extend({
     this.submission.addInputValue(params, cb);
   },
   removeFieldInputValue: function(params) {
-    this.submission.removeFieldValue(params.fieldId, params.index);
+    this.submission.removeFieldValue(params.fieldId, params.index, params.sectionIndex);
   },
   populateFieldViewsToSubmission: function(isStore, cb) {
     if (typeof cb === "undefined") {
@@ -530,7 +545,8 @@ var FormView = BaseView.extend({
           tmpObj.push({
             id: fieldId,
             value: v,
-            index: j
+            index: j,
+            sectionIndex: fieldView.options.sectionIndex
           });
         }
       }
@@ -541,10 +557,11 @@ var FormView = BaseView.extend({
       fieldId = item.id;
       var value = item.value;
       var index = item.index;
+      var sectionIndex = item.sectionIndex;
 
       if(value === null || typeof(value) === 'undefined'){
         //If the value is null, ensure that the value is removed from the submission.
-        submission.removeFieldValue(fieldId, index);
+        submission.removeFieldValue(fieldId, index, sectionIndex);
         $fh.forms.log.e("Input value for fieldId " + fieldId + " was not defined");
         count--;
         if (count === 0) {
@@ -555,7 +572,8 @@ var FormView = BaseView.extend({
           fieldId: fieldId,
           value: value,
           index: index,
-          isStore: isStore
+          isStore: isStore,
+          sectionIndex: sectionIndex
         }, function(err, res) {
           if (err) {
             console.error(err);

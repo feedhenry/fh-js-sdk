@@ -64,6 +64,7 @@ var modules = {
         "040-view02field23field_textarea",
         "040-view02field26sectionBreak",
         "040-view02field27dateTime",
+        "040-view02section",
         "040-view03Page",
         "040-view04Form",
         "040-view05fromJson",

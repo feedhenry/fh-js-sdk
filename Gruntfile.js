@@ -162,7 +162,7 @@ module.exports = function(grunt) {
         dest: './test/browser/browserified_tests.js',
         options: {
           external: [ './src/feedhenry.js' ],
-          ignore: ['../../src-cov/modules/ajax', '../../src-cov/modules/events', '../../src-cov/modules/queryMap', '../../src-cov/modules/sync-cli', '../../src-cov/feedhenry'],
+          ignore: ['../../src-cov/modules/ajax', '../../src-cov/modules/events', '../../src-cov/modules/queryMap', '../../src-cov/feedhenry'],
           // Embed source map for tests
           debug: true
         }
@@ -209,6 +209,10 @@ module.exports = function(grunt) {
         options: {
           spawn: false
         }
+      },
+      appforms: {
+        files: ['src/appforms/src/**/**/*'],
+        tasks: ['appforms']
       }
     },
     uglify: {
@@ -240,19 +244,25 @@ module.exports = function(grunt) {
       }
     },
     shell: {
-      jscov: {
-        //NOTE: install node-jscoverage first from here: https://github.com/visionmedia/node-jscoverage
-        command: 'jscoverage src/ src-cov/ --exclude=appforms',
-        options: {
-          stdout: true
-        }
-      },
       htmlcov: {
-        //NOTE: install jsoncov2htmlcov first from here: https://github.com/plasticine/json2htmlcov
-        command: 'json2htmlcov rep/coverage.json > rep/coverage.html',
+        command: 'cat rep/coverage.json | ./node_modules/.bin/json2htmlcov > rep/coverage.html',
         options: {
           stdout: true
         }
+      }
+    },
+    jscoverage: {
+      src: {
+        expand: true,
+        cwd: 'src/',
+        src: ['*.js', 'modules/**/*.js'],
+        dest: 'src-cov/',
+        ext: '.js',
+      }
+    },
+    coveralls: {
+      target: {
+        src: 'rep/coverage.lcov'
       }
     }
   });
@@ -268,6 +278,8 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-shell');
   grunt.loadNpmTasks('grunt-text-replace');
+  grunt.loadNpmTasks("grunt-jscoverage");
+  grunt.loadNpmTasks('grunt-coveralls');
 
   var spawns = [];
   grunt.registerTask('start-local-servers', function () {
@@ -313,6 +325,13 @@ module.exports = function(grunt) {
 
   });
 
+  grunt.registerTask('json2lcov', function() {
+    var jsoncovToLcov = require('json2lcov');
+    var jsonCovResult = grunt.file.readJSON('rep/coverage.json');
+    var lcov = jsoncovToLcov(jsonCovResult);
+    grunt.file.write('rep/coverage.lcov', lcov);
+  });
+
   var stopLocalServers = function(){
     spawns.forEach(function (server) {
       grunt.log.writeln("Killing process " + server.pid);
@@ -340,7 +359,9 @@ module.exports = function(grunt) {
 
   grunt.registerTask('concat-core-sdk', ['jshint',  'concat:lawnchair', 'concat:crypto', 'browserify:dist', 'concat:forms_core', 'concat:forms_sdk','concat:forms_core_no_v2', 'concat-forms-backbone']);
 
-  grunt.registerTask('coverage', ['shell:jscov', 'browserify:require_cov', 'browserify:test_cov', 'connect:server', 'mocha_phantomjs:test_coverage', 'shell:htmlcov']);
+  grunt.registerTask('coverage', ['jscoverage', 'browserify:require_cov', 'browserify:test_cov', 'connect:server', 'mocha_phantomjs:test_coverage', 'shell:htmlcov', 'json2lcov']);
 
   grunt.registerTask('default', 'jshint concat-core-sdk concat:forms_appFormsTest test uglify:dist zip');
+
+  grunt.registerTask('appforms', ['replace:forms_templates', 'concat:forms_backbone', 'concat:forms_backboneRequireJS','concat:forms_core', 'concat:forms_sdk','concat:forms_core_no_v2' ]);
 };

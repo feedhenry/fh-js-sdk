@@ -161,7 +161,7 @@ var FieldView = Backbone.View.extend({
         }
 
         this.$el.append(fieldTemplate);
-        this.$el.attr("data-field", this.model.getFieldId());
+        this.$el.attr("data-field", this.model.getFieldId() + (this.options.sectionIndex >= 0 ? ('_' + this.options.sectionIndex) : ''));
 
         this.options.parentEl.append(this.$el);
 
@@ -173,7 +173,7 @@ var FieldView = Backbone.View.extend({
         var submission = this.options.formView.getSubmission();
         if (submission) {
             this.submission = submission;
-            this.submission.getInputValueByFieldId(this.model.get('_id'), function(err, res) {
+            this.submission.getInputValueByFieldId(this.model.get('_id'), this.options.sectionIndex, function(err, res) {
                 self.value(res);
             });
         }
@@ -265,6 +265,7 @@ var FieldView = Backbone.View.extend({
         var target = $(e.target);
         var index = currentTarget.data().index || target.data().index;
         var val = self.valueFromElement(index);
+        var sectionIndex = self.options.sectionIndex;
 
         self.validateElement(index, val);
 
@@ -272,7 +273,8 @@ var FieldView = Backbone.View.extend({
             index: index,
             value: val,
             isStore: true,
-            fieldId: self.model.getFieldId()
+            fieldId: self.model.getFieldId(),
+            sectionIndex:sectionIndex
         }, function() {
             //Value has been persisted, now check for any rule changes.
             self.checkRules();

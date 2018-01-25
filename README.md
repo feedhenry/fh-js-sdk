@@ -135,7 +135,7 @@ git push origin master
 Our SDK is release on [npmjs](https://www.npmjs.com/package/fh-js-sdk). To do a release follow those steps:
 
 ### Prepare release
-* Update ```package.json```, ```npm-shrinkwrap.json```, ``` ``` file with the new version number.
+* Update ```package.json```, ```npm-shrinkwrap.json```, ```bower.json``` file with the new version number.
 * Update ```CHANGELOG.md``` with some JIRA link
 * Do a PR, make sure Travis build passed. Merge.
 * Tag the repository with the new version number:
@@ -166,7 +166,7 @@ npm publish
 ```
 
 ### Generate API doc
-The documentation is generated from `fh-js-sdk.d.ts`. 
+The documentation is generated from `fh-js-sdk.d.ts`.
 The generated doc is comitted in `doc/` folder and deployed to `gh-pages` so that feedhenry.org and portal documentation can pick it up from a published location.
 
 To publish doc, run the command:
@@ -174,3 +174,7 @@ To publish doc, run the command:
 npm run doc
 ```
 Go to [gh-pages](https://github.com/feedhenry/fh-js-sdk/tree/gh-pages) and see recent commit for the publication.
+
+### Sync client development
+
+Sync client development should be done in [fh-sync-js repository] (https://github.com/feedhenry/fh-sync-js)

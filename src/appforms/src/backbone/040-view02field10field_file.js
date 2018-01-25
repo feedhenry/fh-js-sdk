@@ -16,12 +16,14 @@ FieldFileView = FieldView.extend({
         var filejQ = $(fileEle);
         var index = filejQ.data().index;
         var file = fileEle.files ? fileEle.files[0] : null;
+        var sectionIndex = self.options.sectionIndex;
 
         self.updateOrRemoveValue({
             fieldId: self.model.getFieldId(),
             value: file,
             isStore: true,
-            index: index
+            index: index,
+            sectionIndex:sectionIndex
         }, function() {
           self.checkRules();
           if (file) {

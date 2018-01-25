@@ -61,51 +61,30 @@ var PageView=BaseView.extend({
 
     if(sections != null){
       var sectionKey;
-      var sectionIndex = 0;
+      var index = 0;
 
       var sectionGroup = $('<div class="panel-group" id="accordion"></div>');
 
 
       //Add the section fields
       for(sectionKey in sections){
-        var sectionEl = $(_.template(self.options.formView.$el.find('#temp_page_structure').html())( {"sectionId": sectionKey, title: sections[sectionKey].title, description: sections[sectionKey].description, index: sectionIndex}));
-        var sectionDivId = '#fh_appform_' + sectionKey + '_body_icon';
-        sectionIndex++;
-        sectionEl.find('.panel-heading').off('click');
-        sectionEl.find(sectionDivId).off('click');
 
-        sectionEl.find(sectionDivId).on('click', function(e){
-          var fieldTarget = $(this).parent().data().field;
-          toggleSection(fieldTarget);
+        var sectionView = new SectionView({
+          model: self.model,
+          parentEl: sectionGroup,
+          formView: self.options.formView,
+          sectionKey: sectionKey,
+          title: sections[sectionKey].title,
+          description: sections[sectionKey].description,
+          index: index,
+          repeating: sections[sectionKey].repeating,
+          minRepeat: sections[sectionKey].minRepeat,
+          maxRepeat: sections[sectionKey].maxRepeat,
+          fields: sections[sectionKey].fields,
+          parentView: self
         });
 
-        sectionEl.find('.panel-heading').on('click', function(e){
-          if($(e.target).data()){
-            if($(e.target).data().field){
-              toggleSection($(e.target).data().field);
-            }
-          }
-        });
-        sectionGroup.append(sectionEl);
-        sections[sectionKey].fields.forEach(function(field, index){
-          var fieldType = field.getType();
-          if (self.viewMap[fieldType]) {
-
-            $fh.forms.log.l("*- "+fieldType);
-
-            if(fieldType !== "sectionBreak"){
-                self.fieldViews[field.get('_id')] = new self.viewMap[fieldType]({
-                parentEl: sectionEl.find('.panel-body'),
-                parentView: self,
-                model: field,
-                formView: self.options.formView,
-                sectionName: sectionKey
-              });
-            }
-          } else {
-            $fh.forms.log.w('FIELD NOT SUPPORTED:' + fieldType);
-          }
-        });
+        index++;
       }
 
       this.$el.append(sectionGroup);
@@ -132,7 +111,7 @@ var PageView=BaseView.extend({
     }
   },
 
-  expandSection: function(fieldId){
+  expandSection: function(fieldId, sectionIndex){
     var sections = this.model.getSections();
     var sectionFound = false;
     var sectionId = "";
@@ -146,11 +125,12 @@ var PageView=BaseView.extend({
     }
 
     if(sectionFound){
-      $("#fh_appform_" + sectionId + "_body").slideDown(20);
-      $("#fh_appform_" + sectionId + "_body_icon").removeClass('icon-minus');
+      var sectionIdentifier = sectionId + (sectionIndex >= 0 ? ('_' + sectionIndex) : '');
+      $("#fh_appform_" + sectionIdentifier + "_body").slideDown(20);
+      $("#fh_appform_" + sectionIdentifier + "_body_icon").removeClass('icon-minus');
 
-      if(!$("#fh_appform_" + sectionId + "_body_icon").hasClass('icon-plus')){
-         $("#fh_appform_" + sectionId + "_body_icon").addClass('icon-plus');
+      if(!$("#fh_appform_" + sectionIdentifier + "_body_icon").hasClass('icon-plus')){
+         $("#fh_appform_" + sectionIdentifier + "_body_icon").addClass('icon-plus');
       }
     }
   },
