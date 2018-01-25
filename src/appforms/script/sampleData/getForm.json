@@ -329,6 +329,28 @@
               }
             },
             "repeating": false
+          },
+          {
+            "fieldOptions": {
+              "definition": {
+                "options": [
+                  {
+                    "label": "Check1",
+                    "checked": true
+                  },
+                  {
+                    "label": "Check2",
+                    "checked": false
+                  }
+                ]
+              }
+            },
+            "required": true,
+            "type": "checkboxes",
+            "name": "Checkboxes",
+            "helpText": "Instructions",
+            "_id": "checkboxes_id",
+            "repeating": false
           }
         ]
       }
@@ -406,6 +428,10 @@
       "dropdownwithblank": {
         "page": 0,
         "field": 16
+      },
+      "checkboxes_id":{
+        "page": 0,
+        "field": 17
       }
     },
     "lastUpdatedTimestamp": 1389347964168,
