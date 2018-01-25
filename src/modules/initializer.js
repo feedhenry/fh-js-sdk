@@ -112,7 +112,7 @@ var loadCloudProps = function(app_props, callback) {
   var storage = null;
   var path = app_props.host + consts.boxprefix + "app/init";
   try {
-    storage = data.getStorage("fh_init_storage", null);
+    storage = data.getStorage("fh_init_storage", typeof Titanium !== "undefined"?['titanium']:null);
     storage.get('fh_init', function(storage_res) {
       var savedHost = null;
       if (storage_res && storage_res.value !== null && typeof(storage_res.value) !== "undefined" && storage_res !== "") {

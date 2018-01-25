@@ -41,6 +41,17 @@ module.exports = function(grunt) {
         ],
         dest: "libs/generated/lawnchair.js"
       },
+      lawnchair_titanium: {
+        src: [
+          "libs/generated/lawnchair.js",
+          "libs/lawnchair/lawnchairTitanium.js",
+        ],
+        dest: "libs/generated/lawnchair.js"
+      },
+      titanium_globals : {
+        src : ["src/modules/titanium/ti.js", "dist/feedhenry-titanium.js"],
+        dest : "dist/feedhenry-titanium.js"
+      },
       crypto: {
         src:[
           "libs/cryptojs/cryptojs-core.js",
@@ -143,6 +154,39 @@ module.exports = function(grunt) {
           }]
         }
       },
+      dist_titanium:{
+        //shim is defined inside package.json
+        src:['src/feedhenry.js'],
+        dest: 'dist/feedhenry-titanium.js',
+        options: {
+          standalone: 'feedhenry',
+          transform: [function(file){
+            var data = '';
+
+            function write (buf) { data += buf }
+            function end () {
+              var t = data;
+              if(file.indexOf("constants.js") >= 0){
+                var version = pkg.version;
+                console.log("found current version = " + version);
+                if(process.env.TRAVIS_BUILD_NUMBER){
+                  console.log("found BUILD_NUMBER in process.env " + process.env.TRAVIS_BUILD_NUMBER);
+                  version = version + '-' + process.env.TRAVIS_BUILD_NUMBER;
+                }
+                console.log("Version to inject is " + version);
+                t = data.replace("BUILD_VERSION", version);
+              }
+              this.queue(t);
+              this.queue(null);
+            }
+            return through(write, end);
+          }],
+          alias: ['./src/modules/titanium/cookies.js:./cookies',
+                  './src/modules/titanium/appProps.js:./appProps',
+                  './src/modules/titanium/appProps.js:./modules/appProps'
+                 ]
+        }
+      },
       // This browserify build can be required by other browserify modules that
       // have been created with an --external parameter.
       require: {
@@ -219,7 +263,8 @@ module.exports = function(grunt) {
       dist: {
         "files": {
           'dist/feedhenry.min.js': ['dist/feedhenry.js'],
-          'dist/feedhenry-forms.min.js': ['dist/feedhenry-forms.js']
+          'dist/feedhenry-forms.min.js': ['dist/feedhenry-forms.js'],
+          'dist/feedhenry-titanium.min.js': ['dist/feedhenry-titanium.js']
         }
       }
     },
@@ -241,6 +286,15 @@ module.exports = function(grunt) {
         },
         dest: 'dist/feedhenry-js.zip',
         src:['dist/feedhenry.js', 'dist/feedhenry-forms.js', 'dist/feedhenry.min.js', 'dist/feedhenry-forms.min.js', 'dist/appForms-backbone.js']
+      },
+      titanium: {
+        router: function(filepath) {
+          grunt.log.writeln(filepath);
+          var filename = path.basename(filepath);
+          return 'feedhenry-titanium/' + filename;
+        },
+        dest: 'dist/feedhenry-titanium.zip',
+        src:['dist/feedhenry-titanium.js', 'dist/feedhenry-titanium.min.js']
       }
     },
     shell: {
@@ -359,9 +413,17 @@ module.exports = function(grunt) {
 
   grunt.registerTask('concat-core-sdk', ['jshint',  'concat:lawnchair', 'concat:crypto', 'browserify:dist', 'concat:forms_core', 'concat:forms_sdk','concat:forms_core_no_v2', 'concat-forms-backbone']);
 
+
+  grunt.registerTask('concat-titanium', ['concat:lawnchair', 'concat:lawnchair_titanium', 'concat:crypto']);
+
+  // We need to ensure that the Titanium globals (definition of window, document, navigator) are at the very top of the file
+  grunt.registerTask('concat-titanium-globals', ['concat:titanium_globals']);
+
+  grunt.registerTask('titanium', 'concat-titanium browserify:dist_titanium concat-titanium-globals');
+
   grunt.registerTask('coverage', ['jscoverage', 'browserify:require_cov', 'browserify:test_cov', 'connect:server', 'mocha_phantomjs:test_coverage', 'shell:htmlcov', 'json2lcov']);
 
-  grunt.registerTask('default', 'jshint concat-core-sdk concat:forms_appFormsTest test uglify:dist zip');
+  grunt.registerTask('default', 'jshint concat-core-sdk concat:forms_appFormsTest test titanium uglify:dist zip');
 
   grunt.registerTask('appforms', ['replace:forms_templates', 'concat:forms_backbone', 'concat:forms_backboneRequireJS','concat:forms_core', 'concat:forms_sdk','concat:forms_core_no_v2' ]);
 };
