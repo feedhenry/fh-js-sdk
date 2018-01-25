@@ -76,6 +76,7 @@ declare module FeedHenry {
         method?: string;
         contentType?: string;
         data?: any;
+        headers?: any;
         timeout?: number;
     }
 
