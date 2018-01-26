@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 3.0.0 - 2018-01-25
+* Remove titanium option
+
 ## 2.24.0 - 2018-01-25
 * Added `headers` parameter to CloudOptions
 
