@@ -14,7 +14,6 @@ deploy:
     secure: AXggnsDClUChq5mRqudXKiDS8g5Mbjv0J/vEOj5vdVYxJgII2+pHcJpFAEtU0hKjiMgWPTtLDDUmjS61iGI9WcxrNKKwGohhORXQk/CPxRUA69AaXOPOUP1p0Sdcyy2NM1NJ1N75mhDkYfrnhlVuafSPKb8DaSjsyjD0JdIoXe4=
   file:
     - $TRAVIS_BUILD_DIR/dist/feedhenry-js.zip
-    - $TRAVIS_BUILD_DIR/dist/feedhenry-titanium.zip
     - $TRAVIS_BUILD_DIR/dist/fh-starter-project-latest.zip
   skip_cleanup: true
   on:

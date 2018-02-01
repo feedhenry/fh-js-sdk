@@ -7,7 +7,7 @@ var data = {
   //dom adapter doens't work on windows phone, so don't specify the adapter if the dom one failed
   //we specify the order of lawnchair adapters to use, lawnchair will find the right one to use, to keep backward compatibility, keep the order
   //as dom, webkit-sqlite, localFileStorage, window-name
-  DEFAULT_ADAPTERS : ["dom", "webkit-sqlite", "window-name", "titanium"],
+  DEFAULT_ADAPTERS : ["dom", "webkit-sqlite", "window-name"],
   getStorage: function(name, adapters, fail){
     var adpts = data.DEFAULT_ADAPTERS;
     var errorHandler = fail || function(){};

@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 3.0.0 - 2018-02-01
+* Remove titanium option as per ticket FH-3250 we are no longer supporting Titanium/appcelerator apps.
+
 ## 2.24.1 - 2018-02-01
 * FIX: RHMAP-19268 - Client gets null pointer exception when connection tag is disabled and the app is running localy
 
