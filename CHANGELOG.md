@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 2.24.1 - 2018-02-01
+* FIX: RHMAP-19268 - Client gets null pointer exception when connection tag is disabled and the app is running localy
+
 ## 2.24.0 - 2018-01-25
 * Added `headers` parameter to CloudOptions
 
