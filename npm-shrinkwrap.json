@@ -1,6 +1,6 @@
 {
   "name": "fh-js-sdk",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "dependencies": {
     "browserify": {
       "version": "3.46.1",
@@ -129,9 +129,9 @@
               "resolved": "https://registry.npmjs.org/base64-js/-/base64-js-0.0.8.tgz"
             },
             "ieee754": {
-              "version": "1.1.8",
+              "version": "1.1.11",
               "from": "ieee754@>=1.1.1 <1.2.0",
-              "resolved": "https://registry.npmjs.org/ieee754/-/ieee754-1.1.8.tgz"
+              "resolved": "https://registry.npmjs.org/ieee754/-/ieee754-1.1.11.tgz"
             }
           }
         },
@@ -146,9 +146,9 @@
           "resolved": "https://registry.npmjs.org/commondir/-/commondir-0.0.1.tgz"
         },
         "concat-stream": {
-          "version": "1.4.10",
+          "version": "1.4.11",
           "from": "concat-stream@>=1.4.1 <1.5.0",
-          "resolved": "https://registry.npmjs.org/concat-stream/-/concat-stream-1.4.10.tgz",
+          "resolved": "https://registry.npmjs.org/concat-stream/-/concat-stream-1.4.11.tgz",
           "dependencies": {
             "typedarray": {
               "version": "0.0.6",
@@ -233,7 +233,7 @@
             },
             "minimist": {
               "version": "0.0.10",
-              "from": "minimist@>=0.0.7 <0.1.0",
+              "from": "minimist@>=0.0.1 <0.1.0",
               "resolved": "https://registry.npmjs.org/minimist/-/minimist-0.0.10.tgz"
             }
           }
@@ -552,7 +552,7 @@
           "dependencies": {
             "minimist": {
               "version": "0.0.10",
-              "from": "minimist@>=0.0.7 <0.1.0",
+              "from": "minimist@>=0.0.1 <0.1.0",
               "resolved": "https://registry.npmjs.org/minimist/-/minimist-0.0.10.tgz"
             }
           }
@@ -623,9 +623,9 @@
           }
         },
         "tty-browserify": {
-          "version": "0.0.0",
+          "version": "0.0.1",
           "from": "tty-browserify@>=0.0.0 <0.1.0",
-          "resolved": "https://registry.npmjs.org/tty-browserify/-/tty-browserify-0.0.0.tgz"
+          "resolved": "https://registry.npmjs.org/tty-browserify/-/tty-browserify-0.0.1.tgz"
         },
         "umd": {
           "version": "2.0.0",
@@ -674,7 +674,7 @@
                     "optimist": {
                       "version": "0.3.7",
                       "from": "optimist@>=0.3.5 <0.4.0",
-                      "resolved": "https://registry.npmjs.org/optimist/-/optimist-0.3.7.tgz",
+                      "resolved": "http://npm.skunkhenry.com/optimist/-/optimist-0.3.7.tgz",
                       "dependencies": {
                         "wordwrap": {
                           "version": "0.0.3",
@@ -839,9 +839,9 @@
                   "resolved": "https://registry.npmjs.org/escodegen/-/escodegen-0.0.15.tgz",
                   "dependencies": {
                     "source-map": {
-                      "version": "0.5.7",
+                      "version": "0.7.2",
                       "from": "source-map@>=0.1.2",
-                      "resolved": "https://registry.npmjs.org/source-map/-/source-map-0.5.7.tgz"
+                      "resolved": "https://registry.npmjs.org/source-map/-/source-map-0.7.2.tgz"
                     }
                   }
                 }
@@ -1035,6 +1035,26 @@
       "from": "fh-sync-js@1.1.1",
       "resolved": "https://registry.npmjs.org/fh-sync-js/-/fh-sync-js-1.1.1.tgz",
       "dependencies": {
+        "loglevel": {
+          "version": "0.6.0",
+          "from": "https://registry.npmjs.org/loglevel/-/loglevel-0.6.0.tgz",
+          "resolved": "https://registry.npmjs.org/loglevel/-/loglevel-0.6.0.tgz"
+        },
+        "process": {
+          "version": "0.6.0",
+          "from": "https://registry.npmjs.org/process/-/process-0.6.0.tgz",
+          "resolved": "https://registry.npmjs.org/process/-/process-0.6.0.tgz"
+        },
+        "type-of": {
+          "version": "2.0.1",
+          "from": "https://registry.npmjs.org/type-of/-/type-of-2.0.1.tgz",
+          "resolved": "https://registry.npmjs.org/type-of/-/type-of-2.0.1.tgz"
+        },
+        "underscore": {
+          "version": "1.6.0",
+          "from": "https://registry.npmjs.org/underscore/-/underscore-1.6.0.tgz",
+          "resolved": "https://registry.npmjs.org/underscore/-/underscore-1.6.0.tgz"
+        },
         "uuid": {
           "version": "3.0.1",
           "from": "https://registry.npmjs.org/uuid/-/uuid-3.0.1.tgz",
