@@ -490,7 +490,7 @@ declare module FeedHenry {
          * @param {String} datasetId
          * @param {Function} callback
          */
-        function getPending(datasetId: string, callback: () => void);
+        function getPending(datasetId: string, callback: (pending: any) => void);
 
         /**
          * @param {String} datasetId
