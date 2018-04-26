@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 3.0.1 - 2018-04-26
+* Add missing callback parameter in `sync.getPending`
+
 ## 3.0.0 - 2018-02-01
 * Remove titanium option as per ticket FH-3250 we are no longer supporting Titanium/appcelerator apps.
 
