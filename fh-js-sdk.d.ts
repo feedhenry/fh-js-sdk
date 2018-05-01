@@ -156,7 +156,7 @@ declare module FeedHenry {
 
       /**
        * Delete the locally stored session token. Will also request that the RHMAP server revoke it
-       * @param callback 
+       * @param callback
        */
       export function clearSession(callback: (err: any) => void)
     }
@@ -514,10 +514,11 @@ declare module FeedHenry {
 
         /**
          * @param {String} datasetId
+         * @param {Object} queryParams
          * @param {Function} success
          * @param {Function} failure
          */
-        function setQueryParams(datasetId: string, success: (queryParams: any) => void, failure: (err: string, datasetId: string) => void);
+        function setQueryParams(datasetId: string, queryParams: any, success?: (queryParams: any) => void, failure?: (err: string, datasetId: string) => void);
 
         /**
          * @param {String} datasetId

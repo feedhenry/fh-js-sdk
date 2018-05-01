@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 3.0.2 - 2018-04-30
+* Add missing argument to `sync.setQueryParams` definition
+
 ## 3.0.1 - 2018-04-26
 * Add missing callback parameter in `sync.getPending`
 
