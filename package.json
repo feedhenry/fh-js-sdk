@@ -93,6 +93,7 @@
     "json2htmlcov": "^0.1.1",
     "json2lcov": "^1.0.0",
     "mocha": "1.17.1",
+    "mocha-phantomjs": "^4.1.0",
     "moment": "^2.18.1",
     "rimraf": "2.6.1",
     "sinon": "1.9.0",
