@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+##Unreleased
+* FIX: Dependency Security Vulnerabilities 
+
 ## 3.0.2 - 2018-04-30
 * Add missing argument to `sync.setQueryParams` definition
 
