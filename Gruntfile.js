@@ -119,28 +119,31 @@ module.exports = function(grunt) {
         src:['src/feedhenry.js'],
         dest: 'dist/feedhenry.js',
         options: {
-          standalone: 'feedhenry',
-          transform: [function(file){
-            var data = '';
-
-            function write (buf) { data += buf }
-            function end () {
-              var t = data;
-              if(file.indexOf("constants.js") >= 0){
-                var version = pkg.version;
-                console.log("found current version = " + version);
-                if(process.env.TRAVIS_BUILD_NUMBER){
-                  console.log("found BUILD_NUMBER in process.env " + process.env.TRAVIS_BUILD_NUMBER);
-                  version = version + '-' + process.env.TRAVIS_BUILD_NUMBER;
-                }
-                console.log("Version to inject is " + version);
-                t = data.replace("BUILD_VERSION", version);
+          browserifyOptions: {
+            standalone: 'feedhenry',
+            transform: [function (file) {
+              var data = '';
+              function write(buf) {
+                  data += buf
               }
-              this.queue(t);
-              this.queue(null);
-            }
+              function end() {
+                  var t = data;
+                  if (file.indexOf("constants.js") >= 0) {
+                      var version = pkg.version;
+                      console.log("found current version = " + version);
+                      if (process.env.TRAVIS_BUILD_NUMBER) {
+                          console.log("found BUILD_NUMBER in process.env " + process.env.TRAVIS_BUILD_NUMBER);
+                          version = version + '-' + process.env.TRAVIS_BUILD_NUMBER;
+                      }
+                      console.log("Version to inject is " + version);
+                      t = data.replace("BUILD_VERSION", version);
+                  }
+                  this.queue(t);
+                  this.queue(null);
+              }
             return through(write, end);
-          }]
+            }]
+          }
         }
       },
       // This browserify build can be required by other browserify modules that
@@ -162,7 +165,7 @@ module.exports = function(grunt) {
         dest: './test/browser/browserified_tests.js',
         options: {
           external: [ './src/feedhenry.js' ],
-          ignore: ['../../src-cov/modules/ajax', '../../src-cov/modules/events', '../../src-cov/modules/queryMap', '../../src-cov/feedhenry'],
+          exclude: ['../../src-cov/modules/ajax', '../../src-cov/modules/events', '../../src-cov/modules/queryMap', '../../src-cov/feedhenry'],
           // Embed source map for tests
           debug: true
         }
