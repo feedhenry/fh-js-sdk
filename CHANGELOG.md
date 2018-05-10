@@ -2,6 +2,7 @@
 
 ## 3.0.3 - 2018-05-09
 * Fix Security vulnerabilities: Upgrade browserify dependencies
+* Add licenses manually
 
 ## 3.0.2 - 2018-04-30
 * Add missing argument to `sync.setQueryParams` definition
