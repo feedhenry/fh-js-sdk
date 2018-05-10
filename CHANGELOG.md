@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 3.0.4 - 2018-05-10
+* Upgrade dependencies which do not have break changes  
+* Update licenses manually
+
 ## 3.0.3 - 2018-05-09
 * Fix Security vulnerabilities: Upgrade browserify dependencies
 * Add licenses manually
