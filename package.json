@@ -53,7 +53,7 @@
     "doc:generate": "typedoc --includeDeclarations --excludeExternals --out doc ./fh-js-sdk.d.ts",
     "doc:gh-pages": "touch doc/.nojekyll; git add doc/.*; git add doc/*; git commit -m 'Publishing to gh-pages'; git push origin :gh-pages --force ; git subtree push --prefix doc origin gh-pages",
     "doc": "npm run doc:clean && npm run doc:generate && npm run doc:gh-pages",
-    "preshrinkwrap": "npm cache verify && npm ls",
+    "preshrinkwrap": "npm cache verify && npm cache clean && npm cache clean && npm ls",
     "postshrinkwrap": "license-reporter save --full-dependency-tree --xml licenses.xml && license-reporter report --full-dependency-tree --silent"
   },
   "repository": {

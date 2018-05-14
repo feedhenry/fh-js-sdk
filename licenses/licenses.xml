@@ -1,7 +1,7 @@
 <?xml version='1.0'?>
 <licenseSummary>
     <project>fh-js-sdk</project>
-    <version>3.0.3</version>
+    <version>3.0.4</version>
     <license>Copyright (c) 2014 FeedHenry Ltd, All Rights Reserved.</license>
     <dependencies>
         <dependency>
@@ -684,7 +684,7 @@
         </dependency>
         <dependency>
             <packageName>fh-js-sdk</packageName>
-            <version>3.0.3</version>
+            <version>3.0.4</version>
             <licenses>
                 <license>
                     <name>UNKNOWN</name>
