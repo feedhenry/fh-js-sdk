@@ -1,6 +1,6 @@
 {
   "name": "fh-js-sdk",
-  "version": "3.0.4",
+  "version": "3.0.5",
   "description": "feedhenry js sdk",
   "main": "dist/feedhenry.js",
   "types": "./fh-js-sdk.d.ts",
@@ -97,7 +97,6 @@
     "json2lcov": "^1.0.0",
     "license-reporter": "github:bucharest-gold/license-reporter#d74abaf47220137b6dfd3a070556c6d5c4f2003b",
     "mocha": "5.1.1",
-    "moment": "^2.18.1",
     "phantomjs": "1.9.7-15",
     "rimraf": "2.6.2",
     "sinon": "1.9.0",
