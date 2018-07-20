@@ -14,7 +14,7 @@ var buildFHParams = function(){
   fhparams.cuid = device.getDeviceId();
   fhparams.cuidMap = device.getCuidMap();
   fhparams.destination = device.getDestination();
-  
+
   if(window.device || navigator.device){
     fhparams.device = window.device || navigator.device;
   }
@@ -45,7 +45,7 @@ var buildFHParams = function(){
       fhparams.init = typeof(app_props.init) === "string" ? JSON.parse(app_props.init) : app_props.init;
     }
   }
-  
+
   defaultParams = fhparams;
   logger.debug("fhparams = ", defaultParams);
   return fhparams;
@@ -63,7 +63,7 @@ var getFHHeaders = function(){
   var params = buildFHParams();
   for(var name in params){
     if(params.hasOwnProperty(name)){
-      headers['X-FH-' + name] = params[name];
+      headers['X-FH-' + name] = JSON.stringify(params[name]);
     }
   }
   return headers;
