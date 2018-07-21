@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 3.0.6 - 2018-07-20
+- Fix header parameters  
+
 ## 3.0.5 - 2018-06-12
 - Add scripts to update the licenses automatically
 - Update automatically lock dependencies file (npm-shrinkwrap.json) and licenses
