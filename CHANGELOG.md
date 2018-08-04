@@ -1,7 +1,10 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 3.0.7 - 2018-08-04
+- Set fhconfig.json default to /fhconfig.json
+
 ## 3.0.6 - 2018-07-20
-- Fix header parameters  
+- Fix header parameters
 
 ## 3.0.5 - 2018-06-12
 - Add scripts to update the licenses automatically
@@ -9,7 +12,7 @@
 - CVE-2017-18214 : Remove unused moment dependency
 
 ## 3.0.4 - 2018-05-10
-* Upgrade dependencies which do not have break changes  
+* Upgrade dependencies which do not have break changes
 * Update licenses manually
 
 ## 3.0.3 - 2018-05-09
