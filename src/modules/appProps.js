@@ -10,16 +10,16 @@ var load = function(cb) {
   var doc_url = document.location.href;
   var url_params = qs(doc_url.replace(/#.*?$/g, ''));
   var url_props = {};
-  
+
   //only use fh_ prefixed params
   for(var key in url_params){
     if(url_params.hasOwnProperty(key) ){
       if(key.indexOf('fh_') === 0){
-        url_props[key.substr(3)] = decodeURI(url_params[key]); 
+        url_props[key.substr(3)] = decodeURI(url_params[key]);
       }
     }
   }
-  
+
   //default properties
   app_props = {
     appid: "000000000000000000000000",
@@ -27,19 +27,19 @@ var load = function(cb) {
     projectid: "000000000000000000000000",
     connectiontag: "0.0.1"
   };
-  
+
   function setProps(props){
     _.extend(app_props, props, url_props);
-    
+
     if(typeof url_params.url !== 'undefined'){
-     app_props.host = url_params.url; 
+     app_props.host = url_params.url;
     }
-    
+
     app_props.local = !!(url_props.host || url_params.url || (props.local && props.host));
     cb(null, app_props);
   }
 
-  var config_url = url_params.fhconfig || consts.config_js;
+  var config_url = url_params.fhconfig || "/" + consts.config_js;
   ajax({
     url: config_url,
     dataType: "json",
