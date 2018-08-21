@@ -1,5 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 3.0.7 - 2018-08-21
+- Fix date form component which is not working when the button is used 
+
 ## 3.0.6 - 2018-07-20
 - Fix header parameters  
 
