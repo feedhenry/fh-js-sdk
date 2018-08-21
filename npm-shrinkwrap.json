@@ -1,6 +1,6 @@
 {
   "name": "fh-js-sdk",
-  "version": "3.0.6",
+  "version": "3.0.7",
   "dependencies": {
     "browserify": {
       "version": "16.2.2",

@@ -30,9 +30,9 @@ FieldDateTimeView = FieldView.extend({
     });
 
     if(!this.readonly){
-      html+=this.renderButton(index,buttonLabel,"fhdate");   
+      html+=this.renderButton(index,buttonLabel,"fhdate");
     }
-    
+
 
     return $(html);
   },
@@ -49,7 +49,7 @@ FieldDateTimeView = FieldView.extend({
     if(!this.readonly){
       this.$el.on("click","button",function(){
         that.action(this);
-      });  
+      });
     }
   },
   action: function(el) {
@@ -57,11 +57,11 @@ FieldDateTimeView = FieldView.extend({
     var self = this;
     var now=new Date();
     if (self.getUnit() === "datetime") {
-      $('input[data-index="'+index+'"]', this.$el).val(self.generateDateTimeText(now)).blur();
+      $('input[data-index="'+index+'"]', this.$el).val(self.generateDateTimeText(now)).change();
     } else if (self.getUnit() === "date") {
-      $('input[data-index="'+index+'"]', this.$el).val(self.getDate(now)).blur();
+      $('input[data-index="'+index+'"]', this.$el).val(self.getDate(now)).change();
     } else if (self.getUnit() === "time") {
-      $('input[data-index="'+index+'"]', this.$el).val(self.getTime(now)).blur();
+      $('input[data-index="'+index+'"]', this.$el).val(self.getTime(now)).change();
     }
   },
   generateDateTimeText: function(date){
