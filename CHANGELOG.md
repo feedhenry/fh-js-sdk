@@ -1,5 +1,14 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 3.0.8 - 2018-08-23
+### Changes
+- Upgrade version used of fh-sync-js to 1.3.1
+- Change trevis to test project with NodeJS 10 
+- Change trevis for don't test project with NodeJS 4
+- Replace npm-shrinkwrap.json by json package-lock.json.  
+### Fix 
+- Add decode module to fix issue client forms app 
+
 ## 3.0.7 - 2018-08-21
 - Fix date form component which is not working when the button is used 
 
