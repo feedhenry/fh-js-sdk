@@ -459,6 +459,16 @@
             </licenses>
         </dependency>
         <dependency>
+            <packageName>decode</packageName>
+            <version>0.3.0</version>
+            <licenses>
+                <license>
+                    <name>MIT License</name>
+                    <url>http://www.opensource.org/licenses/MIT</url>
+                </license>
+            </licenses>
+        </dependency>
+        <dependency>
             <packageName>defined</packageName>
             <version>1.0.0</version>
             <licenses>
@@ -941,6 +951,16 @@
         <dependency>
             <packageName>jsonparse</packageName>
             <version>1.3.1</version>
+            <licenses>
+                <license>
+                    <name>MIT License</name>
+                    <url>http://www.opensource.org/licenses/MIT</url>
+                </license>
+            </licenses>
+        </dependency>
+        <dependency>
+            <packageName>kung-fu</packageName>
+            <version>0.2.1</version>
             <licenses>
                 <license>
                     <name>MIT License</name>
