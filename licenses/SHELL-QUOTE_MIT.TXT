@@ -1,24 +1,72 @@
-The MIT License
+shell-quote
+===========
 
-Copyright (c) 2013 James Halliday (mail@substack.net)
+Parse and quote shell commands.
 
-Permission is hereby granted, free of charge, 
-to any person obtaining a copy of this software and 
-associated documentation files (the "Software"), to 
-deal in the Software without restriction, including 
-without limitation the rights to use, copy, modify, 
-merge, publish, distribute, sublicense, and/or sell 
-copies of the Software, and to permit persons to whom 
-the Software is furnished to do so, 
-subject to the following conditions:
+[![build status](https://secure.travis-ci.org/substack/node-shell-quote.png)](http://travis-ci.org/substack/node-shell-quote)
 
-The above copyright notice and this permission notice 
-shall be included in all copies or substantial portions of the Software.
+example
+=======
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES 
-OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. 
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR 
-ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, 
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE 
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+quote
+-----
+
+``` js
+var quote = require('shell-quote').quote;
+var s = quote([ 'a', 'b c d', '$f', '"g"' ]);
+console.log(s);
+```
+
+output
+
+```
+a 'b c d' \$f '"g"'
+```
+
+parse
+-----
+
+``` js`
+var parse = require('shell-quote').parse;
+var xs = parse('a "b c" \\$def \'it\\\'s great\'');
+console.dir(xs);
+```
+
+output
+
+```
+[ 'a', 'b c', '\\$def', 'it\'s great' ]
+```
+
+methods
+=======
+
+``` js
+var quote = require('shell-quote').quote;
+var parse = require('shell-quote').parse;
+```
+
+quote(args)
+-----------
+
+Return a quoted string for the array `args` suitable for using in shell
+commands.
+
+parse(cmd)
+----------
+
+Return an array of arguments from the quoted string `cmd`.
+
+install
+=======
+
+With [npm](http://npmjs.org) do:
+
+```
+npm install shell-quote
+```
+
+license
+=======
+
+MIT

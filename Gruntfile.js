@@ -11,15 +11,15 @@ module.exports = function(grunt) {
     meta: {},
     jshint: {
       all: ['src/modules/**/*.js',
-            '!src/modules/ajax.js',
-            'src/appforms/src/core/*.js',
-            'src/appforms/src/backbone/*.js',
-            '!src/appforms/src/core/000*.js',
-            '!src/appforms/src/core/060*.js',
-            '!src/appforms/src/core/999*.js',
-            '!src/appforms/src/backbone/000*.js',
-            '!src/appforms/src/backbone/001*.js',
-            '!src/appforms/src/backbone/999*.js'],
+        '!src/modules/ajax.js',
+        'src/appforms/src/core/*.js',
+        'src/appforms/src/backbone/*.js',
+        '!src/appforms/src/core/000*.js',
+        '!src/appforms/src/core/060*.js',
+        '!src/appforms/src/core/999*.js',
+        '!src/appforms/src/backbone/000*.js',
+        '!src/appforms/src/backbone/001*.js',
+        '!src/appforms/src/backbone/999*.js'],
       options: {
         curly: true,
         eqeqeq: true,
@@ -119,31 +119,28 @@ module.exports = function(grunt) {
         src:['src/feedhenry.js'],
         dest: 'dist/feedhenry.js',
         options: {
-          browserifyOptions: {
-            standalone: 'feedhenry',
-            transform: [function (file) {
-              var data = '';
-              function write(buf) {
-                  data += buf
+          standalone: 'feedhenry',
+          transform: [function(file){
+            var data = '';
+
+            function write (buf) { data += buf }
+            function end () {
+              var t = data;
+              if(file.indexOf("constants.js") >= 0){
+                var version = pkg.version;
+                console.log("found current version = " + version);
+                if(process.env.TRAVIS_BUILD_NUMBER){
+                  console.log("found BUILD_NUMBER in process.env " + process.env.TRAVIS_BUILD_NUMBER);
+                  version = version + '-' + process.env.TRAVIS_BUILD_NUMBER;
+                }
+                console.log("Version to inject is " + version);
+                t = data.replace("BUILD_VERSION", version);
               }
-              function end() {
-                  var t = data;
-                  if (file.indexOf("constants.js") >= 0) {
-                      var version = pkg.version;
-                      console.log("found current version = " + version);
-                      if (process.env.TRAVIS_BUILD_NUMBER) {
-                          console.log("found BUILD_NUMBER in process.env " + process.env.TRAVIS_BUILD_NUMBER);
-                          version = version + '-' + process.env.TRAVIS_BUILD_NUMBER;
-                      }
-                      console.log("Version to inject is " + version);
-                      t = data.replace("BUILD_VERSION", version);
-                  }
-                  this.queue(t);
-                  this.queue(null);
-              }
+              this.queue(t);
+              this.queue(null);
+            }
             return through(write, end);
-            }]
-          }
+          }]
         }
       },
       // This browserify build can be required by other browserify modules that
@@ -165,7 +162,7 @@ module.exports = function(grunt) {
         dest: './test/browser/browserified_tests.js',
         options: {
           external: [ './src/feedhenry.js' ],
-          exclude: ['../../src-cov/modules/ajax', '../../src-cov/modules/events', '../../src-cov/modules/queryMap', '../../src-cov/feedhenry'],
+          ignore: ['../../src-cov/modules/ajax', '../../src-cov/modules/events', '../../src-cov/modules/queryMap', '../../src-cov/feedhenry'],
           // Embed source map for tests
           debug: true
         }
