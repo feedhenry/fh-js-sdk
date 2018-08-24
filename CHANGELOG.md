@@ -1,5 +1,10 @@
 # Changelog - FeedHenry Javascript SDK
 
+
+## 3.0.9 - 2018-08-24
+### Fix
+- Downgrade development dependencies and browserify for the same versions used/released at 3.0.2 for it still compatible with client app forms.  
+
 ## 3.0.8 - 2018-08-23
 ### Changes
 - Upgrade version used of fh-sync-js to 1.3.1
