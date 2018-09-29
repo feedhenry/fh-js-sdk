@@ -1,7 +1,7 @@
 <?xml version='1.0'?>
 <licenseSummary>
     <project>fh-js-sdk</project>
-    <version>3.0.9-rc2</version>
+    <version>3.0.9</version>
     <license>Copyright (c) 2014 FeedHenry Ltd, All Rights Reserved.</license>
     <dependencies>
         <dependency>
@@ -35,6 +35,16 @@
             </licenses>
         </dependency>
         <dependency>
+            <packageName>accessory</packageName>
+            <version>1.1.0</version>
+            <licenses>
+                <license>
+                    <name>MIT License</name>
+                    <url>http://www.opensource.org/licenses/MIT</url>
+                </license>
+            </licenses>
+        </dependency>
+        <dependency>
             <packageName>acorn</packageName>
             <version>2.7.0</version>
             <licenses>
@@ -55,6 +65,16 @@
             </licenses>
         </dependency>
         <dependency>
+            <packageName>acorn</packageName>
+            <version>5.7.1</version>
+            <licenses>
+                <license>
+                    <name>MIT License</name>
+                    <url>http://www.opensource.org/licenses/MIT</url>
+                </license>
+            </licenses>
+        </dependency>
+        <dependency>
             <packageName>amdefine</packageName>
             <version>1.0.1</version>
             <licenses>
@@ -65,6 +85,16 @@
                 <license>
                     <name>MIT License</name>
                     <url>http://www.opensource.org/licenses/MIT</url>
+                </license>
+            </licenses>
+        </dependency>
+        <dependency>
+            <packageName>ap</packageName>
+            <version>0.2.0</version>
+            <licenses>
+                <license>
+                    <name>UNKNOWN</name>
+                    <url>UNKNOWN</url>
                 </license>
             </licenses>
         </dependency>
@@ -91,6 +121,16 @@
         <dependency>
             <packageName>async</packageName>
             <version>0.2.10</version>
+            <licenses>
+                <license>
+                    <name>MIT License</name>
+                    <url>http://www.opensource.org/licenses/MIT</url>
+                </license>
+            </licenses>
+        </dependency>
+        <dependency>
+            <packageName>balanced-match</packageName>
+            <version>0.2.1</version>
             <licenses>
                 <license>
                     <name>MIT License</name>
@@ -130,7 +170,7 @@
         </dependency>
         <dependency>
             <packageName>browserify-shim</packageName>
-            <version>3.3.2</version>
+            <version>3.8.14</version>
             <licenses>
                 <license>
                     <name>MIT License</name>
@@ -319,6 +359,16 @@
             </licenses>
         </dependency>
         <dependency>
+            <packageName>defined</packageName>
+            <version>1.0.0</version>
+            <licenses>
+                <license>
+                    <name>MIT License</name>
+                    <url>http://www.opensource.org/licenses/MIT</url>
+                </license>
+            </licenses>
+        </dependency>
+        <dependency>
             <packageName>deps-sort</packageName>
             <version>0.1.2</version>
             <licenses>
@@ -340,7 +390,7 @@
         </dependency>
         <dependency>
             <packageName>detective</packageName>
-            <version>2.3.0</version>
+            <version>3.1.0</version>
             <licenses>
                 <license>
                     <name>MIT License</name>
@@ -350,7 +400,7 @@
         </dependency>
         <dependency>
             <packageName>detective</packageName>
-            <version>3.1.0</version>
+            <version>4.7.1</version>
             <licenses>
                 <license>
                     <name>MIT License</name>
@@ -361,6 +411,16 @@
         <dependency>
             <packageName>domain-browser</packageName>
             <version>1.1.7</version>
+            <licenses>
+                <license>
+                    <name>MIT License</name>
+                    <url>http://www.opensource.org/licenses/MIT</url>
+                </license>
+            </licenses>
+        </dependency>
+        <dependency>
+            <packageName>dot-parts</packageName>
+            <version>1.0.1</version>
             <licenses>
                 <license>
                     <name>MIT License</name>
@@ -389,12 +449,12 @@
             </licenses>
         </dependency>
         <dependency>
-            <packageName>escodegen</packageName>
-            <version>0.0.15</version>
+            <packageName>escape-string-regexp</packageName>
+            <version>1.0.5</version>
             <licenses>
                 <license>
-                    <name>UNKNOWN</name>
-                    <url>UNKNOWN</url>
+                    <name>MIT License</name>
+                    <url>http://www.opensource.org/licenses/MIT</url>
                 </license>
             </licenses>
         </dependency>
@@ -421,16 +481,6 @@
         <dependency>
             <packageName>esprima-fb</packageName>
             <version>3001.1.0-dev-harmony-fb</version>
-            <licenses>
-                <license>
-                    <name>UNKNOWN</name>
-                    <url>UNKNOWN</url>
-                </license>
-            </licenses>
-        </dependency>
-        <dependency>
-            <packageName>esprima</packageName>
-            <version>1.0.2</version>
             <licenses>
                 <license>
                     <name>UNKNOWN</name>
@@ -500,7 +550,7 @@
         </dependency>
         <dependency>
             <packageName>exposify</packageName>
-            <version>0.1.5</version>
+            <version>0.5.0</version>
             <licenses>
                 <license>
                     <name>MIT License</name>
@@ -510,7 +560,7 @@
         </dependency>
         <dependency>
             <packageName>fh-js-sdk</packageName>
-            <version>3.0.9-rc2</version>
+            <version>3.0.9</version>
             <licenses>
                 <license>
                     <name>UNKNOWN</name>
@@ -520,7 +570,7 @@
         </dependency>
         <dependency>
             <packageName>fh-sync-js</packageName>
-            <version>1.3.1</version>
+            <version>1.3.2</version>
             <licenses>
                 <license>
                     <name>UNKNOWN</name>
@@ -530,7 +580,7 @@
         </dependency>
         <dependency>
             <packageName>find-parent-dir</packageName>
-            <version>0.2.1</version>
+            <version>0.3.0</version>
             <licenses>
                 <license>
                     <name>MIT License</name>
@@ -549,18 +599,18 @@
             </licenses>
         </dependency>
         <dependency>
-            <packageName>graceful-fs</packageName>
-            <version>2.0.3</version>
+            <packageName>globo</packageName>
+            <version>1.1.0</version>
             <licenses>
                 <license>
-                    <name>UNKNOWN</name>
-                    <url>UNKNOWN</url>
+                    <name>MIT License</name>
+                    <url>http://www.opensource.org/licenses/MIT</url>
                 </license>
             </licenses>
         </dependency>
         <dependency>
             <packageName>has-require</packageName>
-            <version>1.1.0</version>
+            <version>1.2.2</version>
             <licenses>
                 <license>
                     <name>MIT License</name>
@@ -649,6 +699,16 @@
             </licenses>
         </dependency>
         <dependency>
+            <packageName>is-defined</packageName>
+            <version>1.0.0</version>
+            <licenses>
+                <license>
+                    <name>MIT License</name>
+                    <url>http://www.opensource.org/licenses/MIT</url>
+                </license>
+            </licenses>
+        </dependency>
+        <dependency>
             <packageName>isarray</packageName>
             <version>0.0.1</version>
             <licenses>
@@ -719,8 +779,8 @@
             </licenses>
         </dependency>
         <dependency>
-            <packageName>minimatch</packageName>
-            <version>0.2.14</version>
+            <packageName>map-obj</packageName>
+            <version>1.0.1</version>
             <licenses>
                 <license>
                     <name>MIT License</name>
@@ -749,6 +809,16 @@
             </licenses>
         </dependency>
         <dependency>
+            <packageName>minimist</packageName>
+            <version>0.0.8</version>
+            <licenses>
+                <license>
+                    <name>MIT License</name>
+                    <url>http://www.opensource.org/licenses/MIT</url>
+                </license>
+            </licenses>
+        </dependency>
+        <dependency>
             <packageName>module-deps</packageName>
             <version>2.0.6</version>
             <licenses>
@@ -760,7 +830,7 @@
         </dependency>
         <dependency>
             <packageName>mothership</packageName>
-            <version>0.1.0</version>
+            <version>0.2.0</version>
             <licenses>
                 <license>
                     <name>MIT License</name>
@@ -821,6 +891,16 @@
         <dependency>
             <packageName>parents</packageName>
             <version>0.0.3</version>
+            <licenses>
+                <license>
+                    <name>MIT License</name>
+                    <url>http://www.opensource.org/licenses/MIT</url>
+                </license>
+            </licenses>
+        </dependency>
+        <dependency>
+            <packageName>patch-text</packageName>
+            <version>1.0.2</version>
             <licenses>
                 <license>
                     <name>MIT License</name>
@@ -949,8 +1029,8 @@
             </licenses>
         </dependency>
         <dependency>
-            <packageName>readdirp</packageName>
-            <version>0.3.3</version>
+            <packageName>rename-function-calls</packageName>
+            <version>0.1.1</version>
             <licenses>
                 <license>
                     <name>MIT License</name>
@@ -959,8 +1039,8 @@
             </licenses>
         </dependency>
         <dependency>
-            <packageName>rename-function-calls</packageName>
-            <version>0.1.1</version>
+            <packageName>replace-requires</packageName>
+            <version>1.0.4</version>
             <licenses>
                 <license>
                     <name>MIT License</name>
@@ -1069,16 +1149,6 @@
             </licenses>
         </dependency>
         <dependency>
-            <packageName>source-map</packageName>
-            <version>0.5.7</version>
-            <licenses>
-                <license>
-                    <name>BSD 3-clause "New" or "Revised" License</name>
-                    <url>http://www.opensource.org/licenses/BSD-3-Clause</url>
-                </license>
-            </licenses>
-        </dependency>
-        <dependency>
             <packageName>stream-browserify</packageName>
             <version>0.1.3</version>
             <licenses>
@@ -1149,6 +1219,16 @@
             </licenses>
         </dependency>
         <dependency>
+            <packageName>ternary</packageName>
+            <version>1.0.0</version>
+            <licenses>
+                <license>
+                    <name>MIT License</name>
+                    <url>http://www.opensource.org/licenses/MIT</url>
+                </license>
+            </licenses>
+        </dependency>
+        <dependency>
             <packageName>through2</packageName>
             <version>0.4.2</version>
             <licenses>
@@ -1170,7 +1250,7 @@
         </dependency>
         <dependency>
             <packageName>through</packageName>
-            <version>2.3.8</version>
+            <version>2.3.4</version>
             <licenses>
                 <license>
                     <name>MIT License</name>
@@ -1381,6 +1461,16 @@
         <dependency>
             <packageName>xtend</packageName>
             <version>3.0.0</version>
+            <licenses>
+                <license>
+                    <name>MIT License</name>
+                    <url>http://www.opensource.org/licenses/MIT</url>
+                </license>
+            </licenses>
+        </dependency>
+        <dependency>
+            <packageName>xtend</packageName>
+            <version>4.0.1</version>
             <licenses>
                 <license>
                     <name>MIT License</name>
