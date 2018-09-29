@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 3.0.11 - 2018-08-29
+### Fix
+- Unable to build client app regards issue with the lock file published in the version 3.0.10
+
 ## 3.0.10 - 2018-09-27
 ### Changes
 - Upgrade version used of fh-sync-js to 1.3.2
