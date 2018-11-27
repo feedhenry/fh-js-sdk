@@ -1,44 +1,22 @@
 # Changelog - FeedHenry Javascript SDK
 
 ## 3.0.11 - 2018-08-29
-### Fix
-- Unable to build client app regards issue with the lock file published in the version 3.0.10
-
-## 3.0.10 - 2018-09-27
 ### Changes
 - Upgrade version used of fh-sync-js to 1.3.2
-
-## 3.0.9 - 2018-08-24
-### Fix
-- Downgrade development dependencies and browserify for the same versions used/released at 3.0.2 for it still compatible with client app forms.  
-
-## 3.0.8 - 2018-08-23
-### Changes
-- Upgrade version used of fh-sync-js to 1.3.1
-- Change trevis to test project with NodeJS 10 
+- Downgrade development dependencies and browserify for the same versions used/released at 3.0.2 for it still compatible with client app forms.  - Change trevis to test project with NodeJS 10
 - Change trevis for don't test project with NodeJS 4
-- Replace npm-shrinkwrap.json by json package-lock.json.  
-### Fix 
-- Add decode module to fix issue client forms app 
-
-## 3.0.7 - 2018-08-21
-- Fix date form component which is not working when the button is used 
-
-## 3.0.6 - 2018-07-20
-- Fix header parameters  
-
-## 3.0.5 - 2018-06-12
+- Replace npm-shrinkwrap.json by json package-lock.json.
 - Add scripts to update the licenses automatically
 - Update automatically lock dependencies file (npm-shrinkwrap.json) and licenses
-- CVE-2017-18214 : Remove unused moment dependency
+- Upgrade dependencies which do not have break changes
+- Add/Update licenses manually
+- Upgrade browserify dependencies
 
-## 3.0.4 - 2018-05-10
-* Upgrade dependencies which do not have break changes  
-* Update licenses manually
-
-## 3.0.3 - 2018-05-09
-* Fix Security vulnerabilities: Upgrade browserify dependencies
-* Add licenses manually
+### Fix
+- Add decode module to fix issue client forms app
+- Fix date form component which is not working when the button is used
+- Fix header parameters
+- Remove unused moment dependency
 
 ## 3.0.2 - 2018-04-30
 * Add missing argument to `sync.setQueryParams` definition
