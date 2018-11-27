@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 3.0.12 - 2018-11-27
+### Fix
+- Error with ajax to return  callback from JSONP calls
+
 ## 3.0.11 - 2018-08-29
 ### Fix
 - Unable to build client app regards issue with the lock file published in the version 3.0.10
