@@ -2,41 +2,42 @@
 
 ## 3.0.11 - 2018-08-29
 ### Fix
-- Unable to build client app regards issue with the lock file published in the version 3.0.10
+- Unable to build client app regards issue introduce in the changes made in the version 3.0.3.
+*NOTE:* The tag 3.0.3 and its intermediate ones was deprecated regards this issue.
 
-## 3.0.10 - 2018-09-27
+## 3.0.10 - 2018-09-27 - [DEPRECATED]
 ### Changes
 - Upgrade version used of fh-sync-js to 1.3.2
 
-## 3.0.9 - 2018-08-24
+## 3.0.9 - 2018-08-24 - [DEPRECATED]
 ### Fix
-- Downgrade development dependencies and browserify for the same versions used/released at 3.0.2 for it still compatible with client app forms.  
+- Downgrade development dependencies and browserify for the same versions used/released at 3.0.2 for it still compatible with client app forms.
 
-## 3.0.8 - 2018-08-23
+## 3.0.8 - 2018-08-23 - [DEPRECATED]
 ### Changes
 - Upgrade version used of fh-sync-js to 1.3.1
-- Change trevis to test project with NodeJS 10 
+- Change trevis to test project with NodeJS 10
 - Change trevis for don't test project with NodeJS 4
-- Replace npm-shrinkwrap.json by json package-lock.json.  
-### Fix 
-- Add decode module to fix issue client forms app 
+- Replace npm-shrinkwrap.json by json package-lock.json.
+### Fix
+- Add decode module to fix issue client forms app
 
-## 3.0.7 - 2018-08-21
-- Fix date form component which is not working when the button is used 
+## 3.0.7 - 2018-08-21 - [DEPRECATED]
+- Fix date form component which is not working when the button is used
 
-## 3.0.6 - 2018-07-20
-- Fix header parameters  
+## 3.0.6 - 2018-07-20 - [DEPRECATED]
+- Fix header parameters
 
-## 3.0.5 - 2018-06-12
+## 3.0.5 - 2018-06-12 - [DEPRECATED]
 - Add scripts to update the licenses automatically
 - Update automatically lock dependencies file (npm-shrinkwrap.json) and licenses
 - CVE-2017-18214 : Remove unused moment dependency
 
-## 3.0.4 - 2018-05-10
-* Upgrade dependencies which do not have break changes  
+## 3.0.4 - 2018-05-10 - [DEPRECATED]
+* Upgrade dependencies which do not have break changes
 * Update licenses manually
 
-## 3.0.3 - 2018-05-09
+## 3.0.3 - 2018-05-09 - [DEPRECATED]
 * Fix Security vulnerabilities: Upgrade browserify dependencies
 * Add licenses manually
 
