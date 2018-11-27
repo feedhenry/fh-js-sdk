@@ -241,7 +241,7 @@ ajax.JSONP = function (options) {
 
   // Use insertBefore instead of appendChild to circumvent an IE6 bug.
   // This arises when a base node is used (see jQuery bugs #2709 and #4378).
-  head.insertBefore(script, head.firstChild);
+  // head.insertBefore(script, head.firstChild);
 
   if (options.timeout > 0) abortTimeout = setTimeout(function () {
     xhr.abort()
