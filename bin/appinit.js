@@ -17,11 +17,11 @@ var initData = {
   }
 }
 
-/*app.all('*', function(req, res, next) {
+app.all('*', function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header("Access-Control-Allow-Headers", "X-Requested-With, X-Request-With, Content-Type");
   next();
- });*/
+});
 
 app.get("/box/:servlet/:version/app/init", function(req, res){
   console.log("Got GET request for app init");
