@@ -3,7 +3,7 @@
 ## 3.0.11 - 2018-08-29
 ### Fix
 - Unable to build client app regards issue introduce in the changes made in the version 3.0.3.
-*NOTE:* The tag 3.0.3 and its intermediate ones was deprecated regards this issue.
+**NOTE:** The tag 3.0.3 and its intermediate ones were deprecated regards this issue.
 
 ## 3.0.10 - 2018-09-27 - [DEPRECATED]
 ### Changes
