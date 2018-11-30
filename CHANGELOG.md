@@ -1,5 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 3.0.12 - 2018-11-30
+### Fix
+- Add default result for init requests across domains when the result is not successful which is expected when the connection tag is disable.
+
 ## 3.0.11 - 2018-08-29
 ### Fix
 - Unable to build client app regards issue introduce in the changes made in the version 3.0.3.

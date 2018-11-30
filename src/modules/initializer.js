@@ -94,6 +94,10 @@ var loadCloudProps = function(app_props, callback) {
           if (req && req.status === 400) {
             logger.error(req.responseText);
           } else {
+            if ( !req && !statusText && !error ) {
+              statusText = "Connection tag may be disabled";
+              error = "No cached host found. Init failed.";
+            }
             logger.error("No cached host found. Init failed.");
           }
           handleError(function(msg, err) {
