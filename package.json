@@ -1,68 +1,24 @@
 {
   "name": "fh-js-sdk",
-  "version": "3.0.12",
   "description": "feedhenry js sdk",
-  "main": "dist/feedhenry.js",
-  "types": "./fh-js-sdk.d.ts",
-  "browser": {
-    "JSON": "./libs/json2.js"
-  },
-  "browserify-shim": {
-    "JSON": {
-      "exports": "JSON"
-    },
-    "./libs/generated/lawnchair.js": {
-      "exports": "Lawnchair"
-    },
-    "./libs/generated/crypto.js": {
-      "exports": "CryptoJS"
-    }
-  },
-  "browserify": {
-    "standalone": "feedhenry",
-    "transform": [
-      "browserify-shim"
-    ]
-  },
-  "testling": {
-    "harness": "mocha-bdd",
-    "scripts": [
-      "test/browser/libs/sinon/sinon.js",
-      "test/browser/libs/sinon/sinon-ie.js"
-    ],
-    "files": "test/tests/*.js",
-    "browsers": [
-      "ie/9..10",
-      "firefox/5.0",
-      "firefox/latest",
-      "chrome/7.0",
-      "chrome/latest",
-      "safari/5.0.5",
-      "safari/latest",
-      "opera/11",
-      "opera/next",
-      "iphone/6.0",
-      "ipad/6.0",
-      "android-browser/latest"
-    ]
-  },
-  "scripts": {
-    "test": "grunt test",
-    "prepublish": "grunt concat-core-sdk",
-    "doc:clean": "rimraf doc",
-    "doc:generate": "typedoc --includeDeclarations --excludeExternals --out doc ./fh-js-sdk.d.ts",
-    "doc:gh-pages": "touch doc/.nojekyll; git add doc/.*; git add doc/*; git commit -m 'Publishing to gh-pages'; git push origin :gh-pages --force ; git subtree push --prefix doc origin gh-pages",
-    "doc": "npm run doc:clean && npm run doc:generate && npm run doc:gh-pages",
-    "preshrinkwrap": "npm cache verify && npm cache clean && npm cache clean && npm ls",
-    "postshrinkwrap": "license-reporter save --full-dependency-tree --xml licenses.xml && license-reporter report --full-dependency-tree --silent"
-  },
+  "license": "Copyright (c) 2014 FeedHenry Ltd, All Rights Reserved.",
+  "author": "",
   "repository": {
     "type": "git",
     "url": "git://github.com/feedhenry/fh-js-sdk.git"
   },
-  "author": "",
-  "license": "Copyright (c) 2014 FeedHenry Ltd, All Rights Reserved.",
-  "gitHead": "251a1f88a39f59f2652552ae245893a833faee71",
+  "version": "3.0.12",
+  "main": "dist/feedhenry.js",
+  "scripts": {
+    "doc": "npm run doc:clean && npm run doc:generate && npm run doc:gh-pages",
+    "doc:clean": "rimraf doc",
+    "doc:generate": "typedoc --includeDeclarations --excludeExternals --out doc ./fh-js-sdk.d.ts",
+    "doc:gh-pages": "touch doc/.nojekyll; git add doc/.*; git add doc/*; git commit -m 'Publishing to gh-pages'; git push origin :gh-pages --force ; git subtree push --prefix doc origin gh-pages",
+    "prepublish": "grunt concat-core-sdk",
+    "preshrinkwrap": "npm cache verify && npm cache clean && npm cache clean && npm ls",
+    "postshrinkwrap": "license-reporter save --full-dependency-tree --xml licenses.xml && license-reporter report --full-dependency-tree --silent",
+    "test": "grunt test"
+  },
   "dependencies": {
     "browserify": "3.46.1",
     "browserify-shim": "3.8.14",
@@ -102,5 +58,49 @@
     "sinon-chai": "2.5.0",
     "through": "2.3.4",
     "typedoc": "0.5.8"
-  }
+  },
+  "browser": {
+    "JSON": "./libs/json2.js"
+  },
+  "browserify": {
+    "standalone": "feedhenry",
+    "transform": [
+      "browserify-shim"
+    ]
+  },
+  "browserify-shim": {
+    "JSON": {
+      "exports": "JSON"
+    },
+    "./libs/generated/lawnchair.js": {
+      "exports": "Lawnchair"
+    },
+    "./libs/generated/crypto.js": {
+      "exports": "CryptoJS"
+    }
+  },
+  "gitHead": "251a1f88a39f59f2652552ae245893a833faee71",
+  "testling": {
+    "harness": "mocha-bdd",
+    "scripts": [
+      "test/browser/libs/sinon/sinon.js",
+      "test/browser/libs/sinon/sinon-ie.js"
+    ],
+    "files": "test/tests/*.js",
+    "browsers": [
+      "ie/9..10",
+      "firefox/5.0",
+      "firefox/latest",
+      "chrome/7.0",
+      "chrome/latest",
+      "safari/5.0.5",
+      "safari/latest",
+      "opera/11",
+      "opera/next",
+      "iphone/6.0",
+      "ipad/6.0",
+      "android-browser/latest"
+    ]
+  },
+  "types": "./fh-js-sdk.d.ts"
 }
