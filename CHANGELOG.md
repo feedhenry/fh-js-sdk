@@ -1,5 +1,10 @@
 # Changelog - FeedHenry Javascript SDK
 
+## 3.1.0 - 2019-04-15
+### Change
+- Upgrade version of fh-sync-js from 1.3.2 to 1.4.0
+- Add lawnchair files changed at the version 1.4.0 of fh-sync-js
+
 ## 3.0.12 - 2018-11-30
 ### Fix
 - Add default result for init requests across domains when the result is not successful which is expected when the connection tag is disable.
