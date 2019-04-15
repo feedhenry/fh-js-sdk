@@ -11,8 +11,14 @@ Lawnchair.adapter('indexed-db', (function(){
 
 
   return {
+    valid: function () { return !!getIDB(); },
 
-    valid: function() { return !!getIDB(); },
+    close: function () {
+      if (this.db) {
+        this.db.close();
+      }
+      return this;
+    },
 
     init:function(options, callback) {
       this.idb = getIDB();
@@ -24,34 +30,33 @@ Lawnchair.adapter('indexed-db', (function(){
       //FEEDHENRY CHANGE TO ALLOW ERROR CALLBACK
       if(options && 'function' === typeof options.fail) fail = options.fail
       //END CHANGE
-      request.onupgradeneeded = function(event){
-        self.store = request.result.createObjectStore("teststore", { autoIncrement: true} );
+      request.onupgradeneeded = function (event) {
+        self.store = request.result.createObjectStore("teststore", { autoIncrement: true });
         for (var i = 0; i < self.waiting.length; i++) {
           self.waiting[i].call(self);
         }
         self.waiting = [];
         win();
-      }
+      };
 
-      request.onsuccess = function(event) {
+      request.onsuccess = function (event) {
         self.db = request.result;
 
-
-        if(self.db.version != "2.0") {
-          if(typeof self.db.setVersion == 'function'){
+        if (self.db.version != "2.0") {
+          if (typeof self.db.setVersion == 'function') {
 
             var setVrequest = self.db.setVersion("2.0");
             // onsuccess is the only place we can create Object Stores
-            setVrequest.onsuccess = function(e) {
-              self.store = self.db.createObjectStore("teststore", { autoIncrement: true} );
+            setVrequest.onsuccess = function (e) {
+              self.store = self.db.createObjectStore("teststore", { autoIncrement: true });
               for (var i = 0; i < self.waiting.length; i++) {
                 self.waiting[i].call(self);
               }
               self.waiting = [];
               win();
             };
-            setVrequest.onerror = function(e) {
-             // console.log("Failed to create objectstore " + e);
+            setVrequest.onerror = function (e) {
+              // console.log("Failed to create objectstore " + e);
               fail(e);
             }
 
@@ -64,7 +69,8 @@ Lawnchair.adapter('indexed-db', (function(){
           self.waiting = [];
           win();
         }
-      }
+      };
+
       request.onerror = fail;
     },
 
@@ -77,7 +83,12 @@ Lawnchair.adapter('indexed-db', (function(){
       }
 
       var self = this;
-      var win  = function (e) { if (callback) { obj.key = e.target.result; self.lambda(callback).call(self, obj) }};
+      var win = function (e) {
+        if (callback) {
+          obj.key = e.target.result;
+          self.lambda(callback).call(self, obj)
+        }
+      };
       var accessType = "readwrite";
       var trans = this.db.transaction(["teststore"],accessType);
       var store = trans.objectStore("teststore");

@@ -85,7 +85,7 @@ Lawnchair.adapter = function (id, obj) {
   // ugly here for a  cleaner dsl for implementing adapters
   obj['adapter'] = id
   // methods required to implement a lawnchair adapter
-  var implementing = 'adapter valid init keys save batch get exists all remove nuke'.split(' ')
+  var implementing = 'adapter valid init keys close save batch get exists all remove nuke'.split(' ')
     ,   indexOf = this.prototype.indexOf
   // mix in the adapter
   for (var i in obj) {
