@@ -1,4 +1,8 @@
 # Changelog - FeedHenry Javascript SDK
+## 3.1.1 - 2019-11-08
+### Change
+- Upgrade version of fh-sync-js from 1.4.0 to 1.4.1
+- Update lawnchair changes from fh-sync-js@1.4.1
 
 ## 3.1.0 - 2019-04-15
 ### Change
