@@ -1,4 +1,9 @@
 # Changelog - FeedHenry Javascript SDK
+
+## 3.1.2 - 2019-11-12
+### Change
+- Upgrade version of fh-sync-js from 1.4.2 to 1.4.3
+
 ## 3.1.1 - 2019-11-08
 ### Change
 - Upgrade version of fh-sync-js from 1.4.0 to 1.4.2
